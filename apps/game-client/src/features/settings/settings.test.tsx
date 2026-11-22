@@ -67,8 +67,6 @@ describe("Settings", () => {
       left: `${Math.round((1280 - 640) / 2)}px`,
       top: `${Math.round((720 - 440) / 2)}px`,
     });
-    // The default placement is not saved, so a later layout reset or a
-    // different screen still centers it.
     expect(useWindowsStore.getState().settings.hasDefinedPosition).toBe(false);
   });
 

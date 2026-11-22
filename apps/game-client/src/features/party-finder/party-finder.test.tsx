@@ -109,7 +109,6 @@ it("shows and cancels an owned gathering after switching character and world wit
     name: /Zakończ|Anuluj|Rozwiąż/i,
   });
 
-  // One click ends the gathering; there is no confirmation step.
   await user.click(cancelGathering);
   await waitFor(() => expect(requests).toHaveLength(1));
   const request = requests[0];

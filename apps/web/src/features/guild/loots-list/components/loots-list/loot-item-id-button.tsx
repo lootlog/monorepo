@@ -12,10 +12,6 @@ import { useTranslation } from "react-i18next";
 import { useCopyItemId } from "@/hooks/use-copy-item-id";
 import { formatItemHid } from "@/lib/utils/hid-detection";
 
-/**
- * Copies an item's `ITEM#…` identifier for the search or the game chat. With
- * several copies of one item, a menu picks which copy's identifier.
- */
 export const LootItemIdButton = ({
   hids,
   world,

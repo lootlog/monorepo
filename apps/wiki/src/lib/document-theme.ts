@@ -11,11 +11,6 @@ import {
 } from "@lootlog/ui/themes/resolver";
 import { resolveThemeLook } from "@lootlog/ui/themes/theme-sync";
 
-/**
- * The root's attributes for the stored theme, as the browser applies them, so
- * the server renders the page in it. A custom theme renders from its last
- * applied copy, and as the default without one.
- */
 export const getDocumentTheme = (
   storedSelection: string | null,
   storedCustomTheme: AppliedCustomTheme | null,

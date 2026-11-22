@@ -1,6 +1,3 @@
-// Hand-maintained Battlelog database schema; Drizzle generates SQL migrations from it.
-// `battles` and `battle_timelines` are TimescaleDB hypertables partitioned by
-// battle ID; the migration creates them, the schema cannot.
 import { sql } from "drizzle-orm";
 import {
   boolean,
@@ -21,7 +18,6 @@ import {
 export const battles = pgTable(
   "battles",
   {
-    // UUIDv7 that encodes `createdAt`; see `createBattleId`.
     id: uuid("id").primaryKey(),
     createdAt: timestamp("createdAt", {
       withTimezone: true,
@@ -46,7 +42,6 @@ export const battles = pgTable(
     losingTeam: integer("losingTeam").notNull(),
     honorPoints: integer("honorPoints").default(0).notNull(),
     hasFlee: boolean("hasFlee").default(false).notNull(),
-    // Closed by the submitter before Margonem ended it; both teams are 0.
     unfinished: boolean("unfinished").default(false).notNull(),
     matchmaking: boolean("matchmaking").default(false).notNull(),
 
@@ -88,10 +83,6 @@ export const battles = pgTable(
   ],
 );
 
-/**
- * A unique index on a hypertable must contain the battle ID, so the owner's
- * submission IDs live in this plain table. A retry finds its battle here.
- */
 export const battleSubmissions = pgTable(
   "battle_submissions",
   {
@@ -108,7 +99,6 @@ export const battleSubmissions = pgTable(
   ],
 );
 
-/** The submitted Margonem events of a battle, as zstd-compressed JSON. */
 export const battleTimelines = pgTable(
   "battle_timelines",
   {
@@ -124,11 +114,6 @@ export const battleTimelines = pgTable(
   ],
 );
 
-/**
- * Battles saved before UUIDv7 IDs keep their old public links and R2 object
- * keys here. Their timelines stay in R2 under the old ID; drop the table with
- * the R2 bucket.
- */
 export const battleLegacyIds = pgTable("battle_legacy_ids", {
   legacyId: text("legacyId").primaryKey(),
   battleId: uuid("battleId").notNull().unique("battle_legacy_ids_battleId_key"),
@@ -137,7 +122,6 @@ export const battleLegacyIds = pgTable("battle_legacy_ids", {
 export const battleObjectDeletions = pgTable(
   "battle_object_deletions",
   {
-    // The R2 object ID of a deleted battle saved before UUIDv7 IDs.
     battleId: text("battleId").primaryKey(),
     userId: text("userId").notNull(),
     createdAt: timestamp("createdAt", { withTimezone: true })
@@ -306,13 +290,6 @@ export const battleWarriors = pgTable(
   ],
 );
 
-/**
- * One finishing blow a character dealt to a player with the main weapon it
- * wore. A weapon's counter is the count of its rows for its current owner, so
- * a weapon that changes hands starts again from zero. The kill fingerprint
- * hashes the battle log up to the blow, so every capture of the same battle,
- * whole or cut short, records each blow once.
- */
 export const weaponKills = pgTable(
   "weapon_kills",
   {
@@ -339,14 +316,6 @@ export const weaponKills = pgTable(
   ],
 );
 
-/**
- * The columns battle filters and the warrior search read, keyed by the
- * battle's owner. `battle_warriors` can only be read one battle at a time, so
- * filtering a whole history there costs one scattered lookup per battle. Here
- * an owner's warriors are adjacent, and the primary key carries every column
- * so that reads never touch the heap. Rows are written and removed together
- * with their `battle_warriors` row and never change.
- */
 export const battleWarriorFilters = pgTable(
   "battle_warrior_filters",
   {

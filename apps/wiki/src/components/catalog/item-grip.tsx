@@ -16,10 +16,6 @@ type Grip = (typeof GRIPS)[number];
 const isGrip = (type: string | null): type is Grip =>
   GRIPS.some((grip) => grip === type);
 
-/**
- * How many hands a melee weapon takes as a short chip, `1H`, `1,5H` or `2H`,
- * with the weapon type named in a tooltip; nothing for other items.
- */
 export function ItemGrip({ type }: { type: string | null }) {
   if (!isGrip(type)) return null;
 

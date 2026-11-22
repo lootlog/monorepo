@@ -88,7 +88,6 @@ export const RabbitRoutingKey = {
 export type RabbitEventRoutingKey =
   (typeof RabbitRoutingKey)[keyof typeof RabbitRoutingKey];
 
-/** Every routing key: an event's own key and its derived retry and dead-letter keys. */
 export type RabbitRoutingKeyName =
   | RabbitEventRoutingKey
   | `${RabbitEventRoutingKey}.retry`
@@ -104,7 +103,6 @@ export const deadLetterRoutingKey = <Key extends RabbitEventRoutingKey>(
 
 const DEFAULT_RETRY_TTL_MS = 30_000;
 
-/** Delayed retries a failing delivery gets before it is dead-lettered. */
 const MAX_DELAYED_RETRIES = 3;
 
 export interface RabbitQueueDefinition {
@@ -118,7 +116,6 @@ export interface RabbitQueueDefinition {
   readonly deadLetterRoutingKey?: RabbitRoutingKeyName;
 }
 
-/** Where a consumer sends a delivery its handler failed. */
 export type FailurePolicy =
   | { readonly strategy: "nack" }
   | { readonly strategy: "requeue" }
@@ -155,14 +152,6 @@ export const makeQueue = (
   ...options,
 });
 
-/**
- * - `retry`: delayed retries through `<queue>.retry`, then `<queue>.dlq`.
- * - `broker-retry`: a rejected delivery returns through `<queue>.retry`; the
- *   consumer dead-letters permanent failures itself.
- * - `dead-letter`: straight to `<queue>.dlq`.
- * - `requeue`: back to the queue at once.
- * - `nack`: dropped, for a hint the next event replaces.
- */
 export type ConsumerFailure =
   | "retry"
   | "broker-retry"
@@ -170,7 +159,6 @@ export type ConsumerFailure =
   | "requeue"
   | "nack";
 
-/** One consumed event: the queues it needs and the failure policy they bind. */
 export interface ConsumerRoute<
   Key extends RabbitEventRoutingKey = RabbitEventRoutingKey,
 > {
@@ -186,15 +174,9 @@ export const consumerRoute = <Key extends RabbitEventRoutingKey>(
   routingKey: Key,
   options: {
     readonly failure: ConsumerFailure;
-    /** Deliveries handled at once; 1, the default, keeps the queue's order. */
     readonly prefetch?: number;
     readonly singleActiveConsumer?: true;
-    /** Overrides `<routingKey>.dlq` when two queues consume one event. */
     readonly deadLetterRoutingKey?: RabbitRoutingKeyName;
-    /**
-     * False for a queue declared before broker rejections went to its retry
-     * queue: a live queue's arguments cannot change.
-     */
     readonly rejectToRetryQueue?: false;
   },
 ): ConsumerRoute<Key> => {

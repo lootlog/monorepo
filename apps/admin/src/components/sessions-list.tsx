@@ -6,7 +6,6 @@ import { formatDateTime } from "@/lib/format";
 import { text } from "@/lib/messages";
 import { useUserAction } from "@/lib/use-user-action";
 
-/** A User's active sessions, each with its own way out, and one for all. */
 export function SessionsList({
   user,
   sessions,

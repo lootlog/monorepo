@@ -40,7 +40,6 @@ export interface NotificationDispatchStore {
 }
 
 export interface NotificationDispatchAttempt {
-  /** The queue already ran this entry, so a crashed claim may be retaken. */
   readonly retrying: boolean;
 }
 

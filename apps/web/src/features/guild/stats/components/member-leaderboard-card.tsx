@@ -38,8 +38,6 @@ export const MemberLeaderboardCard = ({
     })
     .sort((a, b) => b.participations - a.participations);
 
-  // The viewer's own place takes the last row when it falls outside the
-  // leaders, so the card keeps the height of its paired leaderboard.
   const ownIndex = ranked.findIndex(
     (member, index) =>
       index >= LEADERBOARD_SIZE && isViewer(member.member.userId),
@@ -50,8 +48,6 @@ export const MemberLeaderboardCard = ({
     ownIndex === -1 ? LEADERBOARD_SIZE : LEADERBOARD_SIZE - 1,
   );
 
-  // The whole row is a link to the member's stats, so the member inside it
-  // cannot be a button of its own.
   const renderRow = (member: (typeof ranked)[number], rank: number) => (
     <StatsLeaderboardRow
       key={member.member.id}

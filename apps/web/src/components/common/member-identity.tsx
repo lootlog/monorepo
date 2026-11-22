@@ -17,30 +17,16 @@ import { cn } from "cn";
 import { useTranslation } from "react-i18next";
 
 type MemberIdentityProps = {
-  /** The key the record stores for its member. */
   member: GuildMemberKey | undefined;
-  /**
-   * What the record itself knows, shown until the member list loads and for
-   * someone the Organization no longer lists.
-   */
   fallback: { name: string; avatarUrl?: string | null };
   display?: "full" | "name" | "avatar";
-  /**
-   * False where the surrounding page or tile already is this member, or where
-   * the member sits inside another button.
-   */
   interactive?: boolean;
-  /** `MemberProfileLink` rows for the page the name used to lead to. */
   profileLinks?: React.ReactNode;
   className?: string;
   avatarClassName?: string;
   nameClassName?: string;
 };
 
-/**
- * A member of the Organization, shown the same way everywhere: avatar, server
- * nickname in the role's colour, and their profile card on click.
- */
 export const MemberIdentity = ({
   member: memberKey,
   fallback,
@@ -81,7 +67,6 @@ export const MemberIdentity = ({
         <span
           className={cn(
             "min-w-0 truncate text-sm font-medium",
-            // The underline takes the colour of the name, not of the button.
             interactive && "group-hover/member:underline",
             nameClassName,
           )}
@@ -111,14 +96,11 @@ export const MemberIdentity = ({
             aria-label={display === "avatar" ? name : undefined}
             className={cn(
               layout,
-              // Stays clickable inside a row whose content lets clicks through
-              // to a link stretched under it.
               "pointer-events-auto cursor-pointer text-left outline-none focus-visible:ring-2 focus-visible:ring-ring",
               display === "avatar"
                 ? "rounded-full hover:brightness-110"
                 : "group/member rounded-sm",
             )}
-            // A member inside a clickable row opens only their own profile.
             onClick={(event) => event.stopPropagation()}
           />
         }

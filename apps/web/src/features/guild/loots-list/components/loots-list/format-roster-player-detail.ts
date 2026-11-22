@@ -2,7 +2,6 @@ import { getShortnameByProf } from "@lootlog/domain/profession";
 import type { TFunction } from "i18next";
 import type { LootRosterPlayer } from "./build-loot-roster";
 
-/** "Lvl 308 · Łowca", or whichever of the two is known. */
 export const formatRosterPlayerDetail = (
   t: TFunction,
   player: Pick<LootRosterPlayer, "lvl" | "prof">,

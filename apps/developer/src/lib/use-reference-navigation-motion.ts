@@ -1,18 +1,10 @@
 import { useEffect, type RefObject } from "react";
 import { getPrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-motion";
 
-/** A jump at least this far is a navigation, not the reader scrolling. */
 const JUMP_DISTANCE = 240;
 
-/** How long after a navigation click a jump still belongs to it. */
 const ARMED_MS = 1500;
 
-/**
- * Scalar jumps to a sidebar entry with `behavior: "instant"` and keeps
- * correcting the position while it lazily renders the target, so a native
- * smooth scroll would fight it. Instead, the content glides in from the
- * direction of the jump once Scalar has placed it.
- */
 export function useReferenceNavigationMotion(
   rootRef: RefObject<HTMLElement | null>,
 ) {

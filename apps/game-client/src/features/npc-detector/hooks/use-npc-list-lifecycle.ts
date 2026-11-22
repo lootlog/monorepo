@@ -20,12 +20,6 @@ type DetectionAnimationDeadline = {
   endsAt: number;
 };
 
-/**
- * Expires notification cooldowns and detection animations with one timer
- * armed for the nearest deadline. Nothing here re-renders the list while a
- * cooldown runs; the store updates on expiry are the only React-visible
- * changes.
- */
 export const useNpcListLifecycle = ({
   activeDetectionAnimations,
   clearDetectionAnimation,
@@ -36,8 +30,6 @@ export const useNpcListLifecycle = ({
     new Map<number, DetectionAnimationDeadline>(),
   );
 
-  // Removing a detection also ends its animation in the store, so pruning by
-  // the store's animations below covers removed NPCs.
   useEffect(() => {
     const now = Date.now();
     const activeNpcIds = new Set<number>();
@@ -64,7 +56,6 @@ export const useNpcListLifecycle = ({
     }
   }, [activeDetectionAnimations]);
 
-  // The timer expires external detector-store cooldowns; these are not derived parent props.
   useEffect(() => {
     let timeoutId: number | undefined;
 

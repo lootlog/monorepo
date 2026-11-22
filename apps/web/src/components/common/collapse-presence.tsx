@@ -24,11 +24,6 @@ interface CollapsePresenceProps {
   children: ReactNode;
 }
 
-/**
- * Mounts and unmounts content while growing or shrinking the space it takes,
- * so neighbouring content slides instead of jumping. The grid track animates
- * from `0fr` to `1fr`, which follows the content's natural size.
- */
 export const CollapsePresence = ({
   open,
   axis = "vertical",

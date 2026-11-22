@@ -9,20 +9,13 @@ type SoundCategorySectionProps = {
   controlId: SettingsControlId;
   title: string;
   description: string;
-  /** Volume in [0, 1]; 0 means muted. */
   volume: number;
   onVolumeCommit: (value: number) => void;
   onMuteToggle: () => void;
-  /** Header actions, e.g. a play button for a category with one fixed sound. */
   actions?: ReactNode;
-  /** Sound rows shown under the volume row. */
   children?: ReactNode;
 };
 
-/**
- * One sound category: its volume row first, then one row per sound. Every
- * category is always expanded so the whole tab reads at a glance.
- */
 export const SoundCategorySection: FC<SoundCategorySectionProps> = ({
   controlId,
   title,

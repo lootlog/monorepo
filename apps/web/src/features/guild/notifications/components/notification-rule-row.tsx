@@ -49,11 +49,6 @@ type NotificationRuleRowProps = {
   onCancelJob: (jobId: string) => Promise<void>;
 };
 
-/**
- * One rule, read as a sentence: what it sends and when, where to, how its
- * last delivery went and when the next one goes out. The row opens the
- * rule's editor; everything else sits in a labelled menu.
- */
 export const NotificationRuleRow = ({
   rule,
   actionsDisabled,
@@ -131,7 +126,6 @@ export const NotificationRuleRow = ({
               {lastJob && <NotificationLastDelivery job={lastJob} />}
             </span>
           </span>
-          {/* Only a queued delivery has a time; the summary already says when the rest send. */}
           {nextJob && (
             <span className="flex shrink-0 flex-col items-end gap-0.5 text-right">
               <span className="text-2xs text-muted-foreground">

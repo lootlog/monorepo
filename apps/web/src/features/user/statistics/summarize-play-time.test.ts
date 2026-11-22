@@ -9,7 +9,6 @@ describe("play time", () => {
         { date: "2026-10-01", onlineSeconds: null },
         { date: "2026-10-02", onlineSeconds: 7200 },
         { date: "2026-10-03", onlineSeconds: 0 },
-        // Tracking covered only the end of this day's play.
         { date: "2026-10-04", onlineSeconds: 600, partial: true },
       ],
       [
@@ -28,7 +27,6 @@ describe("play time", () => {
 
 describe("week comparison", () => {
   it("compares this week to the same days of the previous week", () => {
-    // 2026-10-07 is a Wednesday.
     const daily = [
       "2026-09-28",
       "2026-09-29",
@@ -50,7 +48,6 @@ describe("week comparison", () => {
   });
 
   it("leaves the totals open when a compared day has no history", () => {
-    // 2026-10-06 is a Tuesday; the previous Tuesday has no history.
     const weeks = summarizeWeeks([
       { date: "2026-09-28", kills: 4 },
       { date: "2026-09-29", kills: null },

@@ -3,11 +3,8 @@ import { npcIconUrl } from "@lootlog/domain/npc-icon";
 import type { EventHeroNpc } from "@/lib/api/event-types";
 import { cn } from "cn";
 
-// Up to this many heroes are all shown; a larger roster keeps one slot fewer
-// and counts the rest, so the stack never grows past four slots.
 const MAX_SLOTS = 4;
 
-// Each portrait pops in a beat after the previous one.
 const POP_IN_STAGGER_MS = 70;
 
 interface PinnedEventHeroesProps {
@@ -15,10 +12,6 @@ interface PinnedEventHeroesProps {
   size?: "default" | "sm";
 }
 
-/**
- * The event's heroes standing in an overlapping row; they step apart while
- * the event row is hovered.
- */
 export const PinnedEventHeroes: FC<PinnedEventHeroesProps> = ({
   heroNpcs,
   size = "default",
@@ -53,11 +46,9 @@ export const PinnedEventHeroes: FC<PinnedEventHeroesProps> = ({
           src={npcIconUrl(heroNpc.npcIcon)}
           alt=""
           loading="lazy"
-          // A soft shadow cast to the left keeps overlapping sprites apart.
           className={cn(
             slotClassName,
             "animate-pop-in object-contain object-bottom drop-shadow-[-2px_1px_2px_rgb(0_0_0/0.6)]",
-            // Sprites are mostly transparent margin, so they may spill past the row.
             size === "sm" ? "-my-1 size-8" : "-my-2 size-10",
           )}
           style={

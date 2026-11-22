@@ -196,7 +196,6 @@ export const MapCard = ({
             <>
               <div
                 className="flex shrink-0 -space-x-1.5"
-                // Opening a profile must not also toggle the viewer's assignment.
                 onDoubleClick={(event) => event.stopPropagation()}
               >
                 {displayedAssignedMembers.map((member) => {

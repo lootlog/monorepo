@@ -31,9 +31,7 @@ export type GuildSearchPage = {
 export type LootSearchCommandProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Organization pages the member may open, offered before any typing. */
   pages?: GuildSearchPage[];
-  /** False when the member cannot read loots, so only pages are searched. */
   canSearchLoots?: boolean;
 };
 
@@ -41,7 +39,6 @@ type LootFiltersUpdate = Parameters<typeof serializeLootsFilters>[1];
 
 import { allTrue, anyTrue } from "./loot-search-presentation";
 
-// Hits per kind, as the combined search returned.
 const SEARCH_HITS = 10;
 
 export const useLootSearchCommand = ({
@@ -60,7 +57,6 @@ export const useLootSearchCommand = ({
   const { filters, setFilters } = useLootsFilters();
   const trimmedSearch = searchQuery.trim();
 
-  // Loot states read these terms, so a member without loot access sees pages only.
   const [lootSearchTerm, debouncedLootSearch] = canSearchLoots
     ? [trimmedSearch, debouncedSearch]
     : ["", ""];
@@ -77,8 +73,6 @@ export const useLootSearchCommand = ({
     normalizeSearchText(page.label).includes(pageQuery),
   );
 
-  // Items and monsters are shared by every world; `world` narrows only the
-  // characters, whose loots the list shows for the selected world.
   const searchOptions = {
     query: { enabled: debouncedLootSearch.length >= 2 && !isHidInput },
   };
@@ -100,7 +94,6 @@ export const useLootSearchCommand = ({
 
   const searchQueries = [itemsQuery, npcsQuery, playersQuery];
   const isSearchLoading = searchQueries.some(({ isLoading }) => isLoading);
-  // Any part failing is a search outage: partial hits would read as complete.
   const isSearchError = searchQueries.some(({ isError }) => isError);
 
   const isHid = !!parsedHid;
@@ -117,8 +110,6 @@ export const useLootSearchCommand = ({
     setSearchQuery("");
   };
 
-  // On the loot list a hit refines the current filters; from any other page
-  // it opens the loot list with just that filter.
   const applyLootFilters = (update: LootFiltersUpdate) => {
     if (isOnLootsPage) {
       void setFilters(update);
@@ -143,7 +134,6 @@ export const useLootSearchCommand = ({
   };
 
   const handleSelectItemByHid = (hid: string) => {
-    // The HID names its world, which the loot list must show to find it.
     if (parsedHid && parsedHid.world !== world) setWorld(parsedHid.world);
 
     applyLootFilters({
@@ -167,9 +157,6 @@ export const useLootSearchCommand = ({
     applyLootFilters({ players: [player.name] });
   };
 
-  // The search service can be behind or miss a name entirely. This matches the
-  // term against the loot database itself, so a name it has not indexed is
-  // still reachable.
   const handleDirectSearch = () => {
     applyLootFilters({ search: lootSearchTerm });
   };
@@ -178,13 +165,10 @@ export const useLootSearchCommand = ({
     setFilters({ search: null });
   };
 
-  // Other pages may use a `search` parameter of their own.
   const activeDirectSearch = isOnLootsPage ? filters.search : "";
 
   const canSearchDirectly = allTrue(!isHidInput, lootSearchTerm.length >= 2);
 
-  // Selecting a hit filters by name, so each name is one option even when
-  // several editions or ids share it.
   const npcResults = uniqBy(npcsQuery.data?.hits ?? [], (npc) => npc.name);
 
   const itemResults = uniqBy(itemsQuery.data?.hits ?? [], (item) => item.name);

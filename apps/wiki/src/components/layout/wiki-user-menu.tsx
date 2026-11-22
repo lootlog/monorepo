@@ -22,10 +22,6 @@ import { useSession } from "@/hooks/use-session";
 import { useSignedInCatalogRequest } from "@/hooks/use-signed-in-catalog-request";
 import { t } from "@/i18n/messages";
 
-/**
- * Signing in is optional: it brings the User's theme from the Web app, lets
- * them report pages, and opens the report queue to moderators.
- */
 export function WikiUserMenu() {
   const { config, authClient } = useWikiContext();
   const { session, isPending } = useSession();

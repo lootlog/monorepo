@@ -13,14 +13,12 @@ import { LootItemLine } from "./loot-item-line";
 import { LootPlayersGrid } from "./loot-players-grid";
 import { LootRecipientRow } from "./loot-recipient-row";
 
-/** Who received what, with every item's name and identifier in its row. */
 export const LootDetailsRoster = ({
   loot,
   canManageLoots,
   onShowPlayerLoots,
 }: {
   loot: Loot;
-  /** Loot managers may void a draw's result. */
   canManageLoots: boolean;
   onShowPlayerLoots?: (playerName: string) => void;
 }) => {

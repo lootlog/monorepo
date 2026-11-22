@@ -3,10 +3,6 @@ import { Effect } from "effect";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import { memberTable } from "#src/database/drizzle/organization.schema";
 
-/**
- * The actor keys records store: the Discord id older records keep, or the
- * internal User id new contracts use.
- */
 export type ActorKeys = {
   readonly discordIds?: Iterable<string>;
   readonly userIds?: Iterable<string>;
@@ -17,7 +13,6 @@ export type MemberNames = {
   readonly byUserId: ReadonlyMap<string, string>;
 };
 
-/** The Organization's name of every acting member, by the key it was stored under. */
 export const findMemberNames = (
   database: Pick<typeof ApiDatabase.Service, "select">,
   guildId: string,

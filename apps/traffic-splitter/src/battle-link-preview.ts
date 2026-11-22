@@ -3,12 +3,6 @@ import { escape, upperFirst } from "es-toolkit";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-/**
- * Link-preview bots read only the head of a page and never run JavaScript, so
- * the client-rendered web app shows them an empty shell. Bots that unfurl a
- * public battle link get a small document with the battle's Open Graph tags
- * instead; people keep getting the web app.
- */
 const linkPreviewBotPattern =
   /discordbot|slackbot|twitterbot|facebookexternalhit|facebot|telegrambot|whatsapp|linkedinbot|skypeuripreview|redditbot|embedly|iframely|mastodon|bluesky|cardyb/iu;
 
@@ -78,7 +72,6 @@ function formatTitle(battle: PreviewBattle): string {
 }
 
 function formatOutcome(battle: PreviewBattle): string {
-  // Battlelog records "?" as the winner of every fled or drawn battle.
   if (!battle.unfinished && battle.winner !== "?") {
     return `Zwycięzca: ${battle.winner}`;
   }
@@ -119,11 +112,6 @@ function renderPreviewDocument(battle: PreviewBattle, pageUrl: URL): string {
 `;
 }
 
-/**
- * Builds the preview document for a public battle, or returns null when the
- * battle is not public or Battlelog cannot answer in time, so the caller
- * serves the ordinary web app page.
- */
 export async function createBattleLinkPreview(
   battleId: string,
   requestUrl: URL,
@@ -157,7 +145,6 @@ export async function createBattleLinkPreview(
 
     return new Response(renderPreviewDocument(battle.value, pageUrl), {
       headers: {
-        // Bots and people share the URL, so no shared cache may keep this.
         "cache-control": "private, no-store",
         "content-type": "text/html; charset=utf-8",
         vary: "User-Agent",

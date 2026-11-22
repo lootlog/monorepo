@@ -2,7 +2,6 @@ import { usePrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-m
 import * as m from "framer-motion/m";
 import { useState, type ReactNode } from "react";
 
-// Gremory wrapper for circular elements (like avatars)
 export const GremoryCircle = ({
   children,
   isActive,
@@ -20,7 +19,6 @@ export const GremoryCircle = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Static shadows crossfade without repainting the shadow geometry. */}
       <m.div
         className="absolute inset-0 rounded-xl pointer-events-none"
         style={{ boxShadow: "0 0 8px 2px rgba(200, 30, 60, 0.25)" }}
@@ -41,7 +39,6 @@ export const GremoryCircle = ({
         }
       />
 
-      {/* Rotating mini magic circle on hover */}
       {isAnimating && (
         <m.div
           key={`rotation-${prefersReducedMotion}`}

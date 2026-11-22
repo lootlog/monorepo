@@ -18,10 +18,6 @@ type Props = {
   joined?: boolean;
 };
 
-/**
- * One gathering in the chat: the organizer's character first, what the
- * gathering is for, then the organizer's clan, map and Lootlog name.
- */
 export function ChatGatheringCardView({
   organizer,
   organizerDiscordId,

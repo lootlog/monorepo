@@ -6,10 +6,6 @@ import { EquipmentSetCharacter } from "./equipment-set-character";
 import { EquipmentSetDoll } from "./equipment-set-doll";
 import { EquipmentSetItemRow } from "./equipment-set-item-row";
 
-/**
- * Who wears the set and what they wear: the character, the slots as the
- * game draws them and the same slots by name.
- */
 export function EquipmentSetPanel({ className }: { className?: string }) {
   const { wornItems } = useSetSummary();
 

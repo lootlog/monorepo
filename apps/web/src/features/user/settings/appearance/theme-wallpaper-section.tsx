@@ -23,7 +23,6 @@ const CATEGORY_ORDER: Wallpaper["category"][] = [
   "anime",
 ];
 
-/** The wallpaper behind the content: the base's, none, or a shipped one. */
 export const ThemeWallpaperSection = () => {
   const { t } = useTranslation();
   const name = useId();

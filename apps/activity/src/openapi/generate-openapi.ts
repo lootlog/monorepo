@@ -34,7 +34,6 @@ preserveOpenApi30Contract(
   },
 );
 
-// OpenAPI 3.0 represents a null-only value through a nullable enum.
 for (const [status, property] of [
   ["200", "error"],
   ["503", "info"],

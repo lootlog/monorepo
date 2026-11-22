@@ -6,15 +6,12 @@ import {
   type StoredNotification,
 } from "@/store/notifications.store";
 
-// A notification's answers outlive its row only briefly; NPC notifications
-// expire on the server after half an hour.
 const GOING_RETENTION_MS = 30 * 60_000;
 
 type GoingByGuild = Record<string, readonly NotificationGoingPlayer[]>;
 
 type NotificationGoingEntry = {
   readonly updatedAt: number;
-  /** The reported NPC on its world, once an answer names it. */
   readonly npcKey?: string;
   readonly byGuild: GoingByGuild;
 };
@@ -29,22 +26,11 @@ type NotificationGoingState = {
   ) => void;
 };
 
-/**
- * The reports whose answers one notification row lists. Players answer the
- * report their own row opened with, and rows of one NPC open with different
- * reports: the reporter never receives their own, and a long-lived row forgets
- * its oldest ids. The NPC joins them.
- */
 export type NotificationGoingScope = {
   readonly notificationIds: readonly string[];
   readonly npcKey?: string;
 };
 
-/**
- * Who of each Lootlog answered an NPC notification with "I'm going". Each
- * Lootlog reports its own members and each report keeps its own answers, so
- * the lists are kept apart and joined only for display.
- */
 export const useNotificationGoingStore = create<NotificationGoingState>()(
   (set) => ({
     byNotification: {},
@@ -75,10 +61,6 @@ export const useNotificationGoingStore = create<NotificationGoingState>()(
   }),
 );
 
-/**
- * A gathering keeps to its own report: joining it is its answer, and the
- * NPC's other reports are separate rows.
- */
 export const getNotificationGoingScope = (
   notification: StoredNotification & NotificationWithServers,
 ): NotificationGoingScope => ({
@@ -99,7 +81,6 @@ const selectScopeEntries = (
       (npcKey !== undefined && entry.npcKey === npcKey),
   );
 
-/** Everyone going to the NPC of one notification row. */
 export const selectNotificationGoing = (
   state: NotificationGoingState,
   scope: NotificationGoingScope,
@@ -111,7 +92,6 @@ export const selectNotificationGoing = (
   ).values(),
 ];
 
-/** The reports of one notification row that list the User as going. */
 export const selectUserGoingNotificationIds = (
   state: NotificationGoingState,
   scope: NotificationGoingScope,

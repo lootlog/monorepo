@@ -3,7 +3,6 @@ import * as m from "framer-motion/m";
 
 export type FallingSnowflakeType = "simple" | "detailed" | "dot";
 
-// Single falling snowflake with dynamic behavior
 export const FallingSnowflake = ({
   initialX,
   size,

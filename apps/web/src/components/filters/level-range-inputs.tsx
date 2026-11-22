@@ -6,7 +6,6 @@ import {
 
 export type LevelRangeInputsProps = Omit<LevelRangeFieldsProps, "labels">;
 
-/** The shared level range fields with the Web app's labels. */
 export function LevelRangeInputs(props: LevelRangeInputsProps) {
   const { t } = useTranslation();
 

@@ -1,5 +1,4 @@
 import { SearchUnavailable } from "@lootlog/meilisearch/search-unavailable";
-/** Endpoints owned by the public catalog HTTP module. */
 import {
   HttpApiEndpoint,
   HttpApiGroup,
@@ -17,11 +16,6 @@ import {
   CatalogNpcsResponseDto_Output,
 } from "./schemas.js";
 
-/**
- * Game facts with no Organization behind them: items, the NPCs they drop
- * from and when Lootlog first saw them. No player, world or Organization
- * appears here, and first sightings are days, not times.
- */
 export class CatalogGroup extends HttpApiGroup.make("Catalog")
   .add(
     HttpApiEndpoint.get("CatalogControllerGetItems", "/catalog/items", {

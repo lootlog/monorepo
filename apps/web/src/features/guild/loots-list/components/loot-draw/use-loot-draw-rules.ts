@@ -4,13 +4,6 @@ import { useCanManageLoots } from "@/features/guild/loots-list/use-can-manage-lo
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import type { Item, Loot } from "@/lib/loots/loot-types";
 
-/**
- * Whether the viewer may draw the item, and whether its draw shows. Only loot
- * managers draw, and only items the open Organization draws; nothing is
- * drawn until its settings load, so an excluded boss never flashes a wheel.
- * Everyone who sees the loot sees a standing result, even after its NPC type
- * is excluded, so it can still be read and voided.
- */
 export const useLootDrawRules = () => {
   const guildId = useGuildId();
 

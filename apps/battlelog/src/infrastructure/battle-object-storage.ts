@@ -17,7 +17,6 @@ const LRU_KEY = "battle:raw:lru";
 
 const MAX_CACHE_SIZE = 1000;
 
-// Keep unusually large raw objects in R2 instead of filling the shared cache.
 const MAX_CACHE_ENTRY_BYTES = 256 * 1024;
 
 const CACHE_TTL = 24 * 60 * 60;
@@ -35,7 +34,6 @@ export type BattleObjectCache = Pick<
   | "zrem"
 >;
 
-/** R2 could not complete a request; the battle objects it names are unchanged or unread. */
 class BattleObjectStorageError extends TaggedErrorClass<BattleObjectStorageError>()(
   "BattleObjectStorageError",
   { cause: Schema.Defect() },
@@ -260,7 +258,6 @@ export const makeBattleObjectStorage = (
         );
 
         if (response.Errors?.some((error) => !error.Key)) {
-          // Without a key no object in the batch is known to be removed.
           return yield* Effect.fail(
             new BattleObjectStorageError({ cause: response.Errors }),
           );
@@ -275,7 +272,6 @@ export const makeBattleObjectStorage = (
         failed.push(...batch.filter((id) => errors.has(`battles/${id}.json`)));
 
         if (completed.length > 0) {
-          // Redis failure keeps the durable cleanup intent for a safe retry.
           yield* Effect.all(
             [
               redisStore.del(...completed.map((id) => `${CACHE_PREFIX}:${id}`)),

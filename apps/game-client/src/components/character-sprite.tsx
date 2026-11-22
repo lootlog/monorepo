@@ -6,7 +6,6 @@ type CharacterSpriteProps = ComponentProps<"span"> & {
   icon: string;
 };
 
-/** The first frame of a Margonem character sprite sheet (32×48). */
 export const CharacterSprite: FC<CharacterSpriteProps> = ({
   icon,
   className,

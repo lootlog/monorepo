@@ -104,7 +104,6 @@ const authorizedSubmissionExists = (
 export const makeLootAllocationPersistence = (
   database: typeof ApiDatabase.Service,
 ) => {
-  /** Organizations, inside the API key scope, where the actor may write this loot. */
   const writableOrganizations = (actorDiscordId: string) =>
     Effect.gen(function* () {
       const keyScope = yield* apiKeyOrganizationFilter(guildTable.id);
@@ -148,12 +147,6 @@ export const makeLootAllocationPersistence = (
       });
     });
 
-  // The chat allocation is a game fact the actor witnessed: they submitted
-  // this loot recently in an Organization where they may write and see it.
-  // A mixed party records the same loot in Organizations the actor is not a
-  // member of, so requiring write access in every recording Organization
-  // would reject every mixed-party allocation. The first chat allocation
-  // wins; a conflicting one is rejected by the caller.
   const allocationAuthorization = (options: AuthorizedLootOptions) =>
     Effect.gen(function* () {
       const organizations = yield* writableOrganizations(
@@ -296,7 +289,6 @@ export const makeLootAllocationPersistence = (
       }),
     );
 
-  /** Whether the actor can read the loot at all, to tell a hidden loot from a denied update. */
   const isLootVisible = (options: {
     readonly actorDiscordId: string;
     readonly lootId: number;

@@ -158,7 +158,6 @@ it("treats the first access policy as the page's baseline and reports later revo
       },
     });
 
-  // Reporting the first join as unknown made every page load reset its data.
   joined([Permission.LOOTLOG_LOOTS_READ]);
   expect(handler).toHaveBeenLastCalledWith(
     expect.objectContaining({ accessPolicyChanges: [] }),
@@ -184,7 +183,6 @@ it("keeps a permissions update without a baseline unknown so stale caches are cl
   const handler = vi.fn();
   client.on("access.updated", handler);
 
-  // The gateway sends this before rejecting a join that lost every Organization.
   deliver?.({
     v: 1,
     type: "permissions.updated",

@@ -1,7 +1,5 @@
-/** Transport schemas owned by the health HTTP module. */
 import * as Schema from "effect/Schema";
 
-// schemas
 export type HealthzControllerCheck200 = typeof HealthzControllerCheck200.Type;
 
 export const HealthzControllerCheck200 = Schema.Struct({

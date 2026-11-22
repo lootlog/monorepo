@@ -19,7 +19,6 @@ const decodeAbyssSeasonSearch = Schema.decodeUnknownOption(
   Schema.Struct({ seasonId: Schema.String, characterId: Schema.String }),
 );
 
-// Opened from an Abyss season, the page returns to that season's opponents.
 const resolvePlayerVsPlayerNavigation: RouteNavigation = ({ t, match }) => {
   const abyssSeason = Option.getOrUndefined(
     decodeAbyssSeasonSearch(match.search),

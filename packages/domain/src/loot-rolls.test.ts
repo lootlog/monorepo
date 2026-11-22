@@ -33,7 +33,6 @@ describe("Margonem loot rolls", () => {
   });
 
   it("rolls a hero once when the party's levels spread too far", () => {
-    // On a public world a level 100 lets the party down to level 80.
     const party = [member(100), member(80), member(79)];
 
     expect(
@@ -94,7 +93,6 @@ describe("Margonem loot rolls", () => {
   });
 
   it("gives a full party five or six chances at an item", () => {
-    // 1 - (0.5 * 0.99^5 + 0.5 * 0.99^6)
     expect(getSharedDropChance(0.01, 10)).toBeCloseTo(0.05376, 5);
     expect(getSharedDropChance(0.01, 1)).toBeCloseTo(0.01, 10);
   });

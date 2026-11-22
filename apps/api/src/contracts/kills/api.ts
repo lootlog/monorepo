@@ -6,7 +6,6 @@ import {
   UserKillActivityResponse,
   UserKillCharactersResponse,
 } from "./analytics-schemas.js";
-/** Endpoints owned by the kills HTTP module. */
 import {
   HttpApiEndpoint,
   HttpApiGroup,

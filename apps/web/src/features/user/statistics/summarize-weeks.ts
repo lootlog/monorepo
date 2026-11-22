@@ -3,12 +3,6 @@ import { calendarOffset } from "@/components/common/activity-heatmap/activity-ca
 
 type KillDay = { date: string; kills: number | null };
 
-/**
- * This week's kills next to the previous week's, Monday to Sunday. The
- * totals compare the same days of both weeks, up to today, so a week that
- * has just begun is not measured against a whole one. A total is null when
- * any of its days has no history, rather than counting that day as zero.
- */
 export function summarizeWeeks(daily: readonly KillDay[]) {
   const today = daily[daily.length - 1];
 

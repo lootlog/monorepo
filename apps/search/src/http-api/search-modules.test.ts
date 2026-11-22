@@ -17,7 +17,6 @@ describe("Search Effect modules", () => {
 
     const client = makeClient((name) => ({
       search: (term: string, options: SearchParams) => {
-        // Meilisearch rejects a filter on an attribute the index does not list.
         const filterable =
           new Map(Object.entries(searchIndexSettings)).get(name)
             ?.filterableAttributes ?? [];

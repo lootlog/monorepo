@@ -37,7 +37,6 @@ type KillPointUpdate = Partial<typeof eventKillPointTable.$inferInsert>;
 
 type RankingUpdate = Partial<typeof eventRankingTable.$inferInsert>;
 
-/** Keeps each ranking upsert well below PostgreSQL's bind-parameter limit. */
 const RANKING_UPSERT_BATCH_SIZE = 500;
 
 const excluded = (column: PgColumn) =>
@@ -45,12 +44,6 @@ const excluded = (column: PgColumn) =>
 
 const increment = (column: PgColumn) => sql`${column} + ${excluded(column)}`;
 
-/**
- * Adds a proposed ranking row to the current one inside the upsert, so
- * concurrent kills for the same member accumulate instead of overwriting each
- * other. The AFK average stays a running average rounded to two decimals, as
- * `Math.round(value * 100) / 100` would.
- */
 const addKillToCurrentRanking = {
   totalPoints: increment(eventRankingTable.totalPoints),
   totalKills: increment(eventRankingTable.totalKills),
@@ -60,10 +53,6 @@ const addKillToCurrentRanking = {
   updatedAt: excluded(eventRankingTable.updatedAt),
 };
 
-/**
- * Adds proposed one-kill ranking rows to the current rankings. Callers sort
- * rows by member so concurrent kills lock them in the same order.
- */
 export const addRankingRows = (
   executor: Pick<Database, "insert">,
   rows: ReadonlyArray<RankingInsert>,
@@ -116,11 +105,6 @@ export const makeEventPointsStore = (database: ApiDatabaseValue) => {
     );
   }
 
-  /**
-   * Sums each ranking's manual adjustments from its edit history: every
-   * ranking edit, plus kill-point edits made before kill points tracked their
-   * own adjustment.
-   */
   function findRankingAdjustments(
     eventId: string,
     legacyKillPointsBefore: Date,
@@ -163,13 +147,6 @@ export const makeEventPointsStore = (database: ApiDatabaseValue) => {
     );
   }
 
-  /**
-   * Adds one kill's points to the name-keyed rankings. The kill and its hero
-   * are locked for the transaction, so a concurrent hero deletion or rename
-   * either waits for these writes and then removes or renames them, or has
-   * already happened: the kill is gone and no ranking is written, or the
-   * rankings go to the hero's current name.
-   */
   function addKillToRankings(
     eventId: string,
     killId: string,
@@ -200,8 +177,6 @@ export const makeEventPointsStore = (database: ApiDatabaseValue) => {
 
           const now = new Date(yield* Clock.currentTimeMillis);
 
-          // Rows are locked in conflict-key order so concurrent kills sharing
-          // members cannot deadlock.
           const rows = entries
             .toSorted((left, right) => left.memberId - right.memberId)
             .map((entry) => ({

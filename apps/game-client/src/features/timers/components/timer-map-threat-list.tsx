@@ -7,7 +7,6 @@ import { TimerMapThreatIndicator } from "./timer-map-threat-indicator";
 import { TimerTooltipRows } from "./timer-tooltip-rows";
 import { TimerTooltipSection } from "./timer-tooltip-section";
 
-/** Tooltip section; ticks every second only while the tooltip is open. */
 export function TimerMapThreatList({
   threat,
   expanded,

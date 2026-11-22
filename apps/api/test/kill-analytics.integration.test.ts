@@ -74,7 +74,6 @@ const bucket = async (
   );
 };
 
-/** Lifetime totals of the buckets plus `extra` kills recorded before them. */
 const totals = async (user = "analytics-owner", extra = 0) => {
   await client.query(
     `insert into "UserKillTotal" ("discordUserId",world,"npcId","npcName","npcType","npcLvl",kills,"lastKilledAt") select "discordUserId",world,"npcId",max("npcName"),'HERO',100,sum(kills)+$2,now() from "UserKillBucket" where "discordUserId"=$1 group by "discordUserId",world,"npcId"`,
@@ -212,7 +211,6 @@ describe("personal kill analytics PostgreSQL boundary", () => {
     );
     const analytics = await readAnalytics();
     expect(analytics.overview.totalKills).toBe(10000);
-    // Every monster killed in the period, for the full ranking.
     expect(analytics.npcs).toHaveLength(200);
     expect(analytics.daily).toHaveLength(7);
     expect(analytics.hourlyWeekday).toHaveLength(168);

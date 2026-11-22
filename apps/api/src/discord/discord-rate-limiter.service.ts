@@ -22,7 +22,6 @@ interface DiscordRateLimitState {
   isBlocked: boolean;
 }
 
-/** Discord's per-user rate limit state, shared across API processes. */
 export interface DiscordRateLimiter {
   readonly checkRateLimitForUser: (
     userId: string,

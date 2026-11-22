@@ -21,7 +21,6 @@ const parseOptionalNumber = (value: string) =>
 const optionalValues = <Value>(values: Value[]) =>
   values.length > 0 ? values : undefined;
 
-// The API rejects an unknown value, so one from a stale URL is dropped here.
 const knownValues = <Value extends string>(
   allowed: Readonly<Record<string, Value>>,
   values: string[],
@@ -64,10 +63,6 @@ export const getLootQueryParams = (
   world: optionalText(world),
 });
 
-/**
- * The Organization's loot list, shared by the list page and its route loader
- * so a loader prefetch lands in the query the page reads.
- */
 export const lootListInfiniteQueryOptions = (
   guildId: string,
   params: LootsControllerFetchLootsByGuildIdParams,

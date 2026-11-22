@@ -16,7 +16,6 @@ export const getNpcTplFromEvent = (
 
   if (!templateBase) return undefined;
 
-  // A Hero Tracker template has a level but no weight, profession or type.
   if (isHeroTrackerName(templateBase.nick) && templateBase.level) {
     return {
       ...templateBase,

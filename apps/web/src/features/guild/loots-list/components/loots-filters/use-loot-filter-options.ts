@@ -24,7 +24,6 @@ export function useLootFilterOptions() {
     { value: DisplayItemRarity.UNIQUE, label: t("itemRarity.UNIQUE") },
   ];
 
-  // Strongest groups first: they are what players filter by most.
   const npcTypeOptions = [
     { value: NpcType.TITAN, label: t("npcType.TITAN") },
     { value: NpcType.COLOSSUS, label: t("npcType.COLOSSUS") },

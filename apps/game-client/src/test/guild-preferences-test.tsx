@@ -36,8 +36,6 @@ export const createTestGuild = (
 });
 
 export const createGuildPreferencesTest = () => {
-  // Persistence helpers read the shared client and queue, so tests must
-  // seed the one and drop patches the previous test left pending in the other.
   queryClient.clear();
   settingsPatchQueue.reset();
   queryClient.setDefaultOptions({

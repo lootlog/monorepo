@@ -12,14 +12,12 @@ import {
 import type { Brush } from "./decor";
 import { groundRadius, type AuraPlacement } from "./placement";
 
-/** Astral orbits: height on the body, angular speed, tilt and palette colour. */
 const ORBITS = [
   { at: 0.3, speed: 1.7, tilt: -0.22, color: 0 },
   { at: 0.58, speed: -1.25, tilt: 0.16, color: 3 },
   { at: 0.86, speed: 2.1, tilt: -0.08, color: 2 },
 ];
 
-/** Divine: 1 px rays turning a notch per tick, alternately long and short, fading outwards. */
 export function drawRays(b: Brush, place: AuraPlacement): void {
   const intensity = b.intensity;
   const { bounds } = place.silhouette;
@@ -52,7 +50,6 @@ export function drawRays(b: Brush, place: AuraPlacement): void {
   }
 }
 
-/** Blood moon: a dark red pixel disc with craters and a lit rim, behind the head. */
 export function drawMoon(b: Brush, place: AuraPlacement, beat: number): void {
   const intensity = b.intensity;
   const { head, bounds } = place.silhouette;
@@ -61,7 +58,6 @@ export function drawMoon(b: Brush, place: AuraPlacement, beat: number): void {
     clamp(bounds.w * 0.38, 7, 12) * (place.ground ? 1 : 0.9),
   );
 
-  // Characters: rising behind the head, off to one side so it isn't hidden by it.
   const lag = place.ground ? b.lag : { x: 0, y: 0 };
 
   const x = Math.round(
@@ -114,10 +110,6 @@ export function drawMoon(b: Brush, place: AuraPlacement, beat: number): void {
   );
 }
 
-/**
- * Eclipse: a black sun behind the head, its corona of short flickering rays and a bright
- * "diamond ring" glint running round its rim.
- */
 export function drawEclipse(
   b: Brush,
   place: AuraPlacement,
@@ -127,7 +119,6 @@ export function drawEclipse(
   const { head, bounds } = place.silhouette;
   const [light, mid] = b.tones;
   const r = Math.round(clamp(bounds.w * 0.5, 9, 14) * (place.ground ? 1 : 0.9));
-  // Characters: risen above and behind the head, so the head hides only its lower edge.
   const lag = place.ground ? b.lag : { x: 0, y: 0 };
   const x = Math.round(place.x + head.x + lag.x * 1.3);
 
@@ -137,7 +128,6 @@ export function drawEclipse(
 
   softEllipse(b.lit(), x, y, r * 2.4, r * 2.4, mid, 0.3 * intensity * beat);
 
-  // The corona: rays of uneven length, turning slowly.
   const lit = b.lit();
   const count = 20;
   const turn = b.time * 0.12;
@@ -175,7 +165,6 @@ export function drawEclipse(
   );
 }
 
-/** Hellfire: flame tongues licking up from the outline, each on its own flicker. */
 export function drawTongues(
   b: Brush,
   place: AuraPlacement,
@@ -186,14 +175,12 @@ export function drawTongues(
 
   if (!edge.length) return;
   const count = place.ground ? 14 : 22;
-  // An eruption doubles the flames for a moment.
   const base = (place.ground ? 6 : 5) * (1 + eruption);
   const ctx = b.lit();
 
   for (let i = 0; i < count; i++) {
     const site = edge[Math.floor(((i + 0.5) / count) * edge.length)];
 
-    // Flames rise from the top and the flanks, never from under the feet.
     if (!site || site.ny > 0.5) continue;
     const t = b.time * 2.6 + i * 1.7;
 
@@ -223,7 +210,6 @@ export function drawTongues(
   ctx.globalAlpha = 1;
 }
 
-/** Screen positions of the orbiting stars' heads, the attractors of the star dust. */
 export function orbitHeads(
   place: AuraPlacement,
   time: number,
@@ -255,7 +241,6 @@ export function orbitHeads(
   });
 }
 
-/** Astral: three stars with pixel tails on tilted orbits, split by depth around the body. */
 export function drawOrbits(
   b: Brush,
   place: AuraPlacement,
@@ -299,10 +284,6 @@ export function drawOrbits(
   }
 }
 
-/**
- * Halo: a thin silver ring over the head, the half behind the head (`front` false) or before
- * it, one pixel higher while `raised`. Pixels only, so a lite aura can cache it.
- */
 export function drawHalo(
   b: Brush,
   place: AuraPlacement,
@@ -320,18 +301,12 @@ export function drawHalo(
   pixelArc(b.lit(), x, y - 1, rx, ry, mid, 0.45 * a, front);
 }
 
-/** Dragon: segments of its serpentine body, head first, and their spacing in radians. */
 const DRAGON_SEGMENTS = 11;
 
 const DRAGON_GAP = 0.15;
 
-/** Lite steps the dragon takes per turn round the character. */
 const DRAGON_TURN = 30;
 
-/**
- * Fire dragon: a small dragon circling the character at waist height, the far side of the
- * circle (`front` false) behind it. `step` is the aura's lite step; pixels only.
- */
 export function drawFireDragon(
   b: Brush,
   place: AuraPlacement,
@@ -348,21 +323,18 @@ export function drawFireDragon(
   const lit = b.lit();
   const a = b.intensity;
 
-  // Tail first, so the head lands on top.
   for (let k = DRAGON_SEGMENTS - 1; k >= 0; k--) {
     const angle = head - k * DRAGON_GAP;
 
     if (Math.sin(angle) >= 0 !== front) continue;
     const x = Math.round(cx + Math.cos(angle) * rx);
 
-    // The body undulates as it flies.
     const y = Math.round(
       cy + Math.sin(angle) * ry + Math.sin(step * 0.8 - k * 0.9) * 1.5,
     );
 
     if (k === 0) drawDragonHead(lit, x, y, -Math.sin(angle), b.tones, a);
     else if (k < 7) {
-      // A 2 px thick body: dark back, lit belly.
       plot(lit, x, y, mid, a);
       plot(lit, x + 1, y, mid, a);
       plot(lit, x, y + 1, k < 4 ? light : mid, a * 0.9);
@@ -374,7 +346,6 @@ export function drawFireDragon(
   }
 }
 
-/** The dragon's head facing `dir` (−1 left, 1 right): snout, a horn and a hot eye. */
 function drawDragonHead(
   lit: CanvasRenderingContext2D,
   x: number,
@@ -395,11 +366,9 @@ function drawDragonHead(
   plot(lit, x - f, y - 2, dark, a);
   plot(lit, x, y - 1, dark, a);
   plot(lit, x + f, y, [255, 255, 200], a);
-  // A puff of fire ahead of the snout.
   plot(lit, x + f * 5, y + 1, light, a * 0.6);
 }
 
-/** Two bat wings off a body segment, raised and lowered every other step. */
 function drawDragonWings(
   lit: CanvasRenderingContext2D,
   x: number,
@@ -427,17 +396,12 @@ function drawDragonWings(
   }
 }
 
-/** Crown: gem colours on its three points, left to right. */
 const CROWN_GEMS: readonly Rgb[] = [
   [255, 70, 90],
   [90, 170, 255],
   [255, 70, 90],
 ];
 
-/**
- * Crown: a small gold crown floating over the head, one pixel higher while `raised`, with a
- * glint running along its points every few steps. Pixels only.
- */
 export function drawCrown(
   b: Brush,
   place: AuraPlacement,
@@ -451,13 +415,11 @@ export function drawCrown(
   const x = Math.round(place.x + head.x) - 4;
   const y = Math.round(place.y + head.y) - 6 - (raised ? 1 : 0);
 
-  // The band, lit on top, shaded at the bottom.
   for (let i = 0; i < 9; i++) {
     plot(lit, x + i, y + 2, i % 4 === 0 ? light : mid, a);
     plot(lit, x + i, y + 3, dark, a * 0.8);
   }
 
-  // Three points with their gems.
   for (const [n, px] of [0, 4, 8].entries()) {
     plot(lit, x + px, y, mid, a);
     plot(lit, x + px, y + 1, light, a);
@@ -472,10 +434,6 @@ export function drawCrown(
     pixelGlint(lit, x + glint * 4, y, 1, [255, 255, 255], light, a * 0.9);
 }
 
-/**
- * Wings of shadow: two dark wings spread from the shoulders behind the character, their
- * leading edges lit, raised and lowered every few lite `step`s. Pixels only.
- */
 export function drawWings(b: Brush, place: AuraPlacement, step: number): void {
   const { bounds } = place.silhouette;
   const [light, mid] = b.tones;
@@ -485,7 +443,6 @@ export function drawWings(b: Brush, place: AuraPlacement, step: number): void {
   const cx = place.x + bounds.x + bounds.w / 2;
   const sy = place.y + bounds.y + Math.round(bounds.h * 0.28);
   const span = Math.round(clamp(bounds.w * 0.8 + 8, 16, 28));
-  // Four poses: up, mid, down, mid.
   const lift = [-4, 0, 4, 0][Math.floor(step / 3) % 4] ?? 0;
   const shadow: Rgb = [16, 22, 26];
 
@@ -494,7 +451,6 @@ export function drawWings(b: Brush, place: AuraPlacement, step: number): void {
     const tipX = cx + side * span;
     const tipY = sy - 10 + lift;
 
-    // Feathers hanging from the leading edge, the outer ones longest.
     for (let f = 1; f <= 4; f++) {
       const k = f / 4;
       const px = rootX + (tipX - rootX) * k;
@@ -510,7 +466,6 @@ export function drawWings(b: Brush, place: AuraPlacement, step: number): void {
   }
 }
 
-/** Frost: ice crystals ringing the feet; those behind the feet draw before the character. */
 export function drawShards(
   b: Brush,
   place: AuraPlacement,
@@ -531,7 +486,6 @@ export function drawShards(
     const x = Math.round(place.feetX + Math.cos(angle) * rx * 0.95);
     const y = Math.round(place.feetY - 2 + depth * ry * 0.95);
 
-    // A freeze grows the crystals and shrinks them back.
     const height = Math.round((4 + ((i * 7919) % 5)) * (1 + freeze * 0.9));
 
     const lean = Math.round(Math.cos(angle) * 2);
@@ -563,11 +517,6 @@ export function drawShards(
   }
 }
 
-/**
- * Quake: cracks in the air beside the character, as if it struck the air itself and the
- * world splintered: lines out from a point at chest height and rings joining them. `seed`
- * shapes them (a new one each quake), `strength` (0..1) is how bright they flash.
- */
 export function drawAirCracks(
   b: Brush,
   place: AuraPlacement,
@@ -592,7 +541,6 @@ export function drawAirCracks(
     let x = cx;
     let y = cy;
 
-    // Each spoke in three kinked steps, so it reads as a crack, not a ray.
     for (let step = 1; step <= 3; step++) {
       const bend = angle + (rng() - 0.5) * 0.7;
       const nx = cx + Math.cos(bend) * length * (step / 3);
@@ -605,7 +553,6 @@ export function drawAirCracks(
     }
   }
 
-  // The ring of cross-cracks halfway out.
   for (const [i, [x0, y0]] of ends.entries()) {
     const [x1, y1] = ends[(i + 1) % ends.length] ?? [x0, y0];
     pixelLine(lit, x0, y0, x1, y1, mid, a * 0.7, a * 0.7);

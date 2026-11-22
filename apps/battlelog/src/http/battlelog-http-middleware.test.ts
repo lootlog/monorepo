@@ -10,7 +10,6 @@ import { Effect, Layer, Metric } from "effect";
 import { HttpRouter, HttpServer, HttpServerResponse } from "effect/http";
 import { battlelogHttpMiddleware } from "./battlelog-http.js";
 
-// serviceHttpServer runs the battlelog middleware inside the metrics middleware.
 const middleware: typeof battlelogHttpMiddleware = (effect) =>
   httpServerMetrics(battlelogHttpMiddleware(effect));
 

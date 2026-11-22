@@ -123,9 +123,6 @@ describe("SingleNotification auto-hide countdown", () => {
       notification: { ...notification, receivedAtMs: Date.now() - 10_000 },
     });
 
-    // The cleanup sweep removes this row 20s from now, so the bar must run
-    // for what is left instead of restarting a full 30s countdown it would
-    // never finish.
     expect(animate).toHaveBeenCalledWith(
       [{ transform: `scaleX(${20_000 / 30_000})` }, { transform: "scaleX(0)" }],
       expect.objectContaining({ duration: 20_000 }),
@@ -141,8 +138,6 @@ describe("SingleNotification auto-hide countdown", () => {
       },
     });
 
-    // The sweep removes this row 40s from now; a countdown cut to the new 30s
-    // duration would hide the row 10s early while it still takes clicks.
     expect(animate).toHaveBeenCalledWith(
       [{ transform: "scaleX(1)" }, { transform: "scaleX(0)" }],
       expect.objectContaining({ duration: 40_000 }),
@@ -167,7 +162,6 @@ describe("SingleNotification auto-hide countdown", () => {
     fireEvent.focus(muteButton);
     fireEvent.pointerLeave(row);
 
-    // Keyboard focus still sits in the row, so the countdown stays paused.
     expect(onPauseAutoHide).toHaveBeenCalledOnce();
     expect(onResumeAutoHide).not.toHaveBeenCalled();
 

@@ -3,18 +3,11 @@ import { maxBy, sum } from "es-toolkit";
 type OnlineDay = {
   date: string;
   onlineSeconds: number | null;
-  /** Only part of the day is covered, such as the day tracking began. */
   partial?: boolean;
 };
 
 type KillDay = { date: string; kills: number | null };
 
-/**
- * Time online in a period and the kills made during it. Kills per hour count
- * only whole days whose online time is known: a day before tracking began, or
- * one only partly covered, would set a full day's kills against too little
- * time and inflate the rate.
- */
 export function summarizePlayTime(
   onlineDays: readonly OnlineDay[],
   killDays: readonly KillDay[],

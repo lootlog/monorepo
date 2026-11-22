@@ -31,7 +31,6 @@ export function AnimatedToggleGroup<Value extends string>({
   className,
 }: AnimatedToggleGroupProps<Value>) {
   const selectedIndex = options.findIndex((option) => option.value === value);
-  // In a filter bar the views read as chips, like the filters beside them.
   const chips = useInFilterBar();
 
   return (

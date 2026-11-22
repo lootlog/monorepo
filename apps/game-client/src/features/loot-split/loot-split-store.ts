@@ -6,11 +6,9 @@ import {
 
 type LootSplitSnapshot = Readonly<{
   state: LootSplitState;
-  /** Clock of the last change, for the countdowns. */
   now: number;
 }>;
 
-/** Countdowns show whole seconds. */
 const TICK_MS = 500;
 
 const listeners = new Set<() => void>();
@@ -32,7 +30,6 @@ const setSnapshot = (state: LootSplitState, now: number) => {
   emit();
 };
 
-// Ticks only while a split is listed, so play without splits costs nothing.
 function syncTicker() {
   const needed = snapshot.state.splits.length > 0;
 
@@ -57,7 +54,6 @@ export const lootSplitStore = {
     };
   },
   getSnapshot: () => snapshot,
-  /** Applies `update`; returns the states before and after it. */
   update(update: (state: LootSplitState) => LootSplitState) {
     const previous = snapshot.state;
     const next = update(previous);

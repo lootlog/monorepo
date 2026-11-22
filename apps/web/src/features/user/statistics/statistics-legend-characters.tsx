@@ -7,22 +7,16 @@ import {
 import type { UserLootStatsResponseDtoOutputLegendsItem } from "@lootlog/client/main";
 import { useTranslation } from "react-i18next";
 
-/**
- * Characters named in the row; the rest wait in a popover so it stays narrow.
- * A tooltip would not open on touch, where the tiles are shown.
- */
 const VISIBLE_CHARACTERS = 2;
 
 const showNames = (names: string) => names;
 
 type StatisticsLegendCharactersProps = {
   characters: UserLootStatsResponseDtoOutputLegendsItem["caughtBy"];
-  /** Wraps the visible names, e.g. with a label of their own. */
   label?: (names: string) => string;
   className?: string;
 };
 
-/** The user's characters that caught a legend, with their catches when several. */
 export function StatisticsLegendCharacters({
   characters,
   label = showNames,

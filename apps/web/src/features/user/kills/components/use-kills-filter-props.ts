@@ -16,7 +16,6 @@ export type KillsFiltersState = {
 
 type UseKillsFilterPropsOptions = {
   filters: Pick<KillsFiltersState, "world" | "npcTypes" | "period">;
-  /** Level bounds as the URL keeps them ("" when unset). */
   minLvl: string;
   maxLvl: string;
   onWorldChange: (world: string | undefined) => void;
@@ -26,7 +25,6 @@ type UseKillsFilterPropsOptions = {
   onPeriodChange: (period: KillStatsPeriod) => void;
 };
 
-/** The personal kills page's filters, over the worlds the User has kills on. */
 export const useKillsFilterProps = ({
   filters,
   minLvl,

@@ -4,7 +4,6 @@ import type {
 } from "@lootlog/domain/scoring-presence";
 import { cn } from "cn";
 
-/** Group-size shades: one person reads lightest, five or more darkest. */
 const SIZE_CLASS_NAMES = [
   "bg-primary/25",
   "bg-primary/40",
@@ -19,10 +18,6 @@ interface ScoringPresenceTimelineBarProps {
   label: string;
 }
 
-/**
- * The respawn window as a ruler: the upper band shades each stretch by how
- * many members watched at once, the lower line marks this participant.
- */
 export const ScoringPresenceTimelineBar = ({
   analysis,
   participantId,

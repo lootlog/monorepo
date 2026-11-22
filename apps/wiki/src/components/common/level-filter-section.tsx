@@ -3,7 +3,6 @@ import { FilterTile } from "@/components/filter-tile";
 import { t } from "@/i18n/messages";
 import { FilterSection } from "./filter-section";
 
-/** Level brackets players think in; the last one has no upper bound. */
 const LEVEL_BRACKETS = [
   { min: 1, max: 49 },
   { min: 50, max: 99 },
@@ -22,7 +21,6 @@ type LevelFilterSectionProps = LevelRange & {
   onChange: (change: Partial<LevelRange>) => void;
 };
 
-/** The level filter of a search: the usual brackets, or a range typed in. */
 export function LevelFilterSection({
   minLevel,
   maxLevel,

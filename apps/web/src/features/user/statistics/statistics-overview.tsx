@@ -30,7 +30,6 @@ export function StatisticsOverview({ data, search }: StatisticsTabProps) {
   const bestDay = data.records.bestDay;
   const peak = maxBy(data.hourlyWeekday, (cell) => cell.kills);
 
-  // The records come from the same kills, so they show together or not at all.
   const hasRecords = favourite && bestDay && peak && peak.kills > 0;
   const shift = getKillShift(peak?.hour ?? 0);
 
@@ -51,7 +50,6 @@ export function StatisticsOverview({ data, search }: StatisticsTabProps) {
           const kills =
             data.types.find((entry) => entry.npcType === type)?.totalKills ?? 0;
 
-          // Few players hunt Elite III, so its tile shows only once they do.
           return type === "ELITE3" && kills === 0 ? [] : [{ type, kills }];
         })}
         onSelectType={(type) =>

@@ -18,14 +18,9 @@ const GROUP_ORDER = [
 type NotificationRuleGroupsProps = {
   overview: NotificationsOverview;
   rules: NotificationsOverview["rules"];
-  /** Shown in place of the groups when no rule is left. */
   empty: ReactNode;
 };
 
-/**
- * Rules grouped by what triggers them: spawn reminders, hero sightings, loot
- * draws, then scheduled messages.
- */
 export const NotificationRuleGroups = ({
   overview,
   rules,

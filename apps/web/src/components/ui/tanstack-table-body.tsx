@@ -28,7 +28,6 @@ type TanStackTableBodyProps<TData extends RowData> = {
     cell: Cell<typeof coreTableFeatures, TData, unknown>,
     content: ReactNode,
   ) => ReactNode;
-  /** Rows rendered directly after a data row, such as an expanded detail row. */
   renderRowDetail?: (row: Row<typeof coreTableFeatures, TData>) => ReactNode;
 };
 

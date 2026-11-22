@@ -28,7 +28,6 @@ export function useBattleStatsSearchScroll({
 
       if (!row) return;
 
-      // The table may scroll on its own or with an ancestor column, so let the browser pick.
       row.scrollIntoView({
         block: "center",
         behavior: getPrefersReducedMotion() ? "auto" : "smooth",

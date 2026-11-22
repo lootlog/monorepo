@@ -46,11 +46,6 @@ const getSpawnWindowLabel = (
   return minutes > 0 ? `${minutes}m` : invalidRangeLabel;
 };
 
-/**
- * Manual timer form shown as an overlay inside the timers window. The target
- * Lootlog comes from the window's own switcher, so the form only asks for the
- * monster and its respawn window.
- */
 export function AddTimerForm(props: AddTimerFormProps) {
   const {
     t,

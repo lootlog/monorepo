@@ -10,8 +10,6 @@ export function usePartyReadyRoomSocket(): void {
   const { socket, connected } = useSocket();
   const { applyUpdate } = useReadyRoomsCache();
 
-  // Gateway payloads are unchecked until here; an update this client cannot
-  // decode, such as a newer schema version, is skipped.
   const handleUpdate = useEffectEvent((payload: PartyReadyRoomClientUpdate) => {
     let update: PartyReadyRoomClientUpdate;
 

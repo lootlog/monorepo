@@ -1,26 +1,17 @@
-/**
- * Gromowładca's storm over the whole map while the admin is on it: an overcast sky,
- * cloud shadows drifting over the ground, and lightning striking somewhere on screen
- * every few seconds with a flash. One fill, a few sprite blits and, during a strike, a
- * few strokes a frame.
- */
 import { mulberry32, rgba, type Rgb } from "./math";
 import { jagged } from "./paint";
 import { context2d, createCanvas } from "./silhouette";
 
-/** How much the overcast darkens the map, 0..1. */
 export const STORM_GLOOM = 0.32;
 
 const OVERCAST: Rgb = [16, 22, 38];
 
-/** A cloud shadow: a soft dark blob. */
 const CLOUD_W = 200;
 
 const CLOUD_H = 90;
 
 const CLOUDS = 5;
 
-/** Seconds between chances of a strike, and how long a strike lights up. */
 const STRIKE_EVERY = 1.7;
 
 const STRIKE_LENGTH = 0.22;
@@ -47,10 +38,6 @@ function wrap(value: number, size: number): number {
   return ((value % size) + size) % size;
 }
 
-/**
- * Draws the storm over the screen (`width` × `height`); `view` is the camera, so the
- * cloud shadows stay on the map as it scrolls.
- */
 export function drawStorm(
   ctx: CanvasRenderingContext2D,
   width: number,
@@ -65,7 +52,6 @@ export function drawStorm(
   ctx.fillStyle = rgba(OVERCAST, 1);
   ctx.fillRect(0, 0, width, height);
 
-  // Cloud shadows drifting east with the wind.
   ctx.globalAlpha = 0.3;
   const sprite = cloud();
 
@@ -78,7 +64,6 @@ export function drawStorm(
   const slot = Math.floor(time / STRIKE_EVERY);
   const rng = mulberry32(slot * 7919 + 3);
 
-  // Most chances strike, at a random moment in their slot.
   if (rng() < 0.3) return;
   const k = (time - slot * STRIKE_EVERY - rng() * 1.1) / STRIKE_LENGTH;
 

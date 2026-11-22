@@ -35,11 +35,6 @@ const applyAction = (
     : withdrawHeroSighting(ref);
 };
 
-/**
- * Claims, withdraws the player's claim on, or removes each Organization's
- * sighting of one hero. Organizations that accept keep their change when
- * another fails.
- */
 export const useHeroSightingActions = () => {
   const { t } = useTranslation("heroSightings");
   const queryClient = useQueryClient();
@@ -71,7 +66,6 @@ export const useHeroSightingActions = () => {
       mutate({ action: "claim", sightings }),
     unclaim: (sightings: readonly HeroSightingResponseDto[]) =>
       mutate({ action: "unclaim", sightings }),
-    /** Removes sightings the player entered by hand. */
     withdraw: (sightings: readonly HeroSightingResponseDto[]) =>
       mutate({ action: "withdraw", sightings }),
   };

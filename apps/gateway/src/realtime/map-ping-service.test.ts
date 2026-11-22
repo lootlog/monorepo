@@ -58,7 +58,6 @@ describe("MapPingService", () => {
       sender: { characterId: "123", name: "Hero" },
       createdAt: 1234,
     });
-    // Older clients strip the key, but an explicit undefined would fail encoding.
     expect(events[1]).not.toHaveProperty("npcId");
   });
 

@@ -24,15 +24,9 @@ type SyncPayload = {
 export interface GuildDiscordSyncPorts {
   readonly staleAfterMs: number;
   readonly refresh: (guildId: string) => Effect.Effect<SyncPayload, unknown>;
-  /** Wakes the worker that publishes committed channel deletions. */
   readonly signalChannelDeletions: Effect.Effect<void>;
 }
 
-// A fresh, error-free snapshot stays current through gateway events, so a
-// manual refresh of it is spaced out. Any other state (a failed sync, a bot
-// removed from the server, or a role change that marked the snapshot stale)
-// must be retryable soon after the cause is fixed, while repeated failing calls
-// still stay away from Discord's invalid-request budget.
 const REFRESH_COOLDOWN_MS = 5 * 60 * 1000;
 
 const UNCONFIRMED_REFRESH_COOLDOWN_MS = 30 * 1000;
@@ -117,11 +111,6 @@ const notificationTargetValues = (channel: DiscordGuildChannel) => ({
   metadata: notificationChannelMetadata(channel),
 });
 
-/**
- * Applies a full channel list. Removed channels are deleted and their
- * `discord.guild.channel.deleted` facts stored in one transaction, so a
- * failed publish cannot lose a deletion that a later refresh would no longer see.
- */
 const reconcile = (
   database: typeof ApiDatabase.Service,
   guildId: string,
@@ -216,12 +205,6 @@ const discordSyncErrorMessage = (error: unknown) =>
       ? error.message
       : "Unknown Discord sync error";
 
-/**
- * Records a failed synchronization. `FAILED` is terminal until a manual
- * refresh; a bot-reported `STALE` keeps the projection eligible for the
- * automatic refresh in `getSelectableGuildChannels`, and `NOT_FOUND` records
- * that the bot lost access to the guild.
- */
 const recordFailure = (
   database: typeof ApiDatabase.Service,
   guildId: string,
@@ -298,8 +281,6 @@ export const makeGuildDiscordSyncData = (
         ? REFRESH_COOLDOWN_MS
         : UNCONFIRMED_REFRESH_COOLDOWN_MS;
 
-      // The retry window follows the last attempt, so a later state-only write
-      // (a gateway event) does not extend it.
       const cooldownFrom = isConfirmed
         ? current.updatedAt
         : (current.lastAttemptAt ?? current.updatedAt);
@@ -349,7 +330,6 @@ export const makeGuildDiscordSyncData = (
       (yield* Clock.currentTimeMillis) - current.updatedAt.getTime() >
         ports.staleAfterMs;
 
-    // Age alone is not an error; keep only an error Discord actually reported.
     return stale ? { ...current, status: "STALE" } : current;
   });
 

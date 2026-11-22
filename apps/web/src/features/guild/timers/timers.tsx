@@ -82,7 +82,6 @@ export const Timers = () => {
   const now = useMinuteTimestamp();
   const { data: accessPolicy } = useGuildPermissions();
 
-  // A hero timer says where its hero was last detected.
   const { sightings } = useGuildHeroSightings({
     enabled: canViewHeroSightings(accessPolicy),
   });
@@ -101,8 +100,6 @@ export const Timers = () => {
   const { filtered, hasFilteredTimers, showsNoSearchResults } =
     getTimerListState(timers, search);
 
-  // Kept timers sit below the live ones, most recent first, as in the game;
-  // a deleted timer counts from its deletion, as its row does.
   const sorted = sortBy(
     (filtered ?? []).map((timer) => {
       const timeLeft = getTimerTimeLeft(timer, now);
@@ -128,8 +125,6 @@ export const Timers = () => {
     return npcType ? t(`npcType.${npcType}`) : t("timers.npcType.manual");
   };
 
-  // A chosen group that the search or a refresh emptied stops filtering, so
-  // the list never ends up blank with no pill left to clear the choice.
   const activeGroups = selectedGroups.filter((key) => key in groups);
   const activeGroupKeys = new Set(activeGroups);
 
@@ -242,7 +237,6 @@ export const Timers = () => {
                       data-list-tile
                       className={cn(
                         getTimerCellClassName(viewMode),
-                        // A dropped timer renders nothing; its cell goes too.
                         "empty:hidden",
                       )}
                     >

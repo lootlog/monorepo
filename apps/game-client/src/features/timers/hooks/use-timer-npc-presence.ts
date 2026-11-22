@@ -12,11 +12,6 @@ type PresenceTimer = Pick<
   "npc" | "world" | "guildId" | "mergedGuildIds" | "updatedAt"
 >;
 
-/**
- * Where an Organization member sees the timer's NPC standing now, or undefined
- * when nobody does. A sighting older than the timer's last change predates the
- * kill that set the timer.
- */
 export function useTimerNpcPresence(
   timer: PresenceTimer,
 ): NpcStanding | undefined {

@@ -9,7 +9,6 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { cn } from "cn";
 import { useId, type ReactNode } from "react";
 
-/** Rows of a full leaderboard, so paired leaderboards stay the same height. */
 export const LEADERBOARD_SIZE = 10;
 
 type StatsLeaderboardSectionProps = {
@@ -17,14 +16,11 @@ type StatsLeaderboardSectionProps = {
   description?: string;
   actions?: ReactNode;
   isLoading?: boolean;
-  /** Shown instead of the rows when there is nothing to rank. */
   emptyMessage?: string;
-  /** How many rows stand in while it loads. */
   loadingRows?: number;
   children: ReactNode;
 };
 
-/** A leaderboard under a banded heading, its rows tiled edge to edge. */
 export const StatsLeaderboardSection = ({
   title,
   description,

@@ -84,8 +84,6 @@ const warriors = {
   "202": warrior(202, 2),
 };
 
-// 101 finishes 201, then 202 kills 101, who closes the battle; the others
-// fight on and 102 finishes 202.
 const firstRows = [
   "101=100;201=0;+dmg=900;-dmg=900",
   "202=100;101=0;+dmg=900;-dmg=900",
@@ -120,7 +118,6 @@ it("counts each finishing blow once across a cut-short, a whole and a resent log
     ),
   );
 
-  // Margonem sends the whole battle again after a page reload.
   const resent = await run((weaponKills) =>
     weaponKills.recordWeaponKills(
       submission("101", "555", [...firstRows, ...lastRows]),
@@ -152,7 +149,6 @@ it("starts a weapon from zero for its new owner", async () => {
     ),
   );
 
-  // 101 gives the weapon to 102, who finishes 202 with it.
   const newOwner = await run((weaponKills) =>
     weaponKills.recordWeaponKills(
       submission("102", "555", [...firstRows, ...lastRows]),

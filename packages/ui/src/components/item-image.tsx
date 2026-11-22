@@ -11,7 +11,6 @@ type ItemImageProps = {
   icon: string;
   rarity: DisplayItemRarity;
   shareIndex?: number;
-  /** Shown over the icon as `+N`, as the game does, when above 0. */
   upgradeLevel?: number;
 };
 

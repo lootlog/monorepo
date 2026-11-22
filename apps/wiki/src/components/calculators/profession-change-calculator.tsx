@@ -8,7 +8,6 @@ import { CALCULATOR_FIELDS } from "./calculator-fields";
 import { CalculatorNumberField } from "./calculator-number-field";
 import { CalculatorResults } from "./calculator-results";
 
-/** The dragon scales a profession change costs, as players found it. */
 export function ProfessionChangeCalculator() {
   const [level, setLevel] = useState("");
   const value = readNumberInput(level, { min: 1, max: 1000 });

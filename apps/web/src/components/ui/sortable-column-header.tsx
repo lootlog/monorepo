@@ -12,7 +12,6 @@ type SortableColumnHeaderProps = {
   column: SortableColumn;
   children: ReactNode;
   align?: "start" | "center" | "end";
-  /** Narrow tables can drop the neutral icon so only the sorted column spends width on one. */
   showUnsortedIcon?: boolean;
   className?: string;
 };
@@ -23,10 +22,6 @@ const JUSTIFY_BY_ALIGN = {
   end: "justify-end text-right",
 } as const;
 
-/**
- * The header button of a sortable TanStack column. The table header sets the
- * matching `aria-sort` on the surrounding cell.
- */
 export const SortableColumnHeader = ({
   column,
   children,
@@ -37,8 +32,6 @@ export const SortableColumnHeader = ({
   const sortDirection = column.getIsSorted();
 
   const handleClick = () => {
-    // An unsorted column starts in its natural direction; a sorted one flips
-    // and never drops back to unsorted, so the header always shows the order.
     column.toggleSorting(sortDirection ? sortDirection === "asc" : undefined);
   };
 

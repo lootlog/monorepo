@@ -10,7 +10,6 @@ import { invalidateRankingQueries } from "./invalidate-ranking-queries";
 const getEventHeroesPathPrefix = (guildId: string, eventId: string) =>
   `/guilds/${guildId}/events/${eventId}/heroes/`;
 
-// Matches the kill history list and the kill detail and timeline reads.
 const isEventKillQuery = (query: Query, guildId: string, eventId: string) => {
   const path = getQueryKeyPath(query.queryKey);
 

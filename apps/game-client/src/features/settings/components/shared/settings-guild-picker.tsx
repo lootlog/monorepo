@@ -16,12 +16,6 @@ type SettingsGuildPickerProps = {
   disabled?: boolean;
 };
 
-/**
- * Multi-choice grid of server cards: avatar, name and a check mark on the
- * selected ones. Cards wrap to the available width, so the list never scrolls
- * sideways and every server is readable without a tooltip. Without any
- * Lootlog it explains how to join one.
- */
 export const SettingsGuildPicker: FC<SettingsGuildPickerProps> = ({
   guilds,
   selectedGuildIds,

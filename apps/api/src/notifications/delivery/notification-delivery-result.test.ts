@@ -170,7 +170,6 @@ describe("notification delivery result", () => {
 
     const permanentFailure = { ...failedEvent, retryable: false };
 
-    // Missing permissions can be granted back; the target has to survive.
     await Effect.runPromise(
       handle({ ...permanentFailure, errorCode: "50013" }),
     );

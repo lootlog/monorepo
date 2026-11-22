@@ -121,7 +121,6 @@ describe("deployment targets", () => {
       changedFiles: ["docker/developer.Dockerfile"],
     });
 
-    // The SSR applications share one Dockerfile.
     expect(developerPlan.dockerTargets.map(({ id }) => id)).toEqual([
       "admin",
       "developer",

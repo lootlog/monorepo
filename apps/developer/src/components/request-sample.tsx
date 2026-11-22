@@ -43,14 +43,12 @@ const barClassName =
 
 const renderSegments = (segments: Segment[]) =>
   segments.map(([text, className], index) => (
-    // The segments are static, so their position is a stable key.
     // oxlint-disable-next-line react/no-array-index-key
     <span key={index} className={className}>
       {text}
     </span>
   ));
 
-/** A static timers request and its trimmed response for the overview hero. */
 export function RequestSample() {
   return (
     <figure className="min-w-0 overflow-hidden rounded-xl border border-border bg-sidebar shadow-lg">

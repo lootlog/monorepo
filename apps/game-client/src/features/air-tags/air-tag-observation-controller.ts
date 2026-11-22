@@ -17,27 +17,16 @@ import type {
   OtherUpdate,
 } from "@lootlog/margonem/game-events";
 
-/**
- * How long queued sightings coalesce before they leave as one batch.
- *
- * A moving target is only queued once it has travelled
- * `AIR_TAG_MOVEMENT_THRESHOLD_TILES`, which the game walks in about 400 ms, so
- * this window governs how many targets share a batch rather than how fresh any
- * one of them is. A batch costs the gateway and Dragonfly the same whatever it
- * carries, so coalescing wider is close to a proportional saving on a busy map.
- */
 export const AIR_TAG_BATCH_INTERVAL_MS = 1_000;
 
 export const AIR_TAG_HEARTBEAT_INTERVAL_MS = 5_000;
 
-// Keeps a still target's sightings under 6.5 s apart, inside the 10 s AirTag and map-threat freshness windows.
 const AIR_TAG_HEARTBEAT_SCAN_INTERVAL_MS = 1_000;
 
 const AIR_TAG_HEARTBEAT_ALIGNMENT_MS = 2_000;
 
 const AIR_TAG_MOVEMENT_THRESHOLD_TILES = 2;
 
-// How far a walking player and the hero may both have moved since the game's last position update.
 const AIR_TAG_SIGHT_MARGIN_TILES = 3;
 
 const MAX_LOCAL_TARGETS_PER_SCOPE = 100;
@@ -47,10 +36,6 @@ const isSameClan = (
   second: AirTagObservation["clan"],
 ) => first?.id === second?.id && first?.name === second?.name;
 
-/**
- * The observation the gateway accepts, without the fields Margonem left out;
- * null when a field is malformed.
- */
 const toObservation = ({
   targetId,
   nickname,
@@ -85,19 +70,12 @@ const toObservation = ({
 
 type ObservationPublisher = (batch: AirTagObservationBatch) => void;
 
-/**
- * Every player the game sent: any of them can turn into an enemy, and the
- * hero seeing one leave hides a marker another member still reports. Only
- * clan enemies are published.
- */
 type LocalAirTagTarget = AirTagObservation & {
   dir: number;
   lastPublishedAt: number;
   lastPublishedX: number;
   lastPublishedY: number;
-  /** The gateway counts this character among the target's observers. */
   sent: boolean;
-  /** The gateway said another observer reports this target. */
   standby: boolean;
 };
 
@@ -124,7 +102,6 @@ export class AirTagObservationController {
   private readonly cancelInterval: typeof window.clearInterval;
   private batchTimer: number | null = null;
   private heartbeatTimer: number | null = null;
-  /** Enabled on the new interface and allowed to publish. */
   private active = false;
   private mapId: number | null = null;
   private publisher: ObservationPublisher | null = null;
@@ -155,9 +132,7 @@ export class AirTagObservationController {
     canPublish: boolean;
     mapId: number | null;
     publisher: ObservationPublisher;
-    /** A player the hero saw leave the map. */
     onLeftMap?: (targetId: string) => void;
-    /** Whether another observer's sighting of the target arrived recently. */
     isReportedByOthers?: (targetId: string, now: number) => boolean;
   }): void {
     const active = enabled && canPublish;
@@ -197,7 +172,6 @@ export class AirTagObservationController {
     this.mapId = mapId;
   }
 
-  /** A reload rebuilds the map's players from fresh CREATE entries. */
   forgetTargets(): void {
     this.clearState();
   }
@@ -251,7 +225,6 @@ export class AirTagObservationController {
       lastPublishedAt: 0,
       lastPublishedX: observation.x,
       lastPublishedY: observation.y,
-      // The gateway still counts this character when its departure never went out.
       sent:
         this.targets.get(targetId)?.sent === true ||
         this.departures.delete(targetId),
@@ -264,7 +237,6 @@ export class AirTagObservationController {
     this.startHeartbeatTimer();
   }
 
-  /** Margonem sends only changed fields: movement, stasis, a relation or clan change, a level-up. */
   private handleUpdate(targetId: string, update: OtherUpdate): void {
     const target = this.targets.get(targetId);
 
@@ -316,13 +288,11 @@ export class AirTagObservationController {
     return true;
   }
 
-  /** Returns whether an attribute other members see has changed. */
   private applyAttributes(
     target: LocalAirTagTarget,
     update: OtherUpdate,
     moved: boolean,
   ): boolean {
-    // Margonem ends stasis on movement without sending `stasis`.
     const stasis =
       update.stasis === undefined
         ? target.stasis && !moved
@@ -357,16 +327,10 @@ export class AirTagObservationController {
     return changed;
   }
 
-  /**
-   * A standby says nothing about a target while its reporter's sightings keep
-   * arriving. Once they stop, the heartbeat finds the target overdue and this
-   * observer offers to take it over.
-   */
   private isSilent(target: LocalAirTagTarget, now: number): boolean {
     return target.standby && this.isReportedByOthers(target.targetId, now);
   }
 
-  /** What the gateway said of an accepted batch: which sightings were redundant. */
   applyAcknowledgement(
     batch: AirTagObservationBatch,
     standbyTargetIds: readonly string[],
@@ -381,10 +345,6 @@ export class AirTagObservationController {
     }
   }
 
-  /**
-   * The gateway said these targets lost their reporter. This observer offers
-   * each one it still sees; the gateway keeps the first offer.
-   */
   takeOver(targetIds: readonly string[]): void {
     if (!this.active) return;
     const now = this.now();
@@ -398,13 +358,11 @@ export class AirTagObservationController {
     }
   }
 
-  /** Stops reporting a player who is no longer an enemy, such as after a clan war ends. */
   private withdraw(target: LocalAirTagTarget): void {
     this.pending.delete(target.targetId);
 
     if (!target.sent) return;
     target.sent = false;
-    // Another member may still see an enemy in them, so they only fade for this observer.
     this.departures.set(target.targetId, {
       targetId: target.targetId,
       reason: "out-of-sight",
@@ -431,11 +389,6 @@ export class AirTagObservationController {
     this.scheduleBatch();
   }
 
-  /**
-   * Margonem sends `del` both when a player leaves the map and when they
-   * leave the hero's war shadow range. Only a player well inside that range,
-   * or any player on a map without war shadow, has certainly left the map.
-   */
   private getDepartureReason(target: LocalAirTagTarget): AirTagDepartureReason {
     if (useGameStore.getState().game?.map.id !== this.mapId)
       return "out-of-sight";
@@ -452,7 +405,6 @@ export class AirTagObservationController {
     target.lastPublishedX = target.x;
     target.lastPublishedY = target.y;
 
-    // One malformed partial update must not get the whole batch rejected.
     const observation = toObservation(target);
 
     if (!observation) return;
@@ -460,7 +412,6 @@ export class AirTagObservationController {
     this.scheduleBatch();
   }
 
-  /** Sends a rate-limited batch again, unless a newer observation of a target is already queued. */
   retry(batch: AirTagObservationBatch, delayMs: number): void {
     if (!this.active || batch.expectedMapId !== this.mapId) return;
 
@@ -473,8 +424,6 @@ export class AirTagObservationController {
     }
 
     for (const departure of batch.departures ?? []) {
-      // A player seen again as a clan enemy supersedes the departure; one
-      // withdrawn while staying in sight still owes it.
       if (
         !isAirTagClanEnemy(this.targets.get(departure.targetId)?.relation) &&
         !this.departures.has(departure.targetId)
@@ -559,7 +508,6 @@ export class AirTagObservationController {
       )
         return;
 
-      // Targets due soon ride along, so heartbeats settle into one batch per interval.
       for (const target of targets) {
         if (
           now - target.lastPublishedAt >=
@@ -599,7 +547,6 @@ export class AirTagObservationController {
       return;
     }
 
-    // A player nobody is told about goes first; the oldest enemy only on a map full of them.
     let [oldestTargetId, oldest] = this.targets.entries().next().value ?? [];
 
     for (const [id, target] of this.targets) {
@@ -613,8 +560,6 @@ export class AirTagObservationController {
     this.targets.delete(oldestTargetId);
     this.pending.delete(oldestTargetId);
 
-    // The gateway would otherwise count this character among the evicted
-    // target's observers until it expires.
     if (oldest?.sent) {
       this.departures.set(oldestTargetId, {
         targetId: oldestTargetId,

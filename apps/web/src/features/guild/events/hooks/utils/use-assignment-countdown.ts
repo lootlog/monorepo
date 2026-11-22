@@ -10,7 +10,6 @@ export const useAssignmentCountdown = (
     assignmentEnabledAt !== null &&
     assignmentEnabledAt !== undefined;
 
-  // The time left until assignments unlock, or null once they have.
   const formattedTime = useSecondClockValue(() => {
     if (!hasCountdown) return null;
 

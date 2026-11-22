@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next";
 import { ItemTile } from "@/components/tiles/item-tile";
 import type { FeedLoot } from "./live-feed-state";
 
-/** Items past this many collapse into a count, so a big drop keeps one row. */
 const VISIBLE_ITEMS = 4;
 
 export function LiveFeedEventLoot({ loots }: { loots: FeedLoot[] }) {

@@ -137,8 +137,6 @@ describe("usePartyGatheringSocket", () => {
     await test.receive(
       ...Array.from({ length: 105 }, (_, index) => notification(index)),
     );
-    // Hide the newest 55 after ingress so the presentation store's independent
-    // 50-item cap cannot mask whether ingress dropped the oldest five.
     await test.ready(
       Array.from({ length: 55 }, (_, index) => `discord-${index + 50}`),
     );

@@ -115,7 +115,6 @@ export const applyPresenceUpdates = (
   return next;
 };
 
-/** One Lootlog's online players entry for a gateway presence. */
 export const toPlayerPresence = (
   organizationId: string,
   presence: BasicPresence | PresenceWithLocation,
@@ -147,7 +146,6 @@ export const toPlayerPresence = (
   };
 };
 
-/** The departure of one session, as a delta announces it. */
 export const toOfflinePlayerPresence = (
   organizationId: string,
   change: { discordId?: string; userId: string; sessionId: string },
@@ -184,7 +182,6 @@ const dedupePresences = (presences: PlayerPresence[]) => {
   return [...presencesByKey.values()];
 };
 
-/** Game presences of one Lootlog by Discord account, one per character. */
 export const toPlayerPresenceResponse = (
   organizationId: string,
   presences: ReadonlyArray<BasicPresence | PresenceWithLocation>,
@@ -208,8 +205,6 @@ export const toPlayerPresenceResponse = (
 
 const ONLINE_PLAYERS_PRESENCE_ACK_TIMEOUT_MS = 5_000;
 
-// A timed-out fetch usually means a saturated gateway. Spread the retries so a
-// burst of joining clients does not return at the same moment.
 const PRESENCE_RETRY_MIN_DELAY_MS = 1_000;
 
 const PRESENCE_RETRY_MAX_DELAY_MS = 3_000;
@@ -237,9 +232,6 @@ export const requestServerPresence = async (
   }
 };
 
-// The gateway lists every permission an owner or administrator holds, and
-// leaves out presence where this character does not publish its own, so the
-// listed permissions alone decide.
 export const canReadPresence = (
   policy: OrganizationAccessPolicy | undefined,
 ): boolean =>

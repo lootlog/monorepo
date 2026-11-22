@@ -3,10 +3,6 @@ import type { MapPingType } from "@lootlog/schema/map-ping";
 
 export type PingType = MapPingType | BattlePingType;
 
-/**
- * Tones follow the game's own popup-menu palette so pings read as part of
- * Margonem rather than as an overlay; violet is the game's group chat colour.
- */
 export type PingTone = "gold" | "red" | "violet" | "blue" | "green";
 
 export const PING_TONES = {
@@ -20,10 +16,6 @@ export const PING_TONES = {
   { fill: string; border: string; glow: string }
 >;
 
-/**
- * Icons are SVG path data on a 24×24 grid. The wheel renders them as SVG and
- * the map marker strokes the same data through `Path2D`.
- */
 const circle = (cx: number, cy: number, r: number) =>
   `M${cx - r} ${cy}a${r} ${r} 0 1 0 ${r * 2} 0a${r} ${r} 0 1 0 ${-r * 2} 0`;
 
@@ -58,7 +50,6 @@ export type PingIconName = keyof typeof PING_ICONS;
 type PingPresentation = {
   icon: PingIconName;
   tone: PingTone;
-  /** Map pings fade after this long; battle target pings persist instead. */
   durationMs: number;
   playbackRate: number;
   translationKey: `types.${PingType}`;
@@ -86,7 +77,6 @@ const PING_PRESENTATION = {
   attention: presentation("attention", "alert", "gold", 2_500, 1),
   enemy: presentation("enemy", "crosshair", "red", 4_000, 1.35),
   regroup: presentation("regroup", "regroup", "violet", 5_000, 0.82),
-  // Shown as "Idę": the wire keeps the original `avoid` value.
   avoid: presentation("avoid", "navigate", "blue", 5_000, 1.1),
   attack: presentation("attack", "swords", "red", Infinity, 1.35),
   caution: presentation("caution", "warning", "gold", BATTLE_MARK_MS, 1.15),
@@ -145,10 +135,8 @@ const PING_PRESENTATION = {
 
 export const getPingPresentation = (type: PingType) => PING_PRESENTATION[type];
 
-/** Played for a request that names the local hero, so it stands out. */
 export const PING_REQUEST_FOR_ME_PLAYBACK_RATE = 1.5;
 
-/** Map wheel: the centre sends `attention`, the ring starts at the top. */
 export const MAP_PING_CENTRE_TYPE = "attention" satisfies MapPingType;
 
 export const MAP_PING_RING_TYPES = [
@@ -157,7 +145,6 @@ export const MAP_PING_RING_TYPES = [
   "regroup",
 ] as const satisfies readonly MapPingType[];
 
-/** Over a player the centre marks them as an enemy; the ring pings the tile. */
 export const MAP_PING_PLAYER_RING_TYPES = [
   "attention",
   "avoid",
@@ -174,10 +161,8 @@ export const BATTLE_SELF_RING_TYPES = [
   "need-heal",
 ] as const satisfies readonly BattlePingType[];
 
-/** Pinged on the game's quick-fight button; it calls the whole team. */
 export const BATTLE_QUICK_FIGHT_TYPE = "quick-fight" satisfies BattlePingType;
 
-/** What an ally of each Margonem profession can be asked to cast. */
 const BATTLE_PROFESSION_REQUESTS = {
   b: ["fury", "poison"],
   h: ["stigma", "cleanse"],

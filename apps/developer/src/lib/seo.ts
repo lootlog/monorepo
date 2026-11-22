@@ -2,11 +2,6 @@ import { PUBLIC_SITE_ORIGINS } from "@lootlog/domain/public-sites";
 import ogImage from "@/assets/og-image.png?no-inline";
 import { portalText } from "@/lib/translations";
 
-/**
- * Head tags shared by every page: one title and description for search
- * results, link previews and the canonical production URL. Development hosts
- * are kept out of search engines by robots.txt, so they share the same tags.
- */
 export function pageHead({
   path,
   title,

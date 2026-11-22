@@ -1,7 +1,5 @@
 import type { GameEvent } from "@lootlog/margonem/game-events";
 
-// Debug GameEvent builders shared by the settings debug tab and the standalone sandbox.
-
 export const createBaseEvent = (): Pick<GameEvent, "d" | "e" | "ev"> => ({
   d: ["", "", ""],
   e: "ok",

@@ -10,27 +10,14 @@ type IconButtonProps = Omit<
   ComponentProps<typeof Button>,
   "aria-label" | "aria-pressed" | "size" | "variant" | "children"
 > & {
-  /** Accessible name; also the tooltip unless `tooltip` is given. */
   label: string;
-  /** Richer tooltip content, e.g. the label with its hotkey. */
   tooltip?: ReactNode;
-  /** The icon. */
   children: ReactNode;
-  /**
-   * Marks a toggle as on (`aria-pressed`). Popup triggers leave it unset:
-   * their `aria-expanded` lights the button the same way.
-   */
   active?: boolean;
   variant?: "quiet" | "quiet-destructive" | "taskbar";
   onTooltipOpenChange?: (open: boolean) => void;
 };
 
-/**
- * The one icon-only action of the game client: title bars, toolbars, the
- * quick access bar and list rows. 24×24 px, so every icon meets the WCAG 2.2
- * minimum target size. Extra props (including `ref` and popup trigger props)
- * reach the button so it can be a `PopoverTrigger` render target.
- */
 export const IconButton = ({
   label,
   tooltip,

@@ -14,7 +14,6 @@ import { Link } from "@tanstack/react-router";
 import { roleText, text } from "@/lib/messages";
 import type { UsersSearch } from "@/lib/users-search";
 
-/** Stands for "no filter"; the search validation drops it. */
 const ANY = "any";
 
 const roleItems = [
@@ -31,7 +30,6 @@ const statusItems = [
   { value: "no", label: text.filterNotBanned },
 ];
 
-/** The user list filters: a form that puts them in the address bar. */
 export function UsersFilter({ search }: { search: UsersSearch }) {
   return (
     <form

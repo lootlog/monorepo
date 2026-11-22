@@ -16,12 +16,10 @@ type LootFilterSectionProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onClear: () => void;
-  /** Lets the rail scroll the panel to this section and focus its title. */
   triggerRef?: Ref<HTMLButtonElement>;
   children: ReactNode;
 };
 
-/** One collapsible group of the filters panel, separated by a rule. */
 export const LootFilterSection = ({
   icon: Icon,
   title,

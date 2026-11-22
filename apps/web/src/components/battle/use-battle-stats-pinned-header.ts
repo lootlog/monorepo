@@ -1,10 +1,5 @@
 import { useLayoutEffect, useRef } from "react";
 
-/**
- * Publishes the height of a table's pinned title and search as `--battle-stats-pinned-height`
- * on the card, so the column header can stick right below them. The height changes when the
- * title or the actions wrap.
- */
 export function useBattleStatsPinnedHeader(enabled: boolean) {
   const cardRef = useRef<HTMLDivElement>(null);
   const pinnedHeaderRef = useRef<HTMLDivElement>(null);

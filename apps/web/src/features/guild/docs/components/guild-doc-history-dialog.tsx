@@ -95,7 +95,6 @@ export const GuildDocHistoryDialog = ({
         )}
         title={history.title}
       >
-        {/* The row picks the version; the editor's name opens their profile. */}
         <button
           type="button"
           className="absolute inset-0 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"

@@ -13,7 +13,6 @@ import { SettingsClearFilterButton } from "@/components/common/settings-clear-fi
 import { SettingsListEmpty } from "@/components/common/settings-list-empty";
 import type { MemberStatusFilter } from "./member-list-item.utils";
 
-/** Each status that can come up empty: what that means, and its icon. */
 const STATUS_ICONS: Record<Exclude<MemberStatusFilter, "all">, LucideIcon> = {
   active: UserX,
   inactive: UserCheck,
@@ -22,9 +21,7 @@ const STATUS_ICONS: Record<Exclude<MemberStatusFilter, "all">, LucideIcon> = {
 };
 
 type MembersEmptyStateProps = {
-  /** Whether the Organization has any members at all. */
   hasMembers: boolean;
-  /** How many members match the name filter across every status. */
   searchMatchCount: number;
   search: string;
   statusFilter: MemberStatusFilter;
@@ -32,10 +29,6 @@ type MembersEmptyStateProps = {
   onShowAll: () => void;
 };
 
-/**
- * Why the member list is empty: no members yet, a name that matches nobody,
- * a name that matches only in other statuses, or a status nobody is in.
- */
 export const MembersEmptyState = ({
   hasMembers,
   searchMatchCount,

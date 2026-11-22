@@ -7,10 +7,6 @@ import { useGameStore } from "@/store/game.store";
 import { Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-/**
- * Where detections go: every delivery rule stays expanded, so the player sees
- * each level range, world and server list without opening anything.
- */
 export const DetectorRoutingSection = () => {
   const { t } = useTranslation();
   const currentWorld = useGameStore((state) => state.game?.world);

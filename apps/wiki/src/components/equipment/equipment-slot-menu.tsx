@@ -45,10 +45,6 @@ type EquipmentSlotMenuProps = {
 
 const NO_BONUS = "none";
 
-/**
- * A worn item's context menu: its upgrade level, its +5 bonus, the symbol in
- * its socket, its page and taking it off. A long press opens it on touch screens.
- */
 export function EquipmentSlotMenu({
   slotId,
   worn,
@@ -61,7 +57,6 @@ export function EquipmentSlotMenu({
   const canUpgrade = isUpgradable(item);
   const bonuses = upgradeBonusOptions(item);
 
-  // The item as dropped shows whether a fleeting symbol fills its socket.
   const { options: symbols } = useSocketOptions(worn.dropped);
 
   const noSymbol = hasItemStat(worn.dropped.stat, "socket_fleeting_legbon")
@@ -97,7 +92,6 @@ export function EquipmentSlotMenu({
 
                     if (level === undefined) return;
 
-                    // The +5 bonus stays chosen only at +5.
                     upgrade(slotId, {
                       ...worn.upgrade,
                       level,

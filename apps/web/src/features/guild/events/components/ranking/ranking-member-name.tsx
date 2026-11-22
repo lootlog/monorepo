@@ -6,16 +6,13 @@ import { getRankingMemberName } from "./get-ranking-member-name";
 
 type RankingMemberNameProps = {
   ranking: EventRanking;
-  /** With `eventId`, the profile card leads to the member's kills in the event. */
   guildId?: string;
   eventId?: string;
-  /** False where the name sits inside the row's own link. */
   interactive?: boolean;
   className?: string;
   nameClassName?: string;
 };
 
-/** A ranked member's name, opening their profile. */
 export const RankingMemberName = ({
   ranking,
   guildId,

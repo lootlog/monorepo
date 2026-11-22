@@ -8,7 +8,6 @@ import { NewItemsCardsSkeleton } from "./new-items-cards-skeleton";
 
 const MONSTERS_SHOWN = 4;
 
-/** The bosses behind the game's newest items, with those items. */
 export function NewMonsters() {
   const { bosses, isError } = useNewBosses();
 

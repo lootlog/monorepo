@@ -185,7 +185,6 @@ describe("evaluateEventScoring", () => {
 
     const result = evaluateEventScoring(BASE_RULES, context);
 
-    // base-75 sets 1.0, base-50 overwrites to 0.5, leave-grace zeroes it
     expect(result.basePoints).toBe(0);
     expect(result.appliedRules.some((r) => r.ruleId === "leave-grace")).toBe(
       true,

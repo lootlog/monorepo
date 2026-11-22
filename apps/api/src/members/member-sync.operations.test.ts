@@ -112,7 +112,6 @@ test("member sync retries invalidation after a committed role change and clears 
     expect(persisted?.roles).toEqual([]);
     expect(persisted?.active).toBe(true);
 
-    // The retry sees unchanged persisted roles but must repair invalidation.
     failInvalidation = false;
     const retried = await refresh();
     expect(retried.member?.roles).toEqual([]);
@@ -220,7 +219,6 @@ const createSyncBoundary = async () => {
       const concurrentWork = state.duringPublish ?? Effect.void;
       state.duringPublish = undefined;
 
-      // Work from a concurrent writer is not a broker failure.
       return Effect.orDie(concurrentWork);
     }).pipe(
       Effect.andThen(() =>
@@ -238,7 +236,6 @@ const createSyncBoundary = async () => {
       ),
     );
 
-  // A fresh delivery models a restarted process with a new dispatcher cursor.
   const makeDelivery = () =>
     makeMemberDelivery(makeMemberStore(boundary.database), {
       clearMemberCaches: clearCaches,
@@ -365,9 +362,6 @@ test("role deltas retain common rows and only visible profile changes invalidate
       banner: "new-banner",
     };
     const renamed = await boundary.refresh();
-    // The global chat names a User by the server-independent display name.
-    // A per-server avatar is served from the guild, so its address is stored:
-    // the user id and hash alone would build the address of a missing image.
     expect(renamed.member).toMatchObject({
       name: "New name",
       discordDisplayName: "Global name",
@@ -506,7 +500,6 @@ test("a member who must sign in again is warned about once per loss of authoriza
 
     await boundary.refresh();
 
-    // Every request of such a member repeats the attempt.
     boundary.state.error = signInAgain;
     await boundary.refresh();
     await boundary.refresh();
@@ -557,8 +550,6 @@ test("a rejected role write rolls back profile and role changes before any publi
     const initial = await boundary.refresh();
     const roleRows = await boundary.roleRows();
     boundary.events.length = 0;
-    // Drizzle's query builder has no ALTER TABLE API. Reject one external write
-    // to exercise rollback through the real transaction and database boundary.
     await boundary.run(
       boundary.database.execute(sql`
       ALTER TABLE ${memberToRoleTable} ADD CONSTRAINT test_reject_role
@@ -623,7 +614,6 @@ test("a guild missing from Discord still publishes removal after a cache failure
       { permissionsChanged: true },
     ]);
 
-    // The retry no longer sees an active member; only the outbox remembers.
     expect(await deactivateMissing()).toBe(0);
     expect(boundary.events).toEqual([]);
 
@@ -651,8 +641,6 @@ test("a change queued while an earlier change is being published is delivered af
 
     await boundary.refresh();
 
-    // The nested sync commits role-3 while role-2 is being published; its own
-    // delivery attempt finds the row claimed and leaves it to the first one.
     expect(boundary.events).toEqual([
       "cache",
       "freshness",

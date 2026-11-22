@@ -44,8 +44,6 @@ export const WarriorsRecordSchema = Schema.Record(
 
       if (entries.some(([key]) => key.startsWith("-"))) return false;
 
-      // Margonem keys player warriors by their ID. Participants are stored per
-      // ID, and awards break ties in ID order, so a record must not diverge.
       if (entries.some(([key, warrior]) => key !== String(warrior.originalId)))
         return false;
       const teams = new Set(entries.map(([, warrior]) => warrior.team));
@@ -61,8 +59,6 @@ export const WarriorsRecordSchema = Schema.Record(
 
 const decodeWarriorsRecord = Schema.decodeUnknownEffect(WarriorsRecordSchema);
 
-// A record without a complete warrior decodes to a missing key, not an
-// undefined value: raw battle responses encode events as JSON values.
 const OptionalWarriorsRecordSchema = Schema.optionalKey(Schema.Unknown).pipe(
   Schema.decodeTo(Schema.optionalKey(WarriorsRecordSchema), {
     decode: SchemaGetter.transformOptionalEffect((input) => {

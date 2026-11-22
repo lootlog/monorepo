@@ -6,10 +6,6 @@ import { canManageGuild } from "@/lib/guild-permissions";
 import { Outlet } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 
-/**
- * The Organization's settings, one tab each; a role, monster or member page
- * shows a back arrow instead of the tabs.
- */
 export const SettingsLayout = () => {
   const { t } = useTranslation();
   const guildId = useGuildId() ?? "";

@@ -1,4 +1,4 @@
-import { type JsonCodec } from "@lootlog/database/redis-cache-fill";
+import type { JsonCodec } from "@lootlog/database/redis-cache-fill";
 import { BattleProcessor } from "@lootlog/battle-processor/battle-processor";
 import { PgliteClient } from "@effect/sql-pglite";
 import { makeWithDefaults } from "drizzle-orm/effect-pglite";
@@ -70,7 +70,6 @@ const requestJson = async <S extends Schema.ConstraintDecoder<unknown>>(
 
   const text = await response.text();
 
-  // A 500 has no body.
   return {
     body: Schema.decodeUnknownSync(schema)(
       text === "" ? undefined : JSON.parse(text),
@@ -151,14 +150,12 @@ const authHeaders = {
   "x-auth-user-id": "user-1",
 };
 
-// Compile PostgreSQL WASM and apply migrations once, outside individual test budgets.
 const databaseRuntime = ManagedRuntime.make(PgliteClient.layer({}));
 
 const databaseEffect = makeWithDefaults({ relations });
 
 let sharedDatabase: Effect.Success<typeof databaseEffect>;
 
-// A battle's ID carries its time, so aging a battle gives it an older ID.
 const ageStoredBattles = async () => {
   await databaseRuntime.runPromise(
     sharedDatabase.execute(sql`
@@ -387,14 +384,12 @@ const createTestApplication = ({
     invalidateAnalyticsCache: mock(() => Effect.void),
   };
 
-  // R2 holds whatever JSON earlier versions wrote; reads decode it.
   const objects = new Map<string, unknown>();
 
   const readBattleData = mock(async (battleId: string) =>
     JSON.stringify(objects.get(battleId)),
   );
 
-  // R2 only serves timelines of battles saved before they moved to Postgres.
   const objectStorage = {
     readBattleData,
     getBattleData: <TData>(
@@ -829,7 +824,6 @@ describe("battle creation deduplication", () => {
         events: [],
         sourceEvents: [
           ...decodeBattleEvents(timeline.events),
-          // Legacy objects keep Margonem's HP-only warrior updates verbatim.
           {
             ev: 1_785_091_976.7,
             f: {
@@ -1011,7 +1005,6 @@ describe("battle creation deduplication", () => {
       testApplication.analyticsService.invalidateAnalyticsCache,
     ).toHaveBeenCalledTimes(invalidations);
 
-    // Keep the cache key unchanged: authorization must protect even a populated cache entry.
     await databaseRuntime.runPromise(
       sharedDatabase
         .update(battles)
@@ -1083,7 +1076,6 @@ describe("battle creation deduplication", () => {
     );
     expect(second.body.timeline).toEqual(first.body.timeline);
     expect(second.body.timeline).toHaveLength(longMoves.length);
-    // Ingest analyzes the battle once; each uncached read processes it again.
     expect(processBattle).toHaveBeenCalledTimes(3);
   });
 

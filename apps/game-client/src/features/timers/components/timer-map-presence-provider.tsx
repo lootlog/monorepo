@@ -46,7 +46,6 @@ type TimerMapSources = {
 
 const emptySources = new Map<string, TimerMapSources>();
 
-/** Open hero sightings by Organization, world and hero. */
 type HeroSightingIndex = ReadonlyMap<string, HeroSightingResponseDto>;
 
 const emptyHeroSightings: HeroSightingIndex = new Map();
@@ -54,7 +53,6 @@ const emptyHeroSightings: HeroSightingIndex = new Map();
 const TimerMapPresenceContext = createContext<{
   sources: ReadonlyMap<string, TimerMapSources>;
   heroSightings: HeroSightingIndex;
-  /** The time staleness is judged at; it moves when a sighting turns stale. */
   now: number;
 }>({ sources: emptySources, heroSightings: emptyHeroSightings, now: 0 });
 
@@ -85,17 +83,11 @@ export const timerGuildIds = (
   timer: Pick<TimerWithTimeLeft, "guildId" | "mergedGuildIds">,
 ) => timer.mergedGuildIds?.map((entry) => entry.guildId) ?? [timer.guildId];
 
-// Heroes move between maps, so where one was killed says nothing; a hero
-// detector's answer tells where it is now.
 const DETECTABLE_HERO_TYPES = new Set<string>([
   NpcType.HERO,
   NpcType.EVENT_HERO,
 ]);
 
-/**
- * The newest open sighting of the timer's hero in its Organizations; with
- * `currentAt`, only one that still places the hero at that time.
- */
 function findTimerHeroSighting(
   timer: PresenceTimer,
   heroSightings: HeroSightingIndex,
@@ -129,11 +121,8 @@ function getTimerMapName(
   heroSightings: HeroSightingIndex,
   now: number,
 ): string | undefined {
-  // Hero Trackers move between maps and no detector answers for them.
   if (timer.npc.type === NpcType.HERO_TRACKER) return undefined;
 
-  // A roaming hero nobody confirmed lately has likely moved on, so its old
-  // map's players and enemies say nothing about it.
   if (DETECTABLE_HERO_TYPES.has(timer.npc.type))
     return findTimerHeroSighting(timer, heroSightings, now)?.mapName;
 
@@ -189,7 +178,6 @@ function resolveTimerSources(
   return sources;
 }
 
-/** When the next open roaming sighting turns stale, after `now`. */
 function getNextStaleAt(
   sightings: readonly HeroSightingResponseDto[],
   now: number,
@@ -203,7 +191,6 @@ function getNextStaleAt(
     )
       continue;
 
-    // Staleness is strict, so it starts just after the window ends.
     const staleAt =
       Date.parse(sighting.lastSeenAt) + HERO_SIGHTING_STALE_AFTER_MS + 1;
 
@@ -213,11 +200,6 @@ function getNextStaleAt(
   return next;
 }
 
-/**
- * The time sightings are judged at. Rather than ticking, it moves only when
- * a roaming sighting crosses into staleness, so the timers re-render once
- * per sighting that turns unconfirmed.
- */
 function useHeroSightingsStaleClock(
   sightings: readonly HeroSightingResponseDto[],
 ): number {
@@ -227,9 +209,6 @@ function useHeroSightingsStaleClock(
   useEffect(() => {
     if (nextStaleAt === undefined) return;
 
-    // A timer may fire a millisecond before `Date.now()` reaches its delay;
-    // judged that early, the sighting is still current, `nextStaleAt` stays
-    // the same and the clock would never move again.
     const timeout = window.setTimeout(
       () => setNow(Math.max(Date.now(), nextStaleAt)),
       Math.max(0, nextStaleAt - Date.now()),
@@ -276,7 +255,6 @@ export function TimerMapPresenceProvider({
   );
 }
 
-/** Returns the previous result while every source still returns the same value. */
 function createMergedReader<Value>(merge: (values: readonly Value[]) => Value) {
   let inputs: readonly (Value | undefined)[] = [];
   let output: Value | undefined;
@@ -351,7 +329,6 @@ const mergeThreats = (values: readonly MapThreat[]): MapThreat =>
     Date.now(),
   );
 
-/** Organization members on the timer's map, or undefined when none are or presence is unavailable. */
 export function useTimerMapPresence(
   timer: PresenceTimer,
 ): MapOccupancy | undefined {
@@ -362,7 +339,6 @@ export function useTimerMapPresence(
   );
 }
 
-/** Clan enemies seen on the timer's map within the AirTag threat window. */
 export function useTimerMapThreat(timer: PresenceTimer): MapThreat | undefined {
   return useTimerMapProjection(
     timer,
@@ -371,14 +347,11 @@ export function useTimerMapThreat(timer: PresenceTimer): MapThreat | undefined {
   );
 }
 
-/** The open sighting a detector last placed the timer's hero by. */
 export type TimerHeroSighting = {
   readonly sighting: HeroSightingResponseDto;
-  /** A roaming hero nobody confirmed lately; it no longer places the timer. */
   readonly unconfirmed: boolean;
 };
 
-/** Where a detector last placed the timer's hero, while that sighting is open. */
 export function useTimerHeroSighting(
   timer: PresenceTimer,
 ): TimerHeroSighting | undefined {

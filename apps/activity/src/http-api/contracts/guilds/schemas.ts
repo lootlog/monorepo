@@ -1,4 +1,3 @@
-/** Transport schemas owned by the guilds HTTP module. */
 import * as Schema from "effect/Schema";
 import {
   DATE_TIME_STRING_PATTERN,

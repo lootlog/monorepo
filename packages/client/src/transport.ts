@@ -20,7 +20,6 @@ export type ApiServiceConfig = {
   baseUrl: string;
   credentials?: RequestCredentials;
   fetch?: FetchImplementation;
-  /** Bounds the HTTP request through completion of its response body. */
   timeoutMs?: number;
   getHeaders?: () => HeadersInit | Promise<HeadersInit>;
   onError?: (error: ApiError<unknown>, context: ApiRequestContext) => void;
@@ -36,7 +35,6 @@ export class ApiError<TData = unknown> extends Error {
   public readonly cause: unknown;
   public readonly status?: number;
   public readonly data: TData | undefined;
-  /** When the server allows a retry (epoch ms), read from `Retry-After`. */
   public readonly retryAt?: number;
   public readonly url: string;
   public readonly method: string;
@@ -223,9 +221,7 @@ const notifyError = (
       service,
       url: error.url,
     });
-  } catch {
-    // Error observers must not replace the request error.
-  }
+  } catch {}
 };
 
 const withRequestTimeout = async <T>(
@@ -326,14 +322,9 @@ const executeRequest = async ({
   }
 };
 
-/** RFC 9110 IMF-fixdate, the HTTP-date form servers must send. */
 const IMF_FIXDATE =
   /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun), \d{2} (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{4} \d{2}:\d{2}:\d{2} GMT$/;
 
-/**
- * `Retry-After` carries delay seconds or an HTTP-date. Anything else, or a
- * deadline a `Date` cannot represent, leaves the retry time unknown.
- */
 const parseRetryAt = (value: string | null, now: number) => {
   const trimmed = value?.trim() ?? "";
 
@@ -395,7 +386,6 @@ export const isApiError = (error: unknown): error is ApiError<unknown> => {
   return error instanceof ApiError;
 };
 
-/** Read a raw API error field without normalizing display text or array messages. */
 export const getApiErrorStringField = (
   cause: unknown,
   field: "message" | "code",
@@ -413,7 +403,6 @@ const getApiErrorDetail = (cause: unknown, key: string) => {
   return isObject(details) ? details[key] : undefined;
 };
 
-/** Read a string from an API error's `details`, the reason's parameters. */
 export const getApiErrorStringDetail = (
   cause: unknown,
   key: string,
@@ -423,7 +412,6 @@ export const getApiErrorStringDetail = (
   return Predicate.isString(value) ? value : undefined;
 };
 
-/** Read a finite number from an API error's `details`. */
 export const getApiErrorNumberDetail = (
   cause: unknown,
   key: string,
@@ -457,13 +445,6 @@ const REQUEST_TIMEOUT_STATUS = 408;
 
 const TOO_MANY_REQUESTS_STATUS = 429;
 
-/**
- * A client error is an answer, not a failure: retrying a 401, 403 or 404 only
- * repeats a request the server will reject again, and on the Game client an
- * expired session would keep re-asking the API and auth for it. Everything
- * else — a timeout, a rate limit, a server error, a dropped connection — can
- * succeed on a second attempt.
- */
 export const isRetryableApiFailure = (cause: unknown): boolean => {
   const status = getApiErrorStatus(cause);
 

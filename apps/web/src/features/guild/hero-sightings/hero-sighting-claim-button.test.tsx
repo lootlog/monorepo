@@ -77,7 +77,6 @@ const mount = async (
     </QueryClientProvider>,
   );
 
-  // The organization route renders after the router loads.
   await screen.findByRole("heading", { name: "Board" });
 };
 

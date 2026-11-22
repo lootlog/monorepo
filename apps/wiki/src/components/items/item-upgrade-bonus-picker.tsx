@@ -17,11 +17,6 @@ type ItemUpgradeBonusPickerProps = {
   onChange: (bonus: UpgradeBonusKey | undefined) => void;
 };
 
-/**
- * The extra bonus a +5 item can draw, grouped by how often the game offers
- * it, each card with its value at +5 and its chance to be among the three
- * offered. Choosing one upgrades the item to +5.
- */
 export function ItemUpgradeBonusPicker({
   options,
   value,

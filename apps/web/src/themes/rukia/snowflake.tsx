@@ -2,7 +2,6 @@
 import { usePrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-motion";
 import * as m from "framer-motion/m";
 
-// Snowflake component
 export const Snowflake = ({
   x,
   y,

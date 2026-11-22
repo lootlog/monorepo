@@ -2,21 +2,14 @@ import { Input } from "@lootlog/ui/components/input";
 import { useState } from "react";
 
 type ColorHexFieldProps = {
-  /** Names the colour picker; the HEX field adds `hexLabel`. */
   label: string;
   hexLabel: string;
-  /** A 6-digit HEX colour. */
   value: string;
   onChange: (color: string) => void;
 };
 
 const HEX_COLOR_PATTERN = /^#[\dA-F]{6}$/iu;
 
-/**
- * A native colour picker with its HEX code beside it. The code keeps its own
- * draft, so a half-typed value never reaches the theme; an invalid one snaps
- * back to the colour on blur.
- */
 export const ColorHexField = ({
   label,
   hexLabel,

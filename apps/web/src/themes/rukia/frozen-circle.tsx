@@ -3,8 +3,6 @@ import { usePrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-m
 import * as m from "framer-motion/m";
 import { useState, type ReactNode } from "react";
 
-// Generate random crystal positions around a circle - stable per mount
-// Crystals stay within the avatar bounds to avoid overflow issues in narrow containers
 const generateCircleCrystals = (count: number, circleSize: number) =>
   Array.from({ length: count }, (_, i) => {
     const baseAngle = (i / count) * 360;
@@ -25,7 +23,6 @@ const generateCircleCrystals = (count: number, circleSize: number) =>
 
 const frozenCircleCrystals = generateCircleCrystals(10, 44);
 
-// Frozen wrapper for circular elements (like avatars)
 export const FrozenCircle = ({
   children,
   isActive,
@@ -43,7 +40,6 @@ export const FrozenCircle = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Pulsing ice glow */}
       <m.div
         key={String(prefersReducedMotion)}
         className="absolute inset-0 rounded-xl pointer-events-none"
@@ -78,7 +74,6 @@ export const FrozenCircle = ({
         }
       />
 
-      {/* Frost overlay */}
       <m.div
         className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden"
         animate={{ opacity: isAnimating ? 1 : 0 }}
@@ -93,7 +88,6 @@ export const FrozenCircle = ({
         />
       </m.div>
 
-      {/* Ice crystals - randomly scattered, continuously animated */}
       {frozenCircleCrystals.map((crystal) => (
         <m.div
           key={`${`${crystal.x}:${crystal.y}`}:${prefersReducedMotion}`}
@@ -145,7 +139,6 @@ export const FrozenCircle = ({
         </m.div>
       ))}
 
-      {/* Content */}
       <div className="relative z-10">{children}</div>
     </div>
   );

@@ -13,14 +13,6 @@ const escapeCodeUnits = (character: string) =>
     .map((unit) => `\\u${unit.charCodeAt(0).toString(16).padStart(4, "0")}`)
     .join("");
 
-/**
- * Chrome refuses to load a content script that contains a literal Unicode
- * noncharacter (Lexical uses U+FFFF), and terser writes escaped ones back as
- * literals. A noncharacter can only sit in a string, template, regular
- * expression or comment, where its `\uXXXX` escape means the same (only a
- * template's raw text differs), so escape just those after minification
- * instead of making terser escape every non-ASCII character.
- */
 const escapeUnicodeNoncharacters = (): Plugin => ({
   name: "lootlog:escape-unicode-noncharacters",
   apply: "build",
@@ -86,7 +78,6 @@ export default defineConfig({
 
     if (browser === "firefox") {
       if (mode !== "production") {
-        // Firefox's default MV3 CSP upgrades local ws:// to unavailable wss://.
         manifest.content_security_policy = {
           extension_pages: "script-src 'self'; object-src 'self'",
         };

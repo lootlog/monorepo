@@ -1,14 +1,9 @@
-/** Epoch milliseconds of an ISO observation time; null when it is malformed. */
 export const toSeenAt = (observedAt: string) => {
   const time = Date.parse(observedAt);
 
   return Number.isNaN(time) ? null : time;
 };
 
-/**
- * The earlier of two observations. Order of delivery is not chronology, so a
- * catalog entry keeps the earliest time any delivery reports.
- */
 export const earliestSeenAt = (
   first: number | null | undefined,
   second: number | null | undefined,

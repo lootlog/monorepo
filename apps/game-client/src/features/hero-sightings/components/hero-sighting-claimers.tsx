@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next";
 import { heroSightingDetectorClassName } from "@/features/hero-sightings/hero-sighting-detector-style";
 import type { HeroSightingClaimer } from "@/features/hero-sightings/hero-sighting-rows";
 
-/** Who claims the hero, the claimer who also detected it highlighted. */
 export function HeroSightingClaimers({
   claims,
 }: {

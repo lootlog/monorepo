@@ -117,10 +117,6 @@ const migrateSyntheticTimer = (
 
 type TimerRow = typeof timerTable.$inferSelect;
 
-/**
- * Commits the event hero check with its timer, so a failed publication or
- * enqueue cannot lose the event points this kill may award.
- */
 const insertEventHeroCheck = (
   transaction: Pick<typeof ApiDatabase.Service, "insert">,
   {
@@ -174,9 +170,6 @@ const findRecentlyCreatedTimer = Effect.fnUntraced(function* (
 
   const dedupSince = new Date(startedAt.getTime() - DEDUP_TTL_SECONDS * 1000);
 
-  // The transaction can commit before Redis records its result. Only the
-  // CREATE history written by an automatic submission identifies it: event
-  // respawn windows, resets, deletes, and restores also move the timer row.
   const recentCreates = yield* database
     .select({ id: timerHistoryEntryTable.id })
     .from(timerHistoryEntryTable)
@@ -194,10 +187,6 @@ const findRecentlyCreatedTimer = Effect.fnUntraced(function* (
   return recentCreates.length > 0 ? timer : null;
 });
 
-/**
- * Stores one Lootlog's timer for a reported kill under the timer lock, or
- * reports that the kill is already stored.
- */
 export const persistAutoTimer = (
   database: typeof ApiDatabase.Service,
   ports: AutoTimerPersistencePorts,
@@ -273,8 +262,6 @@ export const persistAutoTimer = (
         );
 
         if (completedTimer) {
-          // Redis records a result only after publication, so this is a
-          // committed attempt whose publication may not have happened.
           return { _tag: "Unpublished" as const, projection: completedTimer };
         }
 
@@ -376,7 +363,6 @@ export const persistAutoTimer = (
           previousTimer,
         });
 
-        // A hero Lootlog saw killed is no longer where it was detected.
         const closedHeroSightingId =
           getNpcTypeRoutingTier(npc.type) === "heroes"
             ? yield* closeKilledHeroSighting(transaction, {

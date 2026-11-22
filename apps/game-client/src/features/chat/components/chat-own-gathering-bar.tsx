@@ -21,7 +21,6 @@ import { IconButton } from "@/components/ui/icon-button";
 import { useExtendPartyGathering } from "@/features/party-finder/hooks/use-extend-party-gathering";
 import { getRoomOrganizer } from "@/features/chat/party-gathering-organizer";
 
-// The organizer is offered to extend the gathering in its last minutes.
 const EXTEND_OFFER_MINUTES = 2;
 
 function getLatestDetails(
@@ -38,7 +37,6 @@ export function ChatOwnGatheringBar({
   stale,
 }: {
   room: PartyReadyRoomProjection;
-  /** Shows organizer controls; otherwise the current character's application. */
   organizer: boolean;
   summary?: PartyGatheringSummary;
   stale?: boolean;

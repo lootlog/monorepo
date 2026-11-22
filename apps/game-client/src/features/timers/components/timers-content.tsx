@@ -34,9 +34,7 @@ type TimersContentProps = {
   onRetry?: () => void;
   refreshError?: boolean;
   refreshing?: boolean;
-  /** Loaded timers are on screen; realtime keeps them current. */
   hasData?: boolean;
-  /** Covers the strips and the list, e.g. the add timer panel. */
   overlay?: ReactNode;
 };
 
@@ -69,9 +67,6 @@ export const TimersContent: FC<TimersContentProps> = ({
       className={cn(
         "ll:relative ll:h-full ll:flex ll:flex-1 ll:flex-col ll:pt-1 ll:w-full",
         {
-          // The strips bleed 4px past their container, the same as they do
-          // through the window padding; pull the whole content out by that
-          // much so the list and the add timer overlay line up with them.
           "ll:pt-0! ll:h-auto ll:min-h-0 ll:-mx-1 ll:w-auto": isUnderBag,
         },
       )}

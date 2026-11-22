@@ -5,7 +5,6 @@ import { useDrag } from "./use-drag";
 
 const ORIGIN = { x: 0, y: 0 };
 
-/** Owns the resting position the way a window frame does with its store. */
 const useStatefulDrag = (
   ref: RefObject<HTMLDivElement | null>,
   onDragStop: (position: { x: number; y: number }) => void,
@@ -436,7 +435,6 @@ describe("useDrag", () => {
       );
     });
     expect(result.current.isDragging).toBe(false);
-    // A press is not a placement: saving here would freeze a default layout.
     expect(onDragStop).not.toHaveBeenCalled();
   });
 });

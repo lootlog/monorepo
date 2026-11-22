@@ -1,6 +1,5 @@
 import { Predicate, Schema } from "effect";
 
-// Dotted-path helpers shared by the API resolver and the Game client cache.
 const SettingsJsonRecordSchema = Schema.Record(Schema.String, Schema.Json);
 
 export type SettingsJsonRecord = Record<string, typeof Schema.Json.Type>;
@@ -9,18 +8,12 @@ export const decodeSettingsRecord = Schema.decodeUnknownSync(
   SettingsJsonRecordSchema,
 );
 
-// JSON leaves have already been decoded at the document boundary.
 export const isSettingsRecord = (
   value: typeof Schema.Json.Type | undefined,
 ): value is SettingsJsonRecord => Predicate.isObject(value);
 
 const FORBIDDEN_SEGMENTS = new Set(["__proto__", "constructor", "prototype"]);
 
-/**
- * Paths come from client patches; a segment that names a prototype property
- * would let `setPath` reach `Object.prototype` through a freshly cloned
- * record, so such paths are rejected before any write.
- */
 const splitWritablePath = (path: string) => {
   const segments = path.split(".");
 

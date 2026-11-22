@@ -52,7 +52,6 @@ export type PublicTimer = {
   guildId: string;
   minSpawnTime: string;
   maxSpawnTime: string;
-  /** When a Hero Tracker's open entrance closes; null for every other timer. */
   entranceClosesAt: string | null;
   updatedAt: string | null;
   isCustomTime?: boolean;
@@ -66,7 +65,6 @@ export type PublicSocketState = {
   joinedGuilds: string[];
 };
 
-/** One online character, without user, session or account identifiers. */
 export type PublicOnlinePlayer = {
   world: string;
   name: string;
@@ -89,7 +87,6 @@ export type PublicOnlinePlayer = {
   updatedAt?: number;
 };
 
-/** Online characters sorted by name. */
 export type PublicOnlinePlayers = PublicOnlinePlayer[];
 
 export type PublicOnlinePlayersResult =

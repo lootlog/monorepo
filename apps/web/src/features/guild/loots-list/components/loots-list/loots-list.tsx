@@ -21,12 +21,11 @@ import { LootListItemStacksProvider } from "./loot-list-item-stacks-provider";
 import { RetryButton } from "@/components/common/retry-button";
 import { ClearFiltersButton } from "@/components/common/clear-filters-button";
 
-// Dimming the current page signals a reload without moving anything.
 const REFRESHABLE_LIST_CLASS =
   "relative w-full transition-opacity duration-200 motion-reduce:transition-none";
 
 export const LootsList = () => {
-  "use no memo"; // Reads a virtualizer that mutates in place; see usePageVirtualizer.
+  "use no memo";
 
   const {
     setScrollElement,
@@ -113,7 +112,6 @@ export const LootsList = () => {
         onScroll={resumeReconciliation}
       >
         <LootsListToolbar />
-        {/* Phones scroll the document under the app bar; wider screens scroll this viewport. */}
         <div
           aria-live="polite"
           className="pointer-events-none fixed inset-x-0 top-[calc(var(--page-sticky-top)+var(--filter-bar-height,0px)+0.5rem)] z-10 flex justify-center md:sticky md:inset-x-auto md:h-0"
@@ -226,7 +224,6 @@ export const LootsList = () => {
             </div>
           )}
         </div>
-        {/* Keeps the last loot clear of the phone's floating filters button. */}
         <div aria-hidden="true" className="h-20 md:hidden" />
       </ScrollArea>
     </SharedTooltipProvider>

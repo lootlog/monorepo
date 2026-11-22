@@ -8,7 +8,6 @@ import {
   RESERVATIONS_VIEW_MODE_KEY,
 } from "./reservation-collection-layout";
 
-/** Route-level stand-in for the reservations page: its toolbar above the spots. */
 export const ReservationsPageSkeleton = () => {
   const { viewMode, canChooseViewMode } = useViewMode(
     RESERVATIONS_VIEW_MODE_KEY,

@@ -5,7 +5,6 @@ import { MEMBER_REFRESH_QUEUE } from "#src/members/member-refresh-queue";
 import type { MemberRefreshJobData } from "#src/members/member-refresh-scheduler";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 
-/** The queue the member refresh scheduler deduplicates and delays jobs in. */
 export class MemberRefreshQueue extends Context.Service<
   MemberRefreshQueue,
   Queue<MemberRefreshJobData>

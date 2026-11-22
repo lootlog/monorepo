@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 
 type StatsNpcCellProps = {
   npc: { id: number; name: string; lvl: number; icon?: string | null };
-  /** The name, plain or wrapped in a link. */
   name: ReactNode;
   subtitle: ReactNode;
 };

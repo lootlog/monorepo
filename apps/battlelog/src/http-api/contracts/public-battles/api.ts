@@ -1,4 +1,3 @@
-/** Endpoints owned by the public-battles HTTP module. */
 import { HttpApiEndpoint, HttpApiGroup, OpenApi } from "effect/http-api";
 import { NotFound } from "../errors.js";
 import {

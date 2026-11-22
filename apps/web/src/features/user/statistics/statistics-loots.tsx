@@ -26,13 +26,11 @@ const LootTopNpcsChart = lazy(() =>
   ),
 );
 
-/** Loots of the fights the user's characters took part in. */
 export function StatisticsLoots({ search }: { search: StatisticsSearch }) {
   const { t } = useTranslation();
   const query = useStatisticsLootStats(search);
   const { data, isPending: isLoading } = query;
 
-  // The sections stand in for themselves while the numbers load.
   const content = (
     <>
       <LootOverviewCards

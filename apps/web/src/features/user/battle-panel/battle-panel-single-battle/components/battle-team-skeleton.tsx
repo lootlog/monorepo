@@ -9,7 +9,6 @@ type BattleTeamSkeletonProps = {
   className?: string;
 };
 
-/** Stands in for one team of `BattleTeamsOverview`. */
 export const BattleTeamSkeleton = ({
   align,
   className,

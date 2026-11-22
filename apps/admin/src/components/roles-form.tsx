@@ -8,7 +8,6 @@ import { useState } from "react";
 import { roleText, text } from "@/lib/messages";
 import { useUserAction } from "@/lib/use-user-action";
 
-/** Checks the roles a User holds; saving replaces the whole set. */
 export function RolesForm({
   userId,
   roles,

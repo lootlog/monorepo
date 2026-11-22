@@ -27,9 +27,6 @@ describe("player snapshot merge migration", () => {
         await database.exec(migration.sql.join("\n"));
       }
 
-      // 1 and 2 hold the same content under both legacy hashes; 2 is linked
-      // from a loot, its map players, a timer and its history. 3 is the same
-      // character after a rename, 4 a timer actor nothing references any more.
       await database.exec(`
         INSERT INTO "Guild" (id, name, "ownerId", "updatedAt") VALUES ('guild', 'Guild', 'owner', now());
         INSERT INTO "Member" (id, "userId", "guildId", name, "updatedAt") VALUES (10, 'user', 'guild', 'Member', now());
@@ -76,8 +73,6 @@ describe("player snapshot merge migration", () => {
           )
         ).rows,
       ).toEqual([{ organizationLootRecordId: 200, playerSnapshotId: 1 }]);
-      // Timer references are ON DELETE SET NULL, so a merged row deleted
-      // before its timers move would silently drop the actor.
       expect(
         (await database.query(`SELECT "actorCharacterSnapshotId" FROM "Timer"`))
           .rows,

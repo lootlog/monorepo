@@ -12,8 +12,6 @@ import { CommandAdmission } from "#src/realtime/command-admission";
 import { MapPingService } from "#src/realtime/map-ping-service";
 import { RealtimeHub } from "#src/realtime/realtime-hub";
 
-// Run with `bun run perf:commands`. This measures the per-command CPU path from
-// a received frame to its sent response; Redis and federation I/O resolve at once.
 const commands = 200_000;
 
 const warmupCommands = 20_000;
@@ -24,13 +22,11 @@ const hub = new RealtimeHub(
   () => {},
 );
 
-// One map ping per command passes a 5-per-15 s window only with a stub reply.
 const mapPings = new MapPingService(
   { command: { eval: () => Promise.resolve([1, 1_783_000_000_000, 0]) } },
   hub,
 );
 
-// The admission replies with one enabled scope and the merge with one moved target.
 const airTags = new AirTagService(
   {
     command: {
@@ -84,7 +80,6 @@ const { handler } = makeCommandHandler({
   features: {
     mapPings,
     airTags,
-    // Unbounded, so the benchmark measures the observation, not its rejection.
     airTagObservationAdmission: new CommandAdmission({
       ratePerSecond: Number.MAX_SAFE_INTEGER,
       burst: Number.MAX_SAFE_INTEGER,
@@ -124,7 +119,6 @@ const scenarios = {
       },
     }),
   ],
-  // Alternates so every subscribe changes the socket's subscriptions.
   "subscription.subscribe+unsubscribe": [
     commandFrame({ type: "subscription.subscribe", data: presenceScope }),
     commandFrame({ type: "subscription.unsubscribe", data: presenceScope }),
@@ -160,16 +154,11 @@ for (const [scenario, frames] of Object.entries(scenarios)) {
   hub.register(socket);
 
   const run = async (count: number) => {
-    // Both counts are multiples of every scenario's frame count.
     for (let index = 0; index < count; index += frames.length)
       for (const input of frames) {
-        // One connection may send 15 batches per 3 s; forget them so every
-        // observation is admitted and the benchmark measures the merge.
         if (socket.data.airTagBatchesSentAt)
           socket.data.airTagBatchesSentAt.length = 0;
 
-        // One user may send 45 batches per 3 s on a replica; a user per
-        // batch keeps that limit out of the measurement too.
         Object.assign(socket.data, { userId: `user-${index}` });
 
         await Effect.runPromise(handler.handle(socket, input));

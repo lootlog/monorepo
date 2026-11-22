@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 
-/** The line an expanded stats row shows when the warrior has nothing to break down. */
 export const BreakdownEmptyMessage = ({
   children,
 }: {

@@ -22,7 +22,6 @@ export function getLootlogOtherGlowColor(
     : LOOTLOG_OTHER_GLOW_RED_ORANGE;
 }
 
-/** What a glow reads from the game character it sits behind. */
 type GlowMaster = {
   d: { id?: number | string | null; x?: number; y?: number };
   fw?: number;
@@ -84,8 +83,6 @@ function getRuntimeWindow(): RuntimeWindow {
   return window;
 }
 
-// OthersManager.getDrawableList mixes characters, pets, markers and glows.
-// Classify only known native glow capabilities; retain every other object by identity.
 function isNativeOtherGlowDrawable(drawable: unknown): boolean {
   if (!isObject(drawable)) return false;
 
@@ -117,10 +114,6 @@ type TintedMaskSource = (
   height: number,
 ) => HTMLCanvasElement | null;
 
-/**
- * The game's character glow (`WhoIsHereGlow2`): a tinted mask 4 px larger
- * than the sprite, drawn just behind it.
- */
 class CharacterGlow<Master extends GlowMaster> {
   private alpha = 1;
   private color: string;
@@ -177,7 +170,6 @@ class CharacterGlow<Master extends GlowMaster> {
     this.drawMask = null;
   }
 
-  /** Draws at the position of the last `update()`, run once per frame. */
   draw(ctx: CanvasRenderingContext2D): void {
     const runtimeWindow = getRuntimeWindow();
     const engine = runtimeWindow.Engine;
@@ -243,10 +235,6 @@ class CharacterGlow<Master extends GlowMaster> {
   }
 }
 
-/**
- * One mask request and one tinted canvas per (color, size) serve every glow,
- * of players and NPCs alike, and survive Shift releases.
- */
 class TintedGlowMasks {
   private mask: HTMLImageElement | null = null;
   private requested = false;
@@ -275,7 +263,6 @@ class TintedGlowMasks {
     image.src = MASK_PATH;
   }
 
-  /** Lets the next request try again after an earlier load never finished. */
   retryIfMissing(): void {
     if (!this.mask) this.requested = false;
   }
@@ -319,21 +306,10 @@ export type TrackedCharacterGlow = {
   draw: (context: CanvasRenderingContext2D) => void;
   getAlwaysDraw: () => boolean;
   getOrder: () => number;
-  /**
-   * Looks the character up for this frame; call it once per frame before
-   * adding the glow to the renderer. False once the character left the map,
-   * and the glow then draws nothing.
-   */
   refresh: () => boolean;
   setAlpha: (alpha: number) => void;
 };
 
-/**
- * A glow behind a monster's or player's sprite, like the game's own group
- * glow. `refresh()` looks the character up once per frame, so a respawned or
- * moved character keeps its glow while the game's sort reads a cached order;
- * add it to the renderer each frame it should show.
- */
 export const createCharacterGlow = (
   { id, kind }: RuntimeCharacterRef,
   color: string,
@@ -401,9 +377,6 @@ class LootlogOtherGlowManager {
     tintedGlowMasks.retryIfMissing();
 
     this.originalGetDrawableList = others.getDrawableList;
-    // Engine calls this every rendered frame, after `others.update` moved the
-    // players (Engine.js `update`), so each glow follows its player here.
-    // Build at most one array per call.
     others.getDrawableList = () => {
       const drawables = this.originalGetDrawableList?.call(others) ?? [];
 
@@ -423,8 +396,6 @@ class LootlogOtherGlowManager {
         combined.push(drawable);
       }
 
-      // A glow that cannot update is skipped; the others and the game's own
-      // drawables still render.
       for (const glow of this.glowsByCharacterId.values()) {
         try {
           glow.update();
@@ -491,7 +462,6 @@ class LootlogOtherGlowManager {
     this.glowsByCharacterId.clear();
   }
 
-  // Shift released: stop drawing and restore the game, keep shared masks.
   uninstall(): void {
     this.nativeGlowSuppressed = false;
     this.clear();

@@ -27,14 +27,9 @@ import { WIKI_GAME_VERSION } from "@/lib/catalog-links";
 type ReportButtonProps = {
   subjectType: CatalogReportDtoOutputSubjectType;
   subjectId: number;
-  /** The page's name, as its title shows it. */
   name: string;
 };
 
-/**
- * Lets a reader tell the moderators that a page shows something wrong. A
- * signed-in User sees their open report and may change or withdraw it.
- */
 export function ReportButton({
   subjectType,
   subjectId,

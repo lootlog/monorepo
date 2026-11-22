@@ -4,10 +4,6 @@ import { ConnectionStatus } from "@/features/quick-access/components/connection-
 import { QuickAccessCollapseButton } from "@/features/quick-access/components/quick-access-collapse-button";
 import { useWindowsStore } from "@/store/windows.store";
 
-/**
- * The collapsed quick access bar: connection state and the expand button.
- * Both are buttons, so an unlocked bar leads with a grip to drag it by.
- */
 export const QuickAccessCollapsedBar: FC = () => {
   const locked = useWindowsStore((state) => state["quick-access"].locked);
 

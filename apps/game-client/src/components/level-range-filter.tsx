@@ -12,18 +12,11 @@ export type LevelRange = {
 
 type LevelRangeFilterProps = {
   value: LevelRange;
-  /** Lowest and highest level either bound accepts; typed values clamp to it. */
   min: number;
   max: number;
   onChange: (value: LevelRange) => void;
 };
 
-/**
- * The "level from / to" pair of a toolbar filter strip. Typed values clamp to
- * the allowed range, input that is not a number keeps the previous bound, and
- * moving one bound past the other drags the other along, so the range never
- * silently matches nothing.
- */
 export const LevelRangeFilter: FC<LevelRangeFilterProps> = ({
   value,
   min,

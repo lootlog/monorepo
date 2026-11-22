@@ -6,7 +6,6 @@ import {
 } from "@lootlog/schema/npc-appearance";
 import { deriveNpcSurfaceColors } from "@lootlog/domain/npc-appearance";
 
-/** Notification kinds without an NPC type, as red, green and blue. */
 const MESSAGE_COLORS_BY_KEY = {
   message: "219, 39, 99",
   "party-gathering": "147, 51, 234",
@@ -23,10 +22,6 @@ const PLAIN_COLORS = {
   border: "rgba(156, 163, 175, 1)",
 };
 
-/**
- * How a notification or detector row is painted: in the colour of its NPC type
- * or message kind when highlighted, plain otherwise.
- */
 export const getNotificationColors = (
   key: string | undefined,
   highlight: boolean | undefined,
@@ -55,7 +50,6 @@ export const getSubtleBackgroundColor = (
 ) =>
   `color-mix(in srgb, ${getNotificationColors(key, true, npcTypeColors).background} 37.5%, transparent)`;
 
-/** How brightly a row plays its arrival: rarer NPCs flash harder. */
 export const getArrivalStrength = (key?: string) => {
   switch (key) {
     case NpcType.TITAN:

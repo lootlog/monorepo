@@ -9,7 +9,6 @@ import { MemberSummary } from "#src/contracts/shared";
 
 export type LootShare = Record<string, string[]>;
 
-// The realtime snapshot carries this response in its encoded form.
 export const LootResponse = Schema.Struct({
   ...LootSnapshot.fields,
   submissions: Schema.optionalKey(Schema.Array(LootSubmission)),

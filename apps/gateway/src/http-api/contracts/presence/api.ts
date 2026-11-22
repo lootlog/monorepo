@@ -1,4 +1,3 @@
-/** Endpoints owned by the presence HTTP module. */
 import { HttpApiEndpoint, HttpApiGroup, OpenApi } from "effect/http-api";
 import {
   OrganizationPresence,

@@ -12,11 +12,6 @@ export const LOOTLOG_CHARACTERS_CONFIG_MUTATION_KEY = [
   "userLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig",
 ];
 
-/**
- * Builds a character entry from the account map as it is in the cache right
- * now, optimistic updates included, so a toggle derived from it never undoes
- * a click that is still saving.
- */
 export type LootlogCharacterConfigUpdater = (
   current: UserLootlogConfigAccountResponseDtoOutput | undefined,
 ) => CreateOrUpdateLootlogCharacterConfigDto;
@@ -38,7 +33,6 @@ export const useUpdateLootlogCharactersConfig = () => {
 
   const mutation = useMutation({
     mutationKey: LOOTLOG_CHARACTERS_CONFIG_MUTATION_KEY,
-    // Writes for one account go out in order, so the last click wins.
     scope: { id: "lootlog-characters-config" },
     mutationFn: (options: CreateOrUpdateLootlogCharacterConfigDto) => {
       if (!accountId) {
@@ -50,9 +44,6 @@ export const useUpdateLootlogCharactersConfig = () => {
         options,
       );
     },
-    // The response is the saved character entry; it replaces the optimistic
-    // one instead of triggering a refetch of the whole account map. While a
-    // later write is queued, the response predates its optimistic state.
     onSuccess: (data) => {
       if (!hasLaterUpdates()) {
         queryClient.setQueryData<UserLootlogConfigAccountResponseDtoOutput>(
@@ -71,8 +62,6 @@ export const useUpdateLootlogCharactersConfig = () => {
           queryKey,
         );
 
-      // Applied before anything is awaited, so the next click in the same
-      // tick already derives from this one.
       if (previousData) {
         queryClient.setQueryData(queryKey, {
           ...previousData,
@@ -87,9 +76,6 @@ export const useUpdateLootlogCharactersConfig = () => {
 
       return { previousData };
     },
-    // The snapshot may hold an earlier write's optimistic state that also
-    // failed, so it goes back as outdated rather than confirmed, and a
-    // refetch replaces it.
     onError: (_err, variables, context) => {
       if (!hasLaterUpdates()) {
         if (context?.previousData)

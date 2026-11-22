@@ -4,17 +4,10 @@ import { npcCatalogKey, npcMonsterKey } from "#src/npcs/npcs.service";
 import { earliestSeenAt, toSeenAt } from "#src/shared/first-seen";
 import type { CatalogItemObservation } from "@lootlog/protocol/rabbit/catalog";
 
-/**
- * An item keeps the NPCs of this many monsters it drops from; later monsters
- * are not added. A monster's every identity counts once: a dialog NPC such as
- * Zamrożony czarodziej stands in a dozen places.
- */
 const MAX_DROP_MONSTERS = 20;
 
-/** An NPC an item drops from, as the NPC catalog names it. */
 export type DropSource = {
   key: string;
-  /** The monster across its catalog identities, as `npcMonsterKey` names it. */
   monsterKey: string;
   id: number;
   identityNamespace: NpcIdentityNamespace;
@@ -25,14 +18,11 @@ export type DropSource = {
   type: string | null;
 };
 
-/** What the catalog knows of an item's drops, merged across observations. */
 export type ItemDropFields = {
   firstSeenAt: number | null;
   droppedBy: DropSource[];
   droppedByKeys: string[];
-  /** The monsters of `droppedBy`, so any identity of one finds its drops. */
   droppedByMonsterKeys: string[];
-  /** The NPC types of `droppedBy`, for filtering by the kind of boss. */
   droppedByTypes: string[];
 };
 
@@ -41,7 +31,6 @@ type IndexItem = CatalogItemObservation;
 const toDropSource = (
   npc: NonNullable<IndexItem["droppedBy"]>,
 ): DropSource | null =>
-  // Without a Margonem type the NPC has no catalog entry to link to.
   npc.margonemType === null
     ? null
     : {
@@ -57,8 +46,6 @@ const toDropSource = (
       };
 
 export const toItemDropFields = (item: IndexItem): ItemDropFields => {
-  // Some older loots name another edition's NPC; its page lists none of the
-  // item's edition, so it is no source of it.
   const source =
     item.droppedBy?.gameVersion === item.gameVersion
       ? toDropSource(item.droppedBy)
@@ -73,12 +60,6 @@ export const toItemDropFields = (item: IndexItem): ItemDropFields => {
   };
 };
 
-/**
- * One item's drops from two observations: the earliest time either saw it
- * and every NPC either names, the stored ones first. Merging is commutative
- * apart from that order, so redelivered or reordered deliveries settle on the
- * same entry. Documents indexed before these fields existed have none.
- */
 export const mergeItemDropFields = (
   incoming: ItemDropFields,
   stored: Partial<ItemDropFields> | undefined,

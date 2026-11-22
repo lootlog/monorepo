@@ -22,7 +22,6 @@ import {
   type TimerUpdatePorts,
 } from "./timer-update-publication.js";
 
-// A reset repeats the window as entered, counted from the reset.
 const withRespawn = (minSpawnTime: Date, maxSpawnTime: Date, now: Date) => {
   const respawn = respawnFromSpawnWindow(
     (minSpawnTime.getTime() - now.getTime()) / 1000,
@@ -104,7 +103,6 @@ export const makeManualTimer = (
 
         let timer: typeof timerTable.$inferSelect | undefined;
 
-        // A fresh id only collides with a manual timer of the same name.
         for (
           let attempt = 0;
           !timer && attempt < MANUAL_TIMER_INSERT_ATTEMPTS;

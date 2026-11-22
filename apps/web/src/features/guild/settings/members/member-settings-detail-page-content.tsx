@@ -107,7 +107,6 @@ export const MemberSettingsDetailPageContent = () => {
     );
   }
 
-  // The route has no loader, so this page shows its own loading and failure.
   if (!member) {
     return isError ? (
       <SettingsListError
@@ -140,7 +139,6 @@ export const MemberSettingsDetailPageContent = () => {
     <DetailPage
       name={member.name}
       media={
-        // The page is the member, so the avatar opens nothing.
         <MemberIdentity
           member={{ memberId: member.id }}
           fallback={{

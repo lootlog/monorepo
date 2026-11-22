@@ -106,7 +106,6 @@ describe("AirTagObservationController", () => {
       edge: createOther({ x: 20, y: 16 }),
     });
     vi.advanceTimersByTime(AIR_TAG_BATCH_INTERVAL_MS);
-    // Leaves before its first batch went out.
     controller.handle({ unsent: createOther({ x: 11, y: 10 }) });
     controller.handle({
       near: { del: 1 },
@@ -125,7 +124,6 @@ describe("AirTagObservationController", () => {
     });
     expect(onLeftMap.mock.calls).toEqual([["near"], ["unsent"]]);
 
-    // Without war shadow the game knows every player on the map.
     setTestRuntimeGame({
       hero: { x: 10, y: 10 },
       map: { id: 42, name: "Ithan", visibility: 0 },
@@ -182,11 +180,6 @@ describe("AirTagObservationController", () => {
       vi.advanceTimersByTime(100);
     }
 
-    // The heartbeat, its scan granularity and the batch window bound the gap
-    // between two reports of a target that never moves; it settles at the
-    // heartbeat itself. Once that bound reaches the window the gateway keeps a
-    // target in, the target expires and silently leaves every observer's map,
-    // so the three constants spend one budget rather than standing on their own.
     const gaps = publishedAt
       .slice(1)
       .map((at, index) => at - publishedAt[index]!);
@@ -213,7 +206,6 @@ describe("AirTagObservationController", () => {
       ],
     });
 
-    // A partial update omits the profession; the observation keeps it.
     controller.handle({ "123": { stasis: 1 } });
     vi.advanceTimersByTime(AIR_TAG_BATCH_INTERVAL_MS);
     expect(publisher).toHaveBeenCalledTimes(2);
@@ -222,7 +214,6 @@ describe("AirTagObservationController", () => {
       observations: [expect.objectContaining({ prof: "w", stasis: true })],
     });
 
-    // Margonem sends no `stasis: 0` when a player in stasis moves.
     controller.handle({ "123": { x: 11, y: 10, dir: 1 } });
     vi.advanceTimersByTime(AIR_TAG_BATCH_INTERVAL_MS);
     expect(publisher).toHaveBeenCalledTimes(3);
@@ -261,7 +252,6 @@ describe("AirTagObservationController", () => {
       mapId: 42,
       publisher,
     });
-    // Neutral players, friends and clan mates are most of a map; none is reported.
     controller.handle({
       "123": createOther({ relation: 1 }),
       friend: createOther({ relation: 2 }),
@@ -271,7 +261,6 @@ describe("AirTagObservationController", () => {
     vi.advanceTimersByTime(AIR_TAG_HEARTBEAT_INTERVAL_MS * 2);
     expect(publisher).not.toHaveBeenCalled();
 
-    // A clan war declared while both players stay on the map.
     controller.handle({
       "123": { relation: 6, clan: { id: 7, name: "Rivals" } },
     });
@@ -291,7 +280,6 @@ describe("AirTagObservationController", () => {
     vi.advanceTimersByTime(AIR_TAG_BATCH_INTERVAL_MS);
     expect(publisher).toHaveBeenCalledTimes(1);
 
-    // The war ends: the gateway stops counting this observer, and no heartbeat follows.
     controller.handle({ "123": { relation: 1 } });
     vi.advanceTimersByTime(AIR_TAG_BATCH_INTERVAL_MS);
     expect(publisher).toHaveBeenLastCalledWith({
@@ -302,7 +290,6 @@ describe("AirTagObservationController", () => {
     vi.advanceTimersByTime(AIR_TAG_HEARTBEAT_INTERVAL_MS * 2);
     expect(publisher).toHaveBeenCalledTimes(2);
 
-    // The gateway rate-limited the withdrawal: it still has to go out.
     const withdrawal = publisher.mock.calls[1]?.[0];
 
     if (!withdrawal) throw new Error("Expected a batch");
@@ -333,7 +320,6 @@ describe("AirTagObservationController", () => {
     const first = publisher.mock.calls[0]?.[0];
 
     if (!first) throw new Error("Expected a batch");
-    // The gateway already has a reporter for 123; this observer keeps 456.
     controller.applyAcknowledgement(first, ["123"]);
     publisher.mockClear();
 
@@ -346,7 +332,6 @@ describe("AirTagObservationController", () => {
       ),
     ).not.toContain("123");
 
-    // The gateway says the reporter stopped watching: no waiting for silence.
     publisher.mockClear();
     controller.takeOver(["123", "gone"]);
     vi.advanceTimersByTime(AIR_TAG_BATCH_INTERVAL_MS);
@@ -358,10 +343,8 @@ describe("AirTagObservationController", () => {
     const offer = publisher.mock.calls[0]?.[0];
 
     if (!offer) throw new Error("Expected a batch");
-    // Another standby was quicker.
     controller.applyAcknowledgement(offer, ["123"]);
 
-    // The reporter left or lost its connection: nothing arrives any more.
     reportedByOthers = false;
     publisher.mockClear();
     vi.advanceTimersByTime(

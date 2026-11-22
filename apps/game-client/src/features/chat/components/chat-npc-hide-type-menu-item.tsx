@@ -13,10 +13,6 @@ type ChatNpcHideTypeMenuItemProps = {
   npc: NonNullable<ChatMessageType["npc"]>;
 };
 
-/**
- * Context menu entry that hides every chat message of the clicked NPC's rank.
- * Mounted only while the menu is open so message rows stay cheap to render.
- */
 export const ChatNpcHideTypeMenuItem: FC<ChatNpcHideTypeMenuItemProps> = ({
   npc,
 }) => {

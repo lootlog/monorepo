@@ -13,7 +13,6 @@ const FAILED_REQUEST_LIMIT = 5;
 
 type DiagnosticsInput = {
   bridgeHealth: RuntimeBridgeHealth;
-  /** What failed, when the report accompanies a failure notice. */
   failure?: string;
 };
 
@@ -32,18 +31,14 @@ const describeRealtime = (): string => {
     : "connected, not joined";
 };
 
-// Organization, resource and character ids all carry digits; route words
-// such as `timers` or `manual` do not.
 const IDENTIFIER_SEGMENT = /\d/u;
 
-/** A route template of the path, so a report never carries identifiers. */
 const redactPath = (path: string) =>
   path
     .split("/")
     .map((segment) => (IDENTIFIER_SEGMENT.test(segment) ? ":id" : segment))
     .join("/");
 
-/** Host and route template only: paths and query strings carry identifiers. */
 const describeEndpoint = (endpoint: string): string => {
   try {
     const url = new URL(endpoint, window.location.origin);
@@ -76,12 +71,6 @@ const describeFailedRequests = (): string[] => {
   );
 };
 
-/**
- * One plain-text bundle a player can paste into a bug report. It carries the
- * build, the installation, and the state of each connection, and deliberately
- * leaves out identities, tokens, cookies and request bodies. Keys stay in
- * English so reports read the same whatever the product language.
- */
 export const createDiagnosticsReport = ({
   bridgeHealth,
   failure,

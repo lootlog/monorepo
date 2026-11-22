@@ -42,18 +42,12 @@ type ItemsFilterPanelProps = {
   onChange: (change: Partial<ItemsSearch>) => void;
 };
 
-// Types no equipment slot holds, such as potions, keys and quest items.
 const OTHER_TYPE_OPTIONS = ITEM_TYPE_OPTIONS.filter(
   (type) => !EQUIPMENT_SLOTS.some((slot) => slot.types.includes(type)),
 );
 
 const TILE_GRID = "grid grid-cols-2 gap-1.5";
 
-/**
- * Every filter of the item search, folded into sections. The equipment slots
- * come first and are drawn as the game's equipment, the way players pick
- * what to look for.
- */
 export function ItemsFilterPanel({ search, onChange }: ItemsFilterPanelProps) {
   const listFilter = (
     key: "professions" | "rarities" | "bonuses" | "bosses" | "stats" | "types",

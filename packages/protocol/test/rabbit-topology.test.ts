@@ -7,7 +7,6 @@ import {
   type ConsumerRoute,
 } from "../src/rabbit/topology.ts";
 
-/** Every exchange and routing key a failed delivery of `route` can be sent to. */
 const failureDestinations = (route: ConsumerRoute) => {
   const policy = route.failurePolicy;
 
@@ -37,7 +36,6 @@ describe("canonical RabbitMQ topology", () => {
     });
   });
 
-  // The broker silently drops a message published to an unbound routing key.
   test.each<ConsumerFailure>([
     "retry",
     "broker-retry",

@@ -1,6 +1,5 @@
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 
-/** The filters of a stats page's filter bar, still loading; narrow pages move them to a panel. */
 export const StatsFiltersSkeleton = () => (
   <>
     <Skeleton

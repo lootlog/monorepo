@@ -106,9 +106,7 @@ describe("user shell navigation", () => {
         name: "Page action",
       }),
     ).toBeNull();
-    // A settings tab is a sibling of the overview, not its child.
     expect(screen.queryByRole("link", { name: /^Wróć/ })).toBeNull();
-    // The phone tab bar shows the open section too; the top bar names it.
     expect(
       screen.getByText("Ustawienia", { ignore: '[aria-label="Sekcje"] *' }),
     ).toBeDefined();

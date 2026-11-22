@@ -9,7 +9,6 @@ type MemberKillBreakdownToggleProps = {
   onToggle: () => void;
 };
 
-/** Shows or hides how the member's points for a kill add up. */
 export const MemberKillBreakdownToggle = ({
   monsterName,
   isExpanded,

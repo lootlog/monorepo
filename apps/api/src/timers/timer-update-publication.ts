@@ -13,7 +13,6 @@ export interface TimerUpdatePorts {
   readonly publish: EventPublisher["publish"];
 }
 
-/** Publishes the realtime and notification facts together; both are attempted even when one fails. */
 export const publishTimerEvents = Effect.fnUntraced(function* (
   realtime: Effect.Effect<void, MessagingError>,
   notifications: Effect.Effect<void, MessagingError>,

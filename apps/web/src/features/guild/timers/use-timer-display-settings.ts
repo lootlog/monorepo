@@ -13,10 +13,6 @@ const params = { domains: "timers,appearance" };
 const GENERAL_DEFAULTS =
   SETTINGS_CATALOG.timers.fields.generalConfig.defaultValue;
 
-/**
- * The player's timer settings from the game client, so the panel removes,
- * keeps, counts down and paints timers the way the game does.
- */
 export const useTimerDisplaySettings = () => {
   const { data } = useSettingsDocumentsControllerGetPreferences(params, {
     query: { staleTime: 60_000, retry: false },
@@ -44,7 +40,6 @@ export const useTimerDisplaySettings = () => {
     return resolveTimerColorPaint(selectedColor, customColor, overriddenColor);
   };
 
-  // Kept on screen after the removal delay, as chosen in the game client.
   const isPinned = (timer: { world: string; timerKey: string }) =>
     timers.alwaysVisibleExpiredTimers?.[timer.world]?.includes(
       timer.timerKey,

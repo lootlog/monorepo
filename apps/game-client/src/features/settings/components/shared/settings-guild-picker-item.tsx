@@ -9,7 +9,6 @@ type SettingsGuildPickerItemProps = {
   className?: string;
 };
 
-/** One server card; also stacked by the reorderable servers list. */
 export const SettingsGuildPickerItem: FC<SettingsGuildPickerItemProps> = ({
   guild,
   className,

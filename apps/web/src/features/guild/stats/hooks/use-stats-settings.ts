@@ -16,7 +16,6 @@ import {
   type KillStatsPeriod,
 } from "@/features/kills/kill-stats-period";
 
-// An absent key is the default, so a default never reads as an active filter.
 const statsSearchParsers = {
   minLvl: parseAsString.withDefault(""),
   maxLvl: parseAsString.withDefault(""),
@@ -31,7 +30,6 @@ const loadStatsSearch = createLoader(statsSearchParsers);
 
 const SEARCH_PUBLISH_DELAY_MS = 500;
 
-/** A stats page's filters, with the Organization's world they apply to. */
 export type StatsSettings = {
   minLvl: string;
   maxLvl: string;
@@ -53,14 +51,9 @@ const toStatsSettings = (
   world,
 });
 
-/** The settings a stats route's loader prefetches for, read from its URL. */
 export const readStatsSettings = (searchStr: string, world: string | null) =>
   toStatsSettings(loadStatsSearch(searchStr), world);
 
-/**
- * A stats page's filters and list page in its URL. The search input keeps a
- * draft; the URL follows once typing pauses.
- */
 export const useStatsSettings = () => {
   const { world } = useGuildWorld();
 
@@ -79,7 +72,6 @@ export const useStatsSettings = () => {
     void setPage(null);
   }, SEARCH_PUBLISH_DELAY_MS);
 
-  // The page belongs to the world it was picked on.
   const pageWorld = useRef(world);
 
   useEffect(() => {
@@ -89,7 +81,6 @@ export const useStatsSettings = () => {
     void setPage(null);
   }, [world, setPage]);
 
-  // Every filter change starts the list over.
   const updateFilters = (next: Parameters<typeof setFilters>[0]) => {
     void setFilters(next);
     void setPage(null);
@@ -99,7 +90,6 @@ export const useStatsSettings = () => {
     settings: toStatsSettings(filters, world),
     searchDraft,
     hasActiveFilters,
-    /** Zero-based list page; the URL counts from 1. */
     pageIndex: Math.max((page ?? 1) - 1, 0),
     setPageIndex: (pageIndex: number) => {
       void setPage(pageIndex > 0 ? pageIndex + 1 : null);

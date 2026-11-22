@@ -80,7 +80,6 @@ const getNpcLabel = (rule: NotificationRule, t: Translator) => {
     : t("settings.notifications.allNpcs");
 };
 
-/** When and where the rule sends, as the parts of one sentence. */
 const getRuleSummary = (
   rule: NotificationRule,
   t: Translator,

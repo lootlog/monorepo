@@ -1,4 +1,3 @@
-/** Shared input and output schemas for the reservations feature. */
 import * as Schema from "effect/Schema";
 import {
   DateTimeWithOffsetString,
@@ -10,10 +9,6 @@ import {
 } from "@lootlog/schema/http-scalars";
 
 const ReservationAuthor = Schema.Struct({
-  /**
-   * The author's internal User id, or null for a reservation shared from
-   * another Organization and for one stored before User ids.
-   */
   userId: Schema.NullOr(Schema.String),
   displayName: Schema.String,
   avatarUrl: Schema.Union([Schema.String, Schema.Null]),

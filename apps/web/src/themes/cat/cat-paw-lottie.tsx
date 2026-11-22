@@ -23,7 +23,6 @@ export const CatPawLottie: FC<CatPawLottieProps> = ({
       ) : (
         <Lottie
           src={animationData}
-          // Three plays of the 46-frame, 30-fps asset stay below five seconds.
           loop={2}
           autoplay
           subscriptions={{ complete: () => setCompleted(true) }}

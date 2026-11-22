@@ -12,10 +12,6 @@ type ChatReadEntry = {
 
 export type ChatReadState = Record<string, ChatReadEntry[]>;
 
-/**
- * Records an unread arrival. Whether it needs the player's attention is
- * decided by `reconcileChatReadState` once the message is in the history.
- */
 export const receiveChatMessage = (
   state: ChatReadState,
   message: ChatMessageResponseDtoOutput,
@@ -111,7 +107,6 @@ const EMPTY_UNREAD_SUMMARY: ChatUnreadSummary = Object.freeze({
   reports: false,
 });
 
-/** One pass over the state for every guild the header renders a badge for. */
 export const getChatUnreadSummaryByGuildId = (
   state: ChatReadState,
   guildIds: readonly string[],
@@ -138,11 +133,6 @@ type ReconcileChatReadStateInput = {
   ) => boolean;
 };
 
-/**
- * Aligns persisted read entries with the messages the transcript can show:
- * drops revoked organizations, prunes entries the transcript no longer renders
- * (evicted, or hidden by a rank filter), and flags loaded mentions.
- */
 export const reconcileChatReadState = (
   state: ChatReadState,
   {

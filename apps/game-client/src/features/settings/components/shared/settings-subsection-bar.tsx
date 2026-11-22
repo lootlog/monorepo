@@ -10,10 +10,6 @@ type SettingsSubsectionBarProps = {
   onSelect: (id: string) => void;
 };
 
-/**
- * Subsection switcher above the domain content. Its own tabs root drives
- * navigation only; the selected subsection renders through the settings path.
- */
 export const SettingsSubsectionBar: FC<SettingsSubsectionBarProps> = ({
   label,
   options,
@@ -25,7 +21,6 @@ export const SettingsSubsectionBar: FC<SettingsSubsectionBarProps> = ({
     onValueChange={(id) => onSelect(String(id))}
     className="ll:shrink-0 ll:px-4"
   >
-    {/* Matches the search field height so both columns share one top row. */}
     <TabsList
       aria-label={label}
       className="ll:gap-1.5 ll:rounded-none ll:bg-transparent ll:p-0 ll:group-data-horizontal/tabs:h-8"

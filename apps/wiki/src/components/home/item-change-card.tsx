@@ -7,10 +7,6 @@ import {
   formatRevisionDays,
 } from "@/lib/item-revision-changes";
 
-/**
- * An item the game changed, as a row of the catalog's lists: its name over
- * when Lootlog saw its latest change and how much that change altered.
- */
 export function ItemChangeCard({ item }: { item: CatalogItemDtoOutput }) {
   const latest = item.revisions.at(-1);
 

@@ -62,7 +62,6 @@ export function useEventSummaryDialog({
   const { deck, slides, activeIndex, activeSlide, isFinalSlide } =
     resolveSlideState();
 
-  // This state drives the render-time slide reset when reopening; changing it to a ref would lose the committed reopen transition.
   // oxlint-disable-next-line react-doctor/rerender-state-only-in-handlers
   const [wasOpen, setWasOpen] = useState(open);
 

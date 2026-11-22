@@ -22,7 +22,6 @@ import { portalText } from "@/lib/translations";
 
 const mdxComponents = { ...defaultMdxComponents, Step, Steps, Tab, Tabs };
 
-/** The router base path ends with a slash, page URLs start with one. */
 function withBasePath(path: string) {
   return `${import.meta.env.BASE_URL.replace(/\/$/, "")}${path}`;
 }

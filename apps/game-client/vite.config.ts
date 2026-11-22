@@ -5,7 +5,6 @@ import monkey from "vite-plugin-monkey";
 import { visualizer } from "rollup-plugin-visualizer";
 import { nonGameSubdomains } from "./extension/matches.ts";
 
-// https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, import.meta.dirname, "");
   const shared = gameClientViteConfig(mode);

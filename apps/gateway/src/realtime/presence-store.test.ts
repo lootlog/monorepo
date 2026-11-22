@@ -379,7 +379,6 @@ const session = (permissions: Permission[]): SessionData =>
     ],
   });
 
-// Reads presence outside the game, where no publication is required.
 const webViewer = (permissions: Permission[]): SessionData => ({
   ...session(permissions),
   platform: "web-app",
@@ -406,7 +405,6 @@ const numberedSocket = (index: number, overrides: Partial<SessionData> = {}) =>
 const gameSocket = (overrides: Partial<SessionData> = {}) =>
   socket({ ...session([]), character, ...overrides });
 
-// Publishes to every Lootlog of the session, as a client whose character catches for all of them.
 const joinedOrganizations = (target: GatewaySocket) =>
   target.data.guilds.map(({ guild }) => guild.id);
 
@@ -483,7 +481,6 @@ const deltaChanges = (hub: RecordingHub, action: "upsert" | "remove") =>
       : [],
   );
 
-/** Holds every `mget` reply, read before the gate, until `release`. */
 const gateMget = (redis: MemoryRedis) => {
   const started = Promise.withResolvers<void>();
   const gate = Promise.withResolvers<void>();
@@ -519,7 +516,6 @@ describe("PresenceStore", () => {
         await publish(store, publisher, { isAfk: true });
       else await disconnect(store, publisher);
 
-      // The change is stored but not yet announced, so the revision is unchanged.
       const joined = readSnapshot(store, viewer);
 
       read.release();
@@ -597,7 +593,6 @@ describe("PresenceStore", () => {
     const join = async (index: number) => {
       const joining = numberedSocket(index);
       await publish(store, joining);
-      // Every joining client fetches the Organization snapshot.
       await readSnapshot(store, joining.data);
     };
 
@@ -658,7 +653,6 @@ describe("PresenceStore", () => {
     await publish(store, first);
     await publish(store, second);
     spyOn(hub, "publishPresence").mockImplementationOnce(async () => {
-      // A departure queued while the failed flush is in flight is newer.
       await disconnect(store, second);
       throw new Error("Redis publish failed");
     });
@@ -701,7 +695,6 @@ describe("PresenceStore", () => {
     await flushing;
     await flush(store);
 
-    // Batches settling during the interruption may repeat; none may be lost.
     const delivered = new Set(
       deltaChanges(hub, "upsert").map((change) =>
         change.action === "upsert" ? change.presence.sessionId : undefined,

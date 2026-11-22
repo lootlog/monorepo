@@ -2,7 +2,6 @@ import { BattleAnalyticsOverview } from "@/features/user/battle-panel/battle-pan
 import { getAbyssSeasonAnalyticsParams } from "./abyss-season-params";
 import { useAbyssSeason } from "./use-abyss-season";
 
-/** The season's analytics: the battle panel's overview for its battles. */
 export function AbyssSeasonAnalytics() {
   const { characterId, season } = useAbyssSeason();
 

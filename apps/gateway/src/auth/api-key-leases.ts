@@ -18,7 +18,6 @@ import { Hub } from "#src/realtime/realtime-hub";
 import { hasValidApiKeyLease, type GatewaySocket } from "#src/realtime/session";
 
 export class ApiKeyLeases {
-  /** Renews the leases of this replica's API key sessions while it runs. */
   static readonly layer = Layer.effectDiscard(
     Effect.gen(function* () {
       const hub = yield* Hub;
@@ -104,7 +103,6 @@ export class ApiKeyLeases {
         return;
       }
 
-      // Lease age starts before remote checks, so a slow renewal cannot extend stale authority.
       const checkedAt = now();
       const valid = new Map<string, Extract<ApiKeyStatus, { valid: true }>>();
 

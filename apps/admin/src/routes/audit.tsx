@@ -8,7 +8,6 @@ import { AUDIT_PAGE_SIZE, listAudit } from "@/server/queries";
 type AuditSearch = { page?: number | undefined };
 
 export const Route = createFileRoute("/audit")({
-  // Returns the key even when empty, or the raw value would stay in place.
   validateSearch: (search: { page?: unknown }): AuditSearch => ({
     page: readPage(search.page),
   }),

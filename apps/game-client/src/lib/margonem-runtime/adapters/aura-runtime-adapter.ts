@@ -1,6 +1,5 @@
 import type { CharacterTipUpdate } from "@lootlog/margonem/tooltip";
 
-/** The frame a character drew: its source rect on the sprite and where it landed on screen. */
 export type RuntimeCharacterFrame = {
   image: CanvasImageSource;
   sx: number;
@@ -11,16 +10,12 @@ export type RuntimeCharacterFrame = {
   dy: number;
 };
 
-/** A character as the aura sees it this frame. */
 export type RuntimeAuraCharacter = {
   frame: RuntimeCharacterFrame;
-  /** The character's draw order (Character.js `getOrder`). */
   order: number;
-  /** Height of the sprite's feet below the frame top; the frame height for most outfits. */
   feetHeight: number;
 };
 
-/** The part of the canvas context Character.js `drawIcon` draws a character with. */
 type CharacterIconContext = Pick<
   CanvasRenderingContext2D,
   | "globalAlpha"
@@ -32,7 +27,6 @@ type CharacterIconContext = Pick<
   | "restore"
 >;
 
-/** What Character.js gives every drawn character, the hero and others. */
 type RuntimeCanvasCharacter = {
   imgLoaded?: boolean;
   fh?: number;
@@ -70,12 +64,6 @@ const getRuntimeWindow = (): AuraRuntimeWindow => window;
 
 let recorded: RuntimeCharacterFrame | null = null;
 
-/**
- * Stands in for the game canvas while `drawIcon` runs and records the frame it
- * blits instead of drawing it. In water `drawIcon` blits twice, the full frame
- * faded and then the part above the water (Character.js:349); the tallest one
- * is the whole frame.
- */
 const recorder = {
   globalAlpha: 1,
   drawImage(...args: unknown[]) {
@@ -103,7 +91,6 @@ const recorder = {
   restore() {},
 } satisfies CharacterIconContext;
 
-/** Takes the frame the recorder kept during `drawIcon` and clears it. */
 function takeRecordedFrame(): RuntimeCharacterFrame | null {
   const frame = recorded;
   recorded = null;
@@ -111,7 +98,6 @@ function takeRecordedFrame(): RuntimeCharacterFrame | null {
   return frame;
 }
 
-/** Whether a character tip's object is a hero or other drawn by Character.js. */
 function isCanvasCharacter(
   object: CharacterTipUpdate["object"],
 ): object is RuntimeCanvasCharacter {
@@ -123,7 +109,6 @@ function hasPixels(image: CanvasImageSource): boolean {
     return image.complete && image.naturalWidth > 0;
   }
 
-  // An SVG image's width is an animated length, not pixels; it is drawn as it is.
   if ("width" in image && Number.isFinite(image.width)) {
     return Number(image.width) > 0 && Number(image.height) > 0;
   }
@@ -131,10 +116,6 @@ function hasPixels(image: CanvasImageSource): boolean {
   return true;
 }
 
-/**
- * Asks the character which frame it draws now through the game's own
- * `drawIcon` (Character.js:285), so water, animated outfits and offsets match.
- */
 function captureCharacterFrame(
   character: RuntimeCanvasCharacter,
 ): RuntimeCharacterFrame | null {
@@ -144,9 +125,6 @@ function captureCharacterFrame(
   character.drawIcon(recorder, true);
   const frame = takeRecordedFrame();
 
-  // On a map change the hero loses its position for a few frames (Hero.js
-  // `onClear` deletes rx/ry), so drawIcon blits at NaN; a sprite swapped for
-  // the new map may not have loaded yet.
   if (
     !frame ||
     !(frame.sw > 0 && frame.sh > 0) ||
@@ -159,7 +137,6 @@ function captureCharacterFrame(
   return hasPixels(frame.image) ? frame : null;
 }
 
-/** The same checks that skip a character in Character.js `draw`. */
 function isHiddenByGame(character: RuntimeCanvasCharacter): boolean {
   const engine = getRuntimeWindow().Engine;
 
@@ -189,19 +166,16 @@ function toAuraCharacter(
   };
 }
 
-/** The NI map, its camera and the hero and others drawn on it. */
 export const auraRuntimeAdapter = {
   isAvailable(): boolean {
     return Boolean(getRuntimeWindow().Engine?.hero);
   },
 
-  /** The current map and its camera, or null while the map is not drawn. */
   getView(): { mapId?: number; camera: readonly [number, number] } | null {
     const runtimeWindow = getRuntimeWindow();
     const map = runtimeWindow.Engine?.map;
     const camera = map?.getOffset?.();
 
-    // The map is not drawn while the battle window covers it (Engine.js:981).
     if (
       !camera ||
       runtimeWindow.checkBattleWindowActive?.() ||
@@ -224,7 +198,6 @@ export const auraRuntimeAdapter = {
     );
   },
 
-  /** The hero or other a character tip belongs to. */
   getTipOwner(
     object: CharacterTipUpdate["object"],
   ): { accountId: string; characterId: string } | null {
@@ -237,12 +210,10 @@ export const auraRuntimeAdapter = {
       : { accountId: String(account), characterId: String(id) };
   },
 
-  /** `.tip-layer`, where Tips.js appends the one `.tip-wrapper` it shows. */
   getTipLayer(): HTMLElement | null {
     return getRuntimeWindow().Engine?.interface?.get$tipLayer?.()?.[0] ?? null;
   },
 
-  /** Rebuilds the cached tips of the given others, and of the hero when asked. */
   refreshTips(otherIds: Iterable<string>, hero: boolean): void {
     const engine = getRuntimeWindow().Engine;
 

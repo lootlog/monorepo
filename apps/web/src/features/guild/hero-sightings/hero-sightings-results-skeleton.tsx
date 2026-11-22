@@ -9,7 +9,6 @@ import {
 
 const SKELETON_ROWS = 6;
 
-/** Stands in for the board: a banded group heading above `HeroSightingRow`s. */
 export const HeroSightingsResultsSkeleton = () => (
   <div aria-busy="true">
     <div

@@ -13,7 +13,6 @@ const FieldSkeleton = () => (
   </div>
 );
 
-/** Stands in for an event edit tab: a banded section of fields. */
 export const EventEditSkeleton = () => (
   <section aria-busy="true">
     <div

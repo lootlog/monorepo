@@ -1,6 +1,5 @@
 import { GameCharacter } from "../game-character.schema.js";
 import { HeroTrackerEntranceSecondsLeft } from "#src/contracts/timers/schemas";
-/** Shared input and output schemas for the messaging feature. */
 import * as Schema from "effect/Schema";
 import { NotificationGoingPlayerSchema } from "@lootlog/schema/notification-going";
 import {
@@ -162,7 +161,6 @@ export const NotificationGoingRequest = Schema.Struct({
 
 export const NotificationGoingResponse = Schema.Struct({
   notificationId: NonEmptyString,
-  // Each Lootlog keeps its own answers, the same lists its members receive live.
   guilds: Schema.Array(
     Schema.Struct({
       guildId: NonEmptyString,

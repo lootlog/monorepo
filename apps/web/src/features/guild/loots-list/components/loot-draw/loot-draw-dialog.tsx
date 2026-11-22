@@ -3,11 +3,6 @@ import { useRef } from "react";
 import type { Item, Loot } from "@/lib/loots/loot-types";
 import { LootDrawDialogBody } from "./loot-draw-dialog-body";
 
-/**
- * The draw of one item. Loot managers draw it unless the Organization
- * excludes its NPC type, and void its result; everyone who sees the loot sees
- * the result. It stays mounted while closed, so it animates in and out.
- */
 export const LootDrawDialog = ({
   loot,
   item,
@@ -29,8 +24,6 @@ export const LootDrawDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className="flex max-h-[min(90dvh,48rem)] w-[calc(100%-1.5rem)] max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden p-0 shadow-2xl sm:max-w-3xl lg:max-w-4xl"
-        // Focus would land on the item tile in the header and open its
-        // tooltip over the dialog, so it starts on the body instead.
         initialFocus={bodyRef}
       >
         <LootDrawDialogBody

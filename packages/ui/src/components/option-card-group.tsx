@@ -13,7 +13,6 @@ type OptionCard<Value extends string> = {
   value: Value;
   title: string;
   description: string;
-  /** Shows the option in its own look, such as a font in that font. */
   style?: CSSProperties;
 };
 
@@ -26,7 +25,6 @@ type OptionCardGroupProps<Value extends string> = {
   className?: string;
 };
 
-/** A choice between a few modes, each a card with a title and a description. */
 export const OptionCardGroup = <Value extends string>({
   options,
   value,
@@ -47,7 +45,6 @@ export const OptionCardGroup = <Value extends string>({
     className={cn("grid grid-cols-1 gap-3 sm:grid-cols-2", className)}
   >
     {options.map((option) => (
-      // The label draws the card; a chosen card takes a clear primary border.
       <FieldLabel
         key={option.value}
         className="cursor-pointer has-data-checked:border-primary/60 dark:has-data-checked:border-primary/60"

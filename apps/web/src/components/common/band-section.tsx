@@ -10,26 +10,13 @@ type BandSectionProps = {
   id: string;
   title: string;
   description?: string;
-  /** How many of the section's items are on, such as `2/4`. */
   count?: ReactNode;
-  /** A control at the heading's end, such as the section's main action. */
   trailing?: ReactNode;
-  /** Lets wide content, such as the editor beside its preview, use the full width. */
   wide?: boolean;
-  /**
-   * Content that tiles the page edge to edge, such as a checklist, instead of
-   * fields in an inset column.
-   */
   tiled?: boolean;
   children: ReactNode;
 };
 
-/**
- * One part of a page, such as a form step or a group of details, under a
- * banded heading, as list groups are shown.
- * Pages render their sections straight in the page scroller marked
- * `data-under-top-bar`, so each heading can stay pinned.
- */
 export const BandSection = ({
   id,
   title,
@@ -41,15 +28,12 @@ export const BandSection = ({
   children,
 }: BandSectionProps) => (
   <section aria-labelledby={id}>
-    {/* The section's name stays pinned while its fields scroll past. */}
     <ListGroupHeading
       id={id}
       count={count}
       trailing={trailing}
       className={cn(
         LIST_BAND_HEADING_CLASS,
-        // Under the page's `FilterBar`, when it has one. Pinned a pixel
-        // higher, its top rule covers the rule of the bar or tabs above it.
         "sticky top-[calc(var(--page-sticky-top)+var(--filter-bar-height,0px)-1px)] z-10",
       )}
     >

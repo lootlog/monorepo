@@ -103,8 +103,6 @@ async function fixture(cacheMembers = true) {
   };
 
   let channels = [channel];
-  // Guilds announced at login carry their channels, so discord.js caches
-  // them as available; a plain REST guild does not.
   const gatewayGuildIds = new Set<string>();
   const restCalls: string[] = [];
   let memberFetchError: Error | undefined;
@@ -172,7 +170,6 @@ async function fixture(cacheMembers = true) {
           }
 
           return Effect.sync(() => {
-            // Every emitted wire payload must pass the same decoder as the API consumer.
             const key = [
               RabbitRoutingKey.GUILDS_CREATE,
               RabbitRoutingKey.GUILDS_UPDATE,
@@ -242,11 +239,6 @@ async function fixture(cacheMembers = true) {
 
 const channelsRoute = `/guilds/${guildId}/channels`;
 
-/**
- * Applies a gateway CHANNEL_UPDATE the way discord.js does: the cached channel
- * is cloned, then patched in place, and the clone is what handlers receive as
- * `oldChannel`.
- */
 type GatewayChannelPatch = Partial<Omit<APITextChannel, "type">> &
   Pick<APIChannel, "type">;
 
@@ -315,7 +307,6 @@ describe("Discord SDK to RabbitMQ contracts", () => {
           guildId,
           name: "testowankox",
           icon: updated.iconURL(),
-          // An animated banner is published still.
           banner:
             image &&
             `https://cdn.discordapp.com/banners/${guildId}/${image}.webp?size=512`,
@@ -338,7 +329,6 @@ describe("Discord SDK to RabbitMQ contracts", () => {
     const f = await fixture();
     const failingGuildId = "999999999999999999";
     f.guild.banner = "a_12345678901234567890123456789012";
-    // The failing guild is cached first.
     await f.announceGuild(failingGuildId);
     await f.announceGuild(guildId);
     f.rejectPublishesFor(failingGuildId);
@@ -574,9 +564,6 @@ describe("Discord SDK to RabbitMQ contracts", () => {
     const f = await fixture();
     const channel = await f.fetchChannel();
 
-    // discord.js clones the cached channel and patches it in place on a
-    // gateway CHANNEL_UPDATE; the handler receives that clone and the patched
-    // channel, so the projection key must see the overwrite change.
     const withOverwrite = {
       ...f.channel,
       permission_overwrites: [{ id: botId, type: 1, allow: "3072", deny: "0" }],

@@ -44,11 +44,6 @@ import {
 } from "lucide-react";
 import type { ComponentType } from "react";
 
-/**
- * Runtime registry that pairs the data-only manifest with React. It lives
- * apart from the manifest so search and the UI store can import manifest data
- * without pulling every subsection component into their module graph.
- */
 export const SETTINGS_DOMAIN_ICONS = {
   settings: Settings,
   crosshair: Crosshair,
@@ -89,8 +84,6 @@ export const SETTINGS_SUBSECTION_CONTENT = {
   sounds: SoundsSettingsTab,
   hotkeys: HotkeysSettingsTab,
   logs: LogsSettingsTab,
-  // The debug subsection is visible only in development; a constant `DEV`
-  // lets production builds drop the tab and everything only it imports.
   debug: import.meta.env.DEV ? DebugTab : () => null,
   "whats-new": WhatsNewSettingsTab,
   build: InformationSettingsTab,

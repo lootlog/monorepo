@@ -36,7 +36,6 @@ export const getCommandSuggestions = (
   return suggestions;
 };
 
-/** A completed `/grp` is already hidden as the mode, so it suggests nothing. */
 export const isCommandSuggestionsInput = (inputValue: string) => {
   return (
     inputValue.startsWith("/") &&

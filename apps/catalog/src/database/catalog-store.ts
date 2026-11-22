@@ -18,7 +18,6 @@ import {
 import type { CatalogDatabaseValue } from "./database.js";
 import { catalogItemTable, catalogNpcTable } from "./schema.js";
 
-/** The fields the writers look an item entry up by; the rest is the index's. */
 export type ItemDocumentKeys = {
   readonly uid: string;
   readonly id: number;
@@ -39,10 +38,8 @@ const WRITE_BATCH = 500;
 
 const READ_BATCH = 1000;
 
-/** An item id and the name its page goes by. */
 type CatalogItemName = { readonly id: number; readonly name: string };
 
-/** What the catalog index needs of a current NPC identity. */
 type CatalogNpcName = {
   readonly id: number;
   readonly name: string;
@@ -51,10 +48,6 @@ type CatalogNpcName = {
   readonly identityNamespace: NpcIdentityNamespace;
 };
 
-/**
- * Lookups by key and whole-catalog listings, answered from PostgreSQL: the
- * search index stays for searching and filtering.
- */
 export type CatalogReads<Npc> = {
   readonly monsterKeyOf: (
     npcKey: string,
@@ -73,13 +66,6 @@ export type CatalogReads<Npc> = {
   ) => Effect.Effect<CatalogNpcName[], EffectDrizzleQueryError>;
 };
 
-/**
- * The reads and writes one catalog change makes. Saving writes the entries
- * to PostgreSQL and replaces them in the search index before the change
- * commits, so a failed projection rolls the change back and its deliveries
- * are retried. A commit that fails after the projection leaves the index
- * ahead of the database until the entry's next change or a rebuild.
- */
 export type CatalogChange<Item, Npc> = {
   readonly itemsByUids: (
     uids: ReadonlyArray<string>,
@@ -103,17 +89,11 @@ export type CatalogChange<Item, Npc> = {
   readonly saveNpcs: (
     npcs: ReadonlyArray<Npc>,
   ) => Effect.Effect<void, CatalogWriteFailure>;
-  /**
-   * Stores entries that a later loot left as they were. The loot id orders
-   * observations in the database and no search reads it, so the index keeps
-   * the entry it has and the change does not wait for a projection.
-   */
   readonly saveNpcLoots: (
     npcs: ReadonlyArray<Npc>,
   ) => Effect.Effect<void, EffectDrizzleQueryError>;
 };
 
-/** Why a catalog change did not commit; only a rejected search request is final. */
 export type CatalogWriteFailure =
   | EffectDrizzleQueryError
   | SearchOperationFailure
@@ -171,8 +151,6 @@ export const makeCatalogStore = <
         .where(eq(catalogNpcTable.uid, npcKey))
         .limit(1)
         .pipe(Effect.map((rows) => rows[0]?.monsterKey)),
-    // An id the game gave to a later item names that item now, so of the
-    // entries of one id the latest seen gives its name, as its page shows it.
     itemNames: (gameVersion) =>
       database
         .selectDistinctOn([catalogItemTable.itemId], {
@@ -205,7 +183,6 @@ export const makeCatalogStore = <
             gameVersion === undefined
               ? undefined
               : eq(npcDocument("gameVersion"), gameVersion),
-            // A monster's former identities are history, not current NPCs.
             sql`${catalogNpcTable.document}->'current' is distinct from 'false'::jsonb`,
           ),
         )
@@ -295,8 +272,6 @@ export const makeCatalogStore = <
       Effect.gen(function* () {
         yield* storeNpcs(transaction, npcs);
 
-        // Every identity of a monster shows when the monster was first seen,
-        // so a save projects all of them, as they are after it.
         const identities = yield* npcLookups(transaction).npcsByMonsterKeys([
           ...new Set(npcs.map(({ monsterKey }) => monsterKey)),
         ]);
@@ -310,14 +285,6 @@ export const makeCatalogStore = <
     saveNpcLoots: (npcs) => storeNpcs(transaction, npcs),
   });
 
-  /**
-   * Runs one catalog change. Most deliveries repeat what the catalog already
-   * holds, so the change first runs on a snapshot, where a save only says
-   * that there is something to write: one that saves nothing is done, without
-   * waiting for a writer. One that saves runs again on the entries as they
-   * are by then, one at a time across every consumer and replica, so the
-   * index receives entries in the order the database committed them.
-   */
   const write = <A, E>(
     run: (change: CatalogChange<Item, Npc>) => Effect.Effect<A, E>,
   ) =>

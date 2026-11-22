@@ -3,11 +3,9 @@ import { formatNumber } from "@lootlog/domain/locale";
 
 type StatsDetailMetaProps = {
   subtitle?: ReactNode;
-  /** `capped` marks a value that stops at a list's size: at least this many. */
   metrics: { key: string; label: string; value: number; capped?: boolean }[];
 };
 
-/** What a member's or monster's stats page is about, with its totals, for its `DetailBar`. */
 export const StatsDetailMeta = ({
   subtitle,
   metrics,

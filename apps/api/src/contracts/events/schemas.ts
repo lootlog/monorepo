@@ -1,4 +1,3 @@
-/** Shared input and output schemas for the events feature. */
 import * as Schema from "effect/Schema";
 import {
   EVENT_SCORING_ACTION_TYPES,

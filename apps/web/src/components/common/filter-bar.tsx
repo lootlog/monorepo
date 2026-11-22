@@ -10,27 +10,14 @@ import { FilterBarContext } from "@lootlog/ui/components/filter-bar-context";
 import { observeTopBarGlass } from "@/components/layout/observe-top-bar-glass";
 
 type FilterBarProps = {
-  /** Names the group of filters and their panel; a skeleton has none. */
   ariaLabel?: string;
-  /**
-   * The bar's lead, which stays in it at every width: an `InlineSearchField`,
-   * or navigation such as view tabs on a page without a search.
-   */
   search?: ReactNode;
-  /** The filters, listed in the bar after the search. */
   children?: ReactNode;
-  /**
-   * The same filters stacked for a panel. Pages narrower than a results
-   * table open them from a floating button instead of listing `children`.
-   */
   stackedFilters?: ReactNode;
-  /** The active filters, listed under the controls. */
   chips?: FilterChip[];
-  /** How many filters are active, for pages without chips; defaults to the chips. */
   activeFilterCount?: number;
   clearFiltersLabel?: string;
   onClearFilters?: () => void;
-  /** Stands in for the chips while the page loads. */
   chipsPlaceholder?: ReactNode;
 };
 
@@ -38,8 +25,6 @@ const EMPTY_CHIPS: FilterChip[] = [];
 
 const FILTER_BAR_HEIGHT_PROPERTY = "--filter-bar-height";
 
-// Publishes the bar's height on its container, so a table header after it
-// pins right under it (`FILTERED_TABLE_HEADER_CLASS`) whatever its height.
 const publishFilterBarHeight = (bar: HTMLDivElement | null) => {
   const container = bar?.parentElement;
 
@@ -51,7 +36,6 @@ const publishFilterBarHeight = (bar: HTMLDivElement | null) => {
       `${bar.getBoundingClientRect().height}px`,
     );
 
-  // Measured on mount, then again whenever wrapping or chips change it.
   const observer = new ResizeObserver(measure);
 
   measure();
@@ -73,12 +57,6 @@ const attachFilterBar = (bar: HTMLDivElement | null) => {
   };
 };
 
-/**
- * A page's filters as an edge-to-edge bar that stays on top while the page
- * scrolls: a borderless search first, the filters after it, and the active
- * filters as chips under them. It belongs directly in the page scroller
- * marked `data-under-top-bar`, or in a `ResultsSurface`.
- */
 export const FilterBar = ({
   ariaLabel,
   search,
@@ -109,7 +87,6 @@ export const FilterBar = ({
             aria-label={ariaLabel}
             data-inline-search-bar
             className={cn(
-              // The bar's bottom rule lights up while the search has focus.
               "flex min-h-12 flex-wrap items-center gap-x-4 gap-y-2 py-2 transition-colors has-[[data-slot=inline-search]_input:focus-visible]:border-primary motion-reduce:transition-none",
               LIST_TILE_RULE_CLASS,
               LIST_TILE_INSET_CLASS,
@@ -118,8 +95,6 @@ export const FilterBar = ({
             <FilterBarContext value>
               {search}
               {!usesPanel && children && (
-                // At the bar's end; wraps under the search as a whole once
-                // both no longer fit.
                 <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-1">
                   {children}
                 </div>

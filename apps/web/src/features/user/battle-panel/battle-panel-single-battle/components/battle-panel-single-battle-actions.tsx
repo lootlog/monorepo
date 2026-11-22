@@ -87,9 +87,7 @@ export const BattlePanelSingleBattleActions: FC<
           }),
         ]);
         await navigate({ to: ROUTES.user.battlePanel.base });
-      } catch {
-        // The battle is already deleted; navigation failure must not offer a retry.
-      }
+      } catch {}
     })().finally(() => {
       setIsDeletePending(false);
     });

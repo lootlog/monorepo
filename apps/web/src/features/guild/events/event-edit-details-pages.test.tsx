@@ -39,8 +39,6 @@ const pages = {
   },
 } as const;
 
-// The form takes its values from the event after mounting and resets again
-// after each save; a reset that unregisters the fields leaves edits unsaveable.
 it.each(["settings", "rulebook"] as const)(
   "saves consecutive edits on the %s page",
   async (pageName) => {
@@ -98,7 +96,6 @@ it.each(["settings", "rulebook"] as const)(
     const saveButton = () =>
       screen.queryByRole("button", { name: /common.save/ });
 
-    // Each save resets the form; the next edit must still make it dirty.
     for (const [index, value] of ["Zima 2026", "Lato 2027"].entries()) {
       fireEvent.change(await page.field(), { target: { value } });
       fireEvent.click(
@@ -111,7 +108,6 @@ it.each(["settings", "rulebook"] as const)(
       await waitFor(() => expect(saveButton()).toBeNull());
     }
 
-    // So must an edit after discarding changes with the bar's reset.
     fireEvent.change(await page.field(), { target: { value: "Jesień" } });
     fireEvent.click(
       await screen.findByRole("button", { name: "common.reset" }),

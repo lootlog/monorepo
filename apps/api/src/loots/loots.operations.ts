@@ -16,7 +16,7 @@ import type {
   guildTable,
   roleTable,
 } from "#src/database/drizzle/organization.schema";
-import { type RedisService } from "#src/redis/redis.service";
+import type { RedisService } from "#src/redis/redis.service";
 import { randomInt } from "node:crypto";
 import {
   InvalidRequestError,
@@ -167,10 +167,6 @@ interface LootsDependencies {
   readonly persistence: LootPersistence;
   readonly query: LootQueryOperations;
   readonly redis: Pick<RedisService, "invalidateScopes" | "getOrSetJson">;
-  /**
-   * Wakes the outbox that announces committed draws. Only a hint: the outbox
-   * also polls, so a lost signal delays an announcement but never drops it.
-   */
   readonly signalDrawAnnouncements: Effect.Effect<void>;
 }
 
@@ -178,11 +174,6 @@ const CACHE_TTL_SECONDS = 10;
 
 const MAX_PENDING_DETAIL_READS = 1_024;
 
-/**
- * Keyset of the loot list, newest first: the last returned loot ID, and a
- * fingerprint of the filters the page was read with, so a cursor replayed
- * with other filters is rejected instead of skipping or repeating rows.
- */
 const LootListCursor = Schema.Struct({
   id: PositiveSafeInteger,
   filters: Schema.String,
@@ -372,8 +363,6 @@ export const makeLootsOperations = ({
 
     createDraw: (options) =>
       Effect.gen(function* () {
-        // The entrants come from the loot as the caller may see it, so a
-        // draw never reveals players or items outside their visibility.
         const loot = yield* visibleLoot(
           options.guild,
           options.accessPolicy,
@@ -409,7 +398,6 @@ export const makeLootsOperations = ({
           winnerIndex: ticketOrder[roll] ?? 0,
         });
 
-        // The list shows each item's standing winner.
         yield* invalidateList([options.guild.id]);
         yield* signalDrawAnnouncements;
 
@@ -499,7 +487,6 @@ export const makeLootsOperations = ({
             ),
           );
 
-        // Only the first page is cached: it is the one live views reread.
         if (after) return yield* read;
 
         const wireCodec = makeJsonCodec(LootListResponse);
@@ -534,7 +521,6 @@ export const makeLootsOperations = ({
           if (pending) {
             const loot = yield* restore(pending);
 
-            // Another replica may have archived the record after this flight began.
             if (!loot) return null;
 
             const visible = yield* restore(
@@ -546,12 +532,9 @@ export const makeLootsOperations = ({
 
           const read = query.fetchLootById(guild, permissions, roles, lootId);
 
-          // Bound retained flights; completed results are never cached.
           if (pendingDetails.size >= MAX_PENDING_DETAIL_READS)
             return yield* restore(read);
 
-          // Effect.cached starts a new run after every caller abandons the last
-          // one, so only the newest run, or no run at all, may release the key.
           let runs = 0;
 
           const release = (run: number) =>
@@ -559,7 +542,6 @@ export const makeLootsOperations = ({
               if (runs === run) pendingDetails.delete(key);
             });
 
-          // The flight outlives a disconnected initiator while others still wait.
           const shared = yield* Effect.cached(
             Effect.suspend(() => {
               const run = ++runs;

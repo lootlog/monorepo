@@ -192,7 +192,6 @@ export const useNotificationTemplateEditor = ({
 
     editor.focus();
     editor.update(() => {
-      // A variable inserted before the player typed anything goes at the end.
       if (!$isRangeSelection($getSelection())) {
         $getRoot().selectEnd();
       }

@@ -3,21 +3,17 @@ import { useSecondClockValue } from "@/hooks/utils/use-second-clock-value";
 interface TimeRemaining {
   minutes: number;
   seconds: number;
-  /** Remaining time as `m:ss`, the one format every cooldown shows. */
   label: string;
   isExpired: boolean;
 }
 
 const EXPIRED_SECONDS = -1;
 
-/** Counts down to an ISO date or epoch milliseconds; `null` is expired. */
 export const useCountdown = (
   target: string | number | null | undefined,
 ): TimeRemaining => {
   const hasTarget = target !== null && target !== undefined;
 
-  // Whole seconds left, rounded up so 0:00 never shows while still waiting,
-  // or -1 once the target has passed.
   const remainingSeconds = useSecondClockValue(() => {
     if (!hasTarget) return EXPIRED_SECONDS;
 

@@ -3,17 +3,13 @@ import type { ReactNode } from "react";
 import { LIST_GROUP_HEADING_CLASS, LIST_TILE_INSET_CLASS } from "./list-tile";
 
 type ListGroupHeadingProps = {
-  /** Lets the group's `section` name itself with `aria-labelledby`. */
   id: string;
   children: ReactNode;
-  /** How many tiles the group holds, or how much of a limit they use. */
   count?: ReactNode;
-  /** A control at the heading's end, such as a link to the full list. */
   trailing?: ReactNode;
   className?: string;
 };
 
-/** The heading above a group of tiles in a tiled list. */
 export const ListGroupHeading = ({
   id,
   children,

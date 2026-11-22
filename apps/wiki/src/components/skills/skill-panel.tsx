@@ -12,23 +12,13 @@ const weaponNames = (weapons: SkillDefinition["weapons"]) =>
 type SkillPanelProps = {
   skill: SkillDefinition;
   state: SkillState;
-  /** The ranks the skill can move between from where the tree stands. */
   range: { min: number; max: number };
   level: number | null;
-  /**
-   * A rank the slider points at beyond what the tree allows now, shown
-   * without being learned.
-   */
   preview: number | undefined;
   onPreviewChange: (rank: number | undefined) => void;
   onRankChange: (rank: number) => void;
 };
 
-/**
- * The chosen skill as the game's window explains it, with the controls that
- * hand out its points: one at a time, all at once, or with a slider that
- * also shows what any rank would do before it can be learned.
- */
 export function SkillPanel({
   skill,
   state,
@@ -46,7 +36,6 @@ export function SkillPanel({
     onRankChange(next);
   };
 
-  // The slider learns as far as the tree allows and previews the rest.
   const slideTo = (target: number) => {
     const learned = Math.min(Math.max(target, range.min), range.max);
 

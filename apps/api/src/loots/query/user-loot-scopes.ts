@@ -18,7 +18,6 @@ import {
 import { hydrateMemberRoles } from "#src/members/member-role-hydration";
 import { buildLootNpcVisibilityCondition } from "#src/loots/loot-visibility";
 
-/** One Organization the user belongs to, with the roles that set what they see. */
 export type UserLootScope = {
   guild: typeof guildTable.$inferSelect;
   roles: ReadonlyArray<typeof roleTable.$inferSelect>;
@@ -46,7 +45,6 @@ export const loadUserLootScopes = Effect.fnUntraced(function* (
   }));
 });
 
-/** The scope's loot access policy, or none when the user may not read its loots. */
 export const userLootScopeAccess = (
   { guild, roles }: UserLootScope,
   discordId: string,
@@ -64,7 +62,6 @@ export const userLootScopeAccess = (
     : undefined;
 };
 
-/** Matches an Organization loot record the user can see in one of their scopes. */
 export const buildUserLootRecordCondition = (
   scopes: ReadonlyArray<UserLootScope>,
   discordId: string,

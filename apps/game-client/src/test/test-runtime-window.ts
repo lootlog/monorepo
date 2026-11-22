@@ -55,11 +55,6 @@ import type {
 const parseInertHtml = (html: string): Document =>
   new DOMParser().parseFromString(html, "text/html");
 
-/**
- * Renders a message() argument the way the game does, in an inert document:
- * the game decodes HTML entities like a textarea and renders the result as
- * HTML. `decoded` is the text the game's BB-code parser receives.
- */
 export const renderRuntimeMessage = (text: string) => {
   const decoded =
     parseInertHtml(`<textarea>${text}</textarea>`).querySelector("textarea")
@@ -68,7 +63,6 @@ export const renderRuntimeMessage = (text: string) => {
   return { decoded, rendered: parseInertHtml(decoded) };
 };
 
-/** Records each game message as the player reads it. */
 export const captureRuntimeMessages = (): string[] => {
   const messages: string[] = [];
 

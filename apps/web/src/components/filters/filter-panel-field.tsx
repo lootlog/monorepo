@@ -1,12 +1,10 @@
 import { useId, type ReactNode } from "react";
 
 type FilterPanelFieldProps = {
-  /** Omit for a control that names itself, such as a labelled checkbox. */
   label?: string;
   children: ReactNode;
 };
 
-/** One filter in a `FiltersOverlay`, ruled off like a loot filters section. */
 export const FilterPanelField = ({
   label,
   children,

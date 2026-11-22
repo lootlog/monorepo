@@ -67,7 +67,6 @@ export const KillMapAssignmentGroup = ({
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
-      {/* The row toggles the periods; the member on it opens their profile. */}
       <div className="relative rounded-lg transition-colors hover:bg-muted/30">
         <CollapsibleTrigger
           render={

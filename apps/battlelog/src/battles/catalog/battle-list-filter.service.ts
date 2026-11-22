@@ -30,7 +30,6 @@ type BattleListFilterDatabase = {
   };
 };
 
-// Margonem levels run from 1 to 500; the web panel's default range is the same.
 const MIN_WARRIOR_LEVEL = 1;
 
 const MAX_WARRIOR_LEVEL = 500;
@@ -43,7 +42,6 @@ export const makeBattleListFilter = (drizzle: BattleListFilterDatabase) => {
     resultColumn: "winningTeam" | "losingTeam",
   ): void => {
     if (!characterIds.length) {
-      // The user has no characters in this world, so they cannot have won or lost here.
       resultConditions.push(sql`false`);
 
       return;
@@ -131,9 +129,6 @@ export const makeBattleListFilter = (drizzle: BattleListFilterDatabase) => {
       return;
     }
 
-    // The panel sends the full range (1 to 500) while no level filter is set.
-    // Such a bound excludes no warrior, but the EXISTS below would still probe
-    // battle_warriors once per battle the user owns.
     const minLevel =
       query.minLevel !== undefined && query.minLevel > MIN_WARRIOR_LEVEL
         ? query.minLevel
@@ -144,7 +139,6 @@ export const makeBattleListFilter = (drizzle: BattleListFilterDatabase) => {
         ? query.maxLevel
         : undefined;
 
-    // Selected characters still need an opponent besides themselves.
     if (
       minLevel === undefined &&
       maxLevel === undefined &&

@@ -9,7 +9,6 @@ import { t } from "@/i18n/messages";
 import { formatChestChance } from "@/lib/chest-chance";
 import { SocketItem } from "./socket-item";
 
-/** One chest of components: the chest and each component's chance from it. */
 export function ChestCard({ chest }: { chest: ComponentChest }) {
   const itemsById = useSocketItems();
 

@@ -11,7 +11,6 @@ import type { GuildMember } from "@/features/guild/settings/members/members.type
 import type { MemberActivityStatsByDiscordId } from "./member-activity-stats.utils";
 import type { MemberGamePresenceByDiscordId } from "./member-game-presence.utils";
 
-/** Presence and activity of every member, as the member list receives them. */
 export type MemberActivitySources = {
   activityStatsByDiscordIdAndSource: MemberActivityStatsByDiscordId;
   memberGamePresenceByDiscordId: MemberGamePresenceByDiscordId | undefined;

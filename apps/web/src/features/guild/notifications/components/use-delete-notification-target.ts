@@ -14,7 +14,6 @@ import {
   type GuildNotificationCacheSnapshot,
 } from "../notifications-api";
 
-/** Deletes a channel, dropping it from the cached lists at once; rejects on failure. */
 export const useDeleteNotificationTarget = (
   target: NotificationTargetResponseDto,
 ) => {

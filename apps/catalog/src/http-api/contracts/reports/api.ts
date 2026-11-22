@@ -1,4 +1,3 @@
-/** Endpoints owned by the catalog reports HTTP module. */
 import { HttpErrorResponse } from "@lootlog/protocol/http/errors";
 import {
   HttpApiEndpoint,
@@ -30,11 +29,6 @@ const conflict = HttpErrorResponse.pipe(HttpApiSchema.status(409));
 
 const rateLimited = HttpErrorResponse.pipe(HttpApiSchema.status(429));
 
-/**
- * Signed-in Users report catalog pages that show something wrong, and
- * catalog moderators review the reports. Reports name no Organization; a
- * reporter's identity stays with the catalog.
- */
 export class CatalogReportsGroup extends HttpApiGroup.make("CatalogReports")
   .add(
     HttpApiEndpoint.post("CatalogReportsControllerCreate", "/catalog/reports", {

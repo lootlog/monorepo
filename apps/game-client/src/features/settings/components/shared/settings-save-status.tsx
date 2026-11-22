@@ -10,14 +10,11 @@ const SAVED_VISIBLE_MS = 1500;
 
 const LABEL_ENTER_CLASS_NAME = "ll:animate-in ll:fade-in-0 ll:duration-150";
 
-/** Title bar indicator for the shared settings write queue. */
 export const SettingsSaveStatus: FC = () => {
   const { t } = useTranslation("settings");
   const status = useSettingsSaveStatusStore((state) => state.status);
   const savedAt = useSettingsSaveStatusStore((state) => state.savedAt);
   const retry = useSettingsSaveStatusStore((state) => state.retry);
-  // The "saved" confirmation hides itself after a moment; the timeout records
-  // which save it already hid so the value derives from state during render.
   const [hiddenSavedAt, setHiddenSavedAt] = useState<number | null>(null);
 
   useEffect(() => {

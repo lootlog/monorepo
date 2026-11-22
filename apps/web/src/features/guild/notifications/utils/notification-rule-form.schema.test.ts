@@ -153,7 +153,6 @@ describe("ruleFormSchema", () => {
     ).toBeUndefined();
   });
 
-  // The API keeps a draw rule to one world; the form must say so before saving.
   it("asks a loot draw rule for one world, and nothing about monsters", () => {
     const drawRule = {
       ...createBaseTimerFormValues(),

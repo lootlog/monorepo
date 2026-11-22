@@ -85,16 +85,13 @@ describe("NPC presence source", () => {
     expect(source.getStanding(npc.id)?.since).toBe(5_000);
 
     await harness.receive(presence(false, 6));
-    // The first-reporter update of a second gateway replica arrives late.
     await harness.receive(presence(true, 5));
     expect(source.getStanding(npc.id)).toBeUndefined();
 
-    // The snapshot was read before the NPC stopped standing.
     answerFetch({ revision: 4, npcs: [{ npc, since: 5_000 }] });
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(source.getStanding(npc.id)).toBeUndefined();
 
-    // An update between the snapshot and the newest one still arrives late.
     await harness.receive(presence(true, 5));
     expect(source.getStanding(npc.id)).toBeUndefined();
     release();

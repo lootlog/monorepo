@@ -1,4 +1,3 @@
-/** Endpoints owned by the timers HTTP module. */
 import { HttpErrorResponse } from "@lootlog/protocol/http/errors";
 import {
   HttpApiEndpoint,

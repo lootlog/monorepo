@@ -1,4 +1,3 @@
-// TypeScript's DOM library does not declare the Long Animation Frames API yet.
 type ScriptTiming = PerformanceEntry & {
   invoker: string;
   sourceFunctionName: string;
@@ -11,14 +10,8 @@ type LongAnimationFrameTiming = PerformanceEntry & {
   scripts: readonly ScriptTiming[];
 };
 
-// Long enough to cost the game a visible frame at 60 Hz, three frames over.
 const REPORTED_SCRIPT_MS = 50;
 
-/**
- * Development aid: warns when Lootlog's own scripts made a frame long, with
- * the functions responsible. The game shares the main thread, so these frames
- * are the ones a player feels as a stutter.
- */
 export function monitorLongFrames(): () => void {
   if (!PerformanceObserver.supportedEntryTypes.includes("long-animation-frame"))
     return () => {};

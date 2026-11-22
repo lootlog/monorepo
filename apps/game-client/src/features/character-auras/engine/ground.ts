@@ -6,10 +6,6 @@ import { drawMagicCircle, type Brush } from "./decor";
 import { groundRadius, type AuraPlacement } from "./placement";
 import type { AuraPreset } from "./presets/preset";
 
-/**
- * The preset's ground piece under the feet; `beat` is the preset's pulse and `flash` the
- * lightning or burst flash.
- */
 export function drawGround(
   b: Brush,
   place: AuraPlacement,
@@ -95,7 +91,6 @@ export function drawGround(
       pixelEllipse(lit, x, y, rx, ry, light, a * 0.6, 0, 2);
       break;
     case "rainbow":
-      // Pixels only: the prism is a lite aura, so its body skips the pixel finish.
       pixelEllipse(lit, x, y, rx, ry, null, a, t * 1.2, 1);
       pixelEllipse(
         lit,
@@ -110,7 +105,6 @@ export function drawGround(
       );
       break;
     case "ripples":
-      // Three rings spreading from the feet in turn, fading as they widen.
       softEllipse(lit, x, y, rx, ry, color, a * 0.3);
 
       for (let i = 0; i < 3; i++) {
@@ -138,7 +132,6 @@ export function drawGround(
       drawDustDashes(lit, x, y, rx, ry, t, light, color, a);
       break;
     case "halo":
-      // Pixels only and still between ticks, so a lite aura's cached body stays valid.
       pixelEllipse(lit, x, y, rx, ry, light, a, 0, 1);
       pixelEllipse(
         lit,
@@ -174,7 +167,6 @@ export function drawGround(
   }
 }
 
-/** Ground split by the pressure: jagged cracks from the feet, glowing red in pulses. */
 function drawCrackedGround(
   b: Brush,
   x: number,
@@ -220,7 +212,6 @@ function drawCrackedGround(
   softEllipse(b.dim(), x, y, rx * 0.6, ry * 0.6, [10, 0, 4], 0.6 * intensity);
 }
 
-/** Dust ground: dashes of sand racing round the feet. */
 function drawDustDashes(
   lit: CanvasRenderingContext2D,
   x: number,
@@ -246,7 +237,6 @@ function drawDustDashes(
   }
 }
 
-/** Vortex ground: three arms of pixels winding in, rotating a notch per tick. */
 function drawVortexArms(
   lit: CanvasRenderingContext2D,
   x: number,

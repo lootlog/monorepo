@@ -48,10 +48,8 @@ const commandsByName = new Map(
   SLASH_COMMANDS.map((command) => [command.definition.name, command]),
 );
 
-// Discord drops an autocomplete answer that arrives after three seconds.
 const AUTOCOMPLETE_BUDGET = "2500 millis";
 
-/** Every outcome of a command is a reply; failures explain what to do next. */
 export const answerCommand = (
   commandName: string,
   invocation: CommandInvocation,
@@ -75,7 +73,6 @@ export const answerCommand = (
   );
 };
 
-/** Suggestions are best effort: any failure offers nothing to choose from. */
 const answerAutocomplete = (
   commandName: string,
   invocation: AutocompleteInvocation,
@@ -116,7 +113,6 @@ const handleCommand = (
   Effect.gen(function* () {
     const isPublic = interaction.options.getBoolean(VISIBILITY_OPTION) === true;
 
-    // The answer needs only the invocation; only editReply waits for the defer.
     const [, reply] = yield* Effect.all(
       [
         Effect.tryPromise(() =>
@@ -141,7 +137,6 @@ const handleCommand = (
         embeds: [...(reply.embeds ?? [])],
         components: [...(reply.components ?? [])],
         files: [...(reply.files ?? [])],
-        // A public ranking must never ping the players it lists.
         allowedMentions: { parse: [], users: [...(reply.pings ?? [])] },
       }),
     );
@@ -183,8 +178,6 @@ export const registerSlashCommands = (
   client: Client,
   run: (effect: Effect.Effect<void, never, CommandServices>) => void,
 ): void => {
-  // Login can finish before these listeners exist, so a ready client
-  // publishes its commands immediately.
   if (client.isReady()) run(publishCommands(client.application));
   else
     client.once(Events.ClientReady, (readyClient) =>

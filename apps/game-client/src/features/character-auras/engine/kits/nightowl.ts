@@ -1,9 +1,3 @@
-/**
- * Nocna sowa: night on the whole map but for a ring of moonlight round the character, and
- * in the dark 22 pairs of eyes that open, blink and follow the character. A small owl
- * circles its head. Its burst is the hunt: an owl as wide as the screen sweeps over the
- * map, its shadow putting everything out, and feathers snow down after it.
- */
 import { sprite } from "../decor";
 import { mulberry32, type Rgb } from "../math";
 import { plot } from "../paint";
@@ -16,14 +10,12 @@ const MOON: Rgb = [216, 226, 255];
 
 const AMBER: Rgb = [255, 200, 60];
 
-/** Pairs of eyes in the dark. */
 const EYES = 22;
 
 const OWL_UP = ["#  #  #", "## # ##", " #####", "  o#o", "  ###"];
 
 const OWL_DOWN = ["       ", "  ###", " #o#o#", "#######", "# ### #"];
 
-/** Where each pair of eyes sits on the screen, 0..1, and when it blinks. */
 const eyes = (() => {
   const rng = mulberry32(22);
 
@@ -47,7 +39,6 @@ export const nightowl: AuraKit = {
     const hy = place.y + head.y;
 
     if (!front) {
-      // A crescent behind the head: a disc with a bite out of it.
       for (let dy = -7; dy <= 7; dy++)
         for (let dx = -7; dx <= 7; dx++)
           if (Math.hypot(dx, dy) <= 7 && Math.hypot(dx - 4, dy - 2) > 6)
@@ -60,7 +51,6 @@ export const nightowl: AuraKit = {
             );
     }
 
-    // The owl circling over the head, beating its wings.
     const angle = b.time * 1.5;
 
     if (Math.sin(angle) > 0 !== front) return;
@@ -76,7 +66,6 @@ export const nightowl: AuraKit = {
 
   sky(scene) {
     const { ctx, width, height, now, x, y, burst } = scene;
-    // The owl's shadow puts out even the moonlight for a moment.
     const sweep = span(burst, 0.2, 0.75);
     const dark = burst < 0 ? 0 : Math.sin(Math.PI * sweep);
     washAround(scene, NIGHT, 0.7, 55, 170);
@@ -89,10 +78,8 @@ export const nightowl: AuraKit = {
       const ex = Math.round(eye.x * width);
       const ey = Math.round(eye.y * height);
 
-      // None inside the moonlight, and each shut for a moment on its own beat.
       if (Math.hypot(ex - x, ey - y) < 150 || (now + eye.at) % eye.beat < 0.18)
         continue;
-      // The pupils turn towards the character.
       const look = Math.sign(x - ex);
       const tilt = Math.sign(y - ey);
 
@@ -105,7 +92,6 @@ export const nightowl: AuraKit = {
     }
 
     if (burst < 0.2) return;
-    // The owl: body, head and two wings, from the top left to the bottom right.
     const ox = -width * 0.5 + sweep * width * 2;
     const oy = -height * 0.2 + sweep * height * 1.2;
     const wing = width * 0.55;
@@ -129,7 +115,6 @@ export const nightowl: AuraKit = {
       ctx.fill();
     }
 
-    // Feathers snowing down behind it.
     const fall = span(burst, 0.4, 1);
     ctx.fillStyle = "#d8cdb8";
 

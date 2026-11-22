@@ -3,10 +3,6 @@ import { Radar } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { HeroSightingResponseDto } from "@lootlog/client/main";
 
-/**
- * Marks a hero timer whose hero a detector placed on a map; dimmed, like a
- * stale map count, once nobody has confirmed a roaming hero lately.
- */
 export function TimerHeroSightingIndicator({
   sighting,
   unconfirmed,

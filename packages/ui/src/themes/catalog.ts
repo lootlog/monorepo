@@ -45,7 +45,6 @@ export interface ThemePreview {
   family: ThemeFamily;
   colors: string[];
   backgroundImage: string;
-  /** The theme's type and rounding, which a custom theme starts from too. */
   font: CustomThemeFontId;
   radius: CustomThemeRadius;
 }

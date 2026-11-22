@@ -53,7 +53,6 @@ describe("shared presence map projection", () => {
     const harness = createOnlinePlayersTest();
     getSocket().connect();
     harness.open();
-    // The gateway withholds presence until the character publishes there.
     await harness.join(["guild-1"], policy());
     await harness.receive({
       v: 1,

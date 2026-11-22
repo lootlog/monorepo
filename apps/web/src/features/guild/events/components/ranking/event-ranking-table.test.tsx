@@ -53,7 +53,6 @@ describe("EventRankingTable", () => {
     restoreApiClients = configureApiClients({
       main: {
         baseUrl: "https://api.test",
-        // Rows look up who left the Lootlog; the assertions count only ranking requests.
         fetch: (input, init) =>
           isMemberReferencesRequest(input)
             ? Promise.resolve(
@@ -270,7 +269,6 @@ describe("EventRankingTable", () => {
     );
 
     const { rerender } = render(createRankingTable());
-    // The member list each name reads settles before the commits are counted.
     await waitFor(() => expect(queryClient.isFetching()).toBe(0));
     const commitsAfterMount = commitCount;
 

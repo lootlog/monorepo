@@ -11,24 +11,14 @@ import { APP_NAVIGATION_ICONS } from "@/navigation/app-navigation-icons";
 
 type AppTabBarProps = {
   sections: AppTabBarSections;
-  /** Counts shown on sections, such as the events running now. */
   badges?: Partial<Record<AppNavigationItemId, number>>;
-  /** The shell's search, as a circle at the bar's trailing end. */
   onSearch?: () => void;
 };
 
-/**
- * The app's phone navigation: the first sections and "More", which opens the
- * full navigation sheet and is marked current while the open section is one
- * of those behind it.
- */
 export const AppTabBar = ({ sections, badges, onSearch }: AppTabBarProps) => {
   const { t } = useTranslation();
   const { setOpenMobile } = useSidebar();
 
-  // "More" keeps its name and icon even while a section behind it is open,
-  // so it still reads as the way to the rest of the navigation; the page
-  // title and the collapsed pill name the open section.
   const activeOverflow = sections.overflow.find((section) => section.active);
 
   return (

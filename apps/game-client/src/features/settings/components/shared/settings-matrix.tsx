@@ -18,35 +18,22 @@ import {
 
 export type SettingsMatrixColumn = {
   key: string;
-  /** Short column name shown in the header. */
   label: string;
   icon: LucideIcon;
-  /** One sentence shown in the header tooltip; explains what the column does. */
   description: string;
-  /** The first column usually switches the whole row on; it stays highlighted. */
   primary?: boolean;
-  /**
-   * Header click sets every enabled row of the column at once: on unless all
-   * of them are already on, then off. `checked` is true when all are on.
-   */
   bulk?: {
     checked: boolean;
     onChange: (checked: boolean) => void;
   };
 };
 
-/**
- * Index of the option column under the pointer or holding keyboard focus, or
- * null; rows highlight it.
- */
 export const SettingsMatrixHoveredColumnContext = createContext<number | null>(
   null,
 );
 
 type SettingsMatrixProps = {
-  /** Accessible name of the grid, e.g. the section title. */
   label: string;
-  /** Header of the row-name column, e.g. "Typ". */
   rowHeader: string;
   columns: readonly SettingsMatrixColumn[];
   children: ReactNode;
@@ -66,13 +53,6 @@ const readColumnIndex = (event: { target: EventTarget }) => {
   return Number.isNaN(index) ? null : index;
 };
 
-/**
- * Grid of settings: one row per category, one column per option, so every
- * option of every category is visible and comparable at once. Column names
- * show only while the whole grid fits the content column; otherwise the
- * header keeps the icons (the tooltip still names the column) so the grid
- * stays readable instead of scrolling.
- */
 export const SettingsMatrix: FC<SettingsMatrixProps> = ({
   label,
   rowHeader,
@@ -108,15 +88,11 @@ export const SettingsMatrix: FC<SettingsMatrixProps> = ({
     return () => observer.disconnect();
   }, []);
 
-  // The labelled width is measured whenever the labels are rendered, so a
-  // window that grows back past it shows them again.
   useLayoutEffect(() => {
     const table = tableRef.current;
     const rowHeader = rowHeaderRef.current;
 
     if (compact || !table || !rowHeader) return;
-    // The table and its name column stretch to the container, so the natural
-    // width is read with both stretches switched off for a moment (before paint).
     table.style.width = "max-content";
     rowHeader.style.width = "auto";
     setLabelledWidth(table.offsetWidth);
@@ -150,8 +126,6 @@ export const SettingsMatrix: FC<SettingsMatrixProps> = ({
                 scope="col"
                 className={cn(
                   "ll:px-2 ll:py-2 ll:text-left ll:align-middle ll:text-[11px] ll:font-semibold ll:uppercase ll:leading-4 ll:tracking-wide ll:text-muted-foreground",
-                  // With labels the name column absorbs the spare width; in
-                  // icon-only mode every column keeps its own width instead.
                   !compact && "ll:w-full",
                 )}
               >
@@ -162,8 +136,6 @@ export const SettingsMatrix: FC<SettingsMatrixProps> = ({
                   key={column.key}
                   scope="col"
                   data-matrix-column={index}
-                  // The tooltip trigger swallows its own click, so the bulk
-                  // action listens on the cell the click bubbles to.
                   onClick={
                     column.bulk
                       ? () => column.bulk?.onChange(!column.bulk.checked)
@@ -173,11 +145,6 @@ export const SettingsMatrix: FC<SettingsMatrixProps> = ({
                     "ll:px-1 ll:py-2 ll:text-center ll:align-middle ll:font-normal ll:transition-colors",
                     column.primary &&
                       "ll:border-0 ll:border-e ll:border-solid ll:border-border",
-                    // The name column absorbs the spare width; every option
-                    // column shares one width so the switches line up in an
-                    // even grid. Labels wrap inside it, and the header grows
-                    // with them. Icon-only columns keep enough room for the
-                    // control to read as its own column.
                     compact ? "ll:min-w-12" : "ll:min-w-[92px]",
                     hoveredColumn === index && "ll:bg-white/5",
                   )}

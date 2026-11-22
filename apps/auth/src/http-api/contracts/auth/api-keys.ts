@@ -19,7 +19,6 @@ import {
   Unauthorized,
 } from "./errors.js";
 
-/** A browser session from a trusted origin. */
 const sessionError = [Unauthorized, Forbidden, ServiceUnavailable];
 
 export class ApiKeysGroup extends HttpApiGroup.make("apiKeys")
@@ -50,5 +49,4 @@ export class ApiKeysGroup extends HttpApiGroup.make("apiKeys")
       success: ApiKeyStatusResponse,
     }),
   )
-  // Excess fields are rejected rather than silently dropped.
   .annotate(HttpApi.PayloadParseOptions, { onExcessProperty: "error" }) {}

@@ -11,7 +11,6 @@ import {
   type GuildNotificationCacheSnapshot,
 } from "../notifications-api";
 
-/** Cancels a queued delivery, dropping it from the cached queue at once. */
 export const useCancelNotificationJob = () => {
   const { t } = useTranslation();
   const guildId = useGuildId();

@@ -13,8 +13,6 @@ export const getChatAlarmLocation = () => {
   if (others.status === "ready" && others.mapEpoch === mapEpoch) {
     const enemyIds = new Set<string>();
 
-    // OthersManager owns current-map handles and mutates relation in place.
-    // Count only known players; this is not a complete server map census.
     for (const [id, handle] of Object.entries(runtimeOtherHandles.getAll())) {
       const rawData = "d" in handle ? handle.d : handle;
       const data: unknown = rawData;

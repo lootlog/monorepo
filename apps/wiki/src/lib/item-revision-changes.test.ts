@@ -14,7 +14,6 @@ test("lists the stats a change altered, added and removed, leaving out those it 
       after === undefined ? "removed" : "has",
     ]),
   ).toEqual([
-    // In the order the item now shows its stats, then those it lost.
     ["evade", "added", "has"],
     ["manabon", "had", "has"],
     ["reqp", "had", "has"],

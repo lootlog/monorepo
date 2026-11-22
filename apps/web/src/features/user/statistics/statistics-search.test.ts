@@ -19,7 +19,6 @@ describe("statistics URL", () => {
       world: "luvia",
       characterId: "123",
     });
-    // Without its world the id could name characters on several worlds.
     expect(
       parseStatisticsSearch({ characterId: "123" }).characterId,
     ).toBeUndefined();

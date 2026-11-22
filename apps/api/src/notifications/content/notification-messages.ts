@@ -20,13 +20,11 @@ export const DEFAULT_HERO_SIGHTING_TEMPLATE = [
   "Wykrył: **{{detectedBy}}**",
 ].join("\n");
 
-/** Names the Member behind a sighting no detector answer backs. */
 export const heroSightingAddedByHand = (memberName: string) =>
   `${memberName} (ręcznie)`;
 
 export const HERO_SIGHTED_TITLE = "Wykryto herosa";
 
-/** Only a hero that will spawn is announced, so the state has one wording. */
 export const HERO_SIGHTING_STATE_LABEL = "Pojawi się w";
 
 export const heroSightingMessage = (
@@ -45,7 +43,6 @@ export const DEFAULT_LOOT_DRAW_TEMPLATE = [
 
 export const LOOT_DRAW_RESOLVED_TITLE = "Wynik koła";
 
-/** What happened to the draw, as the message's `{{outcome}}` says it. */
 export const lootDrawOutcomeLine = (
   winnerName: string,
   tickets: string,

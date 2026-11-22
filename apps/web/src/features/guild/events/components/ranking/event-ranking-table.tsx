@@ -264,8 +264,6 @@ export const EventRankingTable = ({
       params: { guildId, eventId, memberId: String(ranking.memberId) },
     } as const;
 
-    // The row's one keyboard stop fills the cell behind the name, so the cell
-    // opens the member's kills and the name their profile.
     if (cell.column.id === PRIMARY_LINK_COLUMN_ID) {
       return (
         <div className="relative flex min-h-14 w-full min-w-0 items-center px-2">

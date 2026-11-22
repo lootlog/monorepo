@@ -5,26 +5,15 @@ import { resolve } from "node:path";
 import { Schema } from "effect";
 import { API_SERVICES, type ApiService } from "@lootlog/schema/api-services";
 
-/**
- * Helpers shared by the client (`@lootlog/client`) and public SDK
- * (`@lootlog/sdk`) generation pipelines.
- */
-
 export const repositoryRoot = fileURLToPath(
   new URL("../../..", import.meta.url),
 );
 
-/** The OpenAPI document the service's app publishes. */
 export const serviceSpecPath = (service: ApiService) =>
   resolve(repositoryRoot, "apps", API_SERVICES[service].app, "openapi.yaml");
 
-/** Generated operations call `<service>Fetch` from the client's mutators. */
 export const serviceMutatorName = (service: ApiService) => `${service}Fetch`;
 
-/**
- * Orval reads each mutator's signature, so the mutators stay plain function
- * declarations; the SDK generates against the same file.
- */
 export const mutatorsPath = fileURLToPath(
   new URL("../src/mutators.ts", import.meta.url),
 );
@@ -69,11 +58,6 @@ export const isJsonObject = (
 ): value is JsonObject =>
   value !== null && typeof value === "object" && !Array.isArray(value);
 
-/**
- * Orval types every operation's `options` as `RequestInit`; the mutators also
- * accept a per-request client override, so the generated signature names the
- * mutator's own options type instead.
- */
 export const fixRequestOptionsType = (filePath: string): void => {
   const source = readFileSync(filePath, "utf8");
 
@@ -97,7 +81,6 @@ export const fixRequestOptionsType = (filePath: string): void => {
   if (fixedSource !== source) writeFileSync(filePath, fixedSource);
 };
 
-/** Fails when generated files differ from what is committed. */
 export const assertNoGeneratedDrift = (
   repositoryPaths: readonly string[],
   description: string,

@@ -20,11 +20,6 @@ type UseSettingFieldOptions = {
   afterSave?: () => void;
 };
 
-/**
- * Binds one catalog field to the settings documents: the effective value,
- * whether it is stored or the default, and a setter that writes through the
- * shared patch queue with optimistic cache updates.
- */
 export const useSettingField = <TKey extends ServerSettingsCatalogKey>(
   key: TKey,
   options: UseSettingFieldOptions = {},

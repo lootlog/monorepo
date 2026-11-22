@@ -12,7 +12,6 @@ import { useOrganizationSwitchFade } from "./use-organization-switch-fade";
 
 type GuildShellProps = {
   children: ReactNode;
-  /** `failed` drops the placeholder title: the error card names the problem. */
   variant: "ready" | "fallback" | "failed";
 };
 

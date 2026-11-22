@@ -17,7 +17,6 @@ import {
 
 const at = (clock: string) => new Date(`2026-01-15T${clock}.000Z`);
 
-/** 08:00–09:40, a 100-minute respawn window. */
 const WINDOW: PresenceWindow = { start: at("08:00:00"), end: at("09:40:00") };
 
 const presence = (
@@ -48,11 +47,6 @@ const timeline = (
   minTimePercentage,
 });
 
-/**
- * The example rulebook: half 0.5, full 1 (joined on time), small group 2 and
- * solo 3. Later matching base rules replace earlier ones, so solo is listed
- * after the small group that also covers it.
- */
 const RULEBOOK: EventScoringRules = {
   version: 1,
   timezone: "Europe/Warsaw",

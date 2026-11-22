@@ -158,7 +158,6 @@ const createSyncFixture = async () => {
     failPublication: (failure: MessagingError | undefined) => {
       publicationFailure = failure;
     },
-    /** Holds every publication until the returned release is called. */
     stallPublication: () => {
       const { promise, resolve } = Promise.withResolvers<void>();
       publication = promise;
@@ -276,7 +275,6 @@ it("a stalled publication holds no database lock and a change committed meanwhil
   const stalled = fixture.sync(fixture.roles.slice(2));
   const memberId = (await fixture.stored())?.id;
 
-  // Wait until the stalled sync has claimed its delivery.
   for (let attempt = 0; attempt < 500; attempt++) {
     const claimed = await client.query(
       'SELECT 1 FROM "MemberSyncDelivery" WHERE "memberId" = $1 AND "claimedUntil" > now()',
@@ -288,8 +286,6 @@ it("a stalled publication holds no database lock and a change committed meanwhil
   }
 
   try {
-    // The previous delivery held its row lock and a pooled connection across
-    // the broker call, so these waited for the broker.
     await client.query("BEGIN");
     await client.query("SET LOCAL lock_timeout = '1s'");
     await client.query(

@@ -36,7 +36,6 @@ import { CalculatorFromSetButton } from "./calculator-from-set-button";
 import { CalculatorNumberField } from "./calculator-number-field";
 import { CalculatorResults } from "./calculator-results";
 
-// A set holds at most this many items, so no more can share a bonus.
 const MAX_ITEMS = 10;
 
 const BONUS_OPTIONS = CALCULABLE_LEGENDARY_BONUSES.map((bonus) => ({
@@ -52,10 +51,6 @@ const newItem = (level = "", upgrade: UpgradeLevel = 0): BonusItem => ({
   upgrade,
 });
 
-/**
- * A legendary bonus over several items on a character of a given level:
- * each item's remaining strength and the value they add up to.
- */
 export function LegendaryBonusCalculator() {
   const bonusFieldId = useId();
   const { set } = useEquipmentSet();

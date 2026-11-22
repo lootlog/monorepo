@@ -33,14 +33,11 @@ export type ItemTileLabels = {
   obtainedBy?: string;
   rarity: Record<string, string>;
   type: Record<string, string>;
-  /** Names the upgrade level badge for assistive technology. */
   upgradeLevel: string;
 };
 
-/** An item the tooltip shows beside this one, such as the one worn instead. */
 type ItemTileComparison = {
   item: GameItem;
-  /** What the compared item is, shown above it. */
   label: string;
 };
 
@@ -49,10 +46,6 @@ export type ItemTileProps = {
   comparison?: ItemTileComparison;
   item: GameItem;
   labels: ItemTileLabels;
-  /**
-   * The element the icon is drawn in, such as a link to the item's page;
-   * a button by default.
-   */
   render?: ReactElement;
   renderStat?: (displayValue: ItemDisplayValue) => ReactNode;
   shareIndex?: number;
@@ -110,9 +103,6 @@ export const ItemTile: FC<ItemTileProps> = ({
 
   const comparedRarity = comparison?.item.rarity ?? DisplayItemRarity.COMMON;
 
-  // Side by side where there is room, the item first and then the one it is
-  // compared with, each in its own rarity's frame. The pair starts at the
-  // trigger, so the item pointed at sits by it and the compared one beyond.
   const tooltipAlign = comparison ? "start" : undefined;
 
   const tooltipContent = comparison ? (

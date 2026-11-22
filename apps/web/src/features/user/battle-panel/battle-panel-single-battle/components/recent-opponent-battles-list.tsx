@@ -131,7 +131,6 @@ export function RecentOpponentBattlesList({
                   isPending && "bg-muted/40",
                 )}
               >
-                {/* The battle loads before the page switches to it. */}
                 {isPending ? (
                   <Spinner className="mx-1 size-4 text-muted-foreground" />
                 ) : (

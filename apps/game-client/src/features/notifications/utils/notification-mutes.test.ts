@@ -79,7 +79,6 @@ describe("notification mutes", () => {
     });
 
     expect(firstKey).toBe(secondKey);
-    // Mute keys are stored in the user's preferences.
     expect(firstKey).toBe("npc:-1793111531");
   });
 

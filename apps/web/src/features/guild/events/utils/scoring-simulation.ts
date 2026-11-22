@@ -21,11 +21,8 @@ export type SimulationParticipant = {
 };
 
 export type SimulationTimeline = {
-  /** Minimum respawn time, "HH:MM". */
   windowStart: string;
-  /** Kill time, "HH:MM"; earlier than the start means the next day. */
   killTime: string;
-  /** Maximum respawn time, "HH:MM", for the respawn progress factor. */
   maxRespawn: string;
   participants: SimulationParticipant[];
 };
@@ -41,7 +38,6 @@ export type SimulationResult = {
   results: SimulationParticipantResult[];
 };
 
-/** The simulated kill happens on a fixed day; only clock times matter. */
 const SIMULATION_DAY = { year: 2026, month: 1, day: 15 };
 
 const parseClock = (clock: string) => {
@@ -55,11 +51,6 @@ const parseClock = (clock: string) => {
     : null;
 };
 
-/**
- * Places wall-clock times in the rules' timezone, as the hour conditions read
- * them, on a timeline starting at the window start: a time earlier than the
- * start falls on the next day, so a night respawn works.
- */
 const makeClockResolver = (windowStart: string, timeZone: string) => {
   const start = parseClock(windowStart);
   const startMinutes = start ? start.hour * 60 + start.minute : 0;
@@ -78,10 +69,6 @@ const makeClockResolver = (windowStart: string, timeZone: string) => {
   };
 };
 
-/**
- * Scores every simulated participant from their presence intervals with the
- * same presence analysis and rules that live scoring uses.
- */
 export function simulateScoringTimeline(
   rules: EventScoringRules,
   timeline: SimulationTimeline,
@@ -90,7 +77,6 @@ export function simulateScoringTimeline(
   const startOfDay = toUtcDateFromLocal(SIMULATION_DAY, 0, 0, rules.timezone);
   const maxRespawn = toDate(timeline.maxRespawn);
 
-  // A kill after the maximum respawn ends the window there, as live scoring.
   const window = resolveEventScoringWindow({
     killedAt: toDate(timeline.killTime) ?? startOfDay,
     minSpawnTimeAtKill: toDate(timeline.windowStart),
@@ -116,8 +102,6 @@ export function simulateScoringTimeline(
     intervals,
   });
 
-  // Kill points go to everyone whose presence touches the window, which is
-  // what the existing "liczba obstawiających" factor counts.
   const assignedMembersCount = timeline.participants.filter((participant) =>
     intervals.some(
       (interval) =>
@@ -172,7 +156,6 @@ const participant = (
   })),
 });
 
-/** A member alone for 95 minutes until a second one arrives for the last 5. */
 export const DEFAULT_SIMULATION_TIMELINE: SimulationTimeline = {
   windowStart: "08:00",
   killTime: "09:40",
@@ -183,7 +166,6 @@ export const DEFAULT_SIMULATION_TIMELINE: SimulationTimeline = {
   ],
 };
 
-/** Ready examples: a 100-minute window from 08:00 to the kill at 09:40. */
 export const SIMULATION_PRESETS = [
   {
     id: "joinWithinTolerance",

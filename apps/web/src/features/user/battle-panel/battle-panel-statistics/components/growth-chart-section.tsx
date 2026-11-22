@@ -56,7 +56,6 @@ export function GrowthChartSection<TData extends { date: string }>({
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              // Several battles share a day, so neighbouring ticks would repeat the same date.
               minTickGap={48}
             />
             <YAxis

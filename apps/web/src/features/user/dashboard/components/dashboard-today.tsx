@@ -23,13 +23,8 @@ import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 import { StatisticsDelta } from "@/features/user/statistics/statistics-delta";
 import { formatNumber } from "@lootlog/domain/locale";
 
-// The game client reports presence about once a minute.
 const ONLINE_NOW_MS = 5 * 60_000;
 
-/**
- * Today's time in game, the average day in game this week, and whether the
- * game client reported in just now.
- */
 const summarizeOnline = (
   data: UserOnlineResponseDto | undefined,
   today: string,
@@ -41,7 +36,6 @@ const summarizeOnline = (
     day.onlineSeconds ? [day.onlineSeconds] : [],
   );
 
-  // Without collection there is no time to show, only an unknown.
   const known = data !== undefined && data.status !== "unavailable";
 
   return {
@@ -56,11 +50,6 @@ const summarizeOnline = (
   };
 };
 
-/**
- * This week's kills, or `null` when they are unknown: not loaded, failed, or
- * outside the history Lootlog has. A day the API cannot count stays unknown
- * rather than zero.
- */
 const summarizeWeek = (
   data: UserKillAnalyticsResponseDtoOutput | undefined,
   today: string,
@@ -76,7 +65,6 @@ const summarizeWeek = (
   };
 };
 
-/** Today's play next to the week: kills, time in game, streak and the week's monster. */
 export function DashboardToday() {
   const { t } = useTranslation();
   const now = useMinuteTimestamp();
@@ -226,7 +214,6 @@ export function DashboardToday() {
           }
         />
       </StatsTileGrid>
-      {/* The tiles keep the last good values, or show them as unknown. */}
       {failed.map(({ query, message }) => (
         <QueryErrorNotice
           key={message}

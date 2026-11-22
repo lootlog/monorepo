@@ -3,18 +3,12 @@ import { PenLine } from "lucide-react";
 type GuildDocTitleFieldProps = {
   value: string;
   onChange: (value: string) => void;
-  /** The document form the title is saved with, outside which it renders. */
   form: string;
   label: string;
   placeholder: string;
   maxLength: number;
 };
 
-/**
- * The document's title in place of its breadcrumb, edited where it is read.
- * A hidden copy of the text sizes the field, so it is as wide as the title,
- * and a quiet pencil after it says the title can be renamed.
- */
 export const GuildDocTitleField = ({
   value,
   onChange,
@@ -31,7 +25,6 @@ export const GuildDocTitleField = ({
       >
         {value || placeholder}
       </span>
-      {/* A size of one lets the copy above, not the browser default, set the width. */}
       <input
         size={1}
         form={form}
@@ -44,7 +37,6 @@ export const GuildDocTitleField = ({
         className="col-start-1 row-start-1 w-full min-w-0 bg-transparent pr-1.5 pl-2 text-ellipsis text-foreground outline-none placeholder:text-muted-foreground"
       />
     </span>
-    {/* Fades while typing, so it never reads as part of the title. */}
     <PenLine
       aria-hidden="true"
       className="size-3.5 shrink-0 text-muted-foreground/60 transition-[color,opacity] group-hover:text-muted-foreground group-has-[input:focus]:opacity-0 motion-reduce:transition-none"

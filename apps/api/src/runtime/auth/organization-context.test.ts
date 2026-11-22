@@ -108,7 +108,6 @@ describe("organization context lookup", () => {
       },
     ];
 
-    // An entry written before the guild configuration changed.
     const cachedContext = {
       guildId,
       ownerId: guild.ownerId,
@@ -130,7 +129,6 @@ describe("organization context lookup", () => {
         globalUserId: identity.userId,
         createdAt: guild.createdAt,
         updatedAt: guild.updatedAt,
-        // Fresh for another four minutes, past the refresh-ahead point.
         lastDiscordSyncAt: new Date(Date.now() - 11 * 60_000).toISOString(),
         lastDiscordAttemptAt: null,
         lastDiscordStatus: null,
@@ -154,7 +152,6 @@ describe("organization context lookup", () => {
     );
 
     const result = await Effect.gen(function* () {
-      // Each lookup forks its refresh-ahead; one entry per finished attempt.
       const settled = yield* Queue.unbounded<void>();
       let enqueueAttempts = 0;
 
@@ -176,7 +173,6 @@ describe("organization context lookup", () => {
           }),
       };
 
-      // The queue is briefly unavailable for the first enqueue.
       const queueRefresh = mock<OrganizationContextRefresh>(() =>
         Effect.suspend(() =>
           (enqueueAttempts += 1) === 1
@@ -228,7 +224,6 @@ describe("organization context lookup", () => {
       reason: "organization-context-refresh-ahead",
     };
 
-    // The failed enqueue released its claim; the retry then holds it.
     expect(result.queueRefresh.mock.calls).toEqual([[refresh], [refresh]]);
   });
 
@@ -272,7 +267,6 @@ describe("organization context lookup", () => {
         return yield* lookup.lookup(owner);
       }).pipe(
         provideLookup(guildOnlyCache(), () => Effect.void, {
-          // A member Discord has not confirmed yet waits for `getMe`.
           findStoredMember: () => Effect.succeed(null),
           getMe: () => Effect.succeed(stored),
         }),
@@ -342,7 +336,6 @@ describe("organization context lookup", () => {
           ),
         );
 
-        // The refresh is forked; give it a moment to reach the queue.
         yield* Effect.sleep("20 millis");
 
         return {
@@ -353,8 +346,6 @@ describe("organization context lookup", () => {
         };
       }).pipe(Effect.runPromise);
 
-    // Forty minutes old: served at once, one refresh queued for both
-    // requests, and never cached as fresh.
     expect(await lookupWith(stored)).toEqual({
       permissions: [[Permission.LOOTLOG_ACCESS], [Permission.LOOTLOG_ACCESS]],
       queued: ["organization-context-stale"],
@@ -362,8 +353,6 @@ describe("organization context lookup", () => {
       waitedForDiscord: 0,
     });
 
-    // Past the stale-access grace, or when Discord asked the caller to sign
-    // in again, the request waits for Discord.
     for (const member of [
       { ...stored, lastDiscordSyncAt: minutesAgo(7 * 60) },
       { ...stored, lastDiscordStatus: "UNAUTHORIZED" },

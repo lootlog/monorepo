@@ -33,7 +33,6 @@ const HITS = 40;
 
 const ALL_FILTERS = "all-filters";
 
-/** Who the picker searches for, such as `Wojownik · do 300 lvl`. */
 const describeCharacter = ({
   profession,
   level,
@@ -52,11 +51,6 @@ type SetItemPickerProps = {
   onOpenChange: (open: boolean) => void;
 };
 
-/**
- * Finds an item for one slot of the set without leaving the page: only what
- * the set's character can wear there, strongest first, narrowed by name and
- * rarity. Choosing an item wears it.
- */
 export function SetItemPicker({
   slotId,
   open,
@@ -72,7 +66,6 @@ export function SetItemPicker({
   const slotLabel = t(`slots.${slotId}`);
   const worn = wornItems.get(slotId);
 
-  // The other hand takes only what the worn weapon leaves room for.
   const fittingTypes =
     slotId === "secondary"
       ? secondaryTypesBeside(wornItems.get("weapon")?.item.type)
@@ -180,8 +173,6 @@ export function SetItemPicker({
                 value={`item-${item.id}`}
                 query={debouncedQuery}
                 isWorn={worn?.item.id === item.id}
-                // Hits kept from an earlier search cannot be chosen, so
-                // Enter never wears an item the field no longer asks for.
                 disabled={isStale}
                 onSelect={() => {
                   equip(item);

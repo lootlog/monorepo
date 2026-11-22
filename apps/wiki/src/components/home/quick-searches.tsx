@@ -5,7 +5,6 @@ import { t } from "@/i18n/messages";
 import type { ItemsSearch } from "@/lib/items-search";
 import { EMPTY_ITEMS_SEARCH } from "@/navigation/wiki-navigation";
 
-// Searches players run most, one click from the home page.
 const QUICK_SEARCHES: ReadonlyArray<{
   key: string;
   search: Partial<ItemsSearch>;
@@ -26,7 +25,6 @@ const QUICK_SEARCHES: ReadonlyArray<{
     key: "highLevelLegendaries",
     search: { rarities: DisplayItemRarity.LEGENDARY, minLevel: 250 },
   },
-  // Group fights go to whoever moves first, so players gear for speed.
   {
     key: "fastestTrackerNecklaces",
     search: { slot: "necklace", professions: "t", sort: "attackSpeed:desc" },

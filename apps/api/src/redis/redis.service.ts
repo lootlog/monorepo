@@ -14,7 +14,6 @@ const DEFAULT_JSON_SERIALIZER: Pick<JsonCodec<unknown>, "stringify"> = {
   stringify: (value) => JSON.stringify(value),
 };
 
-/** Caches a schema's decoded values, such as `Date`, in their canonical JSON form. */
 export const makeTypeJsonCodec = <S extends Schema.ConstraintDecoder<unknown>>(
   schema: S,
 ): JsonCodec<S["Type"]> => {
@@ -33,7 +32,6 @@ export interface RedisGetOrSetJsonOptions<T, E> extends CacheFillOptions<
   E,
   never
 > {
-  /** Read-cache scopes whose invalidation makes this entry unreachable. */
   readonly scopes?: readonly string[];
 }
 
@@ -41,8 +39,6 @@ const DEFAULT_SCAN_COUNT = 500;
 
 const DEFAULT_DELETE_BATCH_SIZE = 500;
 
-// Reads renew active scopes; idle metadata expires. A missing scope gets a new
-// random token, so expiry cannot make an old cache fill reachable again.
 const READ_CACHE_GENERATION_TTL_SECONDS = 3_600;
 
 const RELEASE_LOCK_SCRIPT = `
@@ -66,10 +62,6 @@ end
 return versions
 `;
 
-/**
- * The Redis commands Lootlog uses, as Effects that fail with `RedisError`.
- * Domain ports take a `Pick<>` of it.
- */
 export interface RedisService {
   readonly get: (key: string) => Effect.Effect<string | null, Redis.RedisError>;
   readonly set: (
@@ -83,16 +75,11 @@ export interface RedisService {
     value: string,
     ttlSeconds?: number,
   ) => Effect.Effect<boolean, Redis.RedisError>;
-  /**
-   * Sets the key when it is missing and returns the value it already held, or
-   * null when this call set it.
-   */
   readonly setNxGet: (
     key: string,
     value: string,
     ttlSeconds: number,
   ) => Effect.Effect<string | null, Redis.RedisError>;
-  /** Deletes the key only while it still holds `value`. */
   readonly deleteIfValue: (
     key: string,
     value: string,
@@ -102,7 +89,6 @@ export interface RedisService {
     key: string,
     ttlSeconds: number,
   ) => Effect.Effect<number, Redis.RedisError>;
-  /** Reads a JSON value; an entry the codec rejects is deleted and reads as null. */
   readonly getJson: <T>(
     key: string,
     codec: Pick<JsonCodec<T>, "parse">,
@@ -113,11 +99,9 @@ export interface RedisService {
     ttlSeconds?: number,
     codec?: Pick<JsonCodec<T>, "stringify">,
   ) => Effect.Effect<void, Redis.RedisError>;
-  /** Makes every read-cache entry filled under these scopes unreachable. */
   readonly invalidateScopes: (
     ...scopes: string[]
   ) => Effect.Effect<void, Redis.RedisError>;
-  /** Lists the keys matching `pattern` with SCAN, without the key prefix. */
   readonly scan: (pattern: string) => Effect.Effect<string[], Redis.RedisError>;
   readonly deleteByPattern: (
     pattern: string,
@@ -147,12 +131,6 @@ export interface RedisService {
     count: number,
     value: string,
   ) => Effect.Effect<number, Redis.RedisError>;
-  /**
-   * Reads a cached JSON value or fills it once across all API processes. Cache
-   * failures fall back to the factory; only the factory's errors surface. A
-   * caller that waits past `waitTimeoutMs` for another owner's fill dies with
-   * `CacheFillTimeoutError` instead of starting a second fill.
-   */
   readonly getOrSetJson: <T, E>(
     options: RedisGetOrSetJsonOptions<T, E>,
   ) => Effect.Effect<T, E>;
@@ -265,7 +243,6 @@ export const makeRedisService = (
           (options.onError?.(error) ?? Effect.void).pipe(
             Effect.andThen(options.factory),
           ),
-        // Capture before loading: an invalidated in-flight fill stays unreachable.
         onSuccess: (generations) =>
           getOrFillJson(cacheFillStore, {
             ...options,
@@ -310,8 +287,6 @@ export const makeRedisService = (
           ),
         { concurrency: "unbounded", discard: true },
       ),
-    // Accumulators are created per run so a retried or repeated effect starts
-    // from empty.
     scan: (pattern) =>
       Effect.suspend(() => {
         const keys: string[] = [];

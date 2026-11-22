@@ -29,10 +29,6 @@ import { createChatCacheBatcher } from "@/features/chat/chat-cache-batcher";
 
 type MentionSourceNpc = { type: NpcTypeEnum; lvl: number };
 
-/**
- * Resolves the NPC a mention originates from. Returns "skip" when the message
- * carries malformed NPC data or its rank is hidden in chat.
- */
 const resolveMentionSourceNpc = (
   data: ChatMessage,
   hiddenNpcTypes: ReadonlySet<NpcTypeEnum> | undefined,
@@ -78,7 +74,6 @@ export const useChatMessagesListener = ({
   const runtimeHeroName = useGameStore((state) => state.game?.hero.name ?? "");
   const runtimeWorld = useGameStore((state) => state.game?.world ?? "");
   const discordId = sessionData?.user?.discordId;
-  // Bumped by permission changes, so a mention resolved across one is dropped.
   const permissionGenerationRef = useRef(0);
   const guildPermissionGenerationsRef = useRef(new Map<string, number>());
 
@@ -132,8 +127,6 @@ export const useChatMessagesListener = ({
     removeChatMessagesQueriesOutsideGuilds(queryClient, joinedGuilds);
   }, [chatCacheBatcher, joined, joinedGuilds, queryClient]);
 
-  // The SocketProvider applies the access policy to cached histories; this
-  // only drops what is queued and not yet published.
   useEffect(() => {
     const discardAllPending = () => {
       permissionGenerationRef.current += 1;
@@ -235,9 +228,7 @@ export const useChatMessagesListener = ({
           playSound: false,
         },
       ]);
-    } catch {
-      // Mention resolution is best-effort and must not interrupt chat ingestion.
-    }
+    } catch {}
   });
 
   const onChatMessage = useEffectEvent((data: ChatMessage) => {

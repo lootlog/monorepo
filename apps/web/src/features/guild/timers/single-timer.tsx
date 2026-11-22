@@ -31,7 +31,6 @@ import { TimerCountdown } from "./timer-countdown";
 import { TimerDetails } from "./timer-details";
 import { HeroSightingTimerLocation } from "@/features/guild/hero-sightings/hero-sighting-timer-location";
 
-/** An expired timer keeps its colour, darkened, as in the game client. */
 const veil = (color: string, isExpired: boolean) =>
   isExpired ? `color-mix(in srgb, ${color}, black 40%)` : color;
 
@@ -40,11 +39,8 @@ type SingleTimerProps = {
   paint: TimerColorPaint;
   countdownMode: TimerCountdownMode;
   removeTimerAfterMs: number;
-  /** Stays on screen after the removal delay. */
   isPinned: boolean;
-  /** Names the timer's world, for lists that span every world. */
   showWorld?: boolean;
-  /** The current sighting of a hero timer's hero, from the hero detector. */
   heroSighting?: HeroSightingResponseDto;
 };
 
@@ -66,12 +62,9 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   const timeLeft = getTimerTimeLeft(timer, now);
   const phase = getTimerPhase(timeLeft, removeTimerAfterMs);
 
-  // The game client drops a timer once the removal delay passes; the list
-  // refetches then and the server keeps only the timers the player pinned.
   if (phase === "expired" && !isPinned) return null;
 
   const fill = veil(paint.fill, phase === "expired");
-  // A softer wash than the game tile keeps long lists of painted rows calm.
   const wash = `color-mix(in srgb, ${fill} 25%, transparent)`;
   const npcName = timer.npc?.name ?? "";
   const npcIcon = timer.npc?.icon ?? null;
@@ -83,7 +76,6 @@ export const SingleTimer: FC<SingleTimerProps> = ({
 
   return (
     <div
-      // The player's colour tints the row the way it fills the game tile.
       style={{
         backgroundImage: `linear-gradient(${wash}, ${wash})`,
       }}
@@ -93,7 +85,6 @@ export const SingleTimer: FC<SingleTimerProps> = ({
         phase === "expired" && "opacity-75",
       )}
     >
-      {/* The row shows the spawn window; the member's name opens their profile. */}
       <Popover>
         <PopoverTrigger
           openOnHover
@@ -131,8 +122,6 @@ export const SingleTimer: FC<SingleTimerProps> = ({
           <span
             className={cn(
               "flex min-w-0 items-center gap-x-3",
-              // The sighting's map needs the line's width on phones, so
-              // the member moves under it instead of overlapping it.
               heroSighting && "flex-wrap gap-y-1",
             )}
           >

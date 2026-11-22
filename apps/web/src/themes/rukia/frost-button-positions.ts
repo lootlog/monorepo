@@ -1,4 +1,3 @@
-// Crystal positions for buttons
 export const buttonCrystalPositions = [
   { x: "10%", y: "20%", size: 10, rotation: 0, delay: 0.1 },
   { x: "85%", y: "25%", size: 12, rotation: 30, delay: 0.15 },
@@ -12,7 +11,6 @@ export const buttonCrystalPositions = [
   { x: "70%", y: "55%", size: 8, rotation: 25, delay: 0.38 },
 ];
 
-// Snowflake positions for buttons
 export const buttonSnowflakePositions = [
   { x: "25%", y: "30%", size: 14, delay: 0.4 },
   { x: "75%", y: "65%", size: 12, delay: 0.5 },

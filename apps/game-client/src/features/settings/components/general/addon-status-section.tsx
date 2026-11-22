@@ -34,12 +34,6 @@ const ACCOUNT_VALUE_KEY = {
   signedOut: "settings.general.accountSignedOut",
 } as const satisfies Record<LoginState, string>;
 
-/**
- * Read-only health of the addon: who is signed in and whether the realtime
- * gateway delivers this player's Lootlogs. The account row never shows the
- * e-mail; signing in happens in the login window, which also explains a
- * failed check or blocked cookies.
- */
 export const AddonStatusSection: FC = () => {
   const { t } = useTranslation();
   const { t: tCommon } = useTranslation("common");

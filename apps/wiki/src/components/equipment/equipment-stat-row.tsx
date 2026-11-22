@@ -5,25 +5,15 @@ import { formatDecimal } from "@lootlog/domain/locale";
 
 type EquipmentStatRowProps = {
   label: string;
-  /** Drawn after the value, such as `%`. */
   unit: string;
-  /** The set's total; absent when no worn item has the stat. */
   total: number | undefined;
-  /** The top of a range the total starts, such as the most damage dealt. */
   rangeMax?: number;
-  /** Whether the set has loaded, so a new total is the User's change. */
   isLoaded: boolean;
 };
 
 const signed = (value: number, unit: string) =>
   `${value > 0 ? "+" : "−"}${formatDecimal(Math.abs(value))}${unit}`;
 
-/**
- * One summed stat as the game's character window draws it: its name and its
- * value. Equipping, removing or upgrading an item glides the value to the
- * new total and slides in the change; a stat the set gains or loses opens or
- * closes its row, so the list grows and shrinks instead of jumping.
- */
 export function EquipmentStatRow({
   label,
   unit,
@@ -35,7 +25,6 @@ export function EquipmentStatRow({
   const { value: shownValue, change } = useStatChange(total ?? 0, isLoaded);
   const { value: shownMax } = useStatChange(rangeMax ?? 0, isLoaded);
 
-  // The change stays readable while it fades out.
   const [shownChange, setShownChange] = useState(change);
 
   if (change !== 0 && change !== shownChange) setShownChange(change);

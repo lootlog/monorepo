@@ -83,9 +83,6 @@ test("NPC revisions are one per edition, never per world", () => {
     lvl: 30,
   } as const;
 
-  // The API writer, the seed writer and the repair store this hash; the
-  // world is not part of it. Changing its input splits new observations from
-  // every revision already stored under it.
   expect(createNpcSnapshotHash(observation)).toBe(
     createHash("sha256")
       .update(

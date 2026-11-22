@@ -5,9 +5,7 @@ import { useTranslation } from "react-i18next";
 
 type HeroSightingHeroProps = {
   sighting: HeroSightingResponseDto;
-  /** Names the world, for boards that span every world. */
   showWorld: boolean;
-  /** Lets the tile name itself with `aria-labelledby`. */
   id?: string;
 };
 

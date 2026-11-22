@@ -14,15 +14,9 @@ import { npcKindColorStyle, npcKindLabel, npcKindOf } from "@/lib/npc-types";
 
 type NpcCardProps = {
   npc: CatalogNpcDtoOutput;
-  /** The searched phrase, marked in the name. */
   highlight?: string;
 };
 
-/**
- * One monster in a list as a dense row, like an item's: its sprite, its name
- * in its kind's colour over its level and kind, and the map it is fought on
- * most last. The whole row opens its page.
- */
 export function NpcCard({ npc, highlight = "" }: NpcCardProps) {
   const kind = npcKindOf(npc);
   const color = kind && npcKindColorStyle(kind);

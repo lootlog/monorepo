@@ -41,7 +41,6 @@ const presentCharacter = (
       }
     : null;
 
-/** Sightings with their Members, detector character and claims, by id. */
 export const loadHeroSightings = Effect.fnUntraced(function* (
   database: QueryDatabase,
   ids: ReadonlyArray<number>,
@@ -138,7 +137,6 @@ export const loadHeroSightings = Effect.fnUntraced(function* (
     ]),
   );
 
-  // Keep the caller's order.
   return ids.flatMap((id) => {
     const sighting = byId.get(id);
 
@@ -146,14 +144,12 @@ export const loadHeroSightings = Effect.fnUntraced(function* (
   });
 });
 
-/** One hero in one Organization world: the unit sightings are kept per. */
 export type HeroSightingScope = {
   readonly guildId: string;
   readonly world: string;
   readonly heroKey: string;
 };
 
-/** Every sighting, current or past, of the scope's hero. */
 export const heroSightingScopeCondition = (scope: HeroSightingScope) =>
   and(
     eq(heroSightingTable.guildId, scope.guildId),
@@ -161,7 +157,6 @@ export const heroSightingScopeCondition = (scope: HeroSightingScope) =>
     eq(heroSightingTable.heroKey, scope.heroKey),
   );
 
-/** The current sighting of a hero in one Organization world. */
 export const findOpenHeroSighting = (
   database: QueryDatabase,
   scope: HeroSightingScope,

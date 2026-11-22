@@ -13,10 +13,6 @@ import {
 } from "@lootlog/schema/internal-guilds";
 import { BotConfig } from "#src/config/bot-config";
 
-/**
- * Why a command could not read Lootlog data, in the terms a player can act
- * on. Every HTTP status and transport failure maps to exactly one reason.
- */
 export class CommandFailure extends TaggedErrorClass<CommandFailure>()(
   "CommandFailure",
   {
@@ -40,10 +36,8 @@ type Read = <A, I>(
   schema: Schema.Codec<A, I>,
 ) => Effect.Effect<A, CommandFailure>;
 
-/** Reads made on behalf of one Member, with the access policy of the Web app. */
 export interface MemberSession {
   readonly guildId: string;
-  /** Matches the `member.id` of the Organization's own records. */
   readonly memberId: number;
   readonly api: Read;
   readonly gateway: Read;
@@ -151,8 +145,6 @@ export class LootlogClient extends Context.Service<
           ),
         );
 
-        // The API and gateway trust these headers from the private network,
-        // exactly as they trust the edge after it verified a session.
         const asMember = HttpClient.mapRequest(
           httpClient,
           HttpClientRequest.setHeaders({
@@ -196,7 +188,6 @@ export class LootlogClient extends Context.Service<
   );
 }
 
-/** Resolves the Member behind an invocation; every Lootlog read starts here. */
 export const memberSession = (invocation: {
   readonly guildId: string;
   readonly discordId: string;

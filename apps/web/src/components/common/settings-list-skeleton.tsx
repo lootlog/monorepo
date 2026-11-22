@@ -4,13 +4,11 @@ import type { ComponentProps, ReactNode } from "react";
 import { SettingsTabSkeleton } from "@/components/common/settings-tab-skeleton";
 
 type SettingsListSkeletonProps = {
-  /** Stands in for the toolbar's controls after the filter. */
   toolbar?: ReactNode;
   tile?: ComponentProps<typeof ListTileSkeleton>;
   tiles?: number;
 };
 
-/** Route-level stand-in for a settings list under the tabs: toolbar and tiles. */
 export const SettingsListSkeleton = ({
   toolbar,
   tile,

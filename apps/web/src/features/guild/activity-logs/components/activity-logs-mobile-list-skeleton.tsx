@@ -10,7 +10,6 @@ type ActivityLogsMobileListSkeletonProps = {
   rows: number;
 };
 
-/** Stands in for the list `ActivityLogsTable` renders below `xl`. */
 export const ActivityLogsMobileListSkeleton = ({
   rows,
 }: ActivityLogsMobileListSkeletonProps) => (

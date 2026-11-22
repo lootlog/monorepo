@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 
-/** A titled block of a page, with an optional line explaining what it does. */
 export function Section({
   id,
   title,

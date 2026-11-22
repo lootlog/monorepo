@@ -7,20 +7,13 @@ import { useId, type ReactNode } from "react";
 type ChartSectionProps = {
   title: string;
   description?: string;
-  /** A control at the end of the band, such as a chart/table toggle. */
   actions?: ReactNode;
   isLoading?: boolean;
-  /** Shown instead of the content when there is nothing to show. */
   emptyMessage?: string;
-  /** Runs the content edge to edge, as a table rather than a chart. */
   flush?: boolean;
   children: ReactNode;
 };
 
-/**
- * One chart of a statistics page under a banded heading, edge to edge like
- * the page's other sections, with its loading and empty states.
- */
 export const ChartSection = ({
   title,
   description,

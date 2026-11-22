@@ -120,8 +120,6 @@ const createServices = () =>
         (operation) => read(operation, { consistentSnapshot: true }),
       );
 
-      // R2 is the only fake boundary; database, Redis commands and Lua are
-      // real. R2 holds only timelines of battles saved before Postgres did.
       const legacyObjects = new Map<string, unknown>();
 
       const battles = makeBattles(
@@ -182,7 +180,6 @@ beforeAll(async () => {
   services = await createServices();
 }, 60_000);
 
-// Stopping two containers can take longer than the default hook timeout on CI runners.
 afterAll(async () => {
   await runtime?.dispose();
   await pool?.end();
@@ -214,7 +211,6 @@ it("renews the real Lua lock beyond its TTL while concurrent callers create one 
   const creations: Promise<{ battleId: string }>[] = [];
 
   try {
-    // Allow the submission lookup while holding INSERTs past the Redis lock TTL.
     await blocker.query("BEGIN; LOCK TABLE battles IN SHARE MODE");
     creations.push(
       runtime.runPromise(
@@ -262,7 +258,6 @@ it("does not renew or release another owner's real Redis lock after ownership ch
   let creation: Promise<Exit.Exit<unknown, unknown>> | undefined;
 
   try {
-    // Allow the submission lookup while holding INSERTs past the Redis lock TTL.
     await blocker.query("BEGIN; LOCK TABLE battles IN SHARE MODE");
     creation = runtime.runPromise(
       Effect.exit(services.battles.createBattle({ data, userId })),
@@ -688,7 +683,6 @@ it("prevents an expired cache owner from replacing its successor's cached result
 
   try {
     await started;
-    // Let the real Redis lease expire while the original query remains pending.
     await Bun.sleep(1_100);
     expect(
       await Effect.runPromise(
@@ -1071,8 +1065,6 @@ it("does not cache an older snapshot's character list under a newly invalidated 
       Effect.gen(function* () {
         if (pause) {
           pause = false;
-          // Establish the database snapshot before the writer commits, then let the
-          // real analytics factory resolve characters after cache invalidation.
           yield* database
             .select({ id: userCharacters.id })
             .from(userCharacters);

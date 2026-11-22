@@ -10,7 +10,6 @@ export const RukiaEmptyStateIcon: FC<{ className?: string }> = ({
       xmlns="http://www.w3.org/2000/svg"
       className={className}
     >
-      {/* Outer snowflake - main axes */}
       <line
         x1="60"
         y1="8"
@@ -52,7 +51,6 @@ export const RukiaEmptyStateIcon: FC<{ className?: string }> = ({
         opacity="0.2"
       />
 
-      {/* Branch tips - top */}
       <line
         x1="60"
         y1="8"
@@ -73,7 +71,6 @@ export const RukiaEmptyStateIcon: FC<{ className?: string }> = ({
         opacity="0.25"
         strokeLinecap="round"
       />
-      {/* Branch tips - bottom */}
       <line
         x1="60"
         y1="112"
@@ -94,7 +91,6 @@ export const RukiaEmptyStateIcon: FC<{ className?: string }> = ({
         opacity="0.25"
         strokeLinecap="round"
       />
-      {/* Branch tips - left */}
       <line
         x1="8"
         y1="60"
@@ -115,7 +111,6 @@ export const RukiaEmptyStateIcon: FC<{ className?: string }> = ({
         opacity="0.25"
         strokeLinecap="round"
       />
-      {/* Branch tips - right */}
       <line
         x1="112"
         y1="60"
@@ -137,7 +132,6 @@ export const RukiaEmptyStateIcon: FC<{ className?: string }> = ({
         strokeLinecap="round"
       />
 
-      {/* Inner hexagonal ring */}
       <polygon
         points="60,30 86,45 86,75 60,90 34,75 34,45"
         stroke="currentColor"
@@ -148,7 +142,6 @@ export const RukiaEmptyStateIcon: FC<{ className?: string }> = ({
         strokeLinejoin="round"
       />
 
-      {/* Center ice flower - Sode no Shirayuki petals */}
       <ellipse
         cx="60"
         cy="48"
@@ -195,10 +188,8 @@ export const RukiaEmptyStateIcon: FC<{ className?: string }> = ({
         transform="rotate(288, 60, 60)"
       />
 
-      {/* Center dot */}
       <circle cx="60" cy="60" r="3" fill="currentColor" opacity="0.3" />
 
-      {/* Small scattered crystals */}
       <circle cx="30" cy="30" r="1.5" fill="currentColor" opacity="0.15" />
       <circle cx="90" cy="30" r="1" fill="currentColor" opacity="0.12" />
       <circle cx="30" cy="90" r="1" fill="currentColor" opacity="0.12" />

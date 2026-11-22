@@ -12,7 +12,6 @@ export interface Wallpaper {
   category: WallpaperCategory;
   image: string;
   preview: string;
-  /** A built-in theme's wallpaper is named after the theme. */
   themeId?: BuiltInThemeId;
 }
 
@@ -71,7 +70,6 @@ const generatedWallpapers: Wallpaper[] = GENERATED_WALLPAPERS.map(
   }),
 );
 
-/** Every wallpaper a custom theme can pick, in the picker's order. */
 export const WALLPAPERS: Wallpaper[] = [
   ...themeWallpapers,
   ...generatedWallpapers,

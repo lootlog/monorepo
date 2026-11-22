@@ -54,7 +54,6 @@ describe("LootsListItem", () => {
       wrapper: await createLootTestWrapper(manager),
     });
 
-    // An excluded hero's legend gets no wheel to start a draw.
     await waitFor(() =>
       expect(
         screen.queryByRole("button", { name: /loots.details.draw/ }),
@@ -62,7 +61,6 @@ describe("LootsListItem", () => {
     );
     unmount();
 
-    // The same loot of an elite still gets one.
     loot.npcs = [{ ...npc, type: "ELITE2" }];
 
     const elite = render(<LootsListItem loot={loot} />, {
@@ -74,7 +72,6 @@ describe("LootsListItem", () => {
     ).toBeTruthy();
     elite.unmount();
 
-    // A member who does not manage loots cannot start a draw.
     const member = render(<LootsListItem loot={loot} />, {
       wrapper: await createLootTestWrapper(),
     });
@@ -107,7 +104,6 @@ describe("LootsListItem", () => {
     fireEvent.click(trophy);
     expect(await screen.findByRole("dialog")).toBeTruthy();
 
-    // Voiding refreshes the loot without its result; the open draw stays.
     rerender(<LootsListItem loot={{ ...loot, standingDraws: [] }} />);
     expect(screen.getByRole("dialog")).toBeTruthy();
   });

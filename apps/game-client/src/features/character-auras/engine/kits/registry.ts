@@ -1,4 +1,3 @@
-/** Every aura made as a kit, by the name a preset gives in `kit`. */
 import type { AuraKitId } from "../presets/preset";
 import { fortyfour } from "./fortyfour";
 import { joker } from "./joker";

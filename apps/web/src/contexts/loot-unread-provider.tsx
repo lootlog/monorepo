@@ -23,7 +23,6 @@ export const LootUnreadProvider = ({ children }: PropsWithChildren) => {
     Record<string, number[]>
   >({});
 
-  // The Web app reads each new loot once, as `loot.snapshot`.
   const handleLootSnapshot = useEffectEvent((payload: LootSnapshotEvent) => {
     if (payload.guildId === currentGuildId) return;
     setUnreadLootIdsByGuild((previous) => {

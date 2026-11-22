@@ -80,13 +80,11 @@ export const NotificationFiltersSchema = Schema.Struct({
   world: Schema.optionalKey(Schema.String),
   npcId: Schema.optionalKey(Schema.NullOr(Schema.Number)),
   npcIds: Schema.optionalKey(Schema.mutable(Schema.Array(Schema.Number))),
-  /** Margonem template ids; `npcId`/`npcIds` hold timer (runtime or legacy) ids. */
   npcTemplateIds: Schema.optionalKey(
     Schema.mutable(Schema.Array(Schema.Number)),
   ),
   itemId: Schema.optionalKey(Schema.NullOr(Schema.Number)),
   itemIds: Schema.optionalKey(Schema.mutable(Schema.Array(Schema.Number))),
-  /** Level range of a hero sighting rule; omitted bounds are open. */
   npcLevelMin: Schema.optionalKey(Schema.Number),
   npcLevelMax: Schema.optionalKey(Schema.Number),
 });
@@ -139,10 +137,6 @@ export const DiscordNotificationSendCommandSchema = Schema.Struct({
     externalId: Schema.String,
     targetType: NotificationTargetTypeSchema,
   }),
-  /**
-   * Images sent with the message, such as a loot draw's wheel. A bot that
-   * predates them posts the message alone.
-   */
   files: Schema.optionalKey(
     Schema.Array(
       Schema.Struct({
@@ -188,10 +182,6 @@ export const LootDrawOutcome = { DRAWN: "DRAWN", VOIDED: "VOIDED" } as const;
 export type LootDrawOutcome =
   (typeof LootDrawOutcome)[keyof typeof LootDrawOutcome];
 
-/**
- * A loot item's draw that was run or voided in one Organization, carrying
- * what its message and wheel image show.
- */
 export const LootDrawResolvedNotificationEventSchema = Schema.Struct({
   guildId: Schema.NonEmptyString,
   world: Schema.NonEmptyString,
@@ -203,7 +193,6 @@ export const LootDrawResolvedNotificationEventSchema = Schema.Struct({
     icon: Schema.String,
     lvl: Schema.Number,
   }),
-  /** The strongest monster of the fight, when the loot names one. */
   npcName: Schema.NullOr(Schema.String),
   draw: Schema.Struct({
     id: Schema.Int,
@@ -226,7 +215,6 @@ export const LootDrawResolvedNotificationEventSchema = Schema.Struct({
 export type LootDrawResolvedNotificationEvent =
   typeof LootDrawResolvedNotificationEventSchema.Type;
 
-/** The bot's answer to one notification send command. */
 export const DiscordNotificationDeliveryResultSchema = Schema.Struct({
   notificationJobId: Schema.NonEmptyString,
   success: Schema.Boolean,

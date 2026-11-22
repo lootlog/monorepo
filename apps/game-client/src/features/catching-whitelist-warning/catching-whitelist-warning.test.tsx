@@ -43,7 +43,6 @@ const SESSION = {
 
 const restores: Array<() => void> = [];
 
-/** A signed-in player whose character catches for `catchingGuildIds`, or has no scope yet. */
 const serve = ({
   guilds,
   catchingGuildIds,

@@ -16,7 +16,6 @@ import {
 import type { Capability } from "@lootlog/domain/access-policy";
 import { createOrganizationTestWrapper } from "./router";
 
-/** `capabilities` are the viewer's in the Organization; none by default. */
 export async function createLootTestWrapper({
   capabilities = [],
 }: { capabilities?: Capability[] } = {}) {

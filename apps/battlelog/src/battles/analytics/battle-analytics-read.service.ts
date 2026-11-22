@@ -99,8 +99,6 @@ export const makeBattleAnalyticsRead = (
       requireOpponent?: boolean | undefined;
     } = {},
   ) => {
-    // Both participants come from the owner's filter rows, so resolving them
-    // for a whole history reads only that owner's index entries.
     const ownedBy = (battle: typeof battles) =>
       and(
         eq(battleWarriorFilters.userId, battle.userId),
@@ -411,8 +409,6 @@ export const makeBattleAnalyticsRead = (
       .where(where)
       .as("opponent_records");
 
-    // Keep window rows narrow. Only the latest record for each opponent needs
-    // presentation data and statistics; resolve those by participant key.
     const latest = db
       .select()
       .from(ranked)
@@ -487,8 +483,6 @@ export const makeBattleAnalyticsRead = (
             ? (row.wins / (row.wins + row.losses)) * 100
             : 0,
         lastBattleDate: row.lastBattleDate.toISOString(),
-        // Omitted rather than undefined: the response contract declares
-        // optional keys and rejects an undefined value.
         ...(query.matchmaking && {
           totalRatingDelta,
           avgRatingDelta:
@@ -539,7 +533,6 @@ export const makeBattleAnalyticsRead = (
     userId: string,
     characterIds: string[],
   ): Effect.fn.Return<AbyssSeason[], unknown> {
-    // Season discovery intentionally spans all worlds and battle types for the selected characters.
     const { user, opponent, where } = source(
       userId,
       { matchmaking: true },

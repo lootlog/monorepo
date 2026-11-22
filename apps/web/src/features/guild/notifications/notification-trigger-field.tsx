@@ -11,10 +11,6 @@ type Props = Pick<
   "form" | "t" | "getDefaultContentTemplate"
 >;
 
-/**
- * What triggers the rule: a monster's spawn window, a hero sighting, a loot
- * draw's result, or a time of day.
- */
 export const NotificationTriggerField = ({
   form,
   t,
@@ -36,7 +32,6 @@ export const NotificationTriggerField = ({
       form.setValue("scheduledAt", "");
     }
 
-    // Neither a sighting nor a draw is about chosen monsters.
     if (
       nextType === NotificationTriggerType.HERO_SIGHTED ||
       nextType === NotificationTriggerType.LOOT_DRAW_RESOLVED

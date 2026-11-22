@@ -1,6 +1,5 @@
 import type { PublicApiOperation } from "../public-api-policy.js";
 
-/** Search service operations. */
 export const SEARCH_OPERATIONS = [
   {
     service: "search",

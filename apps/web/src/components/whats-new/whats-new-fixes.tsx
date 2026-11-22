@@ -9,11 +9,9 @@ import { useTranslation } from "react-i18next";
 
 type WhatsNewFixesProps = {
   fixes: ChangelogItem[];
-  /** The inset and rule of the list the fixes close. */
   className?: string;
 };
 
-/** A week's fixes, folded so they do not crowd out what is new. */
 export const WhatsNewFixes = ({ fixes, className }: WhatsNewFixesProps) => {
   const { t } = useTranslation();
 

@@ -10,11 +10,6 @@ function hasHttpStatus(cause: unknown, status: number): boolean {
   return isObjectRecord(cause) && cause.status === status;
 }
 
-/**
- * A room can lapse without the server sending anything, so each expiry is
- * rechecked against the room itself: a 404 means it is gone, any other
- * response replaces the stale projection.
- */
 export function usePartyReadyRoomExpiry(): void {
   const projections = useReadyRoomProjections();
   const { removeProjection } = useReadyRoomsCache();

@@ -21,7 +21,6 @@ export const OPERATOR_SYMBOLS: Record<EventScoringNumericOperator, string> = {
   "!=": "≠",
 };
 
-/** "5 min", "4 min 30 s" or "45 s"; whole minutes drop the seconds. */
 export const formatScoringDuration = (seconds: number, t: TFunction) => {
   const minutes = Math.floor(seconds / 60);
   const remainder = Math.round(seconds % 60);
@@ -38,7 +37,6 @@ export const formatScoringDuration = (seconds: number, t: TFunction) => {
       });
 };
 
-/** A share for display; comparisons always use the unrounded value. */
 export const formatScoringPercentage = (value: number) =>
   `${Math.round(value * 10) / 10}%`;
 
@@ -85,7 +83,6 @@ export const getGroupCountingLabel = (counting: GroupCounting, t: TFunction) =>
 const getScoringBooleanValueLabel = (value: boolean, t: TFunction) =>
   t(`events.scoring.booleanValue.${value}`, value ? "tak" : "nie");
 
-/** "solo", "w grupie do 4 osób", "w grupie od 2 do 4 osób"… */
 const formatGroupSize = (size: GroupSizeRange, t: TFunction) => {
   if (size.comparison === "EXACT" && size.value === 1) {
     return t("events.scoring.groupSize.solo");
@@ -103,7 +100,6 @@ const formatGroupSize = (size: GroupSizeRange, t: TFunction) => {
   });
 };
 
-/** The number of members a counted group size accepts: "≤ 4", "2–4"… */
 const formatGroupCountRange = (size: GroupSizeRange) => {
   switch (size.comparison) {
     case "EXACT":
@@ -162,10 +158,6 @@ export const formatScoringCondition = (
 
 type NumericCondition = Extract<EventScoringCondition, { type: "NUMERIC" }>;
 
-/**
- * Joins a rule's conditions, reading an inclusive lower and upper bound on
- * the same factor as one range ("Liczba obstawiających: 1–4").
- */
 export const formatScoringConditions = (
   conditions: EventScoringCondition[],
   t: TFunction,
@@ -220,7 +212,6 @@ export const formatScoringConditions = (
     .join(` ${t("events.scoring.andLabel")} `);
 };
 
-/** "3 pkt", "+0,5 pkt" or "Zeruj punkty". */
 export const formatScoringAction = (
   action: EventScoringAction,
   t: TFunction,

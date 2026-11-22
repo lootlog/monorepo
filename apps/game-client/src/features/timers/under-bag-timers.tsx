@@ -10,9 +10,6 @@ export const UnderBagTimers: FC<PropsWithChildren> = ({ children }) => {
 
   if (!bottomWrapper) return null;
 
-  // Layout and style containment keep the ticking timers' work inside this
-  // host-page subtree. Positioned descendants already have a positioned
-  // ancestor inside it, and popups portal out of it.
   return createPortal(
     <div
       className={cn(

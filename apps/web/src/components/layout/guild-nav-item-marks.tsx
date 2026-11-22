@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next";
 const markClassName =
   "pointer-events-none absolute right-0.5 z-20 size-4 rounded-full border border-sidebar-border bg-sidebar p-0.5 text-muted-foreground";
 
-/** Corner marks on a server-rail avatar: hidden, locked, and unread loots. */
 export const GuildNavItemMarks = ({
   isHidden,
   isLocked,

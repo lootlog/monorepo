@@ -5,18 +5,12 @@ import { RetryButton } from "@/components/common/retry-button";
 
 type QueryErrorNoticeProps = {
   message: string;
-  /** Second line, for example that the content below is the last good copy. */
   detail?: string;
   onRetry?: () => void;
   isRetrying?: boolean;
   className?: string;
 };
 
-/**
- * One-line failure notice for a section that still has room for other content,
- * such as stale data or the rest of a page. A failure that leaves nothing to
- * show uses `EmptyState` with the same icon instead.
- */
 export const QueryErrorNotice = ({
   message,
   detail,

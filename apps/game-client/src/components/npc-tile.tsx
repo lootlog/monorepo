@@ -9,7 +9,6 @@ type NpcTileProps = {
   containerClassName?: string;
 };
 
-/** NPC sprite scaled into a 28×40 list slot. */
 export const NpcTile: FC<NpcTileProps> = ({
   npc,
   className,

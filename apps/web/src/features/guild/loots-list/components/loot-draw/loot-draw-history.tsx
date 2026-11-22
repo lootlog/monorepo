@@ -3,7 +3,6 @@ import { Trans, useTranslation } from "react-i18next";
 import { MemberIdentity } from "@/components/common/member-identity";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 
-/** Voided results of one item, newest first, with who voided them and why. */
 export const LootDrawHistory = ({
   draws,
 }: {
@@ -32,8 +31,6 @@ export const LootDrawHistory = ({
                   i18nKey="loots.details.draw.voidedBy"
                   values={{ date: timestampToDate(draw.voided.at) }}
                   components={{
-                    // Written by a member, so it stays out of the markup the
-                    // sentence is parsed for.
                     reason: <span>{draw.voided.reason}</span>,
                     member: (
                       <MemberIdentity

@@ -54,12 +54,10 @@ const asExtension = () =>
     createRealtime: createGameRealtimeClient,
   });
 
-/** Follows the website link and comes back to the game, as a player would. */
 const roundTripThroughWebsite = async (
   user: ReturnType<typeof userEvent.setup>,
 ) => {
   const link = screen.getByRole("link", { name: "Otwórz stronę Lootloga" });
-  // jsdom cannot open the tab; only the click handler matters here.
   link.addEventListener("click", (event) => event.preventDefault());
   await user.click(link);
   act(() => {
@@ -105,7 +103,6 @@ describe("login window", () => {
     await user.click(screen.getByRole("button", { name: "Sprawdź sesję" }));
     await waitFor(() => expect(screen.queryByRole("region")).toBeNull());
 
-    // A later confirmed sign-out brings the window back.
     vi.mocked(fetch).mockResolvedValue(Response.json(null));
     act(() => authClient.$store.notify("$sessionSignal"));
     await screen.findByRole("region");
@@ -161,8 +158,6 @@ describe("login window", () => {
     const remounted = renderLogin();
     expect(screen.queryByRole("region")).toBeNull();
 
-    // The launcher takes the quick access bar's place, even before the player
-    // has ever moved that bar.
     const launcher = screen.getByRole("button", {
       name: "Zaloguj się do Lootloga",
     });
@@ -178,8 +173,6 @@ describe("login window", () => {
       top: `${quickAccessPosition.y}px`,
     });
 
-    // Reopening is the player's own action, so focus moves in and Escape
-    // closes the window instead of reaching the game.
     await user.click(launcher);
     expect(screen.getByRole("region")).toBeInTheDocument();
     expect(

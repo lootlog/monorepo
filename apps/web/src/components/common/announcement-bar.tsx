@@ -5,7 +5,6 @@ import { X } from "lucide-react";
 import { useLocalStorage } from "usehooks-ts";
 
 type AnnouncementBarProps = {
-  /** Remembers the dismissal; a new key shows the bar again to everyone. */
   dismissedStorageKey: string;
   icon: ReactNode;
   title: string;
@@ -15,7 +14,6 @@ type AnnouncementBarProps = {
   dismissLabel: string;
 };
 
-/** The top bar announcement shown until the player follows or hides it. */
 export const AnnouncementBar = ({
   dismissedStorageKey,
   icon,
@@ -46,8 +44,6 @@ export const AnnouncementBar = ({
       aria-labelledby={titleId}
       className="shrink-0 border-b border-border bg-card text-card-foreground"
     >
-      {/* Below lg the description takes its own row under the title and the
-          actions, where it wraps in full; wide screens keep one line. */}
       <div className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center px-3 py-2.5 text-sm lg:grid-cols-[auto_auto_minmax(0,1fr)_auto] sm:px-4">
         <div
           aria-hidden="true"
@@ -78,7 +74,6 @@ export const AnnouncementBar = ({
             variant="ghost"
             size="icon-sm"
             aria-label={dismissLabel}
-            // Its glyph, not its hit area, meets the bar's inset.
             className="-mr-2 text-muted-foreground hover:text-foreground"
             onClick={handleDismiss}
           >

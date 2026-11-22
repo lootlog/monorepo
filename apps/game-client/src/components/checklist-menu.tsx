@@ -7,7 +7,6 @@ type ChecklistMenuItem<Value extends string> = {
   value: Value;
   label: string;
   leading?: ReactNode;
-  /** Shown before the check mark, e.g. the shortcut that does the same. */
   trailing?: ReactNode;
 };
 
@@ -20,11 +19,9 @@ type ChecklistMenuOnlyAction<Value extends string> = {
 type ChecklistMenuProps<Value extends string> = {
   "aria-label": string;
   className?: string;
-  /** Mutes rows that are off; disable it where an off row is an entry to add. */
   dimUnselected?: boolean;
   items: readonly ChecklistMenuItem<Value>[];
   onToggle: (value: Value) => void;
-  /** Adds an "only" button to each row (and on right-click) that keeps just that entry. */
   only?: ChecklistMenuOnlyAction<Value>;
   selected: ReadonlySet<Value>;
 };
@@ -33,11 +30,6 @@ const ROW_SELECTOR = "[data-ll-checklist-row]";
 
 const ICON_SIZE = 12;
 
-/**
- * Popover checklist shared by filters and pickers: each row toggles its entry,
- * and the optional "only" button (or a right-click on the row) keeps just that
- * entry. Up and Down move between rows so the list works without a pointer.
- */
 export const ChecklistMenu = <Value extends string>({
   "aria-label": ariaLabel,
   className,
@@ -114,7 +106,6 @@ export const ChecklistMenu = <Value extends string>({
               {item.trailing ? (
                 <span className="ll:flex ll:shrink-0 ll:items-center ll:gap-1.5">
                   {item.trailing}
-                  {/* Keeps the trailing content in place as the check moves. */}
                   <Check
                     size={ICON_SIZE}
                     aria-hidden="true"

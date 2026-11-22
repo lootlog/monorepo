@@ -22,11 +22,6 @@ type EquipmentSetSlotProps = {
   worn: WornItem | undefined;
 };
 
-/**
- * One slot of the set. Pressing it opens the item picker for it, worn or
- * empty; the other hand beside a two-handed weapon holds nothing. An item put
- * on grows into the slot.
- */
 export function EquipmentSetSlot({ slot, worn }: EquipmentSetSlotProps) {
   const { unequip } = useEquipmentSet();
   const { pickItem } = useSetItemPicker();

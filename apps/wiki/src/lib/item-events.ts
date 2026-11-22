@@ -7,11 +7,9 @@ import { itemStatValue } from "@lootlog/domain/item-stat";
 import { t } from "@/i18n/messages";
 import { isHeroTrackersEvent } from "@/lib/hero-trackers";
 
-/** The events an item's stats name, as the game writes them. */
 export const itemEvents = (stat: string) =>
   itemEventLabels(itemStatValue(stat, "etiquette") ?? "");
 
-/** The event a slug names, as any of its items writes it. */
 export const eventNameOf = (
   items: readonly { stat: string }[],
   eventSlug: string,
@@ -20,14 +18,9 @@ export const eventNameOf = (
     (label) => itemEventSlug(label) === eventSlug,
   );
 
-/** The latest event an item belongs to; none for an item of no event. */
 export const latestEventOf = (stat: string) =>
   latestItemEvent(itemEvents(stat));
 
-/**
- * What an event is, under its name: Tropiciele Herosów for its editions,
- * and the monster that pictures it.
- */
 export const eventSubtitle = (
   event: string,
   boss: { name: string } | null | undefined,

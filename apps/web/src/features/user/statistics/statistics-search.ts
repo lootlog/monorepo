@@ -16,7 +16,6 @@ export const STATISTICS_TABS = [
 
 export const STATISTICS_DAYS = [7, 30, 90, 365] as const;
 
-/** What a ranking tab can be sorted by; each tab offers some, its first by default. */
 export const STATISTICS_SORT_FIELDS = {
   monsters: ["kills", "change", "legends", "caught"],
   legends: ["legends", "caught", "kills"],
@@ -41,18 +40,13 @@ export type StatisticsSearch = {
   tab: StatisticsTab;
   days: StatisticsDays;
   world?: string;
-  /** One Margonem character, counted since per-character tracking began. */
   characterId?: string;
-  /** Narrows the monster ranking. */
   npcType?: StatisticsNpcType;
-  /** The ranking's sort field; most first unless `asc`. */
   sort?: StatisticsSort;
   asc?: true;
-  /** Narrows a ranking tab by name. */
   q?: string;
 };
 
-/** The tab's sort, falling back to its default when the URL names another tab's field. */
 export const resolveStatisticsSort = (
   tab: StatisticsSortTab,
   search: Pick<StatisticsSearch, "sort" | "asc">,
@@ -64,7 +58,6 @@ export const resolveStatisticsSort = (
     : { field: fields[0] ?? "kills", asc: false };
 };
 
-/** An optional search value, normalized; one it cannot use reads as missing. */
 const optionalSearchValue = <To extends Schema.Codec<string>>(
   to: To,
   normalize: (value: string) => To["Type"] | undefined,
@@ -129,8 +122,6 @@ export const parseStatisticsSearch = Schema.decodeUnknownSync(
         typeof StatisticsSearchSchema.Type,
         typeof StatisticsSearchSchema.Type
       >({
-        // A character id is unique only within its world, so it never stands
-        // alone.
         decode: (search) =>
           search.world ? search : { ...search, characterId: undefined },
         encode: (search) => search,

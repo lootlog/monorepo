@@ -36,8 +36,6 @@ export const getChatReplySnippet = (reply: ReplyLike) => {
   return `${replyText.slice(0, MAX_REPLY_SNIPPET_LENGTH - ELLIPSIS.length)}${ELLIPSIS}`;
 };
 
-// Transcript rows are memoized on message identity, so a renamed reply keeps
-// one object for as long as its source message and resolved name do.
 const resolvedReplies = new WeakMap<
   ChatMessageResponseDtoOutput,
   ChatMessageResponseDtoOutput

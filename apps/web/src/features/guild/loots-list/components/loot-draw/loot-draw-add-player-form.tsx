@@ -23,16 +23,11 @@ const ERROR_KEYS = {
 
 export type LootDrawAddError = keyof typeof ERROR_KEYS;
 
-/**
- * Adds a player the map snapshot missed. `validate` says why they cannot
- * enter; a valid player is handed to `onAdd` and the form clears.
- */
 export const LootDrawAddPlayerForm = ({
   professions,
   validate,
   onAdd,
 }: {
-  /** The professions that can wear the item, offered first. */
   professions: readonly Profession[];
   validate: (candidate: {
     name: string;

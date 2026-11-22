@@ -9,7 +9,6 @@ type EventMemberKillsProfileLinkProps = {
   memberId: number;
 };
 
-/** The profile card's way to a member's kills in the event. */
 export const EventMemberKillsProfileLink = ({
   guildId,
   eventId,

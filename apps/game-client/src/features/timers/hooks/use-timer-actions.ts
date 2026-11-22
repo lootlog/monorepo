@@ -175,8 +175,6 @@ export const useTimerActions = (
         failedResetScopes.current =
           failedScopes.length > 0 ? { identity, scopes: failedScopes } : null;
 
-        // A retry sends only the scopes that failed before, so the message
-        // counts against every scope of the timer.
         return { results, scopeCount: originalScopes.length };
       },
       onSuccess: ({ results, scopeCount }) => {

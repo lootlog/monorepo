@@ -2,11 +2,6 @@ import { useGuildsControllerGetWorldsByGuildId } from "@lootlog/client/main";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useGuildWorld } from "@/hooks/context/use-guild-world";
 
-/**
- * The worlds a per-world Organization read covers: the chosen world, or every
- * world the Organization plays on when all worlds are chosen. `worlds` stays
- * undefined until that list loads.
- */
 export const useGuildWorldScope = ({ enabled = true } = {}) => {
   const guildId = useGuildId();
   const { world } = useGuildWorld();

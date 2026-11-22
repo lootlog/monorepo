@@ -3,7 +3,6 @@ import { useWikiContext } from "@/contexts/wiki-context";
 
 const SESSION_QUERY_KEY = ["session"] as const;
 
-/** The signed-in User, shared with the Web app through the auth cookie. */
 export const useSession = () => {
   const { authClient } = useWikiContext();
 

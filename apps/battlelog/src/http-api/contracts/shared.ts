@@ -1,4 +1,3 @@
-/** Shared transport definitions for the battlelog HTTP contract. */
 import * as Schema from "effect/Schema";
 import * as Struct from "effect/Struct";
 import { DateTimeString, FiniteNumber } from "@lootlog/schema/http-scalars";

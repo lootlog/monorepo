@@ -10,7 +10,6 @@ type ScheduleIconButtonProps = Omit<
   ComponentProps<typeof Button>,
   "aria-label" | "size" | "title"
 > & {
-  /** Names the button and fills its tooltip. */
   label: string;
   size: "icon-sm" | "icon" | "icon-lg";
 };

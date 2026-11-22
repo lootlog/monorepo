@@ -66,9 +66,6 @@ export const makeAccessibleGuilds = (
   ports: AccessibleGuildPorts,
   environment: RuntimeEnvironment,
 ) => {
-  // A refresh that succeeds keeps the member fresh for one soft TTL, and the
-  // queued job retries on its own, so one background enqueue per window is
-  // enough; later requests would only repeat BullMQ round trips.
   const refreshMarkerTtlSeconds = Math.ceil(
     getMemberCacheSoftTtl(environment) / 1000,
   );
@@ -83,8 +80,6 @@ export const makeAccessibleGuilds = (
       (guildId) => {
         const markerKey = `member:refresh:background:${identity.userId}:${guildId}`;
 
-        // Release a claimed marker whenever the enqueue does not succeed,
-        // including interruption, so another read can queue the refresh.
         return Effect.uninterruptibleMask((restore) =>
           ports.setIfAbsent(markerKey, "1", refreshMarkerTtlSeconds).pipe(
             Effect.flatMap((claimed) =>

@@ -1,4 +1,3 @@
-/** Transport definitions for weapon kill counters. */
 import * as Schema from "effect/Schema";
 import { FiniteNumber } from "@lootlog/schema/http-scalars";
 import { CreateBattleDto } from "../battles/creation.schemas.js";

@@ -104,9 +104,6 @@ it("filters Organization, NPC tier, and level boundaries before exposing a gathe
       npc: { name: "NPC", location: "map", lvl: 0, type: "TITAN" },
     }),
   ).toEqual(["org"]);
-  // A gathering NPC carries a free-form `type` string. An unclassifiable one
-  // must be hidden, not fall back to the base tier, which would expose it to
-  // anyone holding plain chat read while the realtime socket suppresses it.
   expect(
     visible({
       ...room,

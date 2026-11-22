@@ -26,8 +26,6 @@ export function getKeyErrorMessage(cause: unknown) {
   const code = getApiErrorStringField(cause, "code");
   const message = getApiErrorStringField(cause, "message");
 
-  // A 503 hides its message behind its code, and auth instances deployed
-  // before the shared error body send only the message.
   const copy =
     keyErrorCopy.find(([reason]) => reason.code === code) ??
     keyErrorCopy.find(([reason]) => reason.message === message);
@@ -52,7 +50,6 @@ const KeyForm = Schema.Struct({
 
 const decodeKeyForm = Schema.decodeUnknownSync(KeyForm);
 
-/** The create request for the key form's fields. */
 export function readKeyForm(data: FormData): ApiKeysCreateApiKeyBody {
   const form = decodeKeyForm({
     name: data.get("name"),

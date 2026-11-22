@@ -399,7 +399,6 @@ export const useHeroDetail = () => {
       status: "missing" as const,
       t,
       error,
-      // A failed maps request would otherwise leave the retried page without maps.
       retry: () => Promise.all([refetchEvent(), refetchMaps()]),
       queryGuildId,
       queryEventId,

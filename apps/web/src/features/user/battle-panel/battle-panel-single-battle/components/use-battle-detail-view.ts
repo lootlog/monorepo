@@ -75,7 +75,6 @@ export function useBattleDetailView({
   const logColumnViewportRef = useRef<HTMLDivElement>(null);
   const mainColumnViewportRef = useRef<HTMLDivElement>(null);
 
-  // The wide rail scrolls the log on its own; below it the whole page scrolls it.
   const logScrollViewportRef = isWide
     ? logColumnViewportRef
     : scrollViewportRef;
@@ -92,7 +91,6 @@ export function useBattleDetailView({
 
   const recentPanels = hasSideContent ? (["recent"] as const) : [];
 
-  // The rail shares the log with the recent battles against the same opponent, if any.
   const panels: BattleDetailPanel[] = ["log", ...recentPanels];
 
   const visiblePanel = panels.includes(activePanel) ? activePanel : "log";
@@ -132,7 +130,6 @@ export function useBattleDetailView({
     setScrollTargetRequestId((requestId) => requestId + 1);
   }, [battleId, queryState.turn]);
 
-  // Only a new battle starts from the top; crossing `md` keeps the place.
   const scrollPageToTop = useEffectEvent(() =>
     getPageScroller(scrollViewportRef.current, scrollsDocument)?.scrollTo({
       top: 0,
@@ -148,7 +145,6 @@ export function useBattleDetailView({
     setScrollTargetTurn(null);
     setScrollTargetRequestId(0);
 
-    // Walking through the recent battles keeps the reader's place in that list.
     const keptViewport =
       useBattleDetailPanelStore.getState().activePanel === "recent"
         ? logColumnViewportRef.current
@@ -169,11 +165,8 @@ export function useBattleDetailView({
 
   useEffect(() => cancelScrollAnimationFrame, []);
 
-  // Two averaged team lines say little about a group battle, so it has no chart for now.
   const hasChartSlot = !isGroup && (isTimelinePending || hasTimeline);
 
-  // Crossing the layout breakpoint hands the log to the other scroller, so bring it back to the
-  // turn the reader was on.
   useEffect(() => {
     const turn = selectedTurnRef.current;
 
@@ -194,7 +187,6 @@ export function useBattleDetailView({
     setScrollTargetRequestId((requestId) => requestId + 1);
     void setQueryState({ turn });
 
-    // The log may be behind the recent battles when the chart picks a turn.
     setActivePanel("log");
   };
 
@@ -232,7 +224,6 @@ export function useBattleDetailView({
       .querySelector("[data-battle-log-toolbar]")
       ?.getBoundingClientRect();
 
-    // The log's search bar pins itself over the top rows of the scroller.
     const occlusionBottom =
       toolbarRect &&
       toolbarRect.bottom > visibleBand.top &&

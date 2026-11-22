@@ -82,10 +82,6 @@ const buildContextStats = ({
   return buildStatsSummary(selectedRanking ? [selectedRanking] : []);
 };
 
-/**
- * The member's place in one hero's ranking, ordered by points as the ranking
- * table is; rankings are per hero, so there is no place across heroes.
- */
 const getRankingPlace = (
   rankings: EventRanking[],
   memberId: number,
@@ -104,7 +100,6 @@ const getRankingPlace = (
     : { position: index + 1, playerCount: heroRankings.length };
 };
 
-/** Where the member stands in the event for the heroes the page shows. */
 const getMemberEventContext = ({
   heroes,
   selectedHero,
@@ -137,7 +132,6 @@ const getMemberEventContext = ({
   };
 };
 
-/** The member's details arrive with their kills, so their id stands in until then. */
 const getMemberName = (
   member: KillHistoryMember | undefined,
   memberId: string,

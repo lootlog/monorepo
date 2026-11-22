@@ -4,7 +4,6 @@ type EmbeddedLootRowsSkeletonProps = {
   rows: number;
 };
 
-/** Stands in for embedded `LootsListItem` rows inside a section card. */
 export const EmbeddedLootRowsSkeleton = ({
   rows,
 }: EmbeddedLootRowsSkeletonProps) => (

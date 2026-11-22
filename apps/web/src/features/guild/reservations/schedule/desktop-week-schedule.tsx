@@ -26,17 +26,11 @@ import {
   type DesktopWeekScheduleProps,
 } from "./use-desktop-week-selection";
 
-/**
- * A day column's horizontal position, for overlays laid over the grid. They
- * are absolute, not grid items, which would take cells from the auto-placed
- * hour slots and shift every row after them.
- */
 const getDayColumnStyle = (day: number) => ({
   left: `calc(${(day / DAYS.length) * 100}% + ${LABEL_COLUMN_WIDTH * (1 - day / DAYS.length)}px)`,
   width: `calc(${100 / DAYS.length}% - ${LABEL_COLUMN_WIDTH / DAYS.length}px)`,
 });
 
-// The day headings pin under the schedule bar, which pins under the app bar.
 const dayHeadingTop = `calc(var(--page-sticky-top) + ${SCHEDULE_BAR_HEIGHT})`;
 
 export function DesktopWeekSchedule({
@@ -49,7 +43,6 @@ export function DesktopWeekSchedule({
   onReservationCancel,
   cancellingReservationId,
 }: DesktopWeekScheduleProps & {
-  /** The schedule bar, which scrolls with the hours in the page scroller. */
   header?: ReactNode;
 }) {
   const {
@@ -79,8 +72,6 @@ export function DesktopWeekSchedule({
     cancellingReservationId,
   });
 
-  // The slot under the mouse: a line marks where a reservation would start
-  // across the week, and the day's column is lit, so both axes read at once.
   const [hoverPoint, setHoverPoint] = useState<{
     day: number;
     minutes: number;
@@ -97,7 +88,6 @@ export function DesktopWeekSchedule({
   return (
     <ScrollArea data-under-top-bar className="min-h-0 flex-1 select-none">
       {header}
-      {/* Isolated, so reservations scrolling past stay under the bar. */}
       <div
         ref={gridRef}
         className={cn(
@@ -251,7 +241,6 @@ export function DesktopWeekSchedule({
           )),
         ])}
 
-        {/* Days and hours that have passed, where no reservation can start. */}
         {DAYS.map((_, dayIndex) =>
           dayIndex > nowDay ? null : (
             <div

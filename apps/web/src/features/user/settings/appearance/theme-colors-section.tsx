@@ -23,20 +23,14 @@ import { useTranslation } from "react-i18next";
 import type { ThemeEditorFormValues } from "./theme-editor-form.schema";
 import { ThemeSettingRow } from "./theme-setting-row";
 
-/** The shipped themes' cover, where the slider starts before it is moved. */
 const DEFAULT_TRANSPARENCY = 50;
 
-/**
- * The theme's colours as the page shows them: the accent, the background,
- * how much wallpaper shows through, and every other colour on request.
- */
 export const ThemeColorsSection = () => {
   const { t } = useTranslation();
   const transparencyLabelId = useId();
   const [showAllColors, setShowAllColors] = useState(false);
   const { control, setValue } = useFormContext<ThemeEditorFormValues>();
   const definition = useWatch({ control, name: "definition" });
-  // The page already previews the draft, so it shows every colour as set.
   const pageColors = useRootColors();
   const hasWallpaper = definition.wallpaper !== "none";
 
@@ -181,7 +175,6 @@ export const ThemeColorsSection = () => {
         </CollapsibleTrigger>
         <CollapsibleContent>
           <ul>
-            {/* The separator has its own row above. */}
             {CUSTOM_THEME_TOKEN_KEYS.filter(
               (token) => token !== "separator",
             ).map((token) => {

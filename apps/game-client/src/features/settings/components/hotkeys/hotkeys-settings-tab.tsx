@@ -42,7 +42,6 @@ export const HotkeysSettingsTab = () => {
     })),
   );
 
-  // Leaving the tab mid-recording must not leave every hotkey disabled.
   useEffect(() => () => setCapturingAction(null), [setCapturingAction]);
 
   const [conflictAction, setConflictAction] = useState<HotkeyAction | null>(

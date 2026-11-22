@@ -27,7 +27,6 @@ type SharedTooltipState = {
 };
 
 type SharedTooltipOptions = {
-  /** Where the content lines up with its trigger; centered by default. */
   align?: TooltipAlign;
   contentClassName?: string;
   triggerElement?: HTMLElement | null;
@@ -152,10 +151,6 @@ function SharedTooltipRoot({
     };
   }, [controllerRef]);
 
-  // A press closes it, as it does a tooltip of its own, and cancels one
-  // about to open: the press that focuses a trigger schedules it. A trigger
-  // that opens a page leaves without a pointer or focus event, and the
-  // tooltip would otherwise stay over the next page.
   useEffect(() => {
     const closeOnPress = () => {
       clearShowTimeout();

@@ -2,10 +2,6 @@ import { useSession } from "@/hooks/auth/use-session";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useGuildsControllerGetGuildById } from "@lootlog/client/main";
 
-/**
- * Both ids are undefined while the guild and session queries are loading, so
- * they must never be compared directly: that would grant owner-only UI.
- */
 const isGuildOwner = (
   ownerId: string | null | undefined,
   discordId: string | null | undefined,

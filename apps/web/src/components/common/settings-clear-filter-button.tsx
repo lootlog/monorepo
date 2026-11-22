@@ -1,7 +1,6 @@
 import { Button } from "@lootlog/ui/components/button";
 import { useTranslation } from "react-i18next";
 
-/** Empties a settings list's name filter from its empty state. */
 export const SettingsClearFilterButton = ({
   onClear,
 }: {

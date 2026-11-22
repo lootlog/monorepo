@@ -86,8 +86,6 @@ export const KillsPage: React.FC = () => {
   const [query, setQuery] = useQueryStates(killsSearchParsers);
   const usesTable = useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
 
-  // The search keeps a local draft; the URL (and with it the request) only
-  // follows once typing pauses. The level range debounces its own drafts.
   const [searchDraft, setSearchDraft] = useState(query.search);
 
   const publishSearch = useDebounceCallback(
@@ -107,7 +105,6 @@ export const KillsPage: React.FC = () => {
   const sortBy: KillsControllerGetUserNpcKillsParams["sortBy"] =
     sorting[0]?.id === "npcLvl" ? "level" : "kills";
 
-  // A cursor is valid only for the filters and sort it was issued for.
   const pages = useCursorStack(JSON.stringify({ filters, sortOrder, sortBy }));
 
   const { cursor, pageIndex } = pages;

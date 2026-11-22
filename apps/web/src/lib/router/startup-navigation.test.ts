@@ -679,7 +679,6 @@ it("opens an organization with its sidebar pins and loot list already loaded", a
       Capability.LOOTLOG_EVENTS_READ,
     ],
     organizationResponse: (path) => {
-      // Answers after the other requests, as a slower endpoint would.
       if (path === "/guilds/42/pinned-events")
         return new Promise<Response>((resolve) =>
           setTimeout(() => resolve(Response.json([])), 20),
@@ -698,7 +697,6 @@ it("opens an organization with its sidebar pins and loot list already loaded", a
   await router.load();
   await router.navigate({ href: "/42?rarities=legendary" });
 
-  // The page renders complete in one step instead of filling in afterwards.
   expect(
     queryClient.getQueryData(getListPinnedEventsQueryKey({ guildId: "42" })),
   ).toEqual([]);

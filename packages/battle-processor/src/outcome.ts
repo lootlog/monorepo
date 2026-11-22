@@ -4,11 +4,9 @@ import { normalizeName, type WarriorRoster } from "./warrior.js";
 export type BattleOutcome = {
   winner: string;
   loser: string;
-  /** `0` when the battle has no winner: unfinished or a turn-limit draw. */
   winningTeam: number;
   losingTeam: number;
   hasFlee: boolean;
-  /** The submitter left before Margonem ended the battle; it has no result. */
   unfinished: boolean;
 };
 
@@ -18,7 +16,6 @@ type OutcomeInput = {
   winner: string;
   loser: string;
   hasFlee: boolean;
-  /** Whether the capture includes the end of the battle. */
   ended: boolean;
 };
 
@@ -32,7 +29,6 @@ const splitOutcomeNames = (value: string): string[] =>
     .map((name) => name.trim())
     .filter((name) => name.length > 0);
 
-/** The team most of the named warriors belong to. */
 const getTeamFromOutcomeNames = (
   roster: WarriorRoster,
   names: string[],
@@ -58,10 +54,6 @@ const getTeamFromOutcomeNames = (
   return topEntry ? topEntry[0] : null;
 };
 
-/**
- * Without outcome names, the team with more survivors wins, then the one
- * with more HP left, more damage dealt and less damage taken.
- */
 const resolveOutcomeFromTotals = (
   roster: WarriorRoster,
   lastHp: ReadonlyMap<string, number>,
@@ -142,9 +134,6 @@ export const resolveBattleOutcome = (input: OutcomeInput): BattleOutcome => {
     hasFlee: input.hasFlee,
   };
 
-  // A player who dies in a group battle may close it before Margonem ends
-  // it. That capture has neither the end packet nor its outcome lines, so no
-  // team can be named the winner.
   if (!input.ended && input.winner === "" && input.loser === "") {
     return {
       ...base,
@@ -154,8 +143,6 @@ export const resolveBattleOutcome = (input: OutcomeInput): BattleOutcome => {
     };
   }
 
-  // A flee also ends with `winner=?`; its teams keep the inferred result the
-  // flee-aware analytics and views expect.
   if (input.winner === NO_WINNER && !input.hasFlee) {
     return { ...base, winningTeam: 0, losingTeam: 0, unfinished: false };
   }

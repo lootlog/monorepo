@@ -10,7 +10,6 @@ const floatingParticles = Array.from({ length: 12 }, (_, index) => ({
   x: 5 + ((index * 29) % 90),
 }));
 
-// Floating destruction particles for global overlay
 export const FloatingParticles = () => {
   const prefersReducedMotion = usePrefersReducedMotion();
 

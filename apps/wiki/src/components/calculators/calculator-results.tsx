@@ -2,14 +2,9 @@ import { cn } from "cn";
 import { t } from "@/i18n/messages";
 
 type CalculatorResultsProps = {
-  /**
-   * Each result with its formatted value, the main answer first; none while
-   * an input is missing.
-   */
   results: ReadonlyArray<{ label: string; value: string | undefined }>;
 };
 
-/** A calculator's answers, the main one large, announced as they change. */
 export function CalculatorResults({ results }: CalculatorResultsProps) {
   return (
     <div className="flex flex-col gap-3">

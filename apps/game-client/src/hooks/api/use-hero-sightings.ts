@@ -12,7 +12,6 @@ import { queryKeys } from "@/lib/query-keys";
 import { useRealtimeSnapshotReady } from "@/contexts/socket-context";
 import { applyGameTimerAccess } from "@/lib/game-access-cache";
 
-/** The latest sighting of every hero in the world, per Organization. */
 export const useHeroSightings = (world: string | undefined) => {
   const queryClient = useQueryClient();
   const snapshotReady = useRealtimeSnapshotReady();
@@ -32,7 +31,6 @@ export const useHeroSightings = (world: string | undefined) => {
 
 const EMPTY_SIGHTINGS: HeroSightingResponseDto[] = [];
 
-// Module-level, so the combined list keeps its identity until a world's list changes.
 const combineLoadedSightings = (
   results: readonly UseQueryResult<HeroSightingResponseDto[]>[],
 ): HeroSightingResponseDto[] => {
@@ -42,10 +40,6 @@ const combineLoadedSightings = (
   return loaded.length > 0 ? loaded : EMPTY_SIGHTINGS;
 };
 
-/**
- * Sightings already loaded for these worlds, without requesting them: the
- * hero sightings feature owns loading and live updates.
- */
 export const useLoadedHeroSightings = (
   worlds: readonly string[],
 ): HeroSightingResponseDto[] =>

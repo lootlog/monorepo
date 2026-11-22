@@ -40,7 +40,6 @@ interface OneVsOneStatsTableProps {
   headerActions?: ReactNode;
   hideZeros?: boolean;
   onHideZerosChange?: (value: boolean) => void;
-  /** Pins the title, search and column header to the scroller the table lives in. */
   pinnedHeader?: boolean;
   statsCustomizationConfig?: StatsCustomizationConfig;
 }
@@ -68,7 +67,6 @@ const resolveStatsTableConfiguration = ({
   showHeader: showHeader ?? true,
 });
 
-// Pinned under the page's tabs, a pixel higher so its top rule covers theirs, like a band heading.
 const PINNED_HEADER_TOP_CLASS_NAME =
   "top-[calc(var(--page-sticky-top)+var(--filter-bar-height,0px)-1px)]";
 
@@ -188,7 +186,6 @@ export function OneVsOneStatsTable({
     getRowId: (row) => row.id,
   });
 
-  // A pinned header sticks to the page's scroller, so the table cannot sit in one of its own.
   const StatsScroller = pinnedHeader ? "div" : ScrollArea;
   const columnHeaderTopClassName = getColumnHeaderTopClassName(pinnedHeader);
 
@@ -202,7 +199,6 @@ export function OneVsOneStatsTable({
     <section
       ref={cardRef}
       aria-labelledby={resolvedShowHeader ? headingId : undefined}
-      // `isolate` keeps the sticky cells' z-indexes from competing with the pinned chart.
       className="isolate w-full"
     >
       {resolvedShowHeader && (

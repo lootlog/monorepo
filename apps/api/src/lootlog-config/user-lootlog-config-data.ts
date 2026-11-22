@@ -1,6 +1,6 @@
 import { makeJsonCodec } from "@lootlog/database/redis-cache-fill";
 import { withAdapterSpan } from "@lootlog/instrumentation/operation";
-import { type RedisService } from "#src/redis/redis.service";
+import type { RedisService } from "#src/redis/redis.service";
 import { requestApiKeyAccess } from "#src/runtime/auth/forward-auth-identity";
 import {
   selectAccessibleGuilds,
@@ -287,8 +287,6 @@ export class UserLootlogConfigData extends Context.Service<
                   )
                   .orderBy(desc(userCharactersLootlogSettingsTable.createdAt));
 
-                // A stored choice outlives the owner's Discord membership; show
-                // only Organizations where the owner can still submit loot.
                 const writableByOwner =
                   yield* selectGuildIdsGrantingPermissions(
                     database,

@@ -5,7 +5,6 @@ type RankBadgeProps = {
   className?: string;
 };
 
-/** A leaderboard position, with the podium places tinted. */
 export const RankBadge = ({ rank, className }: RankBadgeProps) => (
   <span
     className={cn(

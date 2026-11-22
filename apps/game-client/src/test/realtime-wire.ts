@@ -9,7 +9,6 @@ import {
   type AccessPolicySnapshot,
 } from "@lootlog/protocol/realtime/access-policy";
 
-/** A policy owning every listed Lootlog, so no permission restricts the test. */
 export const ownerAccessPolicy = (
   organizationIds: readonly string[],
 ): AccessPolicySnapshot =>
@@ -21,7 +20,6 @@ export const ownerAccessPolicy = (
     "owner",
   );
 
-/** The presence the gateway answers a `presence.publish` with. */
 export const publishedPresence = (sessionId: string): BasicPresence => ({
   userId: "user-1",
   sessionId,

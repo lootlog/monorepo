@@ -10,12 +10,6 @@ const clearCapturedEvents = (events: GameEvent[]) => {
   events.length = 0;
 };
 
-/**
- * NPC warriors (keys starting with "-") carry `originalId`, the runtime NPC id.
- * `mapNpc` is the map observation of that NPC captured when the warrior joined:
- * the battle warrior has no template and its other fields are battle data, not
- * the NPC Margonem shows on the map. Null when the map never showed the NPC.
- */
 export type BattleWarriorsWithAccountId = Record<
   string,
   W[string] & { accountId?: number; mapNpc?: RuntimeNpc | null }

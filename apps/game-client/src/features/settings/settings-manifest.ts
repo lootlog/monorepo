@@ -54,7 +54,6 @@ export interface SettingsDomainManifestItem<
   id: SettingsDomainValue;
   labelKey: string;
   icon: SettingsIconName;
-  /** A domain opens on its first subsection, so only later ones may hide. */
   subsections: NonEmptyList<SettingsSubsectionManifestItem<TControlId>>;
 }
 
@@ -216,8 +215,6 @@ const MANIFEST = [
       {
         id: "character-aura",
         labelKey: "settings.subsections.characterAura",
-        // Shown to Users who may choose an aura or still wear one on any
-        // of their characters.
         visible: () => {
           const own = queryClient.getQueryData<OwnCharacterAuraResponseDto>(
             getCharacterAurasControllerGetOwnAuraQueryKey(),
@@ -698,7 +695,6 @@ const MANIFEST = [
   },
 ] as const satisfies readonly SettingsDomainManifestItem[];
 
-/** Every control id declared in the manifest; rows and search share it. */
 export type SettingsControlId =
   (typeof MANIFEST)[number]["subsections"][number]["controls"][number]["id"];
 
@@ -729,7 +725,6 @@ for (const domain of SETTINGS_MANIFEST) {
 export const getControlLocation = (controlId: string) =>
   controlLocations.get(controlId);
 
-/** Catalog keys a control writes, for per-row save marks. */
 export const getControlSettingKeys = (controlId: string) =>
   controlLocations.get(controlId)?.control.settingKeys;
 

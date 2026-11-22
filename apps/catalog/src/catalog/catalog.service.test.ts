@@ -5,7 +5,6 @@ import { makeCatalogModule } from "./catalog.service.js";
 
 type CatalogReads = Parameters<typeof makeCatalogModule>[1];
 
-/** Database reads for tests that make none. */
 const noReads: CatalogReads = {
   monsterKeyOf: () => Effect.die("unexpected read"),
   npcsByUids: () => Effect.die("unexpected read"),
@@ -14,11 +13,6 @@ const noReads: CatalogReads = {
   currentNpcNames: () => Effect.die("unexpected read"),
 };
 
-/**
- * A Meilisearch that answers item searches with `hits`, a search for elastic
- * items alone with `elasticHits`, and NPC searches with what `npcs` returns
- * for the search's filter.
- */
 const catalogWith = (
   hits: unknown[],
   npcs: (filter: string | undefined) => unknown[] = () => [],
@@ -99,7 +93,6 @@ test("lists a monster's drops from any of its identities, marking the monsters t
         lvl: 120,
         rarity: "LEGENDARY",
         type: "ONE_HAND_WEAPON",
-        // The same boss as seen by an older client and by a current one.
         droppedBy: [
           stored(
             { ...nosferatu, key: "pl_runtime_9001_2", id: 9001 },
@@ -178,7 +171,6 @@ test("lists a monster's drops from any of its identities, marking the monsters t
       'rarity IN ["LEGENDARY"] AND droppedByMonsterKeys = "pl_Nosferatu_HERO"',
     sort: ["lvl:desc"],
   });
-  // A first sighting dates a boss kill, and so its respawn.
   expect(searches[0]?.attributesToRetrieve).not.toContain("worlds");
   expect(searches[0]?.attributesToRetrieve).not.toContain("firstSeenAt");
 });
@@ -198,7 +190,6 @@ test("marks an item seen at its looters' levels as elastic, but not one rebalanc
   const { catalog } = catalogWith([
     { ...hit(1), observedLevels: [40, 42, 47, 52, 57] },
     { ...hit(2), observedLevels: [40, 45, 50, 60] },
-    // Indexed before levels were collected.
     hit(3),
   ]);
 
@@ -227,7 +218,6 @@ test("a level range also finds elastic items, which come at any level from 40 to
 
   expect(searches.map(({ filter }) => filter)).toEqual([
     "((lvl >= 50 AND lvl <= 60) OR elasticLevel = true)",
-    // No elastic item is below 40 or above 300.
     "lvl <= 30",
     "lvl >= 301",
   ]);
@@ -257,8 +247,6 @@ test("an old link to a rebalanced monster's former identity shows the monster as
     type: "COLOSSUS",
   };
 
-  // The old link's id names only the entry from before the rebalance; the
-  // current one has another id.
   const { catalog, npcSearches } = catalogWith([], (filter) =>
     filter?.includes("monsterKey IN")
       ? [
@@ -303,7 +291,6 @@ test("an old link to a rebalanced monster's former identity shows the monster as
     catalog.getNpcs({ gameVersion: "pl", types: ["COLOSSUS"] }),
   );
 
-  // A rebalanced colossus is listed at its level now, not its former one.
   expect(npcSearches[2]?.filter).toBe(
     'gameVersion = "pl" AND current != false AND type IN ["COLOSSUS"]',
   );
@@ -320,8 +307,6 @@ test("a level range leaves out NPCs without a level of their own, and a listing 
     catalog.getNpcs({ gameVersion: "pl", sort: "lvl:asc" }),
   );
 
-  // An NPC whose level follows the player's is stored at 0; "up to 50" must
-  // not list it.
   expect(npcSearches[0]).toMatchObject({
     filter:
       'gameVersion = "pl" AND current != false AND lvl >= 1 AND lvl <= 50',
@@ -345,11 +330,9 @@ test("narrows titans and colossi to the asked origins by their graphic's directo
     catalog.getNpcs({ bossOrigins: ["REGULAR", "HERO_TRACKERS"] }),
   );
 
-  // An event boss has none of the graphics its type owns.
   expect(npcSearches[0]?.filter).toBe(
     'current != false AND type IN ["COLOSSUS"] AND (type NOT IN ["TITAN","COLOSSUS"] OR (type = "TITAN" AND (iconDirectory NOT IN ["tyt"])) OR (type = "COLOSSUS" AND (iconDirectory NOT IN ["kol","her"])))',
   );
-  // Only colossi are fought in a hero's hideout, so no titan matches.
   expect(npcSearches[1]?.filter).toBe(
     'current != false AND (type NOT IN ["TITAN","COLOSSUS"] OR (type = "COLOSSUS" AND (iconDirectory = "her")))',
   );
@@ -382,7 +365,6 @@ test("dates a monster by the first sighting the index derives for it, and lists 
   expect(found.hits).toEqual([
     expect.objectContaining({ name: "Tanroth", firstSeenOn: "2026-11-07" }),
   ]);
-  // December runs to the first instant of January of the next year.
   expect(npcSearches[0]).toMatchObject({
     filter: `current != false AND monsterFirstSeenAt >= ${Date.UTC(2026, 11)} AND monsterFirstSeenAt < ${Date.UTC(2027, 0)}`,
     sort: ["monsterFirstSeenAt:desc", "name:asc"],
@@ -434,7 +416,6 @@ test("an old link by catalog key to a rebalanced monster's former identity shows
 
   expect(found).toEqual({
     estimatedTotalHits: 1,
-    // The monster is as old as its earliest identity, not its current one.
     hits: [
       expect.objectContaining({
         key: current.uid,
@@ -514,7 +495,6 @@ test("ranks an elastic item by its attack speed at the searched level, not the o
     type: "ARMOR",
   });
 
-  // Three attack speed bonuses: 2,31 SA at 297, 0,55 at 62.
   const elastic = {
     ...armor(1, 297, 231),
     observedLevels: [42, 47, 52, 57, 62],
@@ -548,13 +528,11 @@ test("keeps a query's relevance order among fixed items when it merges in elasti
     type: "ARMOR",
   });
 
-  // 0,55 SA at 62.
   const elastic = {
     ...armor(1, 297, 231),
     observedLevels: [42, 47, 52, 57, 62],
   };
 
-  // Meilisearch ranks the better name match first, then speed.
   const { catalog } = catalogWith(
     [armor(3, 50, 40), armor(2, 60, 82)],
     undefined,

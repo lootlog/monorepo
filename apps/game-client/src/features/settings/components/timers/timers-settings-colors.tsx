@@ -35,7 +35,6 @@ type TimerColorSelection = {
 const selectionKey = (selection: TimerColorSelection) =>
   `${selection.kind}:${selection.id}`;
 
-/** A row added or restored in this session slides into the list once. */
 const ENTERED_ROW_CLASS_NAME =
   "ll:animate-in ll:fade-in-0 ll:slide-in-from-top-1 ll:duration-long ll:ease-enter";
 
@@ -118,13 +117,11 @@ export const TimersSettingsColors: FC = () => {
   const { t } = useTranslation();
   const [openPopover, setOpenPopover] = useState<string | null>(null);
 
-  /** Live values of the colour being edited; rows repaint before the save. */
   const [draft, setDraft] = useState<{
     key: string;
     data: ColorEditData;
   } | null>(null);
 
-  /** Key of the row that just joined the list (added or restored). */
   const [enteredKey, setEnteredKey] = useState<string | null>(null);
 
   const hiddenColorIds = new Set(hiddenDefaultColors);

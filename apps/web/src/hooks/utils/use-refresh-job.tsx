@@ -7,7 +7,6 @@ import {
   type MembersControllerGetLatestRefreshJobQueryResult,
 } from "@lootlog/client/main";
 
-// Keeps the latest-job query current so every mount reads the same job state.
 export const useRefreshJob = () => {
   const queryClient = useQueryClient();
   const routeGuildId = useGuildId() ?? "";
@@ -29,7 +28,6 @@ export const useRefreshJob = () => {
         );
 
       if (job?.id !== update.jobId) {
-        // Updates omit the cooldown, so load a job this page has not seen yet.
         void queryClient.invalidateQueries(
           { queryKey },
           { cancelRefetch: false },
@@ -38,7 +36,6 @@ export const useRefreshJob = () => {
         return;
       }
 
-      // A fetch that started before this update must not overwrite it.
       await queryClient.cancelQueries({ queryKey });
       queryClient.setQueryData<MembersControllerGetLatestRefreshJobQueryResult>(
         queryKey,

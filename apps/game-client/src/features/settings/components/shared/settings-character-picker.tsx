@@ -17,7 +17,6 @@ type SettingsCharacterPickerProps = {
   >[];
   value: string;
   onValueChange: (characterId: string) => void;
-  /** Save badge per character id; badges that appear together are staggered. */
   saveMarkByCharacterId?: Record<string, SettingsSaveMark>;
   "aria-label"?: string;
   className?: string;
@@ -26,10 +25,6 @@ type SettingsCharacterPickerProps = {
 
 const BADGE_STAGGER_MS = 40;
 
-/**
- * Single-choice grid of character cards: sprite, nick and level. Cards wrap
- * like the server picker, so both pickers read as one family.
- */
 export const SettingsCharacterPicker: FC<SettingsCharacterPickerProps> = ({
   characters,
   value,
@@ -39,8 +34,6 @@ export const SettingsCharacterPicker: FC<SettingsCharacterPickerProps> = ({
   className,
   disabled,
 }) => {
-  // Characters marked by the same write (same timestamp) reveal their badges
-  // one after another, in grid order.
   const badgeDelayByCharacterId: Record<string, number> = {};
   const rankByMarkTime: Record<number, number> = {};
 
@@ -61,7 +54,6 @@ export const SettingsCharacterPicker: FC<SettingsCharacterPickerProps> = ({
       disabled={disabled}
       value={value ? [value] : []}
       onValueChange={([nextValue]) => {
-        // Pressing the selected character again must not clear the choice.
         if (nextValue) onValueChange(nextValue);
       }}
       className={cn(settingsPickerGridClassName, className)}
@@ -70,8 +62,6 @@ export const SettingsCharacterPicker: FC<SettingsCharacterPickerProps> = ({
         const id = String(character.id);
         const saveMark = saveMarkByCharacterId[id];
 
-        // The sprite sheet frame is 32×48; it is scaled to 3/4 so the card
-        // stays close to the server card height.
         const sprite = (
           <span
             aria-hidden

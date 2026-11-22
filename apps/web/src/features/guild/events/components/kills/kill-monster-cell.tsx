@@ -10,15 +10,7 @@ import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 type KillMonsterCellProps = {
   eventId: string;
   guildId: string;
-  /**
-   * Keeps the date under the name at every width, where no date column shows
-   * it, such as in a preview card or a tile.
-   */
   alwaysShowsDate?: boolean;
-  /**
-   * Links the whole tile, which must be `relative`, from the name. In a table
-   * the row's cells link instead, so the name is plain text.
-   */
   linksTile?: boolean;
   kill: {
     heroNpc: Pick<KillHistoryEntryHeroNpc, "npcIcon" | "npcId" | "npcName">;

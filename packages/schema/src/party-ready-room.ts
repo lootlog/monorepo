@@ -14,8 +14,6 @@ export const PARTY_READY_ROOM_PARTY_PRESENCE_STATES = [
   "IN_PARTY",
 ] as const;
 
-// A gathering lives this long after it is created or extended. Gatherings
-// form within minutes, so an abandoned one must disappear quickly.
 export const PARTY_GATHERING_LIFETIME_MS = 10 * 60_000;
 
 export type PartyReadyRoomStatus = (typeof PARTY_READY_ROOM_STATUSES)[number];
@@ -117,7 +115,6 @@ const PartyReadyRoomParticipantSchema = Schema.Struct({
 });
 
 export const PartyGatheringNpcSchema = Schema.Struct({
-  // The Margonem NPC instance; a kill report names it to close the gathering.
   id: Schema.optionalKey(Schema.Number),
   prof: Schema.optionalKey(Schema.String),
   icon: Schema.optionalKey(Schema.String),
@@ -166,16 +163,10 @@ export const PartyGatheringPartyStateSchema = Schema.Union([
 export type PartyGatheringPartyState =
   typeof PartyGatheringPartyStateSchema.Type;
 
-// Viewers show an observed party as stale once `observedAt` is this old.
 export const PARTY_OBSERVATION_FRESHNESS_MS = 2 * 60_000;
 
-// The organizer's client re-reports an unchanged party this often so that
-// viewers keep receiving a fresh `observedAt` well before it goes stale.
 export const PARTY_OBSERVATION_HEARTBEAT_MS = 60_000;
 
-// The API commits an unchanged observation only once it is at least this old.
-// It stays below the heartbeat interval so every heartbeat refreshes viewers,
-// while repeated reports (reconnects, remounts) do not publish a new revision.
 export const PARTY_OBSERVATION_REFRESH_MS = 45_000;
 
 export const PartyGatheringVolunteerSchema = Schema.Struct({

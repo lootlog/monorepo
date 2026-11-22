@@ -125,7 +125,6 @@ describe("User themes against migrated PostgreSQL", () => {
     expect(
       await failureOf(owner, createUserTheme({ name: "x", definition })),
     ).toBeInstanceOf(UserThemeLimitReached);
-    // Another User's quota is their own.
     expect(await create(stranger)).toMatchObject({ name: "Mój motyw" });
   });
 
@@ -167,14 +166,12 @@ describe("User themes against migrated PostgreSQL", () => {
 
     await as(owner, deleteUserTheme(selected.id));
     expect(await storedPreference(owner)).toBe("rias");
-    // Only the owner's preference follows their theme.
     expect(await storedPreference(stranger)).toBe(`custom:${selected.id}`);
   });
 
   it("resolves a share link only while sharing is on, without the author", async () => {
     const theme = await create(owner);
 
-    // Concurrent tabs and retries must all receive the one link that works.
     const shared = await Promise.all(
       Array.from({ length: 4 }, () => as(owner, shareUserTheme(theme.id))),
     );

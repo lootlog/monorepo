@@ -9,19 +9,13 @@ import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 
 type TimerColorPreviewChipProps = {
-  /** Accent colour: the swatch, standing pulse and legacy tile border. */
   borderColor: string;
   defaultColorId?: string;
-  /** Background colour including its alpha channel. */
   backgroundColor: string;
   fontSize?: number;
   className?: string;
 };
 
-/**
- * Renders a sample timer tile painted with the given colours, the way the
- * timers window shows one.
- */
 export const TimerColorPreviewChip: FC<TimerColorPreviewChipProps> = ({
   defaultColorId,
   borderColor,

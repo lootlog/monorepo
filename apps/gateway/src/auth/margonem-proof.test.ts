@@ -92,7 +92,6 @@ describe("Margonem proof verifier", () => {
       valid: false,
       reason: "invalid proof signature",
     });
-    // One shared cold request and at most one shared forced refresh.
     expect(get).toHaveBeenCalledTimes(2);
   });
 

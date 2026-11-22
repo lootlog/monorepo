@@ -30,7 +30,6 @@ const subscribe = (listener: () => void) => {
   };
 };
 
-/** Reads the preference outside React, e.g. when an effect starts an imperative scroll. */
 export const getPrefersReducedMotion = () => {
   if (mediaQuery) return mediaQuery.matches;
 

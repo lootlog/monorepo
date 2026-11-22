@@ -5,7 +5,6 @@ import { parseEventFixture } from "./publish.js";
 
 const fixturesDir = path.join(import.meta.dirname, "../../events/fixtures");
 
-// A fixture that drifts from the RabbitMQ contract is rejected by its consumer.
 test("every shipped fixture is a valid canonical event", async () => {
   const files = (await fs.readdir(fixturesDir)).filter((file) =>
     file.endsWith(".json"),

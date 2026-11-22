@@ -17,10 +17,6 @@ type EventRankingHeroSelectProps = {
   onValueChange: (heroName: string) => void;
 };
 
-/**
- * Picks the hero whose ranking a narrow column shows, with each hero's
- * player count; hidden while the event has one hero.
- */
 export const EventRankingHeroSelect = ({
   heroes,
   rankings,

@@ -30,10 +30,6 @@ type GlobalChatMessageMenuProps = {
   canModerate: boolean;
 };
 
-/**
- * Copy for everyone; pin, delete and mute for global chat admins. The items of
- * the transcript's shared context menu.
- */
 export const GlobalChatMessageMenu = ({
   channel,
   message,
@@ -105,7 +101,6 @@ export const GlobalChatMessageMenu = ({
             trigger={
               <ContextMenuItem
                 disabled={isPending}
-                // Keeps the menu open while the confirmation is shown.
                 onSelect={(event) => event.preventDefault()}
               >
                 <Trash2

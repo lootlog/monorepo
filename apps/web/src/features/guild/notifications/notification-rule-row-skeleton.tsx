@@ -5,7 +5,6 @@ import {
 } from "@/components/common/list-tile";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 
-/** Mirrors `NotificationRuleRow` and `NotificationChannelRow`: three lines and a menu. */
 export const NotificationRuleRowSkeleton = () => (
   <div data-list-tile className={LIST_TILE_RULE_CLASS}>
     <div className="flex items-center">

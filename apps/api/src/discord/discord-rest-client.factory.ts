@@ -22,11 +22,6 @@ interface CachedDiscordRestClient {
 }
 
 export interface DiscordRestClients {
-  /**
-   * Runs Discord requests with the user's token. When Discord answers 401 the
-   * token is rejected, so later requests neither reuse it nor call Discord
-   * with it again, while a token from a new sign-in is used immediately.
-   */
   readonly withRestClient: <A, E>(
     userId: string,
     discordId: string,
@@ -59,14 +54,6 @@ const toHttpError = (error: AuthServiceError) =>
       }),
   });
 
-/**
- * A REST instance registers two `setInterval` sweepers in its constructor
- * and only `clearHashSweeper`/`clearHandlerSweeper` remove them. The timers
- * keep every instance, its route caches and its bearer token reachable for
- * the process lifetime, while one instance is created per user per cache
- * window. The sweepers are disabled: these clients live for
- * {@link REST_CLIENT_CACHE_TTL_MS} and are pruned, so nothing needs sweeping.
- */
 const createRestClient = (accessToken: string): REST =>
   new REST({
     version: "10",

@@ -16,10 +16,6 @@ type ChatComposeModeIconProps = {
   className?: string;
 };
 
-/**
- * What Enter does with the typed entry: a message, a notification (`!`) or a
- * gathering (`/grp`), in the colour the entry takes in that mode.
- */
 export const ChatComposeModeIcon: FC<ChatComposeModeIconProps> = ({
   mode,
   className,

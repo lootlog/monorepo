@@ -1,18 +1,12 @@
 import { Schema } from "effect";
 import { NonNegativeInt } from "./primitives.js";
 
-/**
- * A participant's choice for one item of a group loot split, as Margonem's
- * `loot.states` reports it: 0 "nie chcę", 1 "chcę", 2 "bardzo chcę".
- */
 const LOOT_SPLIT_CHOICES = [0, 1, 2] as const;
 
 export type LootSplitChoice = (typeof LOOT_SPLIT_CHOICES)[number];
 
-/** A Margonem party holds at most ten characters, so nine other recipients. */
 const MAX_LOOT_SPLIT_RECIPIENTS = 9;
 
-/** Bounds a frame; one group loot holds far fewer items. */
 const MAX_LOOT_SPLIT_ITEMS = 64;
 
 const ITEM_ID_PATTERN = /^[1-9]\d{0,17}$/u;
@@ -49,11 +43,9 @@ const LootSplitChoicesSchema = Schema.Record(
 );
 
 export interface LootSplitSendPayload {
-  /** The smallest item id of the split: item ids are unique server-wide. */
   splitId: string;
   choices: Readonly<Record<string, LootSplitChoice>>;
   accepted: boolean;
-  /** Character ids of the split's other participants, fixed when it opened. */
   recipientCharacterIds: readonly string[];
 }
 
@@ -69,13 +61,7 @@ export interface LootSplitEvent {
   sentAt: number;
 }
 
-/**
- * Sent by a participant whose Margonem loot filter accepted the split for
- * them: the game then opens no loot window and tells that client neither the
- * items nor the choices, so the split has no id it could name.
- */
 export interface LootSplitAutoAcceptPayload {
-  /** Character ids of the fight's other players. */
   recipientCharacterIds: readonly string[];
 }
 

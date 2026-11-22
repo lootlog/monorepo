@@ -11,11 +11,6 @@ import { t } from "@/i18n/messages";
 import { npcPageParams } from "@/lib/catalog-links";
 import { NpcKindLevel } from "@/components/npcs/npc-kind-level";
 
-/**
- * The monsters the item drops from, each a link with its sprite, kind and
- * level, and how often a boss's kills drop it; those that no longer drop it
- * come last.
- */
 export function ItemDropSources({
   sources,
 }: {
@@ -44,7 +39,6 @@ export function ItemDropSources({
                 >
                   <NpcPortrait icon={npc.icon} size="sm" />
                   <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                    {/* The link covers the card; the drop rate's button sits above it. */}
                     <Link
                       to="/npcs/$npcSlug"
                       params={npcPageParams(npc)}

@@ -5,23 +5,12 @@ export type RuntimeStatus = "uninitialized" | "ready";
 
 export type RuntimeInterface = "ni" | "si";
 
-/**
- * `id` is Margonem's runtime NPC id (`npc.id`): one spawn on the current map,
- * used by `npcs_del` and as battle `originalId`. `templateId` is `npc.tpl`,
- * shared by every spawn of one monster template; null when the runtime did not
- * provide a positive template id.
- */
 export type RuntimeNpc = Readonly<{
   actions?: number;
   groupId?: number;
   icon: string;
   id: number;
-  /** Margonem flags the template of a hero spawned by an event. */
   isHeroFromEvent?: boolean;
-  /**
-   * Epoch ms when a claimed Hero Tracker's colossus entrance closes, from the
-   * countdown Margonem sends with it; absent while nobody has claimed it.
-   */
   entranceClosesAt?: number;
   level: number;
   name: string;
@@ -38,7 +27,6 @@ type RuntimeMap = Readonly<{
   id: number;
   name: string;
   visibility: number;
-  /** Margonem PvP mode: 0 green, 1 yellow, 2 red (full PvP), 4 orange. */
   pvp?: number;
 }>;
 
@@ -62,7 +50,6 @@ export type RuntimeHero = Readonly<{
 }>;
 
 export type RuntimeGameSnapshot = Readonly<{
-  /** Null when the page host is not a recognized Margonem edition domain. */
   gameVersion: GameVersion | null;
   hero: RuntimeHero;
   interface: RuntimeInterface;
@@ -139,7 +126,6 @@ export type RuntimeEventHandler = (envelope: RuntimeEventEnvelope) => void;
 
 export type RuntimeIntentHandler = (intent: RuntimeIntent) => void;
 
-/** Receives every outgoing game command string, e.g. `loot&want=…&final=1`. */
 export type RuntimeCommandHandler = (command: string) => void;
 
 export type RuntimeObserverFailure = Readonly<{

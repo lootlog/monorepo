@@ -10,7 +10,6 @@ import {
 import type { EventHeroKillJobData } from "#src/events/kills/check-event-hero-kill-params";
 import { guildTable } from "./organization.schema.js";
 
-/** Event hero checks committed with their timer, pending a BullMQ enqueue. */
 export const eventHeroCheckOutboxTable = pgTable(
   "EventHeroCheckOutbox",
   {
@@ -29,7 +28,6 @@ export const eventHeroCheckOutboxTable = pgTable(
     })
       .onDelete("cascade")
       .onUpdate("cascade"),
-    // Matches the dispatcher's `lastAttemptAt ASC NULLS FIRST, id ASC` selection.
     index("EventHeroCheckOutbox_lastAttemptAt_id_idx").on(
       table.lastAttemptAt.asc().nullsFirst(),
       table.id.asc(),

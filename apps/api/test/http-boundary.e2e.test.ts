@@ -62,7 +62,6 @@ const authorizedGuildId = "guild-authorized";
 
 const forbiddenGuildId = "guild-forbidden";
 
-// Stored worlds are lower-case; `world` filters compare in lower case.
 const world = "aldous";
 
 const publishedMessages: Parameters<RabbitMessagingService["publish"]>[0][] =
@@ -78,7 +77,6 @@ const rabbitBoundary: RabbitMessagingService = {
   nack: () => Effect.void,
 };
 
-// The auth service answers the next IDP token request with this, when set.
 let authServiceAnswer: (() => Response) | null = null;
 
 const fetchBoundary: typeof globalThis.fetch = Object.assign(
@@ -149,7 +147,6 @@ describe("API HTTP boundary", () => {
   const databaseRuntime = ManagedRuntime.make(ApiDatabaseLive);
   let database: ApiDatabaseValue;
 
-  /** Live timers; a deleted timer keeps its row so it can be restored. */
   const countTimers = async () =>
     (
       await databaseRuntime.runPromise(
@@ -341,7 +338,6 @@ describe("API HTTP boundary", () => {
       ),
     ).toEqual([{ active: true }]);
 
-    // Discord is unreachable here, so a refresh that skips the cached list fails.
     const refreshed = await request("/users/@me/guilds/refresh", {
       method: "POST",
     });
@@ -350,7 +346,6 @@ describe("API HTTP boundary", () => {
   });
 
   it("returns watched item snapshots after create, quick-add and retry", async () => {
-    // Watched items accept only a Discord guild list fetched within seconds.
     const seedDiscordGuilds = () =>
       Effect.runPromise(
         redis.set(
@@ -912,7 +907,6 @@ describe("API HTTP boundary", () => {
   });
 
   it("resolves an Organization id to that Organization even when another Organization's vanity URL equals it", async () => {
-    // Bypasses validation: rows stored before it existed could collide.
     await databaseRuntime.runPromise(
       database
         .update(guildTable)
@@ -920,8 +914,6 @@ describe("API HTTP boundary", () => {
         .where(eq(guildTable.id, forbiddenGuildId)),
     );
 
-    // Resolving the colliding Organization first used to cache its row under
-    // the other Organization's id.
     const forbidden = await request(`/guilds/${forbiddenGuildId}`);
     expect(forbidden.status).toBe(403);
 
@@ -1071,9 +1063,6 @@ describe("API HTTP boundary", () => {
       );
       await arrange();
 
-      // Each route declares different own errors (empty 404, none, open 403);
-      // none of them may claim the failure. Sequential: a concurrent refresh
-      // would wait on the per-user lock.
       for (const path of [
         "/members/@me",
         "/events",

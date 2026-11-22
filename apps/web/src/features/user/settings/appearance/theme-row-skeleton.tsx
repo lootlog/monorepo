@@ -7,7 +7,6 @@ import { SkeletonLine } from "@/components/common/skeleton-line";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { cn } from "cn";
 
-/** Mirrors `ThemeRow`: thumbnail, name over description, palette, action. */
 export const ThemeRowSkeleton = ({ action = false }: { action?: boolean }) => (
   <li data-list-tile className={cn("flex items-center", LIST_TILE_RULE_CLASS)}>
     <div className={getListTileLinkClassName(action)}>

@@ -21,7 +21,6 @@ describe("resolvePlayerSnapshots", () => {
     try {
       const { database, run } = boundary;
 
-      // A row written by an earlier sender that stored the empty string.
       await run(
         database.insert(playerSnapshotTable).values({
           ...character,

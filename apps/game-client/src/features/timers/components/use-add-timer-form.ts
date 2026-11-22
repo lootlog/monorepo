@@ -258,8 +258,6 @@ const validateTimerForm = (
   return issues;
 };
 
-// Every rule runs in one form-level check so a missing name is reported
-// together with the respawn fields instead of hiding them.
 const createFormResolver = (t: TimerFormTranslation) =>
   standardSchemaResolver(
     Schema.toStandardSchemaV1(
@@ -270,10 +268,6 @@ const createFormResolver = (t: TimerFormTranslation) =>
 type FormValues = typeof FormSchema.Type;
 
 export type AddTimerFormProps = {
-  /**
-   * The timer lands on the Lootlog the timers window currently shows; without
-   * one (no Lootlog yet, or the "all" chat scope) the form cannot submit.
-   */
   guildId?: string;
   world: string;
   onClose: () => void;
@@ -430,9 +424,6 @@ export function useAddTimerForm({
       timerData.maxSeconds = parseDurationToSeconds(data.maxDuration);
     }
 
-    // The form stays open on failure so the player can retry. The request
-    // settles per Lootlog: a rejected one is listed in the result instead of
-    // failing the mutation.
     const reportFailure = () =>
       showRuntimeMessage(t("messages.createFailed", { name: data.name }));
 

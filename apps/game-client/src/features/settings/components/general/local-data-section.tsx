@@ -5,10 +5,6 @@ import { clearLootlogLocalData } from "@/lib/local-data";
 import { useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
 
-/**
- * Two-step destructive action: the first click arms it, the second clears
- * every local Lootlog store and reloads so nothing writes stale state back.
- */
 export const LocalDataSection: FC = () => {
   const { t } = useTranslation();
   const [armed, setArmed] = useState(false);

@@ -8,15 +8,12 @@ import { openLootlogApp } from "@/lib/open-lootlog-app";
 import { useWhatsNew } from "./use-whats-new";
 import { WhatsNewEntry } from "./whats-new-entry";
 
-/** How many of the newest weeks the addon lists before the Web app's page. */
 const LISTED_WEEK_COUNT = 4;
 
-/** The latest changes in Lootlog, week by week from the newest. */
 export const WhatsNewSettingsTab = () => {
   const { t, i18n } = useTranslation();
   const { weeks, unreadIds, markAllSeen } = useWhatsNew();
 
-  // Opening the tab reads the list; its marks stay for this visit.
   const [unreadOnOpen] = useState(unreadIds);
 
   useEffect(() => {

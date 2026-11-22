@@ -1,10 +1,3 @@
-/**
- * Złoty wojownik: a solid, spiked fire of golden energy burning behind the character,
- * more than twice its height, the ground cracked under its feet. While the admin is on the map the
- * air streams away from them in lines across the whole screen, pebbles lift off the
- * ground everywhere and a pulse rolls out every second or so. Its burst is a power-up:
- * everything is drawn in towards the character, then released at once, and the map shakes.
- */
 import { mulberry32, rgba, type Rgb } from "./math";
 import { jagged, pixelLine } from "./paint";
 import type { Brush } from "./decor";
@@ -13,35 +6,23 @@ import { scatter, wash, washAround, type MapScene } from "./sky";
 
 const WHITE: Rgb = [255, 255, 255];
 
-/** The power gathers until this fraction of the burst, then is released. */
 export const POWER_RELEASE = 0.45;
 
-/** How much taller than at rest the flame stands, at `burst` (0..1, -1 resting). */
 function surge(burst: number): number {
   if (burst < 0) return 0;
 
-  // Drawn in while the power gathers, then thrown up and settling.
   if (burst < POWER_RELEASE) return -0.25 * (burst / POWER_RELEASE);
 
   return (1 - (burst - POWER_RELEASE) / (1 - POWER_RELEASE)) ** 1.5 * 0.9;
 }
 
-/** How one of the warrior auras' fires looks. */
 export interface PowerFire {
-  /** Its size against the first one's. */
   scale: number;
-  /** Spikes round it, from the ground on one side over the top to the other. */
   spikes: number;
-  /** Its colours, outside in: the faint bloom, the edge, the body and the white-hot core. */
   colors: readonly [Rgb, Rgb, Rgb, Rgb];
-  /** The glow of the lightning crawling over it, when it has any. */
   bolt?: Rgb;
 }
 
-/**
- * The fire's shells, outside in: how far each reaches, how long its spikes are and how
- * solid it is. The outermost is a faint bloom; the rest are opaque.
- */
 const SHELLS = [
   { reach: 1.1, spike: 1.15, alpha: 0.3 },
   { reach: 1, spike: 1, alpha: 1 },
@@ -49,12 +30,6 @@ const SHELLS = [
   { reach: 0.68, spike: 0.42, alpha: 1 },
 ] as const;
 
-/**
- * The fire behind the character, as anime draws it: one solid shape more than twice the
- * character's height, white-hot at the body and gold at its edge, whose whole outline is
- * sharp spikes swept upwards, a new set every tick. Drawn straight onto the map, so it
- * is not held to the aura's own buffers round the character.
- */
 export function drawPowerFire(
   ctx: CanvasRenderingContext2D,
   place: AuraPlacement,
@@ -71,11 +46,9 @@ export function drawPowerFire(
   const rx = (bounds.w * 0.95 + 10) * fire.scale * (1 + surge(burst) * 0.5);
   const ry = bounds.h * 1.05 * fire.scale * grow;
   const cy = base - ry * 0.82;
-  // From just under the left flank, over the top, to just under the right one.
   const from = Math.PI - 0.6;
   const sweep = Math.PI + 1.2;
   const rng = mulberry32(tick * 7919 + 13);
-  // One set of spikes for every shell, so the shells stay nested.
   const lengths = Array.from({ length: spikes }, () => 0.5 + rng() * 0.8);
   const leans = Array.from({ length: spikes }, () => (rng() - 0.5) * 0.6);
   ctx.globalCompositeOperation = "source-over";
@@ -89,13 +62,11 @@ export function drawPowerFire(
     for (let i = 0; i < spikes; i++) {
       const angle = from + ((i + 0.5) / spikes) * sweep;
       const half = (sweep / spikes) * 0.5;
-      // How near the top the spike is: those there are the longest.
       const top = Math.max(0, -Math.sin(angle));
 
       const length =
         (12 + 34 * top) * (lengths[i] ?? 1) * shell.spike * fire.scale * grow;
 
-      // Every spike is swept upwards, as fire is, not straight out.
       const outX = Math.cos(angle) + (leans[i] ?? 0);
       const outY = Math.sin(angle) - 1.2;
       const norm = Math.hypot(outX, outY) || 1;
@@ -116,7 +87,6 @@ export function drawPowerFire(
   }
 }
 
-/** Thin streaks racing up through the fire, before the character. */
 export function drawPowerStreaks(
   b: Brush,
   place: AuraPlacement,
@@ -144,27 +114,18 @@ export function drawPowerStreaks(
   }
 }
 
-// --- the field of power over the map ------------------------------------------------------------
-
-/** How much the field dims the map, 0..1, so its gold reads. */
 export const POWER_GLOOM = 0.26;
 
 export const POWER_VEIL: Rgb = [10, 7, 0];
 
 const STREAMS = 46;
 
-/** How hard the map shakes at the release, px. */
 const SHAKE = 9;
 
-/** Cracks the release tears through the ground, and how far they run, px. */
 const CRACKS = 9;
 
 const CRACK_REACH = 340;
 
-/**
- * The ground splitting under the release: jagged cracks run out from the feet across
- * the map, glowing, and cool where they lie. Each burst they take the same paths.
- */
 function drawCracks(scene: MapScene, release: number): void {
   const { ctx, x, feetY, light } = scene;
   const rng = mulberry32(4711);
@@ -205,7 +166,6 @@ function drawCracks(scene: MapScene, release: number): void {
   }
 }
 
-/** Lines of air streaming away from the character, or into it while the power gathers. */
 const streams = (() => {
   const rng = mulberry32(9001);
 
@@ -217,7 +177,6 @@ const streams = (() => {
   }));
 })();
 
-/** Moves everything drawn so far by a few pixels: the map shaking under the release. */
 function shake({ ctx, time }: MapScene, strength: number): void {
   const rng = mulberry32(Math.round(time * 10) * 131 + 5);
   const dx = Math.round((rng() - 0.5) * 2 * SHAKE * strength);
@@ -225,7 +184,6 @@ function shake({ ctx, time }: MapScene, strength: number): void {
 
   if (dx === 0 && dy === 0) return;
   ctx.save();
-  // In the canvas's own pixels, whatever the game's zoom.
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.globalCompositeOperation = "copy";
   ctx.globalAlpha = 1;
@@ -233,11 +191,6 @@ function shake({ ctx, time }: MapScene, strength: number): void {
   ctx.restore();
 }
 
-/**
- * The field over the whole map: the dark that makes the gold read, air streaming away
- * from the character, pebbles lifting off the ground and a pulse rolling out again and
- * again. In a burst the air is drawn in, then a flash, three shockwaves and the shake.
- */
 export function drawPowerField(scene: MapScene): void {
   const { ctx, width, height, x, y, now, view, burst, light } = scene;
   const gathering = burst >= 0 && burst < POWER_RELEASE;
@@ -249,7 +202,6 @@ export function drawPowerField(scene: MapScene): void {
 
   washAround(scene, POWER_VEIL, POWER_GLOOM, 60, 190);
 
-  // Pebbles lifting off the ground all over the map, faster while the power gathers.
   ctx.globalCompositeOperation = "source-over";
   const lift = now * (gathering ? 60 : 22);
 
@@ -272,7 +224,6 @@ export function drawPowerField(scene: MapScene): void {
     );
   });
 
-  // The air streaming out in lines, bright ones far out; inwards while gathering.
   const reach = Math.hypot(width, height) * 0.55;
   ctx.globalCompositeOperation = "lighter";
   ctx.lineCap = "butt";

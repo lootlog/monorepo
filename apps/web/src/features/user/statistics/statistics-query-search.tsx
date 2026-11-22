@@ -8,7 +8,6 @@ type StatisticsQuerySearchProps = {
   search: StatisticsSearch;
 };
 
-/** Narrows a ranking tab by name; the phrase stays in the URL. */
 export function StatisticsQuerySearch({
   tab,
   search,
@@ -21,7 +20,6 @@ export function StatisticsQuerySearch({
       value={search.q ?? ""}
       placeholder={t(`statistics.search.${tab}`)}
       onChange={(q) =>
-        // Each keystroke replaces the entry rather than piling up history.
         void navigate({
           replace: true,
           search: (current) => ({ ...current, q: q || undefined }),

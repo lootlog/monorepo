@@ -1,6 +1,3 @@
-/**
- * Accumulates each warrior's persisted combat totals from the battle rows.
- */
 import {
   ACTOR_DAMAGE_TAKEN,
   readDamageKey,
@@ -17,7 +14,6 @@ import type { NumericWarriorStat, Warrior, WarriorRoster } from "./warrior.js";
 type ActionContext = {
   attacker: Warrior;
   defender: Warrior | null;
-  /** The first parameter value without its sign. */
   value: number;
   signedValue: number;
   param: string;
@@ -55,7 +51,6 @@ const setOnDefender =
     if (defender) defender[stat] = value;
   };
 
-/** Evade, parry and arrow block all make the attack miss. */
 const missAttack: ActionHandler = ({ attacker, defender }) => {
   if (!defender) return;
 
@@ -63,7 +58,6 @@ const missAttack: ActionHandler = ({ attacker, defender }) => {
   attacker.attacksEvaded++;
 };
 
-/** A block reduces the main-weapon damage by the value it reports. */
 const blockAttack: ActionHandler = ({ attacker, defender, value }) => {
   if (!defender) return;
 
@@ -105,7 +99,6 @@ const ACTION_HANDLERS = new Map<string, ActionHandler>([
   ["+resdmgf", addToAttacker("magicResistanceDestroyed")],
   ["+resdmgc", addToAttacker("magicResistanceDestroyed")],
   ["+resdmgl", addToAttacker("magicResistanceDestroyed")],
-  // `heal` reports lost life as a negative value.
   [
     "heal",
     ({ attacker, signedValue }) => {
@@ -117,7 +110,6 @@ const ACTION_HANDLERS = new Map<string, ActionHandler>([
   ["npc_heal", addToAttacker("activeHealing")],
   ["vamp", addToAttacker("activeHealing")],
   ["heal_target", addToDefender("activeHealing")],
-  // Positive `energy` is spent energy, negative is gained energy.
   [
     "energy",
     ({ attacker, signedValue }) => {
@@ -141,7 +133,6 @@ const ACTION_HANDLERS = new Map<string, ActionHandler>([
   ["-endest", addToDefender("destroyedEnergy")],
   ["+manadest", addToDefender("destroyedMana")],
   ["-manadest", addToDefender("destroyedMana")],
-  // Margonem reports received mana as a negative `mana` value.
   [
     "mana",
     ({ attacker, signedValue }) => {
@@ -186,11 +177,9 @@ const ACTION_HANDLERS = new Map<string, ActionHandler>([
   ],
 ]);
 
-/** Skills whose cast is followed by two attack rows instead of one. */
 const TWO_FOLLOW_UP_SKILL_IDS = new Set([97, 239]);
 
 export class CombatTotals {
-  /** The last HP percentage each warrior reported. */
   readonly lastHp = new Map<string, number>();
   winner = "";
   loser = "";
@@ -336,7 +325,6 @@ export class CombatTotals {
     }
   }
 
-  /** Returns the damage the defender took after its defence. */
   private recordAttackDamage(
     attacker: Warrior,
     defender: Warrior | null,
@@ -363,7 +351,6 @@ export class CombatTotals {
     return value;
   }
 
-  /** Margonem sends lost turns and surrender as server text. */
   private recordText(param: string): void {
     if (param.includes("utrata tury")) {
       const warriorName = param.split(" - ")[0]?.trim();
@@ -385,11 +372,6 @@ export class CombatTotals {
     }
   }
 
-  /**
-   * `+oth_dmg=value,class,Name(hp%)` is damage a warrior other than the row's
-   * target took. Damage to the actor or its team is reflected by the target;
-   * damage to an opponent is a spell's or a wide swing's extra hit.
-   */
   private recordOtherDamage(
     attacker: Warrior,
     defender: Warrior | null,
@@ -455,7 +437,6 @@ export class CombatTotals {
     if (defender) defender.reflectedDamage += damage;
   }
 
-  /** `legbon_lastheal=value,Name` heals the warrior it names. */
   private recordLastHeal(
     attacker: Warrior,
     defender: Warrior | null,
@@ -488,7 +469,6 @@ export class CombatTotals {
     }
   }
 
-  /** Derives max HP from damage and the HP percentage it removed. */
   private estimateMaxHp(
     warriorId: string,
     damageReceived: number,

@@ -41,11 +41,6 @@ export type NotificationSettings = {
   sound: boolean;
 };
 
-/**
- * One notification rule per type plus the single list of Organizations the
- * player receives notifications from. The list is shared by every type since
- * `notifications` document schema version 2.
- */
 export type NotificationsSettings = Record<
   NotificationType,
   NotificationSettings
@@ -86,7 +81,6 @@ export type MapPingPreferences = {
 
 export type AirTagPreferences = {
   enabled: boolean;
-  /** Draws enemies other members see on the game's handheld minimap. */
   minimap: boolean;
 };
 
@@ -94,10 +88,8 @@ export type BattlePingPreferences = {
   enabled: boolean;
 };
 
-/** `enabled` shows the loot split window; choices are shared either way. */
 export type LootSplitPreferences = {
   enabled: boolean;
-  /** Rarities whose drop opens the window; empty opens it for every split. */
   rarities: ItemRarityEnum[];
 };
 

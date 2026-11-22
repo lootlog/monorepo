@@ -31,7 +31,6 @@ export type EventHeroTableRow = {
   hero: EventHeroNpc;
   stats?: EventHeroStats;
   timer?: EventTimer;
-  /** The player's place in the hero's ranking; absent while it loads. */
   score?: MyHeroScore;
 };
 
@@ -42,7 +41,6 @@ type CreateEventHeroesTableColumnsOptions = {
   onRequestDeleteHero: (hero: EventHeroNpc) => void;
   onEditHero: (hero: EventHeroNpc) => void;
   onManageMaps: (hero: EventHeroNpc) => void;
-  /** Adds the player's place in each hero's ranking and drops the game's NPC id. */
   showStandings?: boolean;
   t: TFunction;
 };
@@ -181,7 +179,6 @@ export const createEventHeroesTableColumns = ({
       cell: ({ row }) => {
         const score = row.original.score;
 
-        // No score yet: the player's place is still loading.
         if (!score) {
           return (
             <span className="flex justify-end">

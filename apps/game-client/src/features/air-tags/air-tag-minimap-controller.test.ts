@@ -13,7 +13,6 @@ import { airTagReceiveController } from "./air-tag-receive-controller";
 
 const DRAW_EVENT = "call_draw_add_to_renderer";
 
-// The hero stands at 1,2 with a war shadow range of 30.
 const RED_MAP = { id: 7, name: "Ithan", visibility: 30, pvp: 2 };
 
 const target = (overrides: Partial<AirTagTarget>): AirTagTarget => ({
@@ -48,7 +47,6 @@ const report = (targets: AirTagTarget[]) => {
   });
 };
 
-/** The slice of the game the minimap adapters read, with a 4 px tile and a 7 px marker. */
 const installMinimap = ({
   hiddenKinds = [],
 }: { hiddenKinds?: string[] } = {}) => {
@@ -134,15 +132,10 @@ describe("AirTagMinimapController", () => {
     const minimap = installMinimap();
     const controller = new AirTagMinimapController();
 
-    report([
-      target({}),
-      // Inside the hero's own sight: the game draws them, or they have left.
-      target({ targetId: "near", x: 3, y: 4 }),
-    ]);
+    report([target({}), target({ targetId: "near", x: 3, y: 4 })]);
     controller.setEnabled(true, labels);
     minimap.frame();
 
-    // 80 * 4 + 10 - 1.5 and 60 * 4 + 20 - 1.5, rounded as the game rounds.
     expect(minimap.drawImage.mock.calls.map(([, x, y]) => [x, y])).toEqual([
       [329, 259],
     ]);
@@ -173,7 +166,6 @@ describe("AirTagMinimapController", () => {
     minimap.frame();
     expect(minimap.isDrawing()).toBe(false);
 
-    // Enemies are reported on every map, but drawn only on a red one.
     setTestRuntimeGame({ map: { ...RED_MAP, pvp: 0 } });
     report([target({})]);
     expect(minimap.isDrawing()).toBe(false);
@@ -214,7 +206,6 @@ describe("AirTagMinimapController", () => {
     );
     expect(harness.fetchPresence).not.toHaveBeenCalledWith("guild-2", "luvia");
 
-    // Its members must stop counting as enemies without anyone opening a list.
     useGlobalStore
       .getState()
       .setSocketState({ joinedGuilds: ["guild-1", "guild-2"] });

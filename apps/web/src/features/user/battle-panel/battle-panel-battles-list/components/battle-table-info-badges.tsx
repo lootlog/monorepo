@@ -76,7 +76,6 @@ export const BattleTableInfoBadges = ({
       data-battle-table-action
       onClick={stopBattleTableAction}
       onKeyDown={stopBattleTableKeyboardAction}
-      // Only the filter badges take pointer events; the rest of the cell falls through to the battle link underneath.
       className="pointer-events-none relative flex max-w-[168px] flex-wrap items-center gap-1"
     >
       {onWorldClick ? (
@@ -98,7 +97,6 @@ export const BattleTableInfoBadges = ({
         </span>
       )}
       {battle.public && (
-        // Private is the default, so only shared battles are called out.
         <span
           className={cn(
             BATTLE_INFO_TAG_CLASS_NAME,

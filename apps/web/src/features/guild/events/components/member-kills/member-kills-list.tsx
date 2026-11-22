@@ -47,8 +47,6 @@ const HEAD_CLASS_NAMES = new Map([
 
 const RIGHT_ALIGNED_COLUMN_IDS = new Set(["timeCoverage", "trackingTime"]);
 
-// Cells with their own controls, such as the corrected-points tooltip and
-// the breakdown toggle, stay outside the row's link.
 const UNLINKED_COLUMN_IDS = new Set(["points", "actions"]);
 
 const CELL_CLASS_NAMES = new Map([
@@ -67,7 +65,6 @@ const CELL_CLASS_NAMES = new Map([
   ["actions", "w-11 py-0 text-right"],
 ]);
 
-// Initial query loading/error and next-page availability/fetching are independent query states, not mutually exclusive presentation variants.
 // oxlint-disable-next-line react-doctor/no-many-boolean-props
 export const MemberKillsList = ({
   guildId,
@@ -87,7 +84,6 @@ export const MemberKillsList = ({
   const { t } = useTranslation();
   const usesTable = useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
 
-  // Expanded breakdowns belong to one filtered list, so a new reset key starts collapsed.
   const [expanded, setExpanded] = useState<{
     resetKey: string;
     killIds: readonly string[];
@@ -164,7 +160,6 @@ export const MemberKillsList = ({
                 !UNLINKED_COLUMN_IDS.has(cell.column.id) && "p-0!",
               )
             }
-            // The row opens the kill; only the monster cell takes focus.
             renderCellContent={(cell, content) =>
               UNLINKED_COLUMN_IDS.has(cell.column.id) ? (
                 content

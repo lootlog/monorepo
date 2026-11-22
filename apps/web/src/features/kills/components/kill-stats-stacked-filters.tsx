@@ -6,7 +6,6 @@ import { KillStatsNpcTypeSelect } from "@/features/kills/components/kill-stats-n
 import { KillStatsPeriodSelect } from "@/features/kills/components/kill-stats-period-select";
 import { useTranslation } from "react-i18next";
 
-/** The kill statistics filters stacked for the panel narrow pages open. */
 export const KillStatsStackedFilters = ({
   world,
   period = "all",

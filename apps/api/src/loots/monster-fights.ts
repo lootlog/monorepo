@@ -7,11 +7,6 @@ import {
   npcSnapshotTable,
 } from "#src/database/drizzle/loot.schema";
 
-/**
- * The NPC each recorded fight's drops come from: its only NPC, or the only
- * boss among a group, as drop sources name them. Fights before `since`, when
- * given, are left out.
- */
 export const buildFightSources = (database: ApiDatabaseValue, since?: Date) => {
   const isBoss = inArray(npcSnapshotTable.type, [...DROP_SOURCE_BOSS_TYPES]);
 
@@ -41,20 +36,9 @@ export const buildFightSources = (database: ApiDatabaseValue, since?: Date) => {
   );
 };
 
-/**
- * Every recorded fight of every monster, numbered from the monster's first,
- * with the total its monster has. A monster is its edition, name and type, as
- * the catalog names it, so a rework that gives it a new id keeps
- * counting its fights. Fights name their only NPC or the only boss among a
- * group, as drop sources do. The game client records a fight only when it
- * drops something above common, so fights are a sample of kills, not every
- * kill.
- */
 export const buildMonsterFights = (database: ApiDatabaseValue) => {
   const fightSources = buildFightSources(database);
 
-  // Columns stay table columns where they can: Drizzle names an aliased
-  // expression without its CTE, which the joins below would make ambiguous.
   const fights = database.$with("fights").as(
     database
       .select({
@@ -90,10 +74,8 @@ export const buildMonsterFights = (database: ApiDatabaseValue) => {
       .groupBy(fights.gameVersion, fights.name, fights.type),
   );
 
-  // A query declares them all once, in this order.
   const ctes = [fightSources, fights, monsterFights] as const;
 
-  /** Joins a fight to its monster's total. */
   const isMonsterOfFight = and(
     eq(monsterFights.gameVersion, fights.gameVersion),
     eq(monsterFights.name, fights.name),

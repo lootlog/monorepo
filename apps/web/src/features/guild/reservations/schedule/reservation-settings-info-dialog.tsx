@@ -95,7 +95,6 @@ export const ReservationSettingsInfoDialog = ({
           description={t("reservations.schedule.infoDialog.description")}
         />
         <div className="flex min-h-0 flex-col gap-4 overflow-y-auto p-5">
-          {/* Laid out as the reservation's own details are. */}
           <dl className="-mt-3 divide-y text-sm">
             {sections.map(({ icon: Icon, title, value, description }) => (
               <div

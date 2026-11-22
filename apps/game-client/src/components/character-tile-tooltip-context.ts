@@ -7,6 +7,5 @@ export type CharacterTileCharacter = Pick<
   "icon" | "nick" | "lvl" | "prof"
 >;
 
-/** A list's shared character tooltip; without one, each tile mounts its own. */
 export const CharacterTileTooltipContext =
   createContext<BaseTooltip.Handle<CharacterTileCharacter> | null>(null);

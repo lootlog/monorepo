@@ -81,7 +81,6 @@ function getRouteBattle(
   }
 }
 
-/** Names a battle: its two fighters for a duel, its id otherwise. */
 export function getBattleLabel(
   battle: BattleLabel | undefined,
   battleId: string,

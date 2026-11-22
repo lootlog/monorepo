@@ -239,7 +239,6 @@ it("rejects invalid dates and nullable optional data", async () => {
     expect(failure).toBeInstanceOf(ChatOperationError);
   }
 
-  // Values the typed port cannot carry are checked at the response boundary.
   for (const value of [
     { ...message, timestamp: new Date(Number.NaN) },
     { ...message, npc: null },

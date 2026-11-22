@@ -9,17 +9,11 @@ type BattlesTableEmptyProps = {
   hasError: boolean;
   isRetrying: boolean;
   onRetry?: () => void;
-  /** Filters that may hide every battle, which the empty state offers to clear. */
   activeFilterChips?: FilterChip[];
   onClearFilters?: () => void;
-  /** A paginated list reserves a page's height; a preview stays compact. */
   paginated: boolean;
 };
 
-/**
- * Takes the battle list's place when it failed to load, its filters match no
- * battle, or there is no battle yet.
- */
 export const BattlesTableEmpty = ({
   hasError,
   isRetrying,

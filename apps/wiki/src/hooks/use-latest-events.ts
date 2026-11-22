@@ -10,20 +10,11 @@ import { readCatalogItems } from "@/lib/catalog-pages";
 import { eventsByPriority } from "@/lib/hero-trackers";
 import { latestEventOf } from "@/lib/item-events";
 
-/** The events the home page shows: two rows of its two-column grid. */
 export const HOME_EVENTS_SHOWN = 4;
 
 const eventsOf = (items: readonly CatalogItemDtoOutput[]) =>
   new Set(items.flatMap(({ stat }) => latestEventOf(stat) ?? []));
 
-/**
- * The latest events with their items, newest first. Event items carry the
- * event's name, and the game adds items in id order, so pages of the newest
- * ones are read until an event past the last wanted one starts: one large
- * event, such as Halloween, would otherwise fill a whole page alone. Older
- * items that came back belong to their latest event. Tropiciele Herosów
- * editions follow the game's own events.
- */
 export const latestEventsQueryOptions = (count: number) => {
   const params = {
     gameVersion: WIKI_GAME_VERSION,

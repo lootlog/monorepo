@@ -16,12 +16,9 @@ type StatsLeaderboardRowProps = {
   title: ReactNode;
   subtitle?: ReactNode;
   value: number;
-  /** Writes the value, such as event points with their unit. */
   formatValue?: (value: number) => string;
   link?: LinkProps;
-  /** Marks the viewer's own place. */
   isViewer?: boolean;
-  /** Sticks to the bottom of its scroller while its place is below the view. */
   pinned?: boolean;
 };
 
@@ -73,8 +70,6 @@ export const StatsLeaderboardRow = ({
       )}
     >
       {link ? (
-        // The link lies under the content, so a member in `media` or `title`
-        // opens their profile while the rest of the row navigates.
         <div
           className={cn(
             className,

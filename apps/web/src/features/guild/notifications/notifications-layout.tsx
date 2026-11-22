@@ -4,7 +4,6 @@ import { useGuildId } from "@/hooks/context/use-guild-id";
 import { Outlet } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 
-/** Rules, channels and history: the notification views, one tab each. */
 export const NotificationsLayout = () => {
   const { t } = useTranslation();
   const guildId = useGuildId() ?? "";

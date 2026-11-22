@@ -33,9 +33,7 @@ import { GuildDocEditorToolbar } from "./guild-doc-editor-toolbar";
 type GuildDocEditorProps = {
   className?: string;
   contentClassName?: string;
-  /** Shown between the toolbar and the text, such as the document's title. */
   header?: ReactNode;
-  /** The document's own actions at the end of the toolbar. */
   toolbarActions?: ReactNode;
   content: GuildDocEditorContent;
   editable: boolean;
@@ -43,8 +41,6 @@ type GuildDocEditorProps = {
   onChange?: (content: GuildDocEditorContent) => void;
 };
 
-// A host never holds `#`, and an item identifier (`ITEM#….luvia`) is not a
-// link, however much its ending looks like a domain.
 const URL_MATCHER =
   /(?<!ITEM#[\w-]*)((https?:\/\/)?(www\.)?[-a-zA-Z0-9@:%._+~=]{1,256}\.[a-zA-Z0-9()]{1,12}\b[-a-zA-Z0-9()@:%_+.~#?&//=]*)/;
 

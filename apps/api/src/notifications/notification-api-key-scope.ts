@@ -23,7 +23,6 @@ function notificationRuleInApiKeyScope(
 ): boolean {
   if (organizationIds === undefined) return true;
 
-  // This shared system rule controls reservations across Organizations.
   if (rule.name === RESERVATION_REMINDER_RULE_NAME) return false;
 
   if (rule.guildId !== null) return organizationIds.includes(rule.guildId);
@@ -36,7 +35,6 @@ function notificationRuleInApiKeyScope(
   );
 }
 
-/** Reservation jobs retain their source even when a session renames the shared rule. */
 export const notificationRulesInApiKeyScope = Effect.fnUntraced(function* <
   Rule extends RuleScope,
 >(
@@ -90,7 +88,6 @@ export const requireNotificationRuleApiKeyScope = (
     }
   });
 
-/** Check original job source scopes before the history limit, including current loot visibility. */
 export const notificationJobVisibilityFilter = (
   database: ApiDatabaseValue,
   ownerDiscordId?: string,

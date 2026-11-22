@@ -9,7 +9,6 @@ type Props = {
   npc: FeedGroup["loots"][number]["npc"];
 };
 
-/** Opens the loot when one was recorded, otherwise the NPC statistics. */
 export function LiveFeedEventTitle({ group, npc }: Props) {
   const { t } = useTranslation();
   const [loot] = group.loots;

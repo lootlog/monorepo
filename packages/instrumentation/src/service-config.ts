@@ -4,7 +4,6 @@ import {
 } from "@lootlog/schema/runtime-environment";
 import { Config, Redacted } from "effect";
 
-/** What every backend service reads to identify, observe and serve itself. */
 export interface BaseServiceConfiguration {
   readonly environment: RuntimeEnvironment;
   readonly port: number;
@@ -28,7 +27,6 @@ export const baseServiceConfig = (
     ),
   });
 
-/** The Redis connection URL assembled from the `REDIS_*` variables. */
 export const redisUrlConfig: Config.Config<Redacted.Redacted<string>> =
   Config.all({
     host: Config.String("REDIS_HOST"),
@@ -47,7 +45,6 @@ export const redisUrlConfig: Config.Config<Redacted.Redacted<string>> =
     ),
   );
 
-/** A comma-separated variable as its entries, trimmed, without empty ones. */
 export const commaSeparatedConfig = (
   name: string,
 ): Config.Config<ReadonlyArray<string>> =>

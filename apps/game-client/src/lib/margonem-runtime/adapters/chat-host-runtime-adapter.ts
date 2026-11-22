@@ -1,6 +1,5 @@
 import { isFunction } from "es-toolkit";
 
-// Native chat channel/focus operations have no result; the proxy still forwards runtime returns.
 type NativeMethod = (...args: unknown[]) => void;
 
 type ChatOwner = { setChannel?: NativeMethod; focus?: NativeMethod };
@@ -31,8 +30,6 @@ function getNativeChatOwners(runtime: ChatHostWindow) {
   return { chatWindow, chatInput };
 }
 
-// TemplatesData.new-chat-window owns these three direct children in NI.
-// No native channel is registered: game channel names remain protocol-owned.
 export function watchIntegratedChatHost(
   label: string,
   onChange: (host: IntegratedChatHost | null) => void,
@@ -119,12 +116,9 @@ export function watchIntegratedChatHost(
     icon.append(outline);
     button.append(icon);
     const panel = doc.createElement("div");
-    // NI's global wheel handler allows browser scrolling in this subtree.
     panel.className = "ll-integrated-chat-panel unblock-scroll";
     panel.style.cssText =
       "position:absolute;left:0;right:0;bottom:0;min-height:0;overflow:hidden;display:flex;flex-direction:column";
-    // NI positions this left-aligned window with an intrinsic width. Adding a
-    // tab must not expand it beyond the native column's containing block.
     const originalRight = host.style.right;
     host.style.right = "0px";
     const displays = [messages.style.display, input.style.display];
@@ -168,12 +162,9 @@ export function watchIntegratedChatHost(
 
       const wrapped = new Proxy(original, {
         apply(target, receiver, args) {
-          // UI failures cannot alter the native receiver, result, exception or calls.
           try {
             restore();
-          } catch {
-            /* The native method must still run. */
-          }
+          } catch {}
 
           return Reflect.apply(target, receiver, args);
         },
@@ -229,8 +220,6 @@ export function watchIntegratedChatHost(
     update();
   };
 
-  // Identity-only polling catches replacement of the whole NI interface without
-  // observing the game DOM subtree (which changes on every movement).
   const timer = runtime.setInterval(refresh, 1000);
   refresh();
 

@@ -1,4 +1,3 @@
-/** Kills in one hour of one ISO weekday (1 = Monday), in Warsaw time. */
 export type ActivityCell = { weekday: number; hour: number; kills: number };
 
 export function summarizeActivityDistributions(cells: ActivityCell[]) {

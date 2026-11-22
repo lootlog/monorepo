@@ -85,7 +85,6 @@ describe("ServerVisibilitySettingsTab", () => {
       ),
     );
 
-    // The save response seeds the cache; no preferences refetch may follow.
     await waitFor(() => expect(harness.queryClient.isMutating()).toBe(0));
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(harness.request).toHaveBeenCalledTimes(1);
@@ -94,8 +93,6 @@ describe("ServerVisibilitySettingsTab", () => {
   it("hides two guilds clicked in quick succession", async () => {
     render();
 
-    // The second click lands before the first save has finished; each write
-    // must build on the previous optimistic list, not on the rendered one.
     fireEvent.click(screen.getByRole("button", { name: "Alpha" }));
     fireEvent.click(screen.getByRole("button", { name: "Gamma" }));
 

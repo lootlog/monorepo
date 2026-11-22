@@ -17,12 +17,6 @@ import { IconButton } from "@/components/ui/icon-button";
 import { GuildSwitcherItem } from "@/components/guild-switcher-item";
 import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 
-/**
- * The one Lootlog picker for in-game windows: a flat, full-width tile row the
- * caller wraps in a toolbar strip. Uncontrolled, it drives the character's
- * global selection; with `value`/`onChange` the caller owns the selection
- * and keeps it on a visible Lootlog (chat also offers the "all" scope).
- */
 type GuildSwitcherProps = {
   allowAll?: boolean;
   className?: string;
@@ -56,7 +50,6 @@ const getGuildSwitcherStatus = ({
   isLoading,
   visibleGuildCount,
 }: GuildSwitcherStatusInput) => {
-  // Not a member of any Lootlog: nothing to pick and nothing hidden.
   if (hasGuilds && isFetched && guildCount === 0) {
     return "none" as const;
   }
@@ -151,8 +144,6 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
       return;
     }
 
-    // The write derives from the cache at the moment it runs, so two hides in
-    // a row never drop each other.
     updatePreferences.mutateFromCurrent(
       (current) => ({
         hiddenGuildIds: [...(current?.hiddenGuildIds ?? []), guildIdToHide],
@@ -168,12 +159,8 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
     );
   };
 
-  // The status fills the strip and borrows its rules instead of drawing its
-  // own pill.
   const statusClassName = "ll:mt-0 ll:border-y-0";
 
-  // A player outside every Lootlog learns how to join from the window's
-  // empty state, which has room to explain it.
   if (status === "single" || status === "none") {
     return null;
   }

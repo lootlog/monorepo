@@ -28,13 +28,8 @@ let lastOtherCanvasTipEvent: unknown = null;
 
 let lastOtherCanvasTipObject: Other | null = null;
 
-// True while the tooltip currently drawn on the canvas carries the Shift-only
-// section, so releasing Shift redraws only the tooltips that still show it.
 let shiftSectionDrawn = false;
 
-// Others whose cached tooltip html gained the Shift-only section. The game
-// keeps that html in `other.tip` until something rebuilds it, so releasing
-// Shift rebuilds exactly these instead of leaving the section on them.
 const othersWithShiftSection = new Set<Other>();
 
 function isOtherCanvasObject(object: unknown): object is Other {
@@ -67,7 +62,6 @@ function extendCharacterTip(update: CharacterTipUpdate): void {
   }
 }
 
-/** Rebuilds the html the game caches in `other.tip` for the canvas tooltip. */
 function rebuildOtherTip(other: Other): void {
   try {
     other.tipUpdate?.();
@@ -137,8 +131,6 @@ function patchCanvasTip(canvasTip: RuntimeCanvasTip): (() => void) | null {
 function removeShiftSections(): void {
   if (othersWithShiftSection.size === 0) return;
 
-  // Others that left the map are no longer drawn, so only the present ones
-  // need their html rebuilt.
   const presentOthers = new Set<unknown>(
     Object.values(runtimeOtherHandles.getAll()),
   );
@@ -170,8 +162,6 @@ function refreshActiveOtherCanvasTooltip(): void {
 
     if (!shiftSectionDrawn || !hoveredOther) return;
 
-    // Releasing Shift must drop the appended section from the tooltip that is
-    // still on screen, so rebuild its html and redraw the visible tip.
     shiftSectionDrawn = false;
     rebuildOtherTip(hoveredOther);
     redrawOtherCanvasTooltip(hoveredOther);
@@ -183,12 +173,9 @@ function refreshActiveOtherCanvasTooltip(): void {
 
   state.setActiveOther(hoveredOther);
   shiftSectionDrawn = true;
-  // The patched show rebuilds the cached html before drawing it.
   redrawOtherCanvasTooltip(hoveredOther);
 }
 
-// SI has no tooltip hook: its Tip shows the `tip` attribute of the hovered
-// `#other{id}` element, so Lootlog rewrites that attribute instead.
 let hoveredLegacyOtherId: string | null = null;
 
 const legacyOtherIdsWithShiftSection = new Set<string>();
@@ -227,7 +214,6 @@ function removeLegacyShiftSections(): void {
     const legacyOther = getLegacyRuntimeOther(id);
     const baseHtml = legacyOther ? buildLegacyOtherTip(legacyOther) : null;
 
-    // An other that left the map took its element with it.
     if (baseHtml !== null) setLegacyOtherTip(id, baseHtml);
   }
 }
@@ -239,9 +225,6 @@ function showLegacyOtherShiftSection(id: string): void {
 
   const state = useCharacterTooltipCatchingGuildsStore.getState();
 
-  // Every copy is a new object, so publishing one for the player that is
-  // already active would re-run the refresh effects in
-  // useCharacterTooltipCatchingGuilds, which refresh this tooltip again.
   if (String(state.activeOther?.d.id) !== id) {
     state.setActiveOther(toTooltipOther(legacyOther));
   }
@@ -282,7 +265,6 @@ function handleLegacyMouseOver(event: MouseEvent): void {
 
 function installLegacyTooltips(): () => void {
   legacyTooltipsInstalled = true;
-  // Capture runs before Tip's own delegated mouseover reads the attribute.
   window.addEventListener("mouseover", handleLegacyMouseOver, true);
 
   return () => {
@@ -294,11 +276,6 @@ function installLegacyTooltips(): () => void {
   };
 }
 
-/**
- * SI's newOther rewrites `#other{id}[tip]` on full updates, dropping the
- * section. Called after the game applied an `other` packet, so it re-adds the
- * section to the players that still need it.
- */
 export function restoreLegacyShiftSections(otherIds: string[]): void {
   if (
     !legacyTooltipsInstalled ||
@@ -314,7 +291,6 @@ export function restoreLegacyShiftSections(otherIds: string[]): void {
   }
 }
 
-/** Adds or removes the Shift section on the tooltip under the cursor. */
 export function refreshActiveOtherTooltip(): void {
   if (legacyTooltipsInstalled) {
     refreshActiveLegacyOtherTooltip();

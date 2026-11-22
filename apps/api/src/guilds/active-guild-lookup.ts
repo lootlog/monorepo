@@ -4,11 +4,6 @@ import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import { guildTable } from "#src/database/drizzle/organization.schema";
 import { isOrganizationIdLike } from "@lootlog/domain/organization-vanity-url";
 
-/**
- * Picks the Organization a path segment refers to. The id owner always wins,
- * and an id-like segment never falls back to a vanity URL, so one
- * Organization's vanity URL cannot shadow another Organization's id.
- */
 export const pickGuildByIdOrVanityUrl = <
   Guild extends { readonly id: string; readonly vanityUrl: string | null },
 >(
@@ -20,11 +15,6 @@ export const pickGuildByIdOrVanityUrl = <
     ? undefined
     : guilds.find(({ vanityUrl }) => vanityUrl === idOrVanityUrl));
 
-/**
- * Resolves an active Organization from its id or vanity URL. The `active`
- * filter runs after precedence: an inactive id owner resolves to nothing
- * rather than handing its id to another Organization's vanity URL.
- */
 export const findActiveGuild = (
   database: ApiDatabaseValue,
   idOrVanityUrl: string,

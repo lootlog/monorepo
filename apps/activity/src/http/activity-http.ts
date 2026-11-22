@@ -71,7 +71,6 @@ export class ActivityReadiness extends Context.Service<
       const scope = yield* Effect.scope;
       const semaphore = yield* Semaphore.make(1);
 
-      // Drizzle's SELECT builder requires FROM; this probe must not depend on a table.
       const probe = sql`SELECT 1`.pipe(
         semaphore.withPermitsIfAvailable(1),
         Effect.map(Option.isSome),
@@ -81,8 +80,6 @@ export class ActivityReadiness extends Context.Service<
         Effect.acquireUseRelease(
           Effect.forkIn(probe, scope),
           (fiber) => Fiber.join(fiber).pipe(Effect.timeout("3 seconds")),
-          // PostgreSQL cancellation can outlast the response deadline. Keep its
-          // permit until cleanup finishes so subsequent probes cannot pile up.
           (fiber) =>
             Fiber.interrupt(fiber).pipe(
               Effect.forkIn(scope, { startImmediately: true }),
@@ -122,7 +119,6 @@ const authorize = Effect.fn("Activity.authorize")(function* (
 
   if (!identity) return yield* new AuthenticationRequiredError();
 
-  // The grants do not depend on the guild, so both reads start together.
   const [guildId, capabilitiesFor] = yield* Effect.all(
     [
       permissions.resolveGuildId(guildIdentifier),
@@ -153,10 +149,6 @@ const authorize = Effect.fn("Activity.authorize")(function* (
   return guildId;
 });
 
-/**
- * Answers an application failure with its declared status and the shared error
- * body. A repository failure is a defect the server logs and answers with 500.
- */
 const respond = <A, R>(effect: Effect.Effect<A, unknown, R>) =>
   Effect.catch(effect, (error) =>
     applicationErrorHttpResponse(

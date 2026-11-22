@@ -33,7 +33,6 @@ let service: ReturnType<typeof makeBattleAnalytics>;
 
 const namedBattleIds = new Map<string, string>();
 
-// A battle ID carries its createdAt; fixtures name battles for readable assertions.
 const namedBattle = (name: string, createdAt: Date) => {
   const battle = createBattleId(createdAt.getTime());
   namedBattleIds.set(name, battle.id);
@@ -233,10 +232,7 @@ it("shares cached opponent aggregates and PvP counts across forward and backward
     ).battles,
   ).toEqual(pvpFirst.battles);
 
-  // The first page has no previous cursor, the last no next cursor, and a
-  // non-matchmaking query no rating fields; the response must still encode.
   for (const page of [first, next]) {
-    // Rating fields belong to matchmaking queries only.
     for (const record of page.records) {
       expect(record).not.toHaveProperty("totalRatingDelta");
       expect(record).not.toHaveProperty("avgRatingDelta");
@@ -439,11 +435,6 @@ it("selects the recorder among multiple owned participants and uses character or
   ]);
 });
 
-// Matchmaking head-to-head fixture after the flee, type and owner filters:
-// opponent-0 fought battles 0, 3, 6, 9 (three losses, battle 6 on neither
-// team, rating deltas 0/null/1/4); opponent-1 fought 1, 7, 10 (three wins,
-// deltas -4/2/5); opponent-2 fought 5, 8 (two wins, deltas 0/0). SQL returns
-// them by latest battle: opponent-1, opponent-0, opponent-2.
 it("filters and sorts opponent records, breaking ties by latest battle", async () => {
   const headToHead = async (overrides: Partial<BattleStatisticsQuery>) =>
     (
@@ -634,8 +625,6 @@ it("returns empty PvP pages for oversized cursors without passing unrepresentabl
 });
 
 it("pages only 1v1 battles against the requested opponent inside the level range, with packed stat fallback", async () => {
-  // opponent-2 fought battle-02 (level 92), battle-05 (excluded), battle-08
-  // (level 98) and group battle-11 (level 101).
   const pvpQuery = {
     ...query({ minLevel: 93, maxLevel: 101 }),
     opponentId: "opponent-2",
@@ -647,7 +636,6 @@ it("pages only 1v1 battles against the requested opponent inside the level range
       reads.getPlayerVsPlayerCount("owner", pvpQuery, characters),
     ),
   ).toBe(1);
-  // opponent-1 levels: battle-01 91, battle-04 94, battle-07 97, battle-10 100.
   expect(
     await runtime.runPromise(
       reads.getPlayerVsPlayerCount(

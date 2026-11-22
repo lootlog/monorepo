@@ -18,7 +18,6 @@ type BattlePanelTeamSummaryProps = {
 };
 
 const getVisibleWarriorCount = (teamSize: number, maxVisible: number) =>
-  // The overflow counter takes one sprite slot, so it never replaces a single warrior.
   teamSize > maxVisible ? maxVisible - 1 : teamSize;
 
 const renderSprite = (
@@ -31,8 +30,6 @@ const renderSprite = (
     className={cn(
       "relative h-9 w-6 shrink-0 rounded-sm",
       isUserWarrior && "bg-green-500/10 ring-1 ring-inset ring-green-500/40",
-      // A group shows no names, so its sprites sit above the link that opens
-      // the battle and name each warrior on hover.
       isInGroup && "z-1",
     )}
   >

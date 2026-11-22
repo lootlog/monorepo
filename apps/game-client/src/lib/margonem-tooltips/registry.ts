@@ -5,7 +5,6 @@ import type {
 
 let currentTransform: CharacterTooltipTransform | null = null;
 
-/** The one transform that extends character tooltips, while it is mounted. */
 export const characterTooltipTransforms = {
   register(transform: CharacterTooltipTransform): () => void {
     currentTransform = transform;

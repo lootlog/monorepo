@@ -28,7 +28,6 @@ export const Route = createFileRoute("/_authenticated/$guildId/activity-logs")({
       const name = searchParams.get("name") || undefined;
       const clanName = searchParams.get("clanName") || undefined;
 
-      // The page shows the Organization's world, which a link may carry.
       const world =
         readGuildWorld(params.guildId, location.searchStr) ?? undefined;
 

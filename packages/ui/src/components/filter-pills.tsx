@@ -10,7 +10,6 @@ import { FILTER_PILL_CLASS } from "@lootlog/ui/lib/filter-pill";
 type FilterPillOption = {
   value: string;
   label: string;
-  /** Recolors one pill, e.g. in its item rarity's frame color. */
   className?: string;
 };
 
@@ -21,7 +20,6 @@ type FilterPillsProps = {
   onValueChange: (value: string[]) => void;
 };
 
-/** A labelled multi-select row of pills; a pressed pill narrows the list. */
 export const FilterPills = ({
   label,
   options,

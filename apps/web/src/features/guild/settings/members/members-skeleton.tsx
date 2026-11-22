@@ -5,7 +5,6 @@ import { SettingsTabSkeleton } from "@/components/common/settings-tab-skeleton";
 import { MemberTileSkeleton } from "./member-tile-skeleton";
 import type { MemberStatusFilter } from "./member-list-item.utils";
 
-/** Each status pill's loaded width, with a three-digit count. */
 const PILL_WIDTHS: Record<MemberStatusFilter, string> = {
   all: "w-25.5",
   active: "w-24.5",
@@ -27,7 +26,6 @@ export const MembersSettingsSkeleton = () => (
           ))}
         </div>
       </div>
-      {/* Phones show the refresh button as an icon. */}
       <Skeleton className="h-8 w-45.5 rounded-lg max-sm:w-8" />
     </ListToolbarSkeleton>
     {Array.from({ length: 12 }, (_, index) => (

@@ -1,6 +1,5 @@
 import { partyGatheringDetailsFields } from "../party-gathering.schema.js";
 import { GameCharacter } from "../game-character.schema.js";
-/** Shared input and output schemas for the party-ready-room feature. */
 import * as Schema from "effect/Schema";
 import {
   PartyGatheringNpcSchema,

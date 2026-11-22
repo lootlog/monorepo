@@ -5,13 +5,6 @@ import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 
 const NO_GUILD_IDS: readonly string[] = [];
 
-/**
- * The Lootlogs one character plays for, and the toggle that changes them.
- * The selection is the cached config itself: each toggle writes the next
- * list straight through the mutation, which updates the cache
- * optimistically and serializes rapid clicks, so a click never snaps back
- * when an earlier response lands.
- */
 export const useCharacterCatchingSelection = (characterId: string) => {
   const { orderedGuilds: guilds } = useLootlogGuilds();
   const { confirm } = useConfirmedCatchingCharacters();
@@ -24,9 +17,6 @@ export const useCharacterCatchingSelection = (characterId: string) => {
   const selectedGuildIds =
     charactersConfig?.[characterId]?.catchingGuildIds ?? NO_GUILD_IDS;
 
-  // Derived from the cache at click time, not from this render: a re-render
-  // lags the cache by a tick, so the previous click of a rapid series would
-  // otherwise be missing from the saved list.
   const toggle = (guildId: string) => {
     confirm(characterId);
     mutateFromCurrent((current) => {

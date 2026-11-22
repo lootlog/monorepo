@@ -14,17 +14,11 @@ type WarningWindowProps = {
   icon: LucideIcon;
   heading: string;
   description: string;
-  /** The one thing the player should do about the warning. */
   primaryAction: { label: string; onClick: () => void };
   onClose: () => void;
-  /** A choice the player makes right here, between the message and the actions. */
   children?: ReactNode;
 };
 
-/**
- * A one-off notice: the message, then a footer with a way out and the action
- * that resolves it. Every notice window shares this layout and behaviour.
- */
 export const WarningWindow: FC<WarningWindowProps> = ({
   id,
   open,

@@ -1,9 +1,3 @@
-/**
- * The Heavenly Dragon: an eastern dragon chasing a glowing pearl round the character. The
- * pearl follows a path; the head steers after it with a capped turn rate, so it swoops and
- * overshoots; the body follows the head segment by segment. Simulated in 3D (z towards the
- * viewer) so the dragon really passes behind and in front of the character.
- */
 import { clamp } from "es-toolkit";
 import type { Brush } from "./decor";
 import { rgba, type Rgb } from "./math";
@@ -16,14 +10,11 @@ export interface Point3 {
   z: number;
 }
 
-/** Screen squash of depth: z shifts a point down by this share, as a tilted view would. */
 const DEPTH_TILT = 0.22;
 
 export class Dragon {
-  /** Head first, then the body to the tail. */
   readonly segments: Point3[];
   readonly head: Point3;
-  /** Unit heading of the head. */
   private dir: Point3 = { x: 1, y: 0, z: 0 };
 
   constructor(
@@ -46,10 +37,6 @@ export class Dragon {
     return this.dir;
   }
 
-  /**
-   * Advances `dt` seconds chasing `pearl`: the head turns towards it at most `turnRate` rad/s
-   * and flies faster the farther it is; every segment then keeps `spacing` from the one before.
-   */
   step(pearl: Point3, dt: number, turnRate = 5, substeps = 4): void {
     const h = dt / substeps;
 
@@ -86,10 +73,6 @@ export class Dragon {
     }
   }
 
-  /**
-   * Rotates the heading towards the unit vector `want` by at most `max` radians, in the plane
-   * of the two (a plain blend would never turn round from a pearl straight behind).
-   */
   private turn(wx: number, wy: number, wz: number, max: number): void {
     const d = this.dir;
     const dot = clamp(d.x * wx + d.y * wy + d.z * wz, -1, 1);
@@ -103,7 +86,6 @@ export class Dragon {
     let pl = Math.hypot(px, py, pz);
 
     if (pl < 1e-6) {
-      // Straight behind: swing round through up (or sideways when heading vertically).
       [px, py, pz] =
         Math.abs(d.y) < 0.9
           ? [-d.y * d.x, 1 - d.y * d.y, -d.y * d.z]
@@ -121,7 +103,6 @@ export class Dragon {
   }
 }
 
-/** A dragon's colours: its hide, the scales and fins, the belly and the eye. */
 export interface DragonScales {
   hide: Rgb;
   hideDark: Rgb;
@@ -131,7 +112,6 @@ export interface DragonScales {
   eye: Rgb;
 }
 
-/** The Heavenly Dragon's jade hide and gold scales. */
 const JADE_DRAGON: DragonScales = {
   hide: [44, 176, 116],
   hideDark: [16, 86, 58],
@@ -145,7 +125,6 @@ const GOLD = JADE_DRAGON.scale;
 
 const WHITE: Rgb = [255, 255, 255];
 
-/** Screen position of a 3D point, `view` subtracted (the camera for characters, 0 for tooltips). */
 export function project(
   p: Point3,
   viewX: number,
@@ -154,13 +133,6 @@ export function project(
   return [p.x - viewX, p.y + p.z * DEPTH_TILT - viewY];
 }
 
-/**
- * The dragon in pixels: segments with `z > 0` (in front) or not, tail to head so nearer
- * parts cover farther ones; a jade body tapering to the tail with gold scales every third
- * segment, gold fins along the spine, a head with horns and a red eye, whiskers trailing.
- * A shimmer runs down the scales from head to tail; `roaring`, the whole spine blazes.
- * `all` draws every segment on one pass, as round a tooltip where the dragon stays flat.
- */
 export function drawDragon(
   b: Brush,
   dragon: Dragon,
@@ -173,7 +145,6 @@ export function drawDragon(
 ): void {
   const segments = dragon.segments;
   const n = segments.length;
-  // The shimmer's head travels two segments a tick, then rests a while before the next one.
   const shimmer = roaring ? -1 : (b.tick * 2) % (n * 3);
 
   for (let i = n - 1; i >= 1; i--) {
@@ -191,11 +162,6 @@ export function drawDragon(
     drawHead(b, dragon, segments[5] ?? head, viewX, viewY, scales);
 }
 
-/**
- * One body segment `i` of `n` at (x, y): tapering to the tail, gold scales every third,
- * a pale belly, gold fins on the spine. The shimmer lights the segments near its index;
- * a negative one is the roar, when the whole spine blazes.
- */
 function drawSegment(
   b: Brush,
   x: number,
@@ -225,7 +191,6 @@ function drawSegment(
   else if (Math.abs(shimmer - i) < 2) plot(b.lit(), x, y - 1, WHITE, 0.9 * a);
 }
 
-/** The head facing its heading, whiskers trailing back to the segment `back`. */
 function drawHead(
   b: Brush,
   dragon: Dragon,
@@ -241,7 +206,6 @@ function drawHead(
   const x = Math.round(hx);
   const y = Math.round(hy);
   const left = facing > 0 ? x - 2 : x - 3;
-  // Head: a 6×4 snout-forward block, horns swept back, a glowing red eye.
   dim.fillStyle = rgba(scales.hideDark, a);
   dim.fillRect(left, y - 2, 6, 4);
   dim.fillStyle = rgba(scales.hide, a);
@@ -270,7 +234,6 @@ function drawHead(
   );
   const lit = b.lit();
   plot(lit, x + facing, y - 1, scales.eye, a);
-  // Whiskers trail back along the body's path, drooping a pixel.
   const [bx, by] = project(back, viewX, viewY);
   pixelLine(
     lit,
@@ -285,7 +248,6 @@ function drawHead(
   pixelLine(lit, x + facing * 3, y, bx, by - 3, scales.scale, 0.6 * a, 0.1 * a);
 }
 
-/** The pearl the dragon chases: a small glowing orb with a turning glint. */
 export function drawPearl(b: Brush, x: number, y: number): void {
   const a = b.intensity;
   softEllipse(b.lit(), x, y, 6, 6, GOLD, 0.45 * a);
@@ -295,18 +257,12 @@ export function drawPearl(b: Brush, x: number, y: number): void {
   plot(b.lit(), x + ((b.tick >> 1) % 2 ? 1 : -1), y - 1, WHITE, a);
 }
 
-/** Lobes of one cloud puff: x offset and radius. */
 const PUFF = [
   [-3, 2],
   [0, 3],
   [3, 2],
 ] as const;
 
-/**
- * Auspicious clouds drifting under the feet: puffs of three solid lobes with a lit top and a
- * shaded underside, shrinking away at the ends of their drift instead of fading (a fade
- * would dither into a grey checkerboard).
- */
 export function drawClouds(b: Brush, x: number, y: number, rx: number): void {
   const a = b.intensity;
   const dim = b.dim();
@@ -331,7 +287,6 @@ export function drawClouds(b: Brush, x: number, y: number, rx: number): void {
   }
 }
 
-/** Heavenly Dragon: the spark the pearl sheds, drifting down as it fades. */
 export const PEARL_SPARK: EmitterSpec = {
   kind: "mote",
   rate: 0,
@@ -345,7 +300,6 @@ export const PEARL_SPARK: EmitterSpec = {
   front: 0.5,
 };
 
-/** Heavenly Dragon: golden fire from the jaws; `dir` and `front` follow the head. */
 export const DRAGON_FIRE: EmitterSpec = {
   kind: "ember",
   rate: 0,
@@ -359,10 +313,6 @@ export const DRAGON_FIRE: EmitterSpec = {
   front: 0.5,
 };
 
-/**
- * Keeps the dragon flat and out of a tooltip: a segment that cut a corner into the box,
- * grown by `margin`, is pushed back out through its nearest side, so it never crosses the text.
- */
 export function pushOutOfBox(
   dragon: Dragon,
   { x, y, w, h }: { x: number; y: number; w: number; h: number },

@@ -104,7 +104,6 @@ it("deletes a single organization's timer only after confirmation", async () => 
   expect(screen.getByRole("button", { name: "Anuluj" })).toHaveFocus();
   await user.keyboard("{Escape}");
   expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
-  // Margonem reacts to document key presses, so Escape stays with Lootlog.
   expect(gameKeyDown).not.toHaveBeenCalled();
 
   await user.click(screen.getByRole("menuitem", { name: "Usuń timer" }));

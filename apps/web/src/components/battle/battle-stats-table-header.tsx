@@ -11,13 +11,11 @@ type BattleStatsTableHeaderProps = {
   id: string;
   title: string;
   actions?: ReactNode;
-  /** A row under the heading, such as the statistic search. */
   toolbar?: ReactNode;
   className?: string;
   ref?: Ref<HTMLDivElement>;
 };
 
-/** The band heading of a statistics table, with its toolbar row under it. */
 export const BattleStatsTableHeader = ({
   id,
   title,

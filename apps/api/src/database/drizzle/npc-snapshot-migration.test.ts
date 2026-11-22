@@ -26,8 +26,6 @@ describe("NPC observation revision migration", () => {
       if (revisionIndex < 0)
         throw new Error("NPC revision migration is missing");
 
-      // The LOO-252 cleanup requires an edition on every linked revision,
-      // which only the LOO-250 repair gave historical rows.
       const cleanupIndex = migrations.findIndex((migration) =>
         migration.sql.some((statement) =>
           statement.includes('DROP TABLE "LegacyRepairSnapshot"'),
@@ -69,8 +67,6 @@ describe("NPC observation revision migration", () => {
         { identityNamespace: "legacy", world: null, snapshotHash: null },
       ]);
 
-      // This is the new writer's conflict target. Neither this insert nor its
-      // duplicate may overwrite/relink the already accepted historical loot.
       await database.exec(`
         INSERT INTO "NpcSnapshot" ("npcId", name, lvl, type, world, "snapshotHash")
         VALUES (52950, 'Historical hero', 210, 'HERO', 'test', 'new-observation')
@@ -110,8 +106,6 @@ describe("NPC observation revision migration", () => {
         await database.exec(migration.sql.join("\n"));
       }
 
-      // 1 is linked, 2 repeats it, 3 differs in level and 4 repeats only the
-      // unlinked 3; items follow the same pattern with their stats.
       await database.exec(`
         INSERT INTO "Loot" (id, "uniqueId", world, "gameVersion", source, location, "updatedAt")
         VALUES (100, 'loot', 'test', 'pl', 'FIGHT', 'Map', now());
@@ -195,8 +189,6 @@ describe("NPC observation revision migration", () => {
         return { id, ...values, snapshotHash: createNpcSnapshotHash(values) };
       };
 
-      // The legacy name exercises JSON escaping of quotes, backslashes and
-      // non-ASCII text in the SQL hash.
       const bragarth = {
         identityNamespace: "legacy",
         npcId: 227_436,
@@ -217,13 +209,10 @@ describe("NPC observation revision migration", () => {
       };
 
       const revisions = [
-        // 1 has more links than its relative twin 2 and absorbs it.
         revision(1, `${cdn}e2/praork.gif`, bragarth),
         revision(2, "e2/praork.gif", bragarth),
-        // 3 has fewer links than its relative twin 4 and merges into it.
         revision(3, `${cdn}e2/pajeczy16.gif`),
         revision(4, "e2/pajeczy16.gif"),
-        // 5 has no twin; 6 is another graphic variant and stays separate.
         revision(
           5,
           "//micc.garmory-cdn.cloud/obrazki/npc/mas/oltarz.gif",
@@ -262,7 +251,6 @@ describe("NPC observation revision migration", () => {
       const timerNpc = {
         id: 1,
         name: "Ołtarz Pajęczej Bogini",
-        // Some timers carry the directory prefix twice.
         icon: `${cdn}${cdn}mas/oltarz.gif`,
         lvl: 220,
       };

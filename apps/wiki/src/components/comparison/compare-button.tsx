@@ -8,13 +8,10 @@ import { type ItemUpgrade, NO_UPGRADE } from "@lootlog/domain/item-upgrade";
 
 type CompareButtonProps = {
   item: Pick<CatalogItemDtoOutput, "id" | "name">;
-  /** A compact icon button for item lists; the full label elsewhere. */
   compact?: boolean;
-  /** The upgrade the item joins the comparison at. */
   upgrade?: ItemUpgrade;
 };
 
-/** Adds the item to the comparison, or takes it out again. */
 export function CompareButton({
   item,
   compact = false,

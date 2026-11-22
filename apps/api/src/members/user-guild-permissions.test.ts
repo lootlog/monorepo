@@ -241,7 +241,6 @@ describe("aggregate permission revocation", () => {
       (await fixture.read(requestIdentity)).map(({ guild }) => guild.id).sort();
 
     try {
-      // The owner opens Lootlog before adding the bot and caches no access.
       expect(await guildIds(owner)).toEqual([]);
 
       await fixture.run(

@@ -10,7 +10,6 @@ import type { useLootDraws } from "./use-loot-draws";
 
 const MAX_REASON_LENGTH = 200;
 
-/** Voids a standing result with a reason, so the item can be drawn again. */
 export const LootDrawVoidForm = ({
   draw,
   draws,

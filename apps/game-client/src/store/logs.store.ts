@@ -11,7 +11,6 @@ let nextLogSequence = 0;
 
 export type LogActionType = string;
 
-/** `skipped`: Lootlog saw the game event but deliberately sent nothing. */
 export type LogEntryStatus = "success" | "error" | "partial" | "skipped";
 
 export type LogRequestStatus = "success" | "error";
@@ -94,11 +93,6 @@ const serializedByteLengthCache = new WeakMap<LoggedAction, number>();
 const measureSerializedByteLength = (value: LoggedAction) =>
   textEncoder.encode(JSON.stringify(value)).byteLength;
 
-/**
- * Actions are immutable once stored, so their serialized size is measured once.
- * Every store write re-runs the retention pass over all retained actions; without
- * this cache each write re-serialized up to 200 actions (several megabytes).
- */
 const getSerializedByteLength = (value: LoggedAction) => {
   const cachedByteLength = serializedByteLengthCache.get(value);
 

@@ -94,7 +94,6 @@ const getNpcBattleSummary = (warriors: BattleWarriorsWithAccountId) => {
       icon: warrior.mapNpc?.icon ?? normalizeNpcIcon(warrior.icon),
       wt: warrior.wt,
       type: warrior.type,
-      // A battle reports no template flags; the map observation keeps it.
       isHeroFromEvent: warrior.mapNpc?.isHeroFromEvent,
     };
 
@@ -110,10 +109,6 @@ const getNpcBattleSummary = (warriors: BattleWarriorsWithAccountId) => {
   };
 };
 
-/**
- * The NPCs among `keys` that would have produced a kill, alive or dead. The
- * classification matches `resolveKillIntent`.
- */
 const getTrackableNpcs = (
   warriors: BattleWarriorsWithAccountId,
   keys: Iterable<string> = Object.keys(warriors),
@@ -145,12 +140,6 @@ const getTrackableNpcs = (
     ];
   });
 
-/**
- * A player who dies in a group battle may close it while the others fight on.
- * Margonem then sends `close` and never `endBattle`, so the capture so far is
- * submitted as an unfinished battle. A `close` that arrives with `init` belongs
- * to a battle that is already over.
- */
 const getBattleEnding = (
   battleData: BattleData,
   startsBattle: boolean,
@@ -160,17 +149,8 @@ const getBattleEnding = (
   return battleData.close !== undefined && !startsBattle ? "left" : null;
 };
 
-/**
- * How the player's part in a battle stopped: Margonem ended it, the player
- * left it, or the next battle began before either was seen.
- */
 type BattleConclusion = "ended" | "left" | "interrupted";
 
-/**
- * Margonem sends a battle from its start again, for one after a tab was
- * inactive. That packet repeats the rows captured so far, or the NPCs of a
- * battle whose rows are not captured; the start of another battle does not.
- */
 const restartsCapturedBattle = (
   battleData: BattleData,
   capturedTurns: readonly string[],
@@ -205,7 +185,6 @@ const getKillSkipReason = (
 export class BattleEventProcessor {
   private observedTeams = new Set<number>();
   private hasMultipleTeams = false;
-  // NPC battles are never submitted, so their packets are not worth capturing.
   private hasNpcWarrior = false;
   private hasWarnedCaptureOverflow = false;
   private lastEndedBattleNpcKeys = new Set<string>();
@@ -217,13 +196,10 @@ export class BattleEventProcessor {
     if (!event.f) return;
 
     const battlePanelStore = useBattlePanelStore.getState();
-    // The state before this packet; its actions still write the live store.
     const battleStore = useBattleStore.getState();
     const startsBattle = event.f.init === "1";
     const game = ingress?.game ?? useGameStore.getState().game;
 
-    // Every store write happens before the first await: the next packet is
-    // handled while a submission is still being hashed.
     const interrupted = startsBattle
       ? this.concludeInterruptedBattle(event.f, battleStore, {
           collectsBattles: battlePanelStore.isBattleCollectionEnabled,
@@ -247,8 +223,6 @@ export class BattleEventProcessor {
         ? getBattleEnding(event.f, startsBattle)
         : null;
 
-    // PvP battles are captured whether or not the player saves them: the
-    // weapon kill counters are read from the same log.
     if (battleState === "in-battle" && !this.hasNpcWarrior) {
       battleStore.addEvent(event);
     }
@@ -292,12 +266,6 @@ export class BattleEventProcessor {
     ]);
   }
 
-  /**
-   * A battle starts while the previous one is still open when its final
-   * packet never arrived, as when the player is attacked right after it.
-   * Starting the next capture would discard that battle, so it is concluded
-   * with what was captured.
-   */
   private concludeInterruptedBattle(
     battleData: BattleData,
     battleStore: BattleStoreState,
@@ -326,7 +294,6 @@ export class BattleEventProcessor {
     });
   }
 
-  /** Reports the kill, the battle and the weapon kills of a concluded battle. */
   private async concludeBattle(params: {
     battleWarriors: BattleWarriorsWithAccountId;
     capture: BattleCapture;
@@ -348,12 +315,9 @@ export class BattleEventProcessor {
 
     const weaponKillsIntent = this.resolveWeaponKillsIntent(pvpEvents, game);
 
-    // A battle the player left goes on, so its NPCs may still survive. One
-    // that was interrupted is known to be won only once every NPC is dead.
     const isKill =
       conclusion === "ended" || (conclusion === "interrupted" && !hasLivingNpc);
 
-    // The API deduplicates kills reported by every player of the battle.
     const killIntent = this.resolveKillIntent(
       isKill ? topNpc : null,
       game,
@@ -422,8 +386,6 @@ export class BattleEventProcessor {
     for (const key in warriors) {
       if (!key.startsWith("-")) continue;
       this.hasNpcWarrior = true;
-      // Release what was captured before the NPC joined; the battle can no
-      // longer produce a submission.
       useBattleStore.getState().clearEvents();
 
       return;
@@ -445,10 +407,6 @@ export class BattleEventProcessor {
     }
   }
 
-  /**
-   * A repeated final packet of the last battle names only its NPCs; another
-   * NPC means a battle began before Lootlog could see it.
-   */
   private logUnseenBattleStart(
     battleData: BattleData,
     battleWarriors: BattleWarriorsWithAccountId,
@@ -467,10 +425,6 @@ export class BattleEventProcessor {
     );
   }
 
-  /**
-   * A battle against a monster that sets a timer ended without a kill report.
-   * The reason lands in the action log, the only trace players can export.
-   */
   private logSkippedKill(
     reason: KillSkipReason,
     npcs: ReturnType<typeof getTrackableNpcs>,
@@ -489,10 +443,6 @@ export class BattleEventProcessor {
     });
   }
 
-  /**
-   * The party goes with the kill as the battle ended: the survivors decide
-   * how many times the boss's loot is rolled.
-   */
   private resolveKillIntent(
     topNpc: DeadNpc | null,
     game: RuntimeGameSnapshot | null,
@@ -529,7 +479,6 @@ export class BattleEventProcessor {
     };
   }
 
-  /** The submittable events of a finished multi-team battle without NPCs. */
   private getPvpBattleEvents(params: {
     capture: BattleCapture;
     hasNpcInBattle: boolean;
@@ -570,11 +519,6 @@ export class BattleEventProcessor {
     return { accountId, characterId, submissionId, events, world };
   }
 
-  /**
-   * The server credits the hero's finishing blows itself; the client sends
-   * the log only when it contains one, together with the weapon the hero
-   * wore. Equipment cannot change during a battle.
-   */
   private resolveWeaponKillsIntent(
     events: BattleEvents | null,
     game: RuntimeGameSnapshot | null,
@@ -638,7 +582,6 @@ export class BattleEventProcessor {
           showRuntimeMessage(getFixedT("timers")("messages.battleLinkCreated"));
         })
         .catch((error) => {
-          // A battle that never reached the server may be sent by a repeat.
           if (
             shouldRetryLoggedActionStatus(
               getErrorStatusCode(error),

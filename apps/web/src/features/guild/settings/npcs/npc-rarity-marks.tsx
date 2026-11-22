@@ -13,7 +13,6 @@ type NpcRarityMarksProps = {
   side: "top" | "bottom";
 };
 
-/** The rarities collected for a monster, each named in a tooltip. */
 export const NpcRarityMarks = ({ rarities, side }: NpcRarityMarksProps) => {
   const { t } = useTranslation();
 

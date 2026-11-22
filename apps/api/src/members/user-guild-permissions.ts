@@ -15,7 +15,7 @@ import {
 } from "#src/database/drizzle/organization.schema";
 import { UserOrganizationPermissionsResponse } from "#src/contracts/guilds/schemas";
 import { apiKeyCacheSuffix } from "#src/runtime/auth/organization-scope";
-import { type RedisService } from "#src/redis/redis.service";
+import type { RedisService } from "#src/redis/redis.service";
 import { getUserGuildPermissionsCacheScope } from "#src/shared/cache";
 import {
   isActiveMember,
@@ -23,7 +23,6 @@ import {
 } from "./member-access-query.js";
 import { hydrateMemberRoles } from "./member-role-hydration.js";
 
-// Handlers and their tests build this port by name.
 export interface UserGuildPermissionsCache {
   readonly getOrSetJsonEffect: RedisService["getOrSetJson"];
 }
@@ -92,7 +91,6 @@ export const makeUserGuildPermissionsProjection = (
       const member = membersByGuild.get(guild.id);
       const activeMember = member && isActiveMember(member) ? member : null;
 
-      // The owner keeps access without a member row, as in the access query.
       if (!activeMember && guild.ownerId !== discordId) return [];
 
       const permissions = memberCapabilities({
@@ -108,8 +106,6 @@ export const makeUserGuildPermissionsProjection = (
       )
         return [];
 
-      // Clients read the owner's access from roles, so the owner gets one
-      // role that holds every capability over the default level range.
       const roles =
         guild.ownerId === discordId
           ? [

@@ -142,7 +142,6 @@ test("the submitting Organization's NPC visibility decides the allocation, not o
 
     const keyed = keyedTo(["1", "2"]);
 
-    // The Organization the loot was submitted in hides its NPC revision.
     expect(await run(persistence.findAuthorizedLoot(options))).toBeNull();
     expect(await keyed(persistence.findAuthorizedLoot(options))).toBeNull();
     expect(
@@ -163,15 +162,12 @@ test("the submitting Organization's NPC visibility decides the allocation, not o
         .set({ lvlRangeTo: 190 })
         .where(eq(roleTable.id, "2")),
     );
-    // Another Organization recording the same loot, e.g. for a mixed party,
-    // does not block the submitter.
     expect(await run(persistence.findAuthorizedLoot(options))).toMatchObject({
       id: 1,
     });
     expect(await keyed(persistence.findAuthorizedLoot(options))).toMatchObject({
       id: 1,
     });
-    // An API key acts only through the submissions inside its scope.
     expect(
       await keyedTo(["2"])(persistence.findAuthorizedLoot(options)),
     ).toBeNull();
@@ -293,8 +289,6 @@ test("allocation requires a recent actor submission at the atomic update", async
         }),
       ),
     );
-    // A mixed party also records the loot in an Organization outside the
-    // actor's reach; their own submission still confirms the allocation.
     expect(
       await scoped(persistence.findAuthorizedAllocationState(options)),
     ).toEqual({ lootShare: {}, lootShareSource: "NONE" });
@@ -391,8 +385,6 @@ test("allocation requires a recent actor submission at the atomic update", async
 
     await update();
     await update();
-    // A legacy null type must stay unreadable to ordinary recipients; inferring HERO from
-    // its weight would disclose an allocation that the HTTP source policy rejects.
     expect(published).toEqual([
       {
         version: 2,

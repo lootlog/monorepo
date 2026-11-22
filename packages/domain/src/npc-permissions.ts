@@ -8,7 +8,6 @@ export type NpcPermissionData = {
   type: string;
 };
 
-/** A role without a stored level bound covers the full 0–500 range. */
 export type RolePermissionData = {
   permissions: readonly string[];
   lvlRangeFrom: number | null;
@@ -52,12 +51,6 @@ export const NPC_FEATURE_PERMISSIONS = {
   },
 } as const;
 
-/**
- * Borrowed capabilities. Hero sightings are not timers, but they reuse the
- * timer permissions until the capability model gets entries of its own. Every
- * hero sighting surface checks access through these names, so moving to
- * dedicated capabilities changes only this mapping and the role migration.
- */
 export const HERO_SIGHTING_READ_FEATURE: NpcFeature = "timers";
 
 export const HERO_SIGHTING_WRITE_PERMISSION = Permission.LOOTLOG_TIMERS_WRITE;
@@ -105,25 +98,11 @@ export type NpcFeature = keyof typeof NPC_FEATURE_PERMISSIONS;
 
 type NpcFeatureTier = keyof (typeof NPC_FEATURE_PERMISSIONS)[NpcFeature];
 
-/** An NPC-scoped source, reduced to what the visibility rule needs. */
 export type NpcFeatureSource = {
   readonly tier: NpcFeatureTier;
   readonly npcLevel?: number;
 };
 
-/**
- * The single NPC feature visibility rule, shared by every surface that reads
- * NPC-scoped sources: a role must grant the feature's base permission, and an
- * NPC-scoped source additionally needs the permission for that NPC's routing
- * tier within the role's level range.
- *
- * Owner/ADMIN bypass and the party-gathering organizer bypass are NOT part of
- * this rule; each caller resolves them from its own source first.
- *
- * A source of `null` means "not NPC-scoped" and only needs the base permission.
- * A source without `npcLevel` skips the level-range check, because there is no
- * level to place inside a range.
- */
 export const canReadNpcFeatureSource = (
   roles: readonly RolePermissionData[],
   feature: NpcFeature,
@@ -146,7 +125,6 @@ export const canReadNpcFeatureSource = (
   return hasRolePermissionInLevelRange(roles, permission, source.npcLevel);
 };
 
-/** A sighting shows where a hero is, so it follows the hero's own visibility. */
 export const canReadHeroSighting = (
   roles: readonly RolePermissionData[],
   heroLvl: number,

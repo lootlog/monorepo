@@ -54,7 +54,6 @@ function Button({
     <ButtonPrimitive
       data-slot="button"
       className={cn(
-        // The spinner overlays the hidden children, so the button keeps its size.
         overlaysSpinner && "relative",
         overlaysSpinner &&
           loading &&

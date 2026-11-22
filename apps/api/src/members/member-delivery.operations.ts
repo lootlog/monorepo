@@ -27,17 +27,10 @@ export interface MemberDeliveryPorts {
   }) => Effect.Effect<void, MessagingError>;
 }
 
-/**
- * Delivers the `MemberSyncDelivery` outbox: every committed member change,
- * including removals, reaches caches and the gateway at least once. Writers
- * queue a row with `queueMemberDeliveries` in their transaction, then call
- * `deliver` after commit; the dispatcher retries whatever that attempt left.
- */
 export const makeMemberDelivery = (
   store: MemberStore,
   ports: MemberDeliveryPorts,
 ) => {
-  // Invalidate first: a published event makes consumers reread permissions.
   const notify = (
     member: typeof memberTable.$inferSelect,
     permissionsChanged: boolean,
@@ -72,7 +65,6 @@ export const makeMemberDelivery = (
   const deliver = Effect.fn("members.delivery.deliver")(function* (
     memberId: number,
   ) {
-    // Each pass delivers a newer version queued while the previous one ran.
     for (;;) {
       const claim = yield* store.claimDelivery(memberId);
 

@@ -17,11 +17,9 @@ import {
 } from "../global-chat.helpers";
 import { GlobalChatMessageMenu } from "./global-chat-message-menu";
 
-/** What every row of one channel shares. */
 export type GlobalChatRowContext = {
   channel: GlobalChatChannel;
   canModerate: boolean;
-  /** The shared channel tags each message with the world it was sent from. */
   showOriginWorld: boolean;
 };
 
@@ -31,7 +29,6 @@ type GlobalChatRowProps = {
   row: GlobalChatRowData;
 };
 
-// A divider's label depends only on its day, which its key names.
 const areRowPropsEqual = (
   previous: GlobalChatRowProps,
   next: GlobalChatRowProps,
@@ -45,13 +42,6 @@ const areRowPropsEqual = (
     ? next.row.kind === "message" && previous.row.message === next.row.message
     : next.row.kind === "date-divider");
 
-/**
- * Memoized like ChatTranscriptRow, where every incoming message re-rendered
- * every row (measured 502 row renders per message without it). Rows are
- * rebuilt per render, but their message objects keep their identity across
- * live appends. The transcript's shared context menu renders the action menu
- * only while it is open.
- */
 export const GlobalChatRow = memo(function GlobalChatRow({
   appearance,
   context,
@@ -118,8 +108,6 @@ export const GlobalChatRow = memo(function GlobalChatRow({
               <span className="ll:sr-only">{t("message.admin")}</span>
             ) : null}
             <span
-              // Underlines the caller's own name; the narrow window has no
-              // room for a box. An admin's name already stands out in red.
               className={cn("ll:font-bold ll:mr-0.5", {
                 "ll:underline ll:underline-offset-2":
                   message.isOwn && !message.isAdmin,

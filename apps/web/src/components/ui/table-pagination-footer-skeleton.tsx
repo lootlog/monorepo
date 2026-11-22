@@ -4,11 +4,9 @@ import { TablePaginationFooter } from "./table-pagination-footer";
 
 const noop = () => undefined;
 
-/** A `TablePaginationFooter` whose total is still loading. */
 export const TablePaginationFooterSkeleton = ({
   labelClassName = "w-24",
 }: {
-  /** The width of the loading total. */
   labelClassName?: string;
 }) => (
   <TablePaginationFooter

@@ -26,8 +26,6 @@ const makeBetterAuthHandler = (auth: typeof BetterAuthRuntime.Service) =>
 
       const { pathname } = new URL(webRequest.url);
 
-      // The admin plugin enforces bans; its endpoints would let anyone holding
-      // the `admin` role impersonate Users, so only the admin API manages them.
       if (
         pathname.includes("/api-key/") ||
         pathname.startsWith(`${BETTER_AUTH_INTERNAL_PATH}/admin/`)
@@ -85,8 +83,6 @@ export const AuthRoutes = Layer.merge(
   BetterAuthRawRoutes,
 );
 
-// Traefik's forwardAuth calls /auth/verify once per proxied request. Its spans
-// carry no information and outnumber every other trace in the platform.
 const TracingLive = HttpMiddleware.layerTracerDisabledForUrls(["/auth/verify"]);
 
 export const AuthHttpServer = Layer.unwrap(

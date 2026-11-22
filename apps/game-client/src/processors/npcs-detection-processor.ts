@@ -35,20 +35,16 @@ import { areSettingsDocumentsSettled } from "@/lib/settings-persistence/settings
 import { selectSettingsValue } from "@/lib/settings-persistence/settings-documents";
 import { getEffectiveDetectorSettings } from "@/lib/game-account-preferences";
 
-// A rescan reads every NPC the projection holds when it runs, so it covers
-// the packets that would otherwise wait behind it.
 type PendingDetection =
   | { accountId: string; type: "event"; event: GameEvent }
   | { accountId: string; type: "rescan" };
 
 type DetectionProcessingContext = {
   detectorSettings: DetectorSettings;
-  /** The current character's master switch over every type's auto-send. */
   characterAutoSendEnabled: boolean;
   routedGuildIdsByLevel: Map<number, string[]>;
 };
 
-/** What the detector settings decide for one detected NPC type and level. */
 type Detection = {
   settings: DetectorTypeSettings;
   guildIds: string[];
@@ -74,10 +70,6 @@ export class NpcsDetectionProcessor {
     this.pendingDetections = [];
   }
 
-  /**
-   * Queued packets describe the map being left; the new map is rescanned
-   * from the projection once the detector is ready.
-   */
   handleMapChange(): void {
     const [pending] = this.pendingDetections;
 
@@ -191,11 +183,6 @@ export class NpcsDetectionProcessor {
     const context = this.createDetectionContext();
     const intents = this.createDetectionIntents();
 
-    // Margonem sends `npcs` for both spawns and updates of a known NPC (position,
-    // icon, template). Only NPCs the detector does not show yet are detections;
-    // the rest update in place without a new alert, sound, auto-send or focus.
-    // A Hero Tracker claimed while shown is the one update detected again: its
-    // entrance just opened.
     const detectedNpcsById = new Map(
       useNpcDetectorStore.getState().npcs.map((npc) => [npc.id, npc]),
     );
@@ -203,8 +190,6 @@ export class NpcsDetectionProcessor {
     const updatedNpcs: { npcId: number; npc: Partial<GameNpcWithLocation> }[] =
       [];
 
-    // Index the packet's templates and icons once instead of scanning them
-    // per NPC. A later duplicate id wins, as in Margonem's own managers.
     const templatesById: EventNpcTemplatesById = new Map(
       event.npc_tpls?.map((template) => [template.id, template]),
     );
@@ -260,7 +245,6 @@ export class NpcsDetectionProcessor {
     this.dispatchDetectionIntents(intents);
   }
 
-  /** The packet NPC as the detector shows it, or null when it is not detected. */
   private composeEventNpc(
     npc: NonNullable<GameEvent["npcs"]>[number],
     detectedNpc: GameNpcWithLocation | undefined,

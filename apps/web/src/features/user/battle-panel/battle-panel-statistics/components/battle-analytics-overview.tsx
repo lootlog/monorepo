@@ -28,23 +28,15 @@ export type BattleAnalyticsParams = {
   startDate?: string;
   endDate?: string;
   ph?: boolean;
-  /** Abyss battles, which change the rating instead of earning honor points. */
   matchmaking: boolean;
 };
 
 type BattleAnalyticsOverviewProps = {
   params: BattleAnalyticsParams;
-  /** The full list of opponents for the same battles. */
   allOpponentsLink: LinkProps;
-  /** The Abyss season shown, which an opponent's page returns to. */
   seasonId?: string;
 };
 
-/**
- * What a character's battles add up to, edge to edge: the headline numbers,
- * streaks and durations, the opponents fought most and how each profession
- * goes, and the honor points or rating over time.
- */
 export function BattleAnalyticsOverview({
   params,
   allOpponentsLink,
@@ -71,7 +63,6 @@ export function BattleAnalyticsOverview({
     query: { enabled: rated },
   });
 
-  // The streak and durations share a section, so it fails and retries as one.
   const recordsQuery = {
     isError: streakQuery.isError || durationQuery.isError,
     isFetching: streakQuery.isFetching || durationQuery.isFetching,

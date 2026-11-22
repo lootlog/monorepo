@@ -11,14 +11,8 @@ import {
 } from "@/lib/margonem-runtime/adapters/who-is-here-runtime-adapter";
 import type { AirTagTarget } from "@lootlog/schema/air-tag";
 
-/** Game default for clan enemies, used until the game reports the player's colour. */
 const FALLBACK_ENEMY_COLOR = "#fc3e40";
 
-/**
- * A row built from the game's own "one-other" classes, so it looks like the
- * native rows above it: the relation colour, the AFK icon and the level on
- * the right. The age stands where native rows show the battle icon.
- */
 export function WhoIsHereAirTagRow({
   enemy,
   now,
@@ -39,8 +33,6 @@ export function WhoIsHereAirTagRow({
   const { nickname, lvl, prof } = enemy;
   const clanName = enemy.clan?.name;
 
-  // The game's own player tip, as on the native rows above. Bound once per
-  // change of what it shows: the row itself re-renders every second.
   useEffect(() => {
     const element = row.current;
 
@@ -58,13 +50,11 @@ export function WhoIsHereAirTagRow({
     return () => setPlayerTip(element, null);
   }, [nickname, lvl, prof, clanName]);
 
-  // Like a native row, a click starts a private message.
   return (
     <button
       ref={row}
       type="button"
       onClick={() => startPrivateMessage(enemy.nickname)}
-      // The plain title stays for a game that cannot build its tip.
       title={
         hasGameTip
           ? undefined

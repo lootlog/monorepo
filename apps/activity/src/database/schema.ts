@@ -1,5 +1,4 @@
 import { desc, sql } from "drizzle-orm";
-// Hand-maintained Activity database schema; Drizzle generates SQL migrations from it.
 import {
   check,
   boolean,
@@ -147,8 +146,6 @@ export const memberActivitySessions = pgTable(
       name: "MemberActivitySession_pkey",
       columns: [table.guildId, table.discordId, table.source, table.sessionId],
     }),
-    // Every session read and delete names the member, which the primary key
-    // leads with; a second index only adds a random page to each connection.
   ],
 );
 
@@ -161,7 +158,6 @@ export const activitySchema = {
 
 export const oneDay = sql`INTERVAL '1 day'`;
 
-// Private user history is independent of Organization activity logs and their seven-day retention.
 export const userOnlineIntervals = pgTable(
   "UserOnlineInterval",
   {
@@ -175,8 +171,6 @@ export const userOnlineIntervals = pgTable(
   },
   (table) => [
     primaryKey({ columns: [table.userId, table.sessionId, table.segmentId] }),
-    // The primary key covers per-user history reads. Keep advancing checkpoint
-    // fields out of B-tree indexes so ordinary updates can stay on the heap page.
     index("UserOnlineInterval_startedAt_idx").on(table.startedAt),
     check(
       "UserOnlineInterval_check",
@@ -189,13 +183,6 @@ const timestamptzMultirange = customType<{ data: string }>({
   dataType: () => "tstzmultirange",
 });
 
-// Read model of UserOnlineInterval: the merged online spans of one user on one
-// Warsaw calendar day and world, so a dashboard read touches one row per day
-// instead of every checkpoint. Rows are only ever grown by set union, which keeps
-// overlapping sessions, redeliveries and out-of-order checkpoints idempotent, and
-// the table can always be rebuilt from the intervals. An empty world means the
-// interval carried no world provenance. Spans are not clipped to the retention
-// cutoff; readers clip them.
 export const userOnlineDays = pgTable(
   "UserOnlineDay",
   {
@@ -206,14 +193,12 @@ export const userOnlineDays = pgTable(
   },
   (table) => [
     primaryKey({ columns: [table.userId, table.date, table.world] }),
-    // Retention drops whole days across users.
     index("UserOnlineDay_date_idx").on(table.date),
   ],
 );
 
 export const userOnlineTracking = pgTable("UserOnlineTracking", {
   userId: text().primaryKey(),
-  // Keep checkpoint updates HOT-eligible; scan this per-user metadata only during retention.
   lastObservedAt: timestamp({ withTimezone: true, mode: "date" }).notNull(),
 });
 

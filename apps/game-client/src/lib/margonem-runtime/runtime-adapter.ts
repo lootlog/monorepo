@@ -59,12 +59,6 @@ const GAME_VERSION_DOMAINS: ReadonlyArray<readonly [string, GameVersion]> = [
   ["margonem.com", GameVersion.EN],
 ];
 
-/**
- * Margonem serves each edition from its own domain and every world as a
- * subdomain of it; the game builds its WebSocket URL from the page's TLD. A
- * new world therefore needs no list entry, while a lookalike or unknown host
- * resolves to null instead of an edition.
- */
 export function resolveGameVersion(hostname: string): GameVersion | null {
   const host = hostname.toLowerCase().replace(/\.$/, "");
 
@@ -86,8 +80,6 @@ type RuntimeOtherData = {
 
 type RuntimeOtherWrapper = RuntimeOtherData & { d?: RuntimeOtherData };
 
-// NpcManager merges template data by `tpl`; a missing or non-positive value
-// has no template to identify.
 export function normalizeNpcTemplateId(tpl: number | undefined): number | null {
   return tpl !== undefined && Number.isSafeInteger(tpl) && tpl > 0 ? tpl : null;
 }
@@ -136,7 +128,6 @@ function normalizeOther(other: RuntimeOtherWrapper): RuntimeOther | null {
 
 abstract class BaseRuntimeAdapter implements MargonemRuntimeAdapter {
   abstract readonly interface: RuntimeInterface;
-  // The host cannot change without a page load, so it is parsed once.
   private readonly gameVersion = resolveGameVersion(
     getRuntimeWindow().location.hostname,
   );

@@ -21,7 +21,6 @@ export class CoveragePublisher {
   }
 }
 
-/** Asks the API to re-check map coverage when presence changes it. */
 export class Coverage extends Context.Service<Coverage, CoveragePublisher>()(
   "@lootlog/gateway/rabbit/Coverage",
 ) {

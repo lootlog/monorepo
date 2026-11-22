@@ -167,7 +167,6 @@ describe("LootStatsService aggregates", () => {
         ),
       );
 
-      // Items without a rarity stay in timeline totals but outside the rarity denominator.
       expect(stats.timeline).toEqual([
         {
           date: "2025-12-29T00:00:00.000Z",
@@ -185,7 +184,6 @@ describe("LootStatsService aggregates", () => {
         HEROIC: { count: 2, percentage: 33.3 },
         UNIQUE: { count: 1, percentage: 16.7 },
       });
-      // Several qualifying NPCs on one loot must not multiply its item; COMMON-only loots do not qualify.
       expect(stats.topItems).toEqual([
         {
           itemId: 101,

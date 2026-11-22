@@ -168,7 +168,6 @@ describe("EventHeroesTable", () => {
       <EventHeroesTable {...defaultProps} rows={withScore()} showStandings />,
     );
 
-    // A place still loading must not read as "not in the ranking".
     expect(screen.queryByText(EMPTY_VALUE)).toBeNull();
 
     cleanup();

@@ -53,8 +53,6 @@ export function BattlePanelStatistics() {
     }
   }, [characters, currentCharacterId, isLoadingCharacters, setQueryState]);
 
-  // Filters apply in a transition, so the sections keep their data while the
-  // next statistics load.
   const setFilters = (values: Parameters<typeof setQueryState>[0]) => {
     startTransition(() => {
       void setQueryState(values);

@@ -11,10 +11,6 @@ import type {
   battlePanelPlayerVsPlayerSearchParsers,
 } from "./battle-panel-search";
 
-// Each builder serves a page and its route loader alike, so the loader
-// prefetches the very query key the page reads.
-
-/** Rows on one page of every battle panel table. */
 export const BATTLE_PANEL_PAGE_SIZE = 20;
 
 export const buildDashboardBattlesParams = (
@@ -36,7 +32,6 @@ export const buildDashboardBattlesParams = (
   maxLevel: search.maxLevel,
 });
 
-/** A season's battles; the season fixes the character and dates. */
 export const buildAbyssSeasonBattlesParams = (
   search: inferParserType<typeof battlePanelAbyssSeasonSearchParsers>,
   characterId: string | undefined,
@@ -51,7 +46,6 @@ export const buildAbyssSeasonBattlesParams = (
   endDate: season?.endedAt,
 });
 
-/** Opponents of a character, or of one Abyss season when `season` is set. */
 export const buildHeadToHeadParams = (
   search: inferParserType<typeof battlePanelHeadToHeadSearchParsers>,
   scope: {

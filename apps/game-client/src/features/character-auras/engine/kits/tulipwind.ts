@@ -1,11 +1,3 @@
-/**
- * Tulipanowy wiatr: no glow round the character at all, only things that happen. A
- * windmill stands at the edge of the screen before a low sun, its sails turning, and
- * tulip petals ride the wind over the whole map; tulips grow at the character's feet.
- * Its burst is drawn like a finishing move: the sails spin up, tear loose and fly across
- * the screen as one great blade, the picture snaps to its negative for an instant, and
- * tulips come up all over the map in the blade's wake.
- */
 import { sprite } from "../decor";
 import { mulberry32, rgba, type Rgb } from "../math";
 import { pixelLine } from "../paint";
@@ -20,7 +12,6 @@ const SUN: Rgb = [255, 150, 60];
 
 const LEAF: Rgb = [70, 150, 60];
 
-/** Tulips, and the petals the wind carries. */
 const BLOOMS: readonly Rgb[] = [
   [232, 50, 60],
   [255, 138, 30],
@@ -29,27 +20,22 @@ const BLOOMS: readonly Rgb[] = [
   [255, 214, 70],
 ];
 
-/** The burst: the sails spin up, fly, the picture snaps, the tulips come up. */
 const TORN_LOOSE = 0.3;
 
 const IMPACT = 0.45;
 
-/** How long the picture stays in its negative, as a fraction of the burst. */
 const NEGATIVE = 0.035;
 
-/** The length of a sail, px. */
 const SAIL = 92;
 
 const TULIP = [" # # ", " ### ", " ### ", "  l  ", " ll  ", "  l  "];
 
-/** How far the sails have turned at `now`; they wind up through the start of a burst. */
 function sailTurn(now: number, burst: number): number {
   const windUp = burst < 0 ? 0 : Math.min(1, burst / TORN_LOOSE) ** 3 * 26;
 
   return now * 0.5 + windUp;
 }
 
-/** Four sails round (`x`, `y`): each a spar with a lattice along one side of it. */
 function drawSails(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -71,7 +57,6 @@ function drawSails(
     ctx.moveTo(0, 0);
     ctx.lineTo(length, 0);
     ctx.stroke();
-    // The lattice: its frame and the bars across it.
     ctx.lineWidth = Math.max(1, length * 0.016);
     ctx.strokeRect(length * 0.24, 0, length * 0.76, length * 0.17);
 
@@ -91,7 +76,6 @@ function drawSails(
   ctx.restore();
 }
 
-/** One tulip grown `grown` (0..1) of the way at (`x`, `y`): stem, leaf and cup. */
 function drawTulip(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -123,7 +107,6 @@ export const tulipwind: AuraKit = {
     const a = b.intensity;
     const { bounds } = place.silhouette;
 
-    // Tulips round the feet, nodding in the wind; those behind go behind.
     for (let i = 0; i < 6; i++) {
       const angle = (i / 6) * Math.PI * 2 + 0.5;
 
@@ -141,7 +124,6 @@ export const tulipwind: AuraKit = {
 
     if (!front) return;
 
-    // The wind itself: a few short strokes passing the body.
     for (let i = 0; i < 3; i++) {
       const along = (b.time * (0.9 + i * 0.3) + i * 0.4) % 1;
       const x = place.x + bounds.x + bounds.w + 16 - along * (bounds.w + 44);
@@ -165,7 +147,6 @@ export const tulipwind: AuraKit = {
     const millX = width - 96;
     const hubY = height - 168;
 
-    // The low sun behind the mill.
     ctx.globalCompositeOperation = "lighter";
     ctx.fillStyle = rgba(SUN, 1);
 
@@ -180,7 +161,6 @@ export const tulipwind: AuraKit = {
       ctx.fill();
     }
 
-    // The mill: its tower narrowing upwards, a cap and a door.
     ctx.globalCompositeOperation = "source-over";
     ctx.globalAlpha = 0.92;
     ctx.fillStyle = rgba(TIMBER, 1);
@@ -198,7 +178,6 @@ export const tulipwind: AuraKit = {
     ctx.globalAlpha = 0.7;
     ctx.fillRect(millX - 5, hubY + 62, 10, 14);
 
-    // Its sails, unless they are away across the screen.
     const flight = span(burst, TORN_LOOSE, IMPACT + 0.12);
     const back = active ? span(burst, 0.82, 1) : 1;
     const home = active && burst >= TORN_LOOSE ? back : 1;
@@ -215,7 +194,6 @@ export const tulipwind: AuraKit = {
       );
     }
 
-    // Petals on the wind over the whole map, tumbling as they go.
     ctx.globalAlpha = 1;
 
     scatter(
@@ -240,7 +218,6 @@ export const tulipwind: AuraKit = {
 
     if (!active) return;
 
-    // Speed lines: the wind drawn across the whole picture, thickest at the impact.
     const rush =
       burst < IMPACT ? burst / IMPACT : 1 - span(burst, IMPACT, 0.75);
 
@@ -259,7 +236,6 @@ export const tulipwind: AuraKit = {
       );
     }
 
-    // The sails torn loose: one great blade spinning across to the left, over the character.
     if (burst >= TORN_LOOSE && flight < 1) {
       const ease = flight * flight;
       const bx = millX + (-160 - millX) * ease;
@@ -275,10 +251,8 @@ export const tulipwind: AuraKit = {
 
     if (burst < IMPACT) return;
 
-    // The impact frame: the whole picture in its negative, for an instant.
     if (burst < IMPACT + NEGATIVE) wash(scene, WHITE, 1, "difference");
 
-    // The cut it leaves, straight across through the character, closing fast.
     const cut = 1 - span(burst, IMPACT, IMPACT + 0.14);
 
     if (cut > 0) {
@@ -293,7 +267,6 @@ export const tulipwind: AuraKit = {
       );
     }
 
-    // Tulips coming up all over the map, right to left as the blade passed, then gone.
     const gone = 1 - span(burst, 0.9, 1);
     ctx.globalCompositeOperation = "source-over";
 

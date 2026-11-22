@@ -305,7 +305,6 @@ export const makeMargonemProofVerifier = (
   };
 };
 
-/** Verifies the Margonem account proof a Game client sends on join. */
 export class ProofVerifier extends Context.Service<
   ProofVerifier,
   MargonemProofVerifier

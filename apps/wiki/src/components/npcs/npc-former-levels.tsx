@@ -2,10 +2,6 @@ import type { CatalogNpcDtoOutput } from "@lootlog/client/catalog";
 import { t } from "@/i18n/messages";
 import { formatCatalogDay } from "@/lib/catalog-days";
 
-/**
- * The levels a monster had before the game changed it, oldest first. A
- * search API released before former levels existed sends none.
- */
 export function NpcFormerLevels({
   formerLevels,
 }: {

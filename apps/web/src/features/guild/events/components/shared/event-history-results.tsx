@@ -9,9 +9,7 @@ import { RetryButton } from "@/components/common/retry-button";
 import { ClearFiltersButton } from "@/components/common/clear-filters-button";
 
 type EventHistoryResultsProps = {
-  /** The page's scroll viewport, which the next page loads against. */
   scrollElement: HTMLDivElement | null;
-  /** Scrolls the page back to its top when it changes, such as the hero shown. */
   resetKey: string;
   isEmpty: boolean;
   isLoading: boolean;
@@ -21,19 +19,11 @@ type EventHistoryResultsProps = {
   fetchNextPage: () => void;
   onRetry: () => void;
   isRetrying?: boolean;
-  /** Set while a hero tab narrows the kills, to go back to all of them. */
   onShowAllHeroes?: () => void;
-  /** Stands in for the kills while the first page loads. */
   skeleton: ReactNode;
-  /** The loaded kills, as a table or as tiles on phones. */
   children: ReactNode;
 };
 
-/**
- * A page's infinite kill history, edge to edge like the activity log: the
- * kills, then a row that loads the next page as it scrolls into view.
- */
-// Initial query loading/error and next-page availability/fetching are independent query states, not mutually exclusive presentation variants.
 // oxlint-disable-next-line react-doctor/no-many-boolean-props
 export const EventHistoryResults = ({
   scrollElement,

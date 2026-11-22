@@ -37,8 +37,6 @@ const WatchFormFields = Schema.Struct({
 
 type WatchFormValues = typeof WatchFormFields.Type;
 
-// One filter reports the required fields together with the item rules, so a
-// submit shows every problem at once.
 const watchFormSchema = Schema.toStandardSchemaV1(
   WatchFormFields.check(
     Schema.makeFilter((data) => {
@@ -97,7 +95,6 @@ export function useWatchItemForm({
     },
   });
 
-  // A search belongs to the world it was typed for; another world starts empty.
   const [itemSearch, setItemSearch] = useState({ world: "", value: "" });
 
   const form = useForm<WatchFormValues>({
@@ -147,8 +144,6 @@ export function useWatchItemForm({
     },
   });
 
-  // A watch covers the item id; hits for its other names or editions add
-  // nothing, and the most relevant one names it as the player searched.
   const itemSearchResults = uniqBy(
     itemSearchQuery.data?.hits ?? [],
     (hit) => hit.id,

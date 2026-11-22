@@ -15,7 +15,6 @@ export const ReservationsSettings = () => {
 
   return (
     <SettingsTabPage title={t("settings.guildNavigation.reservations")}>
-      {/* Room below the last section for the docked save bar. */}
       <div className="pb-24">
         {guild && <ReservationsSettingsForm guild={guild} />}
         <ReservationSharingSettings />

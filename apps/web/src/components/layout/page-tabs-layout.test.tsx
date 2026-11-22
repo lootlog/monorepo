@@ -81,7 +81,6 @@ it("keeps the same tabs while switching tabs and leaves them out of a page outsi
 
 it("opens another tab at its top but keeps the position restored on the way back from a detail page", async () => {
   const scroll = vi.spyOn(HTMLElement.prototype, "scrollTo");
-  // The tabs also scroll themselves sideways, so only a vertical scroll counts.
   const pageScroll = expect.objectContaining({ top: expect.anything() });
 
   const router = renderSettings("/organization/settings/roles");

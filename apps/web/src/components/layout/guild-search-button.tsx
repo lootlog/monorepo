@@ -8,10 +8,6 @@ type GuildSearchButtonProps = {
   onClick: () => void;
 };
 
-/**
- * Looks like a search field in a wide top bar and shrinks to an icon in a
- * narrow one. Phones search from the tab bar instead.
- */
 export const GuildSearchButton = ({ onClick }: GuildSearchButtonProps) => {
   const { t } = useTranslation();
 

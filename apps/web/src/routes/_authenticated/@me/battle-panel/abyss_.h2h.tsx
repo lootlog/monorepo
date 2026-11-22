@@ -4,7 +4,6 @@ import {
   loadBattlePanelAbyssSearch,
 } from "@/features/user/battle-panel/battle-panel-search";
 
-// Abyss opponents moved into each season's page; old links open the seasons.
 export const Route = createFileRoute(
   "/_authenticated/@me/battle-panel/abyss_/h2h",
 )({

@@ -9,10 +9,6 @@ import {
 } from "drizzle-orm/pg-core";
 import { guildTable } from "./organization.schema.js";
 
-/**
- * Draws run or voided, committed with the change they announce and pending a
- * RabbitMQ publish to the Organization's notification rules.
- */
 export const lootDrawAnnouncementOutboxTable = pgTable(
   "LootDrawAnnouncementOutbox",
   {
@@ -32,7 +28,6 @@ export const lootDrawAnnouncementOutboxTable = pgTable(
     })
       .onDelete("cascade")
       .onUpdate("cascade"),
-    // Matches the dispatcher's `lastAttemptAt ASC NULLS FIRST, id ASC` selection.
     index("LootDrawAnnouncementOutbox_lastAttemptAt_id_idx").on(
       table.lastAttemptAt.asc().nullsFirst(),
       table.id.asc(),

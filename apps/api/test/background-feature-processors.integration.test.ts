@@ -355,7 +355,6 @@ describe("background feature processors against migrated PostgreSQL", () => {
     );
 
     try {
-      // One attempt: a contended job that spent it would end in failed.
       const job = await queue.add(
         "member-refresh",
         {

@@ -28,10 +28,6 @@ class MemberMenuOption extends MenuOption {
   }
 }
 
-/**
- * Typing `@` offers the Organization's current members; picking one leaves a
- * mention that follows their Discord name and avatar.
- */
 export const GuildDocMemberMentionPlugin = () => {
   const [editor] = useLexicalComposerContext();
   const { t } = useTranslation();
@@ -71,7 +67,6 @@ export const GuildDocMemberMentionPlugin = () => {
             textNodeContainingQuery.replace(mention);
           }
 
-          // Writing goes on after a space, as it would after a typed name.
           const next = mention.getNextSibling();
 
           if ($isTextNode(next) && /^\s/.test(next.getTextContent())) {
@@ -115,7 +110,6 @@ export const GuildDocMemberMentionPlugin = () => {
                       <MemberIdentity
                         member={{ discordId: option.member.userId }}
                         fallback={{ name: option.member.name }}
-                        // The option itself is what gets picked.
                         interactive={false}
                         className="gap-2"
                         avatarClassName="size-6"

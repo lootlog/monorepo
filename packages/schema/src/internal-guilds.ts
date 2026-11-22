@@ -1,4 +1,3 @@
-/** The API's private-network guild reads that the gateway and Discord bot call. */
 import { Schema } from "effect";
 import { FiniteNumber } from "./http-scalars.js";
 

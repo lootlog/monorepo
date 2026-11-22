@@ -193,11 +193,6 @@ const toLootSubmissionRows = (
   });
 };
 
-/**
- * The loot facts every organization record denormalizes. Read from Loot inside
- * the writing transaction rather than taken from the caller, so a record can
- * never disagree with the loot it stands for.
- */
 const readLootFacts = (
   transaction: Pick<typeof ApiDatabase.Service, "select">,
   lootId: number,
@@ -486,8 +481,6 @@ export const makeLootSubmissionAcceptancePersistence = (
             lootShareSource: data.lootShareSource,
             updatedAt: now,
           })
-          // world and createdAt come back so the organization records can
-          // denormalize them without a second read.
           .returning({
             id: lootTable.id,
             world: lootTable.world,
@@ -502,8 +495,6 @@ export const makeLootSubmissionAcceptancePersistence = (
           );
         }
 
-        // Snapshot tables are resolved in one order (items, players, NPCs) so
-        // overlapping concurrent loots cannot wait on each other's keys in reverse.
         const itemSnapshotIds = yield* resolveItemSnapshotIds(
           transaction,
           data.items.map(
@@ -522,8 +513,6 @@ export const makeLootSubmissionAcceptancePersistence = (
           );
         }
 
-        // Resolve all characters in one sorted batch; overlapping participant/map
-        // batches from concurrent loots must acquire snapshot keys in the same order.
         const resolvedSnapshots = yield* resolvePlayerSnapshots(transaction, [
           ...data.players,
           ...mapPlayersToSnapshotInputs(
@@ -560,8 +549,6 @@ export const makeLootSubmissionAcceptancePersistence = (
           );
         }
 
-        // The items and NPCs above are already written, so the record reads
-        // its facts from the rows it stands for.
         const records = yield* transaction
           .insert(organizationLootRecordTable)
           .values(

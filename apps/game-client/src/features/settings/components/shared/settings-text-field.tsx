@@ -5,22 +5,15 @@ import { useSourceDraft } from "./use-source-draft";
 
 type SettingsTextFieldProps = {
   id?: string;
-  /** Committed value; the field resyncs to it whenever it changes. */
   value: string;
   placeholder?: string;
   disabled?: boolean;
   variant?: InputVariant;
   "aria-label"?: string;
   className?: string;
-  /** Called with the typed text on blur or Enter, only when it changed. */
   onCommit: (value: string) => void;
 };
 
-/**
- * Text input for settings: edits stay local while typing and the text is
- * committed on blur or Enter, so a half-typed value never persists. Escape
- * drops the draft. A committed value changed elsewhere replaces the draft.
- */
 export const SettingsTextField: FC<SettingsTextFieldProps> = ({
   id,
   value,
@@ -45,7 +38,6 @@ export const SettingsTextField: FC<SettingsTextFieldProps> = ({
       event.currentTarget.blur();
     }
 
-    // Escape reverts the draft; consuming it keeps the window open.
     if (event.key === "Escape") {
       event.preventDefault();
       clearDraft();

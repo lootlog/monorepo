@@ -27,8 +27,6 @@ import {
   type SettingsDocumentsControllerGetPreferencesParams,
 } from "@lootlog/client/main";
 
-// The client keeps the wire form of the documents, so it validates the
-// encoded side of the shared response contract.
 const settingsDocumentsSchema = Schema.toEncoded(
   SettingsDocumentsResponseSchema,
 );
@@ -43,7 +41,6 @@ const guildSettingsDocumentsSchema = Schema.toEncoded(
   GuildSettingsDocumentsResponseSchema,
 );
 
-/** Guild-scoped documents keyed by guild id, from one batched request. */
 export type GuildSettingsDocuments = typeof guildSettingsDocumentsSchema.Type;
 
 export const decodeGuildSettingsDocuments = Schema.decodeUnknownSync(
@@ -101,13 +98,11 @@ export const getGuildTimersDocumentsParams = (
   guildIds: [...new Set(guildIds)].sort().join(","),
 });
 
-/** One cache entry holds the timer documents of every accessible guild. */
 export const getGuildTimersDocumentsQueryKey = (guildIds: readonly string[]) =>
   getSettingsDocumentsControllerGetGuildPreferencesQueryKey(
     getGuildTimersDocumentsParams(guildIds),
   );
 
-/** Prefix matching every guild documents entry, whatever its guild list. */
 export const GUILD_TIMERS_DOCUMENTS_QUERY_KEY_PREFIX =
   getSettingsDocumentsControllerGetGuildPreferencesQueryKey();
 
@@ -146,10 +141,6 @@ const getFieldDefinition = (
   return fields[field];
 };
 
-/**
- * The scope a field is written to unless a caller asks for a wider one:
- * the most specific scope the catalog allows for that field.
- */
 export const getDefaultSettingsScopeType = (
   key: ServerSettingsCatalogKey,
 ): SettingsScopeType => {
@@ -228,11 +219,6 @@ const getFieldPathForLeaf = (domain: SettingsDomain, path: string) => {
   return undefined;
 };
 
-/**
- * Mirrors the server patch semantics on a cached response: leaf paths from
- * `set` overwrite the effective values, `unset` paths fall back to defaults,
- * and the touched fields point at the operation scope.
- */
 export const applySettingsOperation = (
   documents: SettingsDocuments | undefined,
   operation: SettingsOperation,
@@ -274,7 +260,6 @@ export const applySettingsOperation = (
   };
 };
 
-/** Applies a GUILD scoped operation to that guild's entry of a batched response. */
 export const applyGuildSettingsOperation = (
   documents: GuildSettingsDocuments | undefined,
   operation: SettingsOperation,
@@ -290,11 +275,6 @@ export const applyGuildSettingsOperation = (
     : { guilds: { ...documents.guilds, [operation.scope.id]: next } };
 };
 
-/**
- * Replaces the domains a save response carries and keeps the rest of the
- * cached document, so a response resolved for the same context can stand in
- * for a refetch.
- */
 export const mergeSettingsDocuments = (
   current: SettingsDocuments | undefined,
   incoming: SettingsDocuments,
@@ -303,11 +283,6 @@ export const mergeSettingsDocuments = (
     ? { ...current, domains: { ...current.domains, ...incoming.domains } }
     : current;
 
-/**
- * Caches a projection per documents object: the query cache replaces the
- * object on every change, so an unchanged document keeps the projection's
- * identity and its subscribers do not re-render.
- */
 export const memoizeByDocuments = <TResult>(
   project: (documents: SettingsDocuments) => TResult,
 ) => {
@@ -326,7 +301,6 @@ export const memoizeByDocuments = <TResult>(
   };
 };
 
-/** Structural equality for catalog-shaped values (plain JSON). */
 export const areSettingsValuesEqual = (
   left: SettingsCatalogValue<ServerSettingsCatalogKey> | undefined,
   right: SettingsCatalogValue<ServerSettingsCatalogKey> | undefined,

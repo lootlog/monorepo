@@ -271,8 +271,6 @@ export const recordsDataLayer = (services: RecordsServices) =>
           })
           .pipe(Effect.as(true)),
       ),
-    // Where the NPCs stood is a fact of the game, kept whether or not an
-    // Organization takes the loot.
     createLoot: (caller, payload) =>
       services.recordNpcSpawnPositions(payload.gameVersion, payload.npcs).pipe(
         Effect.forkDetach,

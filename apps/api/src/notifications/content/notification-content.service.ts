@@ -70,10 +70,6 @@ const hasAllowedMentionValues = (params: {
   (params.users?.length ?? 0) > 0 ||
   params.repliedUser !== undefined;
 
-/**
- * Replaces each `{{name}}` the values name; any other placeholder stays as
- * written, so a template never loses text it did not mean to fill.
- */
 const fillTemplate = (
   template: string,
   values: Readonly<Record<string, string>>,
@@ -254,10 +250,6 @@ class NotificationContent {
     } satisfies JsonObject;
   }
 
-  /**
-   * A draw's message. The payload keeps the draw as it was announced, so the
-   * wheel image drawn at dispatch shows this outcome, not a later one.
-   */
   buildLootDrawPayload(params: {
     notificationRule: {
       id: number;
@@ -351,7 +343,6 @@ class NotificationContent {
     } satisfies JsonObject;
   }
 
-  /** The payload's `allowedMentions`, omitted when the template pings no one. */
   private allowedMentionsField(
     template: string,
     targetType: NotificationTargetType,
@@ -364,13 +355,6 @@ class NotificationContent {
     return allowedMentions ? { allowedMentions } : {};
   }
 
-  /**
-   * Builds Discord allowedMentions from the admin-authored template, before
-   * placeholders are filled. Role mentions (<@&roleId>), @everyone, and @here
-   * written in the template are forwarded because guild admins control
-   * templates; placeholder values such as hero, map, or timer names come from
-   * Members and must never grant a ping. DM targets skip mentions entirely.
-   */
   buildAllowedMentionsForTarget(
     template: string,
     targetType: NotificationTargetType,

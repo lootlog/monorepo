@@ -6,7 +6,6 @@ import {
   ChartLegend,
   ChartLegendContent,
 } from "@lootlog/ui/components/chart";
-// Loaded on demand by LootStats; Recharts primitives must share this chart boundary.
 // oxlint-disable-next-line react-doctor/prefer-dynamic-import
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 import { useTranslation } from "react-i18next";
@@ -30,7 +29,6 @@ export const LootTopNpcsChart: React.FC<LootTopNpcsChartProps> = ({
   const chartData =
     data?.map((npc) => ({
       name: npc.name.length > 20 ? `${npc.name.slice(0, 18)}...` : npc.name,
-      // Several monsters share a name across level brackets.
       fullName:
         npc.lvl === null
           ? npc.name

@@ -9,7 +9,6 @@ import {
 import { timerTable } from "#src/database/drizzle/timer.schema";
 import type { NotificationTriggerType } from "@lootlog/schema/notifications";
 
-/** An Organization's enabled rules of one trigger for a world, or for every world. */
 const guildWorldRuleCondition = (
   triggerType: NotificationTriggerType,
   guildId: string,
@@ -34,7 +33,6 @@ export const makeNotificationEventStore = (database: ApiDatabaseValue) => {
       .from(notificationRuleTable)
       .where(guildWorldRuleCondition("TIMER_BEFORE_SPAWN", guildId, world));
 
-  /** An Organization's rules of one instant trigger, with their targets. */
   const guildWorldRules = (
     triggerType: Extract<
       NotificationTriggerType,

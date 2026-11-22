@@ -13,13 +13,10 @@ import { t } from "@/i18n/messages";
 import { FiltersHeader } from "./filters-header";
 
 type FiltersSheetProps = {
-  /** How many filters narrow the search now. */
   count: number;
-  /** The search's filter panel. */
   children: ReactNode;
 };
 
-/** A search's filters on a phone: a button that opens them in a side sheet. */
 export function FiltersSheet({ count, children }: FiltersSheetProps) {
   const [isOpen, setIsOpen] = useState(false);
 

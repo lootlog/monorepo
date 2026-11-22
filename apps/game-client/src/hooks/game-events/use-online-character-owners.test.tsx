@@ -92,7 +92,6 @@ describe("useOnlineCharacterOwners", () => {
     vi.useRealTimers();
   });
 
-  // Polling in waitFor keeps running while the retry delay is skipped.
   const skipRetryDelay = () => act(() => vi.advanceTimersByTimeAsync(3_000));
 
   it("reuses owners across Shift presses and refetches them once stale", async () => {

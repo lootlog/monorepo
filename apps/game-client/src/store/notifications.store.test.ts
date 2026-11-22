@@ -362,7 +362,6 @@ describe("notifications.store", () => {
         guildId: "guild-2",
         servers: ["guild-2"],
       }),
-      // The same report delivered through another guild is not a new report.
       presentNpcReport("report-2", {
         guildId: "guild-3",
         servers: ["guild-3"],
@@ -407,7 +406,6 @@ describe("notifications.store", () => {
       presentNpcReport(`report-${index}`);
     }
 
-    // The latest report delivered again through another Organization.
     presentNpcReport("report-500");
 
     const [row] = useNotificationsStore.getState().notifications;
@@ -753,8 +751,6 @@ describe("notifications.store", () => {
 
     const listKey = "notification-1";
 
-    // No stored state: the sweep expires this row from its arrival time, so
-    // a hover or an open mute menu must still hold it on screen.
     useNotificationsStore.getState().pauseNotificationAutoHide(listKey, {
       deadlineMs: Date.now() + 4000,
       durationMs: 5000,

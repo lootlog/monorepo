@@ -8,9 +8,7 @@ import { PRODUCT_LOCALE } from "@lootlog/domain/locale";
 
 type StatRevision = {
   key: string;
-  /** The stat as the item showed it before the change; none when added. */
   before?: ItemDisplayValue;
-  /** ...and after it; none when the game removed it. */
   after?: ItemDisplayValue;
 };
 
@@ -24,10 +22,6 @@ const displayValues = (stat: string) =>
     ),
   );
 
-/**
- * The stats a change gave, took away or altered, as the item shows them:
- * those it kept come first in the new order, then those it lost.
- */
 export const findStatRevisions = ({
   previousStat,
   stat,
@@ -52,7 +46,6 @@ export const findStatRevisions = ({
   );
 };
 
-/** How many names, icons and stats a change altered. */
 export const countRevisionChanges = (revision: CatalogItemRevisionDtoOutput) =>
   findStatRevisions(revision).length +
   Number(revision.previousName !== revision.name) +
@@ -65,10 +58,6 @@ const dayFormat = new Intl.DateTimeFormat(PRODUCT_LOCALE, {
 
 const toDate = (day: string) => new Date(`${day}T00:00:00Z`);
 
-/**
- * When the game made a change, as Lootlog can tell from loots: one day, or
- * the days between the old revision's last loot and the new one's first.
- */
 export const formatRevisionDays = ({
   changedAfter,
   changedBy,

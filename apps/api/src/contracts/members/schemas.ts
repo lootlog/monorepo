@@ -1,4 +1,3 @@
-/** Shared input and output schemas for the members feature. */
 import * as Schema from "effect/Schema";
 import { MemberRole } from "#src/contracts/roles/schemas";
 import { DateTimeString, FiniteNumber } from "@lootlog/schema/http-scalars";
@@ -80,24 +79,15 @@ type MemberReferenceResponse = typeof MemberReferenceResponse.Type;
 
 const MemberReferenceResponse = Schema.Struct({
   id: FiniteNumber,
-  /** The Discord id. */
   userId: Schema.String,
-  /** The internal User id that newer records store for their author. */
   globalUserId: Schema.NullOr(Schema.String),
-  /** The server nickname, or the Discord display name without one. */
   name: Schema.String,
-  /** The Discord display name, independent of the server nickname. */
   displayName: Schema.NullOr(Schema.String),
-  /** The Discord handle; null until the member's next Discord sync. */
   username: Schema.NullOr(Schema.String),
-  /** The per-server avatar's address, or the hash of the User's own avatar. */
   avatar: Schema.optionalKey(Schema.Union([Schema.String, Schema.Null])),
-  /** The hash of the User's own avatar, also when a per-server one hides it. */
   globalAvatar: Schema.NullOr(Schema.String),
-  /** Where the per-server banner is served. */
   bannerUrl: Schema.NullOr(Schema.String),
   color: Schema.Union([FiniteNumber, Schema.Null]),
-  /** Highest role first. */
   roles: Schema.Array(
     Schema.Struct({
       id: Schema.String,

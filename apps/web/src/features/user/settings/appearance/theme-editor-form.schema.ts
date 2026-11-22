@@ -5,7 +5,6 @@ import {
 import type { TFunction } from "i18next";
 import { Schema } from "effect";
 
-/** The editor's draft: the definition's controls build it, so it is trusted. */
 export const createThemeEditorFormSchema = (t: TFunction) =>
   Schema.toStandardSchemaV1(
     Schema.Struct({

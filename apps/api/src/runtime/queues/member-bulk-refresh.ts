@@ -5,7 +5,6 @@ import { MEMBER_BULK_REFRESH_QUEUE } from "#src/members/member-refresh-queue";
 import type { MemberBulkRefreshJobData } from "#src/members/member.types";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 
-/** Queues one Organization-wide member refresh run. */
 export class MemberBulkRefreshQueue extends Context.Service<
   MemberBulkRefreshQueue,
   {

@@ -16,7 +16,6 @@ import {
   type LootSplitState,
 } from "./loot-split-model";
 
-// Shapes and values follow a group split recorded on luvia (Loot filter off).
 const HERO = "220";
 
 const item = (hid: string, name: string, reqp: string): Item => ({
@@ -129,7 +128,6 @@ describe("loot split model", () => {
       "Knoper S",
       "Garberere",
     ]);
-    // The split lasts until the server's `endTs`, not a client guess.
     expect(split?.deadline).toBeCloseTo(20_600, -1);
     expect(split?.views[HERO]?.choices).toEqual({
       "1200653658": 1,
@@ -152,7 +150,6 @@ describe("loot split model", () => {
     const requested = applyGameCommand(opened, command);
     const answer = states({ "1200653658": 1, "1200653660": 1 });
 
-    // Changing a choice is not an accept.
     expect(
       applyGameCommand(opened, "loot&want=1200653658&not=&must=&final=0"),
     ).toBe(opened);
@@ -161,7 +158,6 @@ describe("loot split model", () => {
       applyGameEvent(requested, answer, context()).splits[0]?.views[HERO]
         ?.accepted,
     ).toBe(true);
-    // NI keeps the loot window open when the answer carries `w`.
     expect(
       applyGameEvent(requested, Object.assign({ w: 1 }, answer), context())
         .splits[0]?.views[HERO]?.accepted,
@@ -193,7 +189,6 @@ describe("loot split model", () => {
 
     const second = open(first, groupLoot(SECOND_ITEMS, regrouped), 5_000);
 
-    // nekoza is no longer in the party but still holds up the first split.
     const withSlowpoke = applyRemoteChoices(second, remote("100"));
 
     const firstSplit = withSlowpoke.splits.find(
@@ -226,7 +221,6 @@ describe("loot split model", () => {
     expect(resumed.ownSplitId).toBe("1200653658");
     expect(resumed.splits).toHaveLength(1);
     expect(resumed.splits[0]?.participants).toHaveLength(4);
-    // Neither the hero's pending choices nor anyone else's are lost.
     expect(resumed.splits[0]?.views[HERO]?.accepted).toBe(false);
     expect(resumed.splits[0]?.views["100"]).toEqual(
       chosen.splits[0]?.views["100"],
@@ -363,7 +357,6 @@ describe("loot split model", () => {
   it("keeps a split distributed after its deadline timed out, not choosing", () => {
     const opened = applyRemoteChoices(open(), remote("365"));
 
-    // The game distributes at the deadline, which can beat the expiry tick.
     const [split] = applyGameEvent(
       opened,
       distribution(
@@ -376,8 +369,6 @@ describe("loot split model", () => {
   });
 });
 
-// A group fight recorded on luvia with the hero's loot filter accepting group
-// loot from fights: the drop reaches this client only through the battle log.
 const warrior = (id: number, name: string) => ({
   id,
   originalId: id,
@@ -447,7 +438,6 @@ describe("loot filter accepts", () => {
       autoAccept: "lootFilter",
     });
 
-    // The sender's client heard of the fight a poll earlier than this one.
     const early = open(
       applyRemoteFilterAccept(EMPTY_LOOT_SPLIT_STATE, "365", 0),
       undefined,
@@ -457,7 +447,6 @@ describe("loot filter accepts", () => {
     expect(early.splits[0]?.views["365"]?.autoAccept).toBe("lootFilter");
     expect(early.pendingFilterAccepts).toEqual([]);
 
-    // A stale accept belongs to an earlier fight.
     const stale = open(
       applyRemoteFilterAccept(EMPTY_LOOT_SPLIT_STATE, "365", 0),
       undefined,

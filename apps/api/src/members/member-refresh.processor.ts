@@ -6,7 +6,6 @@ import type { MemberRefreshScheduler } from "./member-refresh-scheduler.js";
 import type { MemberRefreshPorts } from "./member-refresh.operations.js";
 import { isRetryableMemberRefreshStatus } from "./member-discord-sync-status.js";
 
-/** Fails the job so BullMQ retries a Discord refresh that may succeed later. */
 export class MemberRefreshRetryable extends TaggedErrorClass<MemberRefreshRetryable>()(
   "MemberRefreshRetryable",
   { status: Schema.String },
@@ -16,8 +15,6 @@ export class MemberRefreshRetryable extends TaggedErrorClass<MemberRefreshRetrya
   }
 }
 
-// The user lock covers all of a user's guild jobs, and a Discord refresh
-// usually finishes within a second, so a contended job waits about that long.
 const LOCKED_RETRY_DELAY_MS = 1000;
 
 export const makeMemberRefreshProcessor = ({
@@ -67,9 +64,6 @@ export const makeMemberRefreshProcessor = ({
       );
 
       if (!acquired) {
-        // Another guild job for the same user holds the lock. Delaying keeps
-        // the job, its priority and its attempts; failing would burn an
-        // attempt on contention alone.
         const now = yield* Clock.currentTimeMillis;
 
         const nextRefreshAt = yield* scheduler.getNextRefreshAt(
@@ -141,7 +135,6 @@ export const makeMemberRefreshProcessor = ({
       });
 
       return yield* process.pipe(
-        // A retryable status recorded its own outcome before failing.
         Effect.tapError((error) =>
           Schema.is(MemberRefreshRetryable)(error)
             ? Effect.void

@@ -1,7 +1,6 @@
 import { clamp } from "es-toolkit";
 import { noise1, range, TAU, type Rng } from "./math";
 
-/** How a particle moves and how the renderer draws it. */
 export type ParticleKind =
   | "mote"
   | "ember"
@@ -26,16 +25,6 @@ export type ParticleKind =
   | "print"
   | "heart";
 
-/**
- * What a falling particle does when it reaches the ground:
- * - `vanish`: dies there;
- * - `bounce`: bounces with restitution until it rests, then settles;
- * - `settle`: lies where it lands for a few seconds (leaves, snow, sand);
- * - `splash`: bursts into droplets and a ripple;
- * - `shatter`: bounces once, then breaks into smaller pieces;
- * - `scorch`: bounces once, then leaves a glowing mark that cools;
- * - `puddle`: joins or starts a puddle that bubbles and dries.
- */
 type LandMode =
   | "none"
   | "vanish"
@@ -52,38 +41,27 @@ export interface Particle {
   y: number;
   vx: number;
   vy: number;
-  /** Seconds lived and total; the particle dies when `age >= life`. */
   age: number;
   life: number;
   size: number;
-  /** Index into the preset's particle palette. */
   color: number;
   rot: number;
   spin: number;
-  /** Per-particle phase for sway, blink and flutter. */
   seed: number;
-  /** Drawn over the character (true) or behind it. */
   front: boolean;
   gravity: number;
   drag: number;
   sway: number;
-  /** Vertical scale of rings, < 1 lays them flat on the ground. */
   squash: number;
-  /** Spawns a `ring` where it dies (bubbles popping). */
   pop: boolean;
-  /** Ground height under the particle in particle space; Infinity where there is no ground (tooltips). */
   floor: number;
   land: LandMode;
-  /** Lying on the ground: no motion until kicked. */
   settled: boolean;
   bounces: number;
-  /** How strongly wind carries it, 0..1. */
   wind: number;
-  /** Pull towards the nearest attractor, px/s² at 10 px. */
   attract: number;
 }
 
-/** A point on the shape's outline with its outward normal. */
 export interface EdgeSite {
   x: number;
   y: number;
@@ -91,33 +69,20 @@ export interface EdgeSite {
   ny: number;
 }
 
-/**
- * Where particles may spawn this frame and what moves them, in particle space (world pixels
- * for characters, overlay pixels for tooltips).
- */
 export interface SpawnFrame {
-  /** Outline sites, relative to (`ox`, `oy`) so a cached shape needs no copy per frame. */
   edge: readonly EdgeSite[];
   ox: number;
   oy: number;
-  /** Ellipse on the ground under the feet. */
   feet: { x: number; y: number; rx: number; ry: number };
-  /** Opaque bounds of the shape. */
   body: { x: number; y: number; w: number; h: number };
   center: { x: number; y: number };
-  /** Whether there is ground to land on (characters) or not (tooltips). */
   ground: boolean;
-  /** The character's velocity, px/s: walking kicks up what lies and drags what floats. */
   motion: { vx: number; vy: number };
-  /** Points that pull `attract` particles, e.g. the orbiting stars. */
   attractors?: readonly { x: number; y: number }[];
-  /** Where rain falls from, e.g. a cloud over the head. */
   cloud?: { x: number; y: number; w: number };
-  /** Steady wind, px/s, added to the gusts. */
   wind?: number;
 }
 
-/** `above`: a band over the head; `cloud`: under the frame's cloud; `orbit`: on a circle round the centre. */
 type SpawnFrom =
   | "edge"
   | "edge-low"
@@ -133,64 +98,48 @@ type SpawnFrom =
 
 export interface EmitterSpec {
   kind: ParticleKind;
-  /** Particles per second at intensity 1. */
   rate: number;
   from: SpawnFrom;
   life: readonly [number, number];
   speed: readonly [number, number];
-  /** Direction in radians (screen space, -π/2 is up) and the spread around it. */
   dir?: number;
   spread?: number;
-  /** 0..1 blend of the direction towards the spawn site's outward normal. */
   outward?: number;
-  /** px/s², positive falls. */
   gravity?: number;
-  /** Fraction of velocity lost per second. */
   drag?: number;
   size: readonly [number, number];
-  /** How many colours of the preset palette this emitter picks from, from `colorFrom`. */
   colors?: number;
   colorFrom?: number;
-  /** Probability of drawing over the character. */
   front?: number;
-  /** Horizontal wobble acceleration, px/s². */
   sway?: number;
   spin?: readonly [number, number];
   squash?: number;
   pop?: boolean;
-  /** `around`/`orbit`: distance from the centre. */
   radius?: readonly [number, number];
   swirl?: number;
   land?: LandMode;
   wind?: number;
   attract?: number;
-  /** Only round characters, never on a tooltip (things that would cross its text). */
   groundOnly?: boolean;
 }
 
-/** Upper bound per aura, so a long frame hitch can't flood the field. */
 export const MAX_PARTICLES = 260;
 
-/** Gusts plus the frame's steady wind, px/s, the same for every particle at a time. */
 function windAt(time: number, steady = 0): number {
   return steady + noise1(time * 0.25, 77) * 18 + noise1(time * 1.1, 78) * 6;
 }
 
-/** Below this speed, px/s, the character counts as standing. */
 const WALKING = 8;
 
-/** Orbit strength of `rock` debris: acceleration GM / r². */
 const ROCK_GM = 9000;
 
 export class ParticleField {
   readonly particles: Particle[] = [];
   private readonly carry: number[] = [];
-  /** Particles born inside `step` (splashes, shards, bubbles), added once it finishes. */
   private readonly born: Particle[] = [];
 
   constructor(private readonly rng: Rng) {}
 
-  /** Spawns by rate, then advances every particle by `dt` seconds. */
   update(
     dt: number,
     emitters: readonly EmitterSpec[],
@@ -223,7 +172,6 @@ export class ParticleField {
       this.particles.push(this.spawn(spec, frame));
   }
 
-  /** Adds a ready-made particle, e.g. a footprint. */
   add(p: Particle): void {
     if (this.particles.length < MAX_PARTICLES) this.particles.push(p);
   }
@@ -238,7 +186,6 @@ export class ParticleField {
     const colors = Math.max(1, spec.colors ?? 1);
     const land = frame.ground ? (spec.land ?? "none") : "none";
 
-    // The ground under a particle is somewhere on the feet ellipse's depth, never above where it starts.
     const floor =
       land === "none"
         ? Infinity
@@ -308,7 +255,6 @@ export class ParticleField {
       if (list.length < MAX_PARTICLES) list.push(p);
   }
 
-  /** The ground response; may remove `p` (index `i`) from `list`. */
   private landed(p: Particle, list: Particle[], i: number): void {
     const rng = this.rng;
 
@@ -347,7 +293,6 @@ export class ParticleField {
           return;
         }
 
-        // Breaks into three smaller pieces flying apart, which vanish when they land.
         for (let k = 0; k < 3; k++) {
           this.born.push({
             ...p,
@@ -367,7 +312,6 @@ export class ParticleField {
 
         return;
       case "splash":
-        // A ripple where it hit and two droplets thrown back up, which vanish on landing.
         this.born.push({
           ...p,
           kind: "ring",
@@ -412,7 +356,6 @@ export class ParticleField {
 
         return;
       case "puddle": {
-        // Drops close to an existing puddle feed it; otherwise a new one starts.
         const pool = list.find(
           (q) =>
             q.kind === "puddle" &&
@@ -441,7 +384,6 @@ export class ParticleField {
     p.life = Math.max(p.life, p.age + seconds);
   }
 
-  /** Feet walking through lying things toss them up, forward with the stride. */
   private kick(p: Particle, frame: SpawnFrame): void {
     const rng = this.rng;
     p.settled = false;
@@ -453,7 +395,6 @@ export class ParticleField {
     if (p.land === "none") p.land = "settle";
   }
 
-  /** Puddles bubble now and then. */
   bubbleUp(dt: number): void {
     for (const p of this.particles) {
       if (
@@ -503,7 +444,6 @@ function decal(
   };
 }
 
-/** A footprint decal at a point on the ground. */
 export function footprint(
   x: number,
   y: number,
@@ -555,10 +495,6 @@ function near(p: Particle, body: SpawnFrame["body"], margin: number): boolean {
   );
 }
 
-/**
- * Falling-leaf motion: the leaf swings like a pendulum, gliding sideways at the bottom of the
- * swing and sinking fastest at its turning points.
- */
 function flutter(p: Particle, dt: number): void {
   const phase = p.age * 3.2 + p.seed;
   const sink = 9 + 16 * Math.abs(Math.cos(phase));
@@ -568,7 +504,6 @@ function flutter(p: Particle, dt: number): void {
   p.rot = Math.sin(phase) * 0.9;
 }
 
-/** Debris round the void: inverse-square gravity towards the centre, softened near it. */
 function orbit(p: Particle, frame: SpawnFrame, dt: number): void {
   const dx = frame.center.x - p.x;
   const dy = frame.center.y - p.y;
@@ -579,7 +514,6 @@ function orbit(p: Particle, frame: SpawnFrame, dt: number): void {
   p.vy += (dy / r) * a * dt;
 }
 
-/** Pull towards the nearest attractor, falling off with distance. */
 function pull(
   p: Particle,
   attractors: readonly { x: number; y: number }[],
@@ -605,10 +539,6 @@ function pull(
   p.vy += ((best.y - p.y) / d) * a * dt;
 }
 
-/**
- * Bats as a small flock: each seeks its own point on a wobbling ring above the head, keeps
- * away from its neighbours and caps its speed, so they wheel round together.
- */
 function flock(
   p: Particle,
   bats: readonly Particle[],
@@ -715,7 +645,6 @@ function pickSite(
   }
 }
 
-/** Low/high take the bottom or top 60% of the outline by y: flames lick from below, motes leave the head. */
 function pickEdgeSite(
   from: "edge" | "edge-low" | "edge-high" | "edge-under",
   frame: SpawnFrame,
@@ -755,7 +684,6 @@ function offset(site: EdgeSite, frame: SpawnFrame): EdgeSite {
   };
 }
 
-/** Fireflies drift on smooth noise and are pulled back when they stray from the body. */
 function steerFirefly(
   p: Particle,
   frame: SpawnFrame,
@@ -786,7 +714,6 @@ function steerFirefly(
   }
 }
 
-/** Void wisps orbit the centre while falling into it; they die on arrival. */
 function swirlInwards(p: Particle, frame: SpawnFrame, dt: number): void {
   const dx = p.x - frame.center.x;
   const dy = p.y - frame.center.y;
@@ -799,7 +726,6 @@ function swirlInwards(p: Particle, frame: SpawnFrame, dt: number): void {
   }
 
   const speed = Math.hypot(p.vx, p.vy) || 1;
-  // Tangent plus inward pull keeps a spiral whose radius shrinks at a steady pace.
   const tx = -dy / dist;
   const ty = dx / dist;
   const swirl = 1.5;
@@ -812,14 +738,12 @@ function swirlInwards(p: Particle, frame: SpawnFrame, dt: number): void {
   p.vy = (by / len) * target;
 }
 
-/** Removes `list[i]` by moving the last particle into its slot. */
 function removeAt(list: Particle[], i: number): void {
   const last = list.pop();
 
   if (last && i < list.length) list[i] = last;
 }
 
-/** Where a new particle starts and how fast it moves off. */
 interface Launch {
   x: number;
   y: number;
@@ -827,7 +751,6 @@ interface Launch {
   vy: number;
 }
 
-/** Start of a particle: its site and heading, then the `around` and `rock` overrides. */
 function launch(spec: EmitterSpec, frame: SpawnFrame, rng: Rng): Launch {
   const site = pickSite(spec.from, frame, rng);
   const nx = site ? site.nx : 0;
@@ -857,7 +780,6 @@ function launch(spec: EmitterSpec, frame: SpawnFrame, rng: Rng): Launch {
   return start;
 }
 
-/** `around`: a point on a ring round the centre, heading inwards. */
 function fromRing(
   spec: EmitterSpec,
   frame: SpawnFrame,
@@ -875,7 +797,6 @@ function fromRing(
   };
 }
 
-/** Debris starts on a circular orbit: tangential speed √(GM / r), either way round. */
 function onOrbit(spec: EmitterSpec, frame: SpawnFrame, rng: Rng): Launch {
   const a = rng() * TAU;
   const r = range(rng, spec.radius ?? [18, 26]);
@@ -891,7 +812,6 @@ function onOrbit(spec: EmitterSpec, frame: SpawnFrame, rng: Rng): Launch {
   };
 }
 
-/** The kind's own steering: fireflies wander, wisps spiral in, rocks orbit, bats flock. */
 function steer(
   p: Particle,
   bats: readonly Particle[],
@@ -905,7 +825,6 @@ function steer(
   else if (p.kind === "bat") flock(p, bats, frame, time, dt);
 }
 
-/** Forces every particle feels (attractors, flutter, sway, wind, the walking body, gravity, drag), then the move. */
 function drift(
   p: Particle,
   frame: SpawnFrame | null,
@@ -919,10 +838,8 @@ function drift(
 
   if (p.sway) p.vx += Math.cos(p.age * 2.3 + p.seed) * p.sway * dt;
 
-  // Light things relax towards the wind's speed.
   if (p.wind) p.vx += (wind - p.vx) * p.wind * dt;
 
-  // A walking body drags the air round it: what floats close by is pulled along.
   if (moving && frame && near(p, frame.body, 6)) {
     p.vx += frame.motion.vx * 2.2 * dt;
     p.vy += frame.motion.vy * 2.2 * dt;

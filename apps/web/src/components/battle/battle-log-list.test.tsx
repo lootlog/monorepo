@@ -170,7 +170,6 @@ describe("virtual battle log", () => {
 
       return result;
     });
-    // The page viewport grows with the log here, so only the window bounds it.
     vi.mocked(HTMLElement.prototype.getBoundingClientRect).mockImplementation(
       function (this: HTMLElement) {
         const translation = Number.parseFloat(

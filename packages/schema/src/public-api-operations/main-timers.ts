@@ -1,6 +1,5 @@
 import type { PublicApiOperation } from "../public-api-policy.js";
 
-/** Main API timers, per-character Lootlog configuration, and settings documents. */
 export const MAIN_TIMER_OPERATIONS = [
   {
     service: "main",

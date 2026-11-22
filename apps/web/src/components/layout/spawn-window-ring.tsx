@@ -11,10 +11,6 @@ interface SpawnWindowRingProps {
   currentTimestamp: number;
 }
 
-/**
- * A dashed ring while the hero cannot spawn yet; once the window opens it
- * fills with the share of the window that has passed.
- */
 export const SpawnWindowRing: FC<SpawnWindowRingProps> = ({
   minSpawnTimestamp,
   maxSpawnTimestamp,

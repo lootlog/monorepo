@@ -3,12 +3,10 @@ import type { ReactNode } from "react";
 type EquipmentStatSectionProps = {
   id: string;
   title: string;
-  /** Hides a section none of whose stats the set has. */
   hidden: boolean;
   children: ReactNode;
 };
 
-/** One section of the character window's stats: its heading over its rows. */
 export function EquipmentStatSection({
   id,
   title,

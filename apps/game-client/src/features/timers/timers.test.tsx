@@ -297,7 +297,6 @@ it.each(["filtered", "closed"] as const)(
 
     expect(intervals).not.toHaveBeenCalled();
     expect(screen.queryByText(/\[H\] Tanroth/)).not.toBeInTheDocument();
-    // Add-ons read the public API while the window is closed.
     expect(
       fixture.queryClient
         .getQueryCache()
@@ -444,7 +443,6 @@ it("isolates timer level filters across accounts, game worlds and viewed worlds"
     useSettingsStore.setState({ allowWorldSelection: true });
     setTestRuntimeGame({ world: "luvia" });
   });
-  // The viewed world remains gefion, but the playing character is on luvia.
   expect(screen.getByLabelText("Poziom do")).toHaveValue(300);
   act(() => setTestRuntimeGame({ world: "gefion" }));
   expect(screen.getByLabelText("Poziom do")).toHaveValue(100);

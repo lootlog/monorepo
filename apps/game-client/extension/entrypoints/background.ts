@@ -44,9 +44,7 @@ export default defineBackground(() => {
 
         try {
           port.postMessage(encodeMessage({ type: "closed", reason }));
-        } catch {
-          /* Already disconnected. */
-        }
+        } catch {}
 
         port.disconnect();
       },

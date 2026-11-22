@@ -2,17 +2,11 @@ import type { PixelBounds } from "./pixel";
 import type { AuraPlacement } from "./placement";
 import { context2d, createCanvas, type AuraSilhouette } from "./silhouette";
 
-/** An offscreen buffer of one side's light (`lit`) or covering (`dim`) pixels. */
 export interface Layer {
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
   used: boolean;
-  /** Something soft (gradient blobs) was drawn, so it needs the pixel finish; pixel-only layers skip it. */
   soft: boolean;
-  /**
-   * What the finish found drawn, so every frame copies only that: a layer's content
-   * covers about a tenth of its box, and copying the rest costs the most without a GPU.
-   */
   bounds: PixelBounds | null;
 }
 
@@ -35,26 +29,14 @@ function createLayer(): Layer {
   };
 }
 
-/**
- * One side (behind or in front of the character) rendered at a tick. What hangs on the body
- * (ground, rays, flames, orbits…) and the particles, which live on the map, sit in separate
- * buffers: between ticks the first moves with the character and the second with the camera,
- * so neither needs redrawing until the next tick.
- */
 export interface Snapshot {
   key: string;
   box: Box;
-  /**
-   * What the body buffers were last rendered for: the tick for most auras, a coarser step
-   * for lite ones (`AuraPreset.lite`), whose body buffers outlive ticks.
-   */
   bodyKey: string;
   bodySilhouette: AuraSilhouette | null;
   bodyBox: Box;
-  /** The character's screen position when the body buffers were rendered. */
   x: number;
   y: number;
-  /** The camera's screen position when the world buffers were rendered. */
   viewX: number;
   viewY: number;
   bodyLit: Layer;
@@ -81,13 +63,10 @@ export function createSnapshot(): Snapshot {
   };
 }
 
-/** Room around the padded silhouette for particles drifting away from it. */
 const MARGIN = 28;
 
-/** Camera drift a world buffer can move by between ticks. */
 const VIEW_SLACK = 16;
 
-/** Whether an aura at `place` lands inside a `width`×`height` view at all. */
 export function isAuraInView(
   place: AuraPlacement,
   width: number,
@@ -103,10 +82,6 @@ export function isAuraInView(
   );
 }
 
-/**
- * The screen rect an aura at `place` can paint into this frame: its buffers
- * plus the drift a character or the camera makes between ticks.
- */
 export function auraScreenBox(place: AuraPlacement) {
   const box = boxOf(place);
 
@@ -157,7 +132,6 @@ function blitLayer(
   );
 }
 
-/** Copies a side's buffers to the screen: body ones follow the character, world ones the camera. */
 export function blitSnapshot(
   ctx: CanvasRenderingContext2D,
   snap: Snapshot,

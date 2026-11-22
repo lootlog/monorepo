@@ -19,12 +19,10 @@ import { useEffect, useRef, type FC } from "react";
 type ChatInputEditorPluginProps = {
   caretIndex: number;
   disabled?: boolean;
-  /** A prefix of the entry that the editor does not show, such as `!`. */
   hiddenPrefix?: string;
   message: string;
   onChange: (message: string, caretIndex: number) => void;
   onCaretChange: (caretIndex: number) => void;
-  /** Takes over Backspace, with any modifier, when the caret is at the start. */
   onBackspaceAtStart?: () => void;
 };
 
@@ -87,10 +85,6 @@ export const ChatInputEditorPlugin: FC<ChatInputEditorPluginProps> = ({
 
     previousTextRef.current = message;
 
-    // The player just completed the prefix, so the text left of `message`
-    // is the typed prefix, which the editor now hides. The caret stays where
-    // the typing left it, and the history starts here because undo would
-    // bring the prefix back as visible text.
     const movedLength = editorText.length - message.length;
 
     if (
@@ -154,8 +148,6 @@ export const ChatInputEditorPlugin: FC<ChatInputEditorPluginProps> = ({
   useEffect(() => {
     if (!onBackspaceAtStart) return;
 
-    // Lexical routes Backspace and its word/line variants through this
-    // command, so claiming it here stops every deletion at the start.
     return editor.registerCommand(
       KEY_DOWN_COMMAND,
       (event) => {

@@ -27,10 +27,8 @@ const MAX_TARGETS = 100;
 
 const BROADCAST_INTERVAL_MS = 1_000;
 
-// Outlives two missed refreshes of the interest a replica re-registers.
 const INTEREST_TTL_MS = 90_000;
 
-// Registrations expire on Redis time, the clock the merge script compares them with.
 const REGISTER_INTEREST_SCRIPT = `
 local time=redis.call("TIME")
 local expiresAt=(tonumber(time[1])*1000)+math.floor(tonumber(time[2])/1000)+tonumber(ARGV[2])
@@ -38,23 +36,17 @@ for _,key in ipairs(KEYS) do redis.call("ZADD",key,expiresAt,ARGV[1]); redis.cal
 return #KEYS
 `;
 
-// The threat-maps index and its expiry change together.
 const RECORD_THREAT_MAP_SCRIPT = `
 redis.call("SADD",KEYS[1],ARGV[1])
 return redis.call("PEXPIRE",KEYS[1],ARGV[2])
 `;
 
-// A still enemy is sighted at most 6.5 s apart; re-reporting a sighting this old keeps its
-// age under `AIR_TAG_MAP_THREAT_FRESH_MS` on recipients.
 const THREAT_REFRESH_MS = 4_000;
 
-// Caps full-list fan-out per map; a change inside the window is sent with the next sighting.
 export const THREAT_BROADCAST_THROTTLE_MS = 1_000;
 
-// One game tab sends a batch a second; the rest is room for retries.
 const CONNECTION_BATCH_RATE_LIMIT = 15;
 
-// Several characters of one user may each observe a busy map.
 const USER_BATCH_RATE_LIMIT = 45;
 
 const BATCH_RATE_WINDOW_MS = 3_000;
@@ -63,7 +55,6 @@ export type BatchRateAdmission =
   | { readonly admitted: true }
   | { readonly admitted: false; readonly retryAfterMs: number };
 
-/** Counts a batch against a sliding window of earlier ones, unless it is full. */
 const admitWithinWindow = (
   sentAt: number[],
   limit: number,
@@ -91,11 +82,6 @@ const admitWithinWindow = (
   return { admitted: true };
 };
 
-/**
- * The connection limit. A connection only ever reports through the replica
- * that holds its socket, so this needs no shared state, and a flooding
- * connection never reaches Dragonfly.
- */
 export const admitConnectionBatch = (
   session: Pick<SessionData, "airTagBatchesSentAt">,
   now: number,
@@ -106,11 +92,6 @@ export const admitConnectionBatch = (
     now,
   );
 
-/**
- * The limit across one user's connections, kept by this replica. A user whose
- * characters connect to several replicas gets the limit on each: it bounds
- * the load one user can cause, and that bound costs no Dragonfly call.
- */
 export class UserBatchLimiter {
   private readonly sentAtByUser = new Map<string, number[]>();
 
@@ -125,7 +106,6 @@ export class UserBatchLimiter {
     return admitWithinWindow(sentAt, USER_BATCH_RATE_LIMIT, now);
   }
 
-  /** Forgets users whose window has emptied. */
   sweep(now: number): void {
     for (const [userId, sentAt] of this.sentAtByUser) {
       const latest = sentAt.at(-1);
@@ -136,7 +116,6 @@ export class UserBatchLimiter {
   }
 }
 
-// Shared by the observation and snapshot scripts.
 const LUA_COMMON = `
 local function nowMs()
   local time = redis.call("TIME")
@@ -397,8 +376,6 @@ local remoteRecipients=(#updates > 0 or #removed > 0 or #unreported > 0) and (ot
 return withArrays(cjson.encode({epochId=metadata.epochId,epochStartedAt=metadata.epochStartedAt,revision=metadata.revision,acceptedTargets=accepted,targets=updates,removed=removed,standby=standby,unreported=unreported,threat=threatResult,threatPendingMs=threatPendingMs,remoteRecipients=remoteRecipients}),{"targets","removed","standby","unreported","enemies"})
 `;
 
-// Gives up every target one connection reports on a map, when it stops
-// following the map without a departure for each: a map change or a disconnect.
 const RELEASE_SCRIPT = `
 local raw=redis.call("GET",KEYS[2])
 if raw == false then return "" end
@@ -436,7 +413,6 @@ if #targets == 0 then encoded=string.gsub(encoded,'"targets":{}','"targets":[]',
 return encoded
 `;
 
-// Read-only apart from pruning; the map name comes from the last merge.
 const THREAT_SNAPSHOT_SCRIPT = `${LUA_COMMON}
 local now=nowMs()
 local stateRaw=redis.call("GET",KEYS[2])
@@ -447,7 +423,6 @@ if next(records) == nil or state.mapName == nil then return "" end
 return cjson.encode({mapName=state.mapName,revision=now,enemies=threatEnemies(records,now)})
 `;
 
-// Sends a throttled or undelivered list without waiting for another sighting.
 const THREAT_FLUSH_SCRIPT = `${LUA_COMMON}
 local now=nowMs()
 local threatTtl=tonumber(ARGV[1])
@@ -480,9 +455,7 @@ export interface MergeResult {
   acceptedTargets: number;
   targets: AirTagScopeUpdateEvent["targets"];
   removed: string[];
-  /** Sightings of the batch another observer reports in this scope. */
   standby: string[];
-  /** Targets the observer was the reporter of and stopped watching. */
   unreported: string[];
   threat?: { revision: number; enemies: AirTagMapThreatEnemy[] };
   threatPendingMs?: number;
@@ -547,15 +520,11 @@ export type ScriptStore = {
   };
 };
 
-/** A Redis call whose reply is decoded inside it, failing as a store error. */
-
 export type ThreatScope = Pick<AirTagScope, "guildId" | "world" | "mapId">;
 
-/** Keeps every key of one Organization, any-map interest included, on one slot. */
 const organizationTag = (organizationId: string): string =>
   `{air-tag:${organizationId}}`;
 
-/** The key prefix of one map, which also identifies the map within a process. */
 export const mapKeyPrefix = (scope: ThreatScope): string =>
   `${organizationTag(scope.guildId)}:${scope.world}:${scope.mapId}`;
 
@@ -577,7 +546,6 @@ const interestKey = (scope: ThreatScope): string =>
 const threatMapsKey = (guildId: string, world: string): string =>
   `air-tag:threat-maps:${guildId}:${world}`;
 
-/** A scope without a world or map follows every map of its Organization. */
 export const interestKeyFor = (scope: SubscriptionScope): string => {
   const organizationId = scope.organizationId ?? "";
 
@@ -590,22 +558,14 @@ export const interestKeyFor = (scope: SubscriptionScope): string => {
       });
 };
 
-/** How long a replica trusts what it read of the kill switch. */
 const DISABLED_FLAG_TTL_MS = 30_000;
 
-/**
- * The operator's kill switch for one Organization and world, set by hand in
- * Dragonfly. Every batch and subscription asks, so a replica reads a flag
- * about once per `DISABLED_FLAG_TTL_MS`, and the switch takes that long to
- * act. Callers that find it stale at the same moment each read it.
- */
 export class DisabledScopes {
   private readonly flags = new Map<
     string,
     { disabled: boolean; readAt: number }
   >();
 
-  /** The scopes whose Organization and world are not switched off, in order. */
   filterEnabled(
     redis: ScriptStore,
     scopes: ReadonlyArray<AirTagScope>,
@@ -642,7 +602,6 @@ export class DisabledScopes {
     );
   }
 
-  /** Forgets flags no batch or subscription asked about lately. */
   sweep(now: number): void {
     for (const [key, flag] of this.flags) {
       if (now - flag.readAt >= DISABLED_FLAG_TTL_MS) this.flags.delete(key);
@@ -722,10 +681,6 @@ const ReleaseResultJson = Schema.fromJsonString(
   }),
 );
 
-/**
- * Releases the targets `observer` reports in the scope; undefined when it
- * reported none. The scope's revision is unchanged: no target changed.
- */
 export const releaseReportedTargets = (
   redis: ScriptStore,
   scope: AirTagScope,
@@ -743,7 +698,6 @@ export const releaseReportedTargets = (
       : Schema.decodeUnknownSync(ReleaseResultJson)(result);
   });
 
-/** The scope's targets, registering this replica for its later updates. */
 export const loadScopeSnapshot = (
   redis: ScriptStore,
   instanceId: string,
@@ -774,7 +728,6 @@ export const loadScopeSnapshot = (
     };
   });
 
-/** Lists the map of `scope` among the threat maps of its Organization and world. */
 export const recordThreatMap = (
   redis: ScriptStore,
   scope: ThreatScope,
@@ -787,7 +740,6 @@ export const recordThreatMap = (
     AIR_TAG_MAP_THREAT_TTL_MS,
   );
 
-/** Maps of one Organization and world that published a threat within its TTL. */
 export const readThreatMapIds = (
   redis: ScriptStore,
   organizationId: string,
@@ -797,7 +749,6 @@ export const readThreatMapIds = (
     redis.command.smembers(threatMapsKey(organizationId, world)),
   );
 
-/** One map's live threat list, empty when it has none. */
 export const loadMapThreat = (redis: ScriptStore, scope: ThreatScope) => {
   const tag = mapKeyPrefix(scope);
 
@@ -823,10 +774,6 @@ export const loadMapThreat = (redis: ScriptStore, scope: ThreatScope) => {
   );
 };
 
-/**
- * The map's held-back list once its throttle window passed, or a wait; `retry`
- * also takes a list that was not held back, to resend one that failed to go out.
- */
 export const takeThreatFlush = (
   redis: ScriptStore,
   scope: ThreatScope,

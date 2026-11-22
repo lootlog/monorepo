@@ -3,7 +3,6 @@ import { ListTileSkeleton } from "@/components/common/list-tile-skeleton";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useTranslation } from "react-i18next";
 
-/** Route-level stand-in for the notifications page: its two banded sections. */
 export const UserNotificationsPageSkeleton = () => {
   const { t } = useTranslation();
 

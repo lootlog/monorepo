@@ -1,6 +1,5 @@
 import { discordGuildChannelFields } from "@lootlog/schema/discord";
 import { DiscordGuildSyncStateResponse } from "#src/contracts/guilds/schemas";
-/** Shared input and output schemas for the notifications feature. */
 import * as Schema from "effect/Schema";
 import {
   NotificationOwnerTypeSchema,
@@ -271,7 +270,6 @@ const notificationRuleInputFields = {
           "Margonem template ids (`tpl`). Matches every timer observed with one of these templates; `npcId` and `npcIds` match a timer's own NPC id.",
       }),
   ),
-  // A hero sighting rule's level range; null clears a saved bound.
   npcLevelMin: Schema.optionalKey(Schema.NullOr(LevelFilter)),
   npcLevelMax: Schema.optionalKey(Schema.NullOr(LevelFilter)),
   itemId: Schema.optionalKey(SafeInteger),
@@ -351,7 +349,6 @@ const notificationRuleInputFields = {
   enabled: Schema.optionalKey(Schema.Boolean),
 };
 
-// An NPC selection that is present must name at least one timer or template.
 const targetsAtLeastOneNpc = (data: {
   readonly npcId?: number | null;
   readonly npcIds?: ReadonlyArray<number>;

@@ -87,7 +87,6 @@ const errorResponse = (
 ): RealtimeResponse => {
   const error = { code, message, retryable };
 
-  // The frame schema rejects an undefined field.
   return {
     v: 1,
     requestId,
@@ -96,8 +95,6 @@ const errorResponse = (
   };
 };
 
-// Ping, loot split and AirTag acks have a rejection for an invalid payload, so
-// a malformed one of those is answered instead of closing the socket.
 const invalidPayloadRejection = Function.compose(
   Schema.decodeUnknownOption(
     Schema.Struct({
@@ -125,7 +122,6 @@ const invalidPayloadRejection = Function.compose(
 
 export type FeatureRoutes = Omit<CommandRoutes, SessionCommand>;
 
-/** Every feature's routes; a feature command without one does not compile. */
 export const gatewayFeatureRoutes = (features: {
   readonly mapPings: Parameters<typeof mapPingRoutes>[0];
   readonly battlePings: Parameters<typeof battlePingRoutes>[0];
@@ -171,7 +167,6 @@ export class CommandHandler {
       | "unsubscribe"
     >,
     activity: Pick<ActivityPublisher, "publish">,
-    /** Features that follow the session's heartbeats, joins and subscriptions. */
     sessionFeatures: {
       readonly npcPresence: Pick<NpcPresenceService, "refresh" | "withdraw">;
       readonly airTags: Pick<AirTagService, "registerInterest">;
@@ -205,7 +200,6 @@ export class CommandHandler {
   }
 
   rejectOverloaded(socket: GatewaySocket, input: string | Buffer): void {
-    // Admission rejection must not allocate a background fiber or start I/O.
     Effect.runSync(this.process(socket, input, true));
   }
 
@@ -322,8 +316,6 @@ export class CommandHandler {
           );
         });
 
-        // A defect still fails the command, but its client learns to retry
-        // instead of waiting for the request to time out.
         return Cause.hasDies(cause)
           ? respond.pipe(Effect.andThen(Effect.die(Cause.squash(cause))))
           : respond;
@@ -358,7 +350,6 @@ export class CommandHandler {
     if (!hasValidApiKeyLease(socket.data))
       return Effect.fail(new OrganizationAccessDenied());
 
-    // Its authority may predate a lost revocation until the socket closes.
     if (socket.data.closing)
       return Effect.fail(
         new RealtimeDependencyError({
@@ -379,7 +370,6 @@ export class CommandHandler {
   }
 }
 
-/** Decodes and runs the commands of this replica's sessions. */
 export class Commands extends Context.Service<Commands, CommandHandler>()(
   "@lootlog/gateway/realtime/Commands",
 ) {

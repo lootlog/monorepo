@@ -134,10 +134,6 @@ export const makeAutoTimer = (
       );
     }
 
-    // Every Lootlog that recorded the kill is known only now, and a gathering
-    // shared by several closes only when all of them did. Closing is
-    // idempotent, so a retried report repeats it, and the kill report does not
-    // wait for it.
     yield* ports
       .closeKilledNpcGatherings({
         guildIds: submittedGuilds.map(({ guildId }) => guildId),
@@ -150,8 +146,6 @@ export const makeAutoTimer = (
     return { submittedGuilds, rejectedGuilds };
   });
 
-  // The game client reports kills unattended, so a rejected report is the
-  // only trace of a timer that players expected to appear.
   const logRejection = (
     payload: CreateAutoTimerRequest,
     error: ApplicationError,
@@ -167,8 +161,6 @@ export const makeAutoTimer = (
       }),
     );
 
-  // Where the spawn stood is a fact of the game, kept whether or not an
-  // Organization takes the timer.
   return (identity: TimersIdentity, payload: CreateAutoTimerRequest) =>
     recordNpcSpawnPositions(database, payload.gameVersion, [payload.npc]).pipe(
       Effect.forkDetach,

@@ -122,8 +122,6 @@ it("leaves the only shown detection to the window's close button when routing hi
     queryClient.clear();
   });
 
-  // Removing it would empty the window while it stays open with hidden
-  // detections still stored.
   expect(screen.getByText("NPC 1")).toBeVisible();
   expect(
     screen.queryByRole("button", { name: "Usuń potwora z listy" }),
@@ -375,8 +373,6 @@ it("keeps an accepted alert sent when chat publishing fails", async () => {
 
   fireEvent.click(screen.getByRole("button", { name: "Komunikat" }));
 
-  // Clicking again would send another alert, so the row must leave its
-  // sendable state even though chat failed.
   expect(await screen.findByRole("button", { name: "Wysłano" })).toBeDisabled();
   expect(messages).toEqual([
     "Powiadomienie wysłano, ale nie udało się zapisać go w czacie.",

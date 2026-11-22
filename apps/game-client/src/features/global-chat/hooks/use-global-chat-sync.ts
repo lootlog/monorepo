@@ -19,12 +19,6 @@ import {
 import { useGlobalChatChannel } from "./use-global-chat-channel";
 import { getGlobalChatMessagesQueryKey } from "./use-global-chat";
 
-/**
- * Follows the selected global chat channel for as long as the game runs, so
- * the quick access button can count what arrives while the window is closed.
- * Live messages, moderation and counts land in the open window's history;
- * with the window closed there is no history to update.
- */
 export const useGlobalChatSync = () => {
   const { socket } = useSocket();
   const queryClient = useQueryClient();
@@ -37,7 +31,6 @@ export const useGlobalChatSync = () => {
     if (windowOpen) clearUnread();
   }, [windowOpen, clearUnread]);
 
-  // Follows the socket's join lifecycle, which React state does not mirror.
   useEffect(() => {
     if (!socket || !isMember) return;
 
@@ -83,7 +76,6 @@ export const useGlobalChatSync = () => {
         useGlobalChatStore.getState().setStats(stats);
     };
 
-    // Refetches what was sent while the channel was not followed.
     const onSubscribed = (subscribed: GlobalChatChannel) => {
       void queryClient.invalidateQueries({
         queryKey: getGlobalChatMessagesQueryKey(subscribed),

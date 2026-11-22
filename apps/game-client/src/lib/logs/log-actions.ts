@@ -67,7 +67,6 @@ export type LoggedActionRetryOptions = {
   maxAttempts: number;
   retryableStatuses: readonly number[];
   getDelayMs: (attempt: number, cause: unknown) => number;
-  /** Milliseconds after the first attempt when no further attempt may start. */
   latestAttemptStartMs?: number;
 };
 
@@ -376,10 +375,6 @@ export const getAggregateActionStatus = (
   return "success";
 };
 
-/**
- * Records a game event Lootlog recognized but did not report, with the reason,
- * so a missing kill or timer can be explained from the exported action log.
- */
 export const logSkippedAction = ({
   actionType,
   payload,
@@ -518,8 +513,6 @@ const runLoggedRequestWithRetry = <TResponse>({
   const canStartAttemptAfter = (delayMs: number): boolean => {
     if (retry?.latestAttemptStartMs === undefined) return true;
 
-    // Wall time includes suspension on platforms whose monotonic clock pauses;
-    // the monotonic clock also prevents clock corrections extending retries.
     const elapsed = Math.max(
       Date.now() - startedAt,
       performance.now() - startedAtMonotonic,

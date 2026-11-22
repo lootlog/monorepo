@@ -11,7 +11,6 @@ import { useGuildId } from "@/hooks/context/use-guild-id";
 import { patchLoot } from "@/features/guild/loots-list/components/loots-list/loot-list-cache";
 import type { Loot } from "@/lib/loots/loot-types";
 
-// Requests for one loot still in flight, shared by its list tile and dialog.
 const pendingRequests = new Map<string, number>();
 
 const track = (key: string, change: 1 | -1) => {
@@ -23,11 +22,6 @@ const track = (key: string, change: 1 | -1) => {
   return pending;
 };
 
-/**
- * Likes and unlikes a loot as the viewer. The heart flips at once; requests
- * for one loot run in order, and only the last one to settle replaces the
- * optimistic likes with the server's.
- */
 export const useLootLike = (loot: Loot) => {
   const { t } = useTranslation();
   const guildId = useGuildId();
@@ -67,7 +61,6 @@ export const useLootLike = (loot: Loot) => {
 
     const previous = loot.likes;
 
-    // The viewer's Member id is unknown until the server answers.
     const likes = liked
       ? previous.filter((member) => !isViewer(member.userId))
       : [

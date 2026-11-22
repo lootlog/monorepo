@@ -5,7 +5,6 @@ import { formatDate } from "@/lib/format";
 import { text } from "@/lib/messages";
 import { useUserAction } from "@/lib/use-user-action";
 
-/** A User's API keys; removing one cuts off the integration that uses it. */
 export function ApiKeysList({
   userId,
   apiKeys,

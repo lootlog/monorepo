@@ -69,7 +69,6 @@ export const fetchLoot = Effect.fn("loots.fetchLoot")(function* (
 ) {
   const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_READ);
   const loot = yield* data((service) => service.fetchLoot(caller, lootId));
-  // A filtered result deliberately does not reveal whether a record exists.
   const outcome = loot === null ? "unavailable" : "visible";
   yield* Metric.update(Metric.withAttributes(lootDetailReads, { outcome }), 1);
   yield* Effect.annotateCurrentSpan({
@@ -172,7 +171,6 @@ const getLootDraws = Effect.fn("loots.getDraws")(function* (
   return draws;
 });
 
-// Drawing and voiding decide who receives an item, as managing loots does.
 export const createLootDraw = Effect.fn("loots.createDraw")(function* (
   guildId: string | undefined,
   lootId: number,

@@ -56,7 +56,6 @@ describe("NI chat host", () => {
     const { runtime } = fixture();
     const host = watchIntegratedChatHost("Lootlog", vi.fn(), runtime);
 
-    // Characterizes Interface.blockWheel's documented native opt-in.
     const blockWheel = (event: WheelEvent) => {
       if (
         event.target instanceof Element &&

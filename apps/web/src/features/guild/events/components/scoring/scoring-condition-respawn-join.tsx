@@ -29,10 +29,6 @@ const toTotal = (parts: { minutes: string; seconds: string }) => {
     : minutes * 60 + seconds;
 };
 
-/**
- * The allowed lateness, edited as minutes and seconds and stored as whole
- * seconds on the condition.
- */
 export const ScoringConditionRespawnJoin = ({
   control,
   ruleIndex,
@@ -50,8 +46,6 @@ export const ScoringConditionRespawnJoin = ({
 
   const [parts, setParts] = useState(() => toParts(field.value));
 
-  // A form reset replaces the value from outside; show it instead of the
-  // typed text.
   if (
     Number.isFinite(field.value) &&
     toTotal(parts) !== field.value &&

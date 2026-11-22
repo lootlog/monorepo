@@ -20,7 +20,6 @@ import {
 
 const msToSeconds = (ms: number) => Math.round(ms / 1000);
 
-/** A participant's counted time per concurrent group size, smallest first. */
 const getGroupSizeDistribution = (participant: ParticipantPresence) =>
   [...participant.msByGroupSize]
     .sort(([left], [right]) => left - right)
@@ -31,7 +30,6 @@ const getGroupSizeDistribution = (participant: ParticipantPresence) =>
         participant.countedMs > 0 ? (ms / participant.countedMs) * 100 : 0,
     }));
 
-/** "1 osoba: 95 min, 95%; 2 osoby: 5 min, 5%". */
 const formatGroupSizeDistribution = (
   participant: ParticipantPresence,
   t: TFunction,
@@ -61,7 +59,6 @@ export type PresenceFacts = {
   distribution: string | null;
 };
 
-/** The participant's window, join, counted time and group sizes as text. */
 export const getPresenceFacts = (
   analysis: EventKillPresence,
   participantId: PresenceParticipantId,
@@ -146,10 +143,6 @@ const formatMembership = (
   ].filter((part) => part !== null);
 };
 
-/**
- * What a presence condition measured for this participant, such as the
- * matching share of their own time or who the group count included.
- */
 export const getConditionMeasurement = (params: {
   condition: EventScoringCondition;
   outcome: EventScoringConditionOutcome;

@@ -176,7 +176,6 @@ it("follows a hero from a detected spawn to a probable kill, keeping claims whil
     if (!spawning) throw new Error("Missing sighting");
 
     await boundary.run(claims.claim(ownerAccess("a", 1), spawning.id, {}));
-    // A second declaration keeps the first.
     await boundary.run(claims.claim(ownerAccess("a", 1), spawning.id, {}));
 
     const repeated = await boundary.run(
@@ -204,7 +203,6 @@ it("follows a hero from a detected spawn to a probable kill, keeping claims whil
 
     expect(replacement.id).not.toBe(spawning.id);
     expect(replacement.claims).toEqual([]);
-    // Clients learn about both the closed and the new sighting.
     expect(published.map(({ id, closeReason }) => [id, closeReason])).toEqual([
       [spawning.id, "PROBABLY_KILLED"],
       [replacement.id, null],
@@ -437,7 +435,6 @@ it("keeps the recorded hero and map when a Member types them differently", async
       }),
     );
 
-    // A typo must not read as the hero having moved, nor change who sees it.
     expect(typed).toMatchObject({
       id: detected.submittedGuilds[0]?.sighting?.id,
       hero: { name: "Tepeyollotl", lvl: 258 },

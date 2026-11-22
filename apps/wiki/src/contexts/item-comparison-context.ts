@@ -4,7 +4,6 @@ import type { ItemUpgrade } from "@lootlog/domain/item-upgrade";
 
 type ItemComparisonContextValue = {
   items: ReadonlyArray<ComparedItem>;
-  /** Adds the item at `upgrade`; a full comparison or a listed item stays. */
   add: (id: number, upgrade: ItemUpgrade) => void;
   remove: (id: number) => void;
   setUpgrade: (id: number, upgrade: ItemUpgrade) => void;

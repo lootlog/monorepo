@@ -24,7 +24,6 @@ const hotkeyRow = (action: HotkeyAction) => {
     i18n.t(`settings.hotkeys.actions.${action}.label`),
   );
 
-  // SettingsRow: row > text column > label.
   const row = label.parentElement?.parentElement;
 
   if (!row) throw new Error(`Missing ${action} hotkey row`);

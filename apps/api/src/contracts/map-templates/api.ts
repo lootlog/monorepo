@@ -1,4 +1,3 @@
-/** Endpoints owned by the map-templates HTTP module. */
 import {
   HttpApiEndpoint,
   HttpApiGroup,

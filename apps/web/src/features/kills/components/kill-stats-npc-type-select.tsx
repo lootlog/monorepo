@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next";
 const ALL_NPC_TYPES = "ALL";
 
 type KillStatsNpcTypeSelectProps = {
-  /** The NPC types this page tracks; guild and personal kill stats differ. */
   types: readonly string[];
   value: string | null | undefined;
   onValueChange: (value: string | null) => void;

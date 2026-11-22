@@ -13,12 +13,6 @@ import { CatalogConfig } from "#src/config/catalog-config";
 
 const PUBLIC_OPERATIONS = new Set(["HealthzController_healthCheck"]);
 
-/**
- * Every catalog read needs a caller: a signed-in User or an API key, which
- * the edge's forward authentication turns into identity headers, or a
- * service holding the catalog token. The edge strips identity headers it did
- * not set, so a request without either reached the service some other way.
- */
 export class CatalogAccess extends HttpApiMiddleware.Service<CatalogAccess>()(
   "@lootlog/catalog/CatalogAccess",
   {

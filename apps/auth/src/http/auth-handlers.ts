@@ -35,7 +35,6 @@ const verify = Effect.fn("AuthController_verify")(function* () {
     authUserId: headers.get(AUTH_USER_ID_HEADER) ?? undefined,
   });
 
-  // Traefik copies these headers onto the request it forwards.
   yield* HttpEffect.appendPreResponseHandler((_request, response) => {
     const withIdentity = HttpServerResponse.setHeaders(response, {
       [AUTH_DISCORD_ID_HEADER]: identity.discordId,
@@ -73,9 +72,6 @@ export const AuthHandlers = Layer.merge(
     handlers
       .handle("AuthControllerVerify", () =>
         respond(verify()).pipe(
-          // Traefik calls this once per proxied request; a log line per
-          // answer tells nothing and dominated the service's log volume. A
-          // defect still fails the handler and is logged.
           Effect.tap(() => HttpMiddleware.withLoggerDisabled(Effect.void)),
         ),
       )

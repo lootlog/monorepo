@@ -18,16 +18,11 @@ export type LootSearchHit =
   | {
       kind: "player";
       player: SearchState["playerResults"][number];
-      /** The selected world, which every listed player then shares. */
       world: string | null;
     }
   | { kind: "hid"; item: NonNullable<SearchState["hidItem"]>; term: string }
   | { kind: "direct"; term: string };
 
-/**
- * One loot search hit as the palette and the loot list's search bar show it,
- * inside whichever row element each of them selects it with.
- */
 export const LootSearchHitContent = ({ hit }: { hit: LootSearchHit }) => {
   const { t } = useTranslation();
 

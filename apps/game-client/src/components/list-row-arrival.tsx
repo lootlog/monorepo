@@ -1,17 +1,10 @@
 import type { CSSProperties, FC } from "react";
 
 type ListRowArrivalProps = {
-  /** The row's accent colour, which tints the row as it arrives. */
   accent: string;
-  /** 0–1; rarer arrivals play the same effect brighter. */
   strength: number;
 };
 
-/**
- * Plays once when it mounts, so a row replays it by remounting it under a new
- * key: the row lights up in its accent colour and a light sheen crosses it. Only opacity and transform animate, so the effect stays on
- * the compositor. The row must be `relative` and clip its overflow.
- */
 export const ListRowArrival: FC<ListRowArrivalProps> = ({
   accent,
   strength,

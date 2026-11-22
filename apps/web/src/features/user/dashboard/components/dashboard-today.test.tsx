@@ -73,7 +73,6 @@ function renderToday({
   analytics,
   onlineResponse = online,
 }: {
-  /** Each call answers one request; `undefined` fails it. */
   analytics: Array<UserKillAnalyticsResponseDtoOutput | undefined>;
   onlineResponse?: UserOnlineResponseDto;
 }) {

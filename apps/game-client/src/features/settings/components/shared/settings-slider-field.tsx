@@ -9,23 +9,15 @@ type SettingsSliderFieldProps = {
   min: number;
   max: number;
   step?: number;
-  /** Unit appended to the readout, e.g. "%" or "px". */
   unit?: string;
   disabled?: boolean;
   "aria-label": string;
   className?: string;
-  /** Formats the readout; defaults to the raw value followed by the unit. */
   formatValue?: (value: number) => string;
-  /** Called while dragging with the live value; optional live preview hook. */
   onValueChange?: (value: number) => void;
-  /** Called once the drag or keyboard change ends. */
   onCommit: (value: number) => void;
 };
 
-/**
- * Slider with a value readout. Drag updates the readout locally and the value
- * is committed once the interaction ends, so autosave is not hit per frame.
- */
 export const SettingsSliderField: FC<SettingsSliderFieldProps> = ({
   id,
   value,

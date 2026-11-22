@@ -33,13 +33,7 @@ interface ActorNameSelectorProps {
   searchValue: string;
   onSearchChange: (value: string) => void;
   placeholder: string;
-  /** The filter's name for its chip in a filter bar. */
   label?: string;
-  /**
-   * A filter bar's leading search: a borderless field typed into in place,
-   * with the suggestions listed under the whole field, instead of a button
-   * that opens them with a search of their own.
-   */
   inline?: boolean;
   className?: string;
 }
@@ -131,8 +125,6 @@ export function ActorNameSelector({
           />
         </InlineSearchField>
       ) : inFilterBar && label ? (
-        // Picking another name replaces the chosen one; the popup's search
-        // clears it.
         <ComboboxTrigger
           render={
             <FilterChipTrigger

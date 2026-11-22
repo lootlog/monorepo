@@ -2,7 +2,6 @@ import type { CharacterAuraId } from "@lootlog/schema/character-aura";
 import type { EmitterSpec } from "../particles";
 import { breathe, type AuraKitId, type AuraPreset } from "./preset";
 
-/** What the kit auras shed whatever their kit: dust off the outline and a glint or two. */
 const KIT_EMITTERS: readonly EmitterSpec[] = [
   {
     kind: "mote",
@@ -29,10 +28,6 @@ const KIT_EMITTERS: readonly EmitterSpec[] = [
   },
 ];
 
-/**
- * An aura made as a kit: the kit draws everything that is its own, so the preset only
- * names it and gives its colours and words.
- */
 function kitAura(
   id: CharacterAuraId & AuraKitId,
   look: Pick<AuraPreset, "description" | "particles" | "tones" | "tip"> &
@@ -58,7 +53,6 @@ function kitAura(
   };
 }
 
-/** Auras made for single players, one kit each; anyone granted auras may wear them. */
 export const PERSONAL_AURAS = {
   skyborne: kitAura("skyborne", {
     description:
@@ -176,7 +170,6 @@ export const PERSONAL_AURAS = {
     particles: ["#e8323c", "#ff8a1e", "#f6f0e2", "#ff7ab0", "#ffd646"],
     tones: ["#fff6e2", "#ff8a1e", "#8a2a10"],
     tip: "blossoms",
-    // Nothing glows round the character: the aura is what happens about it.
     bare: true,
     inner: 0,
     emitters: [

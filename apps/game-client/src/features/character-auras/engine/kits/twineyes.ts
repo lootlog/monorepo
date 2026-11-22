@@ -1,10 +1,3 @@
-/**
- * Dwoje oczu: nothing spreads out from this aura; what it has comes down to it. Two great
- * eyes hang in the sky over the map, one red with three marks turning in it, one violet
- * and ringed, and lightning plays over the character's hand. Its burst is the catch: the
- * eyes open wide, a bolt falls from the top of the screen and the character catches it in
- * a raised hand, holds it crackling there, and takes it in.
- */
 import { mulberry32, rgba, TAU, type Rgb, type Rng } from "../math";
 import { jagged, pixelGlint, pixelLine, plot } from "../paint";
 import { groundRadius } from "../placement";
@@ -25,21 +18,18 @@ const INK: Rgb = [10, 4, 12];
 
 const DARK: Rgb = [8, 4, 16];
 
-/** The burst: the eyes open, the bolt falls, it is held, it is taken in. */
 const FALL_FROM = 0.22;
 
 const CAUGHT = 0.36;
 
 const HELD_UNTIL = 0.82;
 
-/** How far the hand is raised for the catch, 0..1, at `burst` (0..1, -1 resting). */
 function raised(burst: number): number {
   if (burst < 0) return 0;
 
   return span(burst, 0.1, FALL_FROM) * (1 - span(burst, HELD_UNTIL, 1));
 }
 
-/** The hand: at the side when lowered, beside the head when `lift` is 1. */
 function hand(
   x: number,
   top: number,
@@ -50,7 +40,6 @@ function hand(
   return [x + half + 3 + lift * 2, top + tall * (0.52 - lift * 0.4)];
 }
 
-/** Strokes a jagged bolt along `points` up to `share` of its length, glow under core. */
 function strokeBolt(
   ctx: CanvasRenderingContext2D,
   points: readonly number[],
@@ -77,7 +66,6 @@ function strokeBolt(
   }
 }
 
-/** Short arcs crackling out of (`x`, `y`) and dying within `reach` px: nothing rolls on. */
 function crackle(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -106,7 +94,6 @@ function crackle(
   }
 }
 
-/** An iris in the sky at (`x`, `y`), `open` (0..1) wide: its disc, rim and pupil. */
 function iris(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -128,7 +115,6 @@ function iris(
   ctx.fill();
 }
 
-/** The two eyes over the map, `open` wide and `alpha` strong; the marks turn by `turn`. */
 function drawEyes(
   ctx: CanvasRenderingContext2D,
   width: number,
@@ -143,7 +129,6 @@ function drawEyes(
   const right = width * 0.64;
   ctx.globalCompositeOperation = "source-over";
 
-  // A glow behind each, then the irises.
   for (const [x, color] of [
     [left, RED],
     [right, VIOLET],
@@ -157,7 +142,6 @@ function drawEyes(
     iris(ctx, x, y, r, open, color);
   }
 
-  // The red one: three marks chasing each other round the pupil, each a drop with a tail.
   ctx.fillStyle = rgba(INK, 1);
   ctx.strokeStyle = rgba(INK, 1);
   ctx.lineWidth = r * 0.09;
@@ -175,7 +159,6 @@ function drawEyes(
     ctx.stroke();
   }
 
-  // The violet one: rings within rings.
   ctx.lineWidth = 2.5;
 
   for (const ring of [0.42, 0.62, 0.82]) {
@@ -197,7 +180,6 @@ export const twineyes: AuraKit = {
     const top = place.y + bounds.y;
 
     if (!front) {
-      // Three marks turning on the ground under the feet: turning, never spreading.
       const rx = groundRadius(place);
       const fx = Math.round(place.feetX);
       const fy = Math.round(place.feetY) - 2;
@@ -225,7 +207,6 @@ export const twineyes: AuraKit = {
     const rng = mulberry32(b.tick * 7919 + 3);
     const held = burst >= CAUGHT && burst < HELD_UNTIL;
 
-    // Lightning over the hand: a few sparks at rest, a ball of it once the bolt is caught.
     for (let i = 0; i < (held ? 9 : 3); i++) {
       const angle = rng() * TAU;
       const length = (held ? 6 : 3) + rng() * (held ? 9 : 5);
@@ -245,7 +226,6 @@ export const twineyes: AuraKit = {
 
     if (burst < HELD_UNTIL) return;
 
-    // Taken in: it runs over the outline of the body and is gone.
     for (let i = 0; i < 26; i++) {
       const site = edge[Math.floor(rng() * edge.length)];
 
@@ -263,7 +243,6 @@ export const twineyes: AuraKit = {
   sky(scene) {
     const { ctx, width, height, now, time, burst, x, top, half, feetY } = scene;
     const active = burst >= 0;
-    // The eyes drowse between bursts and stare for the whole of one.
     const stare = active ? span(burst, 0, 0.12) * (1 - span(burst, 0.9, 1)) : 0;
     const blink = now % 5.3 < 0.14 ? 0.15 : 1;
     wash(scene, DARK, 0.3 + stare * 0.3);
@@ -284,13 +263,11 @@ export const twineyes: AuraKit = {
     ctx.lineJoin = "round";
 
     if (burst < CAUGHT + 0.08) {
-      // The bolt on its way down: its tip falls from the sky into the hand, then lingers.
       const fall = span(burst, FALL_FROM, CAUGHT) ** 2;
       const linger = 1 - span(burst, CAUGHT, CAUGHT + 0.08);
       const path = jagged(hx + (rng() - 0.5) * 120, -20, hx, hy, rng);
       strokeBolt(ctx, path, fall, linger, 1);
 
-      // Forks off its upper half, dying in the air.
       for (let i = 0; i < 3; i++) {
         const from = Math.floor(rng() * (path.length / 4)) * 2;
 
@@ -315,7 +292,6 @@ export const twineyes: AuraKit = {
     }
 
     if (burst < CAUGHT) return;
-    // Held: it crackles round the hand and goes nowhere, fading as it is taken in.
     const hold = 1 - span(burst, HELD_UNTIL, 1);
     crackle(ctx, hx, hy, 58, 6, hold, rng);
     ctx.globalAlpha = 0.5 * hold;

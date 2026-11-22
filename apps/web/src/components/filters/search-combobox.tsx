@@ -19,11 +19,8 @@ import { ThemeInteractiveFrame } from "@/themes/adapters";
 export type SearchComboboxOption = {
   value: string;
   label: string;
-  /** Secondary line under the label, e.g. an NPC type or item rarity. */
   description?: ReactNode;
-  /** Trailing text, e.g. a level. */
   meta?: ReactNode;
-  /** Leading visual, e.g. a sprite or item image. */
   icon?: ReactNode;
 };
 
@@ -79,11 +76,6 @@ const getEmptyLabel = ({
   return emptyMessage;
 };
 
-/**
- * Multi-select search combobox: an outline trigger that opens a searchable
- * list fed by the caller, with the current selection listed as removable
- * chips under the trigger. The caller owns the search query and its results.
- */
 export const SearchCombobox = ({
   options,
   selected,
@@ -106,7 +98,6 @@ export const SearchCombobox = ({
   const trimmedSearch = searchValue.trim();
   const meetsMinimumLength = trimmedSearch.length >= minimumSearchLength;
   const visibleOptions = errorMessage || !meetsMinimumLength ? [] : options;
-  // A lookup that is still too short to run shows the prompt, not a spinner.
   const isSearching = loading && meetsMinimumLength;
 
   const itemValues = visibleOptions.map((option) => option.value);

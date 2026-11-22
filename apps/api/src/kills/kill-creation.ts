@@ -61,7 +61,6 @@ export interface KillCreationCache {
     value: string,
     ttlSeconds: number,
   ) => Effect.Effect<boolean, unknown>;
-  /** Sets a missing key; returns the value it already held, or null. */
   readonly setNxGet: (
     key: string,
     value: string,
@@ -79,7 +78,6 @@ type KillInput = {
   readonly npcProf: string | null;
   readonly npcIcon: string | null;
   readonly lastKilledAt: Date;
-  /** Unknown when the Game client did not report the party. */
   readonly lootRolls: KillLootRolls | null;
 };
 
@@ -123,7 +121,6 @@ export const makeKillCreation = (
     readonly token: string;
   }
 
-  /** Takes the dedup claim for one destination; null when another report holds it. */
   const claim = Effect.fnUntraced(function* (key: string, operation: string) {
     const token = randomUUID();
 
@@ -154,10 +151,6 @@ export const makeKillCreation = (
     lastKilledAt: input.lastKilledAt,
   });
 
-  /**
-   * The account-wide and per-character rows change together, so a kill counts
-   * for its character exactly when it counts for the account.
-   */
   const incrementUser =
     (input: KillInput, character: CharacterInput, periodStart: Date): Write =>
     (transaction) => {
@@ -249,8 +242,6 @@ export const makeKillCreation = (
               userKillCharacterTable.world,
               userKillCharacterTable.characterId,
             ],
-            // An older Game client reports only the id; keep the last
-            // known details.
             set:
               character.name === null
                 ? characterCount
@@ -321,18 +312,12 @@ export const makeKillCreation = (
     partyHunters: lootRolls?.members.h ?? null,
   });
 
-  /**
-   * Adds the Organization to the boss kill that every report of it shares.
-   * Adding an Organization again changes nothing, so a retry or another
-   * member's report cannot count the kill twice.
-   */
   const recordBossKill =
     (input: KillInput & { readonly guildId: string }, killedAt: Date): Write =>
     (transaction) => {
       const table = bossKillTable;
       const party = partyOf(input);
 
-      // The first report that named the party fills it in.
       const fillParty = mapValues(
         party,
         (value, key) => sql`coalesce(${table[key]}, ${value})`,
@@ -363,7 +348,6 @@ export const makeKillCreation = (
       ];
     };
 
-  /** The Warsaw day and hour of the kill, in the day rollup's hourly counters. */
   const incrementGuildDay = (
     transaction: Transaction,
     input: KillInput & { readonly guildId: string },
@@ -500,8 +484,6 @@ export const makeKillCreation = (
 
     const apiKey = yield* requestApiKeyAccess;
 
-    // Every claim this request holds. All of them are released unless the one
-    // transaction below commits, so a retry can write what a failure rolled back.
     const claims: Claim[] = [];
 
     const track = (acquired: Claim | null) => {
@@ -516,9 +498,6 @@ export const makeKillCreation = (
     });
 
     const writeKill = Effect.gen(function* () {
-      // The personal claim and the Organization targets are independent; both
-      // finish before the result is read, so neither interrupts the other, and
-      // a personal dedup failure still prevents every guild write.
       const claimPersonal =
         !apiKey || apiKey.personalData
           ? claim(
@@ -573,7 +552,6 @@ export const makeKillCreation = (
         members.map((member) => [member.guildId, member]),
       );
 
-      // A failed guild claim must not stop the other Organizations.
       const claimGuilds = Effect.forEach(
         guildIds,
         (guildId) => {
@@ -629,8 +607,6 @@ export const makeKillCreation = (
       if (!personalClaim && targets.length === 0)
         return { deduplicated: true, updated: 0 };
 
-      // Every report of one boss kill, from any Organization, carries the time
-      // of the first, so the kill is recorded once for all of them.
       const bossKilledAt =
         isDropSourceBossType(npcType) && targets.some((t) => t.countsGuild)
           ? yield* cache
@@ -651,9 +627,6 @@ export const makeKillCreation = (
               )
           : null;
 
-      // The personal rows come first, then each Organization in id order. The
-      // boss rows are shared between Organizations, so they come last: no
-      // transaction holds one while waiting for rows another one holds.
       const writes: Write[] = [
         ...(personalClaim
           ? [
@@ -730,8 +703,6 @@ export const makeKillCreation = (
       return { updated: targets.length };
     });
 
-    // A failure after the first claim rolls the whole kill back, so every
-    // claim goes back and the next report writes it again.
     return yield* writeKill.pipe(Effect.onError(() => releaseAll));
   });
 };

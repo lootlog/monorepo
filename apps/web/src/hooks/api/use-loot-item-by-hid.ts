@@ -4,10 +4,6 @@ import {
 } from "@lootlog/client/main";
 import { useQuery } from "@tanstack/react-query";
 
-/**
- * The item with this in-game identifier among the Organization's loots, or null
- * when no loot recorded it; items bought or crafted never reach the loot list.
- */
 export const useLootItemByHid = (
   guildId: string | undefined,
   itemHid: { hid: string; world: string } | null,

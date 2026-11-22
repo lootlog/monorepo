@@ -34,7 +34,6 @@ const RED = "#E8697D";
 
 const VOIDED_SLICE = "#2A303C";
 
-/** Distinct on a dark ground; past ten, slices repeat a colour. */
 const SLICE_COLORS = [
   "#F5C04A",
   "#5BA8FF",
@@ -50,20 +49,14 @@ const SLICE_COLORS = [
 
 const WHEEL = { cx: 290, cy: 315, radius: 215 };
 
-/** Where the text column beside the wheel starts and ends. */
 const COLUMN = { left: 590, right: WIDTH - 80 };
 
 const ITEM_NAME = { x: 696, size: 30, wrappedSize: 26 };
 
-/** The winner's slice stands out of the wheel by this much. */
 const WINNER_OFFSET = 16;
 
 const HUB_RADIUS = 40;
 
-/**
- * Nicks run along their slice from the hub outwards; a slice narrower than
- * `minDegrees` has no room for one.
- */
 const SLICE_LABEL = {
   size: 17,
   minDegrees: 9,
@@ -93,11 +86,6 @@ const escapeSvg = (text: string) =>
       })[character] ?? character,
   );
 
-/**
- * A generous guess at a glyph's advance in DejaVu Sans Bold, the card's font
- * in production, in ems. SVG text does not wrap or clip itself, so the card
- * measures its text to keep it inside the column.
- */
 const GLYPH_WIDTHS: ReadonlyArray<readonly [string, number]> = [
   [" ", 0.35],
   ["iljIł.,:;'!|", 0.4],
@@ -115,7 +103,6 @@ const textWidth = (body: string, size: number, letterSpacing = 0) =>
     0,
   );
 
-/** The text as it fits in `maxWidth`, cut short with an ellipsis if not. */
 const fit = (
   body: string,
   size: number,
@@ -137,7 +124,6 @@ const fit = (
   return cut();
 };
 
-/** The text broken at spaces into at most `maxLines`, the last cut short. */
 const wrap = (
   body: string,
   size: number,
@@ -186,7 +172,6 @@ const slicePath = (
   from: number,
   to: number,
 ) => {
-  // A single entrant fills the wheel, which one arc cannot draw.
   if (to - from >= 360) {
     return `M ${cx - radius} ${cy} a ${radius} ${radius} 0 1 0 ${2 * radius} 0 a ${radius} ${radius} 0 1 0 ${-2 * radius} 0`;
   }
@@ -197,10 +182,6 @@ const slicePath = (
   return `M ${cx} ${cy} L ${x1} ${y1} A ${radius} ${radius} 0 ${to - from > 180 ? 1 : 0} 1 ${x2} ${y2} Z`;
 };
 
-/**
- * The wheel at rest, each entrant's tickets side by side, turned so the
- * pointer at the top stops inside the winner's slice.
- */
 const wheelSvg = (draw: LootDrawResolvedNotificationEvent["draw"]) => {
   const voided = draw.voided !== null;
   const total = draw.entrants.reduce((sum, { tickets }) => sum + tickets, 0);
@@ -215,7 +196,6 @@ const wheelSvg = (draw: LootDrawResolvedNotificationEvent["draw"]) => {
 
   const winner = slices[draw.winnerIndex];
 
-  // The pointer stops where the draw's wheel on the web stops in its slice.
   const turn = winner
     ? -90 -
       (winner.from + (winner.to - winner.from) * lootDrawLandingOffset(draw.id))
@@ -244,7 +224,6 @@ const wheelSvg = (draw: LootDrawResolvedNotificationEvent["draw"]) => {
 
     const inner = SLICE_LABEL.inner;
     const outer = radius - SLICE_LABEL.outer;
-    // A name on the left half turns over so it never reads upside down.
     const flipped = Math.cos((middle * Math.PI) / 180) < 0;
     const [x, y] = polar(cx, cy, (inner + outer) / 2, middle);
 
@@ -255,7 +234,6 @@ const wheelSvg = (draw: LootDrawResolvedNotificationEvent["draw"]) => {
       800,
       voided ? MUTED : TEXT,
       escapeSvg(fit(name, SLICE_LABEL.size, outer - inner)),
-      // A dark outline keeps white names legible on the light slices.
       `stroke="${BACKGROUND}" stroke-width="3" stroke-opacity="0.6" stroke-linejoin="round" paint-order="stroke" text-anchor="middle" dy="0.35em" transform="translate(${x} ${y}) rotate(${flipped ? middle + 180 : middle})"`,
     );
 
@@ -304,10 +282,6 @@ const voidedSvg = (voided: { by: string; reason: string }) => `
   ${text(612, 412, 14, 800, RED, escapeSvg(fit(`POWÓD · ${voided.by.toUpperCase()}`, 14, COLUMN.right - 634, 2)), 'letter-spacing="2"')}
   ${text(612, 442, 19, 700, "#F3D3D9", escapeSvg(fit(voided.reason, 19, COLUMN.right - 634)))}`;
 
-/**
- * The item's name on one line beside its icon, or, when it is too long, on
- * two smaller lines; its rarity and level stay under it.
- */
 const itemSvg = (item: LootDrawResolvedNotificationEvent["item"]) => {
   const maxWidth = COLUMN.right - ITEM_NAME.x;
   const oneLine = textWidth(item.name, ITEM_NAME.size) <= maxWidth;
@@ -334,7 +308,6 @@ const itemSvg = (item: LootDrawResolvedNotificationEvent["item"]) => {
     ${text(ITEM_NAME.x, top + (lines.length - 1) * 30 + 32, 18, 600, MUTED, `Legendarny · ${item.lvl} lvl`)}`;
 };
 
-/** The result card, with the item's icon as a data URL when it was fetched. */
 const lootDrawCardSvg = (
   event: LootDrawResolvedNotificationEvent,
   iconDataUrl: string | null,
@@ -384,7 +357,6 @@ const lootDrawCardSvg = (
   </svg>`;
 };
 
-/** Draws a loot draw's result card for its Discord message. */
 export class LootDrawCardImage {
   constructor(private readonly httpClient: HttpClientValue) {}
 
@@ -402,7 +374,6 @@ export class LootDrawCardImage {
     });
   }
 
-  /** The icon scaled up without blur, or null: the card stands without it. */
   private fetchIcon(icon: string): Effect.Effect<string | null> {
     return outboundHttpRequest(this.httpClient, {
       adapter: "margonem-item-icon",

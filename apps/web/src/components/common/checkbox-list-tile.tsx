@@ -11,11 +11,9 @@ import {
 type CheckboxListTileProps = {
   checked: boolean;
   onCheckedChange: ComponentProps<typeof Checkbox>["onCheckedChange"];
-  /** The rest of the tile; its `FormLabel` covers the tile, so the whole tile toggles. */
   children: ReactNode;
 };
 
-/** A checkbox form field as a tile of a tiled list, tinted while checked. */
 export function CheckboxListTile({
   checked,
   onCheckedChange,

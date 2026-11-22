@@ -31,11 +31,6 @@ type Target = (typeof TARGETS)[number];
 
 const MAX_LEVEL = UPGRADE_LEVELS.at(-1) ?? 5;
 
-/**
- * What upgrading the worn items from +0 costs, to the levels the set has
- * them at or every one to +5: the totals, the breakdown currency of each
- * rarity apart, then each item's share.
- */
 export function SetUpgradeCost() {
   const wornItems = useWornItems();
   const [target, setTarget] = useState<Target>("set");
@@ -78,7 +73,6 @@ export function SetUpgradeCost() {
         size="sm"
         spacing={1.5}
         value={[target]}
-        // One target is always chosen: pressing it again keeps it.
         onValueChange={([pressed]) => {
           const next = TARGETS.find((value) => value === pressed);
 

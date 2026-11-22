@@ -7,10 +7,6 @@ export class CacheFillTimeoutError extends Error {
   }
 }
 
-/**
- * How a cache entry is written and read. `stringify` serializes any JSON
- * value, so a domain value can be stored in its wire form and read back as it.
- */
 export interface JsonCodec<T> {
   stringify: (value: unknown) => string;
   parse: (text: string) => T;
@@ -20,7 +16,6 @@ const decodeJsonUnknown = Schema.decodeUnknownSync(
   Schema.fromJsonString(Schema.Unknown),
 );
 
-/** Stores plain JSON and decodes what it reads with `schema`. */
 export const makeJsonCodec = <S extends Schema.ConstraintDecoder<unknown>>(
   schema: S,
 ): JsonCodec<S["Type"]> => {
@@ -32,9 +27,7 @@ export const makeJsonCodec = <S extends Schema.ConstraintDecoder<unknown>>(
   };
 };
 
-/** The Redis commands a cache fill runs, failing with the store's error. */
 export interface CacheFillStore<E extends Error> {
-  /** Reads a JSON value; an entry the codec rejects reads as null. */
   readonly getJson: <T>(
     key: string,
     codec: Pick<JsonCodec<T>, "parse">,
@@ -59,7 +52,6 @@ export interface CacheFillOptions<T, E, R> {
   readonly lockTtlSeconds?: number;
   readonly waitTimeoutMs?: number;
   readonly waitIntervalMs?: number;
-  /** Reports a Redis failure the read recovered from by running `factory`. */
   readonly onError?: (error: Error) => Effect.Effect<void>;
 }
 
@@ -78,16 +70,8 @@ end
 return 0
 `;
 
-// Deadlines need a monotonic clock: a wall-clock jump must not end a wait.
 const now = Effect.sync(() => performance.now());
 
-/**
- * Reads a JSON value, or lets one caller fill it while the others wait. One
- * fill runs per Redis lease, and an expired owner cannot publish over its
- * successor. A Redis failure runs `factory` uncached; a `factory` failure
- * fails the read; a waiter that outlives `waitTimeoutMs` dies with
- * `CacheFillTimeoutError`.
- */
 export const getOrFillJson = <T, E, R, SE extends Error>(
   store: CacheFillStore<SE>,
   {
@@ -115,7 +99,6 @@ export const getOrFillJson = <T, E, R, SE extends Error>(
       const filled = yield* Effect.exit(factory);
 
       if (Exit.isSuccess(filled))
-        // The value is already computed: a failed publish only costs the cache.
         yield* store
           .eval(
             PUBLISH_SCRIPT,
@@ -126,7 +109,6 @@ export const getOrFillJson = <T, E, R, SE extends Error>(
 
       return filled;
     }).pipe(
-      // A failed release cannot fail a completed read; the lease expires.
       Effect.ensuring(
         Effect.ignore(store.eval(RELEASE_SCRIPT, [lockKey], [token])),
       ),
@@ -158,8 +140,6 @@ export const getOrFillJson = <T, E, R, SE extends Error>(
     }
   });
 
-  // The fill settles to the factory's Exit, so only Redis failures reach the
-  // fallback and a factory failure is never retried uncached.
   return fill.pipe(
     Effect.catch((error) =>
       onError(error).pipe(Effect.andThen(Effect.exit(factory))),

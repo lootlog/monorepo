@@ -1,6 +1,5 @@
 import type { PublicApiOperation } from "../public-api-policy.js";
 
-/** Main API loot, Lootlog configuration, health, and chat. */
 export const MAIN_LOOT_OPERATIONS = [
   {
     service: "main",

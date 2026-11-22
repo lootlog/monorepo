@@ -6,12 +6,6 @@ const AFTER_CHARACTER_TIP_UPDATE = "afterCharacterTipUpdate";
 
 type StrTipData = { nick: string; object?: unknown };
 
-/**
- * The NI tooltip contract: OthersManager.createStrTip builds the base html,
- * passes `{ text, object }` to afterCharacterTipUpdate handlers through
- * Api.callEvent and returns the possibly replaced `text`. Other.tipUpdate
- * caches that html in `other.tip`, which CanvasTip.show draws.
- */
 export function createNativeCharacterTips() {
   const handlers: ApiEventCallback[] = [];
 

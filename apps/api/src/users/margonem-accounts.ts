@@ -4,7 +4,6 @@ import type { MargonemAccountVerifiedV1 } from "@lootlog/protocol/rabbit/events"
 import type { ApiDatabaseValue as Database } from "#src/database/drizzle/database";
 import { userMargonemAccountTable } from "#src/database/drizzle/user.schema";
 
-/** Records the gateway's fact; a late or repeated one never moves time back. */
 export const recordMargonemAccountVerification = (
   database: Database,
   event: MargonemAccountVerifiedV1,
@@ -27,7 +26,6 @@ export const recordMargonemAccountVerification = (
     })
     .pipe(Effect.asVoid);
 
-/** Each verified Margonem account with the User who proved it last. */
 export const currentMargonemAccountPlayers = (
   database: Database,
   where?: SQL,

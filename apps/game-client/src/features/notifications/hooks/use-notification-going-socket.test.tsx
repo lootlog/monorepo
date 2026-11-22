@@ -18,7 +18,6 @@ afterEach(() => {
   useNotificationGoingStore.setState({ byNotification: {} });
 });
 
-// The realtime test session signs in as User "user".
 const REPORTER = "user";
 
 const player = (userId: string, nick: string) => ({
@@ -81,7 +80,6 @@ it("tells the reporter who goes to their NPC and who takes it back", async () =>
   const { test, shown } = await render("reporter");
 
   await test.receive(going(REPORTER, [player("a", "Szybka Strzała")]));
-  // Another of the reporter's Lootlogs lists the same answer.
   await test.receive(
     going(REPORTER, [player("a", "Szybka Strzała")], "guild-2"),
   );
@@ -117,8 +115,6 @@ it("keeps other members' answers silent for everyone but the reporter", async ()
 it("lists answers to another report of the same NPC under the row", async () => {
   const { test } = await render("reporter");
 
-  // The reporter's row opened with a later report of their NPC, while the
-  // others answer the first one.
   const row = (npcId: number) =>
     selectNotificationGoing(useNotificationGoingStore.getState(), {
       notificationIds: ["notification-2"],
