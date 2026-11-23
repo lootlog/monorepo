@@ -2,6 +2,7 @@ import {
   OperationError,
   withAdapterSpan,
 } from "@lootlog/instrumentation/operation";
+import { ApplicationError } from "@lootlog/protocol/http/errors";
 import { Effect } from "effect";
 import type { DiscordGuildMemberClient } from "./discord-guild-member.client.js";
 import type { DiscordUserGuildsClient } from "./discord-user-guilds.client.js";
@@ -12,7 +13,11 @@ export const makeDiscordOperations = (
 ) => {
   const adapter = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
     effect.pipe(
-      Effect.mapError((cause) => new OperationError({ operation, cause })),
+      Effect.mapError((cause) =>
+        cause instanceof ApplicationError
+          ? cause
+          : new OperationError({ operation, cause }),
+      ),
       withAdapterSpan(operation, "discord"),
     );
 
