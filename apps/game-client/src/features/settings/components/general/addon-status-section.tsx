@@ -28,6 +28,7 @@ const CONNECTION_DOT_CLASS_NAME = {
 
 const ACCOUNT_VALUE_KEY = {
   signedIn: "settings.general.accountSignedIn",
+  reauthRequired: "settings.general.accountReauthRequired",
   checking: "settings.general.accountChecking",
   checkFailed: "settings.general.accountError",
   cookiesBlocked: "settings.general.accountCookiesBlocked",
@@ -37,7 +38,7 @@ const ACCOUNT_VALUE_KEY = {
 export const AddonStatusSection: FC = () => {
   const { t } = useTranslation();
   const { t: tCommon } = useTranslation("common");
-  const { state, session } = useLoginState();
+  const { state, session, check } = useLoginState();
   const openAndFocus = useWindowsStore((windows) => windows.openAndFocus);
   const { joinedGuilds, status: connection } = useSocket();
   const signedIn = state === "signedIn";
@@ -95,13 +96,7 @@ export const AddonStatusSection: FC = () => {
             >
               {tCommon("auth.signIn")}
             </Button>
-            <Button
-              size="xs"
-              variant="secondary"
-              onClick={() => {
-                void session.refetch();
-              }}
-            >
+            <Button size="xs" variant="secondary" onClick={check}>
               {tCommon("auth.check")}
             </Button>
           </>

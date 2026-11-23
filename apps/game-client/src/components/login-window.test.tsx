@@ -16,6 +16,11 @@ import {
 import { useSettingsStore } from "@/store/settings.store";
 import { LOOTLOG_APP_URL } from "@/config/app";
 import { resolveDefaultWindowPosition } from "@/components/draggable-window/window-default-placement";
+import { QueryObserver } from "@tanstack/react-query";
+import { usersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/client/main";
+import { configureGameApiClients } from "@/lib/configure-api-clients";
+import { queryClient } from "@/lib/query-client";
+import { resetTransientRuntimeState } from "@/composition/runtime-state";
 
 const SIGNED_OUT = "Zaloguj się na stronie Lootloga, a potem wróć do gry";
 
@@ -80,6 +85,8 @@ beforeEach(async () => {
 
 afterEach(() => {
   useLoginWebsiteStore.setState({ websiteOpened: false });
+  resetTransientRuntimeState();
+  queryClient.clear();
   restorePlatform?.();
   restorePlatform = undefined;
   vi.restoreAllMocks();
@@ -106,6 +113,65 @@ describe("login window", () => {
     vi.mocked(fetch).mockResolvedValue(Response.json(null));
     act(() => authClient.$store.notify("$sessionSignal"));
     await screen.findByRole("region");
+  });
+
+  it("asks a signed-in player to sign in through Discord again when the API loses their authorization, and hides once access returns", async () => {
+    const restoreClients = configureGameApiClients();
+    let discordAuthorized = false;
+    vi.mocked(fetch).mockImplementation((input) =>
+      Promise.resolve(
+        new Request(input).url.includes("/idp/")
+          ? Response.json(signedInSession)
+          : discordAuthorized
+            ? Response.json([])
+            : Response.json(
+                { code: "TOKEN_EXPIRED", requiresReauth: true },
+                { status: 401 },
+              ),
+      ),
+    );
+    useWindowsStore.getState().setOpen("extension-login", false);
+    renderLogin();
+    act(() => authClient.$store.notify("$sessionSignal"));
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: "Zaloguj się do Lootloga" }),
+      ).toBeNull(),
+    );
+
+    const unsubscribe = new QueryObserver(queryClient, {
+      queryKey: ["accessible-guilds"],
+      queryFn: () => usersControllerGetCurrentUserAccessibleGuilds(),
+      retry: false,
+    }).subscribe(() => {});
+
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "Lootlog stracił dostęp do Twojego konta Discord",
+      ),
+    );
+
+    act(() => {
+      window.dispatchEvent(new Event("focus"));
+    });
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "Lootlog stracił dostęp do Twojego konta Discord",
+      ),
+    );
+
+    discordAuthorized = true;
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Sprawdź sesję" }));
+    await waitFor(() => expect(screen.queryByRole("region")).toBeNull());
+
+    unsubscribe();
+    restoreClients();
+    vi.mocked(fetch).mockImplementation(() =>
+      Promise.resolve(Response.json(null)),
+    );
+    act(() => authClient.$store.notify("$sessionSignal"));
+    await screen.findByText(new RegExp(SIGNED_OUT, "u"));
   });
 
   it("tells a failed session check apart from a missing session", async () => {

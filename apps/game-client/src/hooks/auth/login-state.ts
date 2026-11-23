@@ -1,5 +1,6 @@
 export type LoginState =
   | "signedIn"
+  | "reauthRequired"
   | "checking"
   | "checkFailed"
   | "signedOut"
@@ -8,10 +9,12 @@ export type LoginState =
 export const resolveLoginState = ({
   extension,
   websiteOpened,
+  reauthentication,
   session,
 }: {
   extension: boolean;
   websiteOpened: boolean;
+  reauthentication: { required: boolean; checking: boolean };
   session: {
     data: unknown;
     error: unknown;
@@ -19,9 +22,12 @@ export const resolveLoginState = ({
     isRefetching: boolean;
   };
 }): LoginState => {
-  if (session.data) return "signedIn";
+  if (session.data && !reauthentication.required) return "signedIn";
 
-  if (session.isPending || session.isRefetching) return "checking";
+  if (session.isPending || session.isRefetching || reauthentication.checking)
+    return "checking";
+
+  if (session.data) return "reauthRequired";
 
   if (session.error) return "checkFailed";
 

@@ -9,7 +9,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useSocket } from "@/contexts/socket-context";
-import { authClient, isSessionSignedOut } from "@/lib/auth-client";
+import { useSignInRequired } from "@/hooks/auth/use-login-state";
 import { useWindowsStore } from "@/store/windows.store";
 import type { RealtimeConnectionStatus } from "@/lib/realtime-connection-status";
 import { LoaderCircle, LogIn, Wifi, WifiOff } from "lucide-react";
@@ -66,10 +66,9 @@ export const ConnectionStatus: FC = () => {
     guildsQuery: { data: guilds },
   } = useLootlogGuilds();
 
-  const session = authClient.useSession();
   const openAndFocus = useWindowsStore((state) => state.openAndFocus);
 
-  const signedOut = isSessionSignedOut(session);
+  const signedOut = useSignInRequired();
   const online = !signedOut && status === "online";
 
   const statusLabel = signedOut

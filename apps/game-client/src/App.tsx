@@ -10,6 +10,7 @@ import { disposeSoundPlayback } from "@/lib/sound-playback";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { LoginWindow } from "@/components/login-window";
 import { useLoginWebsiteStore } from "@/hooks/auth/use-login-state";
+import { useReauthenticationStore } from "@/store/reauthentication.store";
 import { isExtensionClient } from "@/lib/game-client-platform";
 import { authClient } from "@/lib/auth-client";
 import { useEffect, useState, type ReactNode } from "react";
@@ -21,6 +22,7 @@ function App() {
   const session = authClient.useSession();
   const extension = isExtensionClient();
   const userId = session.data?.user.id ?? null;
+  const reauthRequired = useReauthenticationStore((state) => state.required);
 
   useEffect(() => {
     if (userId !== null)
@@ -89,19 +91,20 @@ function App() {
 
   if (!showGame) content = extension ? <LoginWindow /> : null;
 
-  const showUserscriptLogin =
+  const userscriptSignedOut =
     !extension &&
-    showGame &&
     !session.isPending &&
     userId === null &&
     (!session.error || !activeUserId);
+
+  const showLogin = showGame && (userscriptSignedOut || reauthRequired);
 
   return (
     <ThemeProvider>
       <TooltipProvider>
         <QueryClientProvider client={queryClient}>
           {content}
-          {showUserscriptLogin ? <LoginWindow /> : null}
+          {showLogin ? <LoginWindow /> : null}
         </QueryClientProvider>
       </TooltipProvider>
     </ThemeProvider>

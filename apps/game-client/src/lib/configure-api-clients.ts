@@ -1,11 +1,19 @@
 import { gameClientFetch } from "./game-client-platform";
-import { configureApiClients } from "@lootlog/client/transport";
+import {
+  type ApiError,
+  configureApiClients,
+  requiresReauthentication,
+} from "@lootlog/client/transport";
 import { API_URL, AUTH_API_URL, BATTLELOG_API_URL } from "@/config/api";
+import { requireReauthentication } from "@/store/reauthentication.store";
 
 export const configureGameApiClients = (): (() => void) => {
   const sharedConfiguration = {
     credentials: "include" as const,
     fetch: gameClientFetch,
+    onError: (error: ApiError) => {
+      if (requiresReauthentication(error)) requireReauthentication();
+    },
   };
 
   return configureApiClients({

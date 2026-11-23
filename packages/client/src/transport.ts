@@ -396,6 +396,11 @@ export const getApiErrorStringField = (
   return typeof value === "string" ? value : undefined;
 };
 
+export const requiresReauthentication = (cause: unknown): boolean =>
+  isApiError(cause) &&
+  isObject(cause.data) &&
+  cause.data["requiresReauth"] === true;
+
 const getApiErrorDetail = (cause: unknown, key: string) => {
   if (!isApiError(cause) || !isObject(cause.data)) return undefined;
   const details = cause.data.details;

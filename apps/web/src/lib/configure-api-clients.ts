@@ -2,6 +2,7 @@ import {
   type ApiError,
   type ApiRequestContext,
   configureApiClients,
+  requiresReauthentication,
 } from "@lootlog/client/transport";
 import {
   ACTIVITY_API_URL,
@@ -12,8 +13,6 @@ import {
   SEARCH_API_URL,
 } from "@/config/api";
 import { useAuthRecoveryStore } from "@/store/auth-recovery.store";
-
-import { requiresReauthentication } from "@/lib/api-reauthentication";
 
 export const handleWebApiError = (
   error: ApiError<unknown>,

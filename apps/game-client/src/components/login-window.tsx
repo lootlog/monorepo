@@ -21,7 +21,7 @@ const LOGIN_WINDOW_MAX_WIDTH = 360;
 
 export function LoginWindow() {
   const { t } = useTranslation("common");
-  const { state, session } = useLoginState();
+  const { state, check } = useLoginState();
   const extension = isExtensionClient();
   const open = useWindowsStore((windows) => windows["extension-login"].open);
   const size = useWindowsStore((windows) => windows["extension-login"].size);
@@ -34,12 +34,15 @@ export function LoginWindow() {
   useEffect(() => {
     if (signedIn) return;
 
-    const recheck = () => authClient.$store.notify("$sessionSignal");
+    const recheck =
+      state === "reauthRequired"
+        ? check
+        : () => authClient.$store.notify("$sessionSignal");
 
     window.addEventListener("focus", recheck);
 
     return () => window.removeEventListener("focus", recheck);
-  }, [signedIn]);
+  }, [signedIn, state, check]);
 
   if (signedIn) return null;
 
@@ -100,7 +103,7 @@ export function LoginWindow() {
               variant="secondary"
               size="xs"
               loading={busy}
-              onClick={() => void session.refetch()}
+              onClick={check}
             >
               {t("auth.check")}
             </Button>

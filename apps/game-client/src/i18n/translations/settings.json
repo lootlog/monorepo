@@ -218,6 +218,7 @@
     "accountLabel": "Konto",
     "accountChecking": "Sprawdzanie sesji…",
     "accountSignedIn": "Zalogowano jako {{name}}",
+    "accountReauthRequired": "Zaloguj się ponownie przez Discord",
     "accountSignedOut": "Niezalogowany",
     "accountError": "Nie udało się sprawdzić sesji",
     "accountCookiesBlocked": "Przeglądarka może blokować sesję Lootloga",
