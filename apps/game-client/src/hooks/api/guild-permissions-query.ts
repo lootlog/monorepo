@@ -25,9 +25,7 @@ export const getGuildPermissionsQueryOptions = (
         ...query,
         queryKey,
         queryFn: async ({ signal }) =>
-          (await readGameClientBootstrap<
-            GuildsControllerGetGuildPermissions200Item[]
-          >(queryKey)) ??
+          (await readGameClientBootstrap("guildPermissions", queryKey)) ??
           guildsControllerGetGuildPermissions({ guildId }, { signal }),
       },
     },
