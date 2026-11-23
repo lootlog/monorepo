@@ -1,12 +1,14 @@
 import { upperFirst } from "es-toolkit";
-import { invalidateUserNotificationQueries } from "@/lib/user-notifications/invalidate-user-notification-queries";
 import { Globe, Hash, Trash2, TriangleAlert, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { toast } from "@lootlog/ui/lib/toast";
 import { cn } from "cn";
 import { Button } from "@lootlog/ui/components/button";
-import { ConfirmDialog } from "@lootlog/ui/components/confirm-dialog";
 import { ItemImage } from "@lootlog/ui/components/item-image";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@lootlog/ui/components/tooltip";
 import {
   DisplayItemRarity,
   resolveItemRarity,
@@ -18,49 +20,22 @@ import {
 } from "@/components/common/list-tile";
 import { MetaItem } from "@/components/common/meta-item";
 import { ItemTile } from "@/components/tiles/item-tile";
-import { getUserNotificationsErrorMessage } from "@/lib/user-notifications/get-user-notifications-error-message";
-import { useQueryClient } from "@tanstack/react-query";
-import {
-  useNotificationsUserControllerDeleteWatchedItem,
-  type WatchedItemResponseDto,
-} from "@lootlog/client/main";
+import type { WatchedItemResponseDto } from "@lootlog/client/main";
 
 type WatchedItemTileProps = {
   watchedItem: WatchedItemResponseDto;
   guildLabels: string[];
   missingGuildIds: string[];
+  onRemove: (watchedItem: WatchedItemResponseDto) => void;
 };
 
 export const WatchedItemTile = ({
   watchedItem,
   guildLabels,
   missingGuildIds,
+  onRemove,
 }: WatchedItemTileProps) => {
   const { t } = useTranslation();
-  const queryClient = useQueryClient();
-
-  const deleteWatchedItem = useNotificationsUserControllerDeleteWatchedItem({
-    mutation: {
-      onSuccess: async () => {
-        await invalidateUserNotificationQueries(queryClient);
-      },
-    },
-  });
-
-  const handleDelete = async () => {
-    try {
-      await deleteWatchedItem.mutateAsync({
-        pathParams: { watchedItemId: watchedItem.id },
-      });
-      toast.success(t("settings.userNotifications.toasts.watchDeleted"));
-    } catch (error) {
-      toast.error(
-        getUserNotificationsErrorMessage(error, t) ??
-          t("settings.userNotifications.toasts.watchDeleteError"),
-      );
-      throw error;
-    }
-  };
 
   const snapshot = watchedItem.itemSnapshot;
   const rarity = resolveItemRarity(snapshot?.rarity);
@@ -144,37 +119,30 @@ export const WatchedItemTile = ({
           </span>
         </div>
         <div className={LIST_TILE_ACTIONS_CLASS}>
-          <ConfirmDialog
-            disabled={deleteWatchedItem.isPending}
-            onConfirm={handleDelete}
-            title={t("settings.userNotifications.deleteWatchDialog.title")}
-            description={t(
-              "settings.userNotifications.deleteWatchDialog.description",
-              {
-                itemName: watchedItem.itemName,
-              },
-            )}
-            confirmButtonLabel={t("settings.notifications.actions.delete")}
-            cancelButtonLabel={t("settings.notifications.actions.cancel")}
-            triggerTooltip={t("settings.userNotifications.quickAdd.remove")}
-            trigger={
-              <Button
-                type="button"
-                size="icon-sm"
-                variant="ghost"
-                className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                aria-label={t(
-                  "settings.userNotifications.actions.removeWatch",
-                  {
-                    itemName: displayName,
-                  },
-                )}
-                loading={deleteWatchedItem.isPending}
-              >
-                <Trash2 className="size-4" />
-              </Button>
-            }
-          />
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  type="button"
+                  size="icon-sm"
+                  variant="ghost"
+                  className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                  aria-label={t(
+                    "settings.userNotifications.actions.removeWatch",
+                    {
+                      itemName: displayName,
+                    },
+                  )}
+                  onClick={() => onRemove(watchedItem)}
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              }
+            />
+            <TooltipContent>
+              {t("settings.userNotifications.quickAdd.remove")}
+            </TooltipContent>
+          </Tooltip>
         </div>
       </div>
     </li>

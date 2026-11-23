@@ -21,6 +21,14 @@
   "noResults": "Brak wyników",
   "searchUnavailable": "Wyszukiwarka jest chwilowo niedostępna. Spróbuj ponownie.",
   "clear": "Wyczyść",
+  "leaderboard": {
+    "rankUp_one": "Awans o {{count}} miejsce",
+    "rankUp_few": "Awans o {{count}} miejsca",
+    "rankUp_many": "Awans o {{count}} miejsc",
+    "rankDown_one": "Spadek o {{count}} miejsce",
+    "rankDown_few": "Spadek o {{count}} miejsca",
+    "rankDown_many": "Spadek o {{count}} miejsc"
+  },
   "dateTimePicker": {
     "placeholder": "Wybierz datę i godzinę",
     "time": "Godzina",

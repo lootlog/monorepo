@@ -1,5 +1,6 @@
 import type { Variants } from "framer-motion";
 import type { ReactNode } from "react";
+import { EASE_EMPHASIZED, MOTION_DURATION } from "@/lib/motion";
 
 export const containerVariants: Variants = {
   hidden: { opacity: 0, y: 4 },
@@ -7,14 +8,14 @@ export const containerVariants: Variants = {
     opacity: 1,
     y: 0,
     transition: {
-      duration: 0.2,
-      ease: [0.22, 1, 0.36, 1],
+      duration: MOTION_DURATION.medium,
+      ease: EASE_EMPHASIZED,
     },
   },
   exit: {
     opacity: 0,
     y: -4,
-    transition: { duration: 0.12 },
+    transition: { duration: MOTION_DURATION.short, ease: EASE_EMPHASIZED },
   },
 };
 

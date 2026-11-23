@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import type { ReactNode } from "react";
 import { USER_WATCHED_ITEMS_LIMIT } from "@/lib/user-notifications/user-watched-items-limit";
 import { WatchedItemTile } from "@/features/user/notifications/components/watched-item-tile";
+import { useWatchedItemRemoval } from "@/features/user/notifications/components/use-watched-item-removal";
 import type { WatchedItemResponseDto } from "@lootlog/client/main";
 
 const getWatchedItemGuildIds = (filters: { guildIds?: string[] } | null) =>
@@ -20,13 +21,19 @@ type WatchedItemsSectionProps = {
 };
 
 export const WatchedItemsSection = ({
-  watchedItems,
+  watchedItems: allWatchedItems,
   guilds,
   canAddWatch,
   onAddWatch,
   trailing,
 }: WatchedItemsSectionProps) => {
   const { t } = useTranslation();
+  const { removingIds, remove } = useWatchedItemRemoval();
+
+  const watchedItems = allWatchedItems.filter(
+    (watchedItem) => !removingIds.has(watchedItem.id),
+  );
+
   const watchedItemsCount = watchedItems.length;
   const canAdd = canAddWatch && watchedItemsCount < USER_WATCHED_ITEMS_LIMIT;
   const addLabel = t("settings.userNotifications.actions.addWatch");
@@ -90,6 +97,7 @@ export const WatchedItemsSection = ({
                 watchedItem={watchedItem}
                 guildLabels={guildLabels}
                 missingGuildIds={missingGuildIds}
+                onRemove={remove}
               />
             );
           })}

@@ -1,4 +1,5 @@
 import { StatsTile, StatsTileGrid } from "@/components/common/stats-tile";
+import { StatsTileNumber } from "@/components/common/stats-tile-number";
 import { formatPoints } from "../../utils/format-points";
 import { useTranslation } from "react-i18next";
 import { Clock, Moon, Sparkles, Swords } from "lucide-react";
@@ -47,7 +48,7 @@ export const MemberSummaryStrip = ({
       <StatsTile
         icon={Swords}
         label={t("events.kills.kpiKills")}
-        value={contextStats.totalKills}
+        value={<StatsTileNumber value={contextStats.totalKills} />}
         detail={
           participationShare !== null ? (
             <ShareDetail
