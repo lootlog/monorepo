@@ -32,16 +32,6 @@ export const createDetectorSettings = (): DetectorSettings => {
   return cloneDetector(defaultDetectorSettings);
 };
 
-export const getEffectiveNotificationSettings = (
-  preferences?: GameAccountNotificationPreferences | null,
-) => {
-  if (!preferences) {
-    return cloneNotifications(defaultNotificationsSettings);
-  }
-
-  return cloneNotifications(preferences.notifications);
-};
-
 export const getEffectiveDetectorSettings = (
   preferences?: GameAccountDetectorPreferences | null,
 ) => {
