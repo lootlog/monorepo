@@ -36,19 +36,12 @@ export const AuthenticationGuard = ({ children }: Props) => {
     scopes?.includes(scope),
   );
 
-  const handleLoginAction = () => {
-    const errorCallbackURL = new URL("/signin", window.location.origin);
-    errorCallbackURL.searchParams.set(
-      "redirect",
-      `${window.location.pathname}${window.location.search}${window.location.hash}`,
-    );
-
-    return signIn({
+  const handleLoginAction = () =>
+    signIn({
       callbackURL: window.location.href,
-      errorCallbackURL: errorCallbackURL.toString(),
+      webOrigin: window.location.origin,
       scopes: DISCORD_AUTH_SCOPES,
     });
-  };
 
   if (isPending && !authFailure) {
     return (

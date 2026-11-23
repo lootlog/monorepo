@@ -30,6 +30,7 @@
     "client:generate": "bun ./scripts/generate.ts"
   },
   "dependencies": {
+    "@lootlog/domain": "workspace:*",
     "@lootlog/protocol": "workspace:*",
     "@lootlog/schema": "workspace:*",
     "better-auth": "1.7.16"

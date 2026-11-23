@@ -40,6 +40,7 @@ export const makeAuthAdapterOptions = (
     rpc: { port: 0, callerTokens: {}, api: testRpcUpstream },
     serviceName: "auth-adapter-test",
     appUrl: "https://auth.example.test",
+    webAppUrl: "https://web.example.test",
     trustedOrigins: ["https://example.test"],
     cookieDomain: ".example.test",
     cookiePrefix: "test",

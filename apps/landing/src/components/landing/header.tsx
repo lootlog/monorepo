@@ -47,7 +47,10 @@ export function LandingHeader() {
   }, []);
 
   const handleLoginAction = () =>
-    signIn({ callbackURL: `${window.location.origin}${WEB_SIGN_IN_PATH}` });
+    signIn({
+      callbackURL: `${window.location.origin}${WEB_SIGN_IN_PATH}`,
+      webOrigin: window.location.origin,
+    });
 
   const navigationLinks = (
     <>

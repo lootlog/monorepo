@@ -24,11 +24,21 @@ export const Route = createFileRoute("/signin")({
   pendingComponent: SigninPageSkeleton,
   validateSearch: decodeSigninSearch,
   beforeLoad: async ({ context, search, preload, abortController }) => {
+    if (search.error !== undefined)
+      throw redirect({
+        to: "/signin/error",
+        search: {
+          error: search.error,
+          retry: signinRedirectPath(search.redirect),
+        },
+        replace: true,
+      });
+
     const session = await withRouteLoaderCancellation(abortController, () =>
       context.queryClient.fetchQuery(sessionQueryOptions),
     );
 
-    if (session?.data?.session && !search.error) {
+    if (session?.data?.session) {
       const redirectPath = signinRedirectPath(search.redirect);
 
       if (redirectPath) {

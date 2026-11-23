@@ -48,7 +48,10 @@ export function WikiUserMenu() {
         aria-label={t("userMenu.signIn")}
         title={signIn.hasError ? t("userMenu.signInFailed") : undefined}
         onClick={() =>
-          void signIn.signIn({ callbackURL: window.location.href })
+          void signIn.signIn({
+            callbackURL: window.location.href,
+            webOrigin: config.webAppUrl,
+          })
         }
       >
         {signIn.isPending ? (

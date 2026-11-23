@@ -40,3 +40,9 @@ export const apiServiceOrigin = (
 
   return `https://${prefix}${service === "main" ? "api" : service}.lootlog.pl`;
 };
+
+export const webAppOrigin = (environment: DeploymentEnvironment): string => {
+  if (environment === "local") return "http://localhost";
+
+  return `https://${environment === "development" ? "dev." : ""}lootlog.pl`;
+};

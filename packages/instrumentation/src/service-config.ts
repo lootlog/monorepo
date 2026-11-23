@@ -2,7 +2,11 @@ import {
   RuntimeEnvironment,
   RuntimeEnvironmentSchema,
 } from "@lootlog/schema/runtime-environment";
-import { Config, Redacted, Schema } from "effect";
+import {
+  type DeploymentEnvironment,
+  webAppOrigin,
+} from "@lootlog/schema/api-services";
+import { Config, Option, Redacted, Schema } from "effect";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 
 export class InvalidServiceConfiguration extends TaggedErrorClass<
@@ -65,3 +69,19 @@ export const commaSeparatedConfig = (
         .filter((entry) => entry !== ""),
     ),
   );
+
+const WEB_APP_DEPLOYMENTS = new Map<RuntimeEnvironment, DeploymentEnvironment>([
+  [RuntimeEnvironment.PROD, "production"],
+  [RuntimeEnvironment.DEV, "development"],
+]);
+
+export const webAppUrlConfig: Config.Config<string> = Config.all({
+  environment: runtimeEnvironmentConfig,
+  url: Config.option(Config.String("WEB_APP_URL")),
+}).pipe(
+  Config.map(({ environment, url }) =>
+    Option.getOrElse(url, () =>
+      webAppOrigin(WEB_APP_DEPLOYMENTS.get(environment) ?? "local"),
+    ),
+  ),
+);

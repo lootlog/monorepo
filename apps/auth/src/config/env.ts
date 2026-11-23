@@ -3,6 +3,7 @@ import {
   type BaseServiceConfiguration,
   commaSeparatedConfig,
   redisUrlConfig,
+  webAppUrlConfig,
 } from "@lootlog/instrumentation/service-config";
 import { AuthServedRpcGroup } from "@lootlog/rpc/auth";
 import {
@@ -29,6 +30,7 @@ export interface AuthConfig extends BaseServiceConfiguration {
   readonly adminAccountIds: ReadonlyArray<string>;
   readonly authSecret: Redacted.Redacted<string>;
   readonly appUrl: string;
+  readonly webAppUrl: string;
   readonly postgresql: {
     readonly host: string;
     readonly port: number;
@@ -59,6 +61,7 @@ const authConfig: Config.Config<AuthConfig> = Config.all({
   adminAccountIds: commaSeparatedConfig("ADMIN_ACCOUNT_IDS"),
   authSecret: Config.Redacted("AUTH_SECRET"),
   appUrl: Config.String("APP_URL"),
+  webAppUrl: webAppUrlConfig,
   postgresql: Config.all({
     host: Config.String("POSTGRESQL_HOST"),
     port: Config.Int("POSTGRESQL_PORT"),

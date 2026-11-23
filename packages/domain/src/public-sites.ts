@@ -14,6 +14,15 @@ export const COMMUNITY_LINKS = {
 
 export const WEB_SIGN_IN_PATH = "/signin";
 
+export const WEB_SIGN_IN_ERROR_PATH = "/signin/error";
+
+export const webSignInErrorUrl = (webOrigin: string, retryUrl: string) => {
+  const url = new URL(WEB_SIGN_IN_ERROR_PATH, webOrigin);
+  url.searchParams.set("retry", retryUrl);
+
+  return url.toString();
+};
+
 export const docsPagePath = (slug: string) =>
   slug === "index" ? "/docs" : `/docs/${slug}`;
 
