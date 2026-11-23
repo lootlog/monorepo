@@ -157,7 +157,11 @@ export const createAccessPolicySnapshot = (
 };
 
 const permissionArea = (permission: Permission): AccessPolicyArea => {
-  if (permission.startsWith("LOOTLOG_TIMERS_")) return "timers";
+  if (
+    permission.startsWith("LOOTLOG_TIMERS_") ||
+    permission.startsWith("LOOTLOG_HERO_SIGHTINGS_")
+  )
+    return "timers";
 
   if (permission.startsWith("LOOTLOG_CHAT_")) return "chat";
 

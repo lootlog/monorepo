@@ -245,6 +245,8 @@ export const CHARACTER_AURAS_FEATURE = "character-auras";
 
 export const KILL_STATS_FEATURE = "kill-stats";
 
+export const HERO_SIGHTING_CAPABILITIES_FEATURE = "hero-sighting-capabilities";
+
 const HeartbeatCommand = command(
   "presence.heartbeat",
   Schema.Struct({ sessionId: Schema.NonEmptyString }),

@@ -1,6 +1,7 @@
 import { diffAccessPolicies } from "@lootlog/protocol/realtime/access-policy";
 import {
   CHARACTER_AURAS_FEATURE,
+  HERO_SIGHTING_CAPABILITIES_FEATURE,
   KILL_STATS_FEATURE,
   type ClientCommand,
   type CommandSuccess,
@@ -194,6 +195,8 @@ export const joinSession = (
       data.features?.includes(CHARACTER_AURAS_FEATURE) === true;
     socket.data.killStats =
       data.features?.includes(KILL_STATS_FEATURE) === true;
+    socket.data.heroSightingCapabilities =
+      data.features?.includes(HERO_SIGHTING_CAPABILITIES_FEATURE) === true;
     socket.data.joined = true;
     const scopes = defaultScopes(socket.data);
     yield* Effect.try({

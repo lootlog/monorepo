@@ -10,7 +10,9 @@ type Topic = RealtimeLogicalTopic;
 type Scope = SubscriptionScope;
 
 export type PermissionViewer = Pick<SessionData, "discordId" | "guilds"> &
-  Partial<Pick<SessionData, "platform" | "presence">>;
+  Partial<
+    Pick<SessionData, "platform" | "presence" | "heroSightingCapabilities">
+  >;
 
 export const PRESENCE_PERMISSIONS: ReadonlySet<Permission> = new Set([
   Permission.LOOTLOG_ONLINE_PLAYERS_READ,
