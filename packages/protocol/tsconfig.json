@@ -2,7 +2,7 @@
   "extends": "@lootlog/typescript-config/base.json",
   "compilerOptions": {
     "noEmit": true,
-    "types": ["node"]
+    "types": ["bun", "node"]
   },
   "include": ["src"]
 }

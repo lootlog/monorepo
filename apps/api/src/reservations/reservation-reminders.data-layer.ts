@@ -1,5 +1,4 @@
 import { RESERVATION_REMINDER_RULE_NAME } from "#src/notifications/rules/reservation-reminder";
-import { randomUUID } from "node:crypto";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { Clock, Effect } from "effect";
 import type { ApiDatabase } from "#src/database/drizzle/database";
@@ -263,7 +262,7 @@ export const scheduleReminder = (
             yield* transaction
               .update(notificationJobTable)
               .set({
-                idempotencyKey: `${idempotencyKey}:canceled:${randomUUID()}`,
+                idempotencyKey: `${idempotencyKey}:canceled:${crypto.randomUUID()}`,
               })
               .where(eq(notificationJobTable.id, existing.id));
 

@@ -2,7 +2,6 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "bun:test";
 import { makeLootQueryOperations } from "#src/loots/query/loot-query.operations";
 import { Capability } from "@lootlog/schema/permissions";
 import { makeLootQueryPersistence } from "#src/loots/query/loot-query.repository";
-import { randomUUID } from "node:crypto";
 import { Effect } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
@@ -45,7 +44,7 @@ describe("durable loot detail load", () => {
               ...request.submission,
               loots: request.submission.loots.map((item) => ({
                 ...item,
-                hid: randomUUID(),
+                hid: crypto.randomUUID(),
               })),
             },
           }),

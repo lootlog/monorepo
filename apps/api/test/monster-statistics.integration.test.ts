@@ -1,5 +1,4 @@
 import { afterAll, beforeAll, expect, it } from "bun:test";
-import { randomUUID } from "node:crypto";
 import type { PublishOptions } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Effect, ManagedRuntime } from "effect";
@@ -44,7 +43,7 @@ const PUBLISHER_TIMEOUT_MS = 30_000;
 it(
   "publishes a monster's maps from its latest fights, the drops it no longer gives and the level it had before",
   async () => {
-    const name = `Tytan ${randomUUID()}`;
+    const name = `Tytan ${crypto.randomUUID()}`;
     const startedAt = Date.UTC(2026, 0, 1);
 
     await runtime.runPromise(
@@ -62,7 +61,7 @@ it(
           .values({
             itemId: 1,
             gameVersion: "pl",
-            statsHash: randomUUID(),
+            statsHash: crypto.randomUUID(),
             name: "Dawny łup",
             icon: "item.gif",
             statRaw: "",
@@ -81,7 +80,7 @@ it(
               );
 
               return {
-                uniqueId: randomUUID(),
+                uniqueId: crypto.randomUUID(),
                 world: "test",
                 gameVersion: "pl" as const,
                 source: "FIGHT" as const,
@@ -103,7 +102,7 @@ it(
           loots.slice(0, 100).map(({ id }) => ({
             lootId: id,
             itemSnapshotId: item!.id,
-            hid: randomUUID(),
+            hid: crypto.randomUUID(),
           })),
         );
 
@@ -197,11 +196,15 @@ it(
 it(
   "publishes how often a boss's kills drop each item, counting each kill and drop once over the Organizations that could record it",
   async () => {
-    const name = `Heros ${randomUUID()}`;
-    const world = `rates-${randomUUID()}`;
+    const name = `Heros ${crypto.randomUUID()}`;
+    const world = `rates-${crypto.randomUUID()}`;
     const killsBegin = new Date(Date.UTC(2001, 0, 1));
     const killedAt = new Date(Date.UTC(2001, 0, 2));
-    const [everything, legendsOnly] = [randomUUID(), randomUUID()];
+
+    const [everything, legendsOnly] = [
+      crypto.randomUUID(),
+      crypto.randomUUID(),
+    ];
 
     const published: PublishOptions[] = [];
 
@@ -267,7 +270,7 @@ it(
             (["UNIQUE", "LEGENDARY"] as const).map((rarity, index) => ({
               itemId: 900_001 + index,
               gameVersion: "pl" as const,
-              statsHash: randomUUID(),
+              statsHash: crypto.randomUUID(),
               name: `Łup ${rarity}`,
               icon: "item.gif",
               rarity,
@@ -288,7 +291,7 @@ it(
               .insert(lootTable)
               .values(
                 Array.from({ length: count }, () => ({
-                  uniqueId: randomUUID(),
+                  uniqueId: crypto.randomUUID(),
                   world,
                   gameVersion: "pl" as const,
                   source: "FIGHT" as const,
@@ -308,7 +311,7 @@ it(
               loots.map(({ id }) => ({
                 lootId: id,
                 itemSnapshotId,
-                hid: randomUUID(),
+                hid: crypto.randomUUID(),
               })),
             );
             yield* database.insert(organizationLootRecordTable).values(

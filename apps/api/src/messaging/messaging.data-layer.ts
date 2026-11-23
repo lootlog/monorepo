@@ -21,7 +21,6 @@ import {
   type NotificationGoingPlayer,
 } from "@lootlog/schema/notification-going";
 import { NpcRoutingDataSchema } from "@lootlog/schema/npc-routing";
-import { randomUUID } from "node:crypto";
 
 import { Clock, Effect, Layer, Option, Schema } from "effect";
 import type { RedisError } from "effect/persistence/Redis";
@@ -166,7 +165,7 @@ const consumeRateLimit = (
       [
         NOTIFICATION_RATE_LIMIT_WINDOW_MS,
         NOTIFICATION_RATE_LIMIT_MAX_ATTEMPTS,
-        randomUUID(),
+        crypto.randomUUID(),
       ],
     )
     .pipe(

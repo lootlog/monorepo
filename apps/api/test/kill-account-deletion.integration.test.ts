@@ -1,6 +1,5 @@
 import { requireIsolatedTestDatabase } from "./isolated-test-database.js";
 import { afterAll, expect, test } from "bun:test";
-import { randomUUID } from "node:crypto";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { eq, inArray, sql } from "drizzle-orm";
 import { Effect, ManagedRuntime, Schema } from "effect";
@@ -28,7 +27,7 @@ import { createGuildFixture } from "./organization-fixtures.js";
 
 const runtime = ManagedRuntime.make(ApiDatabaseLive);
 
-const guildId = `kill-deletion-${randomUUID()}`;
+const guildId = `kill-deletion-${crypto.randomUUID()}`;
 
 const deletedUser = `${guildId}-deleted`;
 
@@ -213,7 +212,7 @@ test("account deletion removes personal kills at once and member kills from comp
         invalidateCacheScopes: () => Effect.void,
         deleteCachePattern: () => Effect.void,
         publishMemberRemoved: () => Effect.void,
-      })({ userId: randomUUID(), discordId: deletedUser });
+      })({ userId: crypto.randomUUID(), discordId: deletedUser });
 
       const remaining = (
         table:

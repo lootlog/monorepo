@@ -5,7 +5,6 @@ import { UserLootlogConfigData } from "../src/lootlog-config/user-lootlog-config
 import { MemberReadData } from "../src/members/members-data.js";
 import { makeMemberReadDataLayer } from "../src/members/member-read.data-layer.js";
 import { createDatabaseBoundary } from "./database-fixtures.js";
-import { randomUUID } from "node:crypto";
 import { Effect, ManagedRuntime } from "effect";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Capability } from "@lootlog/schema/permissions";
@@ -57,8 +56,8 @@ describe("Read cache Dragonfly readers", () => {
       await databaseRuntime.runPromise(
         Effect.gen(function* () {
           const db = yield* ApiDatabase;
-          const guildId = randomUUID();
-          const discordId = randomUUID();
+          const guildId = crypto.randomUUID();
+          const discordId = crypto.randomUUID();
           yield* db.insert(guildTable).values({
             id: guildId,
             name: "Settings cache integration",
@@ -68,7 +67,7 @@ describe("Read cache Dragonfly readers", () => {
           yield* db.insert(memberTable).values({
             guildId,
             userId: discordId,
-            globalUserId: randomUUID(),
+            globalUserId: crypto.randomUUID(),
             name: "Owner",
             updatedAt: new Date(),
           });
@@ -130,9 +129,9 @@ describe("Read cache Dragonfly readers", () => {
       await databaseRuntime.runPromise(
         Effect.gen(function* () {
           const db = yield* ApiDatabase;
-          const guildId = randomUUID();
-          const discordId = randomUUID();
-          const roleId = randomUUID();
+          const guildId = crypto.randomUUID();
+          const discordId = crypto.randomUUID();
+          const roleId = crypto.randomUUID();
           yield* db.insert(guildTable).values({
             id: guildId,
             name: "Role cache",
@@ -145,7 +144,7 @@ describe("Read cache Dragonfly readers", () => {
             .values({
               guildId,
               userId: discordId,
-              globalUserId: randomUUID(),
+              globalUserId: crypto.randomUUID(),
               name: "Member",
               updatedAt: new Date(),
             })
@@ -237,7 +236,7 @@ describe("Read cache Dragonfly readers", () => {
           const [guild] = yield* db
             .insert(guildTable)
             .values({
-              id: randomUUID(),
+              id: crypto.randomUUID(),
               name: "Cache integration",
               ownerId: "owner",
               updatedAt: new Date(),
@@ -248,7 +247,7 @@ describe("Read cache Dragonfly readers", () => {
           yield* db.insert(memberTable).values({
             guildId: guild.id,
             userId: "owner",
-            globalUserId: randomUUID(),
+            globalUserId: crypto.randomUUID(),
             name: "Owner",
             updatedAt: new Date(),
           });
@@ -257,7 +256,7 @@ describe("Read cache Dragonfly readers", () => {
             .insert(lootTable)
             .values({
               gameVersion: "pl",
-              uniqueId: randomUUID(),
+              uniqueId: crypto.randomUUID(),
               world: "test",
               source: "FIGHT",
               location: "Test",
@@ -320,11 +319,11 @@ describe("Read cache Dragonfly readers", () => {
       await databaseRuntime.runPromise(
         Effect.gen(function* () {
           const db = yield* ApiDatabase;
-          const guildId = randomUUID();
-          const eventId = randomUUID();
-          const heroId = randomUUID();
-          const mapId = randomUUID();
-          const gapId = randomUUID();
+          const guildId = crypto.randomUUID();
+          const eventId = crypto.randomUUID();
+          const heroId = crypto.randomUUID();
+          const mapId = crypto.randomUUID();
+          const gapId = crypto.randomUUID();
           yield* db.insert(guildTable).values({
             id: guildId,
             name: "Cache integration",

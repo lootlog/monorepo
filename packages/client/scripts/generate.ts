@@ -1,4 +1,3 @@
-import { spawnSync } from "node:child_process";
 import { mkdirSync, rmSync } from "node:fs";
 import { resolve } from "node:path";
 import { API_SERVICE_NAMES } from "@lootlog/schema/api-services";
@@ -7,18 +6,13 @@ import { fixRequestOptionsType } from "./generation";
 const generatedRoot = resolve("src/generated");
 
 const run = (command: string, arguments_: string[]) => {
-  const result = spawnSync(command, arguments_, {
-    encoding: "utf8",
-    stdio: "inherit",
+  const result = Bun.spawnSync([command, ...arguments_], {
+    stdio: ["inherit", "inherit", "inherit"],
   });
 
-  if (result.error) {
-    throw result.error;
-  }
-
-  if (result.status !== 0) {
+  if (!result.success) {
     throw new Error(
-      `${command} ${arguments_.join(" ")} failed with status ${result.status}`,
+      `${command} ${arguments_.join(" ")} failed with status ${result.exitCode}`,
     );
   }
 };

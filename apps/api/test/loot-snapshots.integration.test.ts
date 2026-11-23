@@ -1,6 +1,6 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "bun:test";
 import type { MapPlayersSnapshot } from "@lootlog/protocol/loot-summary";
-import { createHash, randomInt, randomUUID } from "node:crypto";
+import { randomInt } from "node:crypto";
 import { eq, inArray } from "drizzle-orm";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -68,7 +68,7 @@ describe("durable loot item and participant snapshots", () => {
 
     const accept = async (
       item: { name: string; icon: string; instanceStat: string },
-      hids = [randomUUID()],
+      hids = [crypto.randomUUID()],
     ) => {
       const result = await runtime.runPromise(
         acceptance().accept({
@@ -78,7 +78,7 @@ describe("durable loot item and participant snapshots", () => {
             gameVersion: "pl",
             loots: request.submission.loots.map((base, index) => ({
               ...base,
-              hid: hids[index] ?? randomUUID(),
+              hid: hids[index] ?? crypto.randomUUID(),
               id: itemId,
               name: item.name,
               icon: item.icon,
@@ -217,12 +217,12 @@ describe("durable loot item and participant snapshots", () => {
     async () => {
       const first = await seed(true);
       const second = await seed(true);
-      const world = `concurrent-map-${randomUUID()}`;
+      const world = `concurrent-map-${crypto.randomUUID()}`;
 
       const playerA = {
         accountId: randomInt(1, 1_000_000),
         characterId: randomInt(1, 1_000_000),
-        name: `Player A ${randomUUID()}`,
+        name: `Player A ${crypto.randomUUID()}`,
         prof: "WARRIOR" as const,
         icon: "player-a.png",
         lvl: 281,
@@ -231,7 +231,7 @@ describe("durable loot item and participant snapshots", () => {
       const playerB = {
         accountId: randomInt(1_000_001, 2_000_000),
         characterId: randomInt(1_000_001, 2_000_000),
-        name: `Player B ${randomUUID()}`,
+        name: `Player B ${crypto.randomUUID()}`,
         prof: "MAGE" as const,
         icon: "player-b.png",
         lvl: 282,
@@ -248,13 +248,13 @@ describe("durable loot item and participant snapshots", () => {
       const npcP = {
         ...baseNpc,
         id: randomInt(10_000_000, 20_000_000),
-        name: randomUUID(),
+        name: crypto.randomUUID(),
       };
 
       const npcQ = { ...npcP, id: npcP.id + 1 };
 
       const items = (...templates: Array<typeof itemX>) =>
-        templates.map((item) => ({ ...item, hid: randomUUID() }));
+        templates.map((item) => ({ ...item, hid: crypto.randomUUID() }));
 
       first.request.submission = {
         ...first.request.submission,
@@ -434,7 +434,7 @@ describe("durable loot item and participant snapshots", () => {
             .values({
               ...player,
               world: first.request.submission.world,
-              snapshotHash: createHash("sha256")
+              snapshotHash: new Bun.CryptoHasher("sha256")
                 .update(`${player.name}${player.prof}${player.icon}`)
                 .digest("hex"),
             })

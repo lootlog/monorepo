@@ -2,7 +2,6 @@ import {
   OperationError,
   withAdapterSpan,
 } from "@lootlog/instrumentation/operation";
-import { randomUUID } from "node:crypto";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { Clock, Effect } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
@@ -72,7 +71,7 @@ export const notificationJobIdempotencyKey = (options: NotificationJobInput) =>
         options.jobKind === NotificationJobKind.TEST ? "test" : "instant",
         options.notificationRule.id,
         options.target.id,
-        options.sourceEventId ?? randomUUID(),
+        options.sourceEventId ?? crypto.randomUUID(),
       ].join(":");
 
 export const makeNotificationJobScheduler = (
@@ -244,7 +243,7 @@ export const makeNotificationJobScheduler = (
           yield* transaction
             .update(notificationJobTable)
             .set({
-              idempotencyKey: `${idempotencyKey}:canceled:${randomUUID()}`,
+              idempotencyKey: `${idempotencyKey}:canceled:${crypto.randomUUID()}`,
             })
             .where(eq(notificationJobTable.id, existing.id));
 

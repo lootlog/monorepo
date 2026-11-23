@@ -2,7 +2,6 @@ import { ignorePublicationFailure } from "#src/shared/best-effort-publication";
 import { readyRoomSourceVisibility } from "./ready-room-visibility.js";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import { apiKeyAccessibleGuilds } from "#src/runtime/auth/organization-scope";
-import { randomUUID } from "node:crypto";
 
 import { Effect, Layer } from "effect";
 import { Capability } from "@lootlog/schema/permissions";
@@ -348,7 +347,7 @@ export const makeReadyRoomDataLayer = (
   redis: ReadyRoomRedis,
   effects: ReadyRoomEffects,
   clock: () => number = Date.now,
-  idGenerator: () => string = randomUUID,
+  idGenerator: () => string = () => crypto.randomUUID(),
 ) =>
   Layer.effect(
     ReadyRoomData,

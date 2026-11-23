@@ -1,6 +1,5 @@
 import { requireIsolatedTestDatabase } from "./isolated-test-database.js";
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
-import { randomUUID } from "node:crypto";
 import { Client } from "pg";
 import { ManagedRuntime, Schema } from "effect";
 import { Capability } from "@lootlog/schema/permissions";
@@ -26,12 +25,12 @@ const one = async (sql: string, values: unknown[]) => {
 };
 
 const organization = async (user: string) => {
-  const guildId = randomUUID(),
-    roleId = randomUUID();
+  const guildId = crypto.randomUUID(),
+    roleId = crypto.randomUUID();
 
   await client.query(
     `INSERT INTO "Guild" (id,name,"ownerId","updatedAt") VALUES ($1,'Org',$2,now())`,
-    [guildId, randomUUID()],
+    [guildId, crypto.randomUUID()],
   );
 
   const memberId = await one(
@@ -75,7 +74,7 @@ const loot = async (options: {
 
   const lootId = await one(
     `INSERT INTO "Loot" ("uniqueId",world,"gameVersion",source,location,"createdAt","updatedAt") VALUES ($1,$2,'pl',$3::"LootSource",'map',now(),now()) RETURNING id`,
-    [randomUUID(), world, options.dialog ? "DIALOG" : "FIGHT"],
+    [crypto.randomUUID(), world, options.dialog ? "DIALOG" : "FIGHT"],
   );
 
   for (const guildId of options.guildIds)
@@ -95,7 +94,7 @@ const loot = async (options: {
       options.legacy ? null : 77,
     ],
   );
-  const hid = randomUUID();
+  const hid = crypto.randomUUID();
 
   await client.query(
     `WITH item AS (INSERT INTO "ItemSnapshot" ("itemId","statsHash",name,icon,"statRaw","statsSnapshot","itemType",lvl,rarity,"gameVersion") VALUES (9,$2,'Legend','legend.png','','{}'::jsonb,'Sword',100,'LEGENDARY','pl') RETURNING id)
@@ -113,7 +112,7 @@ const loot = async (options: {
       lootId,
       world,
       options.characterId,
-      randomUUID(),
+      crypto.randomUUID(),
       options.name ?? "Hunter",
     ],
   );
@@ -122,7 +121,7 @@ const loot = async (options: {
     await client.query(
       `WITH player AS (INSERT INTO "PlayerSnapshot" (world,"accountId","characterId","snapshotHash",name) VALUES ($2,2,$3,$4,'Partner') RETURNING id)
       INSERT INTO "LootPlayer" ("lootId","playerSnapshotId") SELECT $1,id FROM player`,
-      [lootId, world, nextCharacterId++, randomUUID()],
+      [lootId, world, nextCharacterId++, crypto.randomUUID()],
     );
 
   if (options.shared)
@@ -159,12 +158,12 @@ describe("personal loot statistics", () => {
   });
 
   it("counts each fight of the user's characters once, only as their Organizations let them see it", async () => {
-    const user = randomUUID();
+    const user = crypto.randomUUID();
     const character = nextCharacterId++;
     const stranger = nextCharacterId++;
     const first = await organization(user);
     const second = await organization(user);
-    const foreign = await organization(randomUUID());
+    const foreign = await organization(crypto.randomUUID());
     await registerCharacter(user, character);
 
     await loot({ guildIds: [first, second], characterId: character });
@@ -196,11 +195,11 @@ describe("personal loot statistics", () => {
     expect(result.topNpcs).toEqual([
       expect.objectContaining({ name: "Hero", count: 1 }),
     ]);
-    expect((await stats(randomUUID())).overview.totalLoots).toBe(0);
+    expect((await stats(crypto.randomUUID())).overview.totalLoots).toBe(0);
   });
 
   it("narrows to one character on its world", async () => {
-    const user = randomUUID();
+    const user = crypto.randomUUID();
     const main = nextCharacterId++;
     const alt = nextCharacterId++;
     const guildId = await organization(user);
@@ -221,7 +220,7 @@ describe("personal loot statistics", () => {
   });
 
   it("counts as caught what the loot share gives the user's character or a solo fight leaves them, naming that character, beside their kills of the monster", async () => {
-    const user = randomUUID();
+    const user = crypto.randomUUID();
     const character = nextCharacterId++;
     const archer = nextCharacterId++;
     const guildId = await organization(user);
@@ -265,10 +264,10 @@ describe("personal loot statistics", () => {
   });
 
   it("names a catching character as the user's visible loots last saw it", async () => {
-    const user = randomUUID();
+    const user = crypto.randomUUID();
     const character = nextCharacterId++;
     const guildId = await organization(user);
-    const otherGuildId = await organization(randomUUID());
+    const otherGuildId = await organization(crypto.randomUUID());
     await registerCharacter(user, character);
 
     await loot({ guildIds: [guildId], characterId: character, name: "Archer" });
@@ -290,7 +289,7 @@ describe("personal loot statistics", () => {
   });
 
   it("sets a colossus legend against the kills recorded under its stable id", async () => {
-    const user = randomUUID();
+    const user = crypto.randomUUID();
     const character = nextCharacterId++;
     const guildId = await organization(user);
     await registerCharacter(user, character);
@@ -331,7 +330,7 @@ describe("personal loot statistics", () => {
   });
 
   it("counts a legend reported by template id with the same monster's kills", async () => {
-    const user = randomUUID();
+    const user = crypto.randomUUID();
     const character = nextCharacterId++;
     const guildId = await organization(user);
     await registerCharacter(user, character);
@@ -357,7 +356,7 @@ describe("personal loot statistics", () => {
   });
 
   it("lists a non-boss that dropped a legend only on the world it dropped it", async () => {
-    const user = randomUUID();
+    const user = crypto.randomUUID();
     const character = nextCharacterId++;
     const guildId = await organization(user);
     await registerCharacter(user, character);

@@ -1,5 +1,4 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
-import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { Effect } from "effect";
 import { ApiDatabase } from "../src/database/drizzle/database.js";
@@ -24,13 +23,13 @@ test("event rankings accumulate concurrent kills and count a retried kill once",
     Effect.gen(function* () {
       const db = yield* ApiDatabase;
       const store = makeEventPointsStore(db);
-      const eventId = randomUUID();
+      const eventId = crypto.randomUUID();
       const heroNpcName = "Kotołak";
 
       const [firstKill, secondKill, retriedKill] = [
-        randomUUID(),
-        randomUUID(),
-        randomUUID(),
+        crypto.randomUUID(),
+        crypto.randomUUID(),
+        crypto.randomUUID(),
       ];
 
       const now = new Date();
@@ -72,7 +71,7 @@ test("event rankings accumulate concurrent kills and count a retried kill once",
         })),
       );
       yield* db.insert(eventRankingTable).values({
-        id: randomUUID(),
+        id: crypto.randomUUID(),
         eventId,
         memberId: memberIds.first,
         heroNpcName,

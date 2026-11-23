@@ -1,6 +1,5 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "bun:test";
 import type { CreateLootRequest } from "#src/contracts/loots/schemas";
-import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -117,7 +116,7 @@ describe("durable loot NPC attribution", () => {
 
   it("stores explicit template and runtime NPC identities apart from the overloaded id", async () => {
     const { request } = await seed();
-    const name = `Identity hero ${randomUUID()}`;
+    const name = `Identity hero ${crypto.randomUUID()}`;
 
     const accept = async (npc: Partial<CreateLootRequest["npcs"][number]>) => {
       const result = await runtime.runPromise(
@@ -127,7 +126,7 @@ describe("durable loot NPC attribution", () => {
             ...request.submission,
             loots: request.submission.loots.map((item) => ({
               ...item,
-              hid: randomUUID(),
+              hid: crypto.randomUUID(),
             })),
             npcs: request.submission.npcs.map((base) => ({
               ...base,

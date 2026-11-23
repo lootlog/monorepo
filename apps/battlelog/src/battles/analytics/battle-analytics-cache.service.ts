@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import { ContextLogger } from "@lootlog/instrumentation";
 import type { RedisStore } from "#src/infrastructure/redis-store";
 import type { BattleAnalyticsCriteria } from "#src/battles/analytics/query-battle-analytics";
@@ -62,7 +61,7 @@ export const makeBattleAnalyticsCache = (
         .evalScript<string>(
           CACHE_GENERATION_SCRIPT,
           [`battle-cache-generation:${userId}`],
-          [randomUUID()],
+          [crypto.randomUUID()],
         )
         .pipe(
           Effect.catch((error) => {
@@ -88,17 +87,19 @@ export const makeBattleAnalyticsCache = (
     });
 
   const invalidateUserAnalytics = (userId: string) =>
-    redisService.set(`battle-cache-generation:${userId}`, randomUUID()).pipe(
-      Effect.catch((error) => {
-        logger.warn(
-          `Failed to invalidate analytics cache for user ${userId}:`,
-          error,
-        );
+    redisService
+      .set(`battle-cache-generation:${userId}`, crypto.randomUUID())
+      .pipe(
+        Effect.catch((error) => {
+          logger.warn(
+            `Failed to invalidate analytics cache for user ${userId}:`,
+            error,
+          );
 
-        return Effect.void;
-      }),
-      withAdapterSpan("BattleAnalyticsCache_invalidateUser", "redis"),
-    );
+          return Effect.void;
+        }),
+        withAdapterSpan("BattleAnalyticsCache_invalidateUser", "redis"),
+      );
 
   const formatAnalyticsFilterSegments = (
     query: BattleAnalyticsCriteria | BattleStatisticsQuery,

@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import { and, asc, eq, isNull, or } from "drizzle-orm";
 import { Effect } from "effect";
 import type { ApiDatabase } from "#src/database/drizzle/database";
@@ -147,7 +146,7 @@ export const resolvePlayerSnapshots = Effect.fnUntraced(function* (
     const inserts = missing
       .map((snapshot) => ({
         ...snapshot,
-        snapshotHash: `v2:${createHash("sha256")
+        snapshotHash: `v2:${new Bun.CryptoHasher("sha256")
           .update(JSON.stringify([snapshot.name, snapshot.prof, snapshot.icon]))
           .digest("hex")}`,
       }))

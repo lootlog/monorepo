@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { inArray } from "drizzle-orm";
 import { Effect, ManagedRuntime } from "effect";
@@ -21,9 +20,9 @@ import {
 
 export const makeKillRankingFixture = () => {
   const runtime = ManagedRuntime.make(ApiDatabaseLive);
-  const guildId = `kill-ranking-${randomUUID()}`;
-  const otherGuildId = `kill-ranking-${randomUUID()}`;
-  const timelineGuildId = `kill-ranking-${randomUUID()}`;
+  const guildId = `kill-ranking-${crypto.randomUUID()}`;
+  const otherGuildId = `kill-ranking-${crypto.randomUUID()}`;
+  const timelineGuildId = `kill-ranking-${crypto.randomUUID()}`;
   const memberIds = { first: 0, second: 0 };
 
   const seed = async () => {

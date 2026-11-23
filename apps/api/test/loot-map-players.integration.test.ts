@@ -1,6 +1,5 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "bun:test";
 import type { MapPlayersSnapshot } from "@lootlog/protocol/loot-summary";
-import { createHash, randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -108,7 +107,7 @@ describe("durable loot map players", () => {
     const observer = { ...legacyObserver, name: "Foow", prof: null };
     const world = `hash-collision-${id}`;
 
-    const legacyHash = createHash("sha256")
+    const legacyHash = new Bun.CryptoHasher("sha256")
       .update("Foowoutfit.gif")
       .digest("hex");
 
@@ -145,7 +144,7 @@ describe("durable loot map players", () => {
       ...request.submission,
       loots: request.submission.loots.map((item) => ({
         ...item,
-        hid: randomUUID(),
+        hid: crypto.randomUUID(),
       })),
       mapPlayersSnapshot: [legacyObserver],
     };
@@ -193,7 +192,7 @@ describe("durable loot map players", () => {
             ...request.submission,
             loots: request.submission.loots.map((item) => ({
               ...item,
-              hid: randomUUID(),
+              hid: crypto.randomUUID(),
             })),
             mapPlayersSnapshot: [changed],
           },

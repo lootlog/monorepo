@@ -8,7 +8,6 @@ import {
   InvalidRequestError,
   PermissionDeniedError,
 } from "@lootlog/protocol/http/errors";
-import { createHash } from "node:crypto";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { Capability } from "@lootlog/schema/permissions";
 import type {
@@ -354,7 +353,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         .map((loot) => loot.hid)
         .join("") + world;
 
-    return createHash("sha256").update(source).digest("hex");
+    return new Bun.CryptoHasher("sha256").update(source).digest("hex");
   }
 }
 

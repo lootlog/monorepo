@@ -1,5 +1,4 @@
 import { Effect } from "effect";
-import { randomUUID } from "node:crypto";
 import type { RedisService } from "#src/redis/redis.service";
 import { withEventAdapterSpan } from "#src/events/event-adapter";
 import type { KillTimerData } from "#src/events/respawn/kill-timer-data";
@@ -93,7 +92,7 @@ export const makeEventHeroKillCheck = (
         return;
       }
 
-      const lockToken = randomUUID();
+      const lockToken = crypto.randomUUID();
 
       const lockAcquired = yield* redis
         .setNX(lockKey, lockToken, EVENT_KILL_LOCK_TTL_SECONDS)

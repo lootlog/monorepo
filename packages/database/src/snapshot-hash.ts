@@ -1,9 +1,8 @@
-import { createHash } from "node:crypto";
 import type { GameVersion } from "@lootlog/schema/game-version";
 import { splitItemStat } from "@lootlog/domain/item-stat";
 
 function hashSnapshotPayload(payload: string): string {
-  return createHash("sha256").update(payload).digest("hex");
+  return new Bun.CryptoHasher("sha256").update(payload).digest("hex");
 }
 
 export function createPlayerSnapshotHash(

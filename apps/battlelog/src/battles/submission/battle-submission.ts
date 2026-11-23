@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import type { CreateBattleInput } from "#src/battles/submission/create-battle";
 
 type BattleEvent = CreateBattleInput["events"][number];
@@ -75,7 +74,7 @@ export const createBattleSemanticFingerprint = ({
     world: data.world,
   };
 
-  return createHash("sha256")
+  return new Bun.CryptoHasher("sha256")
     .update(JSON.stringify(semanticBattle))
     .digest("hex");
 };

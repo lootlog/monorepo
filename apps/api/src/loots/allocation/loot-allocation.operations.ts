@@ -4,7 +4,6 @@ import {
 } from "@lootlog/instrumentation/operation";
 import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
 import { getLootListCacheScope } from "#src/shared/cache";
-import { createHash } from "node:crypto";
 import { joinItemStat } from "@lootlog/domain/item-stat";
 import { Clock, Effect, Schema } from "effect";
 import type { RedisService } from "#src/redis/redis.service";
@@ -124,8 +123,12 @@ export const makeLootAllocationOperations = (options: {
 
     return Effect.logWarning("Conflicting chat loot share rejected", {
       lootId,
-      persistedHash: createHash("sha256").update(persistedValue).digest("hex"),
-      submittedHash: createHash("sha256").update(submittedValue).digest("hex"),
+      persistedHash: new Bun.CryptoHasher("sha256")
+        .update(persistedValue)
+        .digest("hex"),
+      submittedHash: new Bun.CryptoHasher("sha256")
+        .update(submittedValue)
+        .digest("hex"),
     }).pipe(
       Effect.andThen(
         Effect.fail(new ResourceConflictError("Conflicting loot share")),

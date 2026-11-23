@@ -13,7 +13,7 @@ test("every shipped fixture is a valid canonical event", async () => {
   expect(files.length).toBeGreaterThan(0);
 
   for (const file of files) {
-    const content = await fs.readFile(path.join(fixturesDir, file), "utf-8");
+    const content = await Bun.file(path.join(fixturesDir, file)).text();
     expect(() => parseEventFixture(content), file).not.toThrow();
   }
 });
