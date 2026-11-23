@@ -18,9 +18,9 @@ export function ChatGatheringOrganizerMeta({
   const { t } = useTranslation("chat");
 
   return (
-    <div className="ll:flex ll:min-w-0 ll:items-center ll:gap-1.5 ll:text-[10px] ll:leading-[14px] ll:text-muted-foreground">
+    <div className="ll:flex ll:min-w-0 ll:items-center ll:gap-1.5 ll:text-[10px] ll:leading-[15px] ll:text-muted-foreground">
       {clanName ? (
-        <span className="ll:min-w-0 ll:max-w-[45%] ll:shrink-0 ll:truncate ll:text-white/75">
+        <span className="ll:min-w-0 ll:max-w-[45%] ll:shrink-0 ll:truncate ll:text-foreground/75">
           {clanName}
         </span>
       ) : null}

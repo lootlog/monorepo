@@ -8,7 +8,8 @@ import {
 import { formatNumber } from "@lootlog/domain/locale";
 import { ArticleSection } from "@/components/article/article-section";
 import { ItemNameLink } from "@/components/catalog/item-name-link";
-import { StatTiles } from "@/components/common/stat-tiles";
+import { StatsTile } from "@lootlog/ui/components/stats-tile";
+import { StatsTileGrid } from "@lootlog/ui/components/stats-tile-grid";
 import { SocketItem } from "@/components/sockets/socket-item";
 import { useSocketItems } from "@/hooks/use-socket-items";
 import { useWornItems } from "@/hooks/use-worn-items";
@@ -77,26 +78,26 @@ export function SetSocketComponents() {
             <p className={EMPTY_STATE}>{t("socket.set.none")}</p>
           ) : (
             <>
-              <StatTiles
-                tiles={[
-                  {
-                    label: t("socket.set.fusions"),
-                    value: formatNumber(symbols.length),
-                  },
-                  {
-                    label: t("socket.set.components"),
-                    value: formatNumber(
-                      sumBy(components, ({ count }) => count),
-                    ),
-                  },
-                  {
-                    label: t("socket.set.gold"),
-                    value: formatGold(
-                      sumBy(symbols, ({ tier }) => fusionGoldCost(tier)),
-                    ),
-                  },
-                ]}
-              />
+              <StatsTileGrid
+                framed
+                aria-live="polite"
+                className="sm:grid-cols-3"
+              >
+                <StatsTile
+                  label={t("socket.set.fusions")}
+                  value={formatNumber(symbols.length)}
+                />
+                <StatsTile
+                  label={t("socket.set.components")}
+                  value={formatNumber(sumBy(components, ({ count }) => count))}
+                />
+                <StatsTile
+                  label={t("socket.set.gold")}
+                  value={formatGold(
+                    sumBy(symbols, ({ tier }) => fusionGoldCost(tier)),
+                  )}
+                />
+              </StatsTileGrid>
               <section
                 aria-labelledby="set-socket-components-list"
                 className="flex flex-col gap-3"

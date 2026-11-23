@@ -13,7 +13,7 @@ import { cn } from "cn";
 import {
   INLINE_SEARCH_INPUT_CLASS,
   InlineSearchField,
-} from "@/components/common/inline-search-field";
+} from "@lootlog/ui/components/inline-search-field";
 import {
   INLINE_SEARCH_SUGGESTION_CLASS,
   InlineSearchSuggestions,

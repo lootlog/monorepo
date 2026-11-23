@@ -52,13 +52,13 @@ export const SettingsMatrixRow: FC<SettingsMatrixRowProps> = ({
     <tr
       data-dimmed={dimmed ? "true" : undefined}
       className={cn(
-        "ll:border-0 ll:border-b ll:border-solid ll:border-border ll:transition-colors ll:last:border-b-0 ll:hover:bg-white/5",
+        "ll:border-0 ll:border-b ll:border-solid ll:border-separator-subtle ll:transition-colors ll:last:border-b-0 ll:hover:bg-white/5",
         className,
       )}
     >
       <th
         scope="row"
-        className="ll:h-9 ll:whitespace-nowrap ll:px-2 ll:text-left ll:align-middle ll:text-[13px] ll:font-semibold ll:leading-4 ll:text-foreground"
+        className="ll:h-9 ll:whitespace-nowrap ll:px-2 ll:text-left ll:align-middle ll:text-xs ll:font-semibold ll:leading-4 ll:text-foreground"
       >
         {title}
       </th>
@@ -71,7 +71,7 @@ export const SettingsMatrixRow: FC<SettingsMatrixRowProps> = ({
             "ll:h-9 ll:p-0 ll:text-center ll:align-middle ll:transition-colors",
             hasEnabledSwitch(cell) && "ll:cursor-pointer",
             index === 0 &&
-              "ll:border-0 ll:border-e ll:border-solid ll:border-border",
+              "ll:border-0 ll:border-e ll:border-solid ll:border-separator-subtle",
             hoveredColumn === index && "ll:bg-white/5",
           )}
         >

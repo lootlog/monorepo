@@ -1,4 +1,4 @@
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { useBattleTableActions } from "@/features/user/battle-panel/battle-panel-battles-list/hooks/use-battle-table-actions";
 import { BattleTableDeleteDialogs } from "@/features/user/battle-panel/battle-panel-battles-list/components/battle-table-delete-dialogs";
 import { DashboardRecentBattleActions } from "./dashboard-recent-battle-actions";
@@ -14,7 +14,7 @@ import { cn } from "cn";
 import { useTranslation } from "react-i18next";
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
-import { StatisticsQueryState } from "@/features/user/statistics/statistics-query-state";
+import { StatisticsQueryState } from "@/components/common/statistics-query-state";
 import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 import { DashboardRecentBattle } from "./dashboard-recent-battle";
 import { DASHBOARD_RECENT_BATTLES_PARAMS } from "./dashboard-recent-battles-params";

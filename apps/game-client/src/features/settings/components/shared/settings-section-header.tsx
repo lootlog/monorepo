@@ -1,3 +1,4 @@
+import { SECTION_LABEL_CLASS_NAME } from "@/components/section-label";
 import { cn } from "cn";
 import type { FC, ReactNode } from "react";
 
@@ -28,7 +29,7 @@ export const SettingsSectionHeader: FC<SettingsSectionHeaderProps> = ({
           className={cn(
             "ll:m-0",
             Heading === "h3"
-              ? "ll:text-[11px] ll:font-semibold ll:uppercase ll:leading-4 ll:tracking-wide ll:text-muted-foreground"
+              ? SECTION_LABEL_CLASS_NAME
               : "ll:text-[13px] ll:font-semibold ll:leading-[18px] ll:text-foreground",
           )}
         >

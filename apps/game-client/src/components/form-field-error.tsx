@@ -9,5 +9,5 @@ export const FormFieldError: FC<FormFieldErrorProps> = ({ message }) => {
     return null;
   }
 
-  return <p className="ll:text-xs ll:text-red-500 ll:mt-1">{message}</p>;
+  return <p className="ll:mt-1 ll:text-xs ll:text-destructive">{message}</p>;
 };

@@ -2,7 +2,7 @@ import { cn } from "cn";
 import { useUpdateUserPreferences } from "@/hooks/api/use-user-preferences";
 import { useSettingsStore } from "@/store/settings.store";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import type { FC } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { GuildButton } from "@/components/guild-button";
@@ -175,7 +175,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
           )}
           role="status"
         >
-          <span className="ll:min-w-0 ll:flex-1 ll:truncate ll:text-[11px] ll:text-gray-300">
+          <span className="ll:min-w-0 ll:flex-1 ll:truncate ll:text-[11px] ll:text-foreground/80">
             {t("guildSwitcher.allHidden")}
           </span>
           <IconButton
@@ -204,9 +204,9 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
           tooltipLabel={t("guildSwitcher.allServers")}
           unreadLabel={null}
         >
-          <AvatarFallback className="ll:mt-1.5 ll:rounded-none ll:text-xl ll:font-semibold">
-            *
-          </AvatarFallback>
+          <Avatar aria-hidden className="ll:size-5 ll:text-base">
+            <AvatarFallback className="ll:pt-1.5">*</AvatarFallback>
+          </Avatar>
         </GuildButton>
       )}
       {visibleGuilds.map((guild) => (

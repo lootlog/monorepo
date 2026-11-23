@@ -97,7 +97,7 @@ export const CommandComposer: FC<CommandComposerProps> = ({ onClose }) => {
           onSelect={handleSuggestionSelect}
         />
       </div>
-      <div className="ll:flex ll:items-center ll:gap-1 ll:rounded-b-lg ll:border-0 ll:border-t ll:border-solid ll:border-gray-400/40 ll:bg-white/[0.03] ll:px-1.5 ll:py-1.5">
+      <div className="ll:flex ll:items-center ll:gap-1 ll:rounded-b-lg ll:border-0 ll:border-t ll:border-solid ll:border-separator ll:bg-white/[0.03] ll:px-1.5 ll:py-1.5">
         <GuildTargetSelect
           aria-label={t("target.label")}
           value={targetGuildId}

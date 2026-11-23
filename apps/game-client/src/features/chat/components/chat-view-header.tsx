@@ -17,7 +17,7 @@ export function ChatViewHeader({
     <div
       className={cn(
         toolbarStripClassName,
-        "ll:flex ll:shrink-0 ll:items-stretch ll:mt-1",
+        "ll:flex ll:shrink-0 ll:items-stretch",
       )}
     >
       <GuildSwitcher

@@ -34,6 +34,7 @@ export function PortalNav() {
 
   return (
     <PortalHeader
+      site="developer"
       title={t.title}
       section={t.developers}
       home=<Link to="/" />
@@ -59,6 +60,8 @@ export function PortalNav() {
         navigation: t.navigation,
         menu: t.menu,
         closeNavigation: t.closeNavigation,
+        sites: t.sites,
+        siteNames: t.siteNames,
       }}
     />
   );

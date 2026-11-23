@@ -3,9 +3,13 @@ import { upperFirst } from "es-toolkit";
 import { type ColumnDef, useTable } from "@tanstack/react-table";
 import { formatLevel } from "@lootlog/domain/profession";
 import type { UserKillAnalyticsResponseDtoOutput } from "@lootlog/client/main";
-import { Skull } from "lucide-react";
+import { SearchX, Skull } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
+import { useMediaQuery } from "usehooks-ts";
+import { ClearFiltersButton } from "@/components/common/clear-filters-button";
+import { RESULTS_TABLE_MEDIA_QUERY } from "@/components/common/page-sticky-table-header";
 import { useTranslation } from "react-i18next";
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { RankBadge } from "@/components/common/rank-badge";
 import { ResultsSurface } from "@/components/common/results-surface";
 import { StatsCountCell } from "@/components/common/stats-count-cell";
@@ -45,6 +49,8 @@ const SORT_COLUMNS: readonly StatisticsSortColumn[] = [
 
 export function StatisticsMonsters({ data, search }: StatisticsTabProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate({ from: "/@me/statistics" });
+  const usesTable = useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
   const { npcs } = data;
   const lootStats = useStatisticsLootStats(search);
 
@@ -173,62 +179,85 @@ export function StatisticsMonsters({ data, search }: StatisticsTabProps) {
     getRowId: (npc) => `${npc.world}:${npc.npcId}`,
   });
 
+  const isFiltered = Boolean(search.q?.trim()) || search.npcType !== undefined;
+
   if (!sorted.length)
     return (
       <div className="p-3">
-        <EmptyState
-          fill
-          icon={Skull}
-          title={t(npcs.length ? "common.noResults" : "statistics.noData")}
-        />
+        {isFiltered ? (
+          <EmptyState
+            fill
+            icon={SearchX}
+            title={t("statistics.noMatchingMonsters")}
+            description={t("statistics.noMatchingMonstersDescription")}
+            action={
+              <ClearFiltersButton
+                onClear={() =>
+                  void navigate({
+                    search: (current) => ({
+                      ...current,
+                      q: undefined,
+                      npcType: undefined,
+                    }),
+                  })
+                }
+              />
+            }
+          />
+        ) : (
+          <EmptyState fill icon={Skull} title={t("statistics.noData")} />
+        )}
       </div>
     );
 
   return (
     <ResultsSurface>
-      <ul className="xl:hidden">
-        {sorted.map((npc, index) => (
-          <li
-            key={`${npc.world}:${npc.npcId}`}
-            data-list-tile
-            className={cn(
-              "flex min-w-0 items-center gap-3 py-3",
-              LIST_TILE_RULE_CLASS,
-              LIST_TILE_INSET_CLASS,
-            )}
-          >
-            <RankBadge rank={index + 1} />
-            <span className="min-w-0 flex-1">
-              {npcCell(
-                npc,
-                [
-                  describe(npc),
-                  upperFirst(npc.world),
-                  drops(npc)?.legends
-                    ? t("statistics.monsterLegends", {
-                        legends: drops(npc)?.legends,
-                        caught: drops(npc)?.caught,
-                      })
-                    : undefined,
-                ]
-                  .filter(Boolean)
-                  .join(" · "),
+      {usesTable ? (
+        <StatsTable table={table} className="border-b" />
+      ) : (
+        <ul>
+          {sorted.map((npc, index) => (
+            <li
+              key={`${npc.world}:${npc.npcId}`}
+              data-list-tile
+              className={cn(
+                "flex min-w-0 items-center gap-3 py-3",
+                LIST_TILE_RULE_CLASS,
+                LIST_TILE_INSET_CLASS,
               )}
-            </span>
-            <span className="flex shrink-0 flex-col items-end">
-              <span className="text-sm font-semibold tabular-nums">
-                {formatNumber(npc.totalKills)}
+            >
+              <RankBadge rank={index + 1} />
+              <span className="min-w-0 flex-1">
+                {npcCell(
+                  npc,
+                  [
+                    describe(npc),
+                    upperFirst(npc.world),
+                    drops(npc)?.legends
+                      ? t("statistics.monsterLegends", {
+                          legends: drops(npc)?.legends,
+                          caught: drops(npc)?.caught,
+                        })
+                      : undefined,
+                  ]
+                    .filter(Boolean)
+                    .join(" · "),
+                )}
               </span>
-              <StatisticsDelta
-                className="text-xs"
-                delta={npc.deltaKills}
-                percent={npc.deltaPercent}
-              />
-            </span>
-          </li>
-        ))}
-      </ul>
-      <StatsTable table={table} className="hidden border-b xl:table" />
+              <span className="flex shrink-0 flex-col items-end">
+                <span className="text-sm font-semibold tabular-nums">
+                  {formatNumber(npc.totalKills)}
+                </span>
+                <StatisticsDelta
+                  className="text-xs"
+                  delta={npc.deltaKills}
+                  percent={npc.deltaPercent}
+                />
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
     </ResultsSurface>
   );
 }

@@ -3,7 +3,8 @@ import { Crown, Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { KillStatsOverview } from "@/components/common/kill-analytics/kill-stats-overview";
 import { BandSection } from "@/components/common/band-section";
-import { StatsTile, StatsTileGrid } from "@/components/common/stats-tile";
+import { StatsTile } from "@lootlog/ui/components/stats-tile";
+import { StatsTileGrid } from "@lootlog/ui/components/stats-tile-grid";
 import { getKillShift } from "@/components/common/kill-analytics/kill-shift";
 import { KillAnalyticsTrend } from "@/components/common/kill-analytics/kill-analytics-trend";
 import {
@@ -104,9 +105,9 @@ export function StatisticsOverview({ data, search }: StatisticsTabProps) {
             />
             <StatsTile
               icon={shift.icon}
-              label={t("statistics.peakTime")}
+              label={t(`kills.records.shift.${shift.key}`)}
               value={`${formatIsoWeekday(peak.weekday, true)} ${peak.hour}:00`}
-              detail={t(`kills.records.shift.${shift.key}`)}
+              detail={t("kills.records.peakDetail", { count: peak.kills })}
             />
           </StatsTileGrid>
         </BandSection>

@@ -30,7 +30,7 @@ export function ItemGrip({ type }: { type: string | null }) {
       >
         <span
           aria-hidden="true"
-          className="grid h-4 place-items-center rounded-full border border-violet-400/50 px-1.5 text-[0.625rem]/none font-semibold text-violet-300"
+          className="grid h-4 place-items-center rounded-full border border-chart-5/50 px-1.5 text-[0.625rem]/none font-semibold text-chart-5"
         >
           {t(`catalog.gripShort.${type}`)}
         </span>

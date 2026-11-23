@@ -19,6 +19,7 @@ import {
   getReservationCellClassName,
   RESERVATION_LIST_ROW_CLASS,
 } from "./reservation-collection-layout";
+import { PINNED_STAR_CLASS } from "@/components/common/pinned-star";
 
 type ReservationCardProps = {
   spot: ReservationSpotsResponseDtoItem;
@@ -161,7 +162,7 @@ export function ReservationCard({
         <Star
           className={cn(
             "size-4 text-muted-foreground",
-            spot.isPinned && "fill-signal-timer text-signal-timer",
+            spot.isPinned && PINNED_STAR_CLASS,
           )}
         />
       </Button>

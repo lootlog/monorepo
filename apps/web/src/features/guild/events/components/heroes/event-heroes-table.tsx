@@ -1,5 +1,5 @@
 import { BandSection } from "@/components/common/band-section";
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useTable } from "@tanstack/react-table";
@@ -16,6 +16,10 @@ import {
   type EventHeroTableRow,
 } from "./event-heroes-table-columns";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
+import { RESULTS_TABLE_MEDIA_QUERY } from "@/components/common/page-sticky-table-header";
+import { TableScroller } from "@/components/common/table-scroller";
+import { useMediaQuery } from "usehooks-ts";
+import { EventHeroTiles } from "./event-hero-tiles";
 
 type EventHeroesTableProps = {
   canManage: boolean;
@@ -33,13 +37,11 @@ type EventHeroesTableProps = {
 const getColumnClassName = (columnId: string) => {
   if (columnId === "hero") return "min-w-0";
 
-  if (columnId === "maps" || columnId === "kills") {
-    return "hidden w-0 text-right lg:table-cell lg:w-16";
-  }
+  if (columnId === "maps" || columnId === "kills") return "w-16 text-right";
 
   if (columnId === "timer") return "w-28 text-right";
 
-  if (columnId === "mine") return "hidden w-0 text-right lg:table-cell lg:w-24";
+  if (columnId === "mine") return "w-24 text-right";
 
   if (columnId === "actions") return "w-16 text-right";
 
@@ -59,6 +61,7 @@ export const EventHeroesTable = ({
   showStandings = false,
 }: EventHeroesTableProps) => {
   const { t } = useTranslation();
+  const usesTable = useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
   const [heroToDelete, setHeroToDelete] = useState<EventHeroNpc | null>(null);
 
   const columns = createEventHeroesTableColumns({
@@ -97,31 +100,44 @@ export const EventHeroesTable = ({
       }
     >
       {rows.length === 0 ? (
-        <EmptyState icon={Swords} title={t("events.heroes.empty")} />
+        <EmptyState compact icon={Swords} title={t("events.heroes.empty")} />
+      ) : usesTable ? (
+        <TableScroller>
+          <Table className="w-full table-fixed">
+            <TanStackTableHeader
+              table={table}
+              className="bg-sidebar"
+              rowClassName="border-b-1! border-border hover:bg-transparent"
+              getHeadClassName={(header) =>
+                cn(
+                  "whitespace-nowrap align-middle",
+                  getColumnClassName(header.column.id),
+                )
+              }
+            />
+            <TanStackTableBody
+              table={table}
+              rowClassName="h-14 border-b border-border hover:bg-muted/40"
+              getCellClassName={(cell) =>
+                cn(
+                  "h-14 overflow-hidden align-middle",
+                  getColumnClassName(cell.column.id),
+                )
+              }
+            />
+          </Table>
+        </TableScroller>
       ) : (
-        <Table className="w-full table-fixed">
-          <TanStackTableHeader
-            table={table}
-            className="bg-sidebar"
-            rowClassName="border-b-1! border-sidebar-border"
-            getHeadClassName={(header) =>
-              cn(
-                "whitespace-nowrap align-middle",
-                getColumnClassName(header.column.id),
-              )
-            }
-          />
-          <TanStackTableBody
-            table={table}
-            rowClassName="h-14 border-b border-sidebar-border hover:bg-muted/40"
-            getCellClassName={(cell) =>
-              cn(
-                "h-14 overflow-hidden align-middle",
-                getColumnClassName(cell.column.id),
-              )
-            }
-          />
-        </Table>
+        <EventHeroTiles
+          rows={rows}
+          guildId={guildId}
+          eventId={eventId}
+          canManage={canManage}
+          showStandings={showStandings}
+          onEditHero={onEditHero}
+          onManageMaps={onManageMaps}
+          onRequestDeleteHero={setHeroToDelete}
+        />
       )}
       <ConfirmDialog
         open={heroToDelete !== null}

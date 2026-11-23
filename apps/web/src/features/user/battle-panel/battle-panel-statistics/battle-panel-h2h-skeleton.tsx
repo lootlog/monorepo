@@ -35,7 +35,7 @@ export const BattlePanelH2hSkeleton = (props: BattlePanelH2hSkeletonProps) => {
         isHeadToHead && (
           <>
             <InlineSearchFieldSkeleton />
-            <Skeleton aria-hidden="true" className="h-10 w-55 rounded-lg" />
+            <Skeleton aria-hidden="true" className="h-10 w-55 rounded-md" />
           </>
         )
       }

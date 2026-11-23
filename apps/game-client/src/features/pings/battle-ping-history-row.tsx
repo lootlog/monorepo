@@ -55,8 +55,10 @@ export const BattlePingHistoryRow: FC<BattlePingHistoryRowProps> = ({
           >
             {label}
           </span>
-          <span className="ll:truncate ll:text-[11px] ll:text-gray-300">
-            <span className="ll:font-semibold ll:text-gray-100">{sender}</span>
+          <span className="ll:truncate ll:text-[11px] ll:text-foreground/80">
+            <span className="ll:font-semibold ll:text-foreground">
+              {sender}
+            </span>
             {forMe && target !== null ? (
               <>
                 {" → "}

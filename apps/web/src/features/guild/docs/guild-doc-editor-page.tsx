@@ -1,4 +1,4 @@
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,

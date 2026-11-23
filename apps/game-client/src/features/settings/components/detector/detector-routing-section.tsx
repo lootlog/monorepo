@@ -1,4 +1,4 @@
-import { SettingsEmptyState } from "@/features/settings/components/shared/settings-empty-state";
+import { EmptyState } from "@/components/empty-state";
 import { SettingsSection } from "@/features/settings/components/shared/settings-section";
 import { Button } from "@/components/ui/button";
 import { DetectorRoutingRule } from "@/features/settings/components/detector/detector-routing-rule";
@@ -39,9 +39,7 @@ export const DetectorRoutingSection = () => {
       contentClassName="ll:gap-2"
     >
       {routingRules.length === 0 ? (
-        <SettingsEmptyState>
-          {t("settings.detector.routing.emptyState")}
-        </SettingsEmptyState>
+        <EmptyState description={t("settings.detector.routing.emptyState")} />
       ) : null}
 
       {routingRules.map((rule, index) => (

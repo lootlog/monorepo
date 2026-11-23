@@ -1,12 +1,10 @@
+import { RESULTS_TABLE_MEDIA_QUERY } from "@/components/common/page-sticky-table-header";
 import { chunk } from "es-toolkit";
 import { useGuildWorld } from "@/hooks/context/use-guild-world";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
 import { useViewMode } from "@/hooks/use-view-mode";
-import {
-  LOOTS_GRID_MEDIA_QUERY,
-  LOOTS_VIEW_MODE_KEY,
-} from "@/features/guild/loots-list/loots-list-layout";
+import { LOOTS_VIEW_MODE_KEY } from "@/features/guild/loots-list/loots-list-layout";
 import {
   useResetScrollTop,
   useVirtualInfiniteScroll,
@@ -384,7 +382,7 @@ export const useLiveLootList = () => {
   const { viewMode } = useViewMode(
     LOOTS_VIEW_MODE_KEY,
     "grid",
-    LOOTS_GRID_MEDIA_QUERY,
+    RESULTS_TABLE_MEDIA_QUERY,
   );
 
   const { allLoots, gridRows } = useStableLootCollections(getLootPages(loots));

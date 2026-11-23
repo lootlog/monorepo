@@ -19,7 +19,7 @@ export const BattleHeader: FC<BattleHeaderProps> = ({
 
   return (
     <>
-      <li className="border-b-2 border-solid border-background bg-gray-500/10 px-3 py-1.5 text-muted-foreground">
+      <li className="border-b-2 border-solid border-background bg-muted/50 px-3 py-1.5 text-muted-foreground">
         {t("battleUi.header.startedBetween")}{" "}
         {attackingTeam.map((w) => {
           const isLast = w === attackingTeam[attackingTeam.length - 1];

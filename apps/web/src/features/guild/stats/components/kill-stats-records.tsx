@@ -1,5 +1,6 @@
 import { BandSection } from "@/components/common/band-section";
-import { StatsTile, StatsTileGrid } from "@/components/common/stats-tile";
+import { StatsTile } from "@lootlog/ui/components/stats-tile";
+import { StatsTileGrid } from "@lootlog/ui/components/stats-tile-grid";
 import {
   formatIsoWeekday,
   formatStatisticsDateHour,

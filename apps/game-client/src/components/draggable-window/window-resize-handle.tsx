@@ -343,7 +343,7 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
       data-ll-window-resize-handle=""
       data-ll-draggable="false"
       className={cn(
-        "ll:absolute ll:-right-1.5 ll:-bottom-1.5 ll:size-4 ll:rounded-sm ll:border-0 ll:p-0 ll:text-white ll:opacity-40 ll:transition-opacity ll:motion-reduce:transition-none ll:hover:opacity-90 ll:focus-visible:opacity-90 ll:focus-visible:outline-2 ll:focus-visible:outline-ring ll:touch-none",
+        "ll:absolute ll:-right-1.5 ll:-bottom-1.5 ll:size-4 ll:rounded-sm ll:border-0 ll:p-0 ll:text-foreground ll:opacity-40 ll:transition-opacity ll:motion-reduce:transition-none ll:hover:opacity-90 ll:focus-visible:opacity-90 ll:focus-visible:outline-2 ll:focus-visible:outline-ring ll:touch-none",
         hidden && "ll:invisible",
       )}
       onMouseDown={handleMouseDown}

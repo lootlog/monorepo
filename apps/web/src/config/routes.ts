@@ -47,6 +47,7 @@ const ROUTES = {
     statsKills: (guildId: string) => `/${guildId}/stats/kills`,
     statsLoots: (guildId: string) => `/${guildId}/stats/loots`,
     statsNpcs: (guildId: string) => `/${guildId}/stats/npcs`,
+    statsRanking: (guildId: string) => `/${guildId}/stats/ranking`,
     statsNpcKillers: (guildId: string, npcId: string) =>
       `/${guildId}/stats/npcs/${npcId}`,
     reservations: {

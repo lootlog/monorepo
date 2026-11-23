@@ -9,7 +9,7 @@ type EmptyStateProps = {
   };
   className?: string;
   description?: string;
-  title: string;
+  title?: string;
 };
 
 export const EmptyState: FC<EmptyStateProps> = ({
@@ -27,9 +27,11 @@ export const EmptyState: FC<EmptyStateProps> = ({
       )}
       role="status"
     >
-      <p className="ll:m-0 ll:text-xs ll:font-semibold ll:leading-4 ll:text-foreground/85 ll:text-balance">
-        {title}
-      </p>
+      {title ? (
+        <p className="ll:m-0 ll:text-xs ll:font-semibold ll:leading-4 ll:text-foreground/85 ll:text-balance">
+          {title}
+        </p>
+      ) : null}
       {description ? (
         <p className="ll:m-0 ll:max-w-60 ll:text-[11px] ll:leading-4 ll:text-muted-foreground ll:text-pretty">
           {description}

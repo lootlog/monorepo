@@ -5,6 +5,11 @@ import { Trophy } from "lucide-react";
 import { cn } from "cn";
 import { useTranslation } from "react-i18next";
 import type { evaluateEventScoring } from "../../utils/scoring-applied-rules";
+import {
+  SCORING_ACTION_TONE,
+  SCORING_TONE_BADGE_VARIANT,
+  SCORING_TONE_TEXT_CLASS,
+} from "../../utils/scoring-tone";
 
 export function ScoringSimulatorResults({
   result,
@@ -37,7 +42,12 @@ export function ScoringSimulatorResults({
           <p className="text-2xs text-muted-foreground/60">
             {t("events.scoring.simulator.bonus")}
           </p>
-          <p className="text-lg font-mono font-bold text-green-400">
+          <p
+            className={cn(
+              "text-lg font-mono font-bold",
+              SCORING_TONE_TEXT_CLASS.bonus,
+            )}
+          >
             {formatPoints(result.bonusPoints)}
           </p>
         </div>
@@ -49,12 +59,17 @@ export function ScoringSimulatorResults({
           <p
             className={cn(
               "text-xl font-mono font-bold",
-              isCapped && "text-amber-400",
+              isCapped && SCORING_TONE_TEXT_CLASS.adjusted,
             )}
           >
             {formatPoints(result.totalPoints)}
             {isCapped && (
-              <span className="text-2xs font-normal text-amber-400/70 ml-1">
+              <span
+                className={cn(
+                  "text-2xs font-normal ml-1",
+                  SCORING_TONE_TEXT_CLASS.adjusted,
+                )}
+              >
                 {t("events.scoring.simulator.capped")}
               </span>
             )}
@@ -71,16 +86,13 @@ export function ScoringSimulatorResults({
             {result.appliedRules.map((rule) => (
               <Badge
                 key={rule.ruleId}
-                variant="outline"
-                className={cn(
-                  "text-2xs font-normal",
-                  rule.actionType === "SET_BASE" &&
-                    "border-blue-500/30 text-blue-400",
-                  rule.actionType === "ADD_BONUS" &&
-                    "border-green-500/30 text-green-400",
-                  rule.actionType === "ZERO_BASE" &&
-                    "border-red-500/30 text-red-400",
-                )}
+                variant={
+                  SCORING_TONE_BADGE_VARIANT[
+                    SCORING_ACTION_TONE[rule.actionType]
+                  ]
+                }
+                size="sm"
+                className="font-normal"
               >
                 {rule.ruleName ?? rule.ruleId}
                 {rule.actionType !== "ZERO_BASE" && (

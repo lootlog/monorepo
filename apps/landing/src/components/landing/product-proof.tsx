@@ -11,6 +11,7 @@ import { useTranslation } from "react-i18next";
 
 import { SectionHead } from "@/components/landing/section-head";
 import { links } from "@/config/links";
+import { TextLink } from "@lootlog/ui/components/text-link";
 
 const AUTOPLAY_MS = 7000;
 
@@ -122,13 +123,13 @@ export function ProductProof() {
           title={t("landing.proof.title")}
           description={t("landing.proof.description")}
         >
-          <a
+          <TextLink
             href={links.organizationGuide}
-            className="landing-footer-link mt-3"
+            className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm"
           >
             {t("landing.proof.guide")}
             <ArrowUpRight className="size-4" aria-hidden="true" />
-          </a>
+          </TextLink>
         </SectionHead>
 
         <div

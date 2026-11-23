@@ -63,7 +63,7 @@ export function DebugRuntimeState() {
                 key={member.characterId}
                 className="ll:flex ll:items-center ll:gap-2"
               >
-                <span className="ll:text-gray-100">{member.name}</span>
+                <span className="ll:text-foreground">{member.name}</span>
                 <span className="ll:text-muted-foreground">
                   {t("settings.debug.partyMemberId", {
                     id: member.characterId,
@@ -105,7 +105,7 @@ export function DebugRuntimeState() {
               })}
             </div>
           </div>
-          <pre className="ll:m-0 ll:max-h-40 ll:overflow-auto ll:whitespace-pre-wrap ll:break-words ll:leading-4 ll:text-gray-300">
+          <pre className="ll:m-0 ll:max-h-40 ll:overflow-auto ll:whitespace-pre-wrap ll:break-words ll:leading-4 ll:text-foreground/80">
             {JSON.stringify(
               {
                 activeOther: tooltipActiveOtherData
@@ -131,7 +131,7 @@ export function DebugRuntimeState() {
           <div className="ll:text-muted-foreground">
             {t("settings.debug.othersCount", { count: debugOthers.length })}
           </div>
-          <pre className="ll:m-0 ll:max-h-48 ll:overflow-auto ll:whitespace-pre-wrap ll:break-words ll:leading-4 ll:text-gray-300">
+          <pre className="ll:m-0 ll:max-h-48 ll:overflow-auto ll:whitespace-pre-wrap ll:break-words ll:leading-4 ll:text-foreground/80">
             {JSON.stringify(debugOthers, null, 2)}
           </pre>
         </SettingsPanel>

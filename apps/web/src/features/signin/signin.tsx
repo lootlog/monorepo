@@ -1,5 +1,5 @@
-import { PageHeader } from "@/components/common/page-header";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+import { PageHeader } from "@lootlog/ui/components/page-header";
+import { SectionCardContent } from "@lootlog/ui/components/section-card-content";
 import { Button } from "@lootlog/ui/components/button";
 import { Alert, AlertDescription } from "@lootlog/ui/components/alert";
 import { useSearch } from "@tanstack/react-router";

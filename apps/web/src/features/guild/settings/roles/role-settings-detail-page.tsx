@@ -1,6 +1,6 @@
 import { MetaItem } from "@/components/common/meta-item";
 import { ROUTES } from "@/config/routes";
-import { SettingsDetailNotFound } from "@/components/common/settings-detail-not-found";
+import { DetailNotFound } from "@/components/common/detail-not-found";
 import { SettingsListError } from "@/components/common/settings-list-error";
 import { RoleSettingsDetailSkeleton } from "./role-settings-detail-skeleton";
 import { PermissionCategoryTooltip } from "@/features/guild/settings/components/permission-category-tooltip";
@@ -32,7 +32,7 @@ export const RoleSettingsDetailPage = () => {
 
   if (roles && !role) {
     return (
-      <SettingsDetailNotFound
+      <DetailNotFound
         icon={ShieldX}
         title={t("settings.roles.roleNotFound")}
         description={t("settings.roles.roleNotFoundDescription")}

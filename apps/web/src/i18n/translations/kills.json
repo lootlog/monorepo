@@ -20,7 +20,8 @@
     "member": "Członek",
     "totalKills": "Łącznie",
     "noData": "Nikt jeszcze niczego nie ubił",
-    "filteredNoData": "Żaden członek nie pasuje do filtrów",
+    "filteredNoData": "Brak pasujących członków",
+    "filteredNoDataDescription": "Zmień kryteria albo wyczyść filtry, aby zobaczyć więcej członków.",
     "viewAll": "Cały ranking"
   },
   "home": {
@@ -34,14 +35,16 @@
     "description": "Kompletna lista statystyk zabitych potworów",
     "search": "Szukaj potwora...",
     "noData": "Nie znaleziono potworów",
-    "filteredNoData": "Brak potworów pasujących do wybranych filtrów",
+    "filteredNoData": "Brak pasujących potworów",
+    "filteredNoDataDescription": "Zmień kryteria albo wyczyść filtry, aby zobaczyć więcej potworów.",
     "total": "Łącznie: {{count}}"
   },
   "topNpcs": {
     "title": "Najczęściej bite potwory",
     "description": "{{type}} · liczba bić",
     "noData": "Brak ubitych potworów",
-    "filteredNoData": "Żaden potwór nie pasuje do filtrów",
+    "filteredNoData": "Brak pasujących potworów",
+    "filteredNoDataDescription": "Zmień kryteria albo wyczyść filtry, aby zobaczyć więcej potworów.",
     "viewAll": "Wszystkie potwory"
   },
   "npcsList": {
@@ -69,8 +72,11 @@
     "totalMembers": "Członkowie",
     "uniqueGuildKills": "Bicia",
     "notFound": "Nie ma takiego potwora w statystykach",
+    "notFoundDescription": "Link może być nieaktualny albo potwór nie ma jeszcze bić w tym Lootlogu.",
+    "backToList": "Wróć do potworów",
     "noKillers": "Nikt jeszcze nie ubił tego potwora",
-    "filteredNoData": "Żaden członek nie pasuje do filtrów",
+    "filteredNoData": "Brak pasujących członków",
+    "filteredNoDataDescription": "Zmień kryteria albo wyczyść filtry, aby zobaczyć więcej członków.",
     "searchPlaceholder": "Szukaj członka",
     "totalTop": "Top {{limit}} członków"
   },
@@ -80,8 +86,11 @@
     "killCount": "Bicia",
     "searchPlaceholder": "Szukaj potwora",
     "noData": "Ten członek nie ma jeszcze żadnych bić",
-    "filteredNoData": "Żadne bicie nie pasuje do filtrów",
-    "notFound": "Nie ma takiego członka w tym Lootlogu"
+    "filteredNoData": "Brak pasujących potworów",
+    "filteredNoDataDescription": "Zmień kryteria albo wyczyść filtry, aby zobaczyć więcej potworów.",
+    "notFound": "Nie ma takiego członka w tym Lootlogu",
+    "notFoundDescription": "Link może być nieaktualny albo członek opuścił serwer Discord.",
+    "backToRanking": "Wróć do rankingu"
   },
   "level": "Poziom {{level}}",
   "timeline": {

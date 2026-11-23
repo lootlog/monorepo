@@ -1,116 +1,87 @@
 import { PLATFORM_ROLES } from "@lootlog/schema/platform-roles";
 import { Button } from "@lootlog/ui/components/button";
-import { Input } from "@lootlog/ui/components/input";
-import { Label } from "@lootlog/ui/components/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@lootlog/ui/components/select";
-import { buttonVariants } from "@lootlog/ui/lib/button-variants";
-import { Link } from "@tanstack/react-router";
+import { FilterPopover } from "@lootlog/ui/components/filter-popover";
+import { useNavigate } from "@tanstack/react-router";
+import { FilterBarRow } from "@/components/filter-bar-row";
+import { SearchForm } from "@/components/search-form";
 import { roleText, text } from "@/lib/messages";
-import type { UsersSearch } from "@/lib/users-search";
+import { toggleSearchValue } from "@/lib/search-params";
+import { hasUsersFilters, type UsersSearch } from "@/lib/users-search";
 
-const ANY = "any";
+const roleOptions = PLATFORM_ROLES.map((role) => ({
+  value: role,
+  label: roleText[role].name,
+}));
 
-const roleItems = [
-  { value: ANY, label: text.filterAnyRole },
-  ...PLATFORM_ROLES.map((role) => ({
-    value: role,
-    label: roleText[role].name,
-  })),
+const statusOptions = [
+  { value: "yes" as const, label: text.filterBanned },
+  { value: "no" as const, label: text.filterNotBanned },
 ];
 
-const statusItems = [
-  { value: ANY, label: text.filterAnyStatus },
-  { value: "yes", label: text.filterBanned },
-  { value: "no", label: text.filterNotBanned },
-];
-
-const auraItems = [
-  { value: ANY, label: text.filterAnyAura },
-  { value: "yes", label: text.filterWithAura },
-  { value: "no", label: text.filterWithoutAura },
+const auraOptions = [
+  { value: "yes" as const, label: text.filterWithAura },
+  { value: "no" as const, label: text.filterWithoutAura },
 ];
 
 export function UsersFilter({ search }: { search: UsersSearch }) {
+  const navigate = useNavigate();
+
+  const update = (patch: Partial<UsersSearch>) =>
+    void navigate({
+      to: "/",
+      search: { ...search, ...patch, page: undefined },
+    });
+
   return (
-    <form
-      key={[search.search, search.role, search.banned, search.aura].join("\n")}
-      method="get"
-      action="/"
-      role="search"
-      className="grid gap-3 rounded-lg border border-border bg-card p-4 md:grid-cols-3 md:items-end xl:grid-cols-[minmax(0,1fr)_16rem_10rem_10rem_auto]"
-    >
-      <div className="grid gap-1.5 md:col-span-3 xl:col-span-1">
-        <Label htmlFor="filter-search">{text.filterSearch}</Label>
-        <Input
-          id="filter-search"
-          name="search"
-          type="search"
-          maxLength={100}
-          defaultValue={search.search ?? ""}
+    <FilterBarRow
+      search={
+        <SearchForm
+          value={search.search}
           placeholder={text.filterSearchPlaceholder}
+          onSearch={(value) => update({ search: value })}
         />
-      </div>
-      <div className="grid gap-1.5">
-        <Label htmlFor="filter-role">{text.filterRole}</Label>
-        <Select name="role" items={roleItems} defaultValue={search.role ?? ANY}>
-          <SelectTrigger id="filter-role" className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {roleItems.map((item) => (
-              <SelectItem key={item.value} value={item.value}>
-                {item.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="grid gap-1.5">
-        <Label htmlFor="filter-banned">{text.filterStatus}</Label>
-        <Select
-          name="banned"
-          items={statusItems}
-          defaultValue={search.banned ?? ANY}
+      }
+    >
+      <FilterPopover
+        options={roleOptions}
+        value={search.role}
+        onValueChange={(role) =>
+          update({ role: toggleSearchValue(search.role, role) })
+        }
+        placeholder={text.filterRole}
+        showSearch={false}
+        active={search.role !== undefined}
+      />
+      <FilterPopover
+        options={statusOptions}
+        value={search.banned}
+        onValueChange={(banned) =>
+          update({ banned: toggleSearchValue(search.banned, banned) })
+        }
+        placeholder={text.filterStatus}
+        showSearch={false}
+        active={search.banned !== undefined}
+      />
+      <FilterPopover
+        options={auraOptions}
+        value={search.aura}
+        onValueChange={(aura) =>
+          update({ aura: toggleSearchValue(search.aura, aura) })
+        }
+        placeholder={text.filterAura}
+        showSearch={false}
+        active={search.aura !== undefined}
+      />
+      {hasUsersFilters(search) ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="xs"
+          onClick={() => void navigate({ to: "/", search: {} })}
         >
-          <SelectTrigger id="filter-banned" className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {statusItems.map((item) => (
-              <SelectItem key={item.value} value={item.value}>
-                {item.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="grid gap-1.5">
-        <Label htmlFor="filter-aura">{text.filterAura}</Label>
-        <Select name="aura" items={auraItems} defaultValue={search.aura ?? ANY}>
-          <SelectTrigger id="filter-aura" className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {auraItems.map((item) => (
-              <SelectItem key={item.value} value={item.value}>
-                {item.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="flex gap-2 md:col-span-3 xl:col-span-1">
-        <Button type="submit">{text.filterApply}</Button>
-        <Link to="/" className={buttonVariants({ variant: "outline" })}>
           {text.filterClear}
-        </Link>
-      </div>
-    </form>
+        </Button>
+      ) : null}
+    </FilterBarRow>
   );
 }

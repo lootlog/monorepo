@@ -1,23 +1,27 @@
 import { Link } from "@tanstack/react-router";
+import { ArrowLeft, BookOpen } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { BlogLayout } from "./blog-layout";
+import { Button } from "@lootlog/ui/components/button";
+import { PageState } from "@lootlog/ui/components/page-state";
+import { SiteLayout } from "@/components/site-layout";
 
 export function BlogNotFound() {
   const { t } = useTranslation();
 
   return (
-    <BlogLayout>
+    <SiteLayout>
       <div className="landing-container blog-not-found">
-        <h1 className="landing-heading-section text-balance">
-          {t("landing.blog.notFoundTitle")}
-        </h1>
-        <p className="landing-lead mt-5 text-[var(--broadcast-text-muted)]">
-          {t("landing.blog.notFoundDescription")}
-        </p>
-        <Link to="/blog" className="landing-action landing-action-solid mt-8">
-          {t("landing.blog.back")}
-        </Link>
+        <PageState
+          icon={<BookOpen />}
+          title={t("landing.blog.notFoundTitle")}
+          description={t("landing.blog.notFoundDescription")}
+        >
+          <Button nativeButton={false} render={<Link to="/blog" />}>
+            <ArrowLeft />
+            {t("landing.blog.back")}
+          </Button>
+        </PageState>
       </div>
-    </BlogLayout>
+    </SiteLayout>
   );
 }

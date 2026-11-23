@@ -1,21 +1,13 @@
 import { formatLevel } from "@lootlog/domain/profession";
-import { cn } from "cn";
 import { TextLink } from "@lootlog/ui/components/text-link";
 import type { TFunction } from "i18next";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Link } from "@tanstack/react-router";
-import { Map as MapIcon, MoreVertical, Pencil, Trash2 } from "lucide-react";
-import { Button } from "@lootlog/ui/components/button";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@lootlog/ui/components/dropdown-menu";
 import { HeroAvatar } from "../shared/hero-avatar";
 import type { EventHeroNpc, EventTimer } from "@/lib/api/event-types";
 import { HeroTimerDisplay } from "./hero-timer-display";
+import { EventHeroActionsMenu } from "./event-hero-actions-menu";
 import type { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { EMPTY_VALUE } from "@/constants/empty-value";
 import type { MyHeroScore } from "../../utils/my-hero-scores";
@@ -45,7 +37,7 @@ type CreateEventHeroesTableColumnsOptions = {
   t: TFunction;
 };
 
-const getTotalMapsCount = (hero: EventHeroNpc) =>
+export const getTotalMapsCount = (hero: EventHeroNpc) =>
   (hero.locations ?? []).reduce(
     (sum, location) => sum + location.maps.length,
     0,
@@ -69,9 +61,7 @@ export const createEventHeroesTableColumns = ({
       id: "hero",
       header: t("events.heroes.columns.hero"),
       cell: ({ row }) => {
-        const { hero, stats, score } = row.original;
-        const totalMapsCount = getTotalMapsCount(hero);
-        const killCount = stats?.killCount ?? 0;
+        const { hero, stats } = row.original;
 
         const npcLevel = hero.npcLvl
           ? formatLevel(hero.npcLvl, stats?.npcProf)
@@ -98,42 +88,13 @@ export const createEventHeroesTableColumns = ({
                   ) : null}
                 </span>
               </div>
-              <div
-                className={cn(
-                  "mt-1 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-2xs leading-none text-muted-foreground",
-                  showStandings && "lg:hidden",
-                )}
-              >
-                {!showStandings && (
-                  <>
-                    <span>
-                      {t("events.heroes.columns.idValue", {
-                        id: hero.npcId ?? EMPTY_VALUE,
-                      })}
-                    </span>
-                    <span className="lg:hidden" aria-hidden="true">
-                      •
-                    </span>
-                  </>
-                )}
-                <span className="lg:hidden">
-                  {t("events.maps.mapCount", { count: totalMapsCount })}
-                </span>
-                <span className="lg:hidden" aria-hidden="true">
-                  •
-                </span>
-                <span className="lg:hidden">
-                  {t("events.heroes.killCount", { count: killCount })}
-                </span>
-                {showStandings && score?.place !== undefined && (
-                  <>
-                    <span aria-hidden="true">•</span>
-                    <span className="font-medium text-foreground">
-                      {t("events.score.place", { place: score.place })}
-                    </span>
-                  </>
-                )}
-              </div>
+              {!showStandings && (
+                <div className="mt-1 text-2xs leading-none text-muted-foreground">
+                  {t("events.heroes.columns.idValue", {
+                    id: hero.npcId ?? EMPTY_VALUE,
+                  })}
+                </div>
+              )}
             </div>
           </TextLink>
         );
@@ -213,46 +174,16 @@ export const createEventHeroesTableColumns = ({
       header: () => (
         <span className="sr-only">{t("events.heroes.columns.actions")}</span>
       ),
-      cell: ({ row }) => {
-        const { hero } = row.original;
-
-        return (
-          <div className="flex justify-end">
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    className="shrink-0 text-muted-foreground"
-                    aria-label={t("events.heroes.actions")}
-                    title={t("events.heroes.actions")}
-                  >
-                    <MoreVertical className="size-4" />
-                  </Button>
-                }
-              />
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => onEditHero(hero)}>
-                  <Pencil className="size-4" />
-                  {t("events.heroes.edit")}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onManageMaps(hero)}>
-                  <MapIcon className="size-4" />
-                  {t("events.heroes.manageMaps")}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  variant="destructive"
-                  onClick={() => onRequestDeleteHero(hero)}
-                >
-                  <Trash2 className="size-4" />
-                  {t("events.heroes.deleteAction")}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        );
-      },
+      cell: ({ row }) => (
+        <div className="flex justify-end">
+          <EventHeroActionsMenu
+            hero={row.original.hero}
+            onEditHero={onEditHero}
+            onManageMaps={onManageMaps}
+            onRequestDeleteHero={onRequestDeleteHero}
+          />
+        </div>
+      ),
     });
   }
 

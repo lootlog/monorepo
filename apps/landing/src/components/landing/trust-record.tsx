@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { links } from "@/config/links";
+import { TextLink } from "@lootlog/ui/components/text-link";
 
 const facts = [
   { key: "free", icon: Coins, tone: "lime" },
@@ -46,10 +47,13 @@ export function TrustRecord() {
               <Code2 className="size-4" aria-hidden="true" />
               {t("landing.trust.github")}
             </a>
-            <a href={links.docs} className="landing-footer-link">
+            <TextLink
+              href={links.docs}
+              className="inline-flex min-h-11 items-center gap-2 text-sm"
+            >
               {t("landing.trust.docs")}
               <ArrowUpRight className="size-4" aria-hidden="true" />
-            </a>
+            </TextLink>
           </div>
         </div>
         <ul className="landing-facts">

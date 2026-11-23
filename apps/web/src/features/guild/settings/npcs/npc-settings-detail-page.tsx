@@ -1,6 +1,6 @@
 import { MetaItem } from "@/components/common/meta-item";
 import { ROUTES } from "@/config/routes";
-import { SettingsDetailNotFound } from "@/components/common/settings-detail-not-found";
+import { DetailNotFound } from "@/components/common/detail-not-found";
 import { SettingsListError } from "@/components/common/settings-list-error";
 import { NpcSettingsDetailSkeleton } from "./npc-settings-detail-skeleton";
 import { NPC_RARITY_CONFIG } from "@/features/guild/settings/npcs/npc-rarity-config";
@@ -32,7 +32,7 @@ export const NpcSettingsDetailPage = () => {
 
   if (config && !npc) {
     return (
-      <SettingsDetailNotFound
+      <DetailNotFound
         icon={Settings2}
         title={t("settings.npcs.npcNotFound")}
         description={t("settings.npcs.npcNotFoundDescription")}

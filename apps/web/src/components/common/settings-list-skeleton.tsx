@@ -1,5 +1,6 @@
 import { ListTileSkeleton } from "@/components/common/list-tile-skeleton";
-import { ListToolbarSkeleton } from "@/components/common/list-toolbar-skeleton";
+import { FilterBar } from "@/components/common/filter-bar";
+import { InlineSearchFieldSkeleton } from "@/components/common/inline-search-field-skeleton";
 import type { ComponentProps, ReactNode } from "react";
 import { SettingsTabSkeleton } from "@/components/common/settings-tab-skeleton";
 
@@ -15,7 +16,7 @@ export const SettingsListSkeleton = ({
   tiles = 8,
 }: SettingsListSkeletonProps) => (
   <SettingsTabSkeleton>
-    <ListToolbarSkeleton>{toolbar}</ListToolbarSkeleton>
+    <FilterBar search={<InlineSearchFieldSkeleton />}>{toolbar}</FilterBar>
     {Array.from({ length: tiles }, (_, index) => (
       <ListTileSkeleton key={index} {...tile} />
     ))}

@@ -45,7 +45,7 @@ export const ChatMessageBody: FC<ChatMessageBodyProps> = ({
       {messageBody && (
         <span
           className={cn("ll:select-text", {
-            "ll:text-gray-200": isMsgYesterday,
+            "ll:text-foreground/90": isMsgYesterday,
           })}
           style={{ color: messageBody.color }}
         >

@@ -1,4 +1,4 @@
-import { SettingsEmptyState } from "@/features/settings/components/shared/settings-empty-state";
+import { EmptyState } from "@/components/empty-state";
 import { IconButton } from "@/components/ui/icon-button";
 import { SettingsRow } from "@/features/settings/components/shared/settings-row";
 import { SettingsSection } from "@/features/settings/components/shared/settings-section";
@@ -122,7 +122,7 @@ export function SoundsSettingsTab() {
   if (isLoading) {
     return (
       <SettingsTabLayout>
-        <SettingsEmptyState>{t("settings.sounds.loading")}</SettingsEmptyState>
+        <EmptyState description={t("settings.sounds.loading")} />
       </SettingsTabLayout>
     );
   }

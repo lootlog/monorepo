@@ -8,7 +8,7 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { ArticleSection } from "@/components/article/article-section";
 import { PageBreadcrumbs } from "@/components/article/page-breadcrumbs";
 import { NpcPortrait } from "@/components/common/npc-portrait";
-import { PageHeader } from "@/components/common/page-header";
+import { PortalPageHeader } from "@lootlog/ui/components/portal-page-header";
 import { t } from "@/i18n/messages";
 import { WIKI_GAME_VERSION } from "@/lib/catalog-links";
 import { isHeroTrackersEvent } from "@/lib/hero-trackers";
@@ -16,6 +16,7 @@ import { prefetchPageQueries } from "@/lib/catalog-page-queries";
 import { eventSubtitle } from "@/lib/item-events";
 import { canonicalLink } from "@/lib/link-preview";
 import { formatNumber } from "@lootlog/domain/locale";
+import { Card } from "@lootlog/ui/components/card";
 
 const EVENTS_QUERY = { gameVersion: WIKI_GAME_VERSION } as const;
 
@@ -57,7 +58,7 @@ function EventsRoute() {
   return (
     <div className="flex flex-col gap-8 py-6">
       <PageBreadcrumbs items={[{ label: t("navigation.events") }]} />
-      <PageHeader
+      <PortalPageHeader
         title={t("navigation.events")}
         description={t("catalog.eventsDescription")}
       />
@@ -93,30 +94,32 @@ function EventsRoute() {
             <ul className={EVENT_GRID}>
               {events.map((event) => (
                 <li key={event.slug}>
-                  <Link
-                    to="/events/$eventSlug"
-                    params={{ eventSlug: event.slug }}
-                    className="group/event flex h-full flex-col gap-2 rounded-xl border border-border/50 bg-card p-2 outline-none transition-[border-color,background-color] duration-150 hover:border-border hover:bg-accent/30 focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none"
-                  >
-                    <NpcPortrait
-                      icon={event.boss?.icon}
-                      size="md"
-                      className="w-full"
-                    />
-                    <span className="flex min-w-0 flex-col gap-0.5 px-1 pb-1">
-                      <span className="truncate text-sm font-semibold text-foreground">
-                        {event.name}
+                  <Card variant="interactive" className="h-full gap-0 py-0">
+                    <Link
+                      to="/events/$eventSlug"
+                      params={{ eventSlug: event.slug }}
+                      className="group/event flex h-full flex-col gap-2 rounded-[inherit] p-2 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+                    >
+                      <NpcPortrait
+                        icon={event.boss?.icon}
+                        size="md"
+                        className="w-full"
+                      />
+                      <span className="flex min-w-0 flex-col gap-0.5 px-1 pb-1">
+                        <span className="truncate text-sm font-semibold text-foreground">
+                          {event.name}
+                        </span>
+                        <span className="truncate text-xs text-muted-foreground">
+                          {eventSubtitle(event.name, event.boss)}
+                        </span>
+                        <span className="text-xs text-muted-foreground tabular-nums">
+                          {t("catalog.eventItemCount", {
+                            count: formatNumber(event.itemCount),
+                          })}
+                        </span>
                       </span>
-                      <span className="truncate text-xs text-muted-foreground">
-                        {eventSubtitle(event.name, event.boss)}
-                      </span>
-                      <span className="text-xs text-muted-foreground tabular-nums">
-                        {t("catalog.eventItemCount", {
-                          count: formatNumber(event.itemCount),
-                        })}
-                      </span>
-                    </span>
-                  </Link>
+                    </Link>
+                  </Card>
                 </li>
               ))}
             </ul>

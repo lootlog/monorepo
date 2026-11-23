@@ -1,6 +1,7 @@
 import type { CatalogItemDtoOutput } from "@lootlog/client/catalog";
 import { ArticleSection } from "@/components/article/article-section";
-import { StatTiles } from "@/components/common/stat-tiles";
+import { StatsTile } from "@lootlog/ui/components/stats-tile";
+import { StatsTileGrid } from "@lootlog/ui/components/stats-tile-grid";
 import { t } from "@/i18n/messages";
 import {
   type ItemUpgrade,
@@ -29,19 +30,6 @@ export function ItemUpgradeSection({
   const effectiveLevel = upgradedItemLevel(item.lvl, upgrade.level);
   const bonuses = upgradeBonusOptions(item);
 
-  const tiles = [
-    { label: t("upgrade.itemLevel"), value: String(item.lvl) },
-    {
-      label: t("upgrade.effectiveLevel"),
-      value: String(effectiveLevel),
-      extra: effectiveLevel > item.lvl ? `+${effectiveLevel - item.lvl}` : null,
-    },
-    {
-      label: t("upgrade.changedStats"),
-      value: String(changes.length),
-    },
-  ];
-
   return (
     <div className="flex flex-col gap-8">
       <ArticleSection
@@ -60,7 +48,23 @@ export function ItemUpgradeSection({
             })
           }
         />
-        <StatTiles tiles={tiles} />
+        <StatsTileGrid framed aria-live="polite" className="sm:grid-cols-3">
+          <StatsTile label={t("upgrade.itemLevel")} value={item.lvl} />
+          <StatsTile
+            label={t("upgrade.effectiveLevel")}
+            value={
+              <>
+                {effectiveLevel}
+                {effectiveLevel > item.lvl ? (
+                  <span className="ml-1.5 text-xs font-semibold text-signal-ready">
+                    +{effectiveLevel - item.lvl}
+                  </span>
+                ) : null}
+              </>
+            }
+          />
+          <StatsTile label={t("upgrade.changedStats")} value={changes.length} />
+        </StatsTileGrid>
       </ArticleSection>
 
       <section

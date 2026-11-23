@@ -15,7 +15,7 @@ import {
   guildDocsTrashQueryOptions,
   invalidateGuildDocsQueries,
 } from "../docs-api";
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { MemberIdentity } from "@/components/common/member-identity";
 import { IconDialogHeader } from "@/components/common/icon-dialog-header";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
@@ -78,7 +78,7 @@ export const GuildDocTrashDialog = ({
         if (!isMutating) onOpenChange(nextOpen);
       }}
     >
-      <DialogContent className="flex max-h-[85vh] flex-col gap-0 overflow-hidden border-border/70 bg-background/95 p-0 shadow-2xl shadow-background/40  sm:max-w-2xl">
+      <DialogContent className="flex max-h-[85vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
         <IconDialogHeader
           icon={Trash2}
           tone="destructive"
@@ -132,10 +132,7 @@ export const GuildDocTrashDialog = ({
                         <h3 className="truncate text-sm font-semibold">
                           {document.title}
                         </h3>
-                        <Badge
-                          variant="outline"
-                          className="h-5 shrink-0 px-1.5 text-2xs"
-                        >
+                        <Badge variant="outline" size="sm" className="shrink-0">
                           {t("docs.list.version", {
                             version: document.version,
                           })}

@@ -17,7 +17,7 @@
       "searchPlaceholder": "Szukaj serwera...",
       "serversLabel": "Serwery Discord, którymi zarządzasz",
       "addToServer": "Dodaj do serwera {{name}}",
-      "loadError": "Nie udało się pobrać Twoich serwerów Discord.",
+      "loadError": "Nie udało się wczytać Twoich serwerów Discord.",
       "retry": "Spróbuj ponownie",
       "notAdmin": {
         "title": "Nie administrujesz serwerem?",

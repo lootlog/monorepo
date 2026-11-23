@@ -53,10 +53,10 @@ export const LOG_STATUS_CHIP_CLASS_NAMES: Record<
   LoggedAction["status"] | LoggedApiRequest["status"],
   string
 > = {
-  success: "ll:bg-emerald-500/15 ll:text-emerald-300",
+  success: "ll:bg-success/15 ll:text-success",
   partial: "ll:bg-white/10 ll:text-muted-foreground",
   error: "ll:bg-destructive/15 ll:text-destructive",
-  skipped: "ll:bg-amber-500/15 ll:text-amber-300",
+  skipped: "ll:bg-warning/15 ll:text-warning",
 };
 
 export const LOG_STATUS_CHIP_BASE_CLASS_NAME =

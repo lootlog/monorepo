@@ -2,7 +2,7 @@ import { Label } from "@lootlog/ui/components/label";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useTranslation } from "react-i18next";
 import { MapPin } from "lucide-react";
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import type { MapManageDialogProps } from "./use-map-manage-dialog";
 
 import { MapChip } from "./map-chip";

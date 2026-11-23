@@ -120,7 +120,7 @@ export const ScoringActionEditor = ({
       </div>
 
       {exceedsCap ? (
-        <p className="flex items-start gap-1.5 text-xs leading-snug text-amber-400">
+        <p className="flex items-start gap-1.5 text-xs leading-snug text-signal-timer">
           <TriangleAlert className="mt-px size-3.5 shrink-0" aria-hidden />
           {t("events.scoring.capWarning", {
             points: formatPoints(action.points),

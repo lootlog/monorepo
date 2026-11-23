@@ -26,6 +26,7 @@ import {
 } from "./components/color-utils";
 import { HiddenColorsList } from "./components/hidden-colors-list";
 import { TimerColorListItem } from "./components/timer-color-list-item";
+import { EmptyState } from "@/components/empty-state";
 
 type TimerColorSelection = {
   id: string;
@@ -315,9 +316,9 @@ export const TimersSettingsColors: FC = () => {
             )}
           </SettingsList>
         ) : (
-          <p className="ll:m-0 ll:px-2 ll:text-xs ll:text-muted-foreground">
-            {t("settings.timers.colors.customColorsEmpty")}
-          </p>
+          <EmptyState
+            description={t("settings.timers.colors.customColorsEmpty")}
+          />
         )}
       </SettingsSection>
     </SettingsTabLayout>

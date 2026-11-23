@@ -1,11 +1,13 @@
-import { EmptyState } from "@/components/common/empty-state";
-import { ListToolbar } from "@/components/common/list-toolbar";
-import { PillToggleGroup } from "@/components/common/pill-toggle-group";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
+import { ResultsSurface } from "@/components/common/results-surface";
+import { KillStatsSearch } from "@/components/common/kill-stats-search";
+import { ClearFiltersButton } from "@/components/common/clear-filters-button";
+import { FilterOptionCount } from "@/components/common/filter-option-count";
+import { FilterPopover } from "@lootlog/ui/components/filter-popover";
 import { SettingsListError } from "@/components/common/settings-list-error";
 import type { NotificationJobsResponseDto } from "@lootlog/client/main";
-import { Button } from "@lootlog/ui/components/button";
 import { groupBy } from "es-toolkit";
-import { History, SearchX } from "lucide-react";
+import { CircleDot, History, SearchX } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NotificationHistoryRow } from "./notification-history-row";
@@ -107,11 +109,10 @@ export const NotificationHistoryList = ({
             fill
             icon={SearchX}
             title={t("settings.notifications.empty.filteredHistory")}
-            action={
-              <Button type="button" variant="outline" onClick={clearFilters}>
-                {t("settings.notifications.clearFilter")}
-              </Button>
-            }
+            description={t(
+              "settings.notifications.empty.filteredHistoryDescription",
+            )}
+            action={<ClearFiltersButton onClear={clearFilters} />}
           />
         </div>
       );
@@ -128,29 +129,61 @@ export const NotificationHistoryList = ({
 
   return (
     <>
-      <ListToolbar
-        search={search}
-        onSearchChange={setSearch}
-        placeholder={t("settings.notifications.historyFilterPlaceholder")}
-        label={t("settings.notifications.historyFilterLabel")}
-        clearLabel={t("settings.notifications.clearFilter")}
-        disabled={isLoading}
-      >
-        {statusGroups.length > 1 && (
-          <PillToggleGroup
-            multiple
-            label={t("settings.notifications.historyStatusesLabel")}
-            value={activeStatuses}
-            onValueChange={setSelectedStatuses}
-            options={statusGroups.map(([status, jobs]) => ({
-              value: status,
-              label: getJobStatusLabel(status, t),
-              count: jobs.length,
-            }))}
+      <ResultsSurface
+        search={
+          <KillStatsSearch
+            value={search}
+            placeholder={t("settings.notifications.historyFilterPlaceholder")}
+            onChange={setSearch}
           />
-        )}
-      </ListToolbar>
-      {renderContent()}
+        }
+        filters={
+          statusGroups.length > 1 && (
+            <FilterPopover
+              options={statusGroups.map(([status, jobs]) => ({
+                value: status,
+                label: getJobStatusLabel(status, t),
+                render: () => (
+                  <FilterOptionCount
+                    label={getJobStatusLabel(status, t)}
+                    count={jobs.length}
+                  />
+                ),
+              }))}
+              value={activeStatuses}
+              onValueChange={(status) =>
+                setSelectedStatuses(
+                  activeStatuses.includes(status)
+                    ? activeStatuses.filter((selected) => selected !== status)
+                    : [...activeStatuses, status],
+                )
+              }
+              placeholder={t("settings.notifications.historyStatusesLabel")}
+              icon={CircleDot}
+              multiSelect
+              showSearch={false}
+              renderTriggerLabel={(count) =>
+                count > 0
+                  ? t("common.filters.selectedCount", { count })
+                  : t("settings.notifications.historyStatusesLabel")
+              }
+            />
+          )
+        }
+        filtersLabel={t("settings.notifications.historyFilterLabel")}
+        chips={activeStatuses.map((status) => ({
+          id: status,
+          label: getJobStatusLabel(status, t),
+          onRemove: () =>
+            setSelectedStatuses(
+              activeStatuses.filter((selected) => selected !== status),
+            ),
+        }))}
+        clearFiltersLabel={t("common.actions.clearFilters")}
+        onClearFilters={clearFilters}
+      >
+        {renderContent()}
+      </ResultsSurface>
       <NotificationJobDetailDialog
         job={selectedJob}
         onOpenChange={(open) => {

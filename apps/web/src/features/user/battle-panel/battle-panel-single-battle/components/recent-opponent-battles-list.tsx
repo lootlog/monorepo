@@ -1,4 +1,4 @@
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { BattleResultStatus } from "@/components/battle/battle-result-status";
 import { getPlayerVsPlayerBattleResult } from "@/components/battle/utils/battle-result-presentation";
 import { BattlePanelPvpWarriorSummary } from "@/features/user/battle-panel/components/battle-panel-pvp-warrior-summary";

@@ -7,7 +7,7 @@ export const NotificationsPageSkeleton = () => (
     actions={
       <>
         <Skeleton className="h-3 w-20" />
-        <Skeleton className="h-8 w-28 rounded-lg" />
+        <Skeleton className="h-8 w-28 rounded-control" />
         <Skeleton className="size-8 rounded-lg" />
       </>
     }

@@ -59,7 +59,7 @@ export const ChatNpcBubble: FC<ChatNpcBubbleProps> = ({
             <span
               className={cn(
                 "ll:min-w-0 ll:max-w-full ll:truncate ll:text-[length:var(--ll-chat-meta-font-size)] ll:leading-[var(--ll-chat-meta-line-height)] ll:font-semibold",
-                { "ll:text-gray-100": isMsgYesterday },
+                { "ll:text-foreground": isMsgYesterday },
               )}
               style={{ color: textColor }}
             >
@@ -68,8 +68,8 @@ export const ChatNpcBubble: FC<ChatNpcBubbleProps> = ({
             {appearance.showNpcLevel ? (
               <span
                 className={cn(
-                  "ll:shrink-0 ll:select-text ll:text-[length:var(--ll-chat-detail-font-size)] ll:leading-[var(--ll-chat-detail-line-height)] ll:text-gray-300",
-                  { "ll:text-gray-300": isMsgYesterday },
+                  "ll:shrink-0 ll:select-text ll:text-[length:var(--ll-chat-detail-font-size)] ll:leading-[var(--ll-chat-detail-line-height)] ll:text-foreground/80",
+                  { "ll:text-foreground/80": isMsgYesterday },
                 )}
               >
                 ({npc.lvl}
@@ -84,9 +84,9 @@ export const ChatNpcBubble: FC<ChatNpcBubbleProps> = ({
         (npcLocationName || npcCoordinatesLabel) ? (
           <div
             className={cn(
-              "ll:w-full ll:min-w-0 ll:max-w-full ll:select-text ll:whitespace-normal ll:break-words ll:text-[length:var(--ll-chat-detail-font-size)] ll:leading-[var(--ll-chat-detail-line-height)] ll:text-gray-400",
+              "ll:w-full ll:min-w-0 ll:max-w-full ll:select-text ll:whitespace-normal ll:break-words ll:text-[length:var(--ll-chat-detail-font-size)] ll:leading-[var(--ll-chat-detail-line-height)] ll:text-muted-foreground",
               appearance.npcLayout === "inline" && "ll:w-auto ll:flex-none",
-              { "ll:text-gray-400": isMsgYesterday },
+              { "ll:text-muted-foreground": isMsgYesterday },
             )}
           >
             {npcLocationName ? <span>{npcLocationName}</span> : null}

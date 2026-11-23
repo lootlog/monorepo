@@ -14,15 +14,12 @@ import {
 } from "@lootlog/ui/components/drawer";
 import { Sheet, SheetContent, SheetTitle } from "@lootlog/ui/components/sheet";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
-import { useMaxWidth } from "@lootlog/ui/hooks/use-max-width";
-import { useLocalStorage } from "usehooks-ts";
+import { useLocalStorage, useMediaQuery } from "usehooks-ts";
+import { RESULTS_TABLE_MEDIA_QUERY } from "@/components/common/page-sticky-table-header";
 import { cn } from "cn";
 import { LootDetailsDialog } from "@/features/guild/loots-list/components/loots-list/loot-details-dialog";
 import { useTranslation } from "react-i18next";
-import {
-  LOOTS_COMPACT_FILTERS_BREAKPOINT,
-  LOOTS_FILTERS_OPEN_KEY,
-} from "./loots-list-layout";
+import { LOOTS_FILTERS_OPEN_KEY } from "./loots-list-layout";
 
 export const LootsListPage: React.FC = () => {
   const { t } = useTranslation();
@@ -41,7 +38,7 @@ export const LootsListPage: React.FC = () => {
 
   const [focusHandoff, setFocusHandoff] = useState<"panel" | "rail">();
   const isMobile = useIsMobile();
-  const usesOverlayFilters = useMaxWidth(LOOTS_COMPACT_FILTERS_BREAKPOINT);
+  const usesOverlayFilters = !useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
   const usesSideSheet = usesOverlayFilters && !isMobile;
   const isPanelDocked = !usesOverlayFilters && isFiltersOpen;
 
@@ -105,6 +102,7 @@ export const LootsListPage: React.FC = () => {
         </Sheet>
       )}
 
+      <h1 className="sr-only">{t("common.breadcrumbs.lootsList")}</h1>
       <GuildWorldHeaderSwitcher />
 
       <div className="flex h-full w-full overflow-x-clip md:overflow-hidden">

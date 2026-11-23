@@ -28,10 +28,7 @@ export const LootCommentForm = ({
       }}
     >
       <Textarea
-        className={cn(
-          "min-h-20 w-full resize-y rounded-xl border-border bg-background px-3 py-2.5 text-foreground placeholder:text-muted-foreground focus:border-primary/60",
-          textareaClassName,
-        )}
+        className={cn("min-h-20 resize-y", textareaClassName)}
         placeholder={t("loots.details.comments.placeholder")}
         maxLength={LOOT_COMMENT_MAX_LENGTH}
         value={value}

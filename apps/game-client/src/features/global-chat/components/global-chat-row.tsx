@@ -122,7 +122,7 @@ export const GlobalChatRow = memo(function GlobalChatRow({
           <span
             data-slot="bubble"
             className={cn("ll:whitespace-pre-wrap ll:select-text", {
-              "ll:text-gray-200": isMsgYesterday,
+              "ll:text-foreground/90": isMsgYesterday,
             })}
             style={{ overflowWrap: "anywhere", wordBreak: "normal" }}
           >

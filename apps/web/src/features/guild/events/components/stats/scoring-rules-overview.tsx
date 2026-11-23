@@ -1,5 +1,5 @@
 import { MARGONEM_TIME_ZONE } from "@lootlog/datetime";
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import type { EventScoringRules } from "@lootlog/domain/scoring";
 import type { TFunction } from "i18next";
 import { Calculator } from "lucide-react";

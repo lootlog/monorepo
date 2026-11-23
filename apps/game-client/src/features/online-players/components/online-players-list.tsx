@@ -23,7 +23,6 @@ import {
 } from "@/features/online-players/online-players-list.helpers";
 import { useShallow } from "zustand/react/shallow";
 import { AsyncContent } from "@/components/async-content";
-import { cn } from "cn";
 import { ConnectionStatusStrip } from "@/components/connection-status-strip";
 import { toolbarStripClassName } from "@/components/ui/toolbar-strip";
 import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
@@ -317,7 +316,7 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
       <div className="ll:flex ll:flex-col ll:h-full ll:overflow-hidden ll:pt-1">
         {filtersVisible && (
           <>
-            <div className={cn(toolbarStripClassName, "ll:-mt-px")}>
+            <div className={toolbarStripClassName}>
               <GuildSwitcher />
             </div>
             {allowWorldSelection && (

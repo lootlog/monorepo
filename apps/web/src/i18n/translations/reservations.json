@@ -1,14 +1,13 @@
 {
-  "loadError": "Nie udało się pobrać rezerwacji.",
+  "loadError": "Nie udało się wczytać rezerwacji.",
   "filterPlaceholder": "Filtruj po nazwie expowiska…",
-  "filterLabel": "Filtruj expowiska po nazwie",
-  "clearSearch": "Wyczyść wyszukiwanie",
   "view": {
     "list": "Widok listy",
     "grid": "Widok siatki"
   },
   "filters": {
     "label": "Filtry expowisk",
+    "chip": "Expowiska",
     "all": "Wszystkie",
     "available": "Wolne teraz",
     "pinned": "Przypięte",
@@ -18,7 +17,7 @@
     "error": "Nie udało się zmienić przypięcia expowiska."
   },
   "error": {
-    "title": "Nie udało się pobrać expowisk",
+    "title": "Nie udało się wczytać expowisk.",
     "description": "Sprawdź połączenie i spróbuj ponownie."
   },
   "card": {
@@ -36,7 +35,6 @@
   "empty": {
     "title": "Brak expowisk",
     "description": "Brak dostępnych expowisk do wyświetlenia.",
-    "searchDescription": "Spróbuj zmienić wyszukiwaną frazę.",
     "noResults": "Brak pasujących expowisk",
     "noResultsDescription": "Zmień kryteria albo wyczyść filtry, aby zobaczyć więcej expowisk."
   },
@@ -119,7 +117,7 @@
       "addAt": "Dodaj rezerwację o {{time}}"
     },
     "error": {
-      "title": "Nie udało się pobrać kalendarza",
+      "title": "Nie udało się wczytać kalendarza.",
       "description": "Spróbuj ponownie za chwilę. Twoje istniejące rezerwacje są bezpieczne."
     },
     "nearestFreeSlot": {
@@ -166,7 +164,8 @@
     "emptyUpcoming": "Nie masz nadchodzących rezerwacji",
     "emptyHistory": "Brak rezerwacji w ostatnich 30 dniach",
     "emptyDescription": "Nowe rezerwacje pojawią się tutaj automatycznie.",
-    "emptyFiltered": "Żadna rezerwacja nie pasuje do filtra",
+    "emptyFiltered": "Brak pasujących rezerwacji",
+    "emptyFilteredDescription": "Zmień kryteria albo wyczyść filtry, aby zobaczyć więcej rezerwacji.",
     "filterPlaceholder": "Filtruj po expowisku lub Lootlogu…",
     "filterLabel": "Filtruj rezerwacje po expowisku lub Lootlogu",
     "cancel": "Anuluj rezerwację na {{spot}}",

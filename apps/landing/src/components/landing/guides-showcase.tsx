@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { BlogGuideCard } from "@/components/blog/blog-guide-card";
 import { SectionHead } from "@/components/landing/section-head";
 import { blogPosts } from "@/config/blog";
+import { TextLink } from "@lootlog/ui/components/text-link";
 
 export function GuidesShowcase() {
   const { t } = useTranslation();
@@ -21,10 +22,13 @@ export function GuidesShowcase() {
           title={t("landing.guides.title")}
           description={t("landing.guides.description")}
         >
-          <Link to="/blog" className="landing-footer-link mt-3">
+          <TextLink
+            render={<Link to="/blog" />}
+            className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm"
+          >
             {t("landing.blog.back")}
             <ArrowRight className="size-4" aria-hidden="true" />
-          </Link>
+          </TextLink>
         </SectionHead>
         <ul className="blog-index mt-12 sm:mt-16">
           {blogPosts.map((post) => (

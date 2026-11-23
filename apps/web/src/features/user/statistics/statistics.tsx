@@ -8,7 +8,7 @@ import {
 } from "@lootlog/client/main";
 import { FilterBar } from "@/components/common/filter-bar";
 import { PageTabsLayout } from "@/components/layout/page-tabs-layout";
-import { StatisticsQueryState } from "./statistics-query-state";
+import { StatisticsQueryState } from "@/components/common/statistics-query-state";
 import { STATISTICS_TABS, type StatisticsSearch } from "./statistics-search";
 import { useStatisticsSortFilter } from "./use-statistics-sort";
 import { StatisticsBarSearch } from "./statistics-bar-search";

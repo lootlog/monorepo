@@ -1,5 +1,5 @@
 import { getRankingSelection } from "./event-ranking-selection";
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";

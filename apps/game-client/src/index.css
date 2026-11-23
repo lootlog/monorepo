@@ -6,8 +6,6 @@
 @import "./motion.css";
 @source "src/**/*.{ts,tsx}";
 
-@variant dark (&:where(#lootlog-root.dark-theme, .ll-theme-boundary.dark-theme, #lootlog-root.dark-theme *, .ll-theme-boundary.dark-theme *));
-
 /*
  * shadcn's versions of these variants also accept Radix's `data-state`
  * spelling. Two alternatives make a stacked variant (`data-active:hover:`)
@@ -59,6 +57,40 @@
   background-color: transparent;
 }
 
+#lootlog-root > * {
+  pointer-events: auto;
+}
+
+/* Matches NI behaviour */
+.si #lootlog-root *,
+.si .ll-theme-boundary * {
+  user-select: none;
+}
+
+#lootlog-root .ll-selectable-text,
+.ll-theme-boundary .ll-selectable-text,
+#lootlog-root .ll-selectable-text *,
+.ll-theme-boundary .ll-selectable-text * {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* Needed because SI has * { cursor: default } */
+.si .ll-custom-cursor-pointer * {
+  cursor: inherit;
+}
+
+.ll-reduced-motion *,
+.ll-reduced-motion *::before,
+.ll-reduced-motion *::after {
+  scroll-behavior: auto !important;
+  transition-delay: 0ms !important;
+  transition-duration: 0ms !important;
+  animation-delay: 0ms !important;
+  animation-duration: 0ms !important;
+  animation-iteration-count: 1 !important;
+}
+
 /*
  * Base UI hides the native scrollbar of a ScrollArea viewport with a hoisted
  * inline <style>, which the game page does not always apply. Without it the
@@ -90,6 +122,16 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-warning: var(--warning);
+  --color-success: var(--success);
+  --color-link: var(--link);
+  --color-separator: var(--separator);
+  --color-unread: var(--unread);
+  --color-game-heading: var(--game-heading);
+  --color-separator-subtle: var(--separator-subtle);
+  --color-gathering: var(--gathering);
+  --color-gathering-joined: var(--gathering-joined);
+  --color-gathering-muted-foreground: var(--gathering-muted-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -104,9 +146,10 @@
 }
 
 /*
- * Neutral shadcn defaults (https://ui.shadcn.com/docs/theming), scoped to the
- * Lootlog roots instead of :root. Spacing and radius are pinned in px so the
- * primitives keep the shadcn sizes regardless of the game's <html> font-size.
+ * The dark neutral shadcn palette (https://ui.shadcn.com/docs/theming), scoped
+ * to the Lootlog roots instead of :root. Lootlog always renders dark inside the
+ * game. Spacing and radius are pinned in px so the primitives keep the shadcn
+ * sizes regardless of the game's <html> font-size.
  */
 #lootlog-root,
 .ll-theme-boundary {
@@ -118,30 +161,6 @@
   --ll-text-xl: 20px;
   --ll-text-2xl: 24px;
   --radius: 10px;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  /* Marks the active item of a picker, tab strip or similar selection. */
-  --selected: oklch(0.145 0 0);
-}
-
-#lootlog-root.dark-theme,
-.ll-theme-boundary.dark-theme {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -157,34 +176,21 @@
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
+  --warning: oklch(0.879 0.169 91.605);
+  --success: oklch(0.792 0.209 151.711);
+  --link: oklch(0.809 0.105 251.813);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
-  --selected: oklch(1 0 0);
-}
-
-body.si #lootlog-root *,
-body.si .ll-theme-boundary * {
-  /* Matches NI behaviour */
-  user-select: none;
-}
-
-body #lootlog-root [data-chat-viewport],
-body .ll-theme-boundary [data-chat-viewport],
-body #lootlog-root [data-chat-viewport] *,
-body .ll-theme-boundary [data-chat-viewport] * {
-  -webkit-user-select: text;
-  user-select: text;
-}
-
-body.si #lootlog-root .ll-custom-cursor-pointer *,
-body.si .ll-theme-boundary .ll-custom-cursor-pointer * {
-  /* Needed because SI has * { cursor: default } */
-  cursor: inherit;
-}
-
-#lootlog-root > * {
-  pointer-events: auto;
+  --unread: oklch(0.577 0.245 27.325);
+  --game-heading: #f5f5dc;
+  --separator: oklch(0.707 0.022 261.325 / 40%);
+  --separator-subtle: oklch(0.707 0.022 261.325 / 20%);
+  --gathering: rgb(40 16 63 / 92%);
+  --gathering-joined: #183524;
+  --gathering-muted-foreground: #b7adbe;
+  /* Marks the active item of a picker, tab strip or similar selection. */
+  --selected: oklch(0.707 0.165 254.624);
 }
 
 #lootlog-root,
@@ -243,21 +249,7 @@ body.si .ll-theme-boundary .ll-custom-cursor-pointer * {
   will-change: opacity, transform;
 }
 
-#lootlog-root.ll-reduced-motion *,
-.ll-theme-boundary.ll-reduced-motion *,
-#lootlog-root.ll-reduced-motion *::before,
-.ll-theme-boundary.ll-reduced-motion *::before,
-#lootlog-root.ll-reduced-motion *::after,
-.ll-theme-boundary.ll-reduced-motion *::after {
-  scroll-behavior: auto !important;
-  transition-delay: 0ms !important;
-  transition-duration: 0ms !important;
-  animation-delay: 0ms !important;
-  animation-duration: 0ms !important;
-  animation-iteration-count: 1 !important;
-}
-
-:is(#lootlog-root, .ll-theme-boundary).ll-reduced-motion .ll\:animate-spin {
+.ll-reduced-motion .ll\:animate-spin {
   animation-duration: 1s !important;
   animation-iteration-count: infinite !important;
 }
@@ -334,12 +326,14 @@ body.si .ll-theme-boundary .ll-custom-cursor-pointer * {
 
 /* Lootlog UI animations match host portals too (timers under the bag),
    which render outside #lootlog-root inside an .ll-theme-boundary. */
-:is(#lootlog-root, .ll-theme-boundary) .ll-count-bump {
+#lootlog-root .ll-count-bump,
+.ll-theme-boundary .ll-count-bump {
   animation: ll-bump 340ms var(--ll-ease-enter) both;
   transform-origin: right center;
 }
 
-:is(#lootlog-root, .ll-theme-boundary) .ll-icon-bump {
+#lootlog-root .ll-icon-bump,
+.ll-theme-boundary .ll-icon-bump {
   animation: ll-bump 340ms var(--ll-ease-enter) both;
   transform-origin: center;
 }
@@ -356,7 +350,8 @@ body.si .ll-theme-boundary .ll-custom-cursor-pointer * {
   }
 }
 
-:is(#lootlog-root, .ll-theme-boundary) .ll-pop-in {
+#lootlog-root .ll-pop-in,
+.ll-theme-boundary .ll-pop-in {
   animation: ll-pop-in var(--ll-transition-duration-medium)
     var(--ll-ease-overshoot) both;
 }
@@ -380,11 +375,12 @@ body.si .ll-theme-boundary .ll-custom-cursor-pointer * {
   }
 }
 
-:is(#lootlog-root, .ll-theme-boundary) .ll-submission-dot {
+#lootlog-root .ll-submission-dot,
+.ll-theme-boundary .ll-submission-dot {
   animation: ll-submission-dot 1200ms var(--ll-ease-enter) both;
 }
 
-:is(#lootlog-root, .ll-theme-boundary).ll-reduced-motion .ll-submission-dot {
+.ll-reduced-motion .ll-submission-dot {
   animation: none !important;
 }
 
@@ -400,7 +396,8 @@ body.si .ll-theme-boundary .ll-custom-cursor-pointer * {
   }
 }
 
-:is(#lootlog-root, .ll-theme-boundary) .ll-connection-recovered {
+#lootlog-root .ll-connection-recovered,
+.ll-theme-boundary .ll-connection-recovered {
   animation: ll-connection-recovered 700ms ease-out both;
 }
 
@@ -412,7 +409,8 @@ body.si .ll-theme-boundary .ll-custom-cursor-pointer * {
   }
 }
 
-:is(#lootlog-root, .ll-theme-boundary) .ll-notice-exit {
+#lootlog-root .ll-notice-exit,
+.ll-theme-boundary .ll-notice-exit {
   animation: ll-notice-exit var(--ll-transition-duration-short)
     var(--ll-ease-exit) both;
 }
@@ -448,12 +446,14 @@ body.si .ll-theme-boundary .ll-custom-cursor-pointer * {
   }
 }
 
-:is(#lootlog-root, .ll-theme-boundary) .ll-timer-standing {
+#lootlog-root .ll-timer-standing,
+.ll-theme-boundary .ll-timer-standing {
   position: relative;
   isolation: isolate;
 }
 
-:is(#lootlog-root, .ll-theme-boundary) .ll-timer-standing::after {
+#lootlog-root .ll-timer-standing::after,
+.ll-theme-boundary .ll-timer-standing::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -478,7 +478,8 @@ body.si .ll-theme-boundary .ll-custom-cursor-pointer * {
   }
 }
 
-:is(#lootlog-root, .ll-theme-boundary) .ll-timer-phase-flash {
+#lootlog-root .ll-timer-phase-flash,
+.ll-theme-boundary .ll-timer-phase-flash {
   animation: ll-timer-phase-flash 900ms ease-out both;
 }
 
@@ -526,21 +527,25 @@ body.si .ll-theme-boundary .ll-custom-cursor-pointer * {
   }
 }
 
-:is(#lootlog-root, .ll-theme-boundary) .ll-row-enter {
+#lootlog-root .ll-row-enter,
+.ll-theme-boundary .ll-row-enter {
   animation: ll-row-enter var(--ll-transition-duration-long)
     var(--ll-ease-enter) both;
 }
 
-:is(#lootlog-root, .ll-theme-boundary) .ll-row-settle {
+#lootlog-root .ll-row-settle,
+.ll-theme-boundary .ll-row-settle {
   animation: ll-row-settle var(--ll-transition-duration-long)
     var(--ll-ease-enter) both;
 }
 
-:is(#lootlog-root, .ll-theme-boundary) .ll-row-arrival-tint {
+#lootlog-root .ll-row-arrival-tint,
+.ll-theme-boundary .ll-row-arrival-tint {
   animation: ll-row-arrival-tint 760ms ease-out both;
 }
 
-:is(#lootlog-root, .ll-theme-boundary) .ll-row-arrival-sheen {
+#lootlog-root .ll-row-arrival-sheen,
+.ll-theme-boundary .ll-row-arrival-sheen {
   animation: ll-row-arrival-sheen 680ms var(--ll-ease-in-out) 80ms both;
 }
 
@@ -639,7 +644,8 @@ body.si .ll-theme-boundary .ll-custom-cursor-pointer * {
   contain-intrinsic-block-size: 40px;
 }
 
-:is(#lootlog-root, .ll-theme-boundary) .ll-custom-cursor-pointer {
+#lootlog-root .ll-custom-cursor-pointer,
+.ll-theme-boundary .ll-custom-cursor-pointer {
   cursor: pointer;
 }
 
@@ -669,26 +675,32 @@ body.ll-mounted .right-main-column-wrapper > .bottom-wrapper > .banners {
   display: none !important;
 }
 
-:is(#lootlog-root, .ll-theme-boundary)
-  .input-no-spinner::-webkit-inner-spin-button,
-:is(#lootlog-root, .ll-theme-boundary)
-  .input-no-spinner::-webkit-outer-spin-button {
+#lootlog-root .input-no-spinner::-webkit-inner-spin-button,
+.ll-theme-boundary .input-no-spinner::-webkit-inner-spin-button,
+#lootlog-root .input-no-spinner::-webkit-outer-spin-button,
+.ll-theme-boundary .input-no-spinner::-webkit-outer-spin-button {
   -webkit-appearance: none;
   appearance: none;
   margin: 0;
 }
 
-:is(#lootlog-root, .ll-theme-boundary) .input-no-spinner {
+#lootlog-root .input-no-spinner,
+.ll-theme-boundary .input-no-spinner {
   -moz-appearance: textfield;
   appearance: textfield;
 }
 
-:is(#lootlog-root, .ll-theme-boundary) .ll-action-menu .ll-action-menu-item {
+#lootlog-root .ll-action-menu .ll-action-menu-item,
+.ll-theme-boundary .ll-action-menu .ll-action-menu-item {
   position: relative;
   border-radius: 0;
 }
 
-:is(#lootlog-root, .ll-theme-boundary)
+#lootlog-root
+  .ll-action-menu
+  .ll-action-menu-item
+  ~ .ll-action-menu-item::before,
+.ll-theme-boundary
   .ll-action-menu
   .ll-action-menu-item
   ~ .ll-action-menu-item::before {
@@ -696,24 +708,6 @@ body.ll-mounted .right-main-column-wrapper > .bottom-wrapper > .banners {
   position: absolute;
   inset: 0 0 auto;
   border: 0;
-  border-top: 1px solid
-    color-mix(in oklab, var(--ll-color-gray-400) 40%, transparent);
+  border-top: 1px solid var(--separator);
   pointer-events: none;
-}
-
-#lootlog-root .ll-party-gathering-card,
-#lootlog-root ul[data-organizer="true"] {
-  background: rgb(40 16 63 / 92%);
-}
-#lootlog-root .ll-party-gathering-card[data-joined="true"] {
-  background: #183524;
-}
-
-#lootlog-root .ll-party-gathering-card .ll\:text-muted-foreground {
-  color: #999;
-  line-height: 15px;
-}
-#lootlog-root .ll-party-gathering-card .ll\:text-inherit {
-  color: #e5e5e5;
-  line-height: 14px;
 }

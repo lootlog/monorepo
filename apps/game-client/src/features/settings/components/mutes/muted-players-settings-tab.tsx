@@ -29,10 +29,8 @@ export const MutedPlayersSettingsTab = () => {
       getName={(player) => player.name}
       getSearchValues={(player) => [player.name]}
       renderLeading={(player) => (
-        <Avatar className="ll:size-6 ll:rounded-sm ll:bg-black/20">
-          <AvatarFallback className="ll:flex ll:h-full ll:w-full ll:items-center ll:justify-center ll:rounded-sm ll:text-[11px] ll:font-semibold">
-            {player.name.charAt(0).toUpperCase()}
-          </AvatarFallback>
+        <Avatar aria-hidden className="ll:size-6 ll:text-[11px]">
+          <AvatarFallback>{player.name.charAt(0).toUpperCase()}</AvatarFallback>
         </Avatar>
       )}
       onRemove={(player) =>

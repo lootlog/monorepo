@@ -1,7 +1,7 @@
 import { DialogHeader, DialogTitle } from "@lootlog/ui/components/dialog";
 import { usePrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-motion";
 import { WatchableItemTile } from "@/components/tiles/watchable-item-tile";
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { LoadingSlot } from "@/components/common/loading-slot";
 import { RetryButton } from "@/components/common/retry-button";
 import { Ban, CircleAlert } from "lucide-react";

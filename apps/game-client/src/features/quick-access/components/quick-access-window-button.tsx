@@ -1,3 +1,5 @@
+import { cn } from "cn";
+import { COUNT_BADGE_CLASS_NAME } from "@/components/count-badge";
 import type { FC, ReactNode } from "react";
 import { QuickAccessButton } from "@/features/quick-access/components/quick-access-button";
 import { useCountBump } from "@/hooks/ui/use-count-bump";
@@ -39,7 +41,10 @@ export const QuickAccessWindowButton: FC<QuickAccessWindowButtonProps> = ({
               ref={badgeRef}
               key={badge.count}
               aria-hidden
-              className="ll:absolute ll:-top-1 ll:-right-2 ll:min-w-3.5 ll:rounded-full ll:bg-amber-400 ll:px-0.5 ll:text-center ll:text-[9px] ll:font-bold ll:leading-3.5 ll:text-amber-950 ll:tabular-nums ll:ring-1 ll:ring-black/80"
+              className={cn(
+                COUNT_BADGE_CLASS_NAME,
+                "ll:absolute ll:-top-1 ll:-right-2 ll:ring-1 ll:ring-black/80",
+              )}
             >
               {badge.count > 99 ? "99+" : badge.count}
             </span>

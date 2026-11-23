@@ -1,4 +1,4 @@
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import type { TOptions } from "i18next";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -180,7 +180,7 @@ export const KillParticipantRow = ({
               {totalAfkSeconds > 0 ? (
                 <>
                   <span aria-hidden="true">·</span>
-                  <span className="text-amber-400">
+                  <span className="text-signal-timer">
                     {t("events.kills.afkTime")}:{" "}
                     {formatDuration(totalAfkSeconds, "human")}
                   </span>
@@ -195,7 +195,7 @@ export const KillParticipantRow = ({
         </span>
         <span className="hidden text-right text-sm tabular-nums text-muted-foreground lg:block">
           {totalAfkSeconds > 0 ? (
-            <span className="text-amber-400">
+            <span className="text-signal-timer">
               {formatDuration(totalAfkSeconds, "human")}
             </span>
           ) : (
@@ -209,7 +209,7 @@ export const KillParticipantRow = ({
               <TooltipTrigger
                 render={
                   <span
-                    className="inline-flex size-6 shrink-0 items-center justify-center text-amber-400"
+                    className="inline-flex size-6 shrink-0 items-center justify-center text-signal-timer"
                     tabIndex={0}
                     aria-label={t("events.points.modified")}
                   >

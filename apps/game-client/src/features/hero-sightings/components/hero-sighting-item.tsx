@@ -99,7 +99,7 @@ export function HeroSightingItem({
       )}
     >
       <span className="ll:flex ll:min-w-0 ll:items-baseline ll:justify-between ll:gap-2">
-        <TruncatedText className="ll:text-white">
+        <TruncatedText className="ll:text-foreground">
           {row.hero.name}
           <span className="ll:ml-1 ll:font-normal ll:text-muted-foreground">
             ({formatLevel(row.hero.lvl, row.hero.prof)})

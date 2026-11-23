@@ -115,7 +115,7 @@ export const CommandOverlay: FC<CommandOverlayProps> = ({
     >
       <div
         className={cn(
-          "ll:relative ll:flex ll:flex-col ll:rounded-lg ll:border ll:border-white/50 ll:bg-black ll:text-white ll:shadow-[0_18px_48px_rgba(0,0,0,0.7),0_0_0_1px_rgba(0,0,0,0.8)]",
+          "ll:relative ll:flex ll:flex-col ll:rounded-lg ll:border ll:border-white/50 ll:bg-black ll:text-foreground ll:shadow-[0_18px_48px_rgba(0,0,0,0.7),0_0_0_1px_rgba(0,0,0,0.8)]",
           {
             "ll-window-preparing": phase === "preparing",
             "ll-window-enter": phase === "enter",

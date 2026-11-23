@@ -1,6 +1,7 @@
 import { GuildDiscordSyncNotice } from "@/components/common/guild-discord-sync-notice";
-import { ListToolbar } from "@/components/common/list-toolbar";
-import { SettingsClearFilterButton } from "@/components/common/settings-clear-filter-button";
+import { ResultsSurface } from "@/components/common/results-surface";
+import { KillStatsSearch } from "@/components/common/kill-stats-search";
+import { ClearFiltersButton } from "@/components/common/clear-filters-button";
 import { SettingsListEmpty } from "@/components/common/settings-list-empty";
 import { SettingsListError } from "@/components/common/settings-list-error";
 import { ROUTES } from "@/config/routes";
@@ -39,15 +40,16 @@ export const NotificationsSettings = () => {
           <GuildDiscordSyncNotice sync={overview.sync} />
         </div>
       )}
-      <div>
-        <ListToolbar
-          search={search}
-          onSearchChange={setSearch}
-          placeholder={t("settings.notifications.ruleFilterPlaceholder")}
-          label={t("settings.notifications.ruleFilterLabel")}
-          clearLabel={t("settings.notifications.clearFilter")}
-          disabled={overview.isLoading}
-        >
+      <ResultsSurface
+        search={
+          <KillStatsSearch
+            value={search}
+            placeholder={t("settings.notifications.ruleFilterPlaceholder")}
+            onChange={setSearch}
+          />
+        }
+        filtersLabel={t("settings.notifications.ruleFilterLabel")}
+        filters={
           <div className="flex items-center gap-2">
             {limits && (
               <span className="text-xs text-muted-foreground tabular-nums">
@@ -77,7 +79,8 @@ export const NotificationsSettings = () => {
             )}
             <NotificationsInfoButton />
           </div>
-        </ListToolbar>
+        }
+      >
         {overview.rulesLoad.isError ? (
           <SettingsListError
             title={t("settings.notifications.empty.loadError")}
@@ -96,11 +99,9 @@ export const NotificationsSettings = () => {
                   icon={SearchX}
                   title={t("settings.notifications.empty.filteredRules")}
                   description={t(
-                    "settings.notifications.empty.filteredDescription",
+                    "settings.notifications.empty.filteredRulesDescription",
                   )}
-                  action={
-                    <SettingsClearFilterButton onClear={() => setSearch("")} />
-                  }
+                  action={<ClearFiltersButton onClear={() => setSearch("")} />}
                 />
               ) : (
                 <SettingsListEmpty
@@ -114,7 +115,7 @@ export const NotificationsSettings = () => {
             }
           />
         )}
-      </div>
+      </ResultsSurface>
     </>
   );
 };

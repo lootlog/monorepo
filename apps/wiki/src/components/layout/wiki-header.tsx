@@ -3,8 +3,8 @@ import { PortalHeader } from "@lootlog/ui/components/portal-header";
 import { t } from "@/i18n/messages";
 import { findWikiSection, WIKI_NAVIGATION } from "@/navigation/wiki-navigation";
 import { WikiHeaderSearch } from "./wiki-header-search";
-import { WikiMark } from "./wiki-mark";
 import { WikiNavigationMenu } from "./wiki-navigation-menu";
+import { wikiSiteNames } from "./wiki-site-names";
 import { WikiUserMenu } from "./wiki-user-menu";
 
 const sections = WIKI_NAVIGATION.filter(({ link }) => link.to !== "/");
@@ -15,11 +15,10 @@ export function WikiHeader() {
 
   return (
     <PortalHeader
+      site="wiki"
       title={`${t("header.brand")} ${t("header.brandSuffix")}`}
       section={t("header.brandSuffix")}
       home={<Link to="/" />}
-      mark={<WikiMark className="size-7 rounded-lg" />}
-      inlineFrom="lg"
       links={sections.map((section) => ({
         id: section.link.to,
         label: t(section.labelKey),
@@ -35,6 +34,8 @@ export function WikiHeader() {
         navigation: t("navigation.ariaLabel"),
         menu: t("navigation.menu"),
         closeNavigation: t("navigation.closeMenu"),
+        sites: t("header.sites"),
+        siteNames: wikiSiteNames,
       }}
     />
   );

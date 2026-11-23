@@ -1,11 +1,18 @@
 import { useEffect, useEffectEvent, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ArrowUp, Pause, Play, Radio, SlidersHorizontal } from "lucide-react";
+import {
+  ArrowUp,
+  Pause,
+  Play,
+  Radio,
+  SearchX,
+  SlidersHorizontal,
+} from "lucide-react";
 import { DEFAULT_ACTIVITY_FEED_SETTINGS } from "@lootlog/domain/activity-feed";
 import { Button } from "@lootlog/ui/components/button";
 import { getPrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-motion";
 import { LiveFeedSkeleton } from "./live-feed-skeleton";
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { BandSection } from "@/components/common/band-section";
 import { FilterCount } from "@/components/common/filter-count";
 import { FiltersOverlay } from "@/components/filters/filters-overlay";
@@ -22,7 +29,8 @@ import {
   groupFeedItems,
   isGroupVisible,
 } from "./live-feed-state";
-import { RetryButton } from "@/components/common/retry-button";
+import { ClearFiltersButton } from "@/components/common/clear-filters-button";
+import { QueryErrorNotice } from "@/components/common/query-error-notice";
 
 const VISIBLE_GROUPS = 8;
 
@@ -174,29 +182,18 @@ export function DashboardLiveFeed() {
         className="pointer-events-none sticky top-[calc(var(--page-sticky-top)+var(--filter-bar-height,0px)+3rem)] z-10 flex h-0 justify-center"
       >
         {state.pending && !paused && (
-          <Button
-            size="sm"
-            className="pointer-events-auto rounded-full shadow-lg shadow-black/40"
-            onClick={showPending}
-          >
+          <Button className="pointer-events-auto" onClick={showPending}>
             <ArrowUp className="size-4" aria-hidden />
             {t("statistics.feedNew")}
           </Button>
         )}
       </div>
       {state.isError && (
-        <div
-          role="alert"
-          className="flex shrink-0 flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm"
-        >
-          <p>{t("statistics.feedError")}</p>
-          <RetryButton
-            onRetry={refresh}
-            isRetrying={state.isFetching}
-            disabled={state.isFetching || paused}
-            size="sm"
-          />
-        </div>
+        <QueryErrorNotice
+          message={t("statistics.feedError")}
+          onRetry={paused ? undefined : refresh}
+          isRetrying={state.isFetching}
+        />
       )}
       <div aria-busy={state.isFetching} className="@container">
         <div ref={top} className="h-px shrink-0" aria-hidden />
@@ -204,25 +201,29 @@ export function DashboardLiveFeed() {
           !state.isError && <LiveFeedSkeleton />
         ) : (
           <>
-            {groups.length === 0 && !state.isError && (
-              <EmptyState
-                icon={Radio}
-                title={t(
-                  isFiltered
-                    ? "statistics.feedEmptyFiltered"
-                    : "statistics.feedEmpty",
-                )}
-                fill={isWide}
-                compact={!isWide}
-                action={
-                  isFiltered && canSave ? (
-                    <Button variant="outline" onClick={clearFilters}>
-                      {t("statistics.feedClearFilters")}
-                    </Button>
-                  ) : undefined
-                }
-              />
-            )}
+            {groups.length === 0 &&
+              !state.isError &&
+              (isFiltered ? (
+                <EmptyState
+                  icon={SearchX}
+                  title={t("statistics.feedNoResults")}
+                  description={t("statistics.feedNoResultsDescription")}
+                  fill={isWide}
+                  compact={!isWide}
+                  action={
+                    canSave ? (
+                      <ClearFiltersButton onClear={clearFilters} />
+                    ) : undefined
+                  }
+                />
+              ) : (
+                <EmptyState
+                  icon={Radio}
+                  title={t("statistics.feedEmpty")}
+                  fill={isWide}
+                  compact={!isWide}
+                />
+              ))}
             <LiveFeedSections
               titleId={titleId}
               groups={shownGroups}

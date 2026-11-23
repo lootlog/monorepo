@@ -10,7 +10,7 @@ import {
   KillStatsFilters,
   type KillStatsFiltersProps,
 } from "@/features/kills/components/kill-stats-filters";
-import { KillStatsSearch } from "@/features/kills/components/kill-stats-search";
+import { KillStatsSearch } from "@/components/common/kill-stats-search";
 import { KillStatsStackedFilters } from "@/features/kills/components/kill-stats-stacked-filters";
 import { TRACKABLE_NPC_TYPES } from "@lootlog/domain/npc-type";
 import { StatsCountCell } from "@/components/common/stats-count-cell";
@@ -32,6 +32,7 @@ import {
 } from "@/components/common/list-tile";
 import { useStatsNpcsListModel } from "./use-stats-npcs-list-model";
 import { formatNumber } from "@lootlog/domain/locale";
+import { Skull } from "lucide-react";
 
 export const StatsNpcsList = () => {
   const {
@@ -165,55 +166,64 @@ export const StatsNpcsList = () => {
         <StatsTableResults
           isLoading={isLoading}
           mobileSkeleton={<StatsMobileListSkeleton media="npcTile" />}
-          emptyMessage={
+          emptyState={
             paginatedData.length === 0
-              ? t(
-                  hasActiveFilters
-                    ? "kills.topNpcs.filteredNoData"
-                    : "kills.topNpcs.noData",
-                )
+              ? hasActiveFilters
+                ? {
+                    isFiltered: true,
+                    title: t("kills.topNpcs.filteredNoData"),
+                    description: t("kills.topNpcs.filteredNoDataDescription"),
+                    onClearFilters: handleClearFilters,
+                  }
+                : {
+                    isFiltered: false,
+                    icon: Skull,
+                    title: t("kills.topNpcs.noData"),
+                  }
               : undefined
           }
-        >
-          <ul className="xl:hidden">
-            {paginatedData.map((npc, index) => (
-              <li
-                key={npc.npcId}
-                data-list-tile
-                className={LIST_TILE_RULE_CLASS}
-              >
-                <Link
-                  to="/$guildId/stats/npcs/$npcId"
-                  params={{ guildId, npcId: String(npc.npcId) }}
-                  className={cn(
-                    "flex min-w-0 items-center gap-3 py-3 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
-                    LIST_TILE_HOVER_CLASS,
-                    LIST_TILE_INSET_CLASS,
-                  )}
+          tiles={
+            <ul>
+              {paginatedData.map((npc, index) => (
+                <li
+                  key={npc.npcId}
+                  data-list-tile
+                  className={LIST_TILE_RULE_CLASS}
                 >
-                  <RankBadge rank={cursor + index + 1} />
-                  <span className="min-w-0 flex-1">
-                    <StatsNpcCell
-                      npc={{
-                        id: npc.npcId,
-                        name: npc.npcName,
-                        lvl: npc.npcLvl,
-                        icon: npc.npcIcon,
-                      }}
-                      name={npc.npcName}
-                      subtitle={`${t(`npcType.${npc.npcType}`)} · ${t("kills.level", { level: formatLevel(npc.npcLvl) })}`}
-                    />
-                  </span>
-                  <span className="shrink-0 text-sm font-semibold tabular-nums">
-                    {formatNumber(npc.uniqueKills)}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
+                  <Link
+                    to="/$guildId/stats/npcs/$npcId"
+                    params={{ guildId, npcId: String(npc.npcId) }}
+                    className={cn(
+                      "flex min-w-0 items-center gap-3 py-3 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+                      LIST_TILE_HOVER_CLASS,
+                      LIST_TILE_INSET_CLASS,
+                    )}
+                  >
+                    <RankBadge rank={cursor + index + 1} />
+                    <span className="min-w-0 flex-1">
+                      <StatsNpcCell
+                        npc={{
+                          id: npc.npcId,
+                          name: npc.npcName,
+                          lvl: npc.npcLvl,
+                          icon: npc.npcIcon,
+                        }}
+                        name={npc.npcName}
+                        subtitle={`${t(`npcType.${npc.npcType}`)} · ${t("kills.level", { level: formatLevel(npc.npcLvl) })}`}
+                      />
+                    </span>
+                    <span className="shrink-0 text-sm font-semibold tabular-nums">
+                      {formatNumber(npc.uniqueKills)}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          }
+        >
           <StatsTable
             table={table}
-            className="hidden border-b xl:table"
+            className="border-b"
             onRowClick={handleRowClick}
           />
         </StatsTableResults>

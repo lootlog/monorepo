@@ -8,7 +8,7 @@ export function TimerTooltipSection({
   children: ReactNode;
 }) {
   return (
-    <section className="ll:flex ll:flex-col ll:gap-1 ll:border-t ll:border-solid ll:border-white/15 ll:pt-1.5">
+    <section className="ll:flex ll:flex-col ll:gap-1 ll:border-t ll:border-solid ll:border-separator ll:pt-1.5">
       {heading && (
         <h3 className="ll:m-0 ll:flex ll:items-center ll:gap-1.5 ll:text-xs ll:leading-4 ll:font-semibold">
           {heading}

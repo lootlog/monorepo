@@ -44,3 +44,7 @@ apps/landing/src/styles/landing.css size-limit-exempt
 
 # Agent instructions are read as one contract, so they stay whole
 AGENTS.md size-limit-exempt
+
+# The wiki keeps all of its copy in one typed message catalog; its sections
+# share lookups and types, so it stays whole like the JSON translation files
+apps/wiki/src/i18n/messages.ts size-limit-exempt

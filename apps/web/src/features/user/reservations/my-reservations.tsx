@@ -7,14 +7,15 @@ import {
   type ListMyReservationsStatus,
   type MyReservationsResponseDtoItemsItem,
 } from "@lootlog/client/main";
-import { Button } from "@lootlog/ui/components/button";
 
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { ListTileSkeleton } from "@/components/common/list-tile-skeleton";
-import { ListToolbar } from "@/components/common/list-toolbar";
+import { ResultsSurface } from "@/components/common/results-surface";
+import { KillStatsSearch } from "@/components/common/kill-stats-search";
+import { ClearFiltersButton } from "@/components/common/clear-filters-button";
 import { PageTabsLayout } from "@/components/layout/page-tabs-layout";
 import { ROUTES } from "@/config/routes";
-import { StatisticsQueryState } from "@/features/user/statistics/statistics-query-state";
+import { StatisticsQueryState } from "@/components/common/statistics-query-state";
 import { EditMyReservationDialog } from "./edit-my-reservation-dialog";
 import { MyReservationListItem } from "./my-reservation-list-item";
 import { MY_RESERVATION_STATUSES } from "./my-reservations-search";
@@ -63,12 +64,8 @@ export function MyReservations() {
         fill
         icon={SearchX}
         title={t("reservations.my.emptyFiltered")}
-        description={t("reservations.empty.searchDescription")}
-        action={
-          <Button type="button" variant="outline" onClick={() => setSearch("")}>
-            {t("reservations.clearSearch")}
-          </Button>
-        }
+        description={t("reservations.my.emptyFilteredDescription")}
+        action={<ClearFiltersButton onClear={() => setSearch("")} />}
       />
     ) : (
       <EmptyState
@@ -96,15 +93,16 @@ export function MyReservations() {
         }))}
       >
         <h1 className="sr-only">{t("reservations.my.title")}</h1>
-        <div>
-          <ListToolbar
-            search={search}
-            onSearchChange={setSearch}
-            placeholder={t("reservations.my.filterPlaceholder")}
-            label={t("reservations.my.filterLabel")}
-            clearLabel={t("reservations.clearSearch")}
-            disabled={query.isPending}
-          />
+        <ResultsSurface
+          search={
+            <KillStatsSearch
+              value={search}
+              placeholder={t("reservations.my.filterPlaceholder")}
+              onChange={setSearch}
+            />
+          }
+          filtersLabel={t("reservations.my.filterLabel")}
+        >
           <StatisticsQueryState
             query={query}
             errorMessage={t("reservations.loadError")}
@@ -143,7 +141,7 @@ export function MyReservations() {
               <div className="p-3">{renderEmpty()}</div>
             )}
           </StatisticsQueryState>
-        </div>
+        </ResultsSurface>
         <EditMyReservationDialog
           reservation={editingReservation}
           open={editingReservation !== null}

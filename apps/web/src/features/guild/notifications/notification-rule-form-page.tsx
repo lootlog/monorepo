@@ -1,5 +1,9 @@
 import { BandSection } from "@/components/common/band-section";
-import { PageHeader } from "@/components/common/page-header";
+import { DetailNotFound } from "@/components/common/detail-not-found";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
+import { RetryButton } from "@/components/common/retry-button";
+import { ROUTES } from "@/config/routes";
+import { Link } from "@tanstack/react-router";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { NotificationCreateSkeleton } from "./notification-create-skeleton";
 import { NotificationHeroLevelFields } from "./notification-hero-level-fields";
@@ -22,7 +26,7 @@ import { Input } from "@lootlog/ui/components/input";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useFormState } from "react-hook-form";
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
-import { Plus } from "lucide-react";
+import { AlertCircle, ArrowLeft, BellOff, Plus } from "lucide-react";
 import { Switch } from "@lootlog/ui/components/switch";
 import { NotificationMessagePreview } from "./components/notification-message-preview";
 import { NotificationTargetDialog } from "./components/notification-target-dialog";
@@ -37,6 +41,9 @@ export const NotificationRuleFormPage = () => {
     isCreateMode,
     isLoading,
     isError,
+    isRetrying,
+    retry,
+    guildId,
     isSubmitting,
     isScheduledMessage,
     isHeroSighting,
@@ -71,22 +78,42 @@ export const NotificationRuleFormPage = () => {
 
   if (isLoading) return <NotificationCreateSkeleton />;
 
-  if (isError || (!isCreateMode && !rule)) {
+  if (isError) {
     return (
-      <div className="min-h-0 flex-1 overflow-y-auto p-3" role="alert">
-        <PageHeader
-          title={t(
-            isCreateMode
-              ? "settings.notifications.ruleDialog.createTitle"
-              : "settings.notifications.ruleDialog.editTitle",
-          )}
-          description={t(
-            isError
-              ? "settings.notifications.errors.loadFailed"
-              : "settings.notifications.errors.ruleNotFound",
-          )}
+      <div className="p-3">
+        <EmptyState
+          fill
+          icon={AlertCircle}
+          title={t("settings.notifications.errors.loadFailed")}
+          action={
+            <>
+              <RetryButton onRetry={retry} isRetrying={isRetrying} />
+              <Button
+                variant="outline"
+                nativeButton={false}
+                icon=<ArrowLeft className="size-4" />
+                render={
+                  <Link to={ROUTES.guild.notifications.base(guildId ?? "")} />
+                }
+              >
+                {t("settings.notifications.actions.backToRules")}
+              </Button>
+            </>
+          }
         />
       </div>
+    );
+  }
+
+  if (!isCreateMode && !rule) {
+    return (
+      <DetailNotFound
+        icon={BellOff}
+        title={t("settings.notifications.errors.ruleNotFound")}
+        description={t("settings.notifications.errors.ruleNotFoundDescription")}
+        backTo={ROUTES.guild.notifications.base(guildId ?? "")}
+        backLabel={t("settings.notifications.actions.backToRules")}
+      />
     );
   }
 

@@ -1,12 +1,12 @@
 import { AsyncContent } from "@/components/async-content";
-import { SettingsEmptyState } from "@/features/settings/components/shared/settings-empty-state";
+import { EmptyState } from "@/components/empty-state";
 import { SettingsSection } from "@/features/settings/components/shared/settings-section";
 import { SettingsTabLayout } from "@/features/settings/components/shared/settings-tab-layout";
 import { SettingsToolbar } from "@/features/settings/components/shared/settings-toolbar";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { ServerOrderList } from "@/features/settings/components/servers/server-order-list";
-import { SettingsNoLootlogEmptyState } from "@/features/settings/components/shared/settings-no-lootlog-empty-state";
+import { NoLootlogEmptyState } from "@/components/no-lootlog-empty-state";
 import { useUpdateUserPreferences } from "@/hooks/api/use-user-preferences";
 import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import {
@@ -73,7 +73,7 @@ export const ServerVisibilitySettingsTab = () => {
         }}
       >
         {orderedGuilds.length === 0 ? (
-          <SettingsNoLootlogEmptyState />
+          <NoLootlogEmptyState />
         ) : (
           <SettingsSection
             controlId="server-visibility"
@@ -136,9 +136,7 @@ export const ServerVisibilitySettingsTab = () => {
               </ToggleGroup>
             </SettingsToolbar>
             {filteredGuilds.length === 0 ? (
-              <SettingsEmptyState>
-                {t("settings.servers.noResults")}
-              </SettingsEmptyState>
+              <EmptyState description={t("settings.servers.noResults")} />
             ) : (
               <ServerOrderList
                 aria-label={t("settings.servers.listTitle")}

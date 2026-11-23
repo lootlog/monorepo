@@ -68,8 +68,8 @@ export const TimerActionConfirmation = ({
             disabled={pending}
             className={
               isDelete
-                ? "ll:text-red-300 ll:hover:bg-red-500/20 ll:data-[highlighted]:bg-red-500/20 ll:focus-visible:bg-red-500/20"
-                : "ll:text-emerald-300"
+                ? "ll:text-destructive ll:hover:bg-destructive/15 ll:data-[highlighted]:bg-destructive/15 ll:focus-visible:bg-destructive/15"
+                : "ll:text-success"
             }
             onSelect={(event) => event.preventDefault()}
           >

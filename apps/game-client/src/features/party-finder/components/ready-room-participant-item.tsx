@@ -100,7 +100,7 @@ export function ReadyRoomParticipantItem({
                 className="ll:scale-75 ll:max-h-6 ll:-ml-1.5 ll:-mr-1 ll:shrink-0"
               />
               <PlayerName
-                className="ll:text-[11px] ll:text-white"
+                className="ll:text-[11px] ll:text-foreground"
                 name={character.nick}
                 level={character.lvl}
                 profession={character.prof}

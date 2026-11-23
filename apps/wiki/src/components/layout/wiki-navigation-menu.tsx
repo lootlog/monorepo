@@ -64,7 +64,7 @@ export function WikiNavigationMenu({ activeSection }: WikiNavigationMenuProps) {
   const triggerClassName = (sections: readonly WikiSection[]) =>
     cn(
       activeSection && sections.includes(activeSection)
-        ? "bg-muted/50 text-foreground"
+        ? "text-foreground"
         : "text-muted-foreground hover:text-foreground data-popup-open:text-foreground",
     );
 

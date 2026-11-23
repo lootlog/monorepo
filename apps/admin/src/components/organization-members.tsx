@@ -1,8 +1,6 @@
 import type { AdminOrganizationMembersPage } from "@lootlog/schema/admin-organizations";
 import { Badge } from "@lootlog/ui/components/badge";
-import { Button } from "@lootlog/ui/components/button";
-import { Input } from "@lootlog/ui/components/input";
-import { Label } from "@lootlog/ui/components/label";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import {
   Table,
   TableBody,
@@ -11,8 +9,12 @@ import {
   TableHeader,
   TableRow,
 } from "@lootlog/ui/components/table";
-import { Link } from "@tanstack/react-router";
+import { TextLink } from "@lootlog/ui/components/text-link";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { SearchX, Users } from "lucide-react";
+import { FilterBarRow } from "@/components/filter-bar-row";
 import { Pagination } from "@/components/pagination";
+import { SearchForm } from "@/components/search-form";
 import { formatDate } from "@/lib/format";
 import { memberTypeText, text } from "@/lib/messages";
 import { ORGANIZATION_MEMBERS_PAGE_SIZE } from "@/server/organizations";
@@ -28,30 +30,32 @@ export function OrganizationMembers({
   search: string | undefined;
   page: number;
 }) {
+  const navigate = useNavigate();
+
   return (
-    <div className="flex flex-col gap-3">
-      <form
-        key={search ?? ""}
-        method="get"
-        action={`/organizations/${encodeURIComponent(guildId)}#members`}
-        role="search"
-        className="flex flex-wrap items-end gap-2"
-      >
-        <div className="grid min-w-0 flex-1 gap-1.5">
-          <Label htmlFor="members-search">{text.filterSearch}</Label>
-          <Input
-            id="members-search"
-            name="members"
-            type="search"
-            maxLength={100}
-            defaultValue={search ?? ""}
+    <>
+      <FilterBarRow
+        search={
+          <SearchForm
+            value={search}
             placeholder={text.membersSearchPlaceholder}
+            onSearch={(members) =>
+              void navigate({
+                to: "/organizations/$guildId",
+                params: { guildId },
+                search: { members },
+                hash: "members",
+              })
+            }
           />
-        </div>
-        <Button type="submit">{text.filterApply}</Button>
-      </form>
+        }
+      />
       {members.members.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{text.membersEmpty}</p>
+        <EmptyState
+          compact
+          icon={search === undefined ? Users : SearchX}
+          title={text.membersEmpty}
+        />
       ) : (
         <Table>
           <TableHeader>
@@ -72,13 +76,17 @@ export function OrganizationMembers({
                     {member.userId === null ? (
                       <span className="font-medium">{member.name}</span>
                     ) : (
-                      <Link
-                        to="/users/$userId"
-                        params={{ userId: member.userId }}
-                        className="rounded-control font-medium underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+                      <TextLink
+                        render={
+                          <Link
+                            to="/users/$userId"
+                            params={{ userId: member.userId }}
+                          />
+                        }
+                        className="w-fit text-sm"
                       >
                         {member.name}
-                      </Link>
+                      </TextLink>
                     )}
                     <span className="truncate text-xs text-muted-foreground">
                       {member.username !== null &&
@@ -121,6 +129,6 @@ export function OrganizationMembers({
           </Link>
         )}
       />
-    </div>
+    </>
   );
 }

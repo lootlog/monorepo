@@ -4,6 +4,7 @@ import { type FC, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AsyncStatusBar } from "@/components/async-status-bar";
 import { AsyncStatusIndicator } from "@/components/async-status-indicator";
+import { CONNECTION_STATUS_TONE } from "@/components/connection-status-tone";
 import { useSocket } from "@/contexts/socket-context";
 import { useDelayedVisibility } from "@/hooks/ui/use-delayed-visibility";
 import { useNoticePresence } from "@/hooks/ui/use-notice-presence";
@@ -35,9 +36,8 @@ const CONNECTION_NOTICE_DELAY_MS = {
 } as const;
 
 const CONNECTION_NOTICE_KIND = {
-  connecting: "loading",
-  reconnecting: "warning",
-  unreachable: "warning",
+  neutral: "loading",
+  warning: "warning",
 } as const;
 
 const REFRESHING_NOTICE_DELAY_MS = 200;
@@ -70,7 +70,7 @@ const resolveNotice = ({
 
   if (connectionDue && connection !== "online") {
     return {
-      kind: CONNECTION_NOTICE_KIND[connection],
+      kind: CONNECTION_NOTICE_KIND[CONNECTION_STATUS_TONE[connection]],
       label: connectionLabel,
       action: null,
     };
@@ -161,7 +161,7 @@ export const ConnectionStatusStrip: FC<ConnectionStatusStripProps> = ({
             }
             retryIcon={
               shownNotice.action === "signIn" ? (
-                <LogIn aria-hidden className="ll:size-3" />
+                <LogIn aria-hidden />
               ) : undefined
             }
           />

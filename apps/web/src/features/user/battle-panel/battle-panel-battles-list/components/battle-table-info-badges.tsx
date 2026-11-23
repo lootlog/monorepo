@@ -1,6 +1,6 @@
 import type { Battle } from "@/lib/api/battlelog-types";
 import { upperFirst } from "es-toolkit";
-import { Badge } from "@lootlog/ui/components/badge";
+import { Badge, badgeVariants } from "@lootlog/ui/components/badge";
 import {
   Tooltip,
   TooltipContent,
@@ -22,7 +22,7 @@ type BattleTableInfoBadgesProps = {
 };
 
 const BATTLE_INFO_TAG_CLASS_NAME =
-  "inline-flex h-5 max-w-[92px] min-w-0 items-center justify-center truncate rounded-md border border-border bg-background/60 px-1.5 py-0 text-2xs font-medium leading-none text-muted-foreground";
+  "max-w-[92px] min-w-0 justify-center truncate";
 
 const BATTLE_INFO_TAG_ACTION_CLASS_NAME =
   "pointer-events-auto cursor-pointer transition-colors hover:border-foreground/40 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
@@ -85,6 +85,7 @@ export const BattleTableInfoBadges = ({
           onClick={(event) => handleWorldBadgeClick(event, battle.world)}
           onKeyDown={stopBattleTableKeyboardAction}
           className={cn(
+            badgeVariants({ variant: "outline", size: "sm" }),
             BATTLE_INFO_TAG_CLASS_NAME,
             BATTLE_INFO_TAG_ACTION_CLASS_NAME,
           )}
@@ -92,19 +93,22 @@ export const BattleTableInfoBadges = ({
           {upperFirst(battle.world)}
         </button>
       ) : (
-        <span className={BATTLE_INFO_TAG_CLASS_NAME}>
+        <Badge
+          variant="outline"
+          size="sm"
+          className={BATTLE_INFO_TAG_CLASS_NAME}
+        >
           {upperFirst(battle.world)}
-        </span>
+        </Badge>
       )}
       {battle.public && (
-        <span
-          className={cn(
-            BATTLE_INFO_TAG_CLASS_NAME,
-            "border-primary/40 bg-primary/10 text-primary",
-          )}
+        <Badge
+          variant="tinted"
+          size="sm"
+          className={BATTLE_INFO_TAG_CLASS_NAME}
         >
           {t("battleUi.metadata.public")}
-        </span>
+        </Badge>
       )}
       {userWarrior?.ph !== 0 && userWarrior?.ph !== undefined && (
         <Tooltip>
@@ -119,6 +123,7 @@ export const BattleTableInfoBadges = ({
                   tabIndex: 0,
                 })}
                 variant="outline"
+                size="sm"
                 className={cn(
                   BATTLE_INFO_TAG_CLASS_NAME,
                   onPhClick && BATTLE_INFO_TAG_ACTION_CLASS_NAME,
@@ -145,12 +150,11 @@ export const BattleTableInfoBadges = ({
                   role: "button",
                   tabIndex: 0,
                 })}
-                variant="outline"
+                variant="live"
+                size="sm"
                 className={cn(
                   BATTLE_INFO_TAG_CLASS_NAME,
                   onMatchmakingClick && BATTLE_INFO_TAG_ACTION_CLASS_NAME,
-                  "border-purple-500/50 bg-purple-500/10 text-purple-400",
-                  onMatchmakingClick && "hover:bg-purple-500/20",
                 )}
               >
                 {t("battlePanel.filters.matchmaking")}

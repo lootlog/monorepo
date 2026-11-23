@@ -7,7 +7,7 @@ const Avatar = React.forwardRef<HTMLSpanElement, BaseAvatar.Root.Props>(
     <BaseAvatar.Root
       ref={ref}
       className={cn(
-        "ll::relative ll::flex ll::h-10 ll::w-10 ll::shrink-0 ll::overflow-hidden ll::rounded-full",
+        "ll:relative ll:flex ll:size-10 ll:shrink-0 ll:select-none ll:overflow-hidden ll:rounded-sm ll:bg-black/25 ll:text-xs ll:font-semibold ll:leading-none ll:text-foreground",
         className,
       )}
       {...props}
@@ -21,7 +21,7 @@ const AvatarImage = React.forwardRef<HTMLImageElement, BaseAvatar.Image.Props>(
   ({ className, ...props }, ref) => (
     <BaseAvatar.Image
       ref={ref}
-      className={cn("ll::aspect-square ll::h-full ll::w-full", className)}
+      className={cn("ll:size-full ll:object-cover", className)}
       {...props}
     />
   ),
@@ -36,7 +36,7 @@ const AvatarFallback = React.forwardRef<
   <BaseAvatar.Fallback
     ref={ref}
     className={cn(
-      "ll::flex ll::h-full ll::w-full ll::items-center ll::justify-center ll::rounded-full ll::bg-muted",
+      "ll:flex ll:size-full ll:items-center ll:justify-center",
       className,
     )}
     {...props}

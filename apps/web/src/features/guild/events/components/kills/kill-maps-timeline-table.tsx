@@ -1,4 +1,8 @@
-import { PAGE_STICKY_TABLE_HEADER_CLASS } from "@/components/common/page-sticky-table-header";
+import {
+  PAGE_STICKY_TABLE_HEADER_CLASS,
+  RESULTS_TABLE_MEDIA_QUERY,
+} from "@/components/common/page-sticky-table-header";
+import { useMediaQuery } from "usehooks-ts";
 import { useState } from "react";
 import type { TFunction } from "i18next";
 import {
@@ -15,7 +19,6 @@ import {
   TableHeader,
   TableRow,
 } from "@lootlog/ui/components/table";
-import { useMaxWidth } from "@lootlog/ui/hooks/use-max-width";
 import { cn } from "cn";
 import type { MapTimelineData } from "@/lib/api/event-types";
 import { getMapCoverageColorClassName } from "../../utils/get-map-coverage-color-class-name";
@@ -35,8 +38,6 @@ interface KillMapsTimelineTableProps {
   t: TFunction;
 }
 
-const TABLE_BREAKPOINT = 768;
-
 export const KillMapsTimelineTable = ({
   maps,
   startTime,
@@ -44,7 +45,7 @@ export const KillMapsTimelineTable = ({
   t,
 }: KillMapsTimelineTableProps) => {
   const [expanded, setExpanded] = useState<ExpandedState>({});
-  const isNarrow = useMaxWidth(TABLE_BREAKPOINT);
+  const isNarrow = !useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
 
   const columns: ColumnDef<typeof expandingTableFeatures, MapTimelineData>[] = [
     {
@@ -78,12 +79,14 @@ export const KillMapsTimelineTable = ({
             >
               {map.mapName}
             </span>
-            <span className="mt-0.5 flex items-center gap-1 text-2xs tabular-nums text-muted-foreground md:hidden">
-              <Users className="size-3.5" />
-              {t("events.killDetail.mapCoverage.memberCount", {
-                count: diagnostics.assignments.length,
-              })}
-            </span>
+            {isNarrow && (
+              <span className="mt-0.5 flex items-center gap-1 text-2xs tabular-nums text-muted-foreground">
+                <Users className="size-3.5" />
+                {t("events.killDetail.mapCoverage.memberCount", {
+                  count: diagnostics.assignments.length,
+                })}
+              </span>
+            )}
           </div>
         );
       },
@@ -189,7 +192,7 @@ export const KillMapsTimelineTable = ({
         ))}
       </colgroup>
       <TableHeader
-        className={cn(PAGE_STICKY_TABLE_HEADER_CLASS, "max-md:sr-only")}
+        className={cn(PAGE_STICKY_TABLE_HEADER_CLASS, isNarrow && "sr-only")}
       >
         {table.getHeaderGroups().map((headerGroup) => (
           <TableRow key={headerGroup.id} className="border-b-1! border-border">

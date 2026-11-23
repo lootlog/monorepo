@@ -2,7 +2,7 @@ import { useState, type ReactNode } from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { cn } from "cn";
 import { RESULTS_TABLE_MEDIA_QUERY } from "@/components/common/page-sticky-table-header";
-import { useFillRemainingHeight } from "@/hooks/utils/use-fill-remaining-height";
+import { useFillRemainingHeight } from "@lootlog/ui/hooks/use-fill-remaining-height";
 
 type StatsSectionColumnsProps = {
   className?: string;

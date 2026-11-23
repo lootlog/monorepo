@@ -15,7 +15,7 @@ import { ProfessionChangeCalculator } from "@/components/calculators/profession-
 import { QuestExperienceCalculator } from "@/components/calculators/quest-experience-calculator";
 import { TransferCostCalculator } from "@/components/calculators/transfer-cost-calculator";
 import { UnbindCostCalculator } from "@/components/calculators/unbind-cost-calculator";
-import { PageHeader } from "@/components/common/page-header";
+import { PortalPageHeader } from "@lootlog/ui/components/portal-page-header";
 import { t } from "@/i18n/messages";
 
 const CALCULATORS: Record<CalculatorId, () => React.JSX.Element> = {
@@ -57,7 +57,7 @@ function CalculatorsRoute() {
 
   return (
     <div className="flex flex-col gap-6 py-6">
-      <PageHeader
+      <PortalPageHeader
         title={t("calculators.title")}
         description={t("calculators.description")}
       />

@@ -1,5 +1,3 @@
-export const BATTLE_DETAIL_WIDE_MEDIA_QUERY = "(width >= 80rem)";
-
 export const BATTLE_DETAIL_CONTENT_CLASS_NAME = "flex flex-col xl:h-full";
 
 export const BATTLE_DETAIL_COLUMNS_CLASS_NAME =

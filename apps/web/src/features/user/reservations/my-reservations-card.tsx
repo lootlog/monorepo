@@ -8,10 +8,11 @@ import {
   type MyReservationsResponseDtoItemsItem,
 } from "@lootlog/client/main";
 
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { BandSection } from "@/components/common/band-section";
+import { ListTileSkeleton } from "@/components/common/list-tile-skeleton";
 import { ROUTES } from "@/config/routes";
-import { StatisticsQueryState } from "@/features/user/statistics/statistics-query-state";
+import { StatisticsQueryState } from "@/components/common/statistics-query-state";
 import { EditMyReservationDialog } from "./edit-my-reservation-dialog";
 import { MyReservationListItem } from "./my-reservation-list-item";
 import { useCancelMyReservation } from "./use-cancel-my-reservation";
@@ -43,12 +44,11 @@ export function MyReservationsCard() {
         compact
         errorMessage={t("reservations.loadError")}
         loading={
-          <p
-            role="status"
-            className="flex min-h-36 flex-1 items-center justify-center px-4 py-8 text-center text-sm text-muted-foreground"
-          >
-            {t("common.loading")}
-          </p>
+          <div role="status" aria-label={t("common.loading")}>
+            {Array.from({ length: 3 }, (_, index) => (
+              <ListTileSkeleton key={index} actions={2} />
+            ))}
+          </div>
         }
       >
         {reservations.length ? (

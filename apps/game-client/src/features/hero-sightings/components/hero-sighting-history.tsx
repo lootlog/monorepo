@@ -8,6 +8,7 @@ import type { HeroSightingRow } from "@/features/hero-sightings/hero-sighting-ro
 import type { HeroSightingMemberColors } from "@/features/hero-sightings/hooks/use-hero-sighting-member-colors";
 import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import { getGuildNamesById } from "@/lib/api/generated-helpers";
+import { EmptyState } from "@/components/empty-state";
 
 type HeroSightingHistoryProps = {
   row: HeroSightingRow;
@@ -68,9 +69,7 @@ export function HeroSightingHistory({
                 retryLabel={t("actions.retry", { ns: "common" })}
               >
                 {history?.data?.length === 0 ? (
-                  <p className="ll:m-0 ll:text-xs ll:text-muted-foreground">
-                    {t("history.empty")}
-                  </p>
+                  <EmptyState description={t("history.empty")} />
                 ) : (
                   <ul className="ll:m-0 ll:list-none ll:p-0">
                     {history?.data?.map((sighting) => (

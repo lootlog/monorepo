@@ -53,7 +53,7 @@ export const GlobalChatToolbar = ({
   ];
 
   return (
-    <div className={cn(toolbarStripClassName, "ll:-mt-px ll:shrink-0")}>
+    <div className={cn(toolbarStripClassName, "ll:shrink-0")}>
       <div className={toolbarStripRowClassName}>
         <div className="ll:flex ll:shrink-0 ll:items-center ll:px-0.5">
           <IconButton
@@ -79,7 +79,7 @@ export const GlobalChatToolbar = ({
           <span
             className={cn(
               toolbarStripDividerClassName,
-              "ll:flex ll:shrink-0 ll:items-center ll:gap-1 ll:px-1.5 ll:text-[11px] ll:tabular-nums ll:text-gray-300",
+              "ll:flex ll:shrink-0 ll:items-center ll:gap-1 ll:px-1.5 ll:text-[11px] ll:tabular-nums ll:text-foreground/80",
             )}
             title={t("stats.listenersLabel", { count: stats.listeners })}
           >

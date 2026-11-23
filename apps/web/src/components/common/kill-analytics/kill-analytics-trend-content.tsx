@@ -5,6 +5,7 @@ import {
   useTable,
 } from "@tanstack/react-table";
 import { Table } from "@lootlog/ui/components/table";
+import { SCROLLER_STICKY_TABLE_HEADER_CLASS } from "@/components/common/page-sticky-table-header";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { AnimatedToggleGroup } from "@/components/ui/animated-toggle-group";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
@@ -178,7 +179,7 @@ export function KillAnalyticsTrend({
           <Table aria-label={title}>
             <TanStackTableHeader
               table={table}
-              className="sticky top-0 z-10 bg-sidebar"
+              className={SCROLLER_STICKY_TABLE_HEADER_CLASS}
               rowClassName="border-b-1! border-border hover:bg-transparent"
               getHeadClassName={(header) =>
                 header.column.id === "kills" ? "text-right" : ""

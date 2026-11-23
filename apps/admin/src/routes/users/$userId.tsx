@@ -1,5 +1,8 @@
 import { Alert, AlertDescription } from "@lootlog/ui/components/alert";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { ScrollText } from "lucide-react";
+import { BackLink } from "@/components/back-link";
 import { ApiKeysList } from "@/components/api-keys-list";
 import { AuraGrants } from "@/components/aura-grants";
 import { AuditTable } from "@/components/audit-table";
@@ -27,12 +30,7 @@ function UserPage() {
 
   return (
     <>
-      <Link
-        to="/"
-        className="self-start rounded-control text-sm text-muted-foreground underline-offset-4 outline-none hover:text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-ring"
-      >
-        ← {text.backToUsers}
-      </Link>
+      <BackLink render={<Link to="/" />}>{text.backToUsers}</BackLink>
       <UserSummary user={user} />
       <div className="grid gap-6 lg:grid-cols-2">
         <Section
@@ -105,8 +103,14 @@ function UserPage() {
       <Section id="api-keys" title={text.apiKeysHeading}>
         <ApiKeysList userId={user.id} apiKeys={apiKeys} />
       </Section>
-      <Section id="history" title={text.auditUserHeading}>
-        <AuditTable entries={audit} showTarget={false} />
+      <Section id="history" title={text.auditUserHeading} flush>
+        <AuditTable
+          entries={audit}
+          showTarget={false}
+          empty={
+            <EmptyState compact icon={ScrollText} title={text.auditEmpty} />
+          }
+        />
       </Section>
     </>
   );

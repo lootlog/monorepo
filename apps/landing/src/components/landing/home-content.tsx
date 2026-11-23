@@ -7,6 +7,8 @@ import { FaqPanel } from "@/components/landing/faq-panel";
 import { GuidesShowcase } from "@/components/landing/guides-showcase";
 import { LandingFooter } from "@/components/landing/footer";
 import { LandingHeader } from "@/components/landing/header";
+import { SITE_CONTENT_ID } from "@/components/site-layout";
+import { SkipLink } from "@lootlog/ui/components/skip-link";
 import { HeroSection } from "@/components/landing/hero-section";
 import { HowItWorks } from "@/components/landing/how-it-works";
 import { ProductProof } from "@/components/landing/product-proof";
@@ -17,10 +19,11 @@ export function HomeContent() {
   const { t } = useTranslation();
 
   return (
-    <div className="relative min-h-screen overflow-x-clip bg-[var(--broadcast-ink)] text-[var(--broadcast-white)] selection:bg-[var(--broadcast-lime)] selection:text-[var(--broadcast-ink)]">
+    <div className="relative min-h-screen overflow-x-clip bg-[var(--broadcast-ink)] text-[var(--broadcast-white)]">
+      <SkipLink target={SITE_CONTENT_ID}>{t("landing.skipToContent")}</SkipLink>
       <LandingHeader />
 
-      <main>
+      <main id={SITE_CONTENT_ID} tabIndex={-1} className="outline-none">
         <HeroSection />
         <ProductProof />
         <HowItWorks />

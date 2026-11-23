@@ -30,34 +30,4 @@ describe("PillToggleGroup", () => {
     fireEvent.click(screen.getByRole("button", { name: "All" }));
     expect(onValueChange).toHaveBeenCalledWith("all");
   });
-
-  it("adds and removes pills of a multiple choice in their listed order", () => {
-    const onValueChange = vi.fn();
-
-    const { rerender } = render(
-      <PillToggleGroup
-        multiple
-        label="Groups"
-        options={OPTIONS}
-        value={["hidden"]}
-        onValueChange={onValueChange}
-      />,
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: "Online" }));
-    expect(onValueChange).toHaveBeenLastCalledWith(["online", "hidden"]);
-
-    rerender(
-      <PillToggleGroup
-        multiple
-        label="Groups"
-        options={OPTIONS}
-        value={["online", "hidden"]}
-        onValueChange={onValueChange}
-      />,
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: "Hidden" }));
-    expect(onValueChange).toHaveBeenLastCalledWith(["online"]);
-  });
 });

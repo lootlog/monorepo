@@ -1,4 +1,9 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  SUGGESTIONS_PANEL_CLASS_NAME,
+  SUGGESTIONS_STATUS_CLASS_NAME,
+  getSuggestionOptionClassName,
+} from "@/components/ui/autocomplete-suggestions";
 import type { CommandSuggestion } from "@/features/command/command-suggestions.helpers";
 import {
   getChatMentionSuggestionDisplayLabel,
@@ -71,21 +76,19 @@ export const ChatMentionSuggestions: FC<ChatMentionSuggestionsProps> = ({
   return (
     <div
       className={cn(
-        "ll:absolute ll:inset-x-0 ll:z-50 ll:w-full ll:overflow-hidden ll:border-x-0 ll:border-gray-400/40 ll:bg-[#171719]",
+        SUGGESTIONS_PANEL_CLASS_NAME,
+        "ll:absolute ll:inset-x-0 ll:overflow-hidden ll:border-x-0",
         placement === "above"
           ? "ll:bottom-full ll:border-t ll:border-b-0"
           : "ll:top-full ll:border-t-0 ll:border-b",
       )}
     >
-      <div className="ll:flex ll:items-center ll:justify-between ll:border-x-0 ll:border-t-0 ll:border-b ll:border-gray-400/20 ll:px-2 ll:py-1 ll:text-[10px] ll:text-neutral-400">
+      <div className="ll:flex ll:items-center ll:justify-between ll:border-x-0 ll:border-t-0 ll:border-b ll:border-solid ll:border-separator-subtle ll:px-2 ll:py-1 ll:text-[10px] ll:text-muted-foreground">
         <span>{title}</span>
         <span>{suggestions.length}</span>
       </div>
       {isLoading ? (
-        <div
-          className="ll:flex ll:items-center ll:justify-center ll:gap-2 ll:p-2 ll:text-[11px] ll:text-neutral-300"
-          role="status"
-        >
+        <div className={SUGGESTIONS_STATUS_CLASS_NAME} role="status">
           <Loader2
             aria-hidden
             className="ll:size-3.5 ll:animate-spin ll:motion-reduce:animate-none"
@@ -93,7 +96,7 @@ export const ChatMentionSuggestions: FC<ChatMentionSuggestionsProps> = ({
           {t("input.mentionSuggestions.loading")}
         </div>
       ) : showNoResults ? (
-        <p className="ll:m-0 ll:p-3 ll:text-center ll:text-[11px] ll:text-neutral-400">
+        <p className={SUGGESTIONS_STATUS_CLASS_NAME}>
           {t(
             suggestionMode === "command"
               ? "input.commandSuggestions.noResults"
@@ -125,10 +128,8 @@ export const ChatMentionSuggestions: FC<ChatMentionSuggestionsProps> = ({
                   aria-label={command ? undefined : label}
                   aria-selected={index === selectedIndex}
                   className={cn(
-                    "ll:flex ll:w-full ll:appearance-none ll:items-center ll:gap-2 ll:rounded-none ll:border-0 ll:px-2 ll:py-[5px] ll:text-left ll:focus-visible:outline-2 ll:focus-visible:outline-neutral-400 ll:focus-visible:-outline-offset-2",
-                    index === selectedIndex
-                      ? "ll:bg-[#303034]"
-                      : "ll:bg-transparent ll:hover:bg-[#262629]",
+                    getSuggestionOptionClassName(index === selectedIndex),
+                    "ll:flex ll:items-center ll:gap-2 ll:px-2 ll:py-[5px]",
                   )}
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => onSelect(suggestion)}
@@ -136,8 +137,8 @@ export const ChatMentionSuggestions: FC<ChatMentionSuggestionsProps> = ({
                   <span
                     aria-hidden
                     className={cn(
-                      "ll:flex ll:size-[22px] ll:shrink-0 ll:items-center ll:justify-center ll:text-[10px] ll:text-neutral-300",
-                      !command && "ll:rounded-full ll:bg-[#353539]",
+                      "ll:flex ll:size-[22px] ll:shrink-0 ll:items-center ll:justify-center ll:text-[10px] ll:text-muted-foreground",
+                      !command && "ll:rounded-full ll:bg-muted",
                     )}
                   >
                     {command
@@ -148,7 +149,7 @@ export const ChatMentionSuggestions: FC<ChatMentionSuggestionsProps> = ({
                   </span>
                   <span className="ll:min-w-0 ll:flex-1">
                     <span
-                      className="ll:block ll:truncate ll:text-[12px] ll:leading-[15px] ll:font-semibold ll:text-white"
+                      className="ll:block ll:truncate ll:text-xs ll:leading-[15px] ll:font-semibold"
                       style={
                         !command && suggestion.color
                           ? { color: `#${suggestion.color}` }
@@ -158,7 +159,7 @@ export const ChatMentionSuggestions: FC<ChatMentionSuggestionsProps> = ({
                       {label}
                     </span>
                     {command && (
-                      <span className="ll:block ll:truncate ll:text-[10px] ll:leading-[14px] ll:text-neutral-400">
+                      <span className="ll:block ll:truncate ll:text-[10px] ll:leading-[14px] ll:text-muted-foreground">
                         {suggestion.description}
                       </span>
                     )}
@@ -167,7 +168,7 @@ export const ChatMentionSuggestions: FC<ChatMentionSuggestionsProps> = ({
                     aria-hidden
                     size={12}
                     className={cn(
-                      "ll:shrink-0 ll:text-neutral-400",
+                      "ll:shrink-0 ll:text-muted-foreground",
                       index !== selectedIndex && "ll:invisible",
                     )}
                   />
@@ -177,7 +178,7 @@ export const ChatMentionSuggestions: FC<ChatMentionSuggestionsProps> = ({
           </div>
         </ScrollArea>
       )}
-      <div className="ll:border-x-0 ll:border-b-0 ll:border-t ll:border-gray-400/20 ll:px-2 ll:py-1 ll:text-[10px] ll:text-neutral-400">
+      <div className="ll:border-x-0 ll:border-b-0 ll:border-t ll:border-solid ll:border-separator-subtle ll:px-2 ll:py-1 ll:text-[10px] ll:text-muted-foreground">
         {t("input.suggestionKeyboardHint")}
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { SettingsEmptyState } from "@/features/settings/components/shared/settings-empty-state";
+import { EmptyState } from "@/components/empty-state";
 import { SettingsList } from "@/features/settings/components/shared/settings-list";
 import { SettingsListRow } from "@/features/settings/components/shared/settings-list-row";
 import { SettingsSection } from "@/features/settings/components/shared/settings-section";
@@ -72,9 +72,9 @@ export const MutedListTab = <TItem,>({
           }}
         />
         {visibleItems.length === 0 ? (
-          <SettingsEmptyState>
-            {items.length === 0 ? emptyLabel : noResultsLabel}
-          </SettingsEmptyState>
+          <EmptyState
+            description={items.length === 0 ? emptyLabel : noResultsLabel}
+          />
         ) : (
           <SettingsList>
             {visibleItems.map((item) => (

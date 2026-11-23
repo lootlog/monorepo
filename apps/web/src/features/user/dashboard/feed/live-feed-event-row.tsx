@@ -7,7 +7,7 @@ import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_HOVER_CLASS,
 } from "@/components/common/list-tile";
-import { LEGENDARY_LOOT_ROW_CLASS } from "@/features/guild/loots-list/loots-list-layout";
+import { LOOT_RARITY_SURFACE_CLASS } from "@lootlog/ui/lib/item-rarity-colors";
 import { npcCategoryAppearance } from "../npc-category-appearance";
 import { LiveFeedEventLoot } from "./live-feed-event-loot";
 import { LiveFeedEventMeta } from "./live-feed-event-meta";
@@ -34,7 +34,7 @@ export function LiveFeedEventRow({ group, now }: Props) {
         "grid grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 py-3 @lg:grid-cols-[2.5rem_minmax(0,1fr)_auto_auto]",
         LIST_TILE_HOVER_CLASS,
         LIST_TILE_INSET_CLASS,
-        legendary && LEGENDARY_LOOT_ROW_CLASS,
+        legendary && LOOT_RARITY_SURFACE_CLASS.LEGENDARY,
       )}
       style={appearance.style}
     >

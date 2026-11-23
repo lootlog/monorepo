@@ -208,7 +208,15 @@ body {
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-ring;
+  }
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  ::selection {
+    background: color-mix(in oklab, var(--ring) 35%, transparent);
+    color: var(--foreground);
   }
   body {
     @apply bg-background text-foreground;

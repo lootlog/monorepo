@@ -1,4 +1,5 @@
 import { SlidersHorizontal } from "lucide-react";
+import { Badge } from "@lootlog/ui/components/badge";
 import type { ReactNode } from "react";
 import { cn } from "cn";
 import { t } from "@/i18n/messages";
@@ -28,12 +29,13 @@ export function FiltersHeader({
       <SlidersHorizontal aria-hidden="true" className="size-4 text-primary" />
       {renderTitle(t("filters.title"))}
       {count > 0 ? (
-        <span
+        <Badge
+          size="sm"
           aria-label={t("filters.activeCount", { count })}
-          className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-semibold text-primary-foreground tabular-nums"
+          className="ml-auto min-w-5 justify-center tabular-nums"
         >
           {count}
-        </span>
+        </Badge>
       ) : null}
     </div>
   );

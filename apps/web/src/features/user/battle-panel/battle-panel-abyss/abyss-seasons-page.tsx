@@ -1,4 +1,4 @@
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { ResultsSurface } from "@/components/common/results-surface";
 import { StatisticsQueryPanel } from "@/features/user/battle-panel/battle-panel-statistics/components/statistics-query-panel";
 import {

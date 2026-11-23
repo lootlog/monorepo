@@ -57,7 +57,7 @@ it("shows a retryable error instead of an empty calendar after initial failure",
   });
   await renderCard(client);
   expect((await screen.findByRole("alert")).textContent).toContain(
-    "Nie udało się pobrać rezerwacji.",
+    "Nie udało się wczytać rezerwacji.",
   );
   expect(screen.queryByText("Nie masz nadchodzących rezerwacji")).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: /Spróbuj ponownie/ }));

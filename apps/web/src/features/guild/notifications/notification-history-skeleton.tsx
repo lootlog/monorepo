@@ -6,8 +6,7 @@ export const NotificationHistorySkeleton = () => (
   <NotificationsTabSkeleton
     actions={
       <>
-        <Skeleton className="h-8 w-24 rounded-lg" />
-        <Skeleton className="h-8 w-20 rounded-lg" />
+        <Skeleton className="h-10 w-36 rounded-md" />
       </>
     }
   >

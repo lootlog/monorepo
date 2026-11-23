@@ -6,16 +6,15 @@ import {
 import { DetailBar } from "@/components/common/detail-bar";
 import { DetailBarFact } from "@/components/common/detail-bar-fact";
 import { DetailBarFacts } from "@/components/common/detail-bar-facts";
-import { EmptyState } from "@/components/common/empty-state";
+import { DetailNotFound } from "@/components/common/detail-not-found";
 import { SkeletonLine } from "@/components/common/skeleton-line";
 import { HeaderSlotPortal } from "@/components/layout/header-slot-portal";
 import { TopBarTitle } from "@/components/layout/top-bar-title";
 import { StatisticsQueryPanel } from "@/features/user/battle-panel/battle-panel-statistics/components/statistics-query-panel";
 import { useBattleCharacters } from "@/components/filters/use-battle-characters";
 import { ROUTES } from "@/config/routes";
-import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { Link, Outlet, useLocation } from "@tanstack/react-router";
+import { Outlet, useLocation } from "@tanstack/react-router";
 import { Trophy } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
@@ -42,27 +41,14 @@ export function AbyssSeasonLayout() {
 
   if (!characterId || (seasonsQuery.data && !season)) {
     return (
-      <div className="p-3">
-        <EmptyState
-          fill
-          icon={Trophy}
-          title={t("battlePanel.abyss.seasonNotFound")}
-          action={
-            <Button
-              variant="outline"
-              nativeButton={false}
-              render={
-                <Link
-                  to={ROUTES.user.battlePanel.abyss}
-                  search={{ characterId }}
-                />
-              }
-            >
-              {t("battlePanel.abyss.backToSeasons")}
-            </Button>
-          }
-        />
-      </div>
+      <DetailNotFound
+        icon={Trophy}
+        title={t("battlePanel.abyss.seasonNotFound")}
+        description={t("battlePanel.abyss.seasonNotFoundDescription")}
+        backTo={ROUTES.user.battlePanel.abyss}
+        backSearch={{ characterId }}
+        backLabel={t("battlePanel.abyss.backToSeasons")}
+      />
     );
   }
 

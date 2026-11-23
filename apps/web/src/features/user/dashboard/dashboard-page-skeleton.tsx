@@ -4,7 +4,8 @@ import { Clock, Crown, Swords, Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { BandSection } from "@/components/common/band-section";
 import { ListTileSkeleton } from "@/components/common/list-tile-skeleton";
-import { StatsTile, StatsTileGrid } from "@/components/common/stats-tile";
+import { StatsTile } from "@lootlog/ui/components/stats-tile";
+import { StatsTileGrid } from "@lootlog/ui/components/stats-tile-grid";
 import { DashboardColumns } from "./dashboard-columns";
 import { LiveFeedSkeleton } from "./feed/live-feed-skeleton";
 
@@ -30,7 +31,7 @@ export function DashboardPageSkeleton() {
           title={t("statistics.today.title")}
           tiled
         >
-          <StatsTileGrid className="grid-cols-2 xl:grid-cols-4">
+          <StatsTileGrid className="sm:grid-cols-2 xl:grid-cols-4">
             {TODAY_TILES.map(({ key, icon }) => (
               <StatsTile
                 key={key}
@@ -40,7 +41,7 @@ export function DashboardPageSkeleton() {
                     ? t("kills.records.streak")
                     : t(`statistics.today.${key}`)
                 }
-                value={<Skeleton className="my-0.5 h-6 w-16" />}
+                value={<Skeleton className="h-7 w-16" />}
               />
             ))}
           </StatsTileGrid>

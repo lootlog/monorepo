@@ -18,20 +18,3 @@
     padding: 4.5rem 2.5rem 6rem;
   }
 }
-
-.portal-link {
-  color: var(--portal-link);
-  font-weight: 500;
-  text-decoration: underline;
-  text-decoration-color: color-mix(
-    in oklab,
-    var(--portal-link) 40%,
-    transparent
-  );
-  text-underline-offset: 0.2em;
-  transition: text-decoration-color 150ms;
-}
-
-.portal-link:hover {
-  text-decoration-color: currentColor;
-}

@@ -11,7 +11,7 @@ import {
 } from "../../hooks/use-window-status";
 import type { CoverageGap } from "../../hooks/queries/use-map-coverage-timer";
 import { MapCard } from "./map-card";
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { getCoveredMapsColorClassName } from "../../utils/get-map-coverage-color-class-name";
 import { getMapStatus, STATUS_STYLES } from "./map-status";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
@@ -199,7 +199,7 @@ export const EventMapGrid = ({
     maps.length;
 
   if (totalMaps === 0) {
-    return <EmptyState icon={MapPin} title={t("events.maps.noMaps")} />;
+    return <EmptyState compact icon={MapPin} title={t("events.maps.noMaps")} />;
   }
 
   if (locations.length === 0 && maps.length > 0) {

@@ -1,7 +1,6 @@
 import { FilterBar } from "@/components/common/filter-bar";
-import { Tabs, TabsTrigger } from "@lootlog/ui/components/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@lootlog/ui/components/tabs";
 import { useTranslation } from "react-i18next";
-import { EventScrollableTabsList } from "./event-scrollable-tabs-list";
 
 const ALL_HEROES_VALUE = "all";
 
@@ -34,16 +33,12 @@ export const HeroTabs = ({
       onValueChange={(nextValue: string) =>
         onValueChange(nextValue === ALL_HEROES_VALUE ? undefined : nextValue)
       }
-      className={
-        placement === "section"
-          ? "border-b border-sidebar-border"
-          : "min-w-0 flex-1"
-      }
+      className={placement === "page" ? "min-w-0 flex-1" : undefined}
     >
-      <EventScrollableTabsList
-        ariaLabel={t("events.heroTabs.label")}
+      <TabsList
+        aria-label={t("events.heroTabs.label")}
         size={placement === "section" ? "default" : "lg"}
-        variant={placement === "section" ? "flush" : "pill"}
+        variant="underline"
       >
         {includeAll && (
           <TabsTrigger value={ALL_HEROES_VALUE}>
@@ -55,7 +50,7 @@ export const HeroTabs = ({
             {hero.npcName}
           </TabsTrigger>
         ))}
-      </EventScrollableTabsList>
+      </TabsList>
     </Tabs>
   );
 

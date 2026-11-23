@@ -10,7 +10,7 @@ import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import { getResetHeadToHeadFilters } from "@/features/user/battle-panel/components/battle-panel-active-filter-helpers";
 import { CardListSkeleton } from "@/components/common/card-list-skeleton";
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { BattlePanelH2hCard } from "@/features/user/battle-panel/components/battle-panel-h2h-card";
 import { BattlePanelH2hCardSkeleton } from "@/features/user/battle-panel/components/battle-panel-h2h-card-skeleton";
 import { BattlePanelPaginationFooter } from "@/features/user/battle-panel/components/battle-panel-pagination-footer";

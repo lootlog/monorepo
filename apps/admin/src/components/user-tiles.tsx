@@ -3,21 +3,24 @@ import { Link } from "@tanstack/react-router";
 import { RoleBadges } from "@/components/role-badges";
 import { StatusBadge } from "@/components/status-badge";
 import { UserAvatar } from "@/components/user-avatar";
+import { RESULT_TILE_LINK_CLASS, RESULT_TILES_CLASS } from "@/lib/list-classes";
 
 export function UserTiles({ users }: { users: ReadonlyArray<AdminUser> }) {
   return (
-    <ul className="flex flex-col gap-2">
+    <ul className={RESULT_TILES_CLASS}>
       {users.map((user) => (
         <li key={user.id}>
           <Link
             to="/users/$userId"
             params={{ userId: user.id }}
-            className="flex flex-col gap-3 rounded-lg border border-border bg-card p-3 outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className={RESULT_TILE_LINK_CLASS}
           >
             <span className="flex min-w-0 items-center gap-3">
               <UserAvatar name={user.name} image={user.image} />
               <span className="grid min-w-0 flex-1">
-                <span className="truncate font-medium">{user.name}</span>
+                <span className="truncate text-sm font-medium">
+                  {user.name}
+                </span>
                 <span className="truncate text-xs text-muted-foreground">
                   {user.discordId}
                 </span>

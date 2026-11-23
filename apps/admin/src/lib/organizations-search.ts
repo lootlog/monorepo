@@ -40,3 +40,8 @@ export const validateOrganizationsSearch = (search: {
   sort: readSort(search.sort),
   page: readPage(search.page),
 });
+
+export const hasOrganizationsFilters = (search: OrganizationsSearch) =>
+  [search.search, search.status, search.sync, search.missing].some(
+    (value) => value !== undefined,
+  );

@@ -1,5 +1,5 @@
 import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { GuildAvatar } from "@/components/guild-avatar";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -96,7 +96,7 @@ export const GuildListPopover = () => {
             ) : null}
 
             {guilds.length > 0 && (
-              <div className="ll:border-0 ll:border-t ll:border-gray-400/40" />
+              <div className="ll:border-0 ll:border-t ll:border-separator" />
             )}
 
             {guilds.length > 0 ? (
@@ -113,16 +113,7 @@ export const GuildListPopover = () => {
                       onClick={() => handleGuildClick(guild.id)}
                     >
                       <div className="ll:flex ll:items-center ll:gap-2 ll:overflow-hidden ll:flex-1 ll:min-w-0">
-                        <Avatar className="ll:size-6 ll:flex ll:items-center ll:justify-center ll:shrink-0 ll:p-0">
-                          <AvatarImage
-                            src={guild.icon ?? undefined}
-                            alt={guild.name}
-                            className="ll:object-cover ll:size-full ll:rounded-full"
-                          />
-                          <AvatarFallback className="ll:text-xs ll:font-semibold ll:bg-muted ll:text-popover-foreground ll:size-full ll:flex ll:items-center ll:justify-center ll:rounded-full">
-                            {guild.name.charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
+                        <GuildAvatar guild={guild} size="md" />
                         <span className="ll:truncate">{guild.name}</span>
                       </div>
                       <ExternalLink className="ll:w-3 ll:h-3 ll:text-muted-foreground ll:shrink-0" />
@@ -131,7 +122,7 @@ export const GuildListPopover = () => {
                 </div>
               </ScrollArea>
             ) : (
-              <div className="ll:flex ll:flex-col ll:gap-0.5 ll:border-0 ll:border-t ll:border-gray-400/40 ll:px-2 ll:py-2 ll:text-xs">
+              <div className="ll:flex ll:flex-col ll:gap-0.5 ll:border-0 ll:border-t ll:border-separator ll:px-2 ll:py-2 ll:text-xs">
                 <span className="ll:font-semibold ll:text-foreground/85">
                   {tCommon("noLootlog.title")}
                 </span>

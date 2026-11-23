@@ -1,6 +1,6 @@
 import { FilterBar } from "@/components/common/filter-bar";
-import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { InlineSearchFieldSkeleton } from "@/components/common/inline-search-field-skeleton";
 
 export const SkeletonFilterBar = () => (
-  <FilterBar search={<Skeleton className="h-10 w-72 rounded-control" />} />
+  <FilterBar search={<InlineSearchFieldSkeleton />} />
 );

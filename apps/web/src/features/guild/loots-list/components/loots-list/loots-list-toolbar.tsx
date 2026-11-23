@@ -1,12 +1,10 @@
+import { RESULTS_TABLE_MEDIA_QUERY } from "@/components/common/page-sticky-table-header";
 import { useTranslation } from "react-i18next";
 import { FilterBar } from "@/components/common/filter-bar";
 import { ViewModeToggle } from "@/components/ui/view-mode-toggle";
 import { useViewMode } from "@/hooks/use-view-mode";
 import { LootSearchField } from "@/features/guild/loots-list/components/loots-filters/loot-search-field";
-import {
-  LOOTS_GRID_MEDIA_QUERY,
-  LOOTS_VIEW_MODE_KEY,
-} from "@/features/guild/loots-list/loots-list-layout";
+import { LOOTS_VIEW_MODE_KEY } from "@/features/guild/loots-list/loots-list-layout";
 
 export const LootsListToolbar = () => {
   const { t } = useTranslation();
@@ -14,7 +12,7 @@ export const LootsListToolbar = () => {
   const { viewMode, setViewMode, canChooseViewMode } = useViewMode(
     LOOTS_VIEW_MODE_KEY,
     "grid",
-    LOOTS_GRID_MEDIA_QUERY,
+    RESULTS_TABLE_MEDIA_QUERY,
   );
 
   return (

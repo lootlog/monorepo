@@ -11,6 +11,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { initializeTestTranslations } from "@/lib/testing/i18n";
 import { createMemberDirectoryTestWrapper } from "@/lib/testing/member-directory";
 import type { MapTimelineData } from "@/lib/api/event-types";
+import { stubResultsTableViewport } from "@/lib/testing/viewport";
 import { KillMapsTimelineTable } from "./kill-maps-timeline-table";
 
 const { t } = await initializeTestTranslations();
@@ -23,9 +24,12 @@ const startTime = new Date("2026-08-12T08:00:00.000Z");
 
 const endTime = new Date("2026-08-12T10:00:00.000Z");
 
-beforeEach(() => installMatchMedia(false));
+beforeEach(stubResultsTableViewport);
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
 
 describe("KillMapsTimelineTable", () => {
   it("groups repeated assignments and reveals every period without duplicate key warnings", () => {
@@ -38,7 +42,7 @@ describe("KillMapsTimelineTable", () => {
     expect(screen.getByText("Pradawne Wzgórze")).toBeTruthy();
     expect(
       screen.getAllByText("events.killDetail.mapCoverage.memberCount"),
-    ).toHaveLength(2);
+    ).toHaveLength(1);
 
     const mapToggle = screen.getByRole("button", {
       name: "events.killDetail.mapCoverage.expandMap",
@@ -166,22 +170,6 @@ function renderTable(maps: MapTimelineData[]) {
       t={t}
     />,
   );
-}
-
-function installMatchMedia(matches: boolean) {
-  Object.defineProperty(window, "matchMedia", {
-    configurable: true,
-    value: vi.fn().mockImplementation(() => ({
-      matches,
-      media: "(width < 48rem)",
-      onchange: null,
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
-      dispatchEvent: vi.fn(),
-    })),
-  });
 }
 
 function createMapWithRepeatedAssignment(): MapTimelineData {

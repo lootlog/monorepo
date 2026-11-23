@@ -1,13 +1,11 @@
 import { useTranslation } from "react-i18next";
 import type { EventScoringAction } from "@lootlog/domain/scoring";
-import { cn } from "cn";
+import { Badge } from "@lootlog/ui/components/badge";
 import { formatScoringAction } from "../../utils/scoring-rule-labels";
-
-const ACTION_CLASS_NAMES: Record<EventScoringAction["type"], string> = {
-  SET_BASE: "bg-primary/10 text-primary",
-  ADD_BONUS: "bg-cyan-400/10 text-cyan-400",
-  ZERO_BASE: "bg-amber-400/10 text-amber-400",
-};
+import {
+  SCORING_ACTION_TONE,
+  SCORING_TONE_BADGE_VARIANT,
+} from "../../utils/scoring-tone";
 
 export const ScoringActionBadge = ({
   action,
@@ -19,15 +17,16 @@ export const ScoringActionBadge = ({
   const { t } = useTranslation();
 
   return (
-    <span
-      className={cn(
-        "inline-flex shrink-0 items-center rounded-md px-1.5 py-0.5 text-xs font-semibold whitespace-nowrap tabular-nums",
+    <Badge
+      variant={
         muted
-          ? "bg-muted/40 text-muted-foreground"
-          : ACTION_CLASS_NAMES[action.type],
-      )}
+          ? "secondary"
+          : SCORING_TONE_BADGE_VARIANT[SCORING_ACTION_TONE[action.type]]
+      }
+      size="sm"
+      className="shrink-0 whitespace-nowrap tabular-nums"
     >
       {formatScoringAction(action, t)}
-    </span>
+    </Badge>
   );
 };

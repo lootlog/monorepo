@@ -1,4 +1,4 @@
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { InfiniteListStatusRow } from "@/components/common/infinite-list-status-row";
 import { useInfiniteScrollSentinel } from "@/hooks/utils/use-infinite-scroll-sentinel";
 import { useResetScrollTop } from "@/hooks/utils/use-virtual-infinite-scroll";

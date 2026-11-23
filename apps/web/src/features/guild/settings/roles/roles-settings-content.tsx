@@ -1,4 +1,5 @@
-import { ListToolbar } from "@/components/common/list-toolbar";
+import { ResultsSurface } from "@/components/common/results-surface";
+import { KillStatsSearch } from "@/components/common/kill-stats-search";
 import { ListTileSkeleton } from "@/components/common/list-tile-skeleton";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useRolesControllerGetGuildRoles } from "@lootlog/client/main";
@@ -9,7 +10,7 @@ import { Link } from "@tanstack/react-router";
 import { ROUTES } from "@/config/routes";
 import { startTransition, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { SettingsClearFilterButton } from "@/components/common/settings-clear-filter-button";
+import { ClearFiltersButton } from "@/components/common/clear-filters-button";
 import { SettingsListEmpty } from "@/components/common/settings-list-empty";
 import { SettingsListError } from "@/components/common/settings-list-error";
 import { SettingsTabPage } from "@/components/common/settings-tab-page";
@@ -96,12 +97,10 @@ export const RolesSettingsContent = () => {
       return (
         <SettingsListEmpty
           icon={SearchX}
-          title={t("settings.roles.empty.filteredTitle", {
-            query: searchValue.trim(),
-          })}
+          title={t("settings.roles.empty.filteredTitle")}
           description={t("settings.roles.empty.filteredDescription")}
           action={
-            <SettingsClearFilterButton
+            <ClearFiltersButton
               onClear={() => startTransition(() => setSearchValue(""))}
             />
           }
@@ -116,15 +115,17 @@ export const RolesSettingsContent = () => {
 
   return (
     <SettingsTabPage title={t("settings.roles.title")}>
-      <ListToolbar
-        search={searchValue}
-        onSearchChange={setSearchValue}
-        placeholder={t("settings.roles.searchPlaceholder")}
-        label={t("settings.roles.searchPlaceholder")}
-        clearLabel={t("settings.clearFilter")}
-        disabled={!roles?.length}
-      />
-      {renderContent()}
+      <ResultsSurface
+        search={
+          <KillStatsSearch
+            value={searchValue}
+            placeholder={t("settings.roles.searchPlaceholder")}
+            onChange={setSearchValue}
+          />
+        }
+      >
+        {renderContent()}
+      </ResultsSurface>
     </SettingsTabPage>
   );
 };

@@ -140,6 +140,9 @@ export function FilterPopover<T extends string = string>({
     renderTriggerLabel,
   });
 
+  const chipLabel = label ?? placeholder;
+  const chipValue = selectedValues.length ? triggerLabel : undefined;
+
   const handleSelect = (optionValue: T) => {
     onValueChange(optionValue);
 
@@ -155,11 +158,16 @@ export function FilterPopover<T extends string = string>({
           render={
             <FilterChipTrigger
               role="combobox"
+              aria-label={
+                chipValue === undefined
+                  ? chipLabel
+                  : `${chipLabel}: ${chipValue}`
+              }
               aria-expanded={open}
               disabled={disabled}
               icon={Icon}
-              label={label ?? placeholder}
-              value={selectedValues.length ? triggerLabel : undefined}
+              label={chipLabel}
+              value={chipValue}
               active={active || (multiSelect && selectedValues.length > 0)}
             />
           }

@@ -16,7 +16,7 @@ import {
 } from "@/features/hero-sightings/hooks/use-add-hero-sighting-form";
 import type { KnownHero } from "@lootlog/domain/hero-sightings";
 
-const hintClassName = "ll:text-[11px] ll:text-gray-400";
+const hintClassName = "ll:text-[11px] ll:text-muted-foreground";
 
 export function AddHeroSightingForm(props: AddHeroSightingFormProps) {
   const {
@@ -73,20 +73,13 @@ export function AddHeroSightingForm(props: AddHeroSightingFormProps) {
               onSelect={fillHero}
               selectedIndex={suggestions.selectedIndex}
               keyExtractor={(hero) => hero.key}
-              renderItem={(hero, _index, isSelected) => (
-                <div
-                  className={cn(
-                    "ll:border-b ll:border-x-0 ll:border-t-0 ll:border-gray-600/50 ll:px-2 ll:py-1.5 ll:text-xs last:ll:border-b-0",
-                    isSelected ? "ll:bg-blue-500/30" : "ll:hover:bg-white/5",
-                  )}
-                >
-                  <span className="ll:font-semibold ll:text-white">
-                    {hero.name}
-                  </span>
-                  <span className="ll:ml-1 ll:text-gray-400">
+              renderItem={(hero) => (
+                <>
+                  <span className="ll:font-semibold">{hero.name}</span>
+                  <span className="ll:ml-1 ll:text-muted-foreground">
                     ({formatLevel(hero.lvl, hero.prof)})
                   </span>
-                </div>
+                </>
               )}
             />
             <FormFieldError message={errors.name?.message} />
@@ -138,7 +131,7 @@ export function AddHeroSightingForm(props: AddHeroSightingFormProps) {
         </div>
       </ScrollArea>
 
-      <WindowFooter rowClassName="ll:justify-end ll:gap-1 ll:px-3">
+      <WindowFooter rowClassName="ll:justify-end">
         <Button
           type="button"
           size="xs"

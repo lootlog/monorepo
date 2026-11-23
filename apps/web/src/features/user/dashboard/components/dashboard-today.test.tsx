@@ -139,7 +139,7 @@ it("shows failed kill statistics as unknown with a retry, not as zero kills", as
 
   const alert = await screen.findByRole("alert");
 
-  expect(alert.textContent).toContain("Nie udało się pobrać statystyk.");
+  expect(alert.textContent).toContain("Nie udało się wczytać statystyk.");
   expect(killsTile()).not.toContain("0");
 
   fireEvent.click(screen.getByRole("button", { name: "Spróbuj ponownie" }));

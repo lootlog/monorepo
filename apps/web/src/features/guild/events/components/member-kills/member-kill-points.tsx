@@ -28,7 +28,7 @@ export const MemberKillPoints = ({ kill }: MemberKillPointsProps) => {
           <TooltipTrigger
             render={
               <span
-                className="inline-flex size-6 shrink-0 items-center justify-center text-amber-400"
+                className="inline-flex size-6 shrink-0 items-center justify-center text-signal-timer"
                 tabIndex={0}
                 aria-label={t("events.points.modified")}
               >

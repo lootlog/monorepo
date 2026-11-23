@@ -1,6 +1,5 @@
 import { getMemberDiscordSyncPresentation } from "@/features/guild/settings/members/member-discord-sync.utils";
 import type { GuildMember } from "@/features/guild/settings/members/members.types";
-import { cn } from "cn";
 import { Badge, type BadgeProps } from "@lootlog/ui/components/badge";
 import {
   AlertTriangle,
@@ -62,10 +61,7 @@ export const MemberStatusBadge = ({ member }: { member: GuildMember }) => {
   const Icon = copy.icon;
 
   return (
-    <Badge
-      variant={copy.variant}
-      className={cn("h-6 gap-1.5 px-2 text-2xs", copy.className)}
-    >
+    <Badge variant={copy.variant} size="sm" className={copy.className}>
       <Icon className="size-3" />
       {copy.label}
     </Badge>

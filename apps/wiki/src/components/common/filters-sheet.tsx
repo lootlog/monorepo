@@ -1,4 +1,5 @@
 import { SlidersHorizontal } from "lucide-react";
+import { Badge } from "@lootlog/ui/components/badge";
 import { type ReactNode, useState } from "react";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
@@ -28,9 +29,9 @@ export function FiltersSheet({ count, children }: FiltersSheetProps) {
         <SlidersHorizontal aria-hidden="true" />
         {t("filters.title")}
         {count > 0 ? (
-          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-semibold text-primary-foreground tabular-nums">
+          <Badge size="sm" className="min-w-5 justify-center tabular-nums">
             {count}
-          </span>
+          </Badge>
         ) : null}
       </SheetTrigger>
       <SheetContent side="left" className="gap-0 bg-card p-0">

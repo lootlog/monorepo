@@ -1,10 +1,11 @@
-import { EmptyState } from "@/components/common/empty-state";
-import { ListToolbar } from "@/components/common/list-toolbar";
-import { PillToggleGroup } from "@/components/common/pill-toggle-group";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
+import { ResultsSurface } from "@/components/common/results-surface";
+import { KillStatsSearch } from "@/components/common/kill-stats-search";
+import { FilterPopover } from "@lootlog/ui/components/filter-popover";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { CalendarClock, CircleAlert, SearchX } from "lucide-react";
+import { AlertCircle, CalendarClock, ListFilter, SearchX } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "@lootlog/ui/lib/toast";
 import {
@@ -107,7 +108,30 @@ export function Reservations() {
     mutation.mutate({ pathParams: { guildId, spotId } });
   };
 
-  const tiles = spotsQuery.isPending ? (
+  const clearFilters = () => {
+    setSearchValue("");
+    setFilter("all");
+  };
+
+  const filterLabel = (value: ReservationFilter) =>
+    t(`reservations.filters.${value}`);
+
+  const tiles = spotsQuery.isError ? (
+    <div className="p-3">
+      <EmptyState
+        fill
+        icon={AlertCircle}
+        title={t("reservations.error.title")}
+        description={t("reservations.error.description")}
+        action={
+          <RetryButton
+            onRetry={() => spotsQuery.refetch()}
+            isRetrying={spotsQuery.isFetching}
+          />
+        }
+      />
+    </div>
+  ) : spotsQuery.isPending ? (
     <div aria-hidden="true" className="overflow-hidden">
       <div className={getReservationCollectionClassName(viewMode)}>
         {Array.from({ length: 8 }).map((_, index) => (
@@ -123,14 +147,7 @@ export function Reservations() {
           icon={SearchX}
           title={t("reservations.empty.noResults")}
           description={t("reservations.empty.noResultsDescription")}
-          action={
-            <ClearFiltersButton
-              onClear={() => {
-                setSearchValue("");
-                setFilter("all");
-              }}
-            />
-          }
+          action={<ClearFiltersButton onClear={clearFilters} />}
         />
       ) : (
         <EmptyState
@@ -172,53 +189,59 @@ export function Reservations() {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <h1 className="sr-only">{t("layout.navigation.reservations")}</h1>
-      {spotsQuery.isError ? (
-        <div className="p-3">
-          <EmptyState
-            fill
-            icon={CircleAlert}
-            title={t("reservations.error.title")}
-            description={t("reservations.error.description")}
-            action={
-              <RetryButton
-                onRetry={() => spotsQuery.refetch()}
-                isRetrying={spotsQuery.isFetching}
-              />
-            }
-          />
-        </div>
-      ) : (
-        <ScrollArea data-under-top-bar className="min-h-0 flex-1">
-          <ListToolbar
-            search={searchValue}
-            onSearchChange={setSearchValue}
-            placeholder={t("reservations.filterPlaceholder")}
-            label={t("reservations.filterLabel")}
-            clearLabel={t("reservations.clearSearch")}
-            disabled={spotsQuery.isPending}
-          >
-            <PillToggleGroup
-              label={t("reservations.filters.label")}
-              value={filter}
-              onValueChange={setFilter}
-              options={RESERVATION_FILTERS.map((value) => ({
-                value,
-                label: t(`reservations.filters.${value}`),
-              }))}
+      <ScrollArea data-under-top-bar className="min-h-0 flex-1">
+        <ResultsSurface
+          search={
+            <KillStatsSearch
+              value={searchValue}
+              placeholder={t("reservations.filterPlaceholder")}
+              onChange={setSearchValue}
             />
-            {canChooseViewMode && (
-              <ViewModeToggle
-                value={viewMode}
-                onChange={setViewMode}
-                listLabel={t("reservations.view.list")}
-                gridLabel={t("reservations.view.grid")}
-                size="sm"
+          }
+          filters={
+            <>
+              <FilterPopover
+                options={RESERVATION_FILTERS.filter(
+                  (value) => value !== "all",
+                ).map((value) => ({ value, label: filterLabel(value) }))}
+                value={filter === "all" ? undefined : filter}
+                onValueChange={(value) =>
+                  setFilter(value === filter ? "all" : value)
+                }
+                placeholder={t("reservations.filters.chip")}
+                icon={ListFilter}
+                showSearch={false}
+                active={filter !== "all"}
               />
-            )}
-          </ListToolbar>
+              {canChooseViewMode && (
+                <ViewModeToggle
+                  value={viewMode}
+                  onChange={setViewMode}
+                  listLabel={t("reservations.view.list")}
+                  gridLabel={t("reservations.view.grid")}
+                  size="sm"
+                />
+              )}
+            </>
+          }
+          filtersLabel={t("reservations.filters.label")}
+          chips={
+            filter === "all"
+              ? []
+              : [
+                  {
+                    id: filter,
+                    label: filterLabel(filter),
+                    onRemove: () => setFilter("all"),
+                  },
+                ]
+          }
+          clearFiltersLabel={t("common.actions.clearFilters")}
+          onClearFilters={clearFilters}
+        >
           {tiles}
-        </ScrollArea>
-      )}
+        </ResultsSurface>
+      </ScrollArea>
     </div>
   );
 }

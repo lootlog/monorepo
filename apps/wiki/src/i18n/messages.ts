@@ -43,6 +43,34 @@ const messages = {
     brandSuffix: "Wiki",
     searchLabel: "Szukaj w wiki",
     searchPlaceholder: "Szukaj przedmiotów i potworów",
+    sites: "Serwisy Lootlog",
+  },
+  sites: {
+    lootlog: "Lootlog",
+    docs: "Dokumentacja",
+    wiki: "Wiki",
+    developer: "Dla programistów",
+    github: "GitHub",
+    discord: "Discord",
+  },
+  footer: {
+    tagline: "Darmowy dodatek open source do Margonem dla graczy i klanów.",
+    navigation: "Linki w stopce",
+    copyright: "© {{year}} Lootlog · open source",
+    legalNotice:
+      "Grafiki wykorzystane na stronie są własnością Garmory sp. z o.o.",
+    privacy: "Prywatność",
+    terms: "Regulamin",
+  },
+  status: {
+    notFoundTitle: "Nie znaleźliśmy tej strony",
+    notFoundDescription:
+      "Adres jest nieaktualny albo strona została przeniesiona.",
+    errorTitle: "Coś poszło nie tak",
+    errorDescription:
+      "Nie udało się wyświetlić tej strony. Spróbuj ponownie za chwilę.",
+    backHome: "Wróć na stronę główną",
+    retry: "Spróbuj ponownie",
   },
   quickSearch: {
     title: "Wyszukiwarka",
@@ -807,9 +835,14 @@ const messages = {
     noLocationsYet: "Lootlog nie zna jeszcze map tego potwora.",
     showAllLocations: "Pokaż wszystkie mapy ({{count}})",
     showFewerLocations: "Pokaż mniej",
-    itemNotFound: "Nie znaleziono przedmiotu.",
-    npcNotFound: "Nie znaleziono potwora.",
-    eventNotFound: "Nie znaleziono eventu.",
+    itemNotFound: "Nie znaleziono przedmiotu",
+    npcNotFound: "Nie znaleziono potwora",
+    eventNotFound: "Nie znaleziono eventu",
+    notFoundDescription:
+      "Mógł zniknąć z gry albo adres jest nieaktualny. Wyszukaj go na liście.",
+    backToItems: "Wróć do przedmiotów",
+    backToNpcs: "Wróć do potworów",
+    backToEvents: "Wróć do eventów",
     eventDescription:
       "Przedmioty z eventu: {{count}}, według potworów i rzadkości.",
     eventOtherItems: "Pozostałe przedmioty",

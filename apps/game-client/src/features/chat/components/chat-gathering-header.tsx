@@ -8,7 +8,7 @@ type Props = {
 export function ChatGatheringHeader({ organizer }: Props) {
   return (
     <PlayerName
-      className="ll:min-h-[18px] ll:text-[12px] ll:leading-[18px] ll:font-semibold ll:text-white"
+      className="ll:min-h-[18px] ll:text-xs ll:leading-[18px] ll:font-semibold ll:text-foreground"
       name={organizer.nick}
       level={organizer.lvl}
       profession={organizer.prof}

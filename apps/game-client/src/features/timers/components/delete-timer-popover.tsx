@@ -112,7 +112,7 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
       <PopoverTrigger asChild>
         <ContextMenuItem
           disabled={pending}
-          className="ll:text-red-300 ll:hover:bg-red-500/20 ll:data-[highlighted]:bg-red-500/20 ll:focus-visible:bg-red-500/20"
+          className="ll:text-destructive ll:hover:bg-destructive/15 ll:data-[highlighted]:bg-destructive/15 ll:focus-visible:bg-destructive/15"
           onSelect={(e) => {
             e.preventDefault();
             setOpen(true);
@@ -148,9 +148,9 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
                   <Button
                     size="xs"
                     type="button"
-                    variant="menu"
+                    variant="menu-destructive"
                     disabled={pending}
-                    className="ll:justify-start ll:text-left ll:text-red-300 ll:hover:bg-red-500/20"
+                    className="ll:text-left"
                   >
                     {guildData?.name ?? guild.guildId}
                   </Button>

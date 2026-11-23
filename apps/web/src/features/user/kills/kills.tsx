@@ -20,16 +20,16 @@ import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { ResultsSurface } from "@/components/common/results-surface";
 import { CardListSkeleton } from "@/components/common/card-list-skeleton";
-import { CircleAlert, SearchX } from "lucide-react";
+import { AlertCircle, SearchX, Skull } from "lucide-react";
 import {
   useKillsFilterProps,
   type KillsFiltersState,
 } from "./components/use-kills-filter-props";
 import { KillStatsFilters } from "@/features/kills/components/kill-stats-filters";
-import { KillStatsSearch } from "@/features/kills/components/kill-stats-search";
+import { KillStatsSearch } from "@/components/common/kill-stats-search";
 import { KillStatsStackedFilters } from "@/features/kills/components/kill-stats-stacked-filters";
 import { createKillsColumns } from "./components/kills-columns";
 import { KillsMobileList } from "./components/kills-mobile-list";
@@ -208,7 +208,7 @@ export const KillsPage: React.FC = () => {
         <div className="p-3">
           <EmptyState
             fill
-            icon={CircleAlert}
+            icon={AlertCircle}
             title={t("statistics.killsLoadError")}
             action={
               <RetryButton onRetry={() => refetch()} isRetrying={isFetching} />
@@ -221,20 +221,17 @@ export const KillsPage: React.FC = () => {
     if (!data || data.items.length === 0) {
       return (
         <div className="p-3">
-          <EmptyState
-            fill
-            icon={SearchX}
-            title={t(
-              hasActiveFilters
-                ? "kills.ranking.filteredNoData"
-                : "kills.ranking.noData",
-            )}
-            action={
-              hasActiveFilters && (
-                <ClearFiltersButton onClear={handleResetFilters} />
-              )
-            }
-          />
+          {hasActiveFilters ? (
+            <EmptyState
+              fill
+              icon={SearchX}
+              title={t("kills.ranking.filteredNoData")}
+              description={t("kills.ranking.filteredNoDataDescription")}
+              action={<ClearFiltersButton onClear={handleResetFilters} />}
+            />
+          ) : (
+            <EmptyState fill icon={Skull} title={t("kills.ranking.noData")} />
+          )}
         </div>
       );
     }

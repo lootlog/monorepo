@@ -31,13 +31,13 @@ export const ChatReplyPreview: FC<ChatReplyPreviewProps> = ({
   return (
     <div
       className={cn(
-        "ll:flex ll:w-full ll:min-w-0 ll:max-w-full ll:items-start ll:justify-between ll:gap-[var(--ll-chat-space-lg)] ll:overflow-hidden ll:rounded-none ll:border-0 ll:text-gray-100 ll:p-0 ll:bg-zinc-800/70",
+        "ll:flex ll:w-full ll:min-w-0 ll:max-w-full ll:items-start ll:justify-between ll:gap-[var(--ll-chat-space-lg)] ll:overflow-hidden ll:rounded-none ll:border-0 ll:text-foreground ll:p-0 ll:bg-accent/70",
         compact
           ? "ll:not-italic ll:text-[length:var(--ll-chat-detail-font-size,10px)] ll:leading-[var(--ll-chat-detail-line-height,13px)]"
           : "ll:italic",
         {
           "ll:cursor-pointer": !!onClick,
-          "ll:hover:bg-zinc-700/70": !!onClick,
+          "ll:hover:bg-accent": !!onClick,
         },
         !onClear && "ll:py-0.5",
         onClear &&
@@ -78,12 +78,12 @@ export const ChatReplyPreview: FC<ChatReplyPreviewProps> = ({
             aria-hidden
             size={12}
             strokeWidth={1.5}
-            className="ll:inline-block ll:align-text-bottom ll:mr-1 ll:text-gray-400"
+            className="ll:inline-block ll:align-text-bottom ll:mr-1 ll:text-muted-foreground"
           />
         )}
         <span
           className={cn(
-            "ll:min-w-0 ll:truncate ll:text-[length:var(--ll-chat-detail-font-size,10px)] ll:leading-[var(--ll-chat-detail-line-height,13px)] ll:font-semibold ll:text-gray-100",
+            "ll:min-w-0 ll:truncate ll:text-[length:var(--ll-chat-detail-font-size,10px)] ll:leading-[var(--ll-chat-detail-line-height,13px)] ll:font-semibold ll:text-foreground",
             compact
               ? "ll:inline-block ll:align-bottom ll:max-w-[35%] ll:mr-1"
               : "ll:w-full ll:max-w-full",
@@ -94,7 +94,7 @@ export const ChatReplyPreview: FC<ChatReplyPreviewProps> = ({
         </span>
         <span
           className={cn(
-            "ll:min-w-0 ll:max-w-full ll:text-[length:var(--ll-chat-detail-font-size,10px)] ll:leading-[var(--ll-chat-detail-line-height,13px)] ll:font-normal ll:text-gray-300",
+            "ll:min-w-0 ll:max-w-full ll:text-[length:var(--ll-chat-detail-font-size,10px)] ll:leading-[var(--ll-chat-detail-line-height,13px)] ll:font-normal ll:text-foreground/80",
             compact
               ? "ll:whitespace-pre-wrap ll:[overflow-wrap:anywhere]"
               : "ll:w-full ll:whitespace-pre-wrap ll:break-words",

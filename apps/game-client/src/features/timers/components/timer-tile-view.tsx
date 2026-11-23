@@ -24,7 +24,7 @@ const EXPIRED_VEIL = "black 40%";
 
 const TEXT_COLORS = {
   entrance: "ll:text-emerald-300",
-  waiting: "ll:text-white",
+  waiting: "ll:text-foreground",
   window: "ll:text-orange-300",
   overdue: "ll:text-red-400",
   expired: "ll:text-red-400/70",
@@ -32,7 +32,7 @@ const TEXT_COLORS = {
 
 const LEGACY_TEXT_COLORS = {
   entrance: "ll:text-emerald-400",
-  waiting: "ll:text-white",
+  waiting: "ll:text-foreground",
   window: "ll:text-orange-400",
   overdue: "ll:text-red-500",
   expired: "ll:text-red-500",

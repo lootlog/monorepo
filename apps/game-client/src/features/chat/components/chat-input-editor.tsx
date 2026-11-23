@@ -139,7 +139,7 @@ export const ChatInputEditor = forwardRef<
                 : undefined,
             }}
             className={cn(
-              "ll:block ll:content-center ll:h-full ll:w-full ll:min-w-0 ll:overflow-x-auto ll:overflow-y-hidden ll:px-1 ll:py-0 ll:text-white ll:caret-white ll:cursor-text ll:outline-none ll:whitespace-pre ll:[&>p]:m-0",
+              "ll:block ll:content-center ll:h-full ll:w-full ll:min-w-0 ll:overflow-x-auto ll:overflow-y-hidden ll:px-1 ll:py-0 ll:text-foreground ll:caret-white ll:cursor-text ll:outline-none ll:whitespace-pre ll:[&>p]:m-0",
               TEXT_SIZE_CLASS_NAMES[size],
               disabled && "ll:cursor-not-allowed ll:opacity-50",
             )}

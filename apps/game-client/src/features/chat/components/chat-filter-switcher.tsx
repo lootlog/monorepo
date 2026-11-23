@@ -1,6 +1,10 @@
-import { ToggleGroup } from "@base-ui/react/toggle-group";
-import { Toggle } from "@base-ui/react/toggle";
+import {
+  SegmentedControl,
+  SegmentedControlItem,
+} from "@/components/ui/segmented-control";
 import { cn } from "cn";
+import { COUNT_BADGE_CLASS_NAME } from "@/components/count-badge";
+import { UnreadDot } from "@/components/unread-dot";
 import { useTranslation } from "react-i18next";
 import type { ChatFilter } from "@/store/chat.store";
 import type { getChatUnreadSummary } from "../chat-read-state";
@@ -21,46 +25,32 @@ export function ChatFilterSwitcher({ value, onValueChange, unread }: Props) {
   ] as const;
 
   return (
-    <div className="ll:-mt-px ll:flex ll:shrink-0 ll:items-center ll:gap-1 ll:border-y ll:border-x-0 ll:border-gray-400/40">
-      <ToggleGroup
-        value={[value]}
-        onValueChange={(values) => {
-          const option = options.find((item) => item.value === values[0]);
-
-          if (option) onValueChange(option.value);
-        }}
+    <div className="ll:-mt-px ll:flex ll:shrink-0 ll:items-center ll:gap-1 ll:border-y ll:border-x-0 ll:border-separator">
+      <SegmentedControl<ChatFilter>
+        value={value}
+        onValueChange={onValueChange}
         aria-label={t("filters.label")}
-        className="ll:grid ll:grid-cols-3 ll:min-w-0 ll:flex-1 ll:h-7 ll:rounded-none ll:border-0 ll:bg-black/20 ll:p-0"
+        className="ll:flex-1"
       >
         {options.map((option) => (
-          <Toggle
+          <SegmentedControlItem
             key={option.value}
             value={option.value}
             aria-label={t(`filters.${option.value}`)}
-            className={cn(
-              "ll:relative ll:flex ll:min-w-0 ll:h-full ll:items-center ll:justify-center ll:gap-1 ll:rounded-none ll:border-0 ll:px-1 ll:py-0 ll:text-[11px] ll:leading-none ll:font-semibold ll:cursor-pointer ll:transition-none ll:focus-visible:outline-2 ll:focus-visible:outline-ring ll:focus-visible:-outline-offset-2",
-              value === option.value
-                ? "ll:bg-zinc-800 ll:text-white ll:hover:bg-zinc-700"
-                : "ll:bg-transparent ll:text-muted-foreground ll:hover:bg-white/5",
-            )}
           >
-            <span aria-hidden className="ll:size-1.5 ll:shrink-0" />
+            <span aria-hidden className="ll:size-2 ll:shrink-0" />
             {t(`filters.${option.value}`)}
-            <span
+            <UnreadDot
               aria-label={option.unread ? t("navigation.unread") : undefined}
               aria-hidden={!option.unread}
-              className={cn(
-                "ll:size-1.5 ll:shrink-0 ll:rounded-full",
-                value === option.value ? "ll:bg-white" : "ll:bg-primary",
-                !option.unread && "ll:invisible",
-              )}
+              className={cn(!option.unread && "ll:invisible")}
             />
-          </Toggle>
+          </SegmentedControlItem>
         ))}
-      </ToggleGroup>
+      </SegmentedControl>
       {unread.attention > 0 && (
         <span
-          className="ll:rounded ll:bg-primary/20 ll:px-1 ll:text-xs ll:font-semibold"
+          className={cn(COUNT_BADGE_CLASS_NAME, "ll:mr-1")}
           title={t("navigation.attention")}
         >
           {unread.attention}

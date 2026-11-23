@@ -1,4 +1,5 @@
-import { ListToolbarSkeleton } from "@/components/common/list-toolbar-skeleton";
+import { FilterBar } from "@/components/common/filter-bar";
+import { InlineSearchFieldSkeleton } from "@/components/common/inline-search-field-skeleton";
 import { useViewMode } from "@/hooks/use-view-mode";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { ReservationCardSkeleton } from "./reservation-card-skeleton";
@@ -18,15 +19,10 @@ export const ReservationsPageSkeleton = () => {
 
   return (
     <div aria-busy="true" className="min-h-0 flex-1 overflow-hidden">
-      <ListToolbarSkeleton>
-        <div className="flex gap-1.5">
-          <Skeleton className="h-8 w-22 rounded-lg" />
-          <Skeleton className="h-8 w-24 rounded-lg" />
-          <Skeleton className="h-8 w-20 rounded-lg" />
-          <Skeleton className="h-8 w-16 rounded-lg" />
-        </div>
+      <FilterBar search={<InlineSearchFieldSkeleton />}>
+        <Skeleton className="h-10 w-32 rounded-md" />
         {canChooseViewMode && <Skeleton className="h-8 w-16 rounded-lg" />}
-      </ListToolbarSkeleton>
+      </FilterBar>
       <div className={getReservationCollectionClassName(viewMode)}>
         {Array.from({ length: 8 }).map((_, index) => (
           <ReservationCardSkeleton key={index} viewMode={viewMode} />

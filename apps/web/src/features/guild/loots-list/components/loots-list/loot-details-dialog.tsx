@@ -29,7 +29,7 @@ import { useTranslation } from "react-i18next";
 import type { Loot } from "@/lib/loots/loot-types";
 import { useCanManageLoots } from "@/features/guild/loots-list/use-can-manage-loots";
 import { useLootsControllerFetchLootById } from "@lootlog/client/main";
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { LoadingSlot } from "@/components/common/loading-slot";
 
 type TitleComponent = ComponentType<{
@@ -251,7 +251,7 @@ export const LootDetailsDialog: FC<LootDetailsDialogProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && closeLootDetails()}>
       <DialogContent
-        className="flex max-h-[min(85dvh,52rem)] w-[calc(100%-1.5rem)] max-w-[calc(100%-1.5rem)] flex-col overflow-hidden rounded-xl border-border bg-background p-0 transition-[scale,filter] duration-200 ease-out data-nested-dialog-open:scale-[0.97] data-nested-dialog-open:brightness-50 motion-reduce:transition-none sm:max-w-3xl"
+        className="flex max-h-[min(85dvh,52rem)] flex-col overflow-hidden p-0 transition-[scale,filter] duration-200 ease-out data-nested-dialog-open:scale-[0.97] data-nested-dialog-open:brightness-50 motion-reduce:transition-none sm:max-w-3xl"
         aria-describedby={undefined}
         initialFocus={false}
         showCloseButton={false}

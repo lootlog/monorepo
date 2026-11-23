@@ -1,7 +1,11 @@
 import type { PlayerPresence } from "@/lib/online-players-presence";
 import { BadgeCheck } from "lucide-react";
 import type { FC } from "react";
-import type { PlayerRelation } from "@/lib/player-relation";
+import {
+  PLAYER_AFK_TEXT_CLASS_NAME,
+  PLAYER_RELATION_TEXT_CLASS_NAMES,
+  type PlayerRelation,
+} from "@/lib/player-relation";
 import { useTranslation } from "react-i18next";
 
 type OnlinePlayerTooltipProps = {
@@ -10,16 +14,6 @@ type OnlinePlayerTooltipProps = {
   memberName: string;
   presence: PlayerPresence;
   relations: readonly PlayerRelation[];
-};
-
-const RELATION_TEXT_CLASSES: Record<PlayerRelation, string> = {
-  self: "ll:text-teal-300",
-  party: "ll:text-purple-300",
-  clan: "ll:text-green-300",
-  enemy: "ll:text-red-300",
-  "clan-enemy": "ll:text-red-300",
-  friend: "ll:text-sky-300",
-  "clan-ally": "ll:text-yellow-300",
 };
 
 const formatCoordinates = (location?: { x?: number; y?: number }) =>
@@ -48,7 +42,9 @@ export const OnlinePlayerTooltip: FC<OnlinePlayerTooltipProps> = ({
     <span
       key={status}
       className={
-        status === "afk" ? "ll:text-orange-300" : RELATION_TEXT_CLASSES[status]
+        status === "afk"
+          ? PLAYER_AFK_TEXT_CLASS_NAME
+          : PLAYER_RELATION_TEXT_CLASS_NAMES[status]
       }
     >
       {t(`tooltip.status.${status}`)}
@@ -58,7 +54,7 @@ export const OnlinePlayerTooltip: FC<OnlinePlayerTooltipProps> = ({
   return (
     <div className="ll:flex ll:flex-col ll:gap-2 ll:py-0.5">
       <div className="ll:flex ll:flex-col ll:gap-0.5">
-        <span className="ll:text-sm ll:font-semibold ll:leading-4">
+        <span className="ll:text-xs ll:font-semibold ll:leading-4">
           {player?.name || t("player.unknown")}
         </span>
         {player ? (

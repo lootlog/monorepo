@@ -4,6 +4,8 @@ import { Tabs as TabsPrimitive } from "@base-ui/react/tabs";
 
 import { cn } from "cn";
 import { useInFilterBar } from "@lootlog/ui/components/filter-bar-context";
+import { useRef } from "react";
+import { useHorizontalWheelScroll } from "../hooks/use-horizontal-wheel-scroll";
 
 function Tabs({ className, ...props }: TabsPrimitive.Root.Props) {
   return (
@@ -35,14 +37,17 @@ function TabsList({
   variant = "pill",
   children,
   ...props
-}: TabsPrimitive.List.Props & {
+}: Omit<TabsPrimitive.List.Props, "ref"> & {
   size?: keyof typeof tabsListSizes;
   variant?: keyof typeof tabsListVariants;
 }) {
   const shownVariant = useInFilterBar() ? "chips" : variant;
+  const viewportRef = useRef<HTMLDivElement>(null);
+  useHorizontalWheelScroll(viewportRef);
 
   return (
     <TabsPrimitive.List
+      ref={viewportRef}
       data-slot="tabs-list"
       data-size={size}
       data-variant={shownVariant}

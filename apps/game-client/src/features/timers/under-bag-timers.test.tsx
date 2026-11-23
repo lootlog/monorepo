@@ -11,7 +11,7 @@ describe("UnderBagTimers", () => {
 
   it("renders into the bottom wrapper portal and stops wheel propagation", () => {
     document.body.innerHTML = `
-      <div id="lootlog-root" class="dark-theme"></div>
+      <div id="lootlog-root"></div>
       <div class="right-column">
         <div class="inner-wrapper">
           <div class="right-main-column-wrapper">
@@ -51,7 +51,7 @@ describe("UnderBagTimers", () => {
 
   it("hides native steppers in compact level inputs rendered under the bag", () => {
     document.body.innerHTML = `
-      <div id="lootlog-root" class="dark-theme"></div>
+      <div id="lootlog-root"></div>
       <div class="right-column">
         <div class="inner-wrapper">
           <div class="right-main-column-wrapper">

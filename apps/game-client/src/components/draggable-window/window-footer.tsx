@@ -14,11 +14,16 @@ export const WindowFooter: FC<WindowFooterProps> = ({
 }) => (
   <div
     className={cn(
-      "ll:w-full ll:shrink-0 ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40",
+      "ll:w-full ll:shrink-0 ll:border-t ll:border-x-0 ll:border-b-0 ll:border-separator",
       className,
     )}
   >
-    <div className={cn("ll:flex ll:h-8 ll:items-center", rowClassName)}>
+    <div
+      className={cn(
+        "ll:flex ll:h-8 ll:items-center ll:gap-1 ll:px-3",
+        rowClassName,
+      )}
+    >
       {children}
     </div>
   </div>

@@ -1,6 +1,7 @@
 import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
 import { BandSection } from "@/components/common/band-section";
-import { StatsTile, StatsTileGrid } from "@/components/common/stats-tile";
+import { StatsTile } from "@lootlog/ui/components/stats-tile";
+import { StatsTileGrid } from "@lootlog/ui/components/stats-tile-grid";
 import type { BattleDurationStats, Streak } from "@/lib/api/battlelog-types";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { Link } from "@tanstack/react-router";

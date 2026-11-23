@@ -10,7 +10,7 @@ import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { StatisticsMonsterLegends } from "./statistics-monster-legends";
 import { StatisticsAllLegendsLink } from "./statistics-all-legends-link";
 import { STATISTICS_PREVIEW_SIZE } from "./statistics-top-npcs";
-import { StatisticsQueryState } from "./statistics-query-state";
+import { StatisticsQueryState } from "@/components/common/statistics-query-state";
 import type { StatisticsSearch } from "./statistics-search";
 import { useStatisticsLootStats } from "./use-statistics-loot-stats";
 

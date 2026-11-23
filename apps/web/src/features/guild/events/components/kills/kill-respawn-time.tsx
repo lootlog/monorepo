@@ -15,7 +15,7 @@ export const KillRespawnTime = ({ kill }: KillRespawnTimeProps) => {
 
   if (kill.isManualClose) {
     return (
-      <span className="block text-right text-xs font-medium text-amber-400">
+      <span className="block text-right text-xs font-medium text-signal-timer">
         {t("events.kills.manualCloseLabel")}
       </span>
     );

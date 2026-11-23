@@ -35,7 +35,7 @@ export const AsyncContent: FC<AsyncContentProps> = ({
       >
         <span className="ll:sr-only">{loadingLabel}</span>
         {showLoadingFallback ? (
-          <Spinner className="ll:size-5 ll:text-gray-300" />
+          <Spinner className="ll:size-5 ll:text-muted-foreground" />
         ) : null}
       </div>
     );
@@ -44,13 +44,10 @@ export const AsyncContent: FC<AsyncContentProps> = ({
   if (error) {
     return (
       <div
-        className="ll:flex ll:h-full ll:min-h-16 ll:w-full ll:flex-col ll:items-center ll:justify-center ll:gap-2 ll:px-3 ll:text-center ll:text-xs ll:text-red-200"
+        className="ll:flex ll:h-full ll:min-h-16 ll:w-full ll:flex-col ll:items-center ll:justify-center ll:gap-2 ll:px-3 ll:text-center ll:text-xs ll:text-destructive"
         role="alert"
       >
-        <AlertCircle
-          aria-hidden
-          className="ll:size-4 ll:shrink-0 ll:text-red-300"
-        />
+        <AlertCircle aria-hidden className="ll:size-4 ll:shrink-0" />
         <span>{errorLabel}</span>
         {onRetry ? (
           <Button

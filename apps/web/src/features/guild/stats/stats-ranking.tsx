@@ -8,12 +8,13 @@ import {
   KillStatsFilters,
   type KillStatsFiltersProps,
 } from "@/features/kills/components/kill-stats-filters";
-import { KillStatsSearch } from "@/features/kills/components/kill-stats-search";
+import { KillStatsSearch } from "@/components/common/kill-stats-search";
 import { KillStatsStackedFilters } from "@/features/kills/components/kill-stats-stacked-filters";
 import { MemberIdentity } from "@/components/common/member-identity";
 import { StatsCountCell } from "@/components/common/stats-count-cell";
 import { getDiscordAvatarUrl } from "@lootlog/domain/discord-avatar";
 import { useId } from "react";
+import { Users } from "lucide-react";
 import { StatsMobileListSkeleton } from "./components/stats-mobile-list-skeleton";
 import { RankBadge } from "@/components/common/rank-badge";
 import {
@@ -160,88 +161,99 @@ export const StatsRanking = () => {
           mobileSkeleton={
             <StatsMobileListSkeleton media="avatar" withTypeCounts />
           }
-          emptyMessage={
+          emptyState={
             paginatedData.length === 0
-              ? t(
-                  hasActiveFilters
-                    ? "kills.memberRanking.filteredNoData"
-                    : "kills.memberRanking.noData",
-                )
+              ? hasActiveFilters
+                ? {
+                    isFiltered: true,
+                    title: t("kills.memberRanking.filteredNoData"),
+                    description: t(
+                      "kills.memberRanking.filteredNoDataDescription",
+                    ),
+                    onClearFilters: handleClearFilters,
+                  }
+                : {
+                    isFiltered: false,
+                    icon: Users,
+                    title: t("kills.memberRanking.noData"),
+                  }
               : undefined
           }
-        >
-          <ul className="xl:hidden">
-            {paginatedData.map((member, index) => {
-              const contentId = `${tileId}-${member.member.id}`;
+          tiles={
+            <ul>
+              {paginatedData.map((member, index) => {
+                const contentId = `${tileId}-${member.member.id}`;
 
-              return (
-                <li
-                  key={member.member.id}
-                  data-list-tile
-                  aria-current={isViewer(member.member.userId) || undefined}
-                  className={cn(
-                    "relative",
-                    LIST_TILE_RULE_CLASS,
-                    LIST_TILE_HOVER_CLASS,
-                    isViewer(member.member.userId) && VIEWER_ROW_CLASS,
-                  )}
-                >
-                  <Link
-                    to="/$guildId/stats/members/$memberId"
-                    params={{ guildId, memberId: String(member.member.id) }}
-                    aria-labelledby={contentId}
-                    className="absolute inset-0 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-                  />
-                  <div
-                    id={contentId}
+                return (
+                  <li
+                    key={member.member.id}
+                    data-list-tile
+                    aria-current={isViewer(member.member.userId) || undefined}
                     className={cn(
-                      "pointer-events-none relative py-3",
-                      LIST_TILE_INSET_CLASS,
+                      "relative",
+                      LIST_TILE_RULE_CLASS,
+                      LIST_TILE_HOVER_CLASS,
+                      isViewer(member.member.userId) && VIEWER_ROW_CLASS,
                     )}
                   >
-                    <span className="flex min-w-0 items-center gap-3">
-                      <RankBadge rank={cursor + index + 1} />
-                      <span className="flex min-w-0 flex-1">
-                        <MemberIdentity
-                          member={{ memberId: member.member.id }}
-                          fallback={{
-                            name: member.member.name,
-                            avatarUrl: getDiscordAvatarUrl(
-                              member.member.userId,
-                              member.member.avatar,
-                              64,
-                            ),
-                          }}
-                          className="pointer-events-auto gap-3"
-                          avatarClassName="size-8"
-                        />
+                    <Link
+                      to="/$guildId/stats/members/$memberId"
+                      params={{ guildId, memberId: String(member.member.id) }}
+                      aria-labelledby={contentId}
+                      className="absolute inset-0 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                    />
+                    <div
+                      id={contentId}
+                      className={cn(
+                        "pointer-events-none relative py-3",
+                        LIST_TILE_INSET_CLASS,
+                      )}
+                    >
+                      <span className="flex min-w-0 items-center gap-3">
+                        <RankBadge rank={cursor + index + 1} />
+                        <span className="flex min-w-0 flex-1">
+                          <MemberIdentity
+                            member={{ memberId: member.member.id }}
+                            fallback={{
+                              name: member.member.name,
+                              avatarUrl: getDiscordAvatarUrl(
+                                member.member.userId,
+                                member.member.avatar,
+                                64,
+                              ),
+                            }}
+                            className="pointer-events-auto gap-3"
+                            avatarClassName="size-8"
+                          />
+                        </span>
+                        <span className="shrink-0 text-sm font-semibold tabular-nums">
+                          {formatNumber(member.totalParticipations)}
+                        </span>
                       </span>
-                      <span className="shrink-0 text-sm font-semibold tabular-nums">
-                        {formatNumber(member.totalParticipations)}
-                      </span>
-                    </span>
-                    {activeNpcTypes.length > 0 && (
-                      <span className="mt-2 flex flex-wrap gap-x-3 gap-y-1 pl-9 text-xs text-muted-foreground">
-                        {activeNpcTypes.map((type) => (
-                          <span key={type}>
-                            {t(`npcType.${type}`)}{" "}
-                            <span className="font-medium tabular-nums text-foreground">
-                              {formatNumber(
-                                member.participationsByType[type] ?? 0,
-                              )}
+                      {activeNpcTypes.length > 0 && (
+                        <span className="mt-2 flex flex-wrap gap-x-3 gap-y-1 pl-9 text-xs text-muted-foreground">
+                          {activeNpcTypes.map((type) => (
+                            <span key={type}>
+                              {t(`npcType.${type}`)}{" "}
+                              <span className="font-medium tabular-nums text-foreground">
+                                {formatNumber(
+                                  member.participationsByType[type] ?? 0,
+                                )}
+                              </span>
                             </span>
-                          </span>
-                        ))}
-                      </span>
-                    )}
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+                          ))}
+                        </span>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          }
+        >
           <StatsTable
             table={table}
-            className="hidden border-b xl:table"
+            className="border-b"
             onRowClick={(member) => handleRowClick(member.member.id)}
             isViewerRow={(member) => isViewer(member.member.userId)}
           />

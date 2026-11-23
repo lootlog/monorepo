@@ -1,6 +1,6 @@
 import { animate, useReducedMotion } from "framer-motion";
 import { Link, useHydrated } from "@tanstack/react-router";
-import { ArrowUpRight, Heart, Loader2, LogIn } from "lucide-react";
+import { ArrowUpRight, Heart, LogIn } from "lucide-react";
 import { useEffect, useState, type MouseEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@lootlog/ui/components/button";
@@ -12,9 +12,19 @@ import { authClient } from "@/lib/auth-client";
 import { useMatchingBackgroundMask } from "@/hooks/use-matching-background-mask";
 import { MenuIcon } from "./menu-icon";
 import { LootlogMark } from "@lootlog/ui/components/lootlog-mark";
+import { PortalSiteLink } from "@lootlog/ui/components/portal-site-link";
+import { PORTAL_SITES } from "@lootlog/ui/lib/portal-sites";
+import { useSiteNames } from "@/hooks/use-site-names";
 
 const navigationLinkClassName =
-  "rounded-md transition-colors hover:text-[var(--broadcast-lime)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--broadcast-lime)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--broadcast-ink)]";
+  "rounded-md transition-colors hover:text-[var(--broadcast-lime)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 focus-visible:ring-offset-background";
+
+const headerSites = PORTAL_SITES.filter(
+  (site) => site.id === "docs" || site.id === "wiki",
+);
+
+const authActionClassName =
+  "landing-auth-action h-12 w-52 shrink-0 rounded-full border-0 px-4 font-bold shadow-none disabled:opacity-80";
 
 const closeNavigation = (event: MouseEvent<HTMLAnchorElement>) => {
   event.currentTarget.closest<HTMLElement>("[popover]")?.hidePopover();
@@ -22,6 +32,7 @@ const closeNavigation = (event: MouseEvent<HTMLAnchorElement>) => {
 
 export function LandingHeader() {
   const { t } = useTranslation();
+  const siteNames = useSiteNames();
   const session = authClient.useSession();
   const reducedMotion = useReducedMotion();
   const overlapRef = useMatchingBackgroundMask();
@@ -93,28 +104,22 @@ export function LandingHeader() {
       >
         {t("landing.header.faq")}
       </Link>
-      <a
-        onClick={closeNavigation}
-        href={links.docs}
-        className={`inline-flex items-center gap-1 ${navigationLinkClassName}`}
-      >
-        {t("landing.header.docs")}
-        <ArrowUpRight className="size-3.5" aria-hidden="true" />
-      </a>
-      <a
-        onClick={closeNavigation}
-        href={links.wiki}
-        className={`inline-flex items-center gap-1 ${navigationLinkClassName}`}
-      >
-        {t("landing.header.wiki")}
-        <ArrowUpRight className="size-3.5" aria-hidden="true" />
-      </a>
+      {headerSites.map((site) => (
+        <PortalSiteLink
+          key={site.id}
+          site={site}
+          onClick={closeNavigation}
+          className={`inline-flex items-center gap-1 ${navigationLinkClassName}`}
+        >
+          {siteNames[site.id]}
+        </PortalSiteLink>
+      ))}
       <a
         onClick={closeNavigation}
         href={links.support}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center gap-2 rounded-md text-[var(--broadcast-coral)] hover:text-[var(--broadcast-white)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--broadcast-coral)]"
+        className="inline-flex items-center gap-2 rounded-md text-[var(--broadcast-coral)] hover:text-[var(--broadcast-white)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 focus-visible:ring-offset-background"
       >
         <Heart className="size-3.5" aria-hidden="true" />
         {t("landing.header.support")}
@@ -122,53 +127,37 @@ export function LandingHeader() {
     </>
   );
 
-  const authAction = isLoading ? (
-    <Button
-      disabled
-      size="sm"
-      variant="outline"
-      className="landing-auth-action h-12 w-52 shrink-0 rounded-full border-0 px-4 font-bold shadow-none transition-colors focus-visible:ring-2 focus-visible:ring-[var(--broadcast-cyan)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--broadcast-ink)] disabled:opacity-80"
-      aria-label={t("landing.header.loginLoading")}
-    >
-      <Loader2 className="size-4 animate-spin" />
-    </Button>
-  ) : isAuthenticated ? (
-    <Button
-      size="sm"
-      variant="outline"
-      className="landing-auth-action h-12 w-52 shrink-0 rounded-full border-0 px-4 font-bold shadow-none transition-colors focus-visible:ring-2 focus-visible:ring-[var(--broadcast-cyan)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--broadcast-ink)] disabled:opacity-80"
-      render={
-        <a href={links.dashboard}>
-          <span className="sm:hidden">{t("landing.header.lootlog")}</span>
-          <span className="hidden sm:inline">
-            {t("landing.header.goToLootlog")}
-          </span>
-          <ArrowUpRight className="size-3.5" />
-        </a>
-      }
-      nativeButton={false}
-    />
-  ) : (
-    <Button
-      size="sm"
-      variant="outline"
-      className="landing-auth-action h-12 w-52 shrink-0 rounded-full border-0 px-4 font-bold shadow-none transition-colors focus-visible:ring-2 focus-visible:ring-[var(--broadcast-cyan)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--broadcast-ink)] disabled:opacity-80"
-      aria-label={t("landing.header.login")}
-      onClick={handleLoginAction}
-      disabled={isSigningIn}
-    >
-      {isSigningIn ? (
-        <Loader2 className="size-4 animate-spin" />
-      ) : (
-        <LogIn className="size-4" />
-      )}
-      <span>
-        {isSigningIn
+  const authAction =
+    isAuthenticated && !isLoading ? (
+      <Button
+        size="sm"
+        variant="outline"
+        className={authActionClassName}
+        render={
+          <a href={links.dashboard}>
+            <span className="sm:hidden">{t("landing.header.lootlog")}</span>
+            <span className="hidden sm:inline">
+              {t("landing.header.goToLootlog")}
+            </span>
+            <ArrowUpRight className="size-3.5" />
+          </a>
+        }
+        nativeButton={false}
+      />
+    ) : (
+      <Button
+        size="sm"
+        variant="outline"
+        className={authActionClassName}
+        onClick={handleLoginAction}
+        loading={isLoading || isSigningIn}
+        icon={isLoading ? undefined : <LogIn />}
+      >
+        {isLoading || isSigningIn
           ? t("landing.header.loginLoading")
           : t("landing.header.login")}
-      </span>
-    </Button>
-  );
+      </Button>
+    );
 
   return (
     <header className="landing-header relative" data-scrolled={scrolled}>
@@ -180,9 +169,9 @@ export function LandingHeader() {
       <div className="mx-auto flex h-24 items-center justify-center px-5 sm:px-8 lg:px-12">
         <Link
           to="/"
-          className="fixed left-3 top-6 z-50 inline-flex h-12 items-center gap-2 rounded-full bg-[var(--broadcast-ink)] px-3 text-xl font-black tracking-[-0.035em] text-[var(--broadcast-white)] sm:left-8 lg:left-10 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--broadcast-lime)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--broadcast-ink)]"
+          className="fixed left-3 top-6 z-50 inline-flex h-12 items-center gap-2 rounded-full bg-[var(--broadcast-ink)] px-3 text-xl font-black tracking-[-0.035em] text-[var(--broadcast-white)] sm:left-8 lg:left-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 focus-visible:ring-offset-background"
         >
-          <LootlogMark className="size-7 shrink-0 rounded-md" />
+          <LootlogMark className="size-7 shrink-0" />
           <span className="max-[379px]:sr-only">
             {t("landing.header.brand")}
           </span>
@@ -208,7 +197,7 @@ export function LandingHeader() {
           type="button"
           popoverTarget="landing-navigation"
           aria-label={t("landing.header.openMenu")}
-          className="fixed right-6 top-6 z-50 flex size-12 items-center justify-center rounded-full bg-[var(--broadcast-ink-soft)] text-[var(--broadcast-white)] hover:text-[var(--broadcast-lime)] focus-visible:outline-2 focus-visible:outline-[var(--broadcast-lime)] sm:right-8 min-[1200px]:hidden"
+          className="fixed right-6 top-6 z-50 flex size-12 items-center justify-center rounded-full bg-[var(--broadcast-ink-soft)] text-[var(--broadcast-white)] hover:text-[var(--broadcast-lime)] focus-visible:outline-2 focus-visible:outline-offset-2 sm:right-8 min-[1200px]:hidden"
         >
           <MenuIcon open={menuOpen} />
         </button>

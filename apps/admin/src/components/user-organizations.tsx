@@ -1,6 +1,8 @@
 import type { AdminUserOrganization } from "@lootlog/schema/admin-organizations";
 import { Badge } from "@lootlog/ui/components/badge";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { Link } from "@tanstack/react-router";
+import { Building2 } from "lucide-react";
 import { OrganizationStatusBadge } from "@/components/organization-status-badge";
 import { UserAvatar } from "@/components/user-avatar";
 import { memberTypeText, text } from "@/lib/messages";
@@ -12,9 +14,11 @@ export function UserOrganizations({
 }) {
   if (organizations.length === 0)
     return (
-      <p className="text-sm text-muted-foreground">
-        {text.userOrganizationsEmpty}
-      </p>
+      <EmptyState
+        compact
+        icon={Building2}
+        title={text.userOrganizationsEmpty}
+      />
     );
 
   return (

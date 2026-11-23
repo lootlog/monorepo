@@ -9,7 +9,7 @@ import {
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { SearchInput } from "@/components/ui/search-input";
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { useState, type FC } from "react";
 import { getGuildIconById } from "@/utils/get-guild-icon-by-id";
 import { buildDiscordBotInstallUrl } from "@/utils/build-discord-bot-install-url";

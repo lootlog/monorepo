@@ -1,5 +1,6 @@
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
+import { Notice } from "@/components/notice";
 import { battlePingStore } from "./battle-ping-store";
 import { PingBadge } from "./ping-badge";
 import { getPingPresentation } from "./ping-presentation";
@@ -21,14 +22,15 @@ export const BattlePingTargetRow: FC<BattlePingTargetRowProps> = ({
   const attack = getPingPresentation("attack");
 
   return (
-    <div
-      className="ll:flex ll:items-center ll:gap-2 ll:rounded-md ll:border ll:border-red-400/35 ll:bg-red-500/10 ll:px-2 ll:py-1.5"
+    <Notice
+      tone="destructive"
+      className="ll:flex ll:gap-2"
       onMouseEnter={() => battlePingStore.highlightWarrior(warriorId)}
       onMouseLeave={() => battlePingStore.highlightWarrior(null)}
     >
       <PingBadge icon={attack.icon} size={20} tone={attack.tone} />
       <span className="ll:flex ll:min-w-0 ll:flex-col ll:leading-tight">
-        <span className="ll:truncate ll:text-xs ll:font-semibold ll:text-gray-100">
+        <span className="ll:truncate ll:text-xs ll:font-semibold">
           {target}
         </span>
         <span className="ll:truncate ll:text-[11px] ll:text-muted-foreground">
@@ -38,6 +40,6 @@ export const BattlePingTargetRow: FC<BattlePingTargetRowProps> = ({
           · {ago}
         </span>
       </span>
-    </div>
+    </Notice>
   );
 };

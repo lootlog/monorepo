@@ -1,4 +1,4 @@
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 

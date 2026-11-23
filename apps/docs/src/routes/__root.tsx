@@ -1,11 +1,10 @@
-import {
-  HeadContent,
-  Outlet,
-  Scripts,
-  createRootRoute,
-} from "@tanstack/react-router";
+import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router";
+import type { ReactNode } from "react";
 import { RootProvider } from "fumadocs-ui/provider/tanstack";
+import { DocsError } from "@/components/docs-error";
+import { DocsFooter } from "@/components/docs-footer";
 import { DocsHeader } from "@/components/docs-header";
+import { DocsNotFound } from "@/components/docs-not-found";
 import { DocsSearchDialog } from "@/components/docs-search-dialog";
 import {
   docsTranslations,
@@ -20,7 +19,7 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { name: "theme-color", content: "#081421" },
+      { name: "theme-color", content: "#060607" },
       { name: "color-scheme", content: "dark" },
       { title: docsTranslations.metadata.title },
       {
@@ -34,25 +33,32 @@ export const Route = createRootRoute({
       { rel: "apple-touch-icon", href: appleTouchIcon },
     ],
   }),
-  component: RootDocument,
+  shellComponent: RootDocument,
+  notFoundComponent: DocsNotFound,
+  errorComponent: DocsError,
 });
 
-function RootDocument() {
+function RootDocument({ children }: { children: ReactNode }) {
   return (
     <html lang="pl" className="dark" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
-      <body className="min-h-screen bg-background text-foreground antialiased">
+      <body className="flex min-h-screen flex-col bg-background text-foreground antialiased">
         <RootProvider
           theme={{ enabled: false }}
           i18n={{ locale: "pl", translations: polishTranslations }}
           search={{ SearchDialog: DocsSearchDialog }}
         >
           <DocsHeader />
-          <div id="portal-content" tabIndex={-1} className="outline-none">
-            <Outlet />
+          <div
+            id="portal-content"
+            tabIndex={-1}
+            className="flex-1 outline-none"
+          >
+            {children}
           </div>
+          <DocsFooter />
         </RootProvider>
         <Scripts />
       </body>

@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/popover";
 import { useTimersStore } from "@/store/timers.store";
 import { TimerListNameForm } from "./timer-list-name-form";
+import { EmptyState } from "@/components/empty-state";
 
 type TimerListsPopoverProps = {
   npcName: string;
@@ -39,7 +40,7 @@ export const TimerListsPopover: FC<TimerListsPopoverProps> = ({ npcName }) => {
     <Popover open={open} onOpenChange={preservePopoverOnMenuPress(setOpen)}>
       <PopoverTrigger asChild>
         <ContextMenuItem
-          className="ll:text-white"
+          className="ll:text-foreground"
           onSelect={(event) => {
             event.preventDefault();
             setOpen(true);
@@ -73,11 +74,9 @@ export const TimerListsPopover: FC<TimerListsPopoverProps> = ({ npcName }) => {
             }
           />
         ) : (
-          <p className="ll:m-0 ll:px-2 ll:py-1.5 ll:text-xs ll:text-muted-foreground">
-            {t("lists.empty")}
-          </p>
+          <EmptyState description={t("lists.empty")} />
         )}
-        <div className="ll:border-0 ll:border-t ll:border-gray-400/40 ll:p-1">
+        <div className="ll:border-0 ll:border-t ll:border-separator ll:p-1">
           <TimerListNameForm
             placeholder={t("lists.namePlaceholder")}
             aria-label={t("lists.nameLabel")}

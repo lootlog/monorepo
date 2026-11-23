@@ -12,7 +12,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import type { EventRanking } from "@/lib/api/event-types";
 import { formatPoints, formatSignedPoints } from "../../utils/format-points";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
@@ -58,7 +58,7 @@ export const EventRankingPoints = ({
               tabIndex={0}
               aria-label={t("events.points.modified")}
             >
-              <Info className="size-3.5 shrink-0 text-amber-400" />
+              <Info className="size-3.5 shrink-0 text-signal-timer" />
               {pointsValue}
             </span>
           }
@@ -84,7 +84,7 @@ export const EventRankingPoints = ({
             }
           />
         >
-          <Info className="size-3.5 shrink-0 text-amber-400" />
+          <Info className="size-3.5 shrink-0 text-signal-timer" />
           {pointsValue}
         </PopoverTrigger>
         <TooltipContent>
@@ -132,7 +132,7 @@ export const EventRankingPoints = ({
                         {formatPoints(entry.previousPoints)}
                       </span>
                       <ArrowRight className="size-3 text-muted-foreground" />
-                      <span className="text-green-500">
+                      <span className="text-signal-ready">
                         {formatPoints(entry.newPoints)}
                       </span>
                       <span className="rounded bg-muted px-1.5 py-0.5 text-xs text-primary">

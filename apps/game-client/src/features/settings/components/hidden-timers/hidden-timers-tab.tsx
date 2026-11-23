@@ -7,7 +7,7 @@ import { useTimersStore } from "@/store/timers.store";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
-import { SettingsNoLootlogEmptyState } from "@/features/settings/components/shared/settings-no-lootlog-empty-state";
+import { NoLootlogEmptyState } from "@/components/no-lootlog-empty-state";
 
 export const HiddenTimersTab = () => {
   const timersGrouping = useTimersStore(
@@ -53,7 +53,7 @@ export const HiddenTimersTab = () => {
               />
             </SettingsRow>
           ) : (
-            <SettingsNoLootlogEmptyState />
+            <NoLootlogEmptyState />
           )}
         </SettingsSection>
       ) : null}

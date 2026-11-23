@@ -24,7 +24,7 @@ export function WhoIsHereAirTags() {
       className={cn(getLootlogHostPortalThemeClassName(), "ll:mt-1")}
     >
       <div className="c-line" />
-      <h3 className="ll:mb-1 ll:text-center ll:text-xs ll:font-bold ll:text-[#f5f5dc]">
+      <h3 className="ll:mb-1 ll:text-center ll:text-xs ll:font-bold ll:text-game-heading">
         {title} ({enemies.length})
       </h3>
       {enemies.map((enemy) => (

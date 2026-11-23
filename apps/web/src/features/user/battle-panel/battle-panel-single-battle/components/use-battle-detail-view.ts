@@ -4,7 +4,7 @@ import {
   useBattleDetailPanelStore,
   type BattleDetailPanel,
 } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-detail-panel.store";
-import { BATTLE_DETAIL_WIDE_MEDIA_QUERY } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-detail-layout";
+import { RESULTS_TABLE_MEDIA_QUERY } from "@/components/common/page-sticky-table-header";
 import {
   getBattleLogScrollActiveTurn,
   type BattleLogTurnPosition,
@@ -67,7 +67,7 @@ export function useBattleDetailView({
     (state) => state.setActivePanel,
   );
 
-  const isWide = useMediaQuery(BATTLE_DETAIL_WIDE_MEDIA_QUERY);
+  const isWide = useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
   const scrollsDocument = usePageScrollsDocument();
   const scrollViewportRef = useRef<HTMLDivElement>(null);
   const logColumnViewportRef = useRef<HTMLDivElement>(null);

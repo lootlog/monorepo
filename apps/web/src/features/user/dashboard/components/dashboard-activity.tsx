@@ -14,7 +14,7 @@ import {
   calendarOffset,
   calendarRange,
 } from "@/components/common/activity-heatmap/activity-calendar";
-import { StatisticsQueryState } from "@/features/user/statistics/statistics-query-state";
+import { StatisticsQueryState } from "@/components/common/statistics-query-state";
 import { useFormatOnlineDuration } from "@/utils/date/format-duration";
 
 export function DashboardActivity() {

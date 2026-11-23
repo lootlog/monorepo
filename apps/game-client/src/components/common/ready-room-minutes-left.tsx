@@ -11,7 +11,7 @@ export function ReadyRoomMinutesLeft({ expiresAt }: Props) {
 
   return (
     <span
-      className="ll:shrink-0 ll:whitespace-nowrap ll:text-[11px] ll:tabular-nums ll:text-[#b7adbe]"
+      className="ll:shrink-0 ll:whitespace-nowrap ll:text-[11px] ll:tabular-nums ll:text-gathering-muted-foreground"
       title={
         minutes > 0 ? t("gatherings.minutesLeftLabel", { minutes }) : undefined
       }

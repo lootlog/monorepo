@@ -43,7 +43,7 @@ export const NotificationDiscordMessage = ({
       <img
         src="/brand/lootlog-mark.svg"
         alt=""
-        className="mt-0.5 size-10 shrink-0 rounded-full bg-[#07111f] object-contain p-1"
+        className="mt-0.5 size-10 shrink-0 rounded-full bg-[#141516] object-contain p-1"
       />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-x-1.5">

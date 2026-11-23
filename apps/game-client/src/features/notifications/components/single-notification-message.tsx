@@ -12,7 +12,7 @@ export const SingleNotificationMessage: FC<SingleNotificationMessageProps> = ({
   notification,
 }) => {
   return (
-    <p className="ll:m-0 ll:text-xs ll:leading-4 ll:break-words ll:text-white/95">
+    <p className="ll:m-0 ll:text-xs ll:leading-4 ll:break-words ll:text-foreground/95">
       {notification.message}
     </p>
   );

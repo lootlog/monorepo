@@ -1,4 +1,7 @@
 import { useViewMode } from "@/hooks/use-view-mode";
+import { FilterBar } from "@/components/common/filter-bar";
+import { InlineSearchFieldSkeleton } from "@/components/common/inline-search-field-skeleton";
+import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { TimersListSkeleton } from "./timers-list-skeleton";
 import { TIMERS_GRID_MEDIA_QUERY, TIMERS_VIEW_MODE_KEY } from "./timers-layout";
 
@@ -11,10 +14,10 @@ export const TimersPageSkeleton = () => {
 
   return (
     <div aria-busy="true" className="min-h-0 flex-1 overflow-hidden">
-      <TimersListSkeleton
-        viewMode={viewMode}
-        canChooseViewMode={canChooseViewMode}
-      />
+      <FilterBar search={<InlineSearchFieldSkeleton />}>
+        {canChooseViewMode && <Skeleton className="h-8 w-16 rounded-lg" />}
+      </FilterBar>
+      <TimersListSkeleton viewMode={viewMode} />
     </div>
   );
 };

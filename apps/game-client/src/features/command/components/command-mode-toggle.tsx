@@ -22,7 +22,7 @@ export const CommandModeToggle: FC<CommandModeToggleProps> = ({
     pressed={pressed}
     disabled={disabled}
     onPressedChange={onToggle}
-    className="ll:gap-1.5 ll:text-muted-foreground ll:data-pressed:text-white"
+    className="ll:gap-1.5 ll:text-muted-foreground ll:data-pressed:text-foreground"
   >
     <Kbd aria-hidden className="ll:h-4 ll:min-w-4 ll:text-[10px]">
       {prefix}

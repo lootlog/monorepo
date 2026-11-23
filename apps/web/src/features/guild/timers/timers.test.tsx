@@ -184,7 +184,7 @@ it("recovers from initial and background failures without losing the last loaded
     );
 
   const { client } = await mount(fetchTimers);
-  await screen.findByText("Nie udało się pobrać timerów");
+  await screen.findByText("Nie udało się wczytać timerów.");
   fireEvent.click(screen.getByRole("button", { name: "Spróbuj ponownie" }));
   await screen.findByText("Original NPC");
   expect(screen.queryByRole("alert")).toBeNull();
@@ -253,11 +253,12 @@ it("shows the remaining timers when the search empties the chosen group", async 
   );
   await screen.findByText("Titan NPC");
 
-  fireEvent.click(screen.getByRole("button", { name: /Tytan/ }));
+  fireEvent.click(screen.getByRole("combobox", { name: "Grupy timerów" }));
+  fireEvent.click(await screen.findByRole("option", { name: /Tytan/ }));
   expect(screen.queryByText("Original NPC")).toBeNull();
 
   fireEvent.change(
-    screen.getByRole("searchbox", { name: "Filtruj timery po nazwie potwora" }),
+    screen.getByRole("searchbox", { name: "Filtruj po nazwie potwora…" }),
     { target: { value: "Original" } },
   );
   await screen.findByText("Original NPC");

@@ -1,5 +1,5 @@
 import { BandSection } from "@/components/common/band-section";
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { Inbox } from "lucide-react";
 import { useId, type ReactNode } from "react";

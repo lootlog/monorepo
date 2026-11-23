@@ -1,11 +1,9 @@
 /*
- * The look shared by the public documentation portals (docs.lootlog.pl and
- * developer.lootlog.pl), on top of the default palette of `@lootlog/ui`.
- * Import it after `globals.css` and the Fumadocs `neutral.css` and
- * `preset.css`. Fumadocs reads its own `--color-fd-*` tokens, so they point at
- * the same colours. Text links and the docs' active states use the live
- * signal (cyan): the primary cobalt is for filled controls and too dark for
- * text on ink.
+ * The shell shared by the public portals (docs, developer and wiki), on top of
+ * the default palette of `@lootlog/ui`. Import it after `globals.css` and, in
+ * the Fumadocs portals, after its `neutral.css` and `preset.css`. Fumadocs
+ * reads its own `--color-fd-*` tokens, so they point at the same colours, and
+ * text links and the docs' active states use the live signal.
  */
 :root,
 .dark {
@@ -32,6 +30,13 @@
   --color-fd-error: var(--signal-alert);
   --color-fd-success: var(--signal-ready);
   --color-fd-idea: var(--primary);
+  --color-fd-overlay: rgb(0 0 0 / 0.5);
+}
+
+.dark #nd-sidebar {
+  --color-fd-muted: var(--secondary);
+  --color-fd-secondary: var(--secondary);
+  --color-fd-muted-foreground: var(--muted-foreground);
 }
 
 html {
@@ -49,18 +54,9 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-::selection {
-  background: color-mix(in oklab, var(--ring) 35%, transparent);
-  color: var(--foreground);
-}
-
 a,
 button {
   -webkit-tap-highlight-color: transparent;
-}
-
-:focus-visible {
-  outline-color: var(--ring);
 }
 
 /* Shell */

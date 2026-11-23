@@ -1,7 +1,9 @@
 import { Link } from "@tanstack/react-router";
+import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { fusionGoldCost, type SymbolInfo } from "@lootlog/domain/item-socket";
 import { ArticleSection } from "@/components/article/article-section";
-import { StatTiles } from "@/components/common/stat-tiles";
+import { StatsTile } from "@lootlog/ui/components/stats-tile";
+import { StatsTileGrid } from "@lootlog/ui/components/stats-tile-grid";
 import { SymbolRecipe } from "@/components/sockets/symbol-recipe";
 import { t } from "@/i18n/messages";
 import { formatGold } from "@/lib/upgrade-cost-format";
@@ -15,31 +17,25 @@ export function ItemSymbolSection({ symbol }: { symbol: SymbolInfo }) {
       title={t("socket.recipe")}
       description={t("socket.recipeDescription")}
       action={
-        <Link
-          to="/sockets"
-          className="text-sm font-medium text-primary outline-none hover:underline focus-visible:underline"
-        >
+        <ChevronLink render={<Link to="/sockets" />}>
           {t("navigation.sockets")}
-        </Link>
+        </ChevronLink>
       }
     >
       <SymbolRecipe recipe={symbol.recipe} />
-      <StatTiles
-        className="grid-cols-2"
-        tiles={[
-          {
-            label: t("socket.levels"),
-            value: t("socket.levelRange", {
-              min: tier.minLevel,
-              max: tier.maxLevel,
-            }),
-          },
-          {
-            label: t("socket.fusionCost"),
-            value: formatGold(fusionGoldCost(tier)),
-          },
-        ]}
-      />
+      <StatsTileGrid framed className="sm:grid-cols-2">
+        <StatsTile
+          label={t("socket.levels")}
+          value={t("socket.levelRange", {
+            min: tier.minLevel,
+            max: tier.maxLevel,
+          })}
+        />
+        <StatsTile
+          label={t("socket.fusionCost")}
+          value={formatGold(fusionGoldCost(tier))}
+        />
+      </StatsTileGrid>
     </ArticleSection>
   );
 }

@@ -1,6 +1,5 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/query-client";
-import { ThemeProvider } from "@/components/theme-provider";
 import { SocketProvider } from "@/contexts/socket-context";
 import { realtimeAccessPolicyObservers } from "@/composition/feature-observers";
 import { ErrorBoundary } from "react-error-boundary";
@@ -100,14 +99,12 @@ function App() {
   const showLogin = showGame && (userscriptSignedOut || reauthRequired);
 
   return (
-    <ThemeProvider>
-      <TooltipProvider>
-        <QueryClientProvider client={queryClient}>
-          {content}
-          {showLogin ? <LoginWindow /> : null}
-        </QueryClientProvider>
-      </TooltipProvider>
-    </ThemeProvider>
+    <TooltipProvider>
+      <QueryClientProvider client={queryClient}>
+        {content}
+        {showLogin ? <LoginWindow /> : null}
+      </QueryClientProvider>
+    </TooltipProvider>
   );
 }
 

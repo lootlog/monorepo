@@ -19,6 +19,7 @@ import {
   Trash2,
 } from "lucide-react";
 import type { useEventHeader } from "../../use-event-header";
+import { PINNED_STAR_CLASS } from "@/components/common/pinned-star";
 
 type EventHeaderActionsProps = Pick<
   ReturnType<typeof useEventHeader>,
@@ -103,12 +104,7 @@ export const EventHeaderActions = ({
       title={pinActionLabel}
       onClick={() => togglePin(event)}
     >
-      <Star
-        className={cn(
-          "size-4",
-          eventIsPinned && "fill-current text-yellow-500",
-        )}
-      />
+      <Star className={cn("size-4", eventIsPinned && PINNED_STAR_CLASS)} />
       {t(eventIsPinned ? "events.unpinEvent" : "events.pinEvent")}
     </Button>
     {canManage && (

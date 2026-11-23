@@ -1,4 +1,10 @@
+import { EmptyState } from "@lootlog/ui/components/empty-state";
+import { HorizontalMenu } from "@lootlog/ui/components/horizontal-menu";
+import { PageHeader } from "@lootlog/ui/components/page-header";
+import { PortalNavLink } from "@lootlog/ui/components/portal-nav-link";
+import { SectionCard } from "@lootlog/ui/components/section-card";
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { ScrollText } from "lucide-react";
 import { Option, Schema } from "effect";
 import { AuditTable } from "@/components/audit-table";
 import { OrganizationAuditTable } from "@/components/organization-audit-table";
@@ -28,9 +34,6 @@ const scopeTabs: ReadonlyArray<{
   { scope: "organizations", label: text.auditScopeOrganizations },
 ];
 
-const tab =
-  "rounded-control px-3 py-1.5 text-sm font-medium text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring data-[status=active]:bg-secondary data-[status=active]:text-foreground";
-
 export const Route = createFileRoute("/audit")({
   validateSearch: (search: {
     scope?: unknown;
@@ -56,57 +59,73 @@ export const Route = createFileRoute("/audit")({
 function AuditPage() {
   const audit = Route.useLoaderData();
   const { page = 1 } = Route.useSearch();
+  const empty = <EmptyState icon={ScrollText} title={text.auditEmpty} />;
 
   return (
-    <div className="flex flex-col gap-3">
-      <div>
-        <h1 className="text-xl font-semibold">{text.auditHeading}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {text.auditDescription}
-        </p>
-      </div>
-      <nav aria-label={text.auditHeading} className="flex gap-1">
-        {scopeTabs.map((item) => (
-          <Link
-            key={item.scope}
-            to="/audit"
-            search={{
-              scope:
-                item.scope === "organizations" ? "organizations" : undefined,
-            }}
-            activeOptions={{ explicitUndefined: true }}
-            className={tab}
-          >
-            {item.label}
-          </Link>
-        ))}
-      </nav>
-      <div className="rounded-lg border border-border bg-card p-2">
-        {audit.scope === "organizations" ? (
-          <OrganizationAuditTable entries={audit.entries} showOrganization />
-        ) : (
-          <AuditTable entries={audit.entries} showTarget />
-        )}
-      </div>
-      <Pagination
-        page={page}
-        pageSize={
-          audit.scope === "organizations"
-            ? ORGANIZATION_AUDIT_PAGE_SIZE
-            : AUDIT_PAGE_SIZE
-        }
-        total={audit.total}
-        renderLink={(target, className, label) => (
-          <Link
-            to="/audit"
-            search={(previous) => ({ ...previous, page: target })}
-            className={className}
-            key={label}
-          >
-            {label}
-          </Link>
-        )}
+    <>
+      <PageHeader
+        icon={ScrollText}
+        title={text.auditHeading}
+        description={text.auditDescription}
       />
-    </div>
+      <SectionCard>
+        <HorizontalMenu
+          aria-label={text.auditHeading}
+          className="h-11 border-b border-sidebar-border"
+        >
+          {scopeTabs.map((item) => (
+            <li key={item.scope}>
+              <PortalNavLink
+                variant="bar"
+                active={item.scope === audit.scope}
+                className="after:inset-y-2"
+                render={
+                  <Link
+                    to="/audit"
+                    search={{
+                      scope:
+                        item.scope === "organizations"
+                          ? "organizations"
+                          : undefined,
+                    }}
+                    activeOptions={{ explicitUndefined: true }}
+                  />
+                }
+              >
+                {item.label}
+              </PortalNavLink>
+            </li>
+          ))}
+        </HorizontalMenu>
+        {audit.scope === "organizations" ? (
+          <OrganizationAuditTable
+            entries={audit.entries}
+            showOrganization
+            empty={empty}
+          />
+        ) : (
+          <AuditTable entries={audit.entries} showTarget empty={empty} />
+        )}
+        <Pagination
+          page={page}
+          pageSize={
+            audit.scope === "organizations"
+              ? ORGANIZATION_AUDIT_PAGE_SIZE
+              : AUDIT_PAGE_SIZE
+          }
+          total={audit.total}
+          renderLink={(target, className, label) => (
+            <Link
+              to="/audit"
+              search={(previous) => ({ ...previous, page: target })}
+              className={className}
+              key={label}
+            >
+              {label}
+            </Link>
+          )}
+        />
+      </SectionCard>
+    </>
   );
 }

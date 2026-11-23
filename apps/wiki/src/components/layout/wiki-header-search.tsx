@@ -1,12 +1,23 @@
 import { Search } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { Button } from "@lootlog/ui/components/button";
 import { Kbd } from "@lootlog/ui/components/kbd";
+import { getPrimaryModifierKeyLabel } from "@lootlog/ui/lib/primary-modifier-key";
 import { t } from "@/i18n/messages";
 import { WikiSearchDialog } from "./wiki-search-dialog";
 
+const subscribeToPlatform = () => () => {};
+
+const serverModifierKeyLabel = () => "Ctrl" as const;
+
 export function WikiHeaderSearch({ variant }: { variant: "field" | "icon" }) {
   const [open, setOpen] = useState(false);
+
+  const modifierKeyLabel = useSyncExternalStore(
+    subscribeToPlatform,
+    getPrimaryModifierKeyLabel,
+    serverModifierKeyLabel,
+  );
 
   useEffect(() => {
     if (variant !== "field") return;
@@ -31,13 +42,13 @@ export function WikiHeaderSearch({ variant }: { variant: "field" | "icon" }) {
           size="sm"
           onClick={() => setOpen(true)}
           aria-keyshortcuts="Control+K Meta+K"
-          className="portal-header-search w-44 justify-start font-normal xl:w-72"
+          className="portal-header-search h-8 w-56 justify-start font-normal lg:w-64"
         >
           <Search aria-hidden="true" />
           <span className="min-w-0 flex-1 truncate text-left">
             {t("header.searchPlaceholder")}
           </span>
-          <Kbd>Ctrl K</Kbd>
+          <Kbd>{`${modifierKeyLabel} K`}</Kbd>
         </Button>
       ) : (
         <Button

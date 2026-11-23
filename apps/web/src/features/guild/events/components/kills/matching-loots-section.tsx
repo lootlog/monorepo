@@ -3,7 +3,7 @@ import { BandSection } from "@/components/common/band-section";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { Package } from "lucide-react";
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { EmbeddedLootRowsSkeleton } from "../shared/embedded-loot-rows-skeleton";
 import type { Loot } from "@/lib/loots/loot-types";
 import { LootsListItem } from "@/features/guild/loots-list/components/loots-list/loots-list-item";

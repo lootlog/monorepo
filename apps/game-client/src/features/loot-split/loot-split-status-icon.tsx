@@ -8,18 +8,12 @@ export const LootSplitStatusIcon: FC<{
 }> = ({ status, byLootFilter = false }) => {
   if (status === "accepted" && byLootFilter)
     return (
-      <Funnel
-        aria-hidden
-        className="ll:size-3.5 ll:shrink-0 ll:text-emerald-400"
-      />
+      <Funnel aria-hidden className="ll:size-3.5 ll:shrink-0 ll:text-success" />
     );
 
   if (status === "accepted")
     return (
-      <Check
-        aria-hidden
-        className="ll:size-3.5 ll:shrink-0 ll:text-emerald-400"
-      />
+      <Check aria-hidden className="ll:size-3.5 ll:shrink-0 ll:text-success" />
     );
 
   if (status === "choosing")
@@ -38,7 +32,7 @@ export const LootSplitStatusIcon: FC<{
   return (
     <CircleHelp
       aria-hidden
-      className="ll:size-3.5 ll:shrink-0 ll:text-white/40"
+      className="ll:size-3.5 ll:shrink-0 ll:text-foreground/40"
     />
   );
 };

@@ -1,43 +1,49 @@
-/* `.default` scopes the default palette to one element, such as a theme's
- * row in the theme list, whatever theme the page itself uses. */
+/*
+ * The default palette: near-black neutrals, close to true black like Apple's
+ * dark mode, with one quiet sky-blue accent and status colours at matching
+ * lightness so none of them shouts. Content sits a step above the sidebar, as
+ * in every other theme, and themes that leave a token unset fall back to it.
+ * `.default` scopes it to one element, such as a theme's row in the theme
+ * list, whatever theme the page itself uses.
+ */
 :root,
 .default {
-  --background: #07111f;
-  --foreground: #f7f8f2;
-  --card: #0d1a2c;
-  --card-foreground: #f7f8f2;
-  --popover: #0d1a2c;
-  --popover-foreground: #f7f8f2;
-  --primary: #3157f6;
-  --primary-foreground: #f7f8f2;
-  --secondary: #14243a;
-  --secondary-foreground: #dce6f4;
-  --muted: #18283e;
-  --muted-foreground: #91a4bf;
-  --accent: #20395b;
-  --accent-foreground: #f7f8f2;
-  --destructive: #ff665b;
-  --destructive-foreground: #07111f;
-  --border: #2b3b53;
-  --ring: #35d3e4;
-  --chart-1: #3157f6;
-  --chart-2: #35d3e4;
-  --chart-3: #c8f135;
-  --chart-4: #ffbd3f;
-  --chart-5: #ff665b;
-  --signal-live: #35d3e4;
-  --signal-ready: #c8f135;
-  --signal-timer: #ffbd3f;
-  --signal-alert: #ff665b;
-  --text-supporting: #b9c8de;
-  --sidebar: #081421;
-  --sidebar-foreground: #dce6f4;
-  --sidebar-primary: #3157f6;
-  --sidebar-primary-foreground: #f7f8f2;
-  --sidebar-accent: #14243a;
-  --sidebar-accent-foreground: #f7f8f2;
-  --sidebar-border: #24364d;
-  --sidebar-ring: #35d3e4;
+  --background: oklch(0.165 0.002 260);
+  --foreground: oklch(0.955 0.002 260);
+  --card: oklch(0.195 0.002 260);
+  --card-foreground: oklch(0.955 0.002 260);
+  --popover: oklch(0.21 0.002 260);
+  --popover-foreground: oklch(0.955 0.002 260);
+  --primary: oklch(0.77 0.105 258);
+  --primary-foreground: oklch(0.125 0.002 260);
+  --secondary: oklch(0.225 0.002 260);
+  --secondary-foreground: oklch(0.885 0.002 260);
+  --muted: oklch(0.24 0.002 260);
+  --muted-foreground: oklch(0.715 0.003 260);
+  --accent: oklch(0.27 0.035 258);
+  --accent-foreground: oklch(0.955 0.002 260);
+  --destructive: oklch(0.705 0.15 25);
+  --destructive-foreground: oklch(0.125 0.002 260);
+  --border: oklch(0.32 0.002 260);
+  --ring: oklch(0.77 0.105 258);
+  --chart-1: oklch(0.77 0.105 258);
+  --chart-2: oklch(0.79 0.085 200);
+  --chart-3: oklch(0.8 0.12 152);
+  --chart-4: oklch(0.83 0.11 78);
+  --chart-5: oklch(0.72 0.12 350);
+  --signal-live: oklch(0.79 0.085 200);
+  --signal-ready: oklch(0.8 0.12 152);
+  --signal-timer: oklch(0.83 0.11 78);
+  --signal-alert: oklch(0.705 0.15 25);
+  --text-supporting: oklch(0.83 0.003 260);
+  --sidebar: oklch(0.125 0.002 260);
+  --sidebar-foreground: oklch(0.885 0.002 260);
+  --sidebar-primary: oklch(0.77 0.105 258);
+  --sidebar-primary-foreground: oklch(0.125 0.002 260);
+  --sidebar-accent: oklch(0.2 0.002 260);
+  --sidebar-accent-foreground: oklch(0.955 0.002 260);
+  --sidebar-border: oklch(0.225 0.002 260);
+  --sidebar-ring: oklch(0.77 0.105 258);
   /*
    * Every rule between panels, sections, rows and cards. Themes leave it to
    * follow their border; a custom theme can set it on its own.

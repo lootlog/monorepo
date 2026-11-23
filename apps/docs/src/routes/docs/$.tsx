@@ -15,11 +15,11 @@ import {
 } from "fumadocs-ui/page";
 import { use } from "react";
 import { PageMarkdownActions } from "@lootlog/ui/components/page-markdown-actions";
+import { useScrollToTop } from "@lootlog/ui/hooks/use-scroll-to-top";
 import {
   COMMUNITY_LINKS,
   PUBLIC_SITE_ORIGINS,
 } from "@lootlog/domain/public-sites";
-import { DocsScrollToTop } from "@/components/docs-scroll-to-top";
 import { ProductScreenshot } from "@/components/product-screenshot";
 import { docsSite } from "@/lib/llms";
 import { docsTranslations } from "@/lib/polish-translations";
@@ -102,6 +102,8 @@ function DocsRoute() {
     Route.useLoaderData(),
   );
 
+  useScrollToTop(path);
+
   const page = docs.getPage(path);
 
   if (!page) {
@@ -119,7 +121,6 @@ function DocsRoute() {
       searchToggle={{ enabled: false }}
       containerProps={{ className: "documentation-layout" }}
     >
-      <DocsScrollToTop />
       <DocsPage toc={toc} tableOfContent={{ style: "clerk" }}>
         <DocsTitle>{page.title}</DocsTitle>
         <DocsDescription className="mb-0">{page.description}</DocsDescription>

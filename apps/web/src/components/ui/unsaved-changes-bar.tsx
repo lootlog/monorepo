@@ -6,7 +6,7 @@ import { cn } from "cn";
 import { useEffect, useRef, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
-import { getPrimaryModifierKeyLabel } from "@/utils/platform/get-primary-modifier-key-label";
+import { getPrimaryModifierKeyLabel } from "@lootlog/ui/lib/primary-modifier-key";
 
 export type UnsavedChangesBarProps = {
   isDirty: boolean;

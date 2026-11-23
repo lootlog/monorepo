@@ -25,10 +25,10 @@ export const PlayerName: FC<PlayerNameProps> = ({
     </span>
     {clanName ? (
       <>
-        <span aria-hidden="true" className="ll:shrink-0 ll:text-white/35">
+        <span aria-hidden="true" className="ll:shrink-0 ll:text-foreground/35">
           ·
         </span>
-        <span className="ll:min-w-0 ll:shrink-[9999] ll:truncate ll:font-normal ll:text-white/65">
+        <span className="ll:min-w-0 ll:shrink-[9999] ll:truncate ll:font-normal ll:text-foreground/65">
           {clanName}
         </span>
       </>

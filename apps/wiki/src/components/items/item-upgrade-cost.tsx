@@ -5,7 +5,8 @@ import {
   UPGRADE_LEVELS,
   type UpgradeLevel,
 } from "@lootlog/domain/item-upgrade";
-import { StatTiles } from "@/components/common/stat-tiles";
+import { StatsTile } from "@lootlog/ui/components/stats-tile";
+import { StatsTileGrid } from "@lootlog/ui/components/stats-tile-grid";
 import { t } from "@/i18n/messages";
 import {
   formatGold,
@@ -61,25 +62,22 @@ export function ItemUpgradeCost({ item, level }: ItemUpgradeCostProps) {
       <p className="text-sm font-medium text-foreground">
         {t("upgrade.cost.totalTo", { level: target })}
       </p>
-      <StatTiles
-        className="max-sm:grid-cols-1"
-        tiles={[
-          {
-            label: t("upgrade.cost.points"),
-            value: formatNumber(total.points),
-          },
-          {
-            label: currency,
-            value: formatNumber(total.essence),
-            hint: atMaxOnly,
-          },
-          {
-            label: t("upgrade.cost.gold"),
-            value: formatGold(total.gold),
-            hint: atMaxOnly,
-          },
-        ]}
-      />
+      <StatsTileGrid framed aria-live="polite" className="sm:grid-cols-3">
+        <StatsTile
+          label={t("upgrade.cost.points")}
+          value={formatNumber(total.points)}
+        />
+        <StatsTile
+          label={currency}
+          value={formatNumber(total.essence)}
+          detail={atMaxOnly}
+        />
+        <StatsTile
+          label={t("upgrade.cost.gold")}
+          value={formatGold(total.gold)}
+          detail={atMaxOnly}
+        />
+      </StatsTileGrid>
 
       <ol
         aria-label={t("upgrade.cost.steps")}

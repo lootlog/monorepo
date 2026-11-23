@@ -2,11 +2,16 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Search, Trash2 } from "lucide-react";
 import { useCatalogControllerGetItems } from "@lootlog/client/catalog";
 import { Button } from "@lootlog/ui/components/button";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+} from "@lootlog/ui/components/empty";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { ShareLinkButton } from "@/components/common/share-link-button";
 import { ItemComparisonTable } from "@/components/comparison/item-comparison-table";
 import { useItemComparison } from "@/contexts/item-comparison-context";
-import { PageHeader } from "@/components/common/page-header";
+import { PortalPageHeader } from "@lootlog/ui/components/portal-page-header";
 import { t } from "@/i18n/messages";
 import { WIKI_GAME_VERSION } from "@/lib/catalog-links";
 import {
@@ -47,7 +52,7 @@ function CompareRoute() {
 
   return (
     <div className="flex flex-col gap-6 py-6">
-      <PageHeader
+      <PortalPageHeader
         title={t("comparison.title")}
         description={t("comparison.description", { count: MAX_COMPARED_ITEMS })}
         actions={
@@ -78,27 +83,46 @@ function CompareRoute() {
           {t("catalog.loadError")}
         </p>
       ) : items.length === 0 ? (
-        <div className="flex flex-col items-start gap-3 rounded-xl border border-dashed border-border px-5 py-6">
-          <p className="text-sm text-muted-foreground">
-            {t("comparison.empty")}
-          </p>
-          <Button
-            variant="outline"
-            size="sm"
-            icon={<Search />}
-            render={<Link to="/items" search={EMPTY_ITEMS_SEARCH} />}
-            nativeButton={false}
-          >
-            {t("comparison.searchItems")}
-          </Button>
-        </div>
+        <Empty>
+          <EmptyDescription>{t("comparison.empty")}</EmptyDescription>
+          <EmptyContent>
+            <Button
+              variant="outline"
+              size="sm"
+              icon={<Search />}
+              render={<Link to="/items" search={EMPTY_ITEMS_SEARCH} />}
+              nativeButton={false}
+            >
+              {t("comparison.searchItems")}
+            </Button>
+          </EmptyContent>
+        </Empty>
       ) : compared.length === 0 ? (
         !data || isFetching ? (
           <Skeleton className="h-96 w-full rounded-xl" />
         ) : (
-          <p className="rounded-xl border border-dashed border-border px-5 py-6 text-sm text-muted-foreground">
-            {t("comparison.notFound")}
-          </p>
+          <Empty>
+            <EmptyDescription>{t("comparison.notFound")}</EmptyDescription>
+            <EmptyContent className="flex-row flex-wrap justify-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                icon={<Trash2 />}
+                onClick={clear}
+              >
+                {t("comparison.clear")}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                icon={<Search />}
+                render={<Link to="/items" search={EMPTY_ITEMS_SEARCH} />}
+                nativeButton={false}
+              >
+                {t("comparison.searchItems")}
+              </Button>
+            </EmptyContent>
+          </Empty>
         )
       ) : (
         <>

@@ -1,4 +1,7 @@
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { ScrollText } from "lucide-react";
+import { BackLink } from "@/components/back-link";
 import { OrganizationAuditTable } from "@/components/organization-audit-table";
 import { OrganizationDiscord } from "@/components/organization-discord";
 import { OrganizationMembers } from "@/components/organization-members";
@@ -53,12 +56,9 @@ function OrganizationPage() {
 
   return (
     <>
-      <Link
-        to="/organizations"
-        className="self-start rounded-control text-sm text-muted-foreground underline-offset-4 outline-none hover:text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-ring"
-      >
-        ← {text.backToOrganizations}
-      </Link>
+      <BackLink render={<Link to="/organizations" />}>
+        {text.backToOrganizations}
+      </BackLink>
       <OrganizationSummary details={details} webUrl={webUrl} />
       <div className="grid gap-6 lg:grid-cols-2">
         <Section
@@ -114,10 +114,11 @@ function OrganizationPage() {
         id="roles"
         title={text.rolesListHeading}
         description={text.rolesListDescription}
+        flush
       >
         <OrganizationRoles roles={details.roles} />
       </Section>
-      <Section id="members" title={text.membersHeading}>
+      <Section id="members" title={text.membersHeading} flush>
         <OrganizationMembers
           guildId={organization.id}
           members={members}
@@ -125,10 +126,13 @@ function OrganizationPage() {
           page={page ?? 1}
         />
       </Section>
-      <Section id="history" title={text.organizationAuditHeading}>
+      <Section id="history" title={text.organizationAuditHeading} flush>
         <OrganizationAuditTable
           entries={details.audit}
           showOrganization={false}
+          empty={
+            <EmptyState compact icon={ScrollText} title={text.auditEmpty} />
+          }
         />
       </Section>
     </>

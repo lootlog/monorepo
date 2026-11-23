@@ -6,7 +6,7 @@ export function LootlogMark({ className }: { className?: string }) {
       focusable="false"
       className={className}
     >
-      <rect x="16" y="16" width="480" height="480" rx="112" fill="#0d1a2c" />
+      <rect x="16" y="16" width="480" height="480" rx="112" fill="#141516" />
       <path
         d="M373.4 138.6A166 166 0 1 0 419.5 227.2"
         fill="none"

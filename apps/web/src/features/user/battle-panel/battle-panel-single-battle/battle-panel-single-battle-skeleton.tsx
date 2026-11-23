@@ -19,6 +19,7 @@ import {
 } from "./components/battle-detail-layout";
 import { BattleHpTimelineChartSkeleton } from "./components/battle-hp-timeline-chart-skeleton";
 import { BattleTeamSkeleton } from "./components/battle-team-skeleton";
+import { BATTLE_SURFACE_COLORS } from "@/components/battle/utils/battle-color-palette";
 
 const metadataItems = ["w-28", "w-14", "w-10", "w-14", "w-16"];
 
@@ -110,7 +111,12 @@ export const BattlePanelSingleBattleSkeleton = () => {
                 <div className="flex w-10 shrink-0 justify-end px-1.5 pt-1.5">
                   <Skeleton className="h-2 w-4" />
                 </div>
-                <div className="min-w-0 flex-1 space-y-1.5 bg-gray-100/10 px-3 py-1.5">
+                <div
+                  className={cn(
+                    "min-w-0 flex-1 space-y-1.5 px-3 py-1.5",
+                    BATTLE_SURFACE_COLORS.log.neutral,
+                  )}
+                >
                   {lines.map((widthClassName, lineIndex) => (
                     <Skeleton
                       key={lineIndex}

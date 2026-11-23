@@ -1,4 +1,4 @@
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import type { FilterChip } from "@/components/common/filter-chip-list";
 import { AlertCircle, SearchX, Shield } from "lucide-react";
 import { useTranslation } from "react-i18next";

@@ -1,7 +1,7 @@
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { MapPin, Plus, Search } from "lucide-react";
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { SearchInput } from "@/components/ui/search-input";
 
 type GameMap = { id: number; name: string };

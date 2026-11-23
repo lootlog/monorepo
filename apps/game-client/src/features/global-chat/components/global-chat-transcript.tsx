@@ -74,7 +74,7 @@ export const GlobalChatTranscript = ({
             className="ll:absolute ll:top-1 ll:left-1/2 ll:z-20 ll:-translate-x-1/2"
           >
             <span className="ll:sr-only">{t("states.loadingOlder")}</span>
-            <Spinner className="ll:size-4 ll:text-gray-300" />
+            <Spinner className="ll:size-4 ll:text-foreground/80" />
           </div>
         ) : olderFailed ? (
           <Button

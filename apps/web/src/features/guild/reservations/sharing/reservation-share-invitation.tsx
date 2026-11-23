@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@lootlog/ui/components/select";
-import { Spinner } from "@lootlog/ui/components/spinner";
+import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useNavigate } from "@tanstack/react-router";
 import { getReservationErrorMessage } from "../get-reservation-error-message";
 
@@ -109,7 +109,17 @@ export function ReservationShareInvitation({
           title={t("reservations.sharing.loadingTitle")}
           description={t("reservations.sharing.loadingDescription")}
         >
-          <Spinner className="size-6" />
+          <div className="flex min-w-0 items-center gap-3">
+            <Skeleton className="size-10 shrink-0 rounded-lg" />
+            <Skeleton className="h-4 w-40" />
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-2">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-9 w-full rounded-md" />
+            </div>
+          </div>
+          <Skeleton className="h-9 w-40 rounded-md" />
         </BandSection>
       </div>
     );

@@ -1,4 +1,4 @@
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { LootsListItem } from "@/features/guild/loots-list/components/loots-list/loots-list-item";
 import { LootsListSkeleton } from "@/features/guild/loots-list/components/loots-list/loots-list-skeleton";
 import { InfiniteListStatusRow } from "@/components/common/infinite-list-status-row";
@@ -13,7 +13,7 @@ import { ThemeEmptyStateIcon } from "@/themes/adapters";
 import { AnimatePresence } from "framer-motion";
 import { EmptyMedia } from "@lootlog/ui/components/empty";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { CircleAlert, PackageOpen, SearchX } from "lucide-react";
+import { AlertCircle, PackageOpen, SearchX } from "lucide-react";
 
 import { useLiveLootList } from "./use-live-loot-list";
 import { NewLootsPill } from "./new-loots-pill";
@@ -60,51 +60,44 @@ export const LootsList = () => {
     queryIdentity,
   } = useLiveLootList();
 
-  if (isFailed) {
-    return (
-      <div className="p-3">
+  const renderEmptyState = () => {
+    if (isFailed) {
+      return (
         <EmptyState
           fill
-          icon={CircleAlert}
+          icon={AlertCircle}
           title={t("loots.list.loadError")}
           description={t("loots.list.loadErrorDescription")}
           action={<RetryButton onRetry={retry} />}
         />
-      </div>
-    );
-  }
+      );
+    }
 
-  if (isEmpty) {
+    if (hasActiveFilters) {
+      return (
+        <EmptyState
+          fill
+          icon={SearchX}
+          title={t("loots.list.noResults")}
+          description={t("loots.list.noResultsDescription")}
+          action={<ClearFiltersButton onClear={clearFilters} />}
+        />
+      );
+    }
+
     return (
-      <div className="p-3">
-        {hasActiveFilters && (
-          <div className="-mx-3 -mt-3 mb-3">
-            <LootsListToolbar />
-          </div>
-        )}
-        {hasActiveFilters ? (
-          <EmptyState
-            fill
-            icon={SearchX}
-            title={t("loots.list.noResults")}
-            description={t("loots.list.noResultsDescription")}
-            action={<ClearFiltersButton onClear={clearFilters} />}
-          />
-        ) : (
-          <EmptyState
-            fill
-            media={
-              <EmptyMedia variant="icon">
-                <ThemeEmptyStateIcon fallback=<PackageOpen /> />
-              </EmptyMedia>
-            }
-            title={t(themedKey("loots.list.empty"))}
-            description={t("loots.list.emptyDescription")}
-          />
-        )}
-      </div>
+      <EmptyState
+        fill
+        media={
+          <EmptyMedia variant="icon">
+            <ThemeEmptyStateIcon fallback=<PackageOpen /> />
+          </EmptyMedia>
+        }
+        title={t(themedKey("loots.list.empty"))}
+        description={t("loots.list.emptyDescription")}
+      />
     );
-  }
+  };
 
   const content = (
     <SharedTooltipProvider>
@@ -127,7 +120,9 @@ export const LootsList = () => {
           </AnimatePresence>
         </div>
         <div ref={listRef}>
-          {isPending ? (
+          {isFailed || isEmpty ? (
+            <div className="p-3">{renderEmptyState()}</div>
+          ) : isPending ? (
             <LootsListSkeleton viewMode={viewMode} />
           ) : viewMode === "grid" ? (
             <div

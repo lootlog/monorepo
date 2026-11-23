@@ -72,7 +72,7 @@ function PopoverContent({
         <BasePopover.Popup
           data-slot="popover-content"
           className={cn(
-            "ll:bg-black ll:border ll:border-white/50 ll:shadow-[2px_2px_3px_3px_rgba(12,13,13,0.4)] ll:text-popover-foreground ll:animate-in ll:fade-in-0 ll:zoom-in-95 data-[ending-style]:ll:animate-out data-[ending-style]:ll:fade-out-0 data-[ending-style]:ll:zoom-out-95 data-[side=bottom]:ll:slide-in-from-top-2 data-[side=left]:ll:slide-in-from-right-2 data-[side=right]:ll:slide-in-from-left-2 data-[side=top]:ll:slide-in-from-bottom-2 ll:z-[500] ll:origin-(--transform-origin) ll:rounded-lg ll:p-2 ll:outline-hidden",
+            "ll:bg-black ll:border ll:border-white/50 ll:shadow-[2px_2px_3px_3px_rgba(12,13,13,0.4)] ll:text-popover-foreground ll:animate-in ll:fade-in-0 ll:zoom-in-95 ll:data-[ending-style]:animate-out ll:data-[ending-style]:fade-out-0 ll:data-[ending-style]:zoom-out-95 ll:data-[side=bottom]:slide-in-from-top-2 ll:data-[side=left]:slide-in-from-right-2 ll:data-[side=right]:slide-in-from-left-2 ll:data-[side=top]:slide-in-from-bottom-2 ll:z-[500] ll:origin-(--transform-origin) ll:rounded-lg ll:p-2 ll:outline-hidden",
             className,
           )}
           {...props}

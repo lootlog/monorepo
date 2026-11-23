@@ -6,6 +6,7 @@ import { cn } from "cn";
 import { formatPoints } from "../../utils/format-points";
 import type { SimulationResult } from "../../utils/scoring-simulation";
 import { ScoringPresenceBreakdown } from "../shared/scoring-presence-breakdown";
+import { SCORING_TONE_TEXT_CLASS } from "../../utils/scoring-tone";
 
 interface ScoringSimulatorTimelineResultsProps {
   result: SimulationResult;
@@ -68,7 +69,7 @@ export const ScoringSimulatorTimelineResults = ({
               <span
                 className={cn(
                   "text-base font-bold tabular-nums text-primary",
-                  isCapped && "text-amber-400",
+                  isCapped && SCORING_TONE_TEXT_CLASS.adjusted,
                 )}
               >
                 {formatPoints(totalPoints)}

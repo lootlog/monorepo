@@ -1,6 +1,7 @@
 import { formatPoints } from "./format-points";
 import type { TOptions } from "i18next";
 import { normalizeBonusBreakdown } from "./normalize-bonus-breakdown";
+import { SCORING_TONE_TEXT_CLASS } from "./scoring-tone";
 
 export const getScoringBreakdown = ({
   points,
@@ -67,7 +68,7 @@ export const getScoringItems = ({
         name: bonus.ruleName ?? t("events.kills.pointsTooltip.unnamedBonus"),
       }),
       value: `+${formatPoints(bonus.points)}`,
-      valueClassName: "text-cyan-400",
+      valueClassName: SCORING_TONE_TEXT_CLASS.bonus,
     });
   }
 
@@ -75,7 +76,7 @@ export const getScoringItems = ({
     items.push({
       label: t("events.kills.pointsTooltip.bonusTotal"),
       value: `+${formatPoints(bonusPoints)}`,
-      valueClassName: "text-cyan-400",
+      valueClassName: SCORING_TONE_TEXT_CLASS.bonus,
     });
   }
 
@@ -83,7 +84,7 @@ export const getScoringItems = ({
     items.push({
       label: t("events.kills.pointsTooltip.capReduction"),
       value: `-${formatPoints(capReduction)}`,
-      valueClassName: "text-amber-400",
+      valueClassName: SCORING_TONE_TEXT_CLASS.adjusted,
     });
   }
 
@@ -94,7 +95,7 @@ export const getScoringItems = ({
         manualAdjustmentPoints > 0
           ? `+${formatPoints(manualAdjustmentPoints)}`
           : formatPoints(manualAdjustmentPoints),
-      valueClassName: "text-amber-400",
+      valueClassName: SCORING_TONE_TEXT_CLASS.adjusted,
     });
   }
 

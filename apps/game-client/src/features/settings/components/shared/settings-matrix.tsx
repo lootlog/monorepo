@@ -113,19 +113,19 @@ export const SettingsMatrix: FC<SettingsMatrixProps> = ({
           ref={tableRef}
           aria-label={label}
           data-compact={compact ? "true" : undefined}
-          className="ll:w-full ll:border-collapse ll:text-[13px]"
+          className="ll:w-full ll:border-collapse ll:text-xs"
           onMouseOver={(event) => setHoveredColumn(readColumnIndex(event))}
           onMouseLeave={() => setHoveredColumn(null)}
           onFocus={(event) => setHoveredColumn(readColumnIndex(event))}
           onBlur={() => setHoveredColumn(null)}
         >
           <thead>
-            <tr className="ll:border-0 ll:border-b ll:border-solid ll:border-border">
+            <tr className="ll:border-0 ll:border-b ll:border-solid ll:border-separator-subtle">
               <th
                 ref={rowHeaderRef}
                 scope="col"
                 className={cn(
-                  "ll:px-2 ll:py-2 ll:text-left ll:align-middle ll:text-[11px] ll:font-semibold ll:uppercase ll:leading-4 ll:tracking-wide ll:text-muted-foreground",
+                  "ll:h-7 ll:px-2 ll:py-2 ll:text-left ll:align-middle ll:text-[11px] ll:font-semibold ll:leading-4 ll:text-muted-foreground",
                   !compact && "ll:w-full",
                 )}
               >
@@ -144,7 +144,7 @@ export const SettingsMatrix: FC<SettingsMatrixProps> = ({
                   className={cn(
                     "ll:px-1 ll:py-2 ll:text-center ll:align-middle ll:font-normal ll:transition-colors",
                     column.primary &&
-                      "ll:border-0 ll:border-e ll:border-solid ll:border-border",
+                      "ll:border-0 ll:border-e ll:border-solid ll:border-separator-subtle",
                     compact ? "ll:min-w-12" : "ll:min-w-[92px]",
                     hoveredColumn === index && "ll:bg-white/5",
                   )}
