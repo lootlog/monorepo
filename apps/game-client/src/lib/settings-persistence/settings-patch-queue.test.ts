@@ -208,7 +208,7 @@ describe("settings patch queue", () => {
           queue.enqueue({ operation: patch, queryKeys: [] });
 
           if (retry && index === 0) {
-            // oxlint-disable-next-line no-await-in-loop
+            // oxlint-disable-next-line no-await-in-loop -- the failed first flush must settle before the remaining patches are enqueued
             await queue.flush();
           }
         }

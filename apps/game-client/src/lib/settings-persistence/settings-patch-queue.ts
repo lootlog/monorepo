@@ -204,7 +204,7 @@ export const createSettingsPatchQueue = <TResponse>(
       for (const [index, batch] of batches.entries()) {
         const operations = batch.map((patch) => patch.operation);
 
-        // oxlint-disable-next-line no-await-in-loop
+        // oxlint-disable-next-line no-await-in-loop -- batches apply in order, and a server document can cancel the remaining batches
         const response = await config.send(operations, options);
 
         if (config.applyServerDocuments?.(response, operations)) {
@@ -245,7 +245,7 @@ export const createSettingsPatchQueue = <TResponse>(
 
     inFlight = (async () => {
       while (pending.size > 0) {
-        // oxlint-disable-next-line no-await-in-loop
+        // oxlint-disable-next-line no-await-in-loop -- patches enqueued during a send go out in the next, ordered round
         await sendPatches(takePending(), options);
       }
     })().finally(() => {

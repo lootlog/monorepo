@@ -1,4 +1,4 @@
-import { replaceEqualDeep, type QueryClient } from "@tanstack/react-query";
+import type { QueryClient } from "@tanstack/react-query";
 import {
   getChatControllerGetChatMessagesQueryKey,
   type ChatMessageResponseDtoOutput as ChatMessageType,
@@ -28,28 +28,6 @@ export const getChatMessagesQueryGuildId = (query: QueryWithKey) => {
 
 const isChatMessagesQuery = (query: QueryWithKey) => {
   return getChatMessagesQueryGuildId(query) !== undefined;
-};
-
-export const shareChatMessages = (
-  previous: readonly ChatMessageType[],
-  next: ChatMessageType[],
-): readonly ChatMessageType[] => {
-  const previousById = new Map(
-    previous.map((message) => [message.id, message]),
-  );
-
-  const shared = next.map((message) => {
-    const previousMessage = previousById.get(message.id);
-
-    return previousMessage
-      ? replaceEqualDeep(previousMessage, message)
-      : message;
-  });
-
-  return shared.length === previous.length &&
-    shared.every((message, index) => message === previous[index])
-    ? previous
-    : shared;
 };
 
 export const removeChatMessagesQueriesOutsideGuilds = (

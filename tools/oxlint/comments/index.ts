@@ -1,9 +1,7 @@
-import { readFileSync } from "node:fs";
-import { relative, resolve } from "node:path";
-
 import { defineRule, eslintCompatPlugin, type ESTree } from "@oxlint/plugins";
 
-const repositoryRoot = resolve(import.meta.dirname, "../../..");
+import { baselineOptionSchema, fileBudget } from "../lootlog/budget.ts";
+import { QUARANTINE } from "../lootlog/rules/no-test-timeout-or-unreasoned-skip.ts";
 
 const toolDirectivePatterns = [
   /^(?:oxlint|eslint)-(?:disable|enable)/u,
@@ -15,6 +13,7 @@ const toolDirectivePatterns = [
   /^@vite-ignore$/u,
   /^@alias$/u,
   /^@jsx(?:ImportSource|Runtime)?\b/u,
+  QUARANTINE,
 ];
 
 const safetyJustification = /(?:^|[^\p{L}\p{N}_])SAFETY\s*:\s*\S/u;
@@ -25,18 +24,6 @@ function isToolDirective(value: string): boolean {
   return toolDirectivePatterns.some((pattern) => pattern.test(text));
 }
 
-function readBudgets(
-  baselinePath: string | undefined,
-): ReadonlyMap<string, number> {
-  if (baselinePath === undefined) return new Map();
-
-  const budgets: Record<string, number> = JSON.parse(
-    readFileSync(resolve(repositoryRoot, baselinePath), "utf8"),
-  );
-
-  return new Map(Object.entries(budgets));
-}
-
 const noCommentsRule = defineRule({
   meta: {
     type: "suggestion",
@@ -44,13 +31,7 @@ const noCommentsRule = defineRule({
       description:
         "Disallow prose comments. Name the concept in code, record a decision in docs/adr, or file an issue for a hack.",
     },
-    schema: [
-      {
-        type: "object",
-        properties: { baseline: { type: "string", minLength: 1 } },
-        additionalProperties: false,
-      },
-    ],
+    schema: baselineOptionSchema,
     defaultOptions: [{}],
     messages: {
       comment:
@@ -58,7 +39,6 @@ const noCommentsRule = defineRule({
     },
   },
   createOnce(context) {
-    let budgets: ReadonlyMap<string, number> | undefined;
     let emptyContainers: ESTree.Node[] = [];
 
     return {
@@ -69,8 +49,6 @@ const noCommentsRule = defineRule({
         emptyContainers.push(node.parent);
       },
       "Program:exit"() {
-        budgets ??= readBudgets(context.options[0]?.baseline);
-
         const comments: ESTree.Comment[] = [];
         let safetyLineEnd = -1;
         let inUserscriptHeader = false;
@@ -102,8 +80,10 @@ const noCommentsRule = defineRule({
           }
         }
 
-        const budget =
-          budgets.get(relative(repositoryRoot, context.filename)) ?? 0;
+        const budget = fileBudget(
+          context.filename,
+          context.options[0]?.baseline,
+        );
 
         if (comments.length <= budget) return;
 

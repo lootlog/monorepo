@@ -50,7 +50,7 @@ function App() {
       useLogsStore.getState().clearActions();
     }
 
-    // oxlint-disable-next-line react/set-state-in-effect
+    // oxlint-disable-next-line react/set-state-in-effect -- the active user changes only after the previous user's socket, caches and runtime state are disposed
     setActiveUserId(userId);
   }, [
     extension,

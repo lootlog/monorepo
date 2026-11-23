@@ -85,7 +85,7 @@ export const makeMemberRefreshProcessor = ({
           reason: "MEMBER_REFRESH_LOCKED",
         });
 
-        // @effect-diagnostics-next-line globalErrorInEffectFailure:off
+        // @effect-diagnostics-next-line globalErrorInEffectFailure:off -- BullMQ recognizes a delayed job only by its own DelayedError class
         return yield* Effect.fail(new DelayedError());
       }
 

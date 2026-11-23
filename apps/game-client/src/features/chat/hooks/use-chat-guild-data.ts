@@ -34,7 +34,7 @@ import {
 } from "@/features/chat/chat-mentions.helpers";
 import type { AsyncResourceState } from "@/types/async-resource-state";
 import { applyCurrentChatAccess } from "../chat-access-policy";
-import { shareChatMessages } from "../chat-query-cache.helpers";
+import { shareById } from "@/lib/share-by-id";
 import { useRealtimeSnapshotReady } from "@/contexts/socket-context";
 
 type UseChatGuildDataOptions = {
@@ -191,7 +191,7 @@ export const useChatGuildData = ({
           staleTime: 5 * 60 * 1000,
           structuralSharing: (previous, next) =>
             Array.isArray(previous) && Array.isArray(next)
-              ? shareChatMessages(previous, next)
+              ? shareById(previous, next)
               : replaceEqualDeep(previous, next),
         };
       }),

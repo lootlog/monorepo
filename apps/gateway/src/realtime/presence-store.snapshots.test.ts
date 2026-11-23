@@ -1,5 +1,6 @@
 import { describe, expect, spyOn, test } from "bun:test";
 import { PRESENCE_EXPIRY_MS } from "@lootlog/protocol/realtime";
+import { encodeRealtimeFrame } from "@lootlog/protocol/realtime/codec";
 import type { Capability } from "@lootlog/schema/permissions";
 import { Cause, Effect, Exit } from "effect";
 import { TestClock } from "effect/testing";
@@ -19,6 +20,13 @@ import {
   readSnapshot,
   flush,
 } from "../../test/presence-store-fixtures.js";
+import { membership } from "../../test/realtime-fixtures.js";
+
+const LARGEST_ORGANIZATION_ACTIVE_MEMBERS = 528;
+
+const PRECISE_SNAPSHOT_BYTE_BUDGET = 320_000;
+
+const BASIC_SNAPSHOT_BYTE_BUDGET = 280_000;
 
 const webViewer = (permissions: Capability[]): SessionData => ({
   ...session(permissions),
@@ -410,5 +418,92 @@ describe("PresenceStore", () => {
       await Effect.runPromise(store.coverageForMap("organization-1", "Empty")),
     ).toEqual([]);
     expect(mget).toHaveBeenCalledTimes(1);
+  });
+
+  test("keeps the largest Organization's world presence snapshot to its own sessions and under its byte budget, so per-presence bloat or leaked Organization ids fail", async () => {
+    const { store } = makeStore({
+      now: () => Date.parse("2026-11-11T08:00:00Z"),
+    });
+
+    const organizationId = "1517975903131406436";
+    const otherOrganizationId = "1223296584318451732";
+
+    const publishMember = (index: number, world: string) =>
+      publish(
+        store,
+        numberedSocket(index, {
+          connectionId: crypto.randomUUID(),
+          userId: `${index}`.padStart(32, "u"),
+          discordId: `${1_242_479_908_928_618_547n + BigInt(index)}`,
+          guilds: [
+            membership(organizationId, [READ]),
+            membership(otherOrganizationId, [READ]),
+          ],
+        }),
+        {
+          character: {
+            world,
+            name: `Postać ${index}`.padEnd(11, "a"),
+            lvl: 200 + (index % 100),
+            icon: `/kuf/her_xxvi_${index}.gif`.padEnd(21, "k"),
+            characterId: `${8_000_000 + index}`,
+            accountId: `${9_000_000 + index}`,
+            prof: "w",
+            clan: { id: 1000 + (index % 7), name: "Bractwo Nubes", rank: 3 },
+          },
+          location: {
+            mapId: 1000 + index,
+            map: "Grota Dzikiego Kota p.2",
+            x: 40 + (index % 60),
+            y: 20 + (index % 40),
+          },
+        },
+      );
+
+    for (let index = 0; index < LARGEST_ORGANIZATION_ACTIVE_MEMBERS; index++)
+      await publishMember(index, "nubes");
+
+    for (let index = 0; index < 50; index++)
+      await publishMember(LARGEST_ORGANIZATION_ACTIVE_MEMBERS + index, "lupus");
+
+    const encodedSnapshot = async (permissions: Capability[]) => {
+      const snapshot = await readSnapshot(
+        store,
+        {
+          ...webViewer(permissions),
+          guilds: [membership(organizationId, permissions)],
+        },
+        organizationId,
+        "nubes",
+      );
+
+      return {
+        snapshot,
+        bytes: Buffer.byteLength(
+          encodeRealtimeFrame({
+            v: 1,
+            type: "presence.snapshot",
+            sequence: snapshot.revision,
+            data: snapshot,
+          }),
+        ),
+      };
+    };
+
+    const precise = await encodedSnapshot([READ, LOCATION]);
+    const basic = await encodedSnapshot([READ]);
+
+    expect(precise.snapshot.presences).toHaveLength(
+      LARGEST_ORGANIZATION_ACTIVE_MEMBERS,
+    );
+    expect(
+      new Set(
+        precise.snapshot.presences.flatMap(
+          (presence) => presence.organizationIds,
+        ),
+      ),
+    ).toEqual(new Set([organizationId]));
+    expect(precise.bytes).toBeLessThanOrEqual(PRECISE_SNAPSHOT_BYTE_BUDGET);
+    expect(basic.bytes).toBeLessThanOrEqual(BASIC_SNAPSHOT_BYTE_BUDGET);
   });
 });

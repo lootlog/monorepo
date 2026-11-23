@@ -13,8 +13,63 @@ changes; optimize for confidence, not deletion count. Campaign mode prunes one
 whole subsystem's test surface (every test file an app, service area, or
 package owns); before starting one, read [CAMPAIGN.md](CAMPAIGN.md).
 
-The Verification section of `AGENTS.md` is the baseline test policy. This skill
-adds the gate, the audit workflow, and the evidence a deletion needs.
+The [test policy](#test-policy) is the repository's baseline for what to test
+and how. This skill adds the gate, the audit workflow, and the evidence a
+deletion needs.
+
+## Test policy
+
+- Make tests wait on the milestone: await the promise, Deferred, Queue, or
+  event that marks it, advance fake timers, or drive the Effect TestClock.
+  The runner's timeout is the ceiling, so a test sets no timeout or retry of
+  its own (container suites, `*.integration.test.ts` and `*.e2e.test.ts`,
+  may). A skipped test names its tracking issue on the line above:
+  `// quarantine: #1234 <why>`. The `lootlog` test rules enforce this.
+- Tests must protect observable behavior, business invariants, real
+  regressions, authorization boundaries, or meaningful integration contracts.
+  Each test must answer: “What real regression would this catch?”
+- Add tests only for a concrete logic regression: name the incorrect outcome
+  they prevent. Prefer extending an existing behavioral test over creating a
+  new suite or fixture. For mechanical replacements with standard-library or
+  dependency utilities, rely on existing coverage; add tests only for Lootlog
+  behavior that the replacement could change, not the utility itself.
+- Never test the language, the runtime, or a framework primitive. A test whose
+  assertions transcribe the implementation — an operator, a comparison, a
+  nullish check, a default value, a type guard, a pass-through argument — proves
+  only that JavaScript works. Delete it instead of writing it. Coverage is not a
+  goal: a test earns its place by naming a realistic incorrect outcome a future
+  change could produce, and by failing when that outcome occurs.
+- For styling, layout, or copy-only changes, use existing visual inspection and
+  lint/typecheck. Do not add tests for literal text rendering, CSS classes or
+  values, DOM nesting, decorative animations, or the absence of deleted UI.
+  Do not commit temporary design/verification pages unless explicitly requested.
+- Skip tests that count symbols or modules, mirror private forwarding or wiring,
+  restate the type system, validate their own fixtures instead of actual output,
+  or merely exercise framework mechanics. Broad snapshots are not a substitute
+  for behavioral assertions.
+- Treat UI primitives copied from shadcn or wrapping Base UI (`components/ui`
+  in any app, `packages/ui`) as vendored: the library owns their tests. Test
+  them only where Lootlog adds logic of its own, such as value mapping or
+  event forwarding; a `data-*` attribute, class, size variant, or a prop that
+  passes straight through to the primitive is not Lootlog logic.
+- Keep UI tests for meaningful behavior: authorization, user input, state
+  transitions, persistence, failure recovery, and keyboard/accessibility
+  interactions. Assert outcomes, not presentation details; remove incidental
+  style and copy assertions from otherwise useful tests.
+- Keep E2E fakes at genuine external boundaries. Verify resulting state, not
+  only status codes, and never mock the unit under test or internal application
+  layers.
+- Prove a Redis Lua script against a real Dragonfly through testcontainers. A
+  fake that re-implements the script in TypeScript proves only the fake; keep
+  such a fake for the TypeScript logic around the script.
+- Add contract or end-to-end coverage when a change crosses Game client, HTTP,
+  RabbitMQ, gateway, or generated-client boundaries. Game client runtime,
+  adapter, processor, projection, and domain-store changes require relevant
+  characterization tests.
+- Preserve golden expectations until an intended behavior change has been
+  established independently. Documentation-only changes do not require
+  application tests.
+
 
 ## Authoring gate
 

@@ -67,9 +67,8 @@ one owner. With each lane, remove the test-only production seams it unlocks:
 injection parameters, getters, reset exports, and indirection layers. Keep the
 `.integration.test.ts` suffix on moved integration suites: `test:integration`
 selects suites by it. Record
-durable test-ownership rules in the Verification section of the root
-`AGENTS.md`, the repository's only one, and only rules drawn from mistakes this
-campaign actually found.
+durable test-ownership rules in the Test policy of `SKILL.md`, and only rules
+drawn from mistakes this campaign actually found.
 
 Done when every lane plan is applied and each lane's keepers pass.
 

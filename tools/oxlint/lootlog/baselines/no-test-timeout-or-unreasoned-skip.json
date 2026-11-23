@@ -1,0 +1,18 @@
+{
+  "apps/activity/src/http/activity-http.test.ts": 2,
+  "apps/api/src/events/wrapped/event-wrapped.service.test.ts": 1,
+  "apps/api/src/loots/query/loot-query.operations.relations.test.ts": 1,
+  "apps/api/src/loots/query/loot-query.operations.search.test.ts": 1,
+  "apps/api/src/openapi/generate-effect-openapi.test.ts": 1,
+  "apps/battlelog/src/battles/analytics/battle-analytics-read.service.test.ts": 2,
+  "apps/battlelog/src/battles/analytics/pagination.service.test.ts": 1,
+  "apps/battlelog/src/battles/catalog/battle-list-filter.service.test.ts": 1,
+  "apps/game-client/src/app-cold-start.test.tsx": 1,
+  "apps/game-client/src/features/chat/components/chat-gathering-bar.behavior.test.tsx": 2,
+  "apps/game-client/src/features/settings/components/information/information-settings-tab.test.tsx": 1,
+  "apps/search/src/players/task-outcomes.test.ts": 1,
+  "apps/search/test/search-consumers.test.ts": 5,
+  "apps/web/src/features/guild/reservations/schedule/mobile-day-schedule.test.tsx": 1,
+  "packages/instrumentation/test/runtime-metrics.test.ts": 1,
+  "scripts/development-deployment-plan.test.mjs": 6
+}

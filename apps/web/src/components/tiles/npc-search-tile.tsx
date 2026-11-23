@@ -17,7 +17,7 @@ export const NpcSearchTile: FC<NpcSearchTileProps> = ({
 
   return (
     <div className="flex h-10 w-8 shrink-0 items-center justify-center">
-      {/* oxlint-disable-next-line eslint-plugin-next/no-img-element */}
+      {/* oxlint-disable-next-line eslint-plugin-next/no-img-element -- the web app is a Vite SPA without next/image */}
       <img
         className={cn(
           "relative cursor-pointer rounded-lg max-h-10 max-w-8",

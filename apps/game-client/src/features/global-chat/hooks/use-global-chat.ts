@@ -1,4 +1,8 @@
-import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  replaceEqualDeep,
+  useInfiniteQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import {
   globalChatControllerGetMessages,
   type GlobalChatControllerGetMessagesParams,
@@ -10,6 +14,8 @@ import {
 } from "@/store/global-chat.store";
 import {
   appendGlobalChatMessage,
+  isGlobalChatPages,
+  shareGlobalChatPages,
   type GlobalChatPages,
 } from "../global-chat.helpers";
 
@@ -35,6 +41,10 @@ export const useGlobalChat = (channel: GlobalChatChannel) => {
     initialPageParam: "",
     getNextPageParam: (page) => page.nextCursor ?? undefined,
     gcTime: 0,
+    structuralSharing: (previous, next) =>
+      isGlobalChatPages(previous) && isGlobalChatPages(next)
+        ? shareGlobalChatPages(previous, next)
+        : replaceEqualDeep(previous, next),
   });
 
   const addSentMessage = (message: GlobalChatMessageResponse) => {

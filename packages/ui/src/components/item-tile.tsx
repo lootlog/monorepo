@@ -55,12 +55,14 @@ export type ItemTileProps = {
 const TOOLTIP_FRAME_CLASS_NAME =
   "w-80 overflow-hidden rounded-xl border-[color-mix(in_oklab,var(--item-rarity)_40%,var(--border))] bg-popover/95 text-left text-wrap backdrop-blur-md";
 
+const DEFAULT_RENDER = <button type="button" />;
+
 export const ItemTile: FC<ItemTileProps> = ({
   color = "",
   comparison,
   item: { icon, name, rarity, stat, type },
   labels,
-  render = <button type="button" />,
+  render = DEFAULT_RENDER,
   renderStat,
   shareIndex,
   shareNickname,

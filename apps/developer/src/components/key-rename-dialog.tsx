@@ -31,19 +31,21 @@ export function KeyRenameDialog({
   const [error, setError] = useState<string | null>(null);
   const inputId = `key-name-${apiKey.id}`;
 
-  async function rename() {
-    setPending(true);
-    setError(null);
-
+  async function saveName() {
     try {
       await apiKeysRenameApiKey({ id: apiKey.id }, { name });
       await onChange();
       setOpen(false);
     } catch (error) {
       setError(getKeyErrorMessage(error));
-    } finally {
-      setPending(false);
     }
+  }
+
+  async function rename() {
+    setPending(true);
+    setError(null);
+
+    await saveName().finally(() => setPending(false));
   }
 
   return (

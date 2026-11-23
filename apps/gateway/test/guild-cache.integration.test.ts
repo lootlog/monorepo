@@ -7,7 +7,6 @@ import { RpcUnavailableError } from "@lootlog/rpc/errors";
 import { useDragonfly } from "./dragonfly-fixtures.js";
 import {
   uniquePrefix,
-  makeConfiguration,
   guilds,
   openStore,
   waitFor,
@@ -20,7 +19,6 @@ describe("realtime Dragonfly integration: guild cache", () => {
     const keyPrefix = uniquePrefix();
     await using first = await openStore(keyPrefix);
     await using second = await openStore(keyPrefix);
-    const configuration = makeConfiguration();
     const options = { discordId: "discord-cache", userId: "user-cache" };
     const cacheKey = getUserGuildsCacheKey(options.discordId, options.userId);
 
@@ -103,7 +101,6 @@ describe("realtime Dragonfly integration: guild cache", () => {
       const keyPrefix = uniquePrefix();
       await using first = await openStore(keyPrefix);
       await using second = await openStore(keyPrefix);
-      const configuration = makeConfiguration();
       const response = Promise.withResolvers<typeof guilds>();
 
       try {
