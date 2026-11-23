@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { createServer, type AddressInfo, type Socket } from "node:net";
+import type { Socket } from "bun";
 import { ManagedRuntime } from "effect";
 import { SqlError } from "effect/sql/SqlError";
 import { PgClient } from "@effect/sql-pg";
@@ -30,24 +30,25 @@ test("closes a stalled connection after startup times out", async () => {
 
   const closed = Promise.withResolvers<void>();
 
-  const server = createServer((socket) => {
-    sockets.add(socket);
-    socket.resume();
-    socket.on("close", () => {
-      sockets.delete(socket);
-      closed.resolve();
-    });
+  const server = Bun.listen({
+    hostname: "127.0.0.1",
+    port: 0,
+    socket: {
+      open: (socket) => {
+        sockets.add(socket);
+      },
+      data: () => {},
+      close: (socket) => {
+        sockets.delete(socket);
+        closed.resolve();
+      },
+    },
   });
-
-  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
-  // SAFETY: the awaited listener binds an IPv4 TCP port, so address is neither
-  // a Unix socket path nor null (the server has not been closed).
-  const address = server.address() as AddressInfo;
 
   const runtime = ManagedRuntime.make(
     makePostgresLayer({
       host: "127.0.0.1",
-      port: address.port,
+      port: server.port,
       connectTimeout: "100 millis",
     }),
   );
@@ -62,7 +63,6 @@ test("closes a stalled connection after startup times out", async () => {
   } finally {
     await runtime.dispose();
 
-    for (const socket of sockets) socket.destroy();
-    await new Promise<void>((resolve) => server.close(() => resolve()));
+    server.stop(true);
   }
 });
