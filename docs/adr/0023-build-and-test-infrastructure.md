@@ -46,6 +46,10 @@ never touch a developer's real databases.
 - **`CHANGELOG`** (`packages/changelog/src/entries.ts`): entries are one file each, named by id and bundled through a Vite glob, so a client shows exactly the changes of its commit and parallel pull requests do not conflict.
 - **`fetch-reference-repositories.ts`** (`scripts/fetch-reference-repositories.ts`): each clone's `.git` is deleted, because a nested repository would hide `repos/` sources from editor and agent search.
 
+- **Lint ratchet** (`scripts/lint-ratchet.ts`, `tools/oxlint/lootlog/budget.ts`): a rule configured with a `baseline` file reports a file only once its findings exceed the file's budget, and `bun run lint:ratchet` fails when a budget grows or when it can shrink, so existing findings never spread and reductions are locked in. The ratchet reads its rules from `.oxlintrc.json` and `.oxlintrc.react.json`, and a finding suppressed with a reason does not count.
+- **`lootlog` oxlint plugin** (`tools/oxlint/lootlog`): its rules are ported from T3 Code's `oxlint-plugin-t3code` (MIT). Its `RuleTester` tests run under `node --test`, because `RuleTester` needs Node's raw AST transfer, which Bun lacks. A suppression reason goes after `--` in the directive, because a reason comment on the line above would be a prose comment. Fake-timer files (`useFakeTimers`, `setSystemTime`) are exempt from the wall-clock rule and from timer-based waits, because their clocks are driven by the test.
+- **`check:changed`** (`scripts/check-changed.ts`): it derives affected packages from `turbo query affected` and `createDeploymentPlan`, the same plan CI's `plan` job uses, so a local pass predicts CI's fast checks; integration and e2e suites stay in CI.
+
 ### CI and deployment targets
 
 - **`packagesWithScript`** (`scripts/deployment-targets.mjs`): test suites and producers are derived from package scripts, so a new suite or producer is never skipped for lack of a manual listing.

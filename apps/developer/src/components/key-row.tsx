@@ -30,19 +30,21 @@ export function KeyRow({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function remove() {
-    setPending(true);
-    setError(null);
-
+  async function deleteKey() {
     try {
       await apiKeysDeleteApiKey({ id: apiKey.id });
       await onChange();
     } catch (error) {
       setError(getKeyErrorMessage(error));
       throw error;
-    } finally {
-      setPending(false);
     }
+  }
+
+  async function remove() {
+    setPending(true);
+    setError(null);
+
+    await deleteKey().finally(() => setPending(false));
   }
 
   const expired = !isApiKeyActive(apiKey, observedAt);

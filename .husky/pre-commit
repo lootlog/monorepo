@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-# Repository-wide formatting, tests and dependents' checks run in CI.
+# Full test suites, integration tests, builds and Docker images run in CI.
 
 echo "📝 Formatting staged files..."
 bunx lint-staged
@@ -9,10 +9,7 @@ bunx lint-staged
 echo "\n📏 Checking staged file sizes..."
 bun scripts/check-staged-file-tokens.ts
 
-echo "\n🔍 Linting and type checking changed packages..."
-bunx turbo run lint typecheck --filter=[HEAD]
-
-echo "\n🧹 Checking for unused files, exports and dependencies..."
-bun run knip
+echo "\n🔍 Running CI's fast checks for this branch's changes..."
+bun run check:changed
 
 echo "\n✅ Pre-commit checks passed!"

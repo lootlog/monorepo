@@ -62,7 +62,7 @@ export function useEventSummaryDialog({
   const { deck, slides, activeIndex, activeSlide, isFinalSlide } =
     resolveSlideState();
 
-  // oxlint-disable-next-line react-doctor/rerender-state-only-in-handlers
+  // oxlint-disable-next-line react-doctor/rerender-state-only-in-handlers -- the previous open value resets the deck during render when the dialog reopens
   const [wasOpen, setWasOpen] = useState(open);
 
   const synchronizeSlide = () => {

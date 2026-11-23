@@ -65,14 +65,14 @@ to the rule. Leave them.
    missing blank line that lint flags. Then:
 
    ```bash
-   bun run comments:ratchet --update
+   bun run lint:ratchet --update
    ```
 
    ```bash
    bun run knip
    ```
 
-   Done when lint, typecheck, tests, knip, and `bun run comments:ratchet` all
+   Done when lint, typecheck, tests, knip, and `bun run lint:ratchet` all
    pass and `baseline.json` only shrank.
 
 Report the counts per category, the ADRs touched, the issue URLs, and the

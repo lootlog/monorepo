@@ -6,7 +6,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@lootlog/ui/components/chart";
-// oxlint-disable-next-line react-doctor/prefer-dynamic-import
+// oxlint-disable-next-line react-doctor/prefer-dynamic-import -- this chart module is itself the lazily loaded chunk
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { useTranslation } from "react-i18next";
 import { formatIsoWeekday } from "@/components/common/kill-analytics/format-statistics-date";

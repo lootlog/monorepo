@@ -96,7 +96,7 @@ export const RefreshStatusProvider = ({
 
   return (
     <RefreshStatusContext.Provider
-      // oxlint-disable-next-line react-doctor/jsx-no-constructed-context-values
+      // oxlint-disable-next-line react-doctor/jsx-no-constructed-context-values -- React Compiler memoizes the value object
       value={{
         refreshedIds,
         failedIds,

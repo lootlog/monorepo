@@ -127,7 +127,7 @@ test("a dropped subscriber reports the interruption before delivering its whole 
                 new Redis.RedisError({ cause: "connection closed" }),
               );
 
-            // @effect-diagnostics-next-line returnEffectInGen:off
+            // @effect-diagnostics-next-line returnEffectInGen:off -- the fake connection returns its lifetime as an Effect for the store to run
             return Deferred.await(terminal);
           }),
         );

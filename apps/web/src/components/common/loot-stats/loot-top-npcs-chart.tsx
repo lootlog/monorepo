@@ -6,7 +6,7 @@ import {
   ChartLegend,
   ChartLegendContent,
 } from "@lootlog/ui/components/chart";
-// oxlint-disable-next-line react-doctor/prefer-dynamic-import
+// oxlint-disable-next-line react-doctor/prefer-dynamic-import -- this chart module is itself the lazily loaded chunk
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 import { useTranslation } from "react-i18next";
 import type { LootStatsResponseDtoOutputTopNpcsItem } from "@lootlog/client/main";

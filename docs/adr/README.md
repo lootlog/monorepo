@@ -35,3 +35,23 @@ undo belongs in the record for its area.
 | [0021](0021-web-data-freshness.md)                           | Client data freshness and state                                    |
 | [0022](0022-web-interface-behaviour.md)                      | Web interface behaviour                                            |
 | [0023](0023-build-and-test-infrastructure.md)                | Build, tooling and test infrastructure                             |
+
+## Records by area
+
+Read the records for an area before changing code in it; review holds changes to them.
+
+| Area                                                             | Records                                                                                                                                                                                  |
+| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Access policy, anywhere                                          | [0001](0001-organization-is-the-security-boundary.md), [0007](0007-organization-access-and-privacy.md)                                                                                   |
+| `apps/game-client`                                               | [0005](0005-game-client-runtime-bridge.md), [0009](0009-margonem-runtime-integration.md), [0011](0011-game-client-performance-budget.md), [0012](0012-game-client-ui-and-preferences.md) |
+| Margonem data, catalog, wiki formulas                            | [0010](0010-margonem-data-semantics.md)                                                                                                                                                  |
+| `apps/web`, `apps/wiki` UI and data                              | [0021](0021-web-data-freshness.md), [0022](0022-web-interface-behaviour.md)                                                                                                              |
+| `apps/gateway`, realtime protocol, presence                      | [0013](0013-realtime-gateway-delivery.md), [0014](0014-presence-and-online-time.md)                                                                                                      |
+| `apps/auth`, `apps/admin`, `apps/developer`, sign-in             | [0008](0008-identity-and-authentication.md)                                                                                                                                              |
+| Loot, kills, timers                                              | [0016](0016-loot-and-kill-records.md)                                                                                                                                                    |
+| `apps/battlelog`                                                 | [0017](0017-battle-logs.md)                                                                                                                                                              |
+| Notifications, `apps/discord-bot`                                | [0018](0018-notifications-and-discord.md)                                                                                                                                                |
+| Ready Room, chat, documents, reservations                        | [0019](0019-coordination-features.md)                                                                                                                                                    |
+| RabbitMQ, outboxes, consumers, `apps/search`, catalog projection | [0002](0002-one-writer-per-data-domain.md), [0004](0004-fail-fast-messaging-and-idempotent-consumers.md), [0015](0015-durable-messaging-and-outboxes.md)                                 |
+| Database, caches, HTTP contracts                                 | [0003](0003-http-contracts-generate-clients.md), [0020](0020-data-storage-and-compatibility.md)                                                                                          |
+| Builds, CI, tooling, test infrastructure                         | [0006](0006-immutable-release-artifacts.md), [0023](0023-build-and-test-infrastructure.md)                                                                                               |

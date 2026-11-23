@@ -16,12 +16,7 @@ export function usePageAction<
   const [pending, setPending] = useState<Action>();
   const inFlight = useRef(false);
 
-  const attempt = async (action: Action): Promise<boolean> => {
-    if (inFlight.current) return false;
-
-    inFlight.current = true;
-    setPending(action);
-
+  const settle = async (action: Action): Promise<boolean> => {
     try {
       const refusal = await perform(action);
 
@@ -33,10 +28,19 @@ export function usePageAction<
       await report({ error: "failed" });
 
       return false;
-    } finally {
+    }
+  };
+
+  const attempt = async (action: Action): Promise<boolean> => {
+    if (inFlight.current) return false;
+
+    inFlight.current = true;
+    setPending(action);
+
+    return settle(action).finally(() => {
       inFlight.current = false;
       setPending(undefined);
-    }
+    });
   };
 
   const run = async (action: Action) => {

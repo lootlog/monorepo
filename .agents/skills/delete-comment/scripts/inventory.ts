@@ -1,7 +1,10 @@
 import { mkdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
 
-import { findComments } from "../../../../tools/oxlint/comments/find-comments.ts";
+import { findDiagnostics } from "../../../../tools/oxlint/find-diagnostics.ts";
+
+const findComments = (paths: readonly string[]) =>
+  findDiagnostics(["lootlog-comments/no-comments"], paths);
 
 const repositoryRoot = resolve(import.meta.dir, "../../../..");
 const [outputDirectory, ...paths] = process.argv.slice(2);

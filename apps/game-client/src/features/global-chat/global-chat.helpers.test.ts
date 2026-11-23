@@ -8,6 +8,7 @@ import {
   removeGlobalChatMessage,
   resolveGlobalChatChannel,
   setGlobalChatPinned,
+  shareGlobalChatPages,
   type GlobalChatPages,
 } from "./global-chat.helpers";
 
@@ -126,6 +127,35 @@ describe("global chat history", () => {
     expect(ids[0]).toEqual(["1", false]);
     expect(ids.at(-1)).toEqual(["live", false]);
     expect(capped?.pages[0]?.nextCursor).toBeNull();
+  });
+
+  it("keeps every surviving message's identity when a live message pushes the oldest out of a full history", () => {
+    const full = pages(range(0, CHAT_VISIBLE_MESSAGE_LIMIT));
+    const appended = appendGlobalChatMessage(full, message("live"))!;
+    const shared = shareGlobalChatPages(full, appended);
+    const previous = full.pages[0]!.messages;
+    const next = shared.pages[0]!.messages;
+
+    expect(
+      next.slice(0, -1).every((kept, index) => kept === previous[index + 1]),
+    ).toBe(true);
+  });
+
+  it("keeps a refetched page's messages that did not change", () => {
+    const loaded = pages([message("a"), message("b")]);
+
+    const refetched = pages([
+      message("a"),
+      message("b", { message: "edited" }),
+    ]);
+
+    const shared = shareGlobalChatPages(loaded, refetched);
+
+    expect(shared.pages[0]!.messages[0]).toBe(loaded.pages[0]!.messages[0]);
+    expect(shared.pages[0]!.messages[1]?.message).toBe("edited");
+    expect(
+      shareGlobalChatPages(loaded, pages([message("a"), message("b")])),
+    ).toBe(loaded);
   });
 });
 

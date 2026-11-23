@@ -32,11 +32,11 @@ export const EMPTY_EQUIPMENT_SET: EquipmentSet = {
   skills: {},
 };
 
-const without = <Value>(
-  record: Partial<Record<EquipmentSlotId, Value>>,
-  slotId: EquipmentSlotId,
+const without = <Key extends PropertyKey, Value>(
+  record: Partial<Record<Key, Value>>,
+  key: Key,
 ) => {
-  const { [slotId]: _removed, ...rest } = record;
+  const { [key]: _removed, ...rest } = record;
 
   return rest;
 };
@@ -91,6 +91,33 @@ export const equipItem = (
         ? { ...upgrades, [slot.id]: nextUpgrade }
         : upgrades,
   };
+};
+
+export const upgradeSlot = (
+  set: EquipmentSet,
+  slotId: EquipmentSlotId,
+  upgrade: ItemUpgrade,
+): EquipmentSet => {
+  if (set.items[slotId] === undefined) return set;
+
+  const upgrades = without(set.upgrades, slotId);
+
+  return {
+    ...set,
+    upgrades: isCrafted(upgrade)
+      ? { ...upgrades, [slotId]: upgrade }
+      : upgrades,
+  };
+};
+
+export const rankSkill = (
+  set: EquipmentSet,
+  skillId: number,
+  rank: number,
+): EquipmentSet => {
+  const skills = without(set.skills, skillId);
+
+  return { ...set, skills: rank > 0 ? { ...skills, [skillId]: rank } : skills };
 };
 
 export const EQUIPMENT_SET_PARAM = "set";
