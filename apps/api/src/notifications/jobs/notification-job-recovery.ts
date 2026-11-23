@@ -25,12 +25,14 @@ const staleAt = (
 export interface NotificationRecoveryStore {
   readonly findOverdue: NotificationJobStore["findOverdue"];
   readonly closeMissed: NotificationJobStore["closeMissed"];
+  readonly findStalledRecurringRules: NotificationJobStore["findStalledRecurringRules"];
 }
 
 export const makeNotificationJobRecovery = (
   store: NotificationRecoveryStore,
   enqueue: (jobId: string, delay: number) => Effect.Effect<void, unknown>,
   finalize: NotificationJobFinalization,
+  scheduleNext: (ruleId: number) => Effect.Effect<void, unknown>,
 ) =>
   Effect.fn("notifications.jobs.recoverOverdue")(function* () {
     const now = yield* Clock.currentTimeMillis;
@@ -62,6 +64,25 @@ export const makeNotificationJobRecovery = (
               "Overdue notification job recovery failed",
               error,
             ).pipe(Effect.annotateLogs({ notificationJobId: job.id })),
+          ),
+        ),
+      { discard: true },
+    );
+
+    const stalled = yield* store.findStalledRecurringRules(
+      new Date(now - OVERDUE_AFTER_MS),
+      BATCH_SIZE,
+    );
+
+    yield* Effect.forEach(
+      stalled,
+      (ruleId) =>
+        scheduleNext(ruleId).pipe(
+          Effect.catch((error) =>
+            Effect.logError(
+              "Stalled recurring notification recovery failed",
+              error,
+            ).pipe(Effect.annotateLogs({ notificationRuleId: ruleId })),
           ),
         ),
       { discard: true },

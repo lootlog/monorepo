@@ -87,24 +87,27 @@ describe("notification job recovery", () => {
           }),
       });
 
+      const recurrence = makeNotificationJobRecurrence(
+        {
+          findRule: store.findRule,
+          cycleStatuses: store.cycleStatuses,
+          advance: store.advanceRule,
+        },
+        () => Effect.succeed(true),
+        { scheduledMessage: () => ({}) },
+        scheduler,
+      );
+
       const finalize = makeNotificationJobFinalization(
         () => Effect.void,
-        makeNotificationJobRecurrence(
-          {
-            findRule: store.findRule,
-            cycleStatuses: store.cycleStatuses,
-            advance: store.advanceRule,
-          },
-          () => Effect.succeed(true),
-          { scheduledMessage: () => ({}) },
-          scheduler,
-        ),
+        recurrence,
       );
 
       const recover = makeNotificationJobRecovery(
         store,
         scheduler.enqueue,
         finalize,
+        recurrence,
       );
 
       const startedAt = Date.now();
@@ -149,6 +152,86 @@ describe("notification job recovery", () => {
       );
       expect(queued.map(({ id }) => id).toSorted()).toEqual(
         ["lost", "timer", next!.id].toSorted(),
+      );
+    } finally {
+      await boundary.dispose();
+    }
+  });
+
+  it("moves a recurring rule on when its cycle ended but finalization never ran", async () => {
+    const boundary = await createDatabaseBoundary();
+
+    try {
+      const database = boundary.database;
+      const store = makeNotificationJobStore(database);
+      const skippedAt = new Date("2026-05-14T10:00:00.000Z");
+      const rule = createNotificationRuleFixture({ scheduledAt: skippedAt });
+      const target = createNotificationTargetFixture();
+
+      await boundary.run(database.insert(notificationRuleTable).values(rule));
+      await boundary.run(
+        database.insert(notificationTargetTable).values(target),
+      );
+      await boundary.run(
+        database
+          .insert(notificationRuleTargetTable)
+          .values({ ruleId: rule.id, targetId: target.id }),
+      );
+      await boundary.run(
+        database.insert(notificationJobTable).values(
+          createNotificationJobFixture({
+            id: "skipped",
+            idempotencyKey: "skipped",
+            jobKind: "SCHEDULED",
+            status: "CANCELED",
+            scheduledFor: skippedAt,
+            sourceEntityType: "scheduled-message",
+            sourceEntityId: String(rule.id),
+          }),
+        ),
+      );
+
+      const scheduler = makeNotificationJobScheduler(database, {
+        remove: () => Effect.void,
+        add: () => Effect.void,
+      });
+
+      const recurrence = makeNotificationJobRecurrence(
+        {
+          findRule: store.findRule,
+          cycleStatuses: store.cycleStatuses,
+          advance: store.advanceRule,
+        },
+        () => Effect.succeed(true),
+        { scheduledMessage: () => ({}) },
+        scheduler,
+      );
+
+      const recover = makeNotificationJobRecovery(
+        store,
+        scheduler.enqueue,
+        makeNotificationJobFinalization(() => Effect.void, recurrence),
+        recurrence,
+      );
+
+      const startedAt = Date.now();
+      await boundary.run(recover());
+
+      const [savedRule] = await boundary.run(
+        database
+          .select()
+          .from(notificationRuleTable)
+          .where(eq(notificationRuleTable.id, rule.id)),
+      );
+
+      const next = (
+        await boundary.run(database.select().from(notificationJobTable))
+      ).find((job) => job.id !== "skipped");
+
+      expect(savedRule?.scheduledAt?.getTime()).toBeGreaterThan(startedAt);
+      expect(next?.status).toBe("PENDING");
+      expect(next?.scheduledFor.getTime()).toBe(
+        savedRule?.scheduledAt?.getTime(),
       );
     } finally {
       await boundary.dispose();

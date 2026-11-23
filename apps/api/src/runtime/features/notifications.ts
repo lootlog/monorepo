@@ -164,9 +164,11 @@ export const notificationsServicesLive = Layer.effect(
       {
         findOverdue: jobsStore.findOverdue,
         closeMissed: jobsStore.closeMissed,
+        findStalledRecurringRules: jobsStore.findStalledRecurringRules,
       },
       notificationScheduler.enqueue,
       finalize,
+      recurrence,
     );
 
     const targets = makeNotificationGuildTargets(

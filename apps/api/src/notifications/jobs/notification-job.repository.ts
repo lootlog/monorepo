@@ -4,7 +4,19 @@ import {
 } from "@lootlog/instrumentation/operation";
 import { selectNotificationJobsWithRelations } from "./notification-job-query.js";
 import { readNotificationRuleTargets } from "#src/notifications/targets/notification-target.repository";
-import { and, asc, desc, eq, inArray, isNull, lt, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  inArray,
+  isNotNull,
+  isNull,
+  lt,
+  ne,
+  notExists,
+  sql,
+} from "drizzle-orm";
 import { Clock, Effect } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
@@ -212,6 +224,48 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
       .limit(limit)
       .pipe(Effect.mapError(failure("notifications.jobStore.findOverdue")));
 
+  const findStalledRecurringRules = (before: Date, limit: number) =>
+    database
+      .select({ id: notificationRuleTable.id })
+      .from(notificationRuleTable)
+      .where(
+        and(
+          eq(notificationRuleTable.enabled, true),
+          isNotNull(notificationRuleTable.scheduleIntervalType),
+          ne(notificationRuleTable.scheduleIntervalType, "ONCE"),
+          lt(notificationRuleTable.scheduledAt, before),
+          notExists(
+            database
+              .select({ id: notificationJobTable.id })
+              .from(notificationJobTable)
+              .where(
+                and(
+                  eq(notificationJobTable.ruleId, notificationRuleTable.id),
+                  eq(
+                    notificationJobTable.scheduledFor,
+                    notificationRuleTable.scheduledAt,
+                  ),
+                  inArray(notificationJobTable.status, [
+                    "PENDING",
+                    "PROCESSING",
+                    "BLOCKED",
+                  ]),
+                ),
+              ),
+          ),
+        ),
+      )
+      .orderBy(asc(notificationRuleTable.scheduledAt))
+      .limit(limit)
+      .pipe(
+        Effect.mapBoth({
+          onSuccess: (rows) => rows.map(({ id }) => id),
+          onFailure: failure(
+            "notifications.jobStore.findStalledRecurringRules",
+          ),
+        }),
+      );
+
   const closeMissed = (jobId: string, reason: string) =>
     Effect.gen(function* () {
       const now = new Date(yield* Clock.currentTimeMillis);
@@ -386,6 +440,7 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
     advanceRule,
     blockJob,
     cancelJob,
+    findStalledRecurringRules,
     claimJob,
     closeMissed,
     cycleStatuses,
