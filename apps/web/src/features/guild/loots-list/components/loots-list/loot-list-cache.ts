@@ -186,6 +186,8 @@ const placeLoot = (
   };
 };
 
+export const lootListsPath = (guildId: string) => `/guilds/${guildId}/loots`;
+
 const cachedLootLists = (
   queryClient: QueryClient,
   guildId: string,
@@ -193,11 +195,21 @@ const cachedLootLists = (
 ) =>
   queryClient
     .getQueriesData<LootsInfiniteData>({
-      queryKey: [`/guilds/${guildId}/loots`],
+      queryKey: [lootListsPath(guildId)],
       type,
       predicate: ({ queryKey }) => isLootListKey(queryKey),
     })
     .flatMap(([key, data]) => (data ? [{ key, data }] : []));
+
+export const subscribeToLootLists = (
+  queryClient: QueryClient,
+  guildId: string,
+  onChange: () => void,
+) =>
+  queryClient.getQueryCache().subscribe(({ query: { queryKey } }) => {
+    if (queryKey[0] === lootListsPath(guildId) && isLootListKey(queryKey))
+      onChange();
+  });
 
 export const findCachedLoot = (
   queryClient: QueryClient,
@@ -285,7 +297,7 @@ export async function reconcileActiveLootLists(
   queryClient: QueryClient,
   guildId: string,
 ) {
-  const queryKey = [`/guilds/${guildId}/loots`];
+  const queryKey = [lootListsPath(guildId)];
   await queryClient.cancelQueries({ queryKey, type: "active" });
 
   for (const { key, data } of cachedLootLists(queryClient, guildId, "active")) {
@@ -319,7 +331,7 @@ export async function clearLootPolicyData(
   queryClient: QueryClient,
   organizationRoutes?: readonly string[],
 ) {
-  const paths = organizationRoutes?.map((id) => `/guilds/${id}/loots`);
+  const paths = organizationRoutes?.map(lootListsPath);
 
   const filters = {
     predicate: (query: { queryKey: readonly unknown[] }) => {

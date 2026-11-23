@@ -12,6 +12,7 @@ import { useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import type { Loot } from "@/lib/loots/loot-types";
+import { lootListsPath } from "./loot-list-cache";
 import {
   invalidateLootsControllerFetchLootById,
   useLootsControllerDeleteLoot,
@@ -40,7 +41,7 @@ export const LootDetailsActions: FC<LootDetailsActionsProps> = ({
 
         await Promise.all([
           queryClient.invalidateQueries({
-            queryKey: [`/guilds/${guildId}/loots`],
+            queryKey: [lootListsPath(guildId)],
             exact: false,
           }),
           invalidateLootsControllerFetchLootById(queryClient, {
