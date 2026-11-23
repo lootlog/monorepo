@@ -7,12 +7,7 @@ import {
   serviceHttpServer,
 } from "@lootlog/instrumentation/service";
 import { Effect, Layer, Schema, SchemaIssue } from "effect";
-import {
-  HttpRouter,
-  HttpServerRequest,
-  HttpServerError,
-  type HttpServerResponse,
-} from "effect/http";
+import { HttpRouter, HttpServerRequest, HttpServerError } from "effect/http";
 import { HttpApiBuilder } from "effect/http-api";
 import { BattlelogApplication } from "#src/battlelog-application";
 import type { BattlelogOperations } from "#src/battles/battlelog-operations";
