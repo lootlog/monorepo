@@ -3,7 +3,6 @@ import { eq } from "drizzle-orm";
 import { Effect } from "effect";
 import { Capability } from "@lootlog/schema/permissions";
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
-import { createOrganizationLootRecordFixture } from "../../test/loot-fixtures.js";
 import {
   createNotificationJobFixture,
   createNotificationRuleFixture,
@@ -13,10 +12,6 @@ import {
   createGuildFixture,
   createMemberFixture,
 } from "../../test/organization-fixtures.js";
-import {
-  lootTable,
-  organizationLootRecordTable,
-} from "#src/database/drizzle/loot.schema";
 import {
   notificationJobTable,
   notificationRuleTable,
@@ -259,48 +254,6 @@ test("a resume whose notification restore fails leaves the Organization suspende
 
   expect(rebuiltRules).toEqual([1]);
   expect(await accessible()).toEqual(["guild-1", "guild-2"]);
-});
-
-test("counts the last month's loot by loot time even when loot ids are out of creation order", async () => {
-  const { boundary, data } = await setup();
-  const day = 24 * 60 * 60 * 1_000;
-  const now = Date.now();
-
-  const loots = [
-    { id: 5, createdAt: new Date(now - 40 * day) },
-    { id: 11, createdAt: new Date(now - 20 * day) },
-    { id: 10, createdAt: new Date(now - 19 * day) },
-  ];
-
-  await boundary.run(
-    boundary.database.insert(lootTable).values(
-      loots.map(({ id, createdAt }) => ({
-        id,
-        uniqueId: `loot-${id}`,
-        world: "test",
-        gameVersion: "pl" as const,
-        source: "FIGHT" as const,
-        location: "Katakumby",
-        createdAt,
-        updatedAt: createdAt,
-      })),
-    ),
-  );
-  await boundary.run(
-    boundary.database.insert(organizationLootRecordTable).values(
-      loots.map(({ id, createdAt }) =>
-        createOrganizationLootRecordFixture({
-          lootId: id,
-          guildId: "guild-1",
-          lootCreatedAt: createdAt,
-        }),
-      ),
-    ),
-  );
-
-  const details = await boundary.run(data.getOrganization("guild-1"));
-
-  expect(details.usage.lootsLastMonth).toBe(2);
 });
 
 test("a recurring rule whose due job is skipped and loses its finalization while resuming gets a future job", async () => {

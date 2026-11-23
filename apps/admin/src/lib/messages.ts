@@ -112,7 +112,6 @@ export const syncStatusText: Record<DiscordGuildSyncStatus, string> = {
 export const organizationSortText: Record<AdminOrganizationSort, string> = {
   created: "Najnowsze",
   members: "Najwięcej członków",
-  activity: "Ostatni loot",
 };
 
 export const memberTypeText: Record<
@@ -344,7 +343,6 @@ export const text = {
     "Taka strona, taki użytkownik albo taki Lootlog nie istnieje.",
   organizationsOverviewTotal: "Lootlogi",
   organizationsOverviewActive: "Aktywne",
-  organizationsOverviewActiveLastWeek: "Z lootem w 7 dni",
   organizationsOverviewSuspended: "Zawieszone",
   organizationsOverviewSyncFailing: "Błąd Discorda",
 
@@ -365,10 +363,8 @@ export const text = {
   columnOrganization: "Lootlog",
   columnOwner: "Właściciel",
   columnMembers: "Członkowie",
-  columnLastLoot: "Ostatni loot",
   columnDiscord: "Discord",
   columnCreated: "Utworzony",
-  noLoot: "Brak",
   unknownOwner: "Nieznany",
   missingPermissionsBadge: "Brak uprawnień",
 
@@ -382,7 +378,6 @@ export const text = {
 
   usageMembers: "Aktywni członkowie",
   usageInactiveMembers: "Nieaktywni członkowie",
-  usageLootsLastMonth: "Loot w 30 dni",
   usageDocuments: (limit: number) => `Dokumenty (limit ${limit})`,
   usageNotificationRules: (limit: number) =>
     `Reguły powiadomień (limit ${limit})`,

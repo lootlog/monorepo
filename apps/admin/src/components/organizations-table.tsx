@@ -12,7 +12,7 @@ import { OrganizationStatusBadge } from "@/components/organization-status-badge"
 import { OrganizationTiles } from "@/components/organization-tiles";
 import { SyncStatusBadge } from "@/components/sync-status-badge";
 import { UserAvatar } from "@/components/user-avatar";
-import { formatDate, formatDateTime } from "@/lib/format";
+import { formatDate } from "@/lib/format";
 import { text } from "@/lib/messages";
 
 const link =
@@ -46,9 +46,6 @@ export function OrganizationsTable({
               <TableHead>{text.columnStatus}</TableHead>
               <TableHead>{text.columnDiscord}</TableHead>
               <TableHead className="text-right">{text.columnMembers}</TableHead>
-              <TableHead className="hidden xl:table-cell">
-                {text.columnLastLoot}
-              </TableHead>
               <TableHead className="hidden xl:table-cell">
                 {text.columnCreated}
               </TableHead>
@@ -103,11 +100,6 @@ export function OrganizationsTable({
                 </TableCell>
                 <TableCell className="text-right tabular-nums">
                   {organization.activeMembers}
-                </TableCell>
-                <TableCell className="hidden text-muted-foreground xl:table-cell">
-                  {organization.lastLootAt === null
-                    ? text.noLoot
-                    : formatDateTime(organization.lastLootAt)}
                 </TableCell>
                 <TableCell className="hidden text-muted-foreground xl:table-cell">
                   {formatDate(organization.createdAt)}
