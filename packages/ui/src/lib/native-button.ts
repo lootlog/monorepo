@@ -8,7 +8,7 @@ export type RenderProp =
   | undefined;
 
 export function nativeButtonForRender(render: RenderProp): true | undefined {
-  if (!isValidElement(render)) {
+  if (!isValidElement<{ render?: unknown }>(render)) {
     return undefined;
   }
 
@@ -20,11 +20,13 @@ export function nativeButtonForRender(render: RenderProp): true | undefined {
     return undefined;
   }
 
-  // SAFETY: the element is a `Button`, whose props carry an optional Base UI
-  // `render` prop of the same shape.
-  const { render: composedRender } = render.props as { render?: RenderProp };
+  const composedRender = render.props.render;
 
-  return composedRender === undefined
-    ? true
-    : nativeButtonForRender(composedRender);
+  if (composedRender === undefined) {
+    return true;
+  }
+
+  return isValidElement(composedRender)
+    ? nativeButtonForRender(composedRender)
+    : undefined;
 }
