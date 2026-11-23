@@ -15,12 +15,20 @@ import { BattleHpTimelineTooltipContent } from "@/features/user/battle-panel/bat
 import {
   buildBattleHpTimelineTooltipData,
   buildBattleHpTimelineTooltipLegendaryBonusesByTurn,
+  type BattleHpTimelineSeriesValues,
+  type BattleHpTimelineTooltipSeries,
 } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-tooltip";
 import {
   getBattleHpTimelinePlayerTeam,
   getBattleHpTimelineTeamColor,
 } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-colors";
-import { getBattleHpTimelineTeamLabel } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-labels";
+import {
+  buildBattleHpTimelineGroupTeams,
+  getBattleHpTimelineGroupSeries,
+  type BattleHpTimelineGroupSelection,
+} from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-group-series";
+import { BattleHpTimelineSeriesSwatch } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-series-swatch";
+import { useBattleHpTimelineTeamLabel } from "@/features/user/battle-panel/battle-panel-single-battle/components/use-battle-hp-timeline-team-label";
 import {
   BATTLE_HP_TIMELINE_LAYER_DEFINITION_BY_KEY,
   type BattleHpTimelineLayerConfig,
@@ -49,6 +57,7 @@ type BattleHpTimelinePlotProps = {
   timeline: BattleTimelineResponseDtoOutput["timeline"];
   warriors: BattleTimelineResponseDtoOutput["warriors"];
   characterId: string | null;
+  groupSelection: BattleHpTimelineGroupSelection | null;
   layers: BattleHpTimelineLayerConfig;
   selectedTurn: number | null;
   compact: boolean;
@@ -56,10 +65,14 @@ type BattleHpTimelinePlotProps = {
   onTurnSelect: (turn: number) => void;
 };
 
+const getTeamValue = (data: BattleHpTimelineSeriesValues, team: number) =>
+  team === 1 ? data.team1 : data.team2;
+
 export function BattleHpTimelinePlot({
   timeline,
   warriors,
   characterId,
+  groupSelection,
   layers,
   selectedTurn,
   compact,
@@ -69,30 +82,51 @@ export function BattleHpTimelinePlot({
   const { t } = useTranslation();
   const chartRootRef = useRef<HTMLDivElement | null>(null);
   const playerTeam = getBattleHpTimelinePlayerTeam(warriors, characterId);
-  const team1Color = getBattleHpTimelineTeamColor(1, playerTeam);
-  const team2Color = getBattleHpTimelineTeamColor(2, playerTeam);
+  const getTeamLabel = useBattleHpTimelineTeamLabel(warriors, characterId);
 
-  const team1Label = getBattleHpTimelineTeamLabel(
-    warriors,
-    1,
-    t("battlePanel.single.chart.team", { team: 1 }),
-  );
+  const series: BattleHpTimelineTooltipSeries[] =
+    groupSelection === null
+      ? [1, 2].map((team) => ({
+          key: `team${team}`,
+          label: getTeamLabel(team),
+          color: getBattleHpTimelineTeamColor(team, playerTeam),
+          isAverage: false,
+          getValue: (data) => getTeamValue(data, team),
+        }))
+      : getBattleHpTimelineGroupSeries(
+          buildBattleHpTimelineGroupTeams(warriors, characterId),
+          groupSelection,
+        ).map((item) =>
+          item.kind === "average"
+            ? {
+                key: item.key,
+                label: t("battlePanel.single.chart.group.teamAverage", {
+                  team: getTeamLabel(item.team),
+                }),
+                color: item.color,
+                isAverage: true,
+                getValue: (data) => getTeamValue(data, item.team),
+              }
+            : {
+                key: item.key,
+                label: item.member.name,
+                color: item.color,
+                isAverage: false,
+                getValue: (data) => data.warriorHp[item.member.warriorId],
+              },
+        );
 
-  const team2Label = getBattleHpTimelineTeamLabel(
-    warriors,
-    2,
-    t("battlePanel.single.chart.team", { team: 2 }),
+  const lineSeries = [...series].sort(
+    (left, right) => Number(right.isAverage) - Number(left.isAverage),
   );
 
   const chartConfig = {
-    team1: {
-      label: team1Label,
-      color: team1Color,
-    },
-    team2: {
-      label: team2Label,
-      color: team2Color,
-    },
+    ...Object.fromEntries(
+      series.map((item) => [
+        item.key,
+        { label: item.label, color: item.color },
+      ]),
+    ),
     momentum: {
       label: t("battlePanel.single.chart.momentum"),
       color: BATTLE_HEX_COLORS.chart.momentum,
@@ -143,9 +177,7 @@ export function BattleHpTimelinePlot({
         .map((bonus) =>
           t("battlePanel.single.chart.legendary.bonusRecipient", {
             bonus: t(bonus.labelKey),
-            recipient:
-              bonus.recipientName ??
-              (group.team === 1 ? team1Label : team2Label),
+            recipient: bonus.recipientName ?? getTeamLabel(group.team),
           }),
         )
         .join(", "),
@@ -174,108 +206,117 @@ export function BattleHpTimelinePlot({
     });
 
   return (
-    <ChartContainer
-      ref={chartRootRef}
-      config={chartConfig}
-      className={cn(
-        "w-full overflow-visible [&_.recharts-wrapper]:overflow-visible",
-        className,
+    <>
+      <ChartContainer
+        ref={chartRootRef}
+        config={chartConfig}
+        className={cn(
+          "w-full overflow-visible [&_.recharts-wrapper]:overflow-visible",
+          className,
+        )}
+      >
+        <LineChart accessibilityLayer data={chartData} margin={chartMargin}>
+          <CartesianGrid vertical={false} />
+          <XAxis
+            dataKey="turn"
+            tickLine={false}
+            axisLine={false}
+            tickMargin={10}
+          />
+          <YAxis
+            domain={[0, 100]}
+            tickLine={false}
+            axisLine={false}
+            tickMargin={4}
+          />
+          <ChartTooltip
+            allowEscapeViewBox={{ x: true, y: true }}
+            cursor={false}
+            wrapperStyle={{ zIndex: 30 }}
+            content=<BattleHpTimelineTooltipContent
+              chartRootRef={chartRootRef}
+              series={series}
+              getTeamLabel={getTeamLabel}
+            />
+          />
+          {selectedTurn !== null ? (
+            <ReferenceLine
+              x={selectedTurn}
+              stroke="var(--muted-foreground)"
+              strokeDasharray="4 4"
+            />
+          ) : null}
+          {lineSeries.map((item) => (
+            <Line
+              {...CHART_SERIES_ANIMATION}
+              key={item.key}
+              name={item.label}
+              dataKey={item.getValue}
+              type="monotone"
+              stroke={item.color}
+              strokeWidth={item.isAverage ? 1.5 : 2}
+              strokeDasharray={item.isAverage ? "5 4" : undefined}
+              dot=<BattleHpTimelinePoint onTurnSelect={onTurnSelect} />
+              activeDot=<BattleHpTimelinePoint
+                visible
+                onTurnSelect={onTurnSelect}
+              />
+            />
+          ))}
+          {legendaryMarkerGroups.map((group) => (
+            <ReferenceDot
+              key={group.key}
+              ifOverflow="visible"
+              r={0}
+              shape={(markerCoordinates) => (
+                <BattleHpTimelineLegendaryMarker
+                  cx={markerCoordinates.cx}
+                  cy={markerCoordinates.cy}
+                  group={group}
+                  label={getLegendaryMarkerLabel(group)}
+                  onTurnSelect={onTurnSelect}
+                />
+              )}
+              x={group.turn}
+              y={group.y}
+            />
+          ))}
+          {eventMarkerGroups.map((group) => (
+            <ReferenceDot
+              key={group.key}
+              ifOverflow="visible"
+              r={0}
+              shape={(markerCoordinates) => (
+                <BattleHpTimelineEventMarker
+                  cx={markerCoordinates.cx}
+                  cy={markerCoordinates.cy}
+                  group={group}
+                  label={getEventMarkerLabel(group)}
+                  onTurnSelect={onTurnSelect}
+                />
+              )}
+              x={group.turn}
+              y={group.y}
+            />
+          ))}
+        </LineChart>
+      </ChartContainer>
+      {groupSelection === null ? null : (
+        <ul
+          aria-label={t("battlePanel.single.chart.group.legendLabel")}
+          className="mt-2 flex shrink-0 flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground"
+        >
+          {series.map((item) => (
+            <li key={item.key} className="flex min-w-0 items-center gap-1.5">
+              <BattleHpTimelineSeriesSwatch
+                color={item.color}
+                isAverage={item.isAverage}
+              />
+              <span className="max-w-40 truncate">{item.label}</span>
+            </li>
+          ))}
+        </ul>
       )}
-    >
-      <LineChart accessibilityLayer data={chartData} margin={chartMargin}>
-        <CartesianGrid vertical={false} />
-        <XAxis
-          dataKey="turn"
-          tickLine={false}
-          axisLine={false}
-          tickMargin={10}
-        />
-        <YAxis
-          domain={[0, 100]}
-          tickLine={false}
-          axisLine={false}
-          tickMargin={4}
-        />
-        <ChartTooltip
-          allowEscapeViewBox={{ x: true, y: true }}
-          cursor={false}
-          wrapperStyle={{ zIndex: 30 }}
-          content=<BattleHpTimelineTooltipContent
-            chartRootRef={chartRootRef}
-            team1Color={team1Color}
-            team1Label={team1Label}
-            team2Color={team2Color}
-            team2Label={team2Label}
-          />
-        />
-        {selectedTurn !== null ? (
-          <ReferenceLine
-            x={selectedTurn}
-            stroke="var(--muted-foreground)"
-            strokeDasharray="4 4"
-          />
-        ) : null}
-        <Line
-          {...CHART_SERIES_ANIMATION}
-          dataKey="team1"
-          type="monotone"
-          stroke="var(--color-team1)"
-          strokeWidth={2}
-          dot=<BattleHpTimelinePoint onTurnSelect={onTurnSelect} />
-          activeDot=<BattleHpTimelinePoint
-            visible
-            onTurnSelect={onTurnSelect}
-          />
-        />
-        <Line
-          {...CHART_SERIES_ANIMATION}
-          dataKey="team2"
-          type="monotone"
-          stroke="var(--color-team2)"
-          strokeWidth={2}
-          dot=<BattleHpTimelinePoint onTurnSelect={onTurnSelect} />
-          activeDot=<BattleHpTimelinePoint
-            visible
-            onTurnSelect={onTurnSelect}
-          />
-        />
-        {legendaryMarkerGroups.map((group) => (
-          <ReferenceDot
-            key={group.key}
-            ifOverflow="visible"
-            r={0}
-            shape={(markerCoordinates) => (
-              <BattleHpTimelineLegendaryMarker
-                cx={markerCoordinates.cx}
-                cy={markerCoordinates.cy}
-                group={group}
-                label={getLegendaryMarkerLabel(group)}
-                onTurnSelect={onTurnSelect}
-              />
-            )}
-            x={group.turn}
-            y={group.y}
-          />
-        ))}
-        {eventMarkerGroups.map((group) => (
-          <ReferenceDot
-            key={group.key}
-            ifOverflow="visible"
-            r={0}
-            shape={(markerCoordinates) => (
-              <BattleHpTimelineEventMarker
-                cx={markerCoordinates.cx}
-                cy={markerCoordinates.cy}
-                group={group}
-                label={getEventMarkerLabel(group)}
-                onTurnSelect={onTurnSelect}
-              />
-            )}
-            x={group.turn}
-            y={group.y}
-          />
-        ))}
-      </LineChart>
-    </ChartContainer>
+    </>
   );
 }

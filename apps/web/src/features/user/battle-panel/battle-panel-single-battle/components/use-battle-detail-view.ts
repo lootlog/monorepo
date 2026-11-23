@@ -43,7 +43,6 @@ export type BattleDetailViewProps = {
 };
 
 export function useBattleDetailView({
-  battle,
   battleId,
   isTimelinePending,
   sideContent,
@@ -69,8 +68,6 @@ export function useBattleDetailView({
 
   const isWide = useMediaQuery(BATTLE_DETAIL_WIDE_MEDIA_QUERY);
   const scrollsDocument = usePageScrollsDocument();
-  const is1v1 = battle?.type === "1v1";
-  const isGroup = battle !== undefined && !is1v1;
   const scrollViewportRef = useRef<HTMLDivElement>(null);
   const logColumnViewportRef = useRef<HTMLDivElement>(null);
   const mainColumnViewportRef = useRef<HTMLDivElement>(null);
@@ -165,7 +162,7 @@ export function useBattleDetailView({
 
   useEffect(() => cancelScrollAnimationFrame, []);
 
-  const hasChartSlot = !isGroup && (isTimelinePending || hasTimeline);
+  const hasChartSlot = isTimelinePending || hasTimeline;
 
   useEffect(() => {
     const turn = selectedTurnRef.current;
@@ -298,7 +295,6 @@ export function useBattleDetailView({
     hasTimeline,
     selectedTurnNumber,
     handleTurnSelect,
-    isGroup,
     isWide,
     panels,
     visiblePanel,

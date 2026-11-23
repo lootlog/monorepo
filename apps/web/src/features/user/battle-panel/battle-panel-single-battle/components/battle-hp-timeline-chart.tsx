@@ -17,6 +17,14 @@ import {
   useBattleHpTimelineSettingsStore,
 } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-settings.store";
 import { useBattleHpTimelineLayers } from "@/features/user/battle-panel/battle-panel-single-battle/components/use-battle-hp-timeline-layers";
+import {
+  buildBattleHpTimelineGroupTeams,
+  getDefaultBattleHpTimelineGroupSelection,
+  isBattleHpTimelineGroupBattle,
+  type BattleHpTimelineGroupSelection,
+} from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-group-series";
+import { BattleHpTimelineWarriorPicker } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-warrior-picker";
+import { useBattleHpTimelineTeamLabel } from "@/features/user/battle-panel/battle-panel-single-battle/components/use-battle-hp-timeline-team-label";
 import { Button } from "@lootlog/ui/components/button";
 import { cn } from "cn";
 import { ChevronsDownUp, ChevronsUpDown, Eye, EyeOff } from "lucide-react";
@@ -25,10 +33,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import { useId } from "react";
+import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 type BattleHpTimelineChartProps = {
+  battleId: string;
   timeline: BattleTimelineResponseDtoOutput["timeline"];
   warriors: BattleTimelineResponseDtoOutput["warriors"];
   characterId: string | null;
@@ -36,7 +45,13 @@ type BattleHpTimelineChartProps = {
   onTurnSelect: (turn: number) => void;
 };
 
+type BattleHpTimelineCustomGroupSelection = {
+  battleId: string;
+  selection: BattleHpTimelineGroupSelection;
+};
+
 export function BattleHpTimelineChart({
+  battleId,
   timeline,
   warriors,
   characterId,
@@ -64,6 +79,31 @@ export function BattleHpTimelineChart({
 
   const { config, setLayerVisibility, resetLayers } =
     useBattleHpTimelineLayers();
+
+  const [customGroupSelection, setCustomGroupSelection] =
+    useState<BattleHpTimelineCustomGroupSelection | null>(null);
+
+  const getTeamLabel = useBattleHpTimelineTeamLabel(warriors, characterId);
+  const isGroupBattle = isBattleHpTimelineGroupBattle(warriors);
+
+  const groupSelection = isGroupBattle
+    ? customGroupSelection?.battleId === battleId
+      ? customGroupSelection.selection
+      : getDefaultBattleHpTimelineGroupSelection(warriors, characterId)
+    : null;
+
+  const warriorPicker =
+    groupSelection === null ? null : (
+      <BattleHpTimelineWarriorPicker
+        teams={buildBattleHpTimelineGroupTeams(warriors, characterId)}
+        selection={groupSelection}
+        getTeamLabel={getTeamLabel}
+        onSelectionChange={(selection) =>
+          setCustomGroupSelection({ battleId, selection })
+        }
+        onReset={() => setCustomGroupSelection(null)}
+      />
+    );
 
   const isExpanded = heightMode === "expanded";
   const layerCounts = getBattleHpTimelineEventLayerCounts(timeline, warriors);
@@ -97,6 +137,7 @@ export function BattleHpTimelineChart({
         className={LIST_BAND_HEADING_CLASS}
         trailing={
           <div className="flex items-center gap-1">
+            {warriorPicker}
             <Tooltip>
               <TooltipTrigger
                 render={
@@ -138,6 +179,8 @@ export function BattleHpTimelineChart({
               timeline={timeline}
               warriors={warriors}
               characterId={characterId}
+              groupSelection={groupSelection}
+              warriorPicker={warriorPicker}
               config={config}
               selectedTurn={selectedTurn}
               onLayerVisibilityChange={setLayerVisibility}
@@ -155,6 +198,7 @@ export function BattleHpTimelineChart({
             timeline={timeline}
             warriors={warriors}
             characterId={characterId}
+            groupSelection={groupSelection}
             layers={config}
             selectedTurn={selectedTurn}
             compact
