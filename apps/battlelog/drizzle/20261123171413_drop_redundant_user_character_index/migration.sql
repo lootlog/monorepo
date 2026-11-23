@@ -1,0 +1,1 @@
+DROP INDEX "user_characters_userId_idx";

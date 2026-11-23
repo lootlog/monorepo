@@ -6,8 +6,14 @@ import {
 import { PgClient } from "@effect/sql-pg";
 import { makePostgresLayer } from "@lootlog/database";
 import { Effect, Redacted } from "effect";
+import { TestClock } from "effect/testing";
 import pg from "pg";
 import { drizzleDatabaseEffect } from "#src/database/database";
+import { createBattleId } from "#src/battles/battle-id";
+import {
+  BATTLE_SUBMISSION_RETENTION_DAYS,
+  pruneBattleSubmissions,
+} from "#src/battles/submission/battle-submission-retention";
 import { makeBattleDeletion } from "./battle-deletion.js";
 
 let postgres: StartedPostgreSqlContainer;
@@ -141,3 +147,31 @@ for (const mode of ["single", "user"] as const) {
       ).toEqual(mode === "single" ? ["two", "other"] : ["other"]);
   });
 }
+
+it("forgets submission ids only after the retry window", async () => {
+  const now = Date.parse("2026-11-23T12:00:00Z");
+  const day = 86_400_000;
+
+  const seeds = {
+    expired: createBattleId(now - BATTLE_SUBMISSION_RETENTION_DAYS * day - 1)
+      .id,
+    retained: createBattleId(now - BATTLE_SUBMISSION_RETENTION_DAYS * day + 1)
+      .id,
+  };
+
+  await pool.query(`TRUNCATE battle_submissions;
+    INSERT INTO battle_submissions ("userId", "submissionId", "battleId")
+    SELECT 'owner', 'expired-' || n, '${seeds.expired}'::uuid FROM generate_series(1, 5001) n
+    UNION ALL SELECT 'owner', 'retained', '${seeds.retained}'::uuid`);
+
+  await run(
+    Effect.gen(function* () {
+      yield* TestClock.setTime(now);
+      yield* pruneBattleSubmissions(yield* drizzleDatabaseEffect);
+    }).pipe(Effect.provide(TestClock.layer())),
+  );
+
+  expect(
+    (await pool.query('SELECT "submissionId" FROM battle_submissions')).rows,
+  ).toEqual([{ submissionId: "retained" }]);
+});
