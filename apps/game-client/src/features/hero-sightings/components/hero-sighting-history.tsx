@@ -5,15 +5,21 @@ import { AsyncContent } from "@/components/async-content";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { HeroSightingHistoryEntry } from "@/features/hero-sightings/components/hero-sighting-history-entry";
 import type { HeroSightingRow } from "@/features/hero-sightings/hero-sighting-rows";
+import type { HeroSightingMemberColors } from "@/features/hero-sightings/hooks/use-hero-sighting-member-colors";
 import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import { getGuildNamesById } from "@/lib/api/generated-helpers";
 
 type HeroSightingHistoryProps = {
   row: HeroSightingRow;
   now: number;
+  memberColors: HeroSightingMemberColors;
 };
 
-export function HeroSightingHistory({ row, now }: HeroSightingHistoryProps) {
+export function HeroSightingHistory({
+  row,
+  now,
+  memberColors,
+}: HeroSightingHistoryProps) {
   const { t } = useTranslation("heroSightings");
 
   const {
@@ -72,6 +78,7 @@ export function HeroSightingHistory({ row, now }: HeroSightingHistoryProps) {
                         <HeroSightingHistoryEntry
                           sighting={sighting}
                           now={now}
+                          memberColors={memberColors}
                         />
                       </li>
                     ))}

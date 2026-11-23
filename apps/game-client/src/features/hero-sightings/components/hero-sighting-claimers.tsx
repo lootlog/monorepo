@@ -1,44 +1,54 @@
 import { cn } from "cn";
 import { Fragment } from "react";
 import { useTranslation } from "react-i18next";
-import { heroSightingDetectorClassName } from "@/features/hero-sightings/hero-sighting-detector-style";
-import type { HeroSightingClaimer } from "@/features/hero-sightings/hero-sighting-rows";
+import type { HeroSightingResponseDto } from "@lootlog/client/main";
+import type { HeroSightingMemberColors } from "@/features/hero-sightings/hooks/use-hero-sighting-member-colors";
+
+type HeroSightingClaim = HeroSightingResponseDto["claims"][number];
 
 export function HeroSightingClaimers({
   claims,
+  memberColors,
+  className,
 }: {
-  claims: readonly HeroSightingClaimer[];
+  claims: readonly HeroSightingClaim[];
+  memberColors: HeroSightingMemberColors;
+  className?: string;
 }) {
   const { t } = useTranslation("heroSightings");
 
   if (claims.length === 0) {
     return (
-      <span className="ll:min-w-0 ll:truncate ll:text-muted-foreground">
+      <span
+        className={cn(
+          "ll:min-w-0 ll:truncate ll:font-normal ll:text-muted-foreground",
+          className,
+        )}
+      >
         {t("claims.none")}
       </span>
     );
   }
 
   return (
-    <>
-      <span className="ll:shrink-0 ll:text-muted-foreground">
-        {t("claims.label")}
+    <span className={cn("ll:min-w-0 ll:break-words ll:font-normal", className)}>
+      <span className="ll:text-muted-foreground">
+        {t("claims.label", { count: claims.length })}{" "}
       </span>
-      <span className="ll:min-w-0 ll:truncate ll:text-white">
-        {claims.map((claim, index) => (
+      {claims.map((claim, index) => {
+        const color = memberColors.get(claim.member.memberId) ?? "FFF";
+
+        return (
           <Fragment key={`${claim.member.memberId}:${claim.createdAt}`}>
-            {index > 0 ? ", " : null}
-            <span
-              className={cn(claim.isDetector && heroSightingDetectorClassName)}
-            >
+            {index > 0 ? (
+              <span className="ll:text-muted-foreground">, </span>
+            ) : null}
+            <span className="ll:font-semibold" style={{ color: `#${color}` }}>
               {claim.member.displayName}
-              {claim.isDetector ? (
-                <span className="ll:sr-only"> {t("claims.detector")}</span>
-              ) : null}
             </span>
           </Fragment>
-        ))}
-      </span>
-    </>
+        );
+      })}
+    </span>
   );
 }

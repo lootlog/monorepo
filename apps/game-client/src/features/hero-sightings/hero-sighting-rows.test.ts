@@ -48,30 +48,6 @@ it("shows only the selected Lootlog's sightings while grouping is off", () => {
   ]);
 });
 
-it("marks a claimer as the detector only where they are the same member of that Organization", () => {
-  const detector = createHeroSightingMember({ userId: "user-5", memberId: 5 });
-
-  const [row] = projectHeroSightingRows(
-    [
-      createHeroSighting({ claims: [claimBy("user-3", 5)] }),
-      createHeroSighting({
-        id: 9,
-        guildId: "guild-2",
-        detectedBy: detector,
-        claims: [claimBy("user-5", 5)],
-      }),
-    ],
-    { guildId: "guild-1", isGrouping: true },
-  );
-
-  expect(
-    row?.claims.map(({ member, isDetector }) => [member.userId, isDetector]),
-  ).toEqual([
-    ["user-3", false],
-    ["user-5", true],
-  ]);
-});
-
 it("names who confirmed the hero last unless the detector did, across Organizations", () => {
   const detector = createHeroSightingMember({ userId: "user-1", memberId: 1 });
   const friend = createHeroSightingMember({ userId: "user-2", memberId: 2 });

@@ -9,15 +9,18 @@ import {
 } from "@/components/ui/popover";
 import { HeroSightingHistory } from "@/features/hero-sightings/components/hero-sighting-history";
 import type { HeroSightingRow } from "@/features/hero-sightings/hero-sighting-rows";
+import type { HeroSightingMemberColors } from "@/features/hero-sightings/hooks/use-hero-sighting-member-colors";
 
 type HeroSightingHistoryPopoverProps = {
   row: HeroSightingRow;
   now: number;
+  memberColors: HeroSightingMemberColors;
 };
 
 export function HeroSightingHistoryPopover({
   row,
   now,
+  memberColors,
 }: HeroSightingHistoryPopoverProps) {
   const { t } = useTranslation("heroSightings");
   const [open, setOpen] = useState(false);
@@ -30,7 +33,7 @@ export function HeroSightingHistoryPopover({
         </IconButton>
       </PopoverTrigger>
       <PopoverContent side="right" align="start" className="ll:w-80 ll:p-2">
-        <HeroSightingHistory row={row} now={now} />
+        <HeroSightingHistory row={row} now={now} memberColors={memberColors} />
       </PopoverContent>
     </Popover>
   );

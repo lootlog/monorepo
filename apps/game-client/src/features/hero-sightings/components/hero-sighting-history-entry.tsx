@@ -5,59 +5,59 @@ import { HeroSightingClaimers } from "@/features/hero-sightings/components/hero-
 import { HeroSightingDetector } from "@/features/hero-sightings/components/hero-sighting-detector";
 import { HeroSightingPlace } from "@/features/hero-sightings/components/hero-sighting-place";
 import { HeroSightingRefresher } from "@/features/hero-sightings/components/hero-sighting-refresher";
-import {
-  getHeroSightingRefresher,
-  isHeroSightingDetectorClaim,
-} from "@/features/hero-sightings/hero-sighting-rows";
+import { getHeroSightingRefresher } from "@/features/hero-sightings/hero-sighting-rows";
+import type { HeroSightingMemberColors } from "@/features/hero-sightings/hooks/use-hero-sighting-member-colors";
 import { format, isSameLocalDay } from "@/utils/local-date";
 
 type HeroSightingHistoryEntryProps = {
   sighting: HeroSightingResponseDto;
   now: number;
+  memberColors: HeroSightingMemberColors;
 };
 
 export function HeroSightingHistoryEntry({
   sighting,
   now,
+  memberColors,
 }: HeroSightingHistoryEntryProps) {
   const isCurrent = sighting.closedAt === null;
   const firstSeenAt = new Date(sighting.firstSeenAt);
   const lastSeenAt = new Date(sighting.lastSeenAt);
   const refreshedBy = getHeroSightingRefresher(sighting);
 
-  const claims = sighting.claims.map((claim) => ({
-    ...claim,
-    isDetector: isHeroSightingDetectorClaim(sighting, claim),
-  }));
+  const showsClaimers =
+    sighting.state === "SPAWNING" || sighting.claims.length > 0;
 
   return (
     <ListRow
       className={cn(
-        "ll:flex-col ll:items-stretch ll:gap-0.5 ll:py-1 ll:text-[11px]",
+        "ll:flex-col ll:items-stretch ll:gap-0.5 ll:py-1.5 ll:text-[11px]",
         !isCurrent && "ll:opacity-60",
       )}
     >
       <HeroSightingPlace sighting={sighting} isCurrent={isCurrent} now={now} />
-      <span className="ll:flex ll:min-w-0 ll:items-center ll:gap-1">
-        <HeroSightingDetector
-          member={sighting.detectedBy}
-          manual={sighting.manual}
+      <HeroSightingDetector
+        member={sighting.detectedBy}
+        manual={sighting.manual}
+        memberColors={memberColors}
+      />
+      {showsClaimers ? (
+        <HeroSightingClaimers
+          claims={sighting.claims}
+          memberColors={memberColors}
         />
-        <span className="ll:flex ll:min-w-0 ll:flex-1 ll:items-center ll:gap-1 ll:font-normal">
-          <HeroSightingClaimers claims={claims} />
-        </span>
-        <span className="ll:flex ll:min-w-0 ll:shrink-0 ll:items-center ll:font-normal ll:tabular-nums ll:text-muted-foreground">
-          <time dateTime={sighting.firstSeenAt}>
-            {format(firstSeenAt, "dd.MM HH:mm:ss")}
-          </time>
-          {lastSeenAt > firstSeenAt ? (
-            <>
-              <span className="ll:shrink-0 ll:whitespace-pre">{" – "}</span>
-              {refreshedBy ? (
-                <span className="ll:mr-1 ll:flex ll:min-w-0">
-                  <HeroSightingRefresher member={refreshedBy} />
-                </span>
-              ) : null}
+      ) : null}
+      <span className="ll:flex ll:min-w-0 ll:items-center ll:overflow-hidden ll:font-normal ll:tabular-nums ll:text-muted-foreground">
+        <time dateTime={sighting.firstSeenAt} className="ll:shrink-0">
+          {format(firstSeenAt, "dd.MM HH:mm:ss")}
+        </time>
+        {lastSeenAt > firstSeenAt ? (
+          <>
+            <span className="ll:shrink-0 ll:whitespace-pre">{" – "}</span>
+            <HeroSightingRefresher
+              member={refreshedBy}
+              memberColors={memberColors}
+            >
               <time dateTime={sighting.lastSeenAt}>
                 {format(
                   lastSeenAt,
@@ -66,9 +66,9 @@ export function HeroSightingHistoryEntry({
                     : "dd.MM HH:mm:ss",
                 )}
               </time>
-            </>
-          ) : null}
-        </span>
+            </HeroSightingRefresher>
+          </>
+        ) : null}
       </span>
     </ListRow>
   );
