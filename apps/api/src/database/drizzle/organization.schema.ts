@@ -1,5 +1,6 @@
 import { DEFAULT_LOOT_DRAW_EXCLUDED_NPC_TYPES } from "@lootlog/domain/loot-draw";
 import { DEFAULT_RESERVATION_SETTINGS } from "@lootlog/domain/reservations";
+import type { OrganizationAuditDetails } from "@lootlog/schema/admin-organizations";
 import { sql } from "drizzle-orm";
 import {
   boolean,
@@ -7,6 +8,7 @@ import {
   foreignKey,
   index,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   primaryKey,
@@ -131,8 +133,15 @@ export const guildTable = pgTable(
       .notNull(),
     updatedAt: timestamp("updatedAt", { mode: "date", precision: 3 }).notNull(),
     active: boolean("active").default(true).notNull(),
+    suspendedAt: timestamp("suspendedAt", { mode: "date", precision: 3 }),
+    suspendedReason: text("suspendedReason"),
+    suspendedBy: text("suspendedBy"),
   },
   (table) => [
+    check(
+      "Guild_suspension_reason_check",
+      sql`(${table["suspendedAt"]} IS NULL) = (${table["suspendedReason"]} IS NULL)`,
+    ),
     check(
       "Guild_vanityUrl_not_id_like_check",
       sql`${table["vanityUrl"]} <> '' AND ${table["vanityUrl"]} !~ '^[0-9]+$'`,
@@ -368,6 +377,48 @@ export const memberToRoleTable = pgTable(
       columns: [table.B],
       foreignColumns: [roleTable.id],
       name: "_MemberToRole_B_fkey",
+    })
+      .onDelete("cascade")
+      .onUpdate("cascade"),
+  ],
+);
+
+export const organizationOperatorActionEnum = pgEnum(
+  "OrganizationOperatorAction",
+  [
+    "limits.set",
+    "vanity-url.clear",
+    "discord-sync.refresh",
+    "suspend",
+    "resume",
+  ],
+);
+
+export const organizationOperatorAuditTable = pgTable(
+  "OrganizationOperatorAudit",
+  {
+    id: serial("id").notNull().primaryKey(),
+    guildId: text("guildId").notNull(),
+    operatorUserId: text("operatorUserId").notNull(),
+    operatorName: text("operatorName").notNull(),
+    action: organizationOperatorActionEnum("action").notNull(),
+    details: jsonb("details").$type<OrganizationAuditDetails>(),
+    createdAt: timestamp("createdAt", { mode: "date", precision: 3 })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index("OrganizationOperatorAudit_guildId_createdAt_idx").on(
+      table["guildId"],
+      table["createdAt"].desc(),
+    ),
+    index("OrganizationOperatorAudit_createdAt_idx").on(
+      table["createdAt"].desc(),
+    ),
+    foreignKey({
+      columns: [table["guildId"]],
+      foreignColumns: [guildTable["id"]],
+      name: "OrganizationOperatorAudit_guildId_fkey",
     })
       .onDelete("cascade")
       .onUpdate("cascade"),

@@ -48,6 +48,7 @@ import {
   AccountOrganizationOperations,
   GuildDiscordSync,
 } from "#src/runtime/features/organizations";
+import { isOrganizationOperational } from "#src/guilds/organization-operational";
 
 interface NotificationsServicesValue {
   readonly layer: ReturnType<typeof notificationDataLayer>;
@@ -136,6 +137,8 @@ export const notificationsServicesLive = Layer.effect(
       },
       {
         hasRequiredGuildPermissions: guildSync.hasRequiredGuildPermissions,
+        isOrganizationOperational: (guildId) =>
+          isOrganizationOperational(database, guildId),
         canReadLootSource: (jobId, discordId) =>
           canDispatchLootNotification(database, jobId, discordId),
       },

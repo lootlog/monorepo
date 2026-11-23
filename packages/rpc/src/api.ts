@@ -1,4 +1,22 @@
 import {
+  AdminOrganizationDetails,
+  AdminOrganizationMembersPage,
+  AdminOrganizationMembersSearch,
+  AdminOrganizationsOverview,
+  AdminOrganizationsPage,
+  AdminOrganizationsSearch,
+  AdminUserOrganization,
+  OrganizationAuditPage,
+  OrganizationLimits,
+  SuspensionReason,
+} from "@lootlog/schema/admin-organizations";
+import {
+  NonNegativeSafeInteger,
+  NpcTypes,
+  PageSize,
+  Period,
+} from "@lootlog/schema/http-scalars";
+import {
   CharacterAuraGrantHolders,
   CharacterAuraGrants,
   PersonalCharacterAuraIdSchema,
@@ -7,13 +25,13 @@ import {
   InternalMemberIdentityResponse,
   InternalUserPermissionsQuery,
 } from "@lootlog/schema/internal-guilds";
-import { NpcTypes, Period } from "@lootlog/schema/http-scalars";
 import { ItemRaritySchema } from "@lootlog/schema/item-rarity";
 import { UserGuildPermissionsDtoSchema } from "@lootlog/schema/permissions";
 import { Schema } from "effect";
 import { Rpc, RpcGroup } from "effect/rpc";
 import { CallerAuth, RpcCallers } from "./callers.js";
 import {
+  RpcBadRequestError,
   RpcForbiddenError,
   RpcNotFoundError,
   RpcUnauthorizedError,
@@ -337,6 +355,11 @@ export class ApiRpcGroup extends RpcGroup.make(
     success: Schema.Array(RpcReservationSpot),
     error: MemberReadError,
   }).annotate(RpcCallers, ["discord-bot"]),
+  Rpc.make("getGuildStatsCard", {
+    payload: { guildId: Schema.String },
+    success: Schema.Uint8Array,
+    error: Schema.Union([RpcNotFoundError, RpcUnavailableError]),
+  }).annotate(RpcCallers, ["discord-bot"]),
 ).middleware(CallerAuth) {}
 
 const AuraGrantUser = {
@@ -347,6 +370,18 @@ const AuraGrantByOperator = {
   ...AuraGrantUser,
   operatorUserId: Schema.NonEmptyString,
 };
+
+const OrganizationTarget = {
+  guildId: Schema.NonEmptyString,
+};
+
+const OrganizationByOperator = {
+  ...OrganizationTarget,
+  operatorUserId: Schema.NonEmptyString,
+  operatorName: Schema.String,
+};
+
+const OperatorReadError = Schema.Union([RpcNotFoundError, RpcUnavailableError]);
 
 export class ApiOperatorRpcGroup extends RpcGroup.make(
   Rpc.make("listCharacterAuraGrantHolders", {
@@ -369,6 +404,59 @@ export class ApiOperatorRpcGroup extends RpcGroup.make(
   Rpc.make("revokeCharacterAuras", {
     payload: AuraGrantUser,
     error: RpcUnavailableError,
+  }).annotate(RpcCallers, ["admin"]),
+  Rpc.make("getOrganizationsOverview", {
+    success: AdminOrganizationsOverview,
+    error: RpcUnavailableError,
+  }).annotate(RpcCallers, ["admin"]),
+  Rpc.make("searchOrganizations", {
+    payload: AdminOrganizationsSearch,
+    success: AdminOrganizationsPage,
+    error: RpcUnavailableError,
+  }).annotate(RpcCallers, ["admin"]),
+  Rpc.make("getOrganization", {
+    payload: OrganizationTarget,
+    success: AdminOrganizationDetails,
+    error: OperatorReadError,
+  }).annotate(RpcCallers, ["admin"]),
+  Rpc.make("listOrganizationMembers", {
+    payload: AdminOrganizationMembersSearch,
+    success: AdminOrganizationMembersPage,
+    error: OperatorReadError,
+  }).annotate(RpcCallers, ["admin"]),
+  Rpc.make("listUserOrganizations", {
+    payload: { discordId: Schema.NonEmptyString },
+    success: Schema.Array(AdminUserOrganization),
+    error: RpcUnavailableError,
+  }).annotate(RpcCallers, ["admin"]),
+  Rpc.make("listOrganizationAudit", {
+    payload: { limit: PageSize, offset: NonNegativeSafeInteger },
+    success: OrganizationAuditPage,
+    error: RpcUnavailableError,
+  }).annotate(RpcCallers, ["admin"]),
+  Rpc.make("setOrganizationLimits", {
+    payload: { ...OrganizationByOperator, limits: OrganizationLimits },
+    error: OperatorReadError,
+  }).annotate(RpcCallers, ["admin"]),
+  Rpc.make("clearOrganizationVanityUrl", {
+    payload: OrganizationByOperator,
+    error: OperatorReadError,
+  }).annotate(RpcCallers, ["admin"]),
+  Rpc.make("refreshOrganizationDiscordSync", {
+    payload: OrganizationByOperator,
+    error: Schema.Union([
+      RpcNotFoundError,
+      RpcBadRequestError,
+      RpcUnavailableError,
+    ]),
+  }).annotate(RpcCallers, ["admin"]),
+  Rpc.make("suspendOrganization", {
+    payload: { ...OrganizationByOperator, reason: SuspensionReason },
+    error: OperatorReadError,
+  }).annotate(RpcCallers, ["admin"]),
+  Rpc.make("resumeOrganization", {
+    payload: OrganizationByOperator,
+    error: OperatorReadError,
   }).annotate(RpcCallers, ["admin"]),
 ).middleware(CallerAuth) {}
 

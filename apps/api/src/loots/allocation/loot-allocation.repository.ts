@@ -45,6 +45,7 @@ import {
   playerSnapshotTable,
 } from "#src/database/drizzle/loot.schema";
 import type { LootShare } from "#src/loots/loot-response.schema";
+import { operationalGuild } from "#src/guilds/organization-operational";
 
 type AuthorizedLootOptions = {
   readonly actorDiscordId: string;
@@ -112,7 +113,7 @@ export const makeLootAllocationPersistence = (
         .select({ member: memberTable, ownerId: guildTable.ownerId })
         .from(memberTable)
         .innerJoin(guildTable, activeGuildMemberJoin(actorDiscordId))
-        .where(and(eq(guildTable.active, true), keyScope));
+        .where(and(operationalGuild, keyScope));
 
       const memberships = yield* hydrateMemberRoles(
         database,

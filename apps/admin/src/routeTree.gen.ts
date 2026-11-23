@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuditRouteImport } from './routes/audit'
 import { Route as SignInRouteImport } from './routes/sign-in'
+import { Route as OrganizationsIndexRouteImport } from './routes/organizations/index'
+import { Route as OrganizationsGuildIdRouteImport } from './routes/organizations/$guildId'
 import { Route as UsersUserIdRouteImport } from './routes/users/$userId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -29,6 +31,16 @@ const SignInRoute = SignInRouteImport.update({
   path: '/sign-in',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OrganizationsIndexRoute = OrganizationsIndexRouteImport.update({
+  id: '/organizations/',
+  path: '/organizations/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrganizationsGuildIdRoute = OrganizationsGuildIdRouteImport.update({
+  id: '/organizations/$guildId',
+  path: '/organizations/$guildId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const UsersUserIdRoute = UsersUserIdRouteImport.update({
   id: '/users/$userId',
   path: '/users/$userId',
@@ -39,34 +51,61 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/audit': typeof AuditRoute
   '/sign-in': typeof SignInRoute
+  '/organizations/$guildId': typeof OrganizationsGuildIdRoute
   '/users/$userId': typeof UsersUserIdRoute
+  '/organizations/': typeof OrganizationsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/audit': typeof AuditRoute
   '/sign-in': typeof SignInRoute
+  '/organizations/$guildId': typeof OrganizationsGuildIdRoute
   '/users/$userId': typeof UsersUserIdRoute
+  '/organizations': typeof OrganizationsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/audit': typeof AuditRoute
   '/sign-in': typeof SignInRoute
+  '/organizations/$guildId': typeof OrganizationsGuildIdRoute
   '/users/$userId': typeof UsersUserIdRoute
+  '/organizations/': typeof OrganizationsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/audit' | '/sign-in' | '/users/$userId'
+  fullPaths:
+    | '/'
+    | '/audit'
+    | '/sign-in'
+    | '/organizations/$guildId'
+    | '/users/$userId'
+    | '/organizations/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/audit' | '/sign-in' | '/users/$userId'
-  id: '__root__' | '/' | '/audit' | '/sign-in' | '/users/$userId'
+  to:
+    | '/'
+    | '/audit'
+    | '/sign-in'
+    | '/organizations/$guildId'
+    | '/users/$userId'
+    | '/organizations'
+  id:
+    | '__root__'
+    | '/'
+    | '/audit'
+    | '/sign-in'
+    | '/organizations/$guildId'
+    | '/users/$userId'
+    | '/organizations/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuditRoute: typeof AuditRoute
   SignInRoute: typeof SignInRoute
+  OrganizationsGuildIdRoute: typeof OrganizationsGuildIdRoute
   UsersUserIdRoute: typeof UsersUserIdRoute
+  OrganizationsIndexRoute: typeof OrganizationsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -92,6 +131,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignInRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/organizations/': {
+      id: '/organizations/'
+      path: '/organizations'
+      fullPath: '/organizations/'
+      preLoaderRoute: typeof OrganizationsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/organizations/$guildId': {
+      id: '/organizations/$guildId'
+      path: '/organizations/$guildId'
+      fullPath: '/organizations/$guildId'
+      preLoaderRoute: typeof OrganizationsGuildIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/users/$userId': {
       id: '/users/$userId'
       path: '/users/$userId'
@@ -106,7 +159,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuditRoute: AuditRoute,
   SignInRoute: SignInRoute,
+  OrganizationsGuildIdRoute: OrganizationsGuildIdRoute,
   UsersUserIdRoute: UsersUserIdRoute,
+  OrganizationsIndexRoute: OrganizationsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

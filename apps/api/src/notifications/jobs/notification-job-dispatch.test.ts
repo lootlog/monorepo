@@ -191,6 +191,7 @@ describe("notification job dispatch", () => {
         dispatchStore,
         {
           hasRequiredGuildPermissions: () => Effect.succeed(true),
+          isOrganizationOperational: () => Effect.succeed(true),
           canReadLootSource: (jobId, discordId) =>
             canDispatchLootNotification(database, jobId, discordId),
         },
@@ -295,6 +296,7 @@ describe("notification job dispatch", () => {
           dispatchStore,
           {
             hasRequiredGuildPermissions: () => Effect.succeed(true),
+            isOrganizationOperational: () => Effect.succeed(true),
             canReadLootSource: (jobId, discordId) =>
               Effect.gen(function* () {
                 started.resolve();
@@ -362,6 +364,7 @@ describe("notification job dispatch", () => {
       },
       {
         hasRequiredGuildPermissions: () => Effect.succeed(true),
+        isOrganizationOperational: () => Effect.succeed(true),
         canReadLootSource: () => Effect.succeed(true),
       },
       {
@@ -388,6 +391,49 @@ describe("notification job dispatch", () => {
     expect(published).toBeFalse();
   });
 
+  it("blocks an Organization job while the Organization is suspended", async () => {
+    const blocked: string[] = [];
+    let published = false;
+
+    const dispatch = makeNotificationJobDispatch(
+      {
+        find: () =>
+          Effect.succeed({
+            ...job(true),
+            ownerType: "GUILD",
+            ownerId: "guild-1",
+          }),
+        update: () => Effect.void,
+        block: (_jobId, reason) =>
+          Effect.sync(() => {
+            blocked.push(reason);
+          }),
+        claim: () => Effect.die("a suspended Organization job is not claimed"),
+        failClaim: () => Effect.die("blocked jobs cannot fail a claim"),
+      },
+      {
+        hasRequiredGuildPermissions: () => Effect.succeed(true),
+        isOrganizationOperational: (guildId) =>
+          Effect.succeed(guildId !== "guild-1"),
+        canReadLootSource: () => Effect.succeed(true),
+      },
+      {
+        publish: () =>
+          Effect.sync(() => {
+            published = true;
+          }),
+      },
+      () => Effect.void,
+      () => undefined,
+      { filesFor: () => Effect.succeed([]) },
+    );
+
+    await Effect.runPromise(dispatch("job-1", { retrying: false }));
+
+    expect(blocked).toEqual(["Organization is inactive or suspended"]);
+    expect(published).toBeFalse();
+  });
+
   it("keeps a delivered job final when a queued retry finds its target disabled", async () => {
     const dispatch = makeNotificationJobDispatch(
       {
@@ -399,6 +445,7 @@ describe("notification job dispatch", () => {
       },
       {
         hasRequiredGuildPermissions: () => Effect.succeed(true),
+        isOrganizationOperational: () => Effect.succeed(true),
         canReadLootSource: () => Effect.die("delivered jobs are not rechecked"),
       },
       {

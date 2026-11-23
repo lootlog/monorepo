@@ -51,6 +51,9 @@ export interface NotificationDispatchPermissions {
   readonly hasRequiredGuildPermissions: (
     guildId: string,
   ) => Effect.Effect<boolean, unknown, never>;
+  readonly isOrganizationOperational: (
+    guildId: string,
+  ) => Effect.Effect<boolean, unknown, never>;
 }
 
 export interface NotificationDispatchPublisher {
@@ -149,6 +152,16 @@ export const makeNotificationJobDispatch = (
     }
 
     if (job.ownerType === NotificationOwnerType.GUILD) {
+      if (!(yield* permissions.isOrganizationOperational(job.ownerId))) {
+        yield* store.block(
+          job.id,
+          "Organization is inactive or suspended",
+          attempt.retrying,
+        );
+
+        return;
+      }
+
       const permitted = yield* permissions.hasRequiredGuildPermissions(
         job.ownerId,
       );

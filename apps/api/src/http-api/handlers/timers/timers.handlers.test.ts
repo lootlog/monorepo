@@ -27,31 +27,19 @@ import {
 } from "./timers.handlers.js";
 
 import { decodeDomainJson } from "../../domain-json.schema.js";
+import { createGuildFixture } from "../../../../test/organization-fixtures.js";
 import { TimersInfrastructureError } from "#src/timers/timer-errors";
 import { decodeTimerResponse } from "#src/timers/timer-response.schema";
 
 const now = new Date("2026-09-02T12:00:00.000Z");
 
-const guild = {
+const guild: Guild = createGuildFixture({
   id: "guild-a",
   name: "Guild A",
-  icon: null,
-  banner: null,
   ownerId: "owner-a",
-  vanityUrl: null,
-  notificationRuleLimit: 20,
-  publicStatsCardEnabled: false,
-  reservationMaxDurationMinutes: 180,
-  reservationMinDurationMinutes: 30,
-  reservationTimeGranularityMinutes: 15,
-  reservationMaxAdvanceDays: 7,
-  reservationActiveLimitPerSpot: 3,
-  lootDrawExcludedNpcTypes: ["HERO", "EVENT_HERO", "TITAN"],
-  documentLimit: 50,
   createdAt: now,
   updatedAt: now,
-  active: true,
-} satisfies Guild;
+});
 
 const restrictedRole = {
   id: "role-a",

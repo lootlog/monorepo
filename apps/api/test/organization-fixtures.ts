@@ -26,6 +26,9 @@ export const createGuildFixture = (overrides: Partial<Guild> = {}): Guild => ({
   createdAt: new Date(0),
   updatedAt: new Date(0),
   active: true,
+  suspendedAt: null,
+  suspendedReason: null,
+  suspendedBy: null,
   ...overrides,
 });
 

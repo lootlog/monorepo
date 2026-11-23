@@ -9,6 +9,7 @@ import {
   lootTable,
   organizationLootRecordTable,
 } from "#src/database/drizzle/loot.schema";
+import { operationalGuild } from "#src/guilds/organization-operational";
 
 export type GuildStatsCardGuild = {
   readonly id: string;
@@ -64,7 +65,7 @@ export class PublicGuildStatsCardRepository extends Context.Service<
               publicStatsCardEnabled: guildTable.publicStatsCardEnabled,
             })
             .from(guildTable)
-            .where(and(eq(guildTable.id, guildId), eq(guildTable.active, true)))
+            .where(and(eq(guildTable.id, guildId), operationalGuild))
             .limit(1)
             .pipe(
               Effect.mapBoth({

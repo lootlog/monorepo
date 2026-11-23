@@ -79,6 +79,11 @@ const apiWeb = HttpRouter.toWebHandler(
         getGuildTopKilledNpcs: unused,
         listUserReservations: unused,
         listGuildReservationSpots: unused,
+        getGuildStatsCard: record(
+          "api.getGuildStatsCard",
+          () => Effect.fail(new RpcNotFoundError()),
+          () => rpcOverrides.getGuildStatsCard,
+        ),
         getMemberIdentity: record(
           "api.getMemberIdentity",
           () => Effect.fail(new RpcNotFoundError()),
@@ -202,7 +207,6 @@ const services = LootlogClient.layer.pipe(
         serviceNamespace: "test",
         discordBotToken: Redacted.make("token"),
         rabbitmqUri: Redacted.make("amqp://test"),
-        apiServiceUrl: "http://api.test",
         webAppUrl: "https://lootlog.test",
       }),
     ),
@@ -642,5 +646,24 @@ describe("slash commands", () => {
       discordId,
       organizationId: guildId,
     });
+  });
+
+  it("attaches the Organization stats card that the API renders over RPC", async () => {
+    const png = new Uint8Array([137, 80, 78, 71]);
+
+    rpcOverrides = { getGuildStatsCard: () => Effect.succeed(png) };
+
+    const reply = await invoke("karta");
+
+    expect(rpcCalls).toEqual([
+      { method: "api.getGuildStatsCard", payload: { guildId } },
+    ]);
+    expect(reply.files?.[0]?.attachment).toEqual(Buffer.from(png));
+  });
+
+  it("explains that the stats card is off when the API has no public card", async () => {
+    const reply = await invoke("karta");
+
+    expect(reply.content).toBe(COMMAND_TEXT.card.unavailable);
   });
 });

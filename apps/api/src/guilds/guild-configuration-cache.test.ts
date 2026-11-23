@@ -66,6 +66,28 @@ describe("guild configuration cache", () => {
     expect(cache.deleted).toEqual([getGuildCacheKey(victimId)]);
   });
 
+  it("evicts a cached Organization that was suspended or left by the bot instead of serving it as current", async () => {
+    await Promise.all(
+      [
+        { active: true, suspendedAt: "2026-11-23T12:00:00.000Z" },
+        { active: false, suspendedAt: null },
+      ].map(async (state) => {
+        const cache = memoryCache();
+        const guildId = "123456789012345678";
+
+        cache.values.set(
+          getGuildCacheKey(guildId),
+          JSON.stringify({ id: guildId, name: "Organization", ...state }),
+        );
+
+        expect(
+          await Effect.runPromise(readGuildConfigurationCache(cache, guildId)),
+        ).toBeNull();
+        expect(cache.deleted).toEqual([getGuildCacheKey(guildId)]);
+      }),
+    );
+  });
+
   it("serves a vanity lookup from its own namespace while preserving all fields", async () => {
     const cache = memoryCache();
 

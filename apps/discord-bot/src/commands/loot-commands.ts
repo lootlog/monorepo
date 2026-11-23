@@ -214,16 +214,12 @@ export const cardCommand: SlashCommand = {
     Effect.gen(function* () {
       const client = yield* LootlogClient;
 
-      const card = yield* client
-        .publicFile(
-          `/public/guilds/${encodeURIComponent(invocation.guildId)}/stats-card.png`,
-        )
-        .pipe(
-          Effect.catchIf(
-            (failure) => failure.reason === "not-found",
-            () => Effect.succeed(null),
-          ),
-        );
+      const card = yield* client.getGuildStatsCard(invocation.guildId).pipe(
+        Effect.catchIf(
+          (failure) => failure.reason === "not-found",
+          () => Effect.succeed(null),
+        ),
+      );
 
       if (!card) return { content: COMMAND_TEXT.card.unavailable };
 

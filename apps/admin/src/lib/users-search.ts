@@ -1,5 +1,10 @@
 import { PlatformRole } from "@lootlog/schema/platform-roles";
-import { Option, Schema } from "effect";
+import {
+  readPage,
+  readSearchParam,
+  readText,
+  readYesNo,
+} from "@/lib/search-params";
 
 export type UsersSearch = {
   search?: string | undefined;
@@ -9,37 +14,7 @@ export type UsersSearch = {
   page?: number | undefined;
 };
 
-const read = <A>(schema: Schema.Codec<A, unknown>) => {
-  const decode = Schema.decodeUnknownOption(schema);
-
-  return (value: A | {} | null | undefined) =>
-    Option.getOrUndefined(decode(value));
-};
-
-const readText = read(
-  Schema.Trim.check(Schema.isMinLength(1), Schema.isMaxLength(100)),
-);
-
-const readRole = read(PlatformRole);
-
-const readYesNo = read(Schema.Literals(["yes", "no"]));
-
-const readPageText = read(
-  Schema.String.check(Schema.isPattern(/^(?:[2-9]|[1-9]\d{1,5})$/u)),
-);
-
-const readPageNumber = read(
-  Schema.Int.check(
-    Schema.isGreaterThanOrEqualTo(2),
-    Schema.isLessThanOrEqualTo(999_999),
-  ),
-);
-
-export const readPage = (value: {} | null | undefined): number | undefined => {
-  const page = readPageText(value);
-
-  return page === undefined ? readPageNumber(value) : Number(page);
-};
+const readRole = readSearchParam(PlatformRole);
 
 export const validateUsersSearch = (search: {
   search?: unknown;

@@ -1,0 +1,420 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "794ab97c-0207-4ce9-bef7-1d9bc77852e2",
+  "prevIds": [
+    "d9877b43-5446-4ee2-b667-ec20504c0136",
+    "72adf5ca-30e5-459a-87dc-fb5b1225c38c"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_enum",
+      "statementTarget": ["enum", "public", "OrganizationOperatorAction"],
+      "writes": [
+        "s|enum|public.OrganizationOperatorAction",
+        "n|enum|public.OrganizationOperatorAction",
+        "e|enum|public.OrganizationOperatorAction",
+        "n|type|public.OrganizationOperatorAction"
+      ],
+      "reads": ["n|sch|public"]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": ["table", "public", "OrganizationOperatorAudit"],
+      "writes": [
+        "s|tbl|public.OrganizationOperatorAudit",
+        "n|tbl|public.OrganizationOperatorAudit",
+        "e|tbl|public.OrganizationOperatorAudit",
+        "n|rel|public.OrganizationOperatorAudit",
+        "n|type|public.OrganizationOperatorAudit",
+        "n|rel|public.OrganizationOperatorAudit_pkey"
+      ],
+      "reads": ["n|sch|public", "n|enum|public.OrganizationOperatorAction"]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": ["column", "public", "Guild", "suspendedAt"],
+      "writes": [
+        "s|col|public.Guild.suspendedAt",
+        "n|col|public.Guild.suspendedAt",
+        "e|col|public.Guild.suspendedAt"
+      ],
+      "reads": ["n|tbl|public.Guild", "n|sch|public"]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": ["column", "public", "Guild", "suspendedReason"],
+      "writes": [
+        "s|col|public.Guild.suspendedReason",
+        "n|col|public.Guild.suspendedReason",
+        "e|col|public.Guild.suspendedReason"
+      ],
+      "reads": ["n|tbl|public.Guild", "n|sch|public"]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": ["column", "public", "Guild", "suspendedBy"],
+      "writes": [
+        "s|col|public.Guild.suspendedBy",
+        "n|col|public.Guild.suspendedBy",
+        "e|col|public.Guild.suspendedBy"
+      ],
+      "reads": ["n|tbl|public.Guild", "n|sch|public"]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "OrganizationOperatorAudit",
+        "OrganizationOperatorAudit_guildId_createdAt_idx"
+      ],
+      "writes": [
+        "s|idx|public.OrganizationOperatorAudit_guildId_createdAt_idx",
+        "n|idx|public.OrganizationOperatorAudit_guildId_createdAt_idx",
+        "e|idx|public.OrganizationOperatorAudit_guildId_createdAt_idx",
+        "n|rel|public.OrganizationOperatorAudit_guildId_createdAt_idx"
+      ],
+      "reads": [
+        "n|tbl|public.OrganizationOperatorAudit",
+        "n|sch|public",
+        "n|col|public.OrganizationOperatorAudit.guildId",
+        "n|col|public.OrganizationOperatorAudit.createdAt"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "OrganizationOperatorAudit",
+        "OrganizationOperatorAudit_createdAt_idx"
+      ],
+      "writes": [
+        "s|idx|public.OrganizationOperatorAudit_createdAt_idx",
+        "n|idx|public.OrganizationOperatorAudit_createdAt_idx",
+        "e|idx|public.OrganizationOperatorAudit_createdAt_idx",
+        "n|rel|public.OrganizationOperatorAudit_createdAt_idx"
+      ],
+      "reads": [
+        "n|tbl|public.OrganizationOperatorAudit",
+        "n|sch|public",
+        "n|col|public.OrganizationOperatorAudit.createdAt"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": ["table", "public", "OrganizationOperatorAudit"],
+      "writes": [
+        "s|fk|public.OrganizationOperatorAudit.OrganizationOperatorAudit_guildId_fkey",
+        "n|fk|public.OrganizationOperatorAudit.OrganizationOperatorAudit_guildId_fkey",
+        "e|fk|public.OrganizationOperatorAudit.OrganizationOperatorAudit_guildId_fkey",
+        "n|con|public.OrganizationOperatorAudit.OrganizationOperatorAudit_guildId_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.OrganizationOperatorAudit",
+        "n|sch|public",
+        "n|tbl|public.Guild",
+        "n|sch|public",
+        "n|col|public.OrganizationOperatorAudit.guildId",
+        "n|col|public.Guild.id",
+        "e|uniqueness|public.Guild.id"
+      ]
+    },
+    {
+      "statementType": "add_check",
+      "statementTarget": ["table", "public", "Guild"],
+      "writes": [
+        "s|ck|public.Guild.Guild_suspension_reason_check",
+        "n|ck|public.Guild.Guild_suspension_reason_check",
+        "e|ck|public.Guild.Guild_suspension_reason_check",
+        "n|con|public.Guild.Guild_suspension_reason_check"
+      ],
+      "reads": [
+        "n|tbl|public.Guild",
+        "n|sch|public",
+        "n|col|public.Guild.suspendedAt",
+        "n|col|public.Guild.suspendedReason"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "OrganizationOperatorAudit",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "OrganizationOperatorAction",
+        "values": [
+          "limits.set",
+          "vanity-url.clear",
+          "discord-sync.refresh",
+          "suspend",
+          "resume"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Guild",
+        "name": "suspendedAt",
+        "type": "timestamp(3)",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Guild",
+        "name": "suspendedReason",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Guild",
+        "name": "suspendedBy",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrganizationOperatorAudit",
+        "name": "id",
+        "type": "serial",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrganizationOperatorAudit",
+        "name": "guildId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrganizationOperatorAudit",
+        "name": "operatorUserId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrganizationOperatorAudit",
+        "name": "operatorName",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrganizationOperatorAudit",
+        "name": "action",
+        "type": "OrganizationOperatorAction",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrganizationOperatorAudit",
+        "name": "details",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrganizationOperatorAudit",
+        "name": "createdAt",
+        "type": "timestamp(3)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrganizationOperatorAudit",
+        "name": "OrganizationOperatorAudit_guildId_createdAt_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "guildId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "createdAt",
+            "isExpression": false,
+            "asc": false,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrganizationOperatorAudit",
+        "name": "OrganizationOperatorAudit_createdAt_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "createdAt",
+            "isExpression": false,
+            "asc": false,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrganizationOperatorAudit",
+        "name": "OrganizationOperatorAudit_guildId_fkey",
+        "nameExplicit": true,
+        "columns": ["guildId"],
+        "schemaTo": "public",
+        "tableTo": "Guild",
+        "columnsTo": ["id"],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "OrganizationOperatorAudit",
+        "name": "OrganizationOperatorAudit_pkey",
+        "columns": ["id"],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "Guild",
+        "name": "Guild_suspension_reason_check",
+        "value": "(\"suspendedAt\" IS NULL) = (\"suspendedReason\" IS NULL)",
+        "entityType": "checks"
+      }
+    }
+  ]
+}

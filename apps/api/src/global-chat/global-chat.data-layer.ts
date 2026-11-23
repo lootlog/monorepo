@@ -30,6 +30,7 @@ import {
   GlobalChatRateLimited,
   type GlobalChatCaller,
 } from "./global-chat-data.js";
+import { operationalGuild } from "#src/guilds/organization-operational";
 
 type GlobalChatStoredEntry = {
   readonly position: number;
@@ -128,7 +129,7 @@ export const makeGlobalChatOperations = (
         .from(memberTable)
         .innerJoin(
           guildTable,
-          and(activeGuildMemberJoin(discordId), eq(guildTable.active, true)),
+          and(activeGuildMemberJoin(discordId), operationalGuild),
         )
         .where(eq(memberTable.globalUserId, userId))
         .orderBy(

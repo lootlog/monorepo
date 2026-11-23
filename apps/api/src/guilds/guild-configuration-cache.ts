@@ -51,6 +51,13 @@ export const readCachedGuild = Effect.fnUntraced(function* <Guild>(
     )
       throw new Error("Guild cache entry belongs to another Organization");
 
+    if (
+      (Predicate.hasProperty(guild, "active") && guild.active !== true) ||
+      (Predicate.hasProperty(guild, "suspendedAt") &&
+        guild.suspendedAt !== null)
+    )
+      throw new Error("Guild cache entry is no longer operational");
+
     return guild;
   }).pipe(Effect.catch(() => Effect.as(cache.del(key), null)));
 });

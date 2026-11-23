@@ -17,6 +17,7 @@ import { findActiveGuild } from "./active-guild-lookup.js";
 import type { guildTable } from "#src/database/drizzle/organization.schema";
 import { findActiveGuildMember } from "#src/members/member-access-query";
 import type { UserOrganizationPermissionsResponse } from "#src/contracts/guilds/schemas";
+import { isOrganizationOperational } from "#src/guilds/organization-operational";
 
 export class InternalGuildsOperationError extends TaggedErrorClass<
   InternalGuildsOperationError,
@@ -116,9 +117,12 @@ export class InternalGuildsData extends Context.Service<
           findActiveGuild: (idOrVanityUrl) =>
             findActiveGuild(database, idOrVanityUrl),
           findActiveMemberIdentity: (guildId, discordId) =>
-            findActiveGuildMember(database, discordId, guildId).pipe(
-              Effect.map((member) =>
-                member?.globalUserId
+            Effect.all([
+              findActiveGuildMember(database, discordId, guildId),
+              isOrganizationOperational(database, guildId),
+            ]).pipe(
+              Effect.map(([member, operational]) =>
+                operational && member?.globalUserId
                   ? { userId: member.globalUserId, memberId: member.id }
                   : null,
               ),
