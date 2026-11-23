@@ -10,6 +10,7 @@ export type GuildWatchedItemsContextValue = {
   hasActiveDm: boolean;
   isQuickAddPending: boolean;
   watchedItemsCount: number;
+  watchedItemsLimit: number;
   quickAddWatchedItem: (
     data: CreateWatchedItemQuickAddDto,
   ) => Promise<WatchedItemResponseDto>;

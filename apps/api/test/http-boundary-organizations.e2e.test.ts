@@ -9,6 +9,7 @@ import {
 import type { ApiDatabaseValue } from "../src/database/drizzle/database.js";
 import type { RedisService } from "#src/redis/redis.service";
 import { Effect } from "effect";
+import { CHAT_MESSAGE_LIMIT } from "@lootlog/schema/chat";
 import { eq } from "drizzle-orm";
 import { getCompleteUserGuildsCacheKey } from "#src/discord/discord-cache.util";
 import {
@@ -21,6 +22,8 @@ import {
   forbiddenGuildId,
   makeHttpBoundaryFixture,
 } from "./http-boundary-fixtures.js";
+
+const CHAT_HISTORY_BYTE_BUDGET = 310_000;
 
 const fixture = makeHttpBoundaryFixture();
 
@@ -38,6 +41,49 @@ describe("API HTTP boundary Organizations", () => {
   beforeEach(fixture.reset);
 
   afterAll(fixture.close);
+
+  it("caps the Organization chat history the game client loads at startup and keeps it under its byte budget, so a lost trim or per-message bloat fails", async () => {
+    const send = (index: number) =>
+      request(`/guilds/${authorizedGuildId}/chat-messages`, {
+        method: "POST",
+        body: JSON.stringify({
+          message: `${index} `.padEnd(128, "ą"),
+          type: "NORMAL",
+          characterData: {
+            nick: "Waćpan Gremi",
+            id: 8_123_456,
+            acc: 9_123_456,
+            lvl: 287,
+            prof: "w",
+            icon: "/eve/w22-wojo-m1.gif",
+          },
+          replyTo: {
+            messageId: crypto.randomUUID(),
+            senderNick: "zbujnik patryk",
+            message: "".padEnd(128, "ę"),
+            type: "NORMAL",
+          },
+        }),
+      });
+
+    for (let index = 0; index < CHAT_MESSAGE_LIMIT + 20; index++)
+      expect((await send(index)).status).toBe(201);
+
+    const response = await request(
+      `/guilds/${authorizedGuildId}/chat-messages`,
+    );
+
+    const body = await response.text();
+
+    const messages: ReadonlyArray<{ message: string }> = JSON.parse(body);
+
+    expect(response.status).toBe(200);
+    expect(messages).toHaveLength(CHAT_MESSAGE_LIMIT);
+    expect(messages[0]?.message).toStartWith("20 ");
+    expect(Buffer.byteLength(body)).toBeLessThanOrEqual(
+      CHAT_HISTORY_BYTE_BUDGET,
+    );
+  });
 
   it.each(["", "/permissions"])(
     "returns 404 for missing Organization metadata %s",

@@ -59,6 +59,7 @@ export function RequestSample() {
   const status = useRef<HTMLSpanElement>(null);
   const [statusSeen, setStatusSeen] = useState(false);
 
+  // oxlint-disable-next-line lootlog/no-unreasoned-state-sync -- IntersectionObserver that reveals the response status once it is fully on screen
   useEffect(() => {
     const element = status.current;
 

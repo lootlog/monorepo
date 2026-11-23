@@ -41,6 +41,8 @@ on paths that run for every connected Game client.
 - **`FRAME_SCHEMA`** (`apps/gateway/src/realtime/realtime-hub.ts`): hashes the frame schema; frames from a replica with the same hash are forwarded without decode, others are validated to strip foreign fields.
 - **`decodeFederatedRealtimeMessage`** (`apps/gateway/src/platform/redis-store.ts`): federated frames travel as nested JSON, so one parse covers envelope and frames, and frames are cast rather than re-walked by `Schema.Json`.
 
+- **Presence snapshot budget** (`apps/gateway/src/realtime/presence-store.snapshots.test.ts`): the snapshot a client receives on a map or world join is held to the byte budget recorded in ADR 0011, because the game client decodes it on Margonem's thread and it grows with members online.
+
 ### Access policy and visibility
 
 - **`createAccessPolicySnapshot`** and **`mergeRanges`** (`packages/protocol/src/realtime/access-policy.ts`): the snapshot versions canonical effective grants, so role ids, order and overlaps cause no spurious change; level ranges merge only when they overlap, because NPC levels can be fractional.

@@ -1,6 +1,9 @@
 import { QueryClient, queryOptions } from "@tanstack/react-query";
 import { apiKeysListApiKeys } from "@lootlog/client/auth";
-import { usersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/client/main";
+import {
+  usersControllerGetCurrentUserAccessibleGuilds,
+  usersControllerGetUserLimits,
+} from "@lootlog/client/main";
 
 export const createKeyQueryClient = () =>
   new QueryClient({
@@ -20,4 +23,10 @@ export const keyOrganizationsQueryOptions = (userId: string) =>
     queryKey: ["key-organizations", userId],
     queryFn: ({ signal }) =>
       usersControllerGetCurrentUserAccessibleGuilds({ signal }),
+  });
+
+export const keyLimitsQueryOptions = (userId: string) =>
+  queryOptions({
+    queryKey: ["key-limits", userId],
+    queryFn: ({ signal }) => usersControllerGetUserLimits({ signal }),
   });

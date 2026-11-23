@@ -7,6 +7,7 @@ export const useCountBump = <Element extends HTMLElement>(
   const elementRef = useRef<Element>(null);
   const previousCountRef = useRef(count);
 
+  // oxlint-disable-next-line lootlog/no-unreasoned-state-sync -- DOM class that plays the bump animation when the count changes
   useLayoutEffect(() => {
     const previousCount = previousCountRef.current;
     previousCountRef.current = count;

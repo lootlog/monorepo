@@ -2,13 +2,13 @@ import { BandSection } from "@/components/common/band-section";
 import { DetailPage } from "@/components/common/detail-page";
 import { MetaItem } from "@/components/common/meta-item";
 import { useUserThemes } from "@/hooks/api/user/use-user-themes";
+import { useUserLimits } from "@/hooks/api/user/use-user-limits";
 import { THEME_CATALOG } from "@lootlog/ui/themes/catalog";
 import {
   createDefinitionFromBase,
   customThemeStyle,
 } from "@lootlog/ui/themes/custom-theme";
 import { getBuiltInThemePreview } from "@/themes/theme-preview";
-import { CUSTOM_THEME_LIMIT } from "@lootlog/schema/custom-theme";
 import { Dices, Palette } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { randomizeCustomTheme } from "@lootlog/domain/custom-theme";
@@ -26,6 +26,7 @@ const RANDOM_BASES = THEME_CATALOG.map(({ name }) => name).filter(
 export const ThemeBasePickerPage = () => {
   const { t } = useTranslation();
   const { data: userThemes } = useUserThemes();
+  const { data: limits } = useUserLimits();
   const { create, isPending } = useCreateTheme();
 
   const themeTitle = (themeId: string) =>
@@ -36,8 +37,8 @@ export const ThemeBasePickerPage = () => {
       name={t("settings.appearance.create.title")}
       meta={
         <MetaItem icon={Palette}>
-          {t("settings.appearance.customSection.title")}{" "}
-          {`${userThemes?.length ?? 0}/${CUSTOM_THEME_LIMIT}`}
+          {t("settings.appearance.customSection.title")}
+          {limits ? ` ${userThemes?.length ?? 0}/${limits.customThemes}` : null}
         </MetaItem>
       }
     >

@@ -80,12 +80,18 @@ jobs:
           filter: blob:none
       - uses: ./.github/actions/setup-bun
       - run: bun test ./scripts
+      # RuleTester needs Node's raw AST transfer, which Bun does not provide.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+      - run: node --test 'tools/oxlint/lootlog/*.node-test.ts'
       - run: bun run format:check
       - run: bun run knip
-      - run: bun run comments:ratchet
-      # The root is not a workspace, so Turbo never lints the CI planning scripts.
+      - run: bun run lint:ratchet
+      # The root is not a workspace, so Turbo never lints the CI planning scripts or lint plugins.
       - name: Lint repository scripts
-        run: bunx oxlint scripts
+        run: bunx oxlint scripts tools/oxlint/lootlog tools/oxlint/comments tools/oxlint/find-diagnostics.ts
       - name: Check migrations match their schemas
         # drizzle-kit only reads its config's connection settings to generate.
         env:

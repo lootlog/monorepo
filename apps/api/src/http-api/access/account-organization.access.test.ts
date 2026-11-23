@@ -101,6 +101,13 @@ const makeData = (
   AccountOrganizationData.of({
     deleteAccount: () => Effect.undefined,
     getUserPreferences: () => Effect.succeed(userPreferences),
+    getUserLimits: () =>
+      Effect.succeed({
+        notificationRules: 10,
+        watchedItems: 10,
+        customThemes: 2,
+        apiKeys: 10,
+      }),
     userOwnsTheme: () => Effect.succeed(true),
     updateUserPreferences: () => Effect.succeed(userPreferences),
     getCurrentUserGuilds: () => Effect.succeed([]),

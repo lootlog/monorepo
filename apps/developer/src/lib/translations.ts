@@ -71,7 +71,7 @@ export const portalText = {
     "Your session has expired. Sign in again to manage API keys.",
   keyCreationFailed: "The API key could not be created. Try again later.",
   keyLimit:
-    "You have reached the limit of 10 active API keys. Delete an unused key to create another.",
+    "You have reached your limit of active API keys. Delete an unused key to create another.",
   title: "Lootlog Developers",
   description:
     "API keys, guides and the HTTP and realtime reference for building on Lootlog, the Margonem companion for shared timers, loot and battles.",
@@ -118,7 +118,7 @@ export const portalText = {
   never: "No expiration",
   empty: "You do not have any API keys yet.",
   keyIntro:
-    "Each key is limited to the selected Organizations and your current permissions. You can have up to 10 active keys.",
+    "Each key is limited to the selected Organizations and your current permissions. An account holds 10 active keys by default.",
   secret:
     "Save this key now. You will not be able to view it again after closing this panel.",
   dismiss: "I saved the key",

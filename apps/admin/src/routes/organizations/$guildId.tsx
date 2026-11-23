@@ -1,9 +1,9 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { OrganizationAuditTable } from "@/components/organization-audit-table";
 import { OrganizationDiscord } from "@/components/organization-discord";
-import { OrganizationLimitsForm } from "@/components/organization-limits-form";
 import { OrganizationMembers } from "@/components/organization-members";
 import { OrganizationNotifications } from "@/components/organization-notifications";
+import { OrganizationPlanForm } from "@/components/organization-plan-form";
 import { OrganizationRoles } from "@/components/organization-roles";
 import { OrganizationSummary } from "@/components/organization-summary";
 import { OrganizationSuspension } from "@/components/organization-suspension";
@@ -72,14 +72,14 @@ function OrganizationPage() {
           />
         </Section>
         <Section
-          id="limits"
-          title={text.limitsHeading}
-          description={text.limitsDescription}
+          id="plan"
+          title={text.planHeading}
+          description={text.planOrganizationDescription}
         >
-          <OrganizationLimitsForm
-            key={`${details.limits.documentLimit}:${details.limits.notificationRuleLimit}`}
+          <OrganizationPlanForm
+            key={details.entitlement.changed?.at ?? "default"}
             guildId={organization.id}
-            limits={details.limits}
+            entitlement={details.entitlement}
           />
         </Section>
       </div>

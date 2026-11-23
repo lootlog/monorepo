@@ -96,6 +96,36 @@ describe("notification rule policy", () => {
     ).toThrow();
   });
 
+  it("keeps system rule names out of user-supplied rules, which would escape the plan's rule limit", () => {
+    const reserved = "__system:reservation-reminder__";
+
+    expect(() =>
+      createNotificationRuleValues(NotificationOwnerType.USER, "user-1", {
+        triggerType: NotificationTriggerType.SCHEDULED_MESSAGE,
+        scheduledAt: "2026-09-02T12:00:00.000Z",
+        targetIds: [1],
+        name: reserved,
+      }),
+    ).toThrow("NOTIFICATION_RULE_NAME_RESERVED");
+
+    const userRule = createNotificationRuleFixture({ name: "my rule" });
+
+    expect(() =>
+      updateNotificationRuleValues(NotificationOwnerType.USER, userRule, {
+        name: reserved,
+      }),
+    ).toThrow("NOTIFICATION_RULE_NAME_RESERVED");
+
+    const systemRule = createNotificationRuleFixture({ name: reserved });
+
+    expect(
+      updateNotificationRuleValues(NotificationOwnerType.USER, systemRule, {
+        name: reserved,
+        enabled: false,
+      }).name,
+    ).toBe(reserved);
+  });
+
   it("limits timer and template NPC selections together and replaces the previous selection", () => {
     const timerRule = createNotificationRuleFixture({
       triggerType: NotificationTriggerType.TIMER_BEFORE_SPAWN,

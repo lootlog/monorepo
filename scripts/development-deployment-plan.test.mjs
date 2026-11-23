@@ -13,10 +13,14 @@ const workflow = Bun.YAML.parse(
 
 const planStep = workflow.jobs.plan.steps.find(({ id }) => id === "plan");
 
+const environmentWithoutGitHookVariables = Object.fromEntries(
+  Object.entries(Bun.env).filter(([name]) => !name.startsWith("GIT_")),
+);
+
 async function command(directory, arguments_, env = {}) {
   const subprocess = Bun.spawn(arguments_, {
     cwd: directory,
-    env: { ...Bun.env, ...env },
+    env: { ...environmentWithoutGitHookVariables, ...env },
     stdout: "pipe",
     stderr: "pipe",
   });

@@ -67,12 +67,14 @@ export const makeApiKeysRuntimeFactory = ({
   auth,
   config,
   getGrantOrganizations,
+  getApiKeyLimit = () => 10,
 }: {
   readonly redis: StartedTestContainer;
   readonly db: AuthDatabaseValue;
   readonly auth: ReturnType<typeof createLootlogAuth>;
   readonly config: ReturnType<typeof makeAuthAdapterOptions>["config"];
   readonly getGrantOrganizations: () => ReadonlyArray<RpcAccessibleGuild>;
+  readonly getApiKeyLimit?: () => number;
 }) => {
   const rateLimits = AuthRedisStorage.layer.pipe(
     Layer.provideMerge(
@@ -91,6 +93,13 @@ export const makeApiKeysRuntimeFactory = ({
       getGuildByIdOrVanityUrl: unused,
       getMemberIdentity: unused,
       getUserAccessibleGuilds: () => Effect.succeed(getGrantOrganizations()),
+      getUserLimits: () =>
+        Effect.succeed({
+          notificationRules: 10,
+          watchedItems: 10,
+          customThemes: 2,
+          apiKeys: getApiKeyLimit(),
+        }),
       listGuildEvents: unused,
       getEventRanking: unused,
       getEventTimers: unused,

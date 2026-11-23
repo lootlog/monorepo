@@ -12,12 +12,17 @@ import { eq } from "drizzle-orm";
 import { TimerResponse } from "#src/contracts/timers/schemas";
 import { memberTable } from "../src/database/drizzle/organization.schema.js";
 import { timerTable } from "../src/database/drizzle/timer.schema.js";
+import { playerSnapshotTable } from "../src/database/drizzle/loot.schema.js";
 import {
   authorizedGuildId,
   forbiddenGuildId,
   makeHttpBoundaryFixture,
   world,
 } from "./http-boundary-fixtures.js";
+
+const ACTIVE_TIMERS_PER_WORLD = 121;
+
+const ACTIVE_TIMER_LIST_BYTE_BUDGET = 125_000;
 
 const fixture = makeHttpBoundaryFixture();
 
@@ -196,6 +201,95 @@ describe("API HTTP boundary timers", () => {
 
     expect((await search(`world=${world}`)).status).toBe(400);
     expect((await search("npcIds=2147483648")).status).toBe(400);
+  });
+
+  it("keeps the game client's startup timer list to active timers in one world and under its byte budget, so returning expired history or bloating each timer fails", async () => {
+    const [member] = await databaseRuntime.runPromise(
+      database
+        .select({ id: memberTable.id })
+        .from(memberTable)
+        .where(eq(memberTable.guildId, authorizedGuildId)),
+    );
+
+    const [actor] = await databaseRuntime.runPromise(
+      database
+        .insert(playerSnapshotTable)
+        .values({
+          world,
+          accountId: 9_123_456,
+          characterId: 8_123_456,
+          snapshotHash: "a".repeat(64),
+          name: "Waćpan Gremi",
+          prof: "WARRIOR",
+          icon: "/eve/w22-wojo-m1.gif",
+        })
+        .returning({ id: playerSnapshotTable.id }),
+    );
+
+    const now = Date.now();
+
+    const timer = (
+      npcId: number,
+      timerWorld: string,
+      maxSpawnOffsetMs: number,
+      deletedAt: Date | null = null,
+    ) => ({
+      guildId: authorizedGuildId,
+      world: timerWorld,
+      npcId,
+      timerKey: `${npcId}:${timerWorld}`,
+      createdById: member?.id ?? 0,
+      actorCharacterSnapshotId: actor?.id ?? null,
+      actorCharacterLvl: 287,
+      npc: {
+        id: npcId,
+        wt: "20",
+        lvl: 108,
+        icon: "e2/blotniaki_milosnik_rycerzy.gif",
+        name: "Miłośnik rycerzy",
+        prof: "WARRIOR",
+        type: "ELITE2",
+        location: "Zabłocona Jama p.2 - Sala Błotnistych Odmętów",
+        templateId: npcId,
+        margonemType: "2",
+      },
+      minSpawnTime: new Date(now + maxSpawnOffsetMs - 600_000),
+      maxSpawnTime: new Date(now + maxSpawnOffsetMs),
+      updatedAt: new Date(now),
+      deletedAt,
+    });
+
+    const ids = (from: number, length: number) =>
+      Array.from({ length }, (_, index) => 300_000 + from + index);
+
+    await databaseRuntime.runPromise(
+      database
+        .insert(timerTable)
+        .values([
+          ...ids(0, ACTIVE_TIMERS_PER_WORLD).map((id) =>
+            timer(id, world, 3_600_000),
+          ),
+          ...ids(1_000, 400).map((id) => timer(id, world, -3_600_000)),
+          ...ids(2_000, 40).map((id) =>
+            timer(id, world, 3_600_000, new Date(now)),
+          ),
+          ...ids(3_000, 60).map((id) => timer(id, "lupus", 3_600_000)),
+        ]),
+    );
+
+    const response = await request(`/timers?world=${world}`);
+    const body = await response.text();
+
+    const timers: ReadonlyArray<{ world: string }> = JSON.parse(body);
+
+    expect(response.status).toBe(200);
+    expect(timers).toHaveLength(ACTIVE_TIMERS_PER_WORLD);
+    expect(new Set(timers.map((listed) => listed.world))).toEqual(
+      new Set([world]),
+    );
+    expect(Buffer.byteLength(body)).toBeLessThanOrEqual(
+      ACTIVE_TIMER_LIST_BYTE_BUDGET,
+    );
   });
 
   it("preserves expected 4xx statuses at the HTTP boundary", async () => {

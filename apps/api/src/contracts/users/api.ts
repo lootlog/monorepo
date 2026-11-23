@@ -7,6 +7,7 @@ import {
   OpenApi,
 } from "effect/http-api";
 import { BearerSecurityMiddleware } from "#src/contracts/api-shared";
+import { UserLimits } from "@lootlog/schema/plans";
 import {
   AccountDeletionAccepted,
   CurrentOrganizationsResponse,
@@ -62,6 +63,16 @@ export class UsersGroup extends HttpApiGroup.make("users").add(
     .annotate(OpenApi.Identifier, "UsersController_updateUserPreferences")
     .annotate(OpenApi.Summary, "Update user preferences")
     .annotate(OpenApi.Description, "Update user preferences"),
+  HttpApiEndpoint.get("UsersControllerGetUserLimits", "/users/@me/limits", {
+    success: UserLimits,
+  })
+    .middleware(BearerSecurityMiddleware)
+    .annotate(OpenApi.Identifier, "UsersController_getUserLimits")
+    .annotate(OpenApi.Summary, "Get user limits")
+    .annotate(
+      OpenApi.Description,
+      "Return how many personal notification rules, watched items, custom themes and active API keys the authenticated user may hold.",
+    ),
   HttpApiEndpoint.get(
     "UsersControllerGetCurrentUserGuilds",
     "/users/@me/guilds",

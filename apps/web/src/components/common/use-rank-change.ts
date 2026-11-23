@@ -9,6 +9,7 @@ export function useRankChange(rank: number) {
     setChange({ rank, places: change.rank - rank });
   }
 
+  // oxlint-disable-next-line lootlog/no-unreasoned-state-sync -- timer that clears the rank change indicator
   useEffect(() => {
     if (change.places === 0) return;
 

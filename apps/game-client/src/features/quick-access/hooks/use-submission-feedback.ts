@@ -9,6 +9,7 @@ export const useSubmissionFeedback = () => {
   const [mountSequence] = useState(latestSequence);
   const [expiredSequence, setExpiredSequence] = useState(latestSequence);
 
+  // oxlint-disable-next-line lootlog/no-unreasoned-state-sync -- timer that expires the visible submission feedback
   useEffect(() => {
     if (latestSequence <= expiredSequence) return;
 

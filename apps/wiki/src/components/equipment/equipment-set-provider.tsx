@@ -11,11 +11,12 @@ import {
   EQUIPMENT_SET_PARAM,
   equipItem,
   LEGACY_EQUIPMENT_SET_PARAM,
+  rankSkill,
   unequipSlot,
+  upgradeSlot,
 } from "@/lib/equipment-set";
 import { findEquipmentSlot } from "@/lib/equipment-slots";
 import { useSetCatalogItems } from "@/hooks/use-worn-items";
-import { isCrafted } from "@lootlog/domain/item-upgrade";
 
 const STORED_SET = {
   storageKey: "lootlog-wiki-equipment-set",
@@ -55,18 +56,7 @@ export function EquipmentSetProvider({ children }: { children: ReactNode }) {
           );
         },
         upgrade: (slotId, upgrade) =>
-          update((current) => {
-            if (current.items[slotId] === undefined) return current;
-
-            const { [slotId]: _previous, ...upgrades } = current.upgrades;
-
-            return {
-              ...current,
-              upgrades: isCrafted(upgrade)
-                ? { ...upgrades, [slotId]: upgrade }
-                : upgrades,
-            };
-          }),
+          update((current) => upgradeSlot(current, slotId, upgrade)),
         unequip: (slotId) => update((current) => unequipSlot(current, slotId)),
         clear: () => update(() => EMPTY_EQUIPMENT_SET),
         setCharacter: (character) =>
@@ -77,12 +67,7 @@ export function EquipmentSetProvider({ children }: { children: ReactNode }) {
               character.profession === current.profession ? current.skills : {},
           })),
         setSkillRank: (skillId, rank) =>
-          update(
-            ({ skills: { [skillId]: _previous, ...skills }, ...current }) => ({
-              ...current,
-              skills: rank > 0 ? { ...skills, [skillId]: rank } : skills,
-            }),
-          ),
+          update((current) => rankSkill(current, skillId, rank)),
         resetSkills: () => update((current) => ({ ...current, skills: {} })),
       }}
     >

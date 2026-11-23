@@ -14,6 +14,7 @@ import {
   useNotificationsUserControllerGetWatchedItems,
   useUsersControllerGetCurrentUserAccessibleGuilds,
 } from "@lootlog/client/main";
+import { useUserLimits } from "@/hooks/api/user/use-user-limits";
 
 export const UserNotifications = () => {
   const { t } = useTranslation();
@@ -21,6 +22,8 @@ export const UserNotifications = () => {
   const targetsQuery = useNotificationsUserControllerGetUserTargets();
 
   const watchedItemsQuery = useNotificationsUserControllerGetWatchedItems();
+
+  const limitsQuery = useUserLimits();
 
   const { data: guilds = [] } =
     useUsersControllerGetCurrentUserAccessibleGuilds();
@@ -31,7 +34,11 @@ export const UserNotifications = () => {
   const dmTarget = targetsQuery.data?.[0] ?? null;
   const hasActiveDm = Boolean(dmTarget?.active && dmTarget.canSend);
   const watchedItems = watchedItemsQuery.data ?? [];
-  const isLoading = targetsQuery.isLoading || watchedItemsQuery.isLoading;
+
+  const isLoading =
+    targetsQuery.isLoading ||
+    watchedItemsQuery.isLoading ||
+    limitsQuery.isLoading;
 
   const guildOptions = guilds.map((guild) => ({
     value: guild.id,
@@ -42,23 +49,30 @@ export const UserNotifications = () => {
     return <UserNotificationsPageSkeleton />;
   }
 
-  if (!targetsQuery.data || !watchedItemsQuery.data) {
+  if (!targetsQuery.data || !watchedItemsQuery.data || !limitsQuery.data) {
     return (
       <div className="flex h-full min-h-0 flex-col">
         <ScrollArea data-under-top-bar className="min-h-0 flex-1">
           <h1 className="sr-only">{t("settings.userNotifications.title")}</h1>
           <SettingsListError
             title={t("settings.userNotifications.loadError")}
-            isRetrying={targetsQuery.isFetching || watchedItemsQuery.isFetching}
+            isRetrying={
+              targetsQuery.isFetching ||
+              watchedItemsQuery.isFetching ||
+              limitsQuery.isFetching
+            }
             onRetry={() => {
               void targetsQuery.refetch();
               void watchedItemsQuery.refetch();
+              void limitsQuery.refetch();
             }}
           />
         </ScrollArea>
       </div>
     );
   }
+
+  const watchedItemsLimit = limitsQuery.data.watchedItems;
 
   return (
     <>
@@ -74,6 +88,7 @@ export const UserNotifications = () => {
           </BandSection>
           <WatchedItemsSection
             watchedItems={watchedItems}
+            watchedItemsLimit={watchedItemsLimit}
             guilds={guilds}
             canAddWatch={hasActiveDm}
             onAddWatch={() => setIsWatchFormOpen(true)}
@@ -90,6 +105,7 @@ export const UserNotifications = () => {
       <UserNotificationsInfoDialog
         open={isInfoDialogOpen}
         onOpenChange={setIsInfoDialogOpen}
+        watchedItemsLimit={watchedItemsLimit}
       />
 
       <WatchFormDialog
@@ -97,6 +113,7 @@ export const UserNotifications = () => {
         onOpenChange={setIsWatchFormOpen}
         hasActiveDm={hasActiveDm}
         watchedItems={watchedItems}
+        watchedItemsLimit={watchedItemsLimit}
         guildOptions={guildOptions}
       />
     </>

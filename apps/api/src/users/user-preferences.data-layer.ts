@@ -20,6 +20,7 @@ import { requestApiKeyAccess } from "#src/runtime/auth/forward-auth-identity";
 import { apiKeyAccessibleGuilds } from "#src/runtime/auth/organization-scope";
 import { PermissionDeniedError } from "@lootlog/protocol/http/errors";
 import { ApiDatabase } from "#src/database/drizzle/database";
+import { readUserLimits } from "#src/plans/entitlements";
 import {
   userSettingsTable,
   userThemeTable,
@@ -274,6 +275,8 @@ export const makeUserPreferencesData = (
           .limit(1)
           .pipe(Effect.map((rows) => rows.length > 0)),
       ),
+    getUserLimits: (userId: string) =>
+      mapError(readUserLimits(database, userId)),
     getUserPreferences: (userId: string) =>
       mapError(
         getUserPreferences(userId).pipe(Effect.flatMap(scopePreferences)),

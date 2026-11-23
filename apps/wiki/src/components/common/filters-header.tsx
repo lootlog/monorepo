@@ -9,11 +9,13 @@ type FiltersHeaderProps = {
   className?: string;
 };
 
+const renderDefaultTitle = (title: string) => (
+  <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+);
+
 export function FiltersHeader({
   count,
-  renderTitle = (title) => (
-    <h2 className="text-sm font-semibold text-foreground">{title}</h2>
-  ),
+  renderTitle = renderDefaultTitle,
   className,
 }: FiltersHeaderProps) {
   return (

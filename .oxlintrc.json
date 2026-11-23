@@ -40,6 +40,10 @@
     {
       "name": "lootlog-comments",
       "specifier": "./tools/oxlint/comments/index.ts"
+    },
+    {
+      "name": "lootlog",
+      "specifier": "./tools/oxlint/lootlog/index.ts"
     }
   ],
   "env": {
@@ -400,6 +404,31 @@
         "baseline": "tools/oxlint/comments/baseline.json"
       }
     ],
+    "lootlog/no-polling-loop-in-tests": [
+      "error",
+      {
+        "baseline": "tools/oxlint/lootlog/baselines/no-polling-loop-in-tests.json"
+      }
+    ],
+    "lootlog/no-real-time-wait-in-tests": [
+      "error",
+      {
+        "baseline": "tools/oxlint/lootlog/baselines/no-real-time-wait-in-tests.json"
+      }
+    ],
+    "lootlog/no-test-timeout-or-unreasoned-skip": [
+      "error",
+      {
+        "baseline": "tools/oxlint/lootlog/baselines/no-test-timeout-or-unreasoned-skip.json"
+      }
+    ],
+    "lootlog/no-wall-clock-in-tests": [
+      "error",
+      {
+        "baseline": "tools/oxlint/lootlog/baselines/no-wall-clock-in-tests.json"
+      }
+    ],
+    "lootlog/require-suppression-reason": "error",
     "oxc/no-accumulating-spread": "error",
     "complexity": "error",
     "eqeqeq": "error",

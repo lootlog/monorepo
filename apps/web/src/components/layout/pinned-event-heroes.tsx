@@ -40,7 +40,7 @@ export const PinnedEventHeroes: FC<PinnedEventHeroesProps> = ({
   return (
     <span aria-hidden="true" className="flex shrink-0 items-end">
       {visibleHeroes.map((heroNpc, index) => (
-        // oxlint-disable-next-line eslint-plugin-next/no-img-element
+        // oxlint-disable-next-line eslint-plugin-next/no-img-element -- the web app is a Vite SPA without next/image
         <img
           key={heroNpc.id}
           src={npcIconUrl(heroNpc.npcIcon)}

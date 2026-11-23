@@ -7,9 +7,14 @@ import {
   AdminOrganizationsSearch,
   AdminUserOrganization,
   OrganizationAuditPage,
-  OrganizationLimits,
   SuspensionReason,
 } from "@lootlog/schema/admin-organizations";
+import {
+  AdminUserEntitlement,
+  OrganizationEntitlementChange,
+  UserEntitlementChange,
+  UserLimits,
+} from "@lootlog/schema/plans";
 import {
   NonNegativeSafeInteger,
   NpcTypes,
@@ -258,6 +263,11 @@ export class ApiRpcGroup extends RpcGroup.make(
     success: InternalMemberIdentityResponse,
     error: Schema.Union([RpcNotFoundError, RpcUnavailableError]),
   }).annotate(RpcCallers, ["discord-bot"]),
+  Rpc.make("getUserLimits", {
+    payload: { userId: Schema.NonEmptyString },
+    success: UserLimits,
+    error: RpcUnavailableError,
+  }).annotate(RpcCallers, ["auth"]),
   Rpc.make("getUserAccessibleGuilds", {
     payload: MemberActor,
     success: Schema.Array(RpcAccessibleGuild),
@@ -362,12 +372,12 @@ export class ApiRpcGroup extends RpcGroup.make(
   }).annotate(RpcCallers, ["discord-bot"]),
 ).middleware(CallerAuth) {}
 
-const AuraGrantUser = {
+const OperatorUser = {
   userId: Schema.NonEmptyString,
 };
 
-const AuraGrantByOperator = {
-  ...AuraGrantUser,
+const UserByOperator = {
+  ...OperatorUser,
   operatorUserId: Schema.NonEmptyString,
 };
 
@@ -389,20 +399,25 @@ export class ApiOperatorRpcGroup extends RpcGroup.make(
     error: RpcUnavailableError,
   }).annotate(RpcCallers, ["admin"]),
   Rpc.make("getCharacterAuraGrants", {
-    payload: AuraGrantUser,
+    payload: OperatorUser,
     success: CharacterAuraGrants,
     error: RpcUnavailableError,
   }).annotate(RpcCallers, ["admin"]),
-  Rpc.make("grantCharacterAuras", {
-    payload: AuraGrantByOperator,
-    error: RpcUnavailableError,
-  }).annotate(RpcCallers, ["admin"]),
   Rpc.make("grantPersonalCharacterAura", {
-    payload: { ...AuraGrantByOperator, auraId: PersonalCharacterAuraIdSchema },
+    payload: { ...UserByOperator, auraId: PersonalCharacterAuraIdSchema },
     error: RpcUnavailableError,
   }).annotate(RpcCallers, ["admin"]),
-  Rpc.make("revokeCharacterAuras", {
-    payload: AuraGrantUser,
+  Rpc.make("revokePersonalCharacterAuras", {
+    payload: OperatorUser,
+    error: RpcUnavailableError,
+  }).annotate(RpcCallers, ["admin"]),
+  Rpc.make("getUserEntitlement", {
+    payload: OperatorUser,
+    success: AdminUserEntitlement,
+    error: RpcUnavailableError,
+  }).annotate(RpcCallers, ["admin"]),
+  Rpc.make("setUserEntitlement", {
+    payload: { ...UserByOperator, change: UserEntitlementChange },
     error: RpcUnavailableError,
   }).annotate(RpcCallers, ["admin"]),
   Rpc.make("getOrganizationsOverview", {
@@ -434,8 +449,11 @@ export class ApiOperatorRpcGroup extends RpcGroup.make(
     success: OrganizationAuditPage,
     error: RpcUnavailableError,
   }).annotate(RpcCallers, ["admin"]),
-  Rpc.make("setOrganizationLimits", {
-    payload: { ...OrganizationByOperator, limits: OrganizationLimits },
+  Rpc.make("setOrganizationEntitlement", {
+    payload: {
+      ...OrganizationByOperator,
+      change: OrganizationEntitlementChange,
+    },
     error: OperatorReadError,
   }).annotate(RpcCallers, ["admin"]),
   Rpc.make("clearOrganizationVanityUrl", {

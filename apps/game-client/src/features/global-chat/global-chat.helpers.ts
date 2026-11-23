@@ -1,4 +1,4 @@
-import type { InfiniteData } from "@tanstack/react-query";
+import { replaceEqualDeep, type InfiniteData } from "@tanstack/react-query";
 import type {
   GlobalChatMessageResponse,
   GlobalChatMessagesResponse,
@@ -10,6 +10,7 @@ import {
   withChatDateDividers,
   type ChatDateDividerRow,
 } from "@/features/chat/chat.helpers";
+import { shareById } from "@/lib/share-by-id";
 import {
   GLOBAL_CHAT_SHARED_CHANNEL,
   type GlobalChatChannel,
@@ -51,6 +52,26 @@ export const appendGlobalChatMessage = (
     ...data,
     pages: [{ ...newest, messages: [...newest.messages, message] }, ...older],
   });
+};
+
+export const isGlobalChatPages = (data: unknown): data is GlobalChatPages =>
+  typeof data === "object" && data !== null && "pages" in data;
+
+export const shareGlobalChatPages = (
+  previous: GlobalChatPages,
+  next: GlobalChatPages,
+): GlobalChatPages => {
+  if (replaceEqualDeep(previous, next) === previous) return previous;
+
+  const previousMessages = previous.pages.flatMap((page) => page.messages);
+
+  return {
+    ...next,
+    pages: next.pages.map((page) => ({
+      ...page,
+      messages: [...shareById(previousMessages, page.messages)],
+    })),
+  };
 };
 
 const capGlobalChatHistory = (data: GlobalChatPages): GlobalChatPages => {

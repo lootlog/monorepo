@@ -39,18 +39,18 @@ export const useLocalCoverageTimer = (
   const gapType =
     statusGapType ?? (status === "ASSIGNED_UNKNOWN" ? fallbackGapType : null);
 
-  // oxlint-disable-next-line react-doctor/no-derived-state-effect
+  // oxlint-disable-next-line react-doctor/no-derived-state-effect -- the start time is read from the clock when the gap type changes, so it cannot be derived during render
   useEffect(() => {
     const prevGapType = prevGapTypeRef.current;
     prevGapTypeRef.current = gapType;
 
     if (gapType === null) {
       if (activeGapId) {
-        // oxlint-disable-next-line react-doctor/no-derived-state
+        // oxlint-disable-next-line react-doctor/no-derived-state -- a closed gap stays ignored after the backend stops reporting it
         setIgnoredGapId(activeGapId);
       }
 
-      // oxlint-disable-next-line react-doctor/no-adjust-state-on-prop-change
+      // oxlint-disable-next-line react-doctor/no-adjust-state-on-prop-change -- the timer stops in the same transition that records the ignored gap
       setStartTime(null);
 
       return;

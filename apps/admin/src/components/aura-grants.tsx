@@ -18,32 +18,17 @@ export function AuraGrants({
   const { run, pending } = useUserAction(user.id);
   const busy = pending !== undefined;
   const personal = new Set<string>(grants.personalAuraIds);
-  const anyGrant = grants.granted || personal.size > 0;
 
   return (
     <div className="flex flex-col gap-6">
       {grants.admin ? (
         <p className="text-sm text-muted-foreground">{text.aurasAdmin}</p>
       ) : null}
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-center gap-3">
-          <h3 className="text-sm font-semibold">{text.aurasGeneralHeading}</h3>
-          <GrantBadge granted={grants.granted} />
-        </div>
+      <div className="flex flex-wrap items-center gap-3">
+        <GrantBadge granted={grants.granted} />
         <p className="text-sm text-muted-foreground">
-          {text.aurasGeneralDescription}
+          {text.aurasGeneral(grants.granted)}
         </p>
-        {grants.granted ? null : (
-          <div>
-            <Button
-              loading={pending?.action === "grant-auras"}
-              disabled={busy}
-              onClick={() => void run({ action: "grant-auras" })}
-            >
-              {text.aurasGrant}
-            </Button>
-          </div>
-        )}
       </div>
       <div className="flex flex-col gap-3">
         <h3 className="text-sm font-semibold">{text.aurasPersonalHeading}</h3>
@@ -86,7 +71,7 @@ export function AuraGrants({
           })}
         </ul>
       </div>
-      {anyGrant ? (
+      {personal.size > 0 ? (
         <div>
           <ConfirmDialog
             title={text.aurasRevokeConfirmTitle(user.name)}
@@ -95,8 +80,8 @@ export function AuraGrants({
             cancelButtonLabel={text.cancel}
             confirmText={text.confirmWord}
             confirmLabel={text.confirmWordLabel(text.confirmWord)}
-            onConfirm={() => run({ action: "revoke-auras" })}
-            pending={pending?.action === "revoke-auras"}
+            onConfirm={() => run({ action: "revoke-personal-auras" })}
+            pending={pending?.action === "revoke-personal-auras"}
             trigger={
               <Button variant="destructive" disabled={busy}>
                 {text.aurasRevoke}

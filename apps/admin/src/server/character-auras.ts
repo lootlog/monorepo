@@ -21,13 +21,6 @@ export const getAuraGrants = (userId: string) =>
     ),
   );
 
-export const grantAuras = (userId: string) =>
-  asOperator(({ auth, api }, session) =>
-    Effect.flatMap(auth.getOperator(session), (operator) =>
-      api.grantCharacterAuras({ userId, operatorUserId: operator.userId }),
-    ),
-  );
-
 export const grantPersonalAura = (
   userId: string,
   auraId: PersonalCharacterAuraId,
@@ -42,10 +35,10 @@ export const grantPersonalAura = (
     ),
   );
 
-export const revokeAuras = (userId: string) =>
+export const revokePersonalAuras = (userId: string) =>
   asOperator(({ auth, api }, session) =>
     Effect.andThen(
       auth.getOperator(session),
-      api.revokeCharacterAuras({ userId }),
+      api.revokePersonalCharacterAuras({ userId }),
     ),
   );

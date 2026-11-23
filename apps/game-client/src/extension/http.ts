@@ -85,14 +85,14 @@ async function readBody(response: Response): Promise<string> {
 
   try {
     while (true) {
-      // oxlint-disable-next-line no-await-in-loop
+      // oxlint-disable-next-line no-await-in-loop -- a stream reader yields chunks one at a time
       const { done, value } = await reader.read();
 
       if (done) break;
       bytes += value.byteLength;
 
       if (bytes > MAX_EXTENSION_HTTP_BYTES) {
-        // oxlint-disable-next-line no-await-in-loop
+        // oxlint-disable-next-line no-await-in-loop -- the oversized stream is cancelled once, right before the loop throws
         await reader.cancel();
         throw new Error("Extension HTTP response is too large");
       }

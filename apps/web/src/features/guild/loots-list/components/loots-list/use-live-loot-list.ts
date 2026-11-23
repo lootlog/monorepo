@@ -176,6 +176,7 @@ export const useLiveLootList = () => {
 
   const [arrivedLootIds, setArrivedLootIds] = useState(EMPTY_LOOT_IDS);
 
+  // oxlint-disable-next-line lootlog/no-unreasoned-state-sync -- timer that clears the arrival highlight
   useEffect(() => {
     if (arrivedLootIds.size === 0) return;
 

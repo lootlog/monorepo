@@ -26,6 +26,7 @@ export const useTimerExpiryClock = (
       .filter((at) => at > now),
   );
 
+  // oxlint-disable-next-line lootlog/no-unreasoned-state-sync -- timer that advances the clock at the next timer expiry
   useEffect(() => {
     if (!Number.isFinite(nextExpiryAt)) return;
 

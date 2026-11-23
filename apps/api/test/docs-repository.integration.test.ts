@@ -17,6 +17,7 @@ import {
   guildDocumentTable,
 } from "../src/database/drizzle/guild-document.schema.js";
 import { guildTable } from "../src/database/drizzle/organization.schema.js";
+import { organizationEntitlementTable } from "../src/database/drizzle/plan.schema.js";
 import {
   DOCUMENT_HISTORY_RETAINED_ENTRIES,
   DocsPersistenceError,
@@ -38,6 +39,8 @@ const guildId = "docs-integration-guild";
 
 const otherGuildId = "docs-other-guild";
 
+const SEEDED_AT = new Date("2026-11-23T12:00:00.000Z");
+
 const create = () =>
   runtime.runPromise(
     Effect.flatMap(DocsRepository, (repository) =>
@@ -46,7 +49,6 @@ const create = () =>
         discordId: "editor-1",
         title: "Plan",
         content,
-        defaultLimit: 50,
       }),
     ),
   );
@@ -101,16 +103,20 @@ describe("DocsRepository against migrated PostgreSQL", () => {
             id: guildId,
             name: "Documents",
             ownerId: "owner",
-            documentLimit: 1,
-            updatedAt: new Date(),
+            updatedAt: SEEDED_AT,
           },
           {
             id: otherGuildId,
             name: "Other",
             ownerId: "other",
-            updatedAt: new Date(),
+            updatedAt: SEEDED_AT,
           },
         ]);
+        yield* db.insert(organizationEntitlementTable).values({
+          guildId,
+          documentLimit: 1,
+          updatedAt: SEEDED_AT,
+        });
       }),
     );
   });

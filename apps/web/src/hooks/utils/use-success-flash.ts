@@ -5,6 +5,7 @@ const SUCCESS_SHOWN_MS = 1200;
 export function useSuccessFlash() {
   const [shown, setShown] = useState(false);
 
+  // oxlint-disable-next-line lootlog/no-unreasoned-state-sync -- timer that hides the success flash
   useEffect(() => {
     if (!shown) return;
 

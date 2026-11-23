@@ -2,10 +2,11 @@ import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { afterAll, beforeEach, describe, expect, it } from "bun:test";
 import { eq, inArray } from "drizzle-orm";
 import { Effect, Layer, ManagedRuntime } from "effect";
-import {
-  CUSTOM_THEME_LIMIT,
-  type CustomThemeDefinition,
-} from "@lootlog/schema/custom-theme";
+import type { CustomThemeDefinition } from "@lootlog/schema/custom-theme";
+import { USER_PLANS } from "../src/plans/plan-catalog.js";
+
+const CUSTOM_THEME_LIMIT = USER_PLANS.free.customThemes;
+
 import {
   ApiDatabase,
   ApiDatabaseLive,
@@ -135,9 +136,14 @@ describe("User themes against migrated PostgreSQL", () => {
       CUSTOM_THEME_LIMIT,
     );
     expect(await as(owner, getUserThemes())).toHaveLength(CUSTOM_THEME_LIMIT);
-    expect(
-      await failureOf(owner, createUserTheme({ name: "x", definition })),
-    ).toBeInstanceOf(UserThemeLimitReached);
+
+    const failure = await failureOf(
+      owner,
+      createUserTheme({ name: "x", definition }),
+    );
+
+    expect(failure).toBeInstanceOf(UserThemeLimitReached);
+    expect(failure).toMatchObject({ customThemeLimit: CUSTOM_THEME_LIMIT });
     expect(await create(stranger)).toMatchObject({ name: "Mój motyw" });
   });
 

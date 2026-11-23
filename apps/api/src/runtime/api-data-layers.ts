@@ -35,6 +35,12 @@ import {
 import { chatData } from "#src/runtime/features/chat";
 import { globalChatData } from "#src/runtime/features/global-chat";
 import { characterAurasData } from "#src/runtime/features/character-auras";
+import { userPlansDataLayer } from "#src/plans/user-plans";
+
+const userPlansData = userPlansDataLayer.pipe(
+  Layer.provide(characterAurasData),
+);
+
 import { organizationOperatorData } from "#src/runtime/features/organization-operator";
 import { messagingData } from "#src/runtime/features/messaging";
 import { publicSystemData } from "#src/runtime/features/public-system";
@@ -74,6 +80,7 @@ const coreDataLayers = Layer.mergeAll(
   chatData,
   globalChatData,
   characterAurasData,
+  userPlansData,
   organizationOperatorData,
   userLootlogConfigData,
   rolesData,
@@ -116,7 +123,7 @@ export const apiDataLayers = Layer.mergeAll(
   readyRoomPublications,
   BullWorkers,
   RabbitConsumers.pipe(Layer.provide(readyRoomData)),
-  ScheduledJobs,
+  ScheduledJobs.pipe(Layer.provide(userPlansData)),
 ).pipe(
   Layer.provide(notificationsServicesLive),
   Layer.provide(eventsServicesLive),

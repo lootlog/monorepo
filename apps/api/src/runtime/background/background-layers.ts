@@ -26,6 +26,7 @@ import { acquireNotificationDispatchWorker } from "#src/runtime/queues/notificat
 import { apiRabbitRoutes } from "#src/runtime/infrastructure/api-rabbit";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 import { forkCronTask } from "#src/runtime/background/cron";
+import { UserPlansData } from "#src/plans/user-plans";
 import { makeMemberKillPurge } from "#src/kills/member-kill-purge";
 import {
   makeRabbitConsumer,
@@ -275,6 +276,16 @@ export const ScheduledJobs = Layer.effectDiscard(
         ),
       ),
       "30 2-5 * * *",
+    );
+    const plans = yield* UserPlansData;
+
+    yield* forkCronTask(
+      plans.announceExpiredPlans.pipe(
+        Effect.catch((error) =>
+          Effect.logError("Expired plan announcement failed", error),
+        ),
+      ),
+      "* * * * *",
     );
     yield* forkCronTask(cleanupTimers, "0 3 * * *");
     yield* forkCronTask(cleanupReservations, "0 4 * * *");

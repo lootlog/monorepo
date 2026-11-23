@@ -1,1 +1,0 @@
-export const USER_WATCHED_ITEMS_LIMIT = 20;

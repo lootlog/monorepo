@@ -4,7 +4,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@lootlog/ui/components/chart";
-// oxlint-disable-next-line react-doctor/prefer-dynamic-import
+// oxlint-disable-next-line react-doctor/prefer-dynamic-import -- this chart module is itself the lazily loaded chunk
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { useTranslation } from "react-i18next";
 import {

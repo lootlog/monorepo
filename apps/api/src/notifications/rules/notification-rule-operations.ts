@@ -12,11 +12,12 @@ import {
   readNotificationTestUsage,
 } from "../jobs/notification-test-usage.js";
 import { randomUUID } from "node:crypto";
-import { and, count, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import type { AccountOrganizationOperationError } from "#src/guilds/account-organization-data";
-import { guildTable } from "#src/database/drizzle/organization.schema";
+import { readOrganizationLimits } from "#src/plans/entitlements";
+import { notificationRuleLimits } from "./notification-rule-limits.js";
 import {
   notificationRuleTable,
   notificationRuleTargetTable,
@@ -48,8 +49,6 @@ import {
 const TEST_LIMIT = 10;
 
 const MAX_NPCS_PER_RULE = 5;
-
-const USER_RULE_LIMIT = 50;
 
 export interface NotificationRuleDependencies {
   readonly ensureGuildPermissions: (
@@ -87,6 +86,8 @@ export const makeNotificationRuleOperations = (
   database: ApiDatabaseValue,
   dependencies: NotificationRuleDependencies,
 ) => {
+  const limits = notificationRuleLimits(database);
+
   const loadRules = (ownerType: NotificationOwnerTypeValue, ownerId: string) =>
     Effect.gen(function* () {
       const organizations = yield* apiKeyAccessibleGuilds(database);
@@ -163,23 +164,11 @@ export const makeNotificationRuleOperations = (
   const listGuild = Effect.fn("notifications.rules.listGuild")(function* (
     guildId: string,
   ) {
-    const [loadedRules, guildRows, counts] = yield* Effect.all(
+    const [loadedRules, organizationLimits, ruleCount] = yield* Effect.all(
       [
         loadRules(NotificationOwnerType.GUILD, guildId),
-        database
-          .select({ notificationRuleLimit: guildTable.notificationRuleLimit })
-          .from(guildTable)
-          .where(eq(guildTable.id, guildId))
-          .limit(1),
-        database
-          .select({ value: count() })
-          .from(notificationRuleTable)
-          .where(
-            and(
-              eq(notificationRuleTable.ownerType, NotificationOwnerType.GUILD),
-              eq(notificationRuleTable.ownerId, guildId),
-            ),
-          ),
+        readOrganizationLimits(database, guildId),
+        limits.countGuildRules(guildId),
       ],
       { concurrency: 3 },
     );
@@ -203,8 +192,8 @@ export const makeNotificationRuleOperations = (
         ),
       })),
       limits: {
-        ruleLimit: guildRows[0]?.notificationRuleLimit ?? 20,
-        ruleCount: counts[0]?.value ?? loadedRules.length,
+        ruleLimit: organizationLimits.notificationRules,
+        ruleCount,
         maxNpcsPerRule: MAX_NPCS_PER_RULE,
         testTriggerLimit: TEST_LIMIT,
         testTriggerWindowSeconds: Math.floor(
@@ -312,56 +301,6 @@ export const makeNotificationRuleOperations = (
       ),
     );
 
-  const ensureRuleLimit = (
-    ownerType: NotificationOwnerTypeValue,
-    ownerId: string,
-  ) =>
-    Effect.gen(function* () {
-      const counts = yield* database
-        .select({ value: count() })
-        .from(notificationRuleTable)
-        .where(
-          and(
-            eq(notificationRuleTable.ownerType, ownerType),
-            eq(notificationRuleTable.ownerId, ownerId),
-          ),
-        );
-
-      const ruleCount = counts[0]?.value ?? 0;
-
-      if (ownerType === NotificationOwnerType.USER) {
-        if (ruleCount >= USER_RULE_LIMIT) {
-          return yield* new ResourceConflictError({
-            code: NotificationError.USER_NOTIFICATION_RULE_LIMIT_REACHED,
-            details: { ruleLimit: USER_RULE_LIMIT, ruleCount },
-          });
-        }
-
-        return;
-      }
-
-      const guilds = yield* database
-        .select({ notificationRuleLimit: guildTable.notificationRuleLimit })
-        .from(guildTable)
-        .where(eq(guildTable.id, ownerId))
-        .limit(1);
-
-      const guild = guilds[0];
-
-      if (!guild) {
-        return yield* new ResourceNotFoundError({
-          code: NotificationError.GUILD_NOT_FOUND,
-        });
-      }
-
-      if (ruleCount >= guild.notificationRuleLimit) {
-        return yield* new ResourceConflictError({
-          code: NotificationError.GUILD_NOTIFICATION_RULE_LIMIT_REACHED,
-          details: { ruleLimit: guild.notificationRuleLimit, ruleCount },
-        });
-      }
-    });
-
   const invalidRuleValues = (cause: unknown) =>
     cause instanceof InvalidRequestError
       ? cause
@@ -372,8 +311,6 @@ export const makeNotificationRuleOperations = (
     ownerId: string,
     data: CreateNotificationRuleRequest,
   ) {
-    yield* ensureRuleLimit(ownerType, ownerId);
-
     const targetIds = yield* validateTargetIds(
       ownerType,
       ownerId,
@@ -630,12 +567,19 @@ export const makeNotificationRuleOperations = (
       dependencies
         .ensureGuildPermissions(guildId)
         .pipe(
-          Effect.flatMap(() =>
-            create(NotificationOwnerType.GUILD, guildId, data),
-          ),
+          Effect.andThen(limits.ensureGuildRuleLimit(guildId)),
+          Effect.andThen(create(NotificationOwnerType.GUILD, guildId, data)),
         ),
-    createUser: (discordId: string, data: CreateNotificationRuleRequest) =>
-      create(NotificationOwnerType.USER, discordId, data),
+    createUser: (
+      discordId: string,
+      userId: string,
+      data: CreateNotificationRuleRequest,
+    ) =>
+      limits
+        .ensureUserRuleLimit(discordId, userId)
+        .pipe(
+          Effect.andThen(create(NotificationOwnerType.USER, discordId, data)),
+        ),
     deleteGuild: (guildId: string, ruleId: number) =>
       remove(NotificationOwnerType.GUILD, guildId, ruleId),
     deleteUser: (discordId: string, ruleId: number) =>

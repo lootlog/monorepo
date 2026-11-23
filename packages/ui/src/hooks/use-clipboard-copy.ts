@@ -7,6 +7,7 @@ const FEEDBACK_SHOWN_MS = 2000;
 export function useClipboardCopy() {
   const [state, setState] = useState<ClipboardCopyState>("idle");
 
+  // oxlint-disable-next-line lootlog/no-unreasoned-state-sync -- timer that returns copy feedback to idle
   useEffect(() => {
     if (state !== "copied" && state !== "failed") return;
 

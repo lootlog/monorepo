@@ -1,7 +1,6 @@
 import { useWatchableItemActions } from "./use-watchable-item-actions";
 import { type ItemTileProps, ItemTile } from "@/components/tiles/item-tile";
 import type { Item } from "@/lib/loots/loot-types";
-import { USER_WATCHED_ITEMS_LIMIT } from "@/lib/user-notifications/user-watched-items-limit";
 import type { WatchedItemScope } from "@/lib/user-notifications/watched-item-scope";
 import { wikiItemUrl } from "@lootlog/domain/wiki-links";
 import { WikiContextMenuItem } from "@/components/common/wiki-context-menu-item";
@@ -46,6 +45,7 @@ export const WatchableItemTile = ({
     isRemovePending,
     effectiveGuildId,
     isWatchedItemLimitReached,
+    watchedItemsLimit,
     isWatchedInScope,
     showAddAction,
     showDmRequired,
@@ -191,7 +191,7 @@ export const WatchableItemTile = ({
             <>
               <ContextMenuItem disabled>
                 {t("settings.userNotifications.quickAdd.limitReached", {
-                  limit: USER_WATCHED_ITEMS_LIMIT,
+                  limit: watchedItemsLimit,
                 })}
               </ContextMenuItem>
               <ContextMenuSeparator />

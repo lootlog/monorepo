@@ -103,8 +103,8 @@ export const makeEventRespawnCommands = (
       publisher.publish(routingKey, payload),
     );
 
-  return {
-    open: Effect.fn("EventsMonitoringController_openRespawnWindow")(function* (
+  const open = Effect.fn("EventsMonitoringController_openRespawnWindow")(
+    function* (
       guild: { id: string },
       eventId: string,
       heroId: string,
@@ -236,17 +236,20 @@ export const makeEventRespawnCommands = (
       );
 
       return { success: true, minSpawnTime, maxSpawnTime };
-    }),
+    },
+  );
 
-    // @effect-diagnostics-next-line effectFnOpportunity:off
-    close: (
-      guild: { id: string },
-      eventId: string,
-      heroId: string,
-      data: CloseRespawnWindowRequest,
-      actorMemberId: number,
-    ) =>
-      Effect.gen(function* () {
+  return {
+    open,
+
+    close: Effect.fn("EventsMonitoringController_closeRespawnWindow")(
+      function* (
+        guild: { id: string },
+        eventId: string,
+        heroId: string,
+        data: CloseRespawnWindowRequest,
+        actorMemberId: number,
+      ) {
         const heroRows = yield* query(
           "events.respawn.close.hero",
           queryEventHero(database, guild.id, eventId, heroId),
@@ -297,13 +300,7 @@ export const makeEventRespawnCommands = (
             );
           }
 
-          yield* makeEventRespawnCommands(
-            database,
-            redis,
-            timers,
-            publisher,
-            manualKill,
-          ).open(
+          yield* open(
             guild,
             eventId,
             heroId,
@@ -316,7 +313,8 @@ export const makeEventRespawnCommands = (
         }
 
         return { success: true };
-      }).pipe(Effect.withSpan("EventsMonitoringController_closeRespawnWindow")),
+      },
+    ),
   };
 };
 

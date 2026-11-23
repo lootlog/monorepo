@@ -12,7 +12,8 @@ import { and, eq } from "drizzle-orm";
 import { Effect, Redacted } from "effect";
 import type { ApiDatabaseValue } from "../src/database/drizzle/database.js";
 import { memberTable } from "../src/database/drizzle/organization.schema.js";
-import { userCharacterAuraGrantTable } from "../src/database/drizzle/user.schema.js";
+import { USER_PLANS } from "../src/plans/plan-catalog.js";
+import { omit } from "es-toolkit";
 import {
   authorizedGuildId,
   caller,
@@ -97,53 +98,68 @@ describe("API RPC boundary", () => {
     expect(["RpcForbiddenError", "RpcNotFoundError"]).toContain(stranger._tag);
   });
 
-  it("lets only the panel's edge grant and revoke auras, which decides whether the User may choose one", async () => {
+  it("lets only the panel's edge set a User's plan, which decides whether the User may choose an aura and how much they may hold", async () => {
     const ownAura = async () =>
       (await request("/users/@me/character-aura")).json();
 
-    const grant = {
+    const limits = async () => (await request("/users/@me/limits")).json();
+
+    const premium = {
       userId: caller.userId,
       operatorUserId: "operator-1",
+      change: {
+        grant: { plan: "premium" as const, validUntil: null },
+        overrides: {
+          notificationRules: null,
+          watchedItems: null,
+          customThemes: null,
+          apiKeys: null,
+          characterAuras: null,
+        },
+      },
     };
 
     const refused = await callOperatorRpc(TEST_RPC_TOKEN, (client) =>
-      client.grantCharacterAuras(grant).pipe(Effect.flip),
+      client.setUserEntitlement(premium).pipe(Effect.flip),
     );
 
     expect(refused).toBeInstanceOf(RpcCallerRejectedError);
     expect(await ownAura()).toMatchObject({ canChange: false });
+    expect(await limits()).toEqual(omit(USER_PLANS.free, ["characterAuras"]));
 
-    const grants = await callOperatorRpc(ADMIN_RPC_TOKEN, (client) =>
+    const entitlement = await callOperatorRpc(ADMIN_RPC_TOKEN, (client) =>
       Effect.andThen(
-        client.grantCharacterAuras(grant),
-        client.getCharacterAuraGrants({ userId: caller.userId }),
+        client.setUserEntitlement(premium),
+        client.getUserEntitlement({ userId: caller.userId }),
       ),
     );
 
-    expect(grants).toEqual({
-      admin: false,
-      granted: true,
-      personalAuraIds: [],
+    expect(entitlement).toMatchObject({
+      activePlan: "premium",
+      effective: USER_PLANS.premium,
+      changed: { by: "operator-1" },
     });
     expect(await ownAura()).toMatchObject({ canChange: true });
-    expect(
-      await databaseRuntime.runPromise(
-        database
-          .select({ granter: userCharacterAuraGrantTable.grantedByUserId })
-          .from(userCharacterAuraGrantTable)
-          .where(eq(userCharacterAuraGrantTable.userId, caller.userId)),
-      ),
-    ).toEqual([{ granter: "operator-1" }]);
+    expect(await limits()).toEqual(
+      omit(USER_PLANS.premium, ["characterAuras"]),
+    );
 
     const holders = await callOperatorRpc(ADMIN_RPC_TOKEN, (client) =>
       Effect.andThen(
-        client.revokeCharacterAuras({ userId: caller.userId }),
+        client.setUserEntitlement({
+          ...premium,
+          change: {
+            ...premium.change,
+            grant: { plan: "free", validUntil: null },
+          },
+        }),
         client.listCharacterAuraGrantHolders(),
       ),
     );
 
     expect(holders).toEqual({ holders: [] });
     expect(await ownAura()).toMatchObject({ canChange: false });
+    expect(await limits()).toEqual(omit(USER_PLANS.free, ["characterAuras"]));
   });
 
   it("resolves a member identity only for an active member of that Organization", async () => {

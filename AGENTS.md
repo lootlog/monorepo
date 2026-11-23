@@ -104,6 +104,9 @@ Preserve unrelated user changes in the working tree. Assume the application is
 already running; do not start it. Keep temporary plans, research, and agent
 scratch files outside tracked repository paths.
 
+Before changing code in an area, read its decision records:
+`docs/adr/README.md` maps areas to records.
+
 <!-- CODEGRAPH_START -->
 
 ### CodeGraph
@@ -234,7 +237,16 @@ Before calling a change complete, account for every applicable item:
 ## Implementation rules
 
 - React Compiler owns memoization. Add `memo`, `useMemo`, or `useCallback` only
-  for a measured integration constraint.
+  for a measured integration constraint, measured with
+  `bun run render-metrics` (ADR 0011). Every React source compiles without a
+  bailout (`scripts/react-compiler-coverage.test.ts`); restructure the code
+  that bails out.
+- Derive values during render and act in handlers. A React effect stays only
+  when it keeps something outside React in step while mounted, and says what
+  in its suppression:
+  `// oxlint-disable-next-line lootlog/no-unreasoned-state-sync -- <what it syncs>`.
+  Every lint, `@ts-*`, and `@effect-diagnostics` suppression carries its
+  reason the same way (`lootlog/require-suppression-reason`).
 - Keep one React component per file. Put all user-facing static text behind
   i18n; Polish is the supported player-facing product language. The developer
   portal and integration documentation use English.
@@ -260,11 +272,12 @@ Before calling a change complete, account for every applicable item:
   Use a full raw SQL query only for a demonstrated builder limitation, and
   explain that limitation alongside the query. Verify generated SQL and relevant
   PostgreSQL behavior when query structure or performance matters.
-- Write no prose comments; `lootlog-comments/no-comments` enforces it, and
-  `tools/oxlint/comments/baseline.json` only shrinks. Name the concept in
-  code, record a non-obvious decision in its `docs/adr` record, and file an
-  issue instead of excusing a hack. Run `bun run comments:ratchet --update`
-  after deleting comments.
+- Write no prose comments; `lootlog-comments/no-comments` enforces it. Name
+  the concept in code, record a non-obvious decision in its `docs/adr`
+  record, and file an issue instead of excusing a hack.
+- A lint rule configured with a `baseline` file is a ratchet: its per-file
+  budgets only shrink. Run `bun run lint:ratchet --update` after removing
+  findings.
 - Import from the module that owns a symbol. Do not create source files that
   only re-export symbols.
 - When importing node built-in modules, first, look for Bun built-ins and only then Node built-ins.
@@ -339,54 +352,15 @@ find it unchanged on the next.
   affected OpenAPI specifications and generated clients, and update callers
   and contract checks for the intended behavior. Run `bun run client:check`
   before pushing; successful generation alone is not verification.
-- Run `bun run knip` from the repository root before committing. It reports
-  exports, files, and dependencies that nothing uses any more, which a
-  simplification or a deleted caller leaves behind and no per-workspace lint
-  or typecheck catches. Remove the leftover or drop its `export`.
-- Tests must protect observable behavior, business invariants, real
-  regressions, authorization boundaries, or meaningful integration contracts.
-  Each test must answer: “What real regression would this catch?”
-- Add tests only for a concrete logic regression: name the incorrect outcome
-  they prevent. Prefer extending an existing behavioral test over creating a
-  new suite or fixture. For mechanical replacements with standard-library or
-  dependency utilities, rely on existing coverage; add tests only for Lootlog
-  behavior that the replacement could change, not the utility itself.
-- Never test the language, the runtime, or a framework primitive. A test whose
-  assertions transcribe the implementation — an operator, a comparison, a
-  nullish check, a default value, a type guard, a pass-through argument — proves
-  only that JavaScript works. Delete it instead of writing it. Coverage is not a
-  goal: a test earns its place by naming a realistic incorrect outcome a future
-  change could produce, and by failing when that outcome occurs.
-- For styling, layout, or copy-only changes, use existing visual inspection and
-  lint/typecheck. Do not add tests for literal text rendering, CSS classes or
-  values, DOM nesting, decorative animations, or the absence of deleted UI.
-  Do not commit temporary design/verification pages unless explicitly requested.
-- Skip tests that count symbols or modules, mirror private forwarding or wiring,
-  restate the type system, validate their own fixtures instead of actual output,
-  or merely exercise framework mechanics. Broad snapshots are not a substitute
-  for behavioral assertions.
-- Treat UI primitives copied from shadcn or wrapping Base UI (`components/ui`
-  in any app, `packages/ui`) as vendored: the library owns their tests. Test
-  them only where Lootlog adds logic of its own, such as value mapping or
-  event forwarding; a `data-*` attribute, class, size variant, or a prop that
-  passes straight through to the primitive is not Lootlog logic.
-- Keep UI tests for meaningful behavior: authorization, user input, state
-  transitions, persistence, failure recovery, and keyboard/accessibility
-  interactions. Assert outcomes, not presentation details; remove incidental
-  style and copy assertions from otherwise useful tests.
-- Keep E2E fakes at genuine external boundaries. Verify resulting state, not
-  only status codes, and never mock the unit under test or internal application
-  layers.
-- Prove a Redis Lua script against a real Dragonfly through testcontainers. A
-  fake that re-implements the script in TypeScript proves only the fake; keep
-  such a fake for the TypeScript logic around the script.
-- Add contract or end-to-end coverage when a change crosses Game client, HTTP,
-  RabbitMQ, gateway, or generated-client boundaries. Game client runtime,
-  adapter, processor, projection, and domain-store changes require relevant
-  characterization tests.
-- Preserve golden expectations until an intended behavior change has been
-  established independently. Documentation-only changes do not require
-  application tests.
+- Before committing, run `bun run check:changed` (the pre-commit hook runs it
+  too). It runs CI's fast checks for the branch's changes, uncommitted files
+  included: format, lint and typecheck of the packages CI plans, the tests
+  beside changed files, knip, the lint ratchet, and `client:check` when CI
+  would run it, then lists what remains for CI. Knip reports exports, files,
+  and dependencies that a simplification or a deleted caller leaves behind;
+  remove the leftover or drop its `export`.
+- Gate every new or changed test with the `test-audit` skill; its Test policy
+  is this repository's rule for what to test and how.
 
 ## Delivery
 

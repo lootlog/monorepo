@@ -60,6 +60,8 @@ const INLINE_CLASS_NAMES = {
   },
 } as const;
 
+const DEFAULT_MARK = <LootlogMark className="size-7" />;
+
 export function PortalHeader({
   title,
   section,
@@ -69,7 +71,7 @@ export function PortalHeader({
   search,
   compactSearch,
   status,
-  mark = <LootlogMark className="size-7" />,
+  mark = DEFAULT_MARK,
   actions,
   inlineFrom = "md",
   labels,

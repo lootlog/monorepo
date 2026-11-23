@@ -1,6 +1,8 @@
-import { getApiErrorStringField } from "@lootlog/client/transport";
 import {
-  CUSTOM_THEME_LIMIT,
+  getApiErrorNumberDetail,
+  getApiErrorStringField,
+} from "@lootlog/client/transport";
+import {
   CUSTOM_THEME_NAME_MAX_LENGTH,
   type CustomThemeDefinition,
 } from "@lootlog/schema/custom-theme";
@@ -21,14 +23,18 @@ export const useCreateTheme = () => {
       {
         onSuccess: (theme) =>
           navigate({ to: ROUTES.user.settings.theme(theme.id) }),
-        onError: (error) =>
-          toast.error(
+        onError: (error) => {
+          const limit =
             getApiErrorStringField(error, "code") === "USER_THEME_LIMIT_REACHED"
-              ? t("settings.appearance.customSection.limitReached", {
-                  limit: CUSTOM_THEME_LIMIT,
-                })
-              : t("settings.appearance.createError"),
-          ),
+              ? getApiErrorNumberDetail(error, "customThemeLimit")
+              : undefined;
+
+          toast.error(
+            limit === undefined
+              ? t("settings.appearance.createError")
+              : t("settings.appearance.customSection.limitReached", { limit }),
+          );
+        },
       },
     );
 

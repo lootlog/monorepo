@@ -27,8 +27,6 @@ export const BuiltInThemeIdSchema = Schema.Literals(BUILT_IN_THEME_IDS);
 
 export type BuiltInThemeId = typeof BuiltInThemeIdSchema.Type;
 
-export const CUSTOM_THEME_LIMIT = 10;
-
 export const CUSTOM_THEME_NAME_MAX_LENGTH = 40;
 
 export const CUSTOM_THEME_PREFERENCE_PREFIX = "custom:";

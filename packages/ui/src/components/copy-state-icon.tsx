@@ -8,10 +8,7 @@ type CopyStateIconProps = {
   idleIcon?: ReactNode;
 };
 
-export function CopyStateIcon({
-  state,
-  idleIcon = <CopyIcon aria-hidden="true" />,
-}: CopyStateIconProps) {
+export function CopyStateIcon({ state, idleIcon }: CopyStateIconProps) {
   if (state === "copied") {
     return <SuccessCheckIcon key="copied" />;
   }
@@ -26,5 +23,5 @@ export function CopyStateIcon({
     );
   }
 
-  return idleIcon;
+  return idleIcon ?? <CopyIcon aria-hidden="true" />;
 }
