@@ -36,7 +36,13 @@ const entitle = (
   userId: string,
   change: Parameters<typeof writeUserEntitlement>[2],
 ) =>
-  writeUserEntitlement(boundary.database, userId, change, "admin", new Date());
+  writeUserEntitlement(
+    boundary.database,
+    userId,
+    change,
+    "admin",
+    new Date(Date.UTC(2026, 10, 2)),
+  );
 
 const withGrants = (boundary: Boundary, data: AurasData) => ({
   ...data,
@@ -558,7 +564,7 @@ describe("character auras", () => {
       entitle(boundary, "player", {
         grant: {
           plan: "premium",
-          validUntil: new Date(Date.now() + 60 * 60 * 1_000).toISOString(),
+          validUntil: new Date(Date.UTC(2999, 0, 1)).toISOString(),
         },
         overrides: NO_OVERRIDES,
       }),
@@ -574,7 +580,7 @@ describe("character auras", () => {
     await boundary.run(
       boundary.database
         .update(userEntitlementTable)
-        .set({ planValidUntil: new Date(Date.now() - 1_000) })
+        .set({ planValidUntil: new Date(Date.UTC(2000, 0, 1)) })
         .where(eq(userEntitlementTable.userId, "player")),
     );
 

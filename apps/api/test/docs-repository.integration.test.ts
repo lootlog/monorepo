@@ -101,19 +101,19 @@ describe("DocsRepository against migrated PostgreSQL", () => {
             id: guildId,
             name: "Documents",
             ownerId: "owner",
-            updatedAt: new Date(),
+            updatedAt: new Date(Date.UTC(2026, 10, 2)),
           },
           {
             id: otherGuildId,
             name: "Other",
             ownerId: "other",
-            updatedAt: new Date(),
+            updatedAt: new Date(Date.UTC(2026, 10, 2)),
           },
         ]);
         yield* db.insert(organizationEntitlementTable).values({
           guildId,
           documentLimit: 1,
-          updatedAt: new Date(),
+          updatedAt: new Date(Date.UTC(2026, 10, 2)),
         });
       }),
     );
