@@ -68,7 +68,7 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
         <span
           key={phaseFlashCount}
           aria-hidden="true"
-          className="ll-timer-phase-flash ll:pointer-events-none ll:absolute ll:inset-0 ll:bg-current"
+          className="ll-timer-phase-flash ll:pointer-events-none ll:absolute ll:inset-0 ll:bg-current ll:opacity-0"
         />
       ) : null}
       <span
