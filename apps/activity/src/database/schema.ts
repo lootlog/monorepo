@@ -13,6 +13,7 @@ import {
   text,
   timestamp,
   uniqueIndex,
+  uuid,
 } from "drizzle-orm/pg-core";
 
 export const activityType = pgEnum("ActivityType", [
@@ -81,14 +82,6 @@ export const activities = pgTable(
     uniqueIndex("Activity_idempotencyKey_createdAt_key").on(
       table.idempotencyKey,
       table.createdAt,
-    ),
-    index("Activity_createdAt_guildId_idx").on(
-      desc(table.createdAt),
-      table.guildId,
-    ),
-    index("Activity_createdAt_userId_idx").on(
-      desc(table.createdAt),
-      table.userId,
     ),
     index("Activity_createdAt_type_idx").on(desc(table.createdAt), table.type),
     index("Activity_guildId_createdAt_idx").on(
@@ -162,16 +155,18 @@ export const userOnlineIntervals = pgTable(
   "UserOnlineInterval",
   {
     userId: text().notNull(),
-    sessionId: text().notNull(),
-    segmentId: text().notNull(),
+    sessionId: uuid().notNull(),
+    segmentStartedAt: timestamp({ withTimezone: true, mode: "date" }).notNull(),
     world: text(),
     startedAt: timestamp({ withTimezone: true, mode: "date" }).notNull(),
     endedAt: timestamp({ withTimezone: true, mode: "date" }).notNull(),
     observedAt: timestamp({ withTimezone: true, mode: "date" }).notNull(),
   },
   (table) => [
-    primaryKey({ columns: [table.userId, table.sessionId, table.segmentId] }),
-    index("UserOnlineInterval_startedAt_idx").on(table.startedAt),
+    primaryKey({
+      columns: [table.userId, table.sessionId, table.segmentStartedAt],
+    }),
+    index("UserOnlineInterval_startedAt_idx").using("brin", table.startedAt),
     check(
       "UserOnlineInterval_check",
       sql`${table.endedAt} >= ${table.startedAt} AND ${table.observedAt} >= ${table.endedAt}`,

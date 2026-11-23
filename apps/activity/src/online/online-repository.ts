@@ -10,7 +10,10 @@ import {
   type ActivityDatabaseFailure,
 } from "#src/database/database";
 import { userOnlineDays, userOnlineIntervals } from "#src/database/schema";
-import type { UserOnlineEventV1 } from "@lootlog/protocol/rabbit/events";
+import type {
+  UserOnlineCheckpointV1,
+  UserOnlineEventV1,
+} from "@lootlog/protocol/rabbit/events";
 import type {
   UserOnlineQuery,
   UserOnlineResponse,
@@ -20,6 +23,14 @@ export class OnlineIngestRejected extends TaggedErrorClass<
   OnlineIngestRejected,
   { readonly brand: unique symbol }
 >()("OnlineIngestRejected", { message: Schema.String }) {}
+
+const isSessionId = Schema.is(Schema.String.check(Schema.isGUID()));
+
+const isGatewaySegment = (event: UserOnlineCheckpointV1) =>
+  isSessionId(event.sessionId) &&
+  event.segmentId.startsWith(`${event.sessionId}:`) &&
+  Number(event.segmentId.slice(event.sessionId.length + 1)) ===
+    Date.parse(event.startedAt);
 
 export interface OnlineRepositoryValue {
   readonly ingest: (
@@ -75,6 +86,11 @@ export class OnlineRepository extends Context.Service<
           });
         }
 
+        if (!isGatewaySegment(event))
+          return yield* new OnlineIngestRejected({
+            message: "Online segment id does not match its session and start",
+          });
+
         const cutoff = onlineHistoryCutoff(now);
 
         if (Date.parse(event.endedAt) <= Date.parse(cutoff)) return;
@@ -85,10 +101,10 @@ export class OnlineRepository extends Context.Service<
               wasKnown: boolean;
             }>`WITH prior AS (
               SELECT 1 FROM "UserOnlineInterval"
-              WHERE "userId" = ${event.userId} AND "sessionId" = ${event.sessionId} AND "segmentId" = ${event.segmentId} AND "world" IS NOT NULL
-            ) INSERT INTO "UserOnlineInterval" ("userId", "sessionId", "segmentId", "world", "startedAt", "endedAt", "observedAt")
-          VALUES (${event.userId}, ${event.sessionId}, ${event.segmentId}, ${event.world ?? null}, GREATEST(${event.startedAt}::timestamptz, ${cutoff}::timestamptz), ${event.endedAt}::timestamptz, ${event.observedAt}::timestamptz)
-          ON CONFLICT ("userId", "sessionId", "segmentId") DO UPDATE
+              WHERE "userId" = ${event.userId} AND "sessionId" = ${event.sessionId}::uuid AND "segmentStartedAt" = ${event.startedAt}::timestamptz AND "world" IS NOT NULL
+            ) INSERT INTO "UserOnlineInterval" ("userId", "sessionId", "segmentStartedAt", "world", "startedAt", "endedAt", "observedAt")
+          VALUES (${event.userId}, ${event.sessionId}::uuid, ${event.startedAt}::timestamptz, ${event.world ?? null}, GREATEST(${event.startedAt}::timestamptz, ${cutoff}::timestamptz), ${event.endedAt}::timestamptz, ${event.observedAt}::timestamptz)
+          ON CONFLICT ("userId", "sessionId", "segmentStartedAt") DO UPDATE
           SET "world" = CASE WHEN "UserOnlineInterval"."world" IS NULL OR EXCLUDED."world" IS NULL THEN NULL ELSE "UserOnlineInterval"."world" END,
               "startedAt" = GREATEST("UserOnlineInterval"."startedAt", EXCLUDED."startedAt"),
               "endedAt" = GREATEST("UserOnlineInterval"."endedAt", EXCLUDED."endedAt"),

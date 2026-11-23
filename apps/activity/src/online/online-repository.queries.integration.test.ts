@@ -139,6 +139,12 @@ describe("durable private online history queries and ingestion", () => {
           .pipe(Effect.exit);
 
         expect(changedWorld._tag).toBe("Failure");
+
+        const movedStart = yield* repo
+          .ingest({ ...known, startedAt: "2026-09-04T21:30:00Z" })
+          .pipe(Effect.exit);
+
+        expect(movedStart._tag).toBe("Failure");
         yield* repo.ingest(
           checkpoint("worlds", "a", known.startedAt, "2026-09-05T00:00:00Z"),
         );
