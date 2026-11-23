@@ -920,10 +920,6 @@
       "selectedLabel": "{{name}} (#{{id}})",
       "itemId": "#{{id}}",
       "itemLevel": "Lvl {{level}}"
-    },
-    "deleteWatchDialog": {
-      "title": "Usunąć obserwowany przedmiot?",
-      "description": "Ta operacja usunie obserwację przedmiotu {{itemName}} i zatrzyma przyszłe powiadomienia."
     }
   },
   "guildInfo": {

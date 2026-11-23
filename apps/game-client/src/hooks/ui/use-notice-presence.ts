@@ -21,7 +21,7 @@ export const useNoticePresence = (
   const [presence, setPresence] = useState<{
     phase: NoticePhase;
     shownAt: number;
-  }>({ phase: "hidden", shownAt: 0 });
+  }>({ phase: active ? "shown" : "hidden", shownAt: 0 });
 
   useEffect(() => {
     const { phase, shownAt } = presence;

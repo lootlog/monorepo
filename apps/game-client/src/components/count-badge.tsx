@@ -1,20 +1,12 @@
-import { useLayoutEffect, useRef, type FC } from "react";
+import type { FC } from "react";
+import { useCountBump } from "@/hooks/ui/use-count-bump";
 
 type CountBadgeProps = {
   count: number;
 };
 
 export const CountBadge: FC<CountBadgeProps> = ({ count }) => {
-  const badgeRef = useRef<HTMLSpanElement>(null);
-  const previousCountRef = useRef(count);
-
-  useLayoutEffect(() => {
-    if (count > previousCountRef.current) {
-      badgeRef.current?.classList.add("ll-count-bump");
-    }
-
-    previousCountRef.current = count;
-  }, [count]);
+  const badgeRef = useCountBump<HTMLSpanElement>(count);
 
   if (count <= 1) {
     return null;

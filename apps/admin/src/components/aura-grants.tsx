@@ -78,6 +78,8 @@ export function AuraGrants({
             description={text.aurasRevokeConfirmDescription}
             confirmButtonLabel={text.aurasRevoke}
             cancelButtonLabel={text.cancel}
+            confirmText={text.confirmWord}
+            confirmLabel={text.confirmWordLabel(text.confirmWord)}
             onConfirm={() => run({ action: "revoke-personal-auras" })}
             pending={pending?.action === "revoke-personal-auras"}
             trigger={

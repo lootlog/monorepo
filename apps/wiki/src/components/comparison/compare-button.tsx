@@ -38,8 +38,11 @@ export function CompareButton({
       disabled={isFull}
       onClick={() => (isCompared ? remove(item.id) : add(item.id, upgrade))}
     >
-      {isCompared && !compact ? (
-        <Check aria-hidden="true" />
+      {isCompared ? (
+        <Check
+          aria-hidden="true"
+          className="animate-pop-in motion-reduce:animate-none"
+        />
       ) : (
         <Scale aria-hidden="true" />
       )}

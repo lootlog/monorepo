@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { sum } from "es-toolkit";
 import { Clock, Crown, Swords, Zap } from "lucide-react";
@@ -14,6 +15,7 @@ import {
 } from "@lootlog/client/activity";
 import { BandSection } from "@/components/common/band-section";
 import { StatsTile, StatsTileGrid } from "@/components/common/stats-tile";
+import { StatsTileNumber } from "@/components/common/stats-tile-number";
 import { calendarRange } from "@/components/common/activity-heatmap/activity-calendar";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import { EMPTY_VALUE } from "@/constants/empty-value";
@@ -21,7 +23,6 @@ import { QueryErrorNotice } from "@/components/common/query-error-notice";
 import { LIST_TILE_RULE_CLASS } from "@/components/common/list-tile";
 import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 import { StatisticsDelta } from "@/features/user/statistics/statistics-delta";
-import { formatNumber } from "@lootlog/domain/locale";
 
 const ONLINE_NOW_MS = 5 * 60_000;
 
@@ -99,7 +100,7 @@ export function DashboardToday() {
             minutes: Math.floor((seconds % 3600) / 60),
           });
 
-  const loading = (value: string | undefined) =>
+  const loading = (value: ReactNode) =>
     week.isPending ? (
       <Skeleton className="my-0.5 h-6 w-16" />
     ) : (
@@ -132,9 +133,9 @@ export function DashboardToday() {
           icon={Swords}
           label={t("statistics.today.kills")}
           value={loading(
-            summary?.todayKills === null || summary === null
-              ? undefined
-              : formatNumber(summary.todayKills),
+            summary?.todayKills === null || summary === null ? undefined : (
+              <StatsTileNumber value={summary.todayKills} />
+            ),
           )}
           detail={
             summary &&

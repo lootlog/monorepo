@@ -1,12 +1,14 @@
 import { Link, type LinkOptions } from "@tanstack/react-router";
 import { NavigationMenuLink } from "@lootlog/ui/components/navigation-menu";
 import type { LucideIcon } from "lucide-react";
+import type { ReactNode } from "react";
 
 type WikiNavigationMenuLinkProps = {
   link: LinkOptions;
   icon: LucideIcon;
   label: string;
   description?: string;
+  badge?: ReactNode;
   active: boolean;
 };
 
@@ -15,6 +17,7 @@ export function WikiNavigationMenuLink({
   icon: Icon,
   label,
   description,
+  badge,
   active,
 }: WikiNavigationMenuLinkProps) {
   return (
@@ -28,7 +31,10 @@ export function WikiNavigationMenuLink({
         <Icon aria-hidden="true" />
       </span>
       <span className="flex min-w-0 flex-col gap-0.5">
-        <span className="font-medium text-foreground">{label}</span>
+        <span className="flex items-center gap-2 font-medium text-foreground">
+          {label}
+          {badge}
+        </span>
         {description && (
           <span className="line-clamp-2 text-xs/relaxed text-muted-foreground">
             {description}

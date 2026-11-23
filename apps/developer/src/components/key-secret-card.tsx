@@ -6,7 +6,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@lootlog/ui/components/card";
-import { useEffect, useState, type RefObject } from "react";
+import { CopyStateIcon } from "@lootlog/ui/components/copy-state-icon";
+import { useClipboardCopy } from "@lootlog/ui/hooks/use-clipboard-copy";
+import { useEffect, type RefObject } from "react";
 import { portalText as t } from "@/lib/translations";
 
 export function KeySecretCard({
@@ -18,23 +20,20 @@ export function KeySecretCard({
   headingRef: RefObject<HTMLHeadingElement | null>;
   onDismiss: () => void;
 }) {
-  const [copyState, setCopyState] = useState("");
+  const { state, copy } = useClipboardCopy();
 
   useEffect(() => {
     headingRef.current?.focus();
   }, [headingRef]);
 
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(secret);
-      setCopyState(t.copied);
-    } catch {
-      setCopyState(t.copyFailed);
-    }
-  }
+  const copyLabel =
+    state === "copied" ? t.copied : state === "failed" ? t.copyFailed : t.copy;
 
   return (
-    <Card aria-labelledby="new-key-secret" className="border-signal-ready/40">
+    <Card
+      aria-labelledby="new-key-secret"
+      className="animate-rise-in border-signal-ready/40 motion-reduce:animate-none"
+    >
       <CardHeader>
         <CardTitle>
           <h2
@@ -49,18 +48,21 @@ export function KeySecretCard({
         <CardDescription>{t.secret}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        <code className="block break-all rounded-lg border border-border bg-sidebar p-4 font-mono text-sm text-signal-ready">
+        <code className="block cursor-text select-all break-all rounded-lg border border-border bg-sidebar p-4 font-mono text-sm text-signal-ready">
           {secret}
         </code>
         <div className="flex flex-wrap gap-2">
-          <Button onClick={() => void copy()}>{t.copy}</Button>
+          <Button
+            loading={state === "copying"}
+            icon=<CopyStateIcon state={state} />
+            onClick={() => void copy(secret)}
+          >
+            <span aria-live="polite">{copyLabel}</span>
+          </Button>
           <Button variant="outline" onClick={onDismiss}>
             {t.dismiss}
           </Button>
         </div>
-        <p role="status" className="text-sm text-muted-foreground">
-          {copyState}
-        </p>
       </CardContent>
     </Card>
   );

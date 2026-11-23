@@ -39,7 +39,7 @@ export function EcosystemShowcase() {
         />
         <ul className="blog-more-list mt-12 sm:mt-16">
           {products.map(({ key, href, host, icon: Icon, surface }) => (
-            <li key={key}>
+            <li key={key} className="landing-reveal">
               <ChevronLink
                 className="blog-guide-card focus-visible:ring-0 focus-visible:ring-offset-0"
                 data-surface={surface}

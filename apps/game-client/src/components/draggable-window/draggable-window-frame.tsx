@@ -193,6 +193,15 @@ export function DraggableWindowFrame(props: DraggableWindowFrameProps) {
           {children}
         </div>
       </div>
+      <div
+        aria-hidden="true"
+        className={cn(
+          "ll:pointer-events-none ll:absolute ll:inset-0 ll:-z-1 ll:rounded-lg ll:shadow-[0_10px_24px_rgb(0_0_0/0.45)] ll:transition-opacity ll:duration-short ll:ease-enter",
+          isDragging && animationPhase === "open"
+            ? "ll:opacity-100"
+            : "ll:opacity-0",
+        )}
+      />
       {(allowsHorizontalResize || allowsVerticalResize) && !isLocked && (
         <WindowResizeHandle
           minWidth={minWidth}

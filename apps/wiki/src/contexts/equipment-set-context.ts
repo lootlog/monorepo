@@ -4,8 +4,14 @@ import type { EquipmentSet } from "@/lib/equipment-set";
 import type { EquipmentSlotId } from "@/lib/equipment-slots";
 import type { ItemUpgrade } from "@lootlog/domain/item-upgrade";
 
+export type EquipEvent = {
+  slotId: EquipmentSlotId;
+  serial: number;
+};
+
 type EquipmentSetContextValue = {
   set: EquipmentSet;
+  lastEquip: EquipEvent | null;
   equip: (item: CatalogItemDtoOutput, upgrade?: ItemUpgrade) => void;
   upgrade: (slot: EquipmentSlotId, upgrade: ItemUpgrade) => void;
   unequip: (slot: EquipmentSlotId) => void;

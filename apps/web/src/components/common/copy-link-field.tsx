@@ -1,8 +1,9 @@
 import { Button } from "@lootlog/ui/components/button";
+import { CopyStateIcon } from "@lootlog/ui/components/copy-state-icon";
 import { Input } from "@lootlog/ui/components/input";
-import { Copy } from "lucide-react";
-import { useState } from "react";
+import { useClipboardCopy } from "@lootlog/ui/hooks/use-clipboard-copy";
 import { toast } from "@lootlog/ui/lib/toast";
+import { CopyStatusAnnouncement } from "@/components/common/copy-status-announcement";
 
 type CopyLinkFieldProps = {
   url: string;
@@ -19,7 +20,8 @@ export const CopyLinkField = ({
   copiedMessage,
   copyErrorMessage,
 }: CopyLinkFieldProps) => {
-  const [isCopying, setIsCopying] = useState(false);
+  const { state, copy } = useClipboardCopy();
+  const isCopying = state === "copying";
 
   return (
     <div className="flex flex-col gap-2 sm:flex-row">
@@ -33,25 +35,18 @@ export const CopyLinkField = ({
         type="button"
         variant="outline"
         className="shrink-0"
-        loading={isCopying}
-        icon=<Copy />
-        onClick={() => {
+        icon=<CopyStateIcon state={state} />
+        disabled={isCopying}
+        aria-busy={isCopying}
+        onClick={async () => {
           if (isCopying) return;
-          setIsCopying(true);
 
-          return Promise.resolve()
-            .then(() => navigator.clipboard.writeText(url))
-            .then(() => {
-              toast.success(copiedMessage);
-            })
-            .catch(() => {
-              toast.error(copyErrorMessage);
-            })
-            .finally(() => setIsCopying(false));
+          if (!(await copy(url))) toast.error(copyErrorMessage);
         }}
       >
         {copyLabel}
       </Button>
+      <CopyStatusAnnouncement state={state} copiedMessage={copiedMessage} />
     </div>
   );
 };

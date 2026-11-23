@@ -30,6 +30,7 @@ import type { GameEvent, LootEvent } from "@lootlog/margonem/game-events";
 import { createLoot } from "@/api/loot.api";
 import { useBattleStore } from "@/store/game-store/battle.store";
 import { useLootStore } from "@/store/game-store/loot.store";
+import { reportSubmissionOutcome } from "@/store/game-store/submission-feedback.store";
 import {
   useDialogStore,
   type DialogNpcContextSource,
@@ -247,6 +248,7 @@ export class LootEventProcessor {
     createLoot(payload, debugContext)
       .then((response) => {
         useLootStore.getState().setLastLootId(response.id);
+        reportSubmissionOutcome("loot", "logged");
         logLootCreateDebug("completed", {
           ...debugContext,
           lastLootId: response.id,
@@ -254,12 +256,15 @@ export class LootEventProcessor {
         });
       })
       .catch((error) => {
-        if (
-          acceptanceKey &&
-          getApiErrorStringField(error, "code") === NO_LOOTLOG_ACCEPTS_LOOT_CODE
-        ) {
+        const refusedBySettings =
+          getApiErrorStringField(error, "code") ===
+          NO_LOOTLOG_ACCEPTS_LOOT_CODE;
+
+        if (acceptanceKey && refusedBySettings) {
           this.rejectedLoots.remember(acceptanceKey);
         }
+
+        if (!refusedBySettings) reportSubmissionOutcome("loot", "failed");
 
         logLootCreateDebug("failed", {
           ...debugContext,

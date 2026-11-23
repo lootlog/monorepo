@@ -1,5 +1,8 @@
-import type { ReactNode } from "react";
-import { EquipmentSetContext } from "@/contexts/equipment-set-context";
+import { type ReactNode, useState } from "react";
+import {
+  type EquipEvent,
+  EquipmentSetContext,
+} from "@/contexts/equipment-set-context";
 import { useSharedStoredState } from "@/hooks/use-shared-stored-state";
 import {
   decodeEquipmentSet,
@@ -12,6 +15,7 @@ import {
   unequipSlot,
   upgradeSlot,
 } from "@/lib/equipment-set";
+import { findEquipmentSlot } from "@/lib/equipment-slots";
 import { useSetCatalogItems } from "@/hooks/use-worn-items";
 
 const STORED_SET = {
@@ -25,12 +29,23 @@ const STORED_SET = {
 export function EquipmentSetProvider({ children }: { children: ReactNode }) {
   const [set, update] = useSharedStoredState(STORED_SET);
   const { itemsById } = useSetCatalogItems(set);
+  const [lastEquip, setLastEquip] = useState<EquipEvent | null>(null);
 
   return (
     <EquipmentSetContext
       value={{
         set,
-        equip: (item, upgrade) =>
+        lastEquip,
+        equip: (item, upgrade) => {
+          const slot = findEquipmentSlot(item.type);
+
+          if (slot) {
+            setLastEquip((previous) => ({
+              slotId: slot.id,
+              serial: (previous?.serial ?? 0) + 1,
+            }));
+          }
+
           update((current) =>
             equipItem(
               current,
@@ -38,7 +53,8 @@ export function EquipmentSetProvider({ children }: { children: ReactNode }) {
               upgrade,
               (itemId) => itemsById.get(itemId)?.type,
             ),
-          ),
+          );
+        },
         upgrade: (slotId, upgrade) =>
           update((current) => upgradeSlot(current, slotId, upgrade)),
         unequip: (slotId) => update((current) => unequipSlot(current, slotId)),

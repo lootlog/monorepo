@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-router";
 import { RootProvider } from "fumadocs-ui/provider/tanstack";
 import { useEffect } from "react";
+import { Toaster } from "@lootlog/ui/components/sonner";
 import { preventIosFocusZoom } from "@lootlog/ui/lib/ios-focus-zoom";
 import { portalText } from "@/lib/translations";
 import { PortalNav } from "@/components/portal-nav";
@@ -69,6 +70,7 @@ function RootComponent() {
           <div id="portal-content" tabIndex={-1} className="outline-none">
             <Outlet />
           </div>
+          <Toaster toastOptions={{ closeButtonAriaLabel: portalText.close }} />
         </RootProvider>
         <Scripts />
       </body>

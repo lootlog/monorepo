@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/popover";
 import { toolbarStripDividerClassName } from "@/components/ui/toolbar-strip";
 import { QuickAccessButton } from "@/features/quick-access/components/quick-access-button";
+import { useCountBump } from "@/hooks/ui/use-count-bump";
 import { SetupChecklist } from "@/features/setup-checklist/components/setup-checklist";
 import type { SetupStepId } from "@/features/setup-checklist/setup-checklist-steps";
 import { useSetupChecklist } from "@/features/setup-checklist/use-setup-checklist";
@@ -21,6 +22,8 @@ export const SetupChecklistButton: FC = () => {
 
   const { steps, remaining, incomplete, dismissed, setDismissed, reconnect } =
     useSetupChecklist();
+
+  const dotRef = useCountBump<HTMLSpanElement>(remaining, "decrease");
 
   if (dismissed || !incomplete) return null;
 
@@ -53,6 +56,8 @@ export const SetupChecklistButton: FC = () => {
               <>
                 <ListChecks aria-hidden="true" className="ll:size-4" />
                 <span
+                  ref={dotRef}
+                  key={remaining}
                   aria-hidden
                   className="ll:pointer-events-none ll:absolute ll:right-0.5 ll:top-0.5 ll:size-2 ll:rounded-full ll:bg-red-500"
                 />

@@ -1,6 +1,7 @@
 import { useState, type MouseEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@lootlog/ui/components/button";
+import { SuccessCheckIcon } from "@lootlog/ui/components/success-check-icon";
 import {
   Tooltip,
   TooltipContent,
@@ -20,6 +21,7 @@ import {
 } from "../../hooks/use-window-status";
 import type { CoverageGap } from "../../hooks/queries/use-map-coverage-timer";
 import { MapCoverageTimer } from "./map-coverage-timer";
+import { useSelfAssignmentFlash } from "./use-self-assignment-flash";
 
 import {
   getPlayersOnMap,
@@ -85,6 +87,12 @@ export const MapCard = ({
   const assignedMembers = map.assignedMembers ?? [];
   const memberCount = assignedMembers.length;
   const isAssignedToMe = assignedMembers.some((m) => m.id === currentMemberId);
+  const isAssignmentConfirmed = useSelfAssignmentFlash(isAssignedToMe);
+
+  const [initialMemberIds] = useState(
+    () => new Set(assignedMembers.map((member) => member.id)),
+  );
+
   const displayedAssignedMembers = assignedMembers.slice(0, 3);
   const playersOnMap = getPlayersOnMap(map.mapName, presenceData);
 
@@ -229,7 +237,11 @@ export const MapCard = ({
                         ),
                       }}
                       display="avatar"
-                      className="shrink-0"
+                      className={cn(
+                        "shrink-0",
+                        !initialMemberIds.has(member.id) &&
+                          "animate-pop-in motion-reduce:animate-none",
+                      )}
                       avatarClassName={cn(
                         "size-5 border-2",
                         avatarBorderClassName,
@@ -300,7 +312,13 @@ export const MapCard = ({
                     className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                     loading={pendingAction === "unassign"}
                     disabled={isActionDisabled}
-                    icon=<X className="size-4" />
+                    icon={
+                      isAssignmentConfirmed ? (
+                        <SuccessCheckIcon />
+                      ) : (
+                        <X className="size-4" />
+                      )
+                    }
                     onClick={() => void runAssignment("unassign")}
                     aria-label={t("events.maps.unassignSelf")}
                   />

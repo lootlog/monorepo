@@ -9,6 +9,9 @@ import { EmptyMedia } from "@lootlog/ui/components/empty";
 import { groupBy, sortBy } from "es-toolkit";
 import { CircleAlert, Clock3, SearchX } from "lucide-react";
 import { useState } from "react";
+import { AnimatePresence } from "framer-motion";
+import * as m from "framer-motion/m";
+import { EASE_EMPHASIZED, MOTION_DURATION } from "@/lib/motion";
 import { SingleTimer } from "./single-timer";
 import { TimersListSkeleton } from "./timers-list-skeleton";
 import {
@@ -39,6 +42,7 @@ import { useGuildHeroSightings } from "@/features/guild/hero-sightings/use-guild
 import { canViewHeroSightings } from "@/lib/hero-sightings-permissions";
 import { findTimerHeroSighting } from "@/features/guild/hero-sightings/find-timer-hero-sighting";
 import { useTimerDisplaySettings } from "./use-timer-display-settings";
+import { useTimerExpiryClock } from "./use-timer-expiry-clock";
 import { ThemeEmptyStateIcon } from "@/themes/adapters";
 import { RetryButton } from "@/components/common/retry-button";
 
@@ -80,6 +84,15 @@ export const Timers = () => {
     removeTimerAfterMs,
   );
   const now = useMinuteTimestamp();
+  const expiryNow = useTimerExpiryClock(timers, removeTimerAfterMs);
+
+  const listedTimers = timers?.filter(
+    (timer) =>
+      isPinned(timer) ||
+      getTimerPhase(getTimerTimeLeft(timer, expiryNow), removeTimerAfterMs) !==
+        "expired",
+  );
+
   const { data: accessPolicy } = useGuildPermissions();
 
   const { sightings } = useGuildHeroSightings({
@@ -98,7 +111,7 @@ export const Timers = () => {
   const { t } = useTranslation();
 
   const { filtered, hasFilteredTimers, showsNoSearchResults } =
-    getTimerListState(timers, search);
+    getTimerListState(listedTimers, search);
 
   const sorted = sortBy(
     (filtered ?? []).map((timer) => {
@@ -230,27 +243,35 @@ export const Timers = () => {
                 {groupLabel(key)}
               </ListGroupHeading>
               <div className="overflow-hidden">
-                <div className={getTimerGroupClassName(viewMode)}>
-                  {groupTimers.map((timer) => (
-                    <div
-                      key={getTimerIdentityKey(timer)}
-                      data-list-tile
-                      className={cn(
-                        getTimerCellClassName(viewMode),
-                        "empty:hidden",
-                      )}
-                    >
-                      <SingleTimer
-                        timer={timer}
-                        paint={getPaint(timer.npc?.name ?? "")}
-                        countdownMode={countdownMode}
-                        removeTimerAfterMs={removeTimerAfterMs}
-                        isPinned={isPinned(timer)}
-                        showWorld={world === null}
-                        heroSighting={findTimerHeroSighting(sightings, timer)}
-                      />
-                    </div>
-                  ))}
+                <div
+                  className={cn(getTimerGroupClassName(viewMode), "relative")}
+                >
+                  <AnimatePresence initial={false} mode="popLayout">
+                    {groupTimers.map((timer) => (
+                      <m.div
+                        key={getTimerIdentityKey(timer)}
+                        layout="position"
+                        initial={{ opacity: 0, y: -8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0 }}
+                        transition={{
+                          duration: MOTION_DURATION.long,
+                          ease: EASE_EMPHASIZED,
+                        }}
+                        data-list-tile
+                        className={getTimerCellClassName(viewMode)}
+                      >
+                        <SingleTimer
+                          timer={timer}
+                          paint={getPaint(timer.npc?.name ?? "")}
+                          countdownMode={countdownMode}
+                          removeTimerAfterMs={removeTimerAfterMs}
+                          showWorld={world === null}
+                          heroSighting={findTimerHeroSighting(sightings, timer)}
+                        />
+                      </m.div>
+                    ))}
+                  </AnimatePresence>
                 </div>
               </div>
             </section>

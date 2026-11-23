@@ -32,3 +32,15 @@ apps/developer/content/** size-limit-exempt
 *.test.ts size-limit-exempt
 *.test.tsx size-limit-exempt
 *.test.mjs size-limit-exempt
+
+# One translation namespace holds the copy of one feature and reads better
+# whole, so the staged file size limit skips translation files
+apps/*/src/i18n/translations/*.json size-limit-exempt
+packages/ui/src/i18n/translations/*.json size-limit-exempt
+
+# The landing page has one stylesheet for its one surface; its sections share
+# tokens and media queries, so it stays whole
+apps/landing/src/styles/landing.css size-limit-exempt
+
+# Agent instructions are read as one contract, so they stay whole
+AGENTS.md size-limit-exempt

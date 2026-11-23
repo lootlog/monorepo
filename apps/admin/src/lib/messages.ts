@@ -325,6 +325,8 @@ export const text = {
   planFeatureCharacterAuras: "Wybór aur",
 
   cancel: "Anuluj",
+  confirmWord: "POTWIERDZAM",
+  confirmWordLabel: (word: string) => `Wpisz ${word}, aby potwierdzić.`,
   banConfirmTitle: (name: string) => `Zbanować użytkownika ${name}?`,
   banConfirmDescription:
     "Wszystkie sesje zostaną zakończone, a logowanie i klucze API zablokowane do czasu zdjęcia bana.",

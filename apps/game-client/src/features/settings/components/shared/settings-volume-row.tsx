@@ -50,7 +50,7 @@ export const SettingsVolumeControl: FC<SettingsVolumeControlProps> = ({
           aria-hidden
           className={cn(
             "ll:flex ll:items-center",
-            bumpKey > 0 && "ll-settings-bump",
+            bumpKey > 0 && "ll-icon-bump",
           )}
         >
           {muted ? (

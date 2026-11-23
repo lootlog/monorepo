@@ -56,7 +56,17 @@
   "connection": {
     "heartbeatPing": "Opóźnienie połączenia: {{ping}} ms",
     "organizations": "Połączone Lootlogi",
-    "reconnect": "Połącz ponownie"
+    "reconnect": "Połącz ponownie",
+    "submission": {
+      "loot": {
+        "logged": "Łup zapisany w Lootlogu",
+        "failed": "Nie udało się zapisać łupu"
+      },
+      "kill": {
+        "logged": "Zabicie zapisane w Lootlogu",
+        "failed": "Nie udało się zapisać zabicia"
+      }
+    }
   },
   "collapse": {
     "collapse": "Zwiń pasek",

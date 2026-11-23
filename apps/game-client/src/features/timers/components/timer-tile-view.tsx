@@ -16,6 +16,8 @@ export type TimerTileViewProps = {
   label: string;
   timeLabel: string;
   timeAdornment?: ReactNode;
+  phaseFlashCount?: number;
+  overlay?: ReactNode;
 };
 
 const EXPIRED_VEIL = "black 40%";
@@ -50,6 +52,8 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
   label,
   timeLabel,
   timeAdornment,
+  phaseFlashCount = 0,
+  overlay,
 }) => {
   const textColorClassName = (
     legacyAppearance ? LEGACY_TEXT_COLORS : TEXT_COLORS
@@ -59,16 +63,27 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
 
   const content = (
     <>
+      {overlay}
+      {phaseFlashCount > 0 ? (
+        <span
+          key={phaseFlashCount}
+          aria-hidden="true"
+          className="ll-timer-phase-flash ll:pointer-events-none ll:absolute ll:inset-0 ll:bg-current"
+        />
+      ) : null}
       <span
-        className={cn("ll:min-w-0 ll:truncate ll:whitespace-nowrap", {
-          "ll:text-center": displayMode === "column",
-          "ll:w-full": displayMode === "column" && legacyAppearance,
-        })}
+        className={cn(
+          "ll:relative ll:min-w-0 ll:truncate ll:whitespace-nowrap",
+          {
+            "ll:text-center": displayMode === "column",
+            "ll:w-full": displayMode === "column" && legacyAppearance,
+          },
+        )}
       >
         {label}
       </span>
       <span
-        className={cn("ll:shrink-0 ll:whitespace-nowrap", {
+        className={cn("ll:relative ll:shrink-0 ll:whitespace-nowrap", {
           "ll:text-center": displayMode === "column",
           "ll:tabular-nums": !legacyAppearance,
         })}
@@ -84,7 +99,7 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
       <span
         id={id}
         className={cn(
-          "ll-custom-cursor-pointer ll:@container/timer-tile ll:flex ll:h-full ll:w-full ll:min-w-0 ll:items-center ll:rounded-[2px] ll:border ll:border-solid ll:border-[var(--ll-timer-accent)] ll:bg-[var(--ll-timer-fill)] ll:px-1 ll:py-0.5 ll:transition-colors ll:hover:bg-[var(--ll-timer-hover-fill)] ll:motion-reduce:transition-none",
+          "ll-custom-cursor-pointer ll:@container/timer-tile ll:flex ll:h-full ll:w-full ll:min-w-0 ll:items-center ll:rounded-[2px] ll:border ll:border-solid ll:border-[var(--ll-timer-accent)] ll:bg-[var(--ll-timer-fill)] ll:relative ll:px-1 ll:py-0.5 ll:transition-[color,background-color,border-color,opacity] ll:hover:bg-[var(--ll-timer-hover-fill)] ll:motion-reduce:transition-none",
           textColorClassName,
           {
             "ll:flex-col ll:items-center ll:px-0 ll:leading-[1.05]":
@@ -111,7 +126,7 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
       id={id}
       fill={isExpired ? veilColor(paint.fill, EXPIRED_VEIL) : paint.fill}
       className={cn(
-        "ll:@container/timer-tile ll:h-full ll:py-[4px]",
+        "ll:@container/timer-tile ll:relative ll:h-full ll:py-[4px] ll:transition-[color,background-color,opacity]",
         textColorClassName,
         TEXT_OUTLINE,
         "ll:shadow-[inset_1px_0_0_rgb(255_255_255/0.08),inset_0_-1px_0_rgb(255_255_255/0.08)]",

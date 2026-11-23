@@ -39,7 +39,7 @@ export function NotificationGoingButton({
       selectUserGoingNotificationIds(state, scope, userId).length > 0,
   );
 
-  const { mutate, isPending, variables } = useMutation({
+  const { mutate, isPending, isSuccess, variables } = useMutation({
     mutationFn: (next: boolean) => {
       const character = buildCurrentCharacterPayload();
 
@@ -83,7 +83,10 @@ export function NotificationGoingButton({
       disabled={isPending}
       onClick={() => mutate(!pressed)}
     >
-      <Footprints aria-hidden />
+      <Footprints
+        aria-hidden
+        className={isSuccess && variables ? "ll-icon-bump" : undefined}
+      />
     </IconButton>
   );
 }

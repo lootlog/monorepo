@@ -63,7 +63,7 @@ export function ItemComparisonTable({ items }: ItemComparisonTableProps) {
                   <TableCell
                     key={items[index]?.item.id ?? index}
                     className={cn(
-                      "h-auto px-2 py-2 align-top text-xs whitespace-normal [overflow-wrap:anywhere] sm:px-3 sm:text-sm",
+                      "h-auto px-2 py-2 align-top text-xs whitespace-normal transition-colors duration-300 [overflow-wrap:anywhere] motion-reduce:transition-none sm:px-3 sm:text-sm",
                       isBest && "bg-signal-ready/8 font-medium",
                     )}
                   >
@@ -76,7 +76,7 @@ export function ItemComparisonTable({ items }: ItemComparisonTableProps) {
                           <>
                             <Crown
                               aria-hidden="true"
-                              className="mt-0.5 size-3.5 shrink-0 text-signal-ready"
+                              className="mt-0.5 size-3.5 shrink-0 animate-pop-in text-signal-ready motion-reduce:animate-none"
                             />
                             <span className="sr-only">
                               {t("comparison.best")}

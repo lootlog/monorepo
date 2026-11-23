@@ -6,7 +6,10 @@ import type { TimerWithTimeLeft } from "../utils/timers-utils";
 import { cn } from "cn";
 import { useTimersStore } from "@/store/timers.store";
 import { Loader2 } from "lucide-react";
-import type { FC } from "react";
+import { useState, type FC } from "react";
+import { ListRowArrival } from "@/components/list-row-arrival";
+import { useAnimationEffects } from "@/hooks/use-animation-effects";
+import { getArrivalStrength } from "@/utils/notifications-and-detector/background";
 import { useTimerActions } from "../hooks/use-timer-actions";
 import { useTimerDisplay } from "../hooks/use-timer-display";
 import { useTimerNpcPresence } from "../hooks/use-timer-npc-presence";
@@ -35,6 +38,7 @@ type SingleTimerProps = {
   timer: TimerWithTimeLeft;
   settingsKey: string | undefined;
   isHidden?: boolean;
+  arrives?: boolean;
 };
 
 export const SingleTimer: FC<SingleTimerProps> = ({
@@ -45,6 +49,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   timer,
   settingsKey,
   isHidden = false,
+  arrives = false,
 }) => {
   const {
     customColors,
@@ -99,6 +104,22 @@ export const SingleTimer: FC<SingleTimerProps> = ({
     countdownMode,
   } = useTimerDisplay(timer);
 
+  const animationEffectsEnabled = useAnimationEffects();
+
+  const [arrival, setArrival] = useState({
+    minSpawnTime: timer.minSpawnTime,
+    count: arrives ? 1 : 0,
+  });
+
+  if (arrival.minSpawnTime !== timer.minSpawnTime) {
+    setArrival({
+      minSpawnTime: timer.minSpawnTime,
+      count: arrival.count + (timer.isPending ? 0 : 1),
+    });
+  }
+
+  const playsArrival = animationEffectsEnabled && arrival.count > 0;
+
   const tooltipHandle = useTimerTooltipHandle();
   const occupancy = useTimerMapPresence(timer);
   const threat = useTimerMapThreat(timer);
@@ -149,8 +170,10 @@ export const SingleTimer: FC<SingleTimerProps> = ({
         className="ll:h-full ll:rounded-[2px] ll:outline-none ll:focus-visible:outline-2 ll:focus-visible:-outline-offset-2 ll:focus-visible:outline-ring"
       >
         <div
+          key={arrival.count}
           className={cn("ll:relative ll:h-full", {
             "ll:opacity-50": isHidden,
+            "ll-row-settle": playsArrival,
           })}
         >
           {isPending && (
@@ -169,6 +192,14 @@ export const SingleTimer: FC<SingleTimerProps> = ({
             label={`${resetIndicator}${shortname} ${timer.npc.name} ${npcDetails}`}
             countdownMode={countdownMode}
             timer={timer}
+            overlay={
+              playsArrival ? (
+                <ListRowArrival
+                  accent={paint.accent}
+                  strength={getArrivalStrength(timer.npc.type)}
+                />
+              ) : undefined
+            }
             timeAdornment=<TimerMapPlayersAdornment
               occupancy={occupancy}
               threat={threat}

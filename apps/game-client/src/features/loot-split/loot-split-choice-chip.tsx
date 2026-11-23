@@ -1,7 +1,7 @@
 import type { LootSplitChoice } from "@lootlog/schema/loot-split";
 import { cn } from "cn";
 import { Check, CheckCheck, X } from "lucide-react";
-import type { FC } from "react";
+import { useState, type FC } from "react";
 
 const CHOICES = {
   0: {
@@ -33,6 +33,10 @@ export const LootSplitChoiceChip: FC<LootSplitChoiceChipProps> = ({
   choice,
   label,
 }) => {
+  const [change, setChange] = useState({ choice, count: 0 });
+
+  if (change.choice !== choice) setChange({ choice, count: change.count + 1 });
+
   if (choice === undefined)
     return (
       <span
@@ -49,10 +53,12 @@ export const LootSplitChoiceChip: FC<LootSplitChoiceChipProps> = ({
 
   return (
     <span
+      key={change.count}
       role="img"
       aria-label={label}
       title={label}
       className={cn(
+        change.count > 0 && "ll-pop-in",
         "ll:inline-flex ll:h-5 ll:w-6 ll:items-center ll:justify-center ll:rounded-[5px] ll:border ll:border-[#0c0d0d] ll:bg-linear-to-t ll:text-[#e6d6bf]",
         className,
       )}

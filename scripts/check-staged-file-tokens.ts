@@ -97,7 +97,13 @@ function report(files: readonly OversizedFile[]): string {
 
 ${rows.join("\n")}
 
-Split every file above into smaller files before committing:
+First decide whether the size is justified. A file that holds one cohesive
+concept, such as one translation namespace, the stylesheet of one surface or
+one data table, stays whole: never split it only to pass this check. Add its
+path to .gitattributes with size-limit-exempt and a comment that says why it
+reads better whole, then commit again.
+
+Otherwise split every file above into smaller files before committing:
 
   1. Find the seams. List what the file exports and group the pieces by the
      single concept each one serves (a type and its constructors, one hook,

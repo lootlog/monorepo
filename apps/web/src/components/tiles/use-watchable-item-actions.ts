@@ -72,7 +72,7 @@ export function useWatchableItemActions(
   watchContext: WatchedItemScope,
 ) {
   const { t } = useTranslation();
-  const { copyItemId, copyingId } = useCopyItemId();
+  const { copyItemId, copyState, copiedMessage } = useCopyItemId();
   const [isAddingThisItem, setIsAddingThisItem] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -234,7 +234,8 @@ export function useWatchableItemActions(
 
   return {
     t,
-    isCopyPending: copyingId !== null,
+    copyState,
+    copiedMessage,
     isAddingThisItem,
     state,
     isQuickAddPending,

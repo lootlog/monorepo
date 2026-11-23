@@ -1,24 +1,29 @@
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useClipboardCopy } from "@lootlog/ui/hooks/use-clipboard-copy";
 import { toast } from "@lootlog/ui/lib/toast";
 
 export const useCopyItemId = () => {
   const { t } = useTranslation();
-  const [copyingId, setCopyingId] = useState<string | null>(null);
+  const { state, copy } = useClipboardCopy();
 
-  const copyItemId = async (id: string) => {
-    if (copyingId !== null) return;
-    setCopyingId(id);
+  const copyItemId = async (
+    id: string,
+    { toastOnSuccess = false }: { toastOnSuccess?: boolean } = {},
+  ) => {
+    if (state === "copying") return;
 
-    try {
-      await navigator.clipboard.writeText(id);
-      toast.success(t("loots.details.copySuccess"));
-    } catch {
+    if (!(await copy(id))) {
       toast.error(t("loots.details.copyError"));
+
+      return;
     }
 
-    setCopyingId(null);
+    if (toastOnSuccess) toast.success(t("loots.details.copySuccess"));
   };
 
-  return { copyItemId, copyingId };
+  return {
+    copyItemId,
+    copyState: state,
+    copiedMessage: t("loots.details.copySuccess"),
+  };
 };

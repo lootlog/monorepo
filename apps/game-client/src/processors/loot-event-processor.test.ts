@@ -9,6 +9,7 @@ import { LOOTLOG_CHARACTERS_CONFIG_MUTATION_KEY } from "@/hooks/api/use-update-l
 import { useBattleStore } from "@/store/game-store/battle.store";
 import { useDialogStore } from "@/store/game-store/dialog.store";
 import { useLootStore } from "@/store/game-store/loot.store";
+import { useSubmissionFeedbackStore } from "@/store/game-store/submission-feedback.store";
 import { useGameStore } from "@/store/game.store";
 import { useOthersStore } from "@/store/others.store";
 import { useNpcsStore } from "@/store/npcs.store";
@@ -143,6 +144,7 @@ beforeEach(() => {
     },
   });
   useLootStore.setState({ lastLootId: 44 });
+  useSubmissionFeedbackStore.setState({ latest: null });
   useDialogStore.getState().clearNpcContext();
   useNpcsStore.getState().clearNpcs();
   useOthersStore.getState().clearOthers();
@@ -325,6 +327,10 @@ it("sends parsed battle participants and loot then stores the accepted id", asyn
     loots: [{ id: 1, name: "Legendarny miecz", stat: "rarity=legendary" }],
   });
   await waitFor(() => expect(useLootStore.getState().lastLootId).toBe(999));
+  expect(useSubmissionFeedbackStore.getState().latest).toMatchObject({
+    kind: "loot",
+    outcome: "logged",
+  });
   expect(log).toHaveBeenCalledWith(
     LOOT_CREATE_DEBUG_PREFIX,
     expect.objectContaining({
@@ -332,6 +338,39 @@ it("sends parsed battle participants and loot then stores the accepted id", asyn
       stage: "completed",
       lastLootId: 999,
     }),
+  );
+});
+
+it("signals a failed loot submission but stays quiet when the Lootlog settings refuse it", async () => {
+  const fixture = createFixture();
+  vi.spyOn(console, "warn").mockImplementation(() => undefined);
+  fixture.rejectWith("NO_GUILD_CONFIG_ACCEPTS_THIS_LOOT");
+  fixture.processor.handleLootFromBattle(createLootEvent("fight", "unique"));
+  await fixture.payload(0);
+  await waitFor(() => expect(console.warn).toHaveBeenCalledTimes(1));
+  expect(useSubmissionFeedbackStore.getState().latest).toBeNull();
+
+  fixture.rejectWith("INVALID_REQUEST");
+  fixture.processor.handleLootFromBattle(createLootEvent("fight", "heroic"));
+  await waitFor(() =>
+    expect(useSubmissionFeedbackStore.getState().latest).toMatchObject({
+      kind: "loot",
+      outcome: "failed",
+    }),
+  );
+});
+
+it("keeps the accepted loot id when the confirmation signal throws", async () => {
+  const fixture = createFixture();
+  const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+  vi.spyOn(useSubmissionFeedbackStore, "setState").mockImplementation(() => {
+    throw new Error("UI signal failed");
+  });
+  fixture.processor.handleLootFromBattle(createBattleLootEvent());
+  await waitFor(() => expect(useLootStore.getState().lastLootId).toBe(999));
+  expect(warn).not.toHaveBeenCalledWith(
+    "[LootEventProcessor] Failed to create loot:",
+    expect.anything(),
   );
 });
 

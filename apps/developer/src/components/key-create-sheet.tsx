@@ -28,6 +28,7 @@ import {
   SheetTrigger,
 } from "@lootlog/ui/components/sheet";
 import { buttonVariants } from "@lootlog/ui/lib/button-variants";
+import { toast } from "@lootlog/ui/lib/toast";
 import { useMutation } from "@tanstack/react-query";
 import { useRef, useState, type FormEvent, type RefObject } from "react";
 import { apiKeysCreateApiKey } from "@lootlog/client/auth";
@@ -61,6 +62,7 @@ export function KeyCreateSheet({
     onSuccess: async (result) => {
       setOpen(false);
       setFormVersion((value) => value + 1);
+      toast.success(t.keyCreated);
       await onCreated(result.key);
     },
   });

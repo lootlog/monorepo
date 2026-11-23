@@ -1,6 +1,7 @@
-import { useState } from "react";
-import { Check, Link2 } from "lucide-react";
+import { Link2 } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
+import { CopyStateIcon } from "@lootlog/ui/components/copy-state-icon";
+import { useClipboardCopy } from "@lootlog/ui/hooks/use-clipboard-copy";
 import { cn } from "cn";
 import { t } from "@/i18n/messages";
 
@@ -19,27 +20,22 @@ export function ShareLinkButton({
   compact = false,
   className,
 }: ShareLinkButtonProps) {
-  const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">(
-    "idle",
-  );
+  const { state, copy } = useClipboardCopy();
 
-  const share = async () => {
+  const share = () => {
     const url = new URL(path, window.location.origin);
 
     url.searchParams.set(param, value);
 
-    try {
-      await navigator.clipboard.writeText(url.toString());
-      setCopyState("copied");
-    } catch {
-      setCopyState("failed");
-    }
-
-    setTimeout(() => setCopyState("idle"), 2000);
+    return copy(url.toString());
   };
 
   const label =
-    copyState === "idle" ? t("share.share") : t(`share.${copyState}`);
+    state === "copied"
+      ? t("share.copied")
+      : state === "failed"
+        ? t("share.failed")
+        : t("share.share");
 
   return (
     <Button
@@ -50,11 +46,7 @@ export function ShareLinkButton({
       title={compact ? label : undefined}
       onClick={() => void share()}
     >
-      {copyState === "copied" ? (
-        <Check aria-hidden="true" />
-      ) : (
-        <Link2 aria-hidden="true" />
-      )}
+      <CopyStateIcon state={state} idleIcon={<Link2 aria-hidden="true" />} />
       <span aria-live="polite" className={cn(compact && "sr-only")}>
         {label}
       </span>

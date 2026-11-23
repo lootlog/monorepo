@@ -67,6 +67,7 @@ export const EventRankingLeaderboard = ({
       }}
       isViewer={ranking.memberId === currentMemberId}
       pinned={pinViewer && ranking.memberId === currentMemberId}
+      live
     />
   );
 

@@ -5,17 +5,11 @@ import {
   type TimerPhase,
   type TimerTimeLeft,
 } from "@lootlog/domain/timers";
+import { useChangeCount } from "@lootlog/ui/hooks/use-change-count";
 import { cn } from "cn";
 import { DoorOpen } from "lucide-react";
 import { useTranslation } from "react-i18next";
-
-const PHASE_TEXT_CLASS = {
-  entrance: "text-emerald-300",
-  waiting: "text-foreground",
-  window: "text-orange-300",
-  overdue: "text-red-400",
-  expired: "text-red-400/70",
-} satisfies Record<TimerPhase, string>;
+import { TIMER_PHASE_TEXT_CLASS } from "./timer-phase-text-class";
 
 type TimerCountdownProps = {
   timeLeft: TimerTimeLeft;
@@ -31,12 +25,13 @@ export const TimerCountdown = ({
   className,
 }: TimerCountdownProps) => {
   const { t } = useTranslation();
+  const phaseChangeCount = useChangeCount(phase);
 
   return (
     <span
       className={cn(
-        "flex shrink-0 items-center gap-1 text-[15px] leading-5 font-semibold tabular-nums",
-        PHASE_TEXT_CLASS[phase],
+        "flex shrink-0 items-center gap-1 text-[15px] leading-5 font-semibold tabular-nums transition-colors duration-500 motion-reduce:transition-none",
+        TIMER_PHASE_TEXT_CLASS[phase],
         className,
       )}
     >
@@ -44,7 +39,10 @@ export const TimerCountdown = ({
         <DoorOpen
           aria-label={t("timers.entranceOpen")}
           role="img"
-          className="size-4"
+          className={cn(
+            "size-4",
+            phaseChangeCount > 0 && "animate-pop-in motion-reduce:animate-none",
+          )}
         />
       )}
       {parseMsToTime(getTimerCountdownMs(timeLeft, countdownMode))}

@@ -1,3 +1,7 @@
+import { Button } from "@lootlog/ui/components/button";
+import { CopyStateIcon } from "@lootlog/ui/components/copy-state-icon";
+import { useClipboardCopy } from "@lootlog/ui/hooks/use-clipboard-copy";
+import { useEffect, useRef, useState } from "react";
 import { portalText as t } from "@/lib/translations";
 
 type Segment = readonly [text: string, className?: string];
@@ -18,6 +22,8 @@ const request: Segment[] = [
   ["  -H", flag],
   [' "X-Api-Key: $LOOTLOG_API_KEY"'],
 ];
+
+const requestText = request.map(([text]) => text).join("");
 
 const response: Segment[] = [
   ['[\n  {\n    "world": '],
@@ -49,21 +55,69 @@ const renderSegments = (segments: Segment[]) =>
   ));
 
 export function RequestSample() {
+  const { state, copy } = useClipboardCopy();
+  const status = useRef<HTMLSpanElement>(null);
+  const [statusSeen, setStatusSeen] = useState(false);
+
+  // oxlint-disable-next-line lootlog/no-unreasoned-state-sync -- IntersectionObserver that reveals the response status once it is fully on screen
+  useEffect(() => {
+    const element = status.current;
+
+    if (!element) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+
+        setStatusSeen(true);
+        observer.disconnect();
+      },
+      { threshold: 1 },
+    );
+
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <figure className="min-w-0 overflow-hidden rounded-xl border border-border bg-sidebar shadow-lg">
       <figcaption className={`${barClassName} border-b`}>
         <span>{t.sampleRequest}</span>
-        <span className="font-mono">GET /guilds/:guildId/timers</span>
+        <span className="flex min-w-0 items-center gap-2">
+          <span className="truncate font-mono">
+            GET /guilds/:guildId/timers
+          </span>
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            className="-mr-1.5 shrink-0"
+            aria-label={t.copyRequest}
+            loading={state === "copying"}
+            icon=<CopyStateIcon state={state} />
+            onClick={() => void copy(requestText)}
+          />
+          <span aria-live="polite" className="sr-only">
+            {state === "copied"
+              ? t.copied
+              : state === "failed"
+                ? t.copyFailed
+                : ""}
+          </span>
+        </span>
       </figcaption>
       <pre className={codeClassName}>
         <code>{renderSegments(request)}</code>
       </pre>
       <div className={`${barClassName} border-y`}>
         <span>{t.sampleResponse}</span>
-        <span className="inline-flex items-center gap-1.5 font-mono text-signal-ready">
+        <span
+          ref={status}
+          className="inline-flex items-center gap-1.5 font-mono text-signal-ready"
+        >
           <span
             aria-hidden="true"
-            className="size-1.5 rounded-full bg-signal-ready"
+            className={`size-1.5 rounded-full bg-signal-ready ${statusSeen ? "animate-pop-in motion-reduce:animate-none" : ""}`}
           />
           200 OK
         </span>

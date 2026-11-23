@@ -35,11 +35,13 @@ export function ChatOwnGatheringBar({
   organizer,
   summary,
   stale,
+  justJoined = false,
 }: {
   room: PartyReadyRoomProjection;
   organizer: boolean;
   summary?: PartyGatheringSummary;
   stale?: boolean;
+  justJoined?: boolean;
 }) {
   const { t } = useTranslation("chat");
   const openAndFocus = useWindowsStore((state) => state.openAndFocus);
@@ -88,7 +90,11 @@ export function ChatOwnGatheringBar({
       {withdrawal.isWithdrawing ? (
         <LoaderCircle size={16} aria-hidden />
       ) : (
-        <Check size={16} aria-hidden />
+        <Check
+          size={16}
+          aria-hidden
+          className={justJoined ? "ll-icon-bump" : undefined}
+        />
       )}
     </div>
   );

@@ -1,0 +1,491 @@
+.realmadrid {
+  --background: oklch(0.12 0.022 240);
+  --foreground: oklch(0.98 0 0);
+  --card: oklch(0.155 0.032 240);
+  --card-foreground: oklch(0.98 0 0);
+  --popover: oklch(0.14 0.027 240);
+  --popover-foreground: oklch(0.98 0 0);
+  --primary: oklch(0.74 0.12 250);
+  --primary-foreground: var(--background);
+  --secondary: oklch(0.2 0 0);
+  --secondary-foreground: oklch(0.98 0 0);
+  --muted: oklch(0.24 0.04 240);
+  --muted-foreground: oklch(0.77 0.025 240);
+  --accent: oklch(0.26 0.01 240);
+  --accent-foreground: var(--foreground);
+  --destructive: oklch(0.745 0.154 25);
+  --destructive-foreground: var(--background);
+  --border: oklch(0.36 0.05 240);
+  --ring: var(--primary);
+  --chart-1: var(--primary);
+  --chart-2: oklch(0.75 0.153 85);
+  --chart-3: oklch(0.88 0.02 0);
+  --chart-4: oklch(0.54 0.096 240);
+  --chart-5: oklch(0.68 0.143 75);
+  --sidebar: oklch(0.08 0.018 240);
+  --sidebar-foreground: oklch(0.98 0 0);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: oklch(0.22 0.04 240);
+  --sidebar-accent-foreground: oklch(0.98 0 0);
+  --sidebar-border: oklch(0.26 0.05 240);
+  --sidebar-ring: var(--ring);
+}
+
+.realmadrid-3rd {
+  --background: oklch(0.16 0.035 290);
+  --foreground: oklch(0.96 0.02 50);
+  --card: oklch(0.195 0.045 290);
+  --card-foreground: oklch(0.96 0.02 50);
+  --popover: oklch(0.19 0.04 290);
+  --popover-foreground: oklch(0.96 0.02 50);
+  --primary: oklch(0.755 0.135 290);
+  --primary-foreground: var(--background);
+  --secondary: oklch(0.25 0.05 290);
+  --secondary-foreground: oklch(0.96 0.02 50);
+  --muted: oklch(0.28 0.045 290);
+  --muted-foreground: oklch(0.775 0.035 290);
+  --accent: oklch(0.29 0.055 290);
+  --accent-foreground: var(--foreground);
+  --destructive: oklch(0.76 0.142 25);
+  --destructive-foreground: var(--background);
+  --border: oklch(0.4 0.05 290);
+  --ring: var(--primary);
+  --chart-1: var(--primary);
+  --chart-2: oklch(0.78 0.159 85);
+  --chart-3: oklch(0.9 0.02 0);
+  --chart-4: oklch(0.58 0.235 280);
+  --chart-5: oklch(0.7 0.147 75);
+  --sidebar: oklch(0.12 0.03 290);
+  --sidebar-foreground: oklch(0.96 0.02 50);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: oklch(0.24 0.045 290);
+  --sidebar-accent-foreground: oklch(0.96 0.02 50);
+  --sidebar-border: oklch(0.35 0.05 290);
+  --sidebar-ring: var(--ring);
+}
+
+.barcelona {
+  --background: oklch(0.16 0.05 10);
+  --foreground: oklch(0.97 0.016 50);
+  --card: oklch(0.195 0.06 10);
+  --card-foreground: oklch(0.97 0.016 50);
+  --popover: oklch(0.21 0.035 250);
+  --popover-foreground: oklch(0.97 0.016 50);
+  --primary: oklch(0.755 0.151 10);
+  --primary-foreground: var(--background);
+  --secondary: oklch(0.23 0.04 250);
+  --secondary-foreground: oklch(0.98 0 0);
+  --muted: oklch(0.26 0.05 10);
+  --muted-foreground: oklch(0.775 0.035 10);
+  --accent: oklch(0.28 0.05 250);
+  --accent-foreground: var(--foreground);
+  --destructive: oklch(0.755 0.146 25);
+  --destructive-foreground: var(--background);
+  --border: oklch(0.38 0.1 10);
+  --ring: var(--primary);
+  --chart-1: var(--primary);
+  --chart-2: oklch(0.555 0.087 240);
+  --chart-3: oklch(0.82 0.16 85);
+  --chart-4: oklch(0.575 0.14 5);
+  --chart-5: oklch(0.55 0.083 230);
+  --sidebar: oklch(0.12 0.025 10);
+  --sidebar-foreground: oklch(0.97 0.016 50);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: oklch(0.24 0.05 10);
+  --sidebar-accent-foreground: oklch(0.97 0.016 50);
+  --sidebar-border: oklch(0.34 0.035 10);
+  --sidebar-ring: var(--ring);
+}
+
+/* Yamato Theme - Ice blue/silver with crimson red accents */
+/* Rukia Kuchiki - Hakka no Togame (白霞罸) - Absolute Zero Ice */
+.rukia {
+  --background: oklch(0.12 0.019 230);
+  --foreground: oklch(0.96 0.015 230);
+  --card: oklch(0.155 0.027 230);
+  --card-foreground: oklch(0.96 0.015 230);
+  --popover: oklch(0.14 0.023 230);
+  --popover-foreground: oklch(0.96 0.015 230);
+  --primary: oklch(0.78 0.1 220);
+  --primary-foreground: var(--background);
+  --secondary: oklch(0.2 0.025 280);
+  --secondary-foreground: oklch(0.96 0.015 230);
+  --muted: oklch(0.22 0.03 230);
+  --muted-foreground: oklch(0.77 0.03 230);
+  --accent: oklch(0.29 0.045 280);
+  --accent-foreground: var(--foreground);
+  --destructive: oklch(0.745 0.154 25);
+  --destructive-foreground: var(--background);
+  --border: oklch(0.36 0.035 230);
+  --ring: var(--primary);
+  --chart-1: var(--primary);
+  --chart-2: oklch(0.65 0.16 280);
+  --chart-3: oklch(0.82 0.12 220);
+  --chart-4: oklch(0.7 0.14 260);
+  --chart-5: oklch(0.555 0.109 230);
+  --sidebar: oklch(0.08 0.015 230);
+  --sidebar-foreground: oklch(0.96 0.015 230);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: oklch(0.2 0.03 230);
+  --sidebar-accent-foreground: oklch(0.96 0.015 230);
+  --sidebar-border: oklch(0.26 0.035 230);
+  --sidebar-ring: var(--ring);
+}
+
+/* ===== RIAS GREMORY: Crimson red / dark purple / blue eye accents ===== */
+.rias {
+  --background: oklch(0.14 0.03 350);
+  --foreground: oklch(0.95 0.01 350);
+  --card: oklch(0.175 0.035 350);
+  --card-foreground: oklch(0.95 0.01 350);
+  --popover: oklch(0.16 0.03 350);
+  --popover-foreground: oklch(0.95 0.01 350);
+  --primary: oklch(0.75 0.152 15);
+  --primary-foreground: var(--background);
+  --secondary: oklch(0.22 0.05 330);
+  --secondary-foreground: oklch(0.95 0.01 350);
+  --muted: oklch(0.24 0.04 340);
+  --muted-foreground: oklch(0.775 0.03 350);
+  --accent: oklch(0.27 0.05 330);
+  --accent-foreground: var(--foreground);
+  --destructive: oklch(0.75 0.15 25);
+  --destructive-foreground: var(--background);
+  --border: oklch(0.37 0.05 345);
+  --ring: var(--primary);
+  --chart-1: var(--primary);
+  --chart-2: oklch(0.56 0.12 330);
+  --chart-3: oklch(0.55 0.12 240);
+  --chart-4: oklch(0.6 0.18 10);
+  --chart-5: oklch(0.56 0.1 350);
+  --sidebar: oklch(0.1 0.025 350);
+  --sidebar-foreground: oklch(0.95 0.01 350);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: oklch(0.2 0.04 340);
+  --sidebar-accent-foreground: oklch(0.95 0.01 350);
+  --sidebar-border: oklch(0.28 0.05 345);
+  --sidebar-ring: var(--ring);
+}
+
+/* ===== RIAS GREMORY: Custom Effects ===== */
+
+/* Selection */
+.rias ::selection {
+  background: oklch(0.45 0.18 15 / 0.4);
+  color: oklch(0.98 0.01 350);
+}
+
+/* Scrollbar */
+.rias .custom-scrollbar {
+  scrollbar-color: oklch(0.4 0.15 15 / 0.4) transparent;
+}
+
+.rias .custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: oklch(0.4 0.15 15 / 0.35);
+}
+
+.rias .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: oklch(0.5 0.2 15 / 0.5);
+  box-shadow: 0 0 8px oklch(0.5 0.2 15 / 0.3);
+}
+
+/* Skeleton shimmer */
+.rias [data-slot="skeleton"] {
+  animation: rias-shimmer 2.5s ease-in-out infinite;
+  background: linear-gradient(
+    90deg,
+    oklch(0.15 0.035 350) 0%,
+    oklch(0.2 0.05 15) 40%,
+    oklch(0.25 0.06 15) 50%,
+    oklch(0.2 0.05 15) 60%,
+    oklch(0.15 0.035 350) 100%
+  );
+  background-size: 200% 100%;
+}
+
+@keyframes rias-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Input focus glow */
+.rias input:focus-visible,
+.rias textarea:focus-visible,
+.rias select:focus-visible,
+.rias [role="combobox"]:focus-visible {
+  box-shadow:
+    0 0 0 2px oklch(0.52 0.22 15 / 0.25),
+    0 0 14px oklch(0.45 0.18 15 / 0.2);
+}
+
+/* Tooltip & Popover */
+.rias [data-slot="tooltip-content"] {
+  border-color: oklch(0.4 0.12 15 / 0.5);
+  box-shadow:
+    0 4px 16px oklch(0.3 0.1 15 / 0.25),
+    inset 0 0 0 1px oklch(0.45 0.12 15 / 0.12);
+}
+
+.rias [data-slot="popover-content"] {
+  border-color: oklch(0.4 0.12 15 / 0.5);
+  box-shadow:
+    0 8px 28px oklch(0.3 0.1 15 / 0.3),
+    inset 0 0 0 1px oklch(0.45 0.12 15 / 0.1);
+}
+
+/* ===== RUKIA THEME: Custom Effects ===== */
+
+/* Selection */
+.rukia ::selection {
+  background: oklch(0.55 0.12 220 / 0.4);
+  color: oklch(0.98 0.01 230);
+}
+
+/* Scrollbar */
+.rukia .custom-scrollbar {
+  scrollbar-color: oklch(0.5 0.1 220 / 0.4) transparent;
+}
+
+.rukia .custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: oklch(0.5 0.1 220 / 0.35);
+}
+
+.rukia .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: oklch(0.6 0.12 220 / 0.5);
+  box-shadow: 0 0 8px oklch(0.6 0.14 220 / 0.3);
+}
+
+/* Skeleton shimmer */
+@keyframes rukia-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.rukia [data-slot="skeleton"] {
+  animation: rukia-shimmer 2.5s ease-in-out infinite;
+  background: linear-gradient(
+    90deg,
+    oklch(0.18 0.03 230) 0%,
+    oklch(0.22 0.04 220) 40%,
+    oklch(0.28 0.05 220) 50%,
+    oklch(0.22 0.04 220) 60%,
+    oklch(0.18 0.03 230) 100%
+  );
+  background-size: 200% 100%;
+}
+
+/* Input focus glow */
+.rukia input:focus-visible,
+.rukia textarea:focus-visible,
+.rukia select:focus-visible,
+.rukia [role="combobox"]:focus-visible {
+  box-shadow:
+    0 0 0 2px oklch(0.72 0.14 220 / 0.3),
+    0 0 16px oklch(0.6 0.12 220 / 0.2);
+}
+
+/* Tooltip & Popover frost border */
+.rukia [data-slot="tooltip-content"] {
+  border-color: oklch(0.45 0.08 220 / 0.5);
+  box-shadow:
+    0 4px 16px oklch(0.3 0.08 220 / 0.25),
+    inset 0 0 0 1px oklch(0.5 0.1 220 / 0.15);
+}
+
+.rukia [data-slot="popover-content"] {
+  border-color: oklch(0.45 0.08 220 / 0.5);
+  box-shadow:
+    0 8px 28px oklch(0.3 0.08 220 / 0.3),
+    inset 0 0 0 1px oklch(0.5 0.1 220 / 0.12);
+}
+
+/* ===== CAT THEME: Różowy Kociak ===== */
+.cat-pink {
+  --background: oklch(0.26 0.03 350);
+  --foreground: oklch(0.92 0.01 350);
+  --card: oklch(0.295 0.035 350);
+  --card-foreground: oklch(0.92 0.01 350);
+  --popover: oklch(0.32 0.04 350);
+  --popover-foreground: oklch(0.92 0.01 350);
+  --primary: oklch(0.78 0.08 350);
+  --primary-foreground: var(--background);
+  --secondary: oklch(0.36 0.045 350);
+  --secondary-foreground: oklch(0.92 0.01 350);
+  --muted: oklch(0.38 0.04 350);
+  --muted-foreground: oklch(0.775 0.02 350);
+  --accent: oklch(0.37 0.04 340);
+  --accent-foreground: var(--foreground);
+  --destructive: oklch(0.73 0.166 25);
+  --destructive-foreground: var(--background);
+  --border: oklch(0.44 0.05 350);
+  --ring: var(--primary);
+  --chart-1: var(--primary);
+  --chart-2: oklch(0.72 0.07 340);
+  --chart-3: oklch(0.82 0.06 350);
+  --chart-4: oklch(0.75 0.07 330);
+  --chart-5: oklch(0.605 0.05 350);
+  --sidebar: oklch(0.22 0.035 350);
+  --sidebar-foreground: oklch(0.92 0.01 350);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: oklch(0.32 0.04 350);
+  --sidebar-accent-foreground: oklch(0.92 0.01 350);
+  --sidebar-border: oklch(0.38 0.05 350);
+  --sidebar-ring: var(--ring);
+  --cat-spinner-filter: brightness(0) saturate(100%) invert(80%) sepia(20%)
+    saturate(600%) hue-rotate(300deg) brightness(102%) contrast(92%);
+}
+
+/* ===== CAT THEME: Fioletowy Mruczek ===== */
+.cat-purple {
+  --background: oklch(0.26 0.04 300);
+  --foreground: oklch(0.92 0.01 300);
+  --card: oklch(0.295 0.045 300);
+  --card-foreground: oklch(0.92 0.01 300);
+  --popover: oklch(0.27 0.04 300);
+  --popover-foreground: oklch(0.92 0.01 300);
+  --primary: oklch(0.75 0.08 300);
+  --primary-foreground: var(--background);
+  --secondary: oklch(0.31 0.045 300);
+  --secondary-foreground: oklch(0.92 0.01 300);
+  --muted: oklch(0.33 0.04 300);
+  --muted-foreground: oklch(0.77 0.02 300);
+  --accent: oklch(0.32 0.04 290);
+  --accent-foreground: var(--foreground);
+  --destructive: oklch(0.73 0.166 25);
+  --destructive-foreground: var(--background);
+  --border: oklch(0.425 0.05 300);
+  --ring: var(--primary);
+  --chart-1: var(--primary);
+  --chart-2: oklch(0.68 0.07 290);
+  --chart-3: oklch(0.8 0.06 300);
+  --chart-4: oklch(0.72 0.07 280);
+  --chart-5: oklch(0.605 0.05 300);
+  --sidebar: oklch(0.22 0.035 300);
+  --sidebar-foreground: oklch(0.92 0.01 300);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: oklch(0.32 0.04 300);
+  --sidebar-accent-foreground: oklch(0.92 0.01 300);
+  --sidebar-border: oklch(0.38 0.05 300);
+  --sidebar-ring: var(--ring);
+  --cat-spinner-filter: brightness(0) saturate(100%) invert(78%) sepia(15%)
+    saturate(500%) hue-rotate(230deg) brightness(102%) contrast(92%);
+}
+
+/* ===== CAT THEME: Niebieski Kocurek ===== */
+.cat-blue {
+  --background: oklch(0.26 0.04 230);
+  --foreground: oklch(0.92 0.01 230);
+  --card: oklch(0.295 0.045 230);
+  --card-foreground: oklch(0.92 0.01 230);
+  --popover: oklch(0.27 0.04 230);
+  --popover-foreground: oklch(0.92 0.01 230);
+  --primary: oklch(0.78 0.07 230);
+  --primary-foreground: var(--background);
+  --secondary: oklch(0.31 0.045 230);
+  --secondary-foreground: oklch(0.92 0.01 230);
+  --muted: oklch(0.33 0.04 230);
+  --muted-foreground: oklch(0.77 0.02 230);
+  --accent: oklch(0.32 0.04 220);
+  --accent-foreground: var(--foreground);
+  --destructive: oklch(0.73 0.166 25);
+  --destructive-foreground: var(--background);
+  --border: oklch(0.425 0.05 230);
+  --ring: var(--primary);
+  --chart-1: var(--primary);
+  --chart-2: oklch(0.72 0.07 220);
+  --chart-3: oklch(0.82 0.06 230);
+  --chart-4: oklch(0.75 0.06 210);
+  --chart-5: oklch(0.605 0.05 230);
+  --sidebar: oklch(0.22 0.035 230);
+  --sidebar-foreground: oklch(0.92 0.01 230);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: oklch(0.32 0.04 230);
+  --sidebar-accent-foreground: oklch(0.92 0.01 230);
+  --sidebar-border: oklch(0.38 0.05 230);
+  --sidebar-ring: var(--ring);
+  --cat-spinner-filter: brightness(0) saturate(100%) invert(85%) sepia(18%)
+    saturate(400%) hue-rotate(165deg) brightness(102%) contrast(92%);
+}
+
+/* ===== CAT THEME: Wspólne dekoracje ===== */
+/* Cat paw spinner — tinted via theme filter */
+.cat-paw-spinner {
+  filter: var(--cat-spinner-filter);
+}
+
+/* Cat paw overlay — hidden by default, shown in cat themes */
+.cat-paw-overlay {
+  display: none;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.cat-pink .cat-paw-overlay {
+  display: block;
+  color: oklch(0.78 0.08 350);
+}
+
+.cat-purple .cat-paw-overlay {
+  display: block;
+  color: oklch(0.75 0.08 300);
+}
+
+.cat-blue .cat-paw-overlay {
+  display: block;
+  color: oklch(0.78 0.07 230);
+}
+
+:is(.cat-pink, .cat-purple, .cat-blue)
+  [data-slot="card"]
+  [data-slot="card"]
+  .cat-paw-overlay {
+  display: none;
+}
+
+:is(.cat-pink, .cat-purple, .cat-blue) [data-slot="sidebar-menu-button"] {
+  position: relative;
+}
+
+:is(.cat-pink, .cat-purple, .cat-blue)
+  [data-slot="sidebar-menu-button"]:hover::after {
+  content: "";
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 14px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cellipse cx='16' cy='22' rx='7' ry='5.5' fill='white'/%3E%3Ccircle cx='9' cy='12' r='3.2' fill='white'/%3E%3Ccircle cx='15' cy='8' r='2.8' fill='white'/%3E%3Ccircle cx='21' cy='8' r='2.8' fill='white'/%3E%3Ccircle cx='27' cy='12' r='3.2' fill='white'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  pointer-events: none;
+  animation: catPawIn 0.2s ease forwards;
+}
+
+@keyframes catPawIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) scale(0.8);
+  }
+  to {
+    opacity: 0.5;
+    transform: translateY(-50%) scale(1);
+  }
+}

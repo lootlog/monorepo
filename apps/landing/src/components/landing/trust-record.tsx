@@ -54,7 +54,10 @@ export function TrustRecord() {
         </div>
         <ul className="landing-facts">
           {facts.map(({ key, icon: Icon, tone }) => (
-            <li key={key} className={`landing-fact landing-tone-${tone}`}>
+            <li
+              key={key}
+              className={`landing-fact landing-reveal landing-tone-${tone}`}
+            >
               <span aria-hidden="true" className="landing-ring" />
               <span className="landing-badge">
                 <Icon className="size-5" aria-hidden="true" />
@@ -81,7 +84,10 @@ export function TrustRecord() {
           >
             <Heart className="size-4" aria-hidden="true" />
             {t("landing.trust.support.action")}
-            <ArrowUpRight className="size-4" aria-hidden="true" />
+            <ArrowUpRight
+              className="landing-action-arrow size-4"
+              aria-hidden="true"
+            />
           </a>
         </div>
       </div>

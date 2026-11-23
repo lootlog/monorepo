@@ -1,18 +1,20 @@
 import { useRouter } from "@tanstack/react-router";
 import { useRef, useState } from "react";
+import { useSectionOutcome } from "@/lib/section-outcome";
+import { text } from "@/lib/messages";
 
 export function usePageAction<
   Action extends { readonly action: string },
   Refusal extends string = never,
 >(
   perform: (action: Action) => Promise<Refusal | null | void>,
-  report: (
-    outcome:
-      | { readonly notice: Action["action"]; readonly error?: undefined }
-      | { readonly error: Refusal | "failed"; readonly notice?: undefined },
-  ) => Promise<void>,
+  messages: {
+    readonly done: (action: Action["action"]) => string;
+    readonly refused?: (refusal: Refusal) => string;
+  },
 ) {
   const router = useRouter();
+  const report = useSectionOutcome();
   const [pending, setPending] = useState<Action>();
   const inFlight = useRef(false);
 
@@ -21,11 +23,24 @@ export function usePageAction<
       const refusal = await perform(action);
 
       await router.invalidate();
-      await report(refusal ? { error: refusal } : { notice: action.action });
 
-      return !refusal;
+      if (refusal) {
+        report({
+          tone: "destructive",
+          message: messages.refused?.(refusal) ?? text.actionFailed,
+        });
+
+        return false;
+      }
+
+      report({
+        tone: "ready",
+        message: messages.done(action.action),
+      });
+
+      return true;
     } catch {
-      await report({ error: "failed" });
+      report({ tone: "destructive", message: text.actionFailed });
 
       return false;
     }

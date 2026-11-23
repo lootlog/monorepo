@@ -4,6 +4,7 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { Button } from "@lootlog/ui/components/button";
+import { SuccessCheckIcon } from "@lootlog/ui/components/success-check-icon";
 import { RefreshCw } from "lucide-react";
 import { useContext, type FC } from "react";
 import {
@@ -13,6 +14,7 @@ import {
   useMembersControllerRefreshMember,
 } from "@lootlog/client/main";
 import { usePermissionRefreshInfo } from "@/hooks/utils/use-permission-refresh-info";
+import { useSuccessFlash } from "@/hooks/utils/use-success-flash";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useQueryClient } from "@tanstack/react-query";
 import { RefreshStatusContext } from "@/features/guild/settings/members/contexts/refresh-status-context";
@@ -40,6 +42,7 @@ export const MemberSyncButton: FC<MemberSyncButtonProps> = ({
   const guildId = useGuildId();
   const queryClient = useQueryClient();
   const refreshStatusContext = useContext(RefreshStatusContext);
+  const refreshed = useSuccessFlash();
 
   const { mutate: refreshMember, isPending } =
     useMembersControllerRefreshMember({
@@ -68,6 +71,7 @@ export const MemberSyncButton: FC<MemberSyncButtonProps> = ({
             onMemberUpdated?.(data);
 
             if (data.active) {
+              refreshed.flash();
               toast.success(t("settings.members.refreshSuccess"));
             } else {
               toast.warning(t("settings.members.refreshAccessDisabled"));
@@ -142,7 +146,13 @@ export const MemberSyncButton: FC<MemberSyncButtonProps> = ({
               size={size}
               variant={variant}
               loading={isPending}
-              icon=<RefreshCw className="size-4" />
+              icon={
+                refreshed.shown ? (
+                  <SuccessCheckIcon />
+                ) : (
+                  <RefreshCw className="size-4" />
+                )
+              }
               disabled={
                 isPending ||
                 !canRefresh ||

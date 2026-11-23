@@ -18,6 +18,7 @@ import {
 import { LikeBurst } from "@/features/guild/loots-list/components/loots-list/like-burst";
 import { useLootLike } from "@/features/guild/loots-list/components/loots-list/use-loot-like";
 import type { Loot } from "@/lib/loots/loot-types";
+import { EASE_EMPHASIZED, MOTION_DURATION } from "@/lib/motion";
 
 const HEART_SIZE = 14;
 
@@ -131,7 +132,10 @@ export const LootLikeButton = ({
               initial="enter"
               animate="center"
               exit="exit"
-              transition={{ duration: 0.22, ease: [0.3, 0.7, 0.3, 1] }}
+              transition={{
+                duration: MOTION_DURATION.medium,
+                ease: EASE_EMPHASIZED,
+              }}
               className="[grid-area:1/1]"
             >
               {count}
