@@ -141,10 +141,7 @@ export const makeMemberSync = (
         } satisfies MemberSyncResult;
       }
 
-      const error =
-        result.failure instanceof OperationError
-          ? result.failure.cause
-          : result.failure;
+      const error = result.failure;
 
       if (error instanceof ResourceNotFoundError) {
         const { member } = yield* markAttempt({
