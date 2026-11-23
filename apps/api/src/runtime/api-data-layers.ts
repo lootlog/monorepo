@@ -12,7 +12,6 @@ import { EventHeroKillQueue } from "#src/runtime/queues/event-hero-kill";
 import { MemberBulkRefreshQueue } from "#src/runtime/queues/member-bulk-refresh";
 import { MemberRefreshQueue } from "#src/runtime/queues/member-refresh";
 import { NotificationDispatchQueue } from "#src/runtime/queues/notification-dispatch";
-import { RespawnWindowQueue } from "#src/runtime/queues/respawn-window";
 import {
   guildConfigurationData,
   internalGuildsData,
@@ -97,7 +96,6 @@ const apiQueues = Layer.mergeAll(
   MemberBulkRefreshQueue.layer,
   MemberRefreshQueue.layer,
   NotificationDispatchQueue.layer,
-  RespawnWindowQueue.layer,
 );
 
 export const apiRequestDataLayers = coreDataLayers.pipe(
