@@ -54,11 +54,8 @@ import { BattlePings } from "#src/realtime/battle-ping-service";
 import { LootSplits } from "#src/realtime/loot-split-service";
 import { NpcPresence } from "#src/realtime/npc-presence-service";
 import { Presence, type PresenceStore } from "#src/realtime/presence-store";
-import {
-  closeGradually,
-  Hub,
-  type RealtimeHub,
-} from "#src/realtime/realtime-hub";
+import { Hub, type RealtimeHub } from "#src/realtime/realtime-hub";
+import { closeGradually } from "#src/realtime/close-gradually";
 import type { GatewaySocket, SessionData } from "#src/realtime/session";
 
 export interface GatewayApplicationService {

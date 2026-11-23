@@ -238,15 +238,7 @@ it("stores a socket timer in the same shape as a loaded one, keeping who reset i
             avatar: null,
             banner: null,
             active: true,
-            roles: [
-              {
-                id: "role-1",
-                guildId: "guild-1",
-                name: "Role",
-                color: null,
-                permissions: [],
-              },
-            ],
+            roles: [],
             globalUserId: null,
             lastDiscordSyncAt: null,
             updatedAt: "2026-05-03T10:00:00.000Z",
@@ -257,10 +249,7 @@ it("stores a socket timer in the same shape as a loaded one, keeping who reset i
     });
     expect(fixture.queryClient.getQueryData(key)).toEqual([
       expect.objectContaining({
-        member: expect.objectContaining({
-          id: 7,
-          roles: [{ position: null, color: null }],
-        }),
+        member: expect.objectContaining({ id: 7, name: "Salvatore" }),
         actorCharactersByMemberId: { "7": actorCharacter },
       }),
     ]);

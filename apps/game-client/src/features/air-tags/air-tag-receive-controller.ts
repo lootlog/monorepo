@@ -13,7 +13,7 @@ const MAX_TARGETS_PER_SCOPE = 100;
 
 const DEPARTED_HIDE_MS = 3_000;
 
-type AirTagScopeState = Omit<AirTagScopeSnapshot, "targets"> & {
+type AirTagScopeState = Omit<AirTagScopeSnapshot, "targets" | "serverTime"> & {
   targets: Map<string, AirTagTarget>;
   revisions: Map<string, number>;
   baseRevision: number;
@@ -99,10 +99,7 @@ export class AirTagReceiveController {
     for (const snapshot of acknowledgement.scopes) {
       if (!this.isCurrentSnapshot(snapshot)) continue;
 
-      const offset =
-        snapshot.serverTime === undefined
-          ? 0
-          : this.now() - snapshot.serverTime;
+      const offset = this.now() - snapshot.serverTime;
 
       const scope = this.createScope(snapshot, snapshot.revision);
 

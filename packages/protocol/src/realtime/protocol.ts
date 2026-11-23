@@ -416,10 +416,24 @@ export const CommandSuccess = {
 export type CommandSuccess<Type extends ClientCommand["type"]> =
   (typeof CommandSuccess)[Type]["Type"];
 
-export const ORGANIZATION_ACCESS_DENIED_MESSAGE = "organization access denied";
+export const REALTIME_ERROR_REASONS = {
+  gatewayBusy: "gateway-busy",
+  subscriptionLimit: "subscription-limit",
+  sessionNotJoined: "session-not-joined",
+  organizationAccessDenied: "organization-access-denied",
+  characterRequired: "character-required",
+  noAuthorizedOrganizations: "no-authorized-organizations",
+  presenceSessionMismatch: "presence-session-mismatch",
+  presenceNotPublished: "presence-not-published",
+  temporarilyUnavailable: "temporarily-unavailable",
+} as const;
+
+export type RealtimeErrorReason =
+  (typeof REALTIME_ERROR_REASONS)[keyof typeof REALTIME_ERROR_REASONS];
 
 const RealtimeError = Schema.Struct({
   code: Schema.NonEmptyString,
+  reason: Schema.optional(Schema.NonEmptyString),
   message: Schema.NonEmptyString,
   retryable: Schema.Boolean,
   retryAfterMs: Schema.optional(NonNegativeInt),

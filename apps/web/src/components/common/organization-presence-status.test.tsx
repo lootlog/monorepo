@@ -26,6 +26,8 @@ it.each([
     "COMMAND_REJECTED",
     "organization access denied",
     false,
+    undefined,
+    "organization-access-denied",
   ),
 ])("allows presence recovery after %s", async (error) => {
   const gateway = createTestGateway();

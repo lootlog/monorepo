@@ -81,6 +81,7 @@ const ExtensionMessageSchema = Schema.Union([
     id,
     message: Schema.String,
     code: Schema.optional(Schema.String),
+    reason: Schema.optional(Schema.String),
     retryable: Schema.optional(Schema.Boolean),
     retryAfterMs: Schema.optional(Schema.Finite),
   }),

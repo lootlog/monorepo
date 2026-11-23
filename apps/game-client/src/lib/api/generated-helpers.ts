@@ -5,7 +5,6 @@ import type {
   GuildResponseDtoOutput,
   MemberSummaryResponseDtoOutput,
   MemberResponseDto,
-  MemberResponseDtoRolesItem,
   TimerResponseDto,
 } from "@lootlog/client/main";
 import type { Npc } from "@/api/npcs.api";
@@ -110,15 +109,8 @@ export const mapGuildMembersByUserId = (
   return membersByUserId;
 };
 
-const normalizeTimerMemberRole = (role: MemberResponseDtoRolesItem) => {
-  return {
-    position: role.position ?? null,
-    color: role.color ?? null,
-  };
-};
-
 export const normalizeTimerMember = (
-  member?: MemberResponseDto,
+  member?: Omit<MemberResponseDto, "roles">,
 ): GuildMember | undefined => {
   if (!member) {
     return undefined;
@@ -131,7 +123,6 @@ export const normalizeTimerMember = (
     avatar: member.avatar ?? null,
     type: member.type,
     name: member.name,
-    roles: member.roles.map(normalizeTimerMemberRole),
   };
 };
 
