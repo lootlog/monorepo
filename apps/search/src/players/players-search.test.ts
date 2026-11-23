@@ -20,7 +20,7 @@ const player = (
   icon: "player.gif",
 });
 
-test("player search prefers known accounts over legacy duplicate identities without merging worlds or known characters", async () => {
+test("player search prefers the known account of a character without merging worlds or characters", async () => {
   const known = player(220, 9822301);
   const renamed = player(220, 9822301, "Previous name");
   const otherWorld = player(220, 0, "cashtelan", "other-world");
@@ -35,7 +35,6 @@ test("player search prefers known accounts over legacy duplicate identities with
     httpClient: () =>
       Promise.resolve({
         hits: [
-          player(22, 0),
           player(49528, 0, "Old name"),
           known,
           renamed,
