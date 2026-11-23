@@ -55,7 +55,9 @@ describe("ActivityRepository", () => {
       ),
     );
 
-  const gameActivity = (key: string): CreateActivity => ({
+  const gameActivity = (
+    key: string,
+  ): Extract<CreateActivity, { source: "GAME" }> => ({
     userId: key,
     guildId: key,
     discordId: key,
