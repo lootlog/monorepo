@@ -12,7 +12,7 @@ export const configureGameApiClients = (): (() => void) => {
     credentials: "include" as const,
     fetch: gameClientFetch,
     onError: (error: ApiError) => {
-      if (requiresReauthentication(error)) requireReauthentication();
+      if (requiresReauthentication(error)) requireReauthentication(error);
     },
   };
 

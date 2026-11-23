@@ -16,11 +16,11 @@ import {
 import { useSettingsStore } from "@/store/settings.store";
 import { LOOTLOG_APP_URL } from "@/config/app";
 import { resolveDefaultWindowPosition } from "@/components/draggable-window/window-default-placement";
-import { QueryObserver } from "@tanstack/react-query";
-import { usersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/client/main";
+import { membersControllerGetMe } from "@lootlog/client/main";
 import { configureGameApiClients } from "@/lib/configure-api-clients";
 import { queryClient } from "@/lib/query-client";
 import { resetTransientRuntimeState } from "@/composition/runtime-state";
+import { useReauthenticationStore } from "@/store/reauthentication.store";
 
 const SIGNED_OUT = "Zaloguj się na stronie Lootloga, a potem wróć do gry";
 
@@ -123,7 +123,7 @@ describe("login window", () => {
         new Request(input).url.includes("/idp/")
           ? Response.json(signedInSession)
           : discordAuthorized
-            ? Response.json([])
+            ? Response.json(null)
             : Response.json(
                 { code: "TOKEN_EXPIRED", requiresReauth: true },
                 { status: 401 },
@@ -139,11 +139,7 @@ describe("login window", () => {
       ).toBeNull(),
     );
 
-    const unsubscribe = new QueryObserver(queryClient, {
-      queryKey: ["accessible-guilds"],
-      queryFn: () => usersControllerGetCurrentUserAccessibleGuilds(),
-      retry: false,
-    }).subscribe(() => {});
+    await membersControllerGetMe({ guildId: "guild" }).catch(() => null);
 
     await waitFor(() =>
       expect(screen.getByRole("status")).toHaveTextContent(
@@ -154,10 +150,12 @@ describe("login window", () => {
     act(() => {
       window.dispatchEvent(new Event("focus"));
     });
+    expect(useReauthenticationStore.getState().checking).toBe(true);
     await waitFor(() =>
-      expect(screen.getByRole("status")).toHaveTextContent(
-        "Lootlog stracił dostęp do Twojego konta Discord",
-      ),
+      expect(useReauthenticationStore.getState().checking).toBe(false),
+    );
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Lootlog stracił dostęp do Twojego konta Discord",
     );
 
     discordAuthorized = true;
@@ -165,7 +163,6 @@ describe("login window", () => {
     await user.click(screen.getByRole("button", { name: "Sprawdź sesję" }));
     await waitFor(() => expect(screen.queryByRole("region")).toBeNull());
 
-    unsubscribe();
     restoreClients();
     vi.mocked(fetch).mockImplementation(() =>
       Promise.resolve(Response.json(null)),
