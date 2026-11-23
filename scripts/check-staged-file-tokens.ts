@@ -4,7 +4,11 @@ const tokenLimit = 5000;
 
 const bytesPerToken = 4;
 
-const skippedAttributes = ["linguist-generated", "linguist-vendored"];
+const skippedAttributes = [
+  "linguist-generated",
+  "linguist-vendored",
+  "size-limit-exempt",
+];
 
 type OversizedFile = {
   readonly path: string;
@@ -113,14 +117,13 @@ Split every file above into smaller files before committing:
        move fixtures shared by several of them into a *.fixtures.ts file.
      - JSON or translation data: split by top-level key or namespace into
        separate files and load each one where it is used.
-     - Markdown: keep an overview in the original and move each large
-       section into its own linked page.
   6. Run lint, typecheck, tests and \`bun run knip\` for the affected
      workspaces, stage the new files and the edited importers, and commit again.
 
 Do not bypass this check with --no-verify. If a file is generated or copied
 from a third party rather than authored here, mark its path in .gitattributes
-with linguist-generated=true or linguist-vendored=true instead.
+with linguist-generated=true or linguist-vendored=true instead. Documentation
+under docs/ and the docs apps' content is exempt through size-limit-exempt.
 `;
 }
 

@@ -70,8 +70,8 @@ the API keeps reading them.
 
 ### Admin panel
 
-- **`authorizeOperator`** (`apps/auth/src/admin/admin-auth.ts`): The operator procedures require both the panel's `RPC_TOKEN_ADMIN_TO_AUTH` and a live session of a User in `ADMIN_ACCOUNT_IDS`; both are needed.
-- **`getOperatorAccess`** (`apps/admin/src/server/queries.ts`): The panel's `beforeLoad` and this query only decide what the panel shows; the auth service authorizes every operator call again from the session cookie `asOperator` (`apps/admin/src/server/rpc.ts`) forwards.
+- **`authorizeOperator`** (`apps/auth/src/admin/admin-auth.ts`): The operator procedures require both the panel's `RPC_TOKEN_ADMIN_TO_AUTH` and a live session of a User in `ADMIN_ACCOUNT_IDS`; neither alone opens them, nobody enters while the admin list is empty, and they are served only on the internal RPC port.
+- **`getOperatorAccess`** (`apps/admin/src/server/queries.ts`): The panel's root `beforeLoad` and this query only decide what the panel shows; the auth service authorizes every operator call again. `asOperator` in `apps/admin/src/server/rpc.ts` forwards the operator's session cookie in each payload, without the Cloudflare Access cookie that no host but the panel needs, and leaves that decision to the auth service.
 - **`verifyAccessToken`** (`apps/admin/src/server/access.ts`): The Cloudflare Access JWT signature, team, and audience are verified on every request, because anything inside the cluster can reach the panel's port. The Vite dev server binds to 127.0.0.1 so the tunnel stays the only exposure.
 - **`readAdminConfig`** (`apps/admin/src/server/config.ts`): Configuration is read once at start, so a half-configured panel fails to start instead of passing health checks; a production build without an Access application and operator is refused.
 - **`authorizeRequest`** (`apps/admin/src/server/guard.ts`): State-changing requests must come from the panel's own origin as well as carry a valid Access token, because browsers attach the Access cookie to cross-site form posts. `currentRequest` in `apps/admin/src/server/request-context.ts` throws outside a guarded request, so no auth call can skip this.
@@ -80,8 +80,8 @@ the API keeps reading them.
 - **`UserAvatar`** (`apps/admin/src/components/user-avatar.tsx`): Images not on Discord's CDN fall back to initials, because the CSP loads images only from there.
 - **`validateUsersSearch`** (`apps/admin/src/lib/users-search.ts`): Every admin route's `validateSearch` returns each key even when empty, because the router overlays the result on the raw search and an omitted key would keep its unvalidated value. The router parses search with plain `URLSearchParams` so a Discord id is not turned into an imprecise number.
 - **`read`** (`apps/admin/src/lib/format.ts`): Dates are assembled from `formatToParts` fields, because locale wording differs between server and browser and would break hydration.
-- **`grantAuras`** (`apps/admin/src/server/character-auras.ts`): Aura grants go through the API's internal RPC as the `admin` caller, not through the public edge. The API cannot see the operator's session, so each aura call first has the auth service authorize the operator and passes their User id as the granter; the operator needs no `admin` platform role.
-- **`listUsers`** (`apps/admin/src/server/queries.ts`): The aura filter sends the API's grant holder ids to the auth service's `searchUsers`, because the API owns grants.
+- **`grantAuras`** (`apps/admin/src/server/character-auras.ts`): The panel changes and reads character aura grants through the API's internal RPC as the `admin` caller, like every other synchronous call between services, instead of through the public edge with the operator's session. The API cannot see that session, so each aura call first asks the auth service to authorize the operator and passes the returned User id as the granter; the `admin` platform role is not required of the operator. The grant endpoints left the public HTTP API, so the panel needs no public egress for them and one `RPC_TOKEN_ADMIN_TO_API` guards them.
+- **`listUsers`** (`apps/admin/src/server/queries.ts`): The aura filter sends the API's grant holder ids to the auth service's `searchUsers`, because the auth service cannot read grants, which the API owns.
 
 ### Admin actions and audit
 
