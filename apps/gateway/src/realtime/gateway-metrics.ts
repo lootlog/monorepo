@@ -11,12 +11,11 @@ import {
   CommandAdmissions,
   type CommandAdmission,
 } from "#src/realtime/command-admission";
+import { Hub, type RealtimeHub } from "#src/realtime/realtime-hub";
 import {
   globalChatScope,
   isGlobalChatTopic,
-  Hub,
-  type RealtimeHub,
-} from "#src/realtime/realtime-hub";
+} from "#src/realtime/global-chat-scope";
 
 const SNAPSHOTS = "realtime:metrics:instances:v2";
 

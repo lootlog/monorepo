@@ -35,6 +35,7 @@ const unexpectedFederationIO = () =>
 
 export const unusedFederationStore = {
   publish: unexpectedFederationIO,
+  publishOnce: unexpectedFederationIO,
   subscribe: unexpectedFederationIO,
 } satisfies ConstructorParameters<typeof RealtimeHub>[1];
 
@@ -195,6 +196,7 @@ export const commandFrame = (
 
 export const makeFederationBus = ({ deliveries = 2 } = {}) => {
   const listeners: Array<(message: FederatedRealtimeMessage) => void> = [];
+  const publications = new Set<string>();
 
   const store = {
     subscribe: (
@@ -225,6 +227,16 @@ export const makeFederationBus = ({ deliveries = 2 } = {}) => {
           listener(delivered);
 
       return Promise.resolve();
+    },
+    publishOnce: async (
+      message: FederatedRealtimeMessage,
+      frames?: FederatedFrameTexts,
+    ) => {
+      if (publications.has(message.id)) return false;
+      await store.publish(message, frames);
+      publications.add(message.id);
+
+      return true;
     },
   } satisfies ConstructorParameters<typeof RealtimeHub>[1];
 
@@ -260,4 +272,72 @@ export const acceptingRateLimit = (
       return Promise.resolve([1, createdAt, 0]);
     },
   },
+});
+
+export const hubConfig = {
+  maxBackpressureBytes: 1_024,
+};
+
+export const makeHub = () =>
+  new RealtimeHub(hubConfig, makeFederationBus().store);
+
+export const startPair = async () => {
+  const { hubs, bus } = await startHubs();
+  const [local, remote] = hubs;
+
+  if (!local || !remote) throw new Error("Missing federated hubs");
+
+  return [local, remote, bus] as const;
+};
+
+export const makeAdminSession = (
+  connectionId: string,
+  overrides: Partial<SessionData> = {},
+): SessionData => {
+  const discordId = `discord-${connectionId}`;
+
+  return makeSession({
+    discordId,
+    userId: `user-${connectionId}`,
+    connectionId,
+    guilds: ["organization-1", "organization-2"].map((id) =>
+      membership(id, [Permission.ADMIN], {
+        ownerId: discordId,
+        roleId: "admin",
+      }),
+    ),
+    ...overrides,
+  });
+};
+
+export const makeGamePresence = (
+  session: SessionData,
+  world = "tempest",
+  mapId = 1,
+  {
+    characterId = "123",
+    organizationIds = session.guilds.map(({ guild }) => guild.id),
+  }: {
+    readonly characterId?: string;
+    readonly organizationIds?: string[];
+  } = {},
+): NonNullable<SessionData["presence"]> => ({
+  userId: session.userId,
+  sessionId: session.connectionId,
+  organizationIds,
+  platform: "game",
+  status: "online",
+  confidence: "reported",
+  isAfk: false,
+  lastSeen: 1,
+  character: {
+    world,
+    name: "Player",
+    lvl: 200,
+    characterId,
+    accountId: "456",
+    prof: "w",
+    icon: "icon",
+  },
+  location: { mapId, map: `Map ${mapId}` },
 });
