@@ -120,7 +120,7 @@ export const KillStats = () => {
 
       <KillStatsTimeline data={data?.timeline} isLoading={isLoading} />
 
-      {data?.timeline && data.hourlyWeekday?.length > 0 && (
+      {data && data.hourlyWeekday.length > 0 && (
         <>
           <KillStatsRecords data={data} />
           <KillStatsActivity cells={data.hourlyWeekday} />

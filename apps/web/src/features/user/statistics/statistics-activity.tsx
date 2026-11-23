@@ -10,8 +10,6 @@ import { StatisticsWeeks } from "./statistics-weeks";
 import { summarizePlayTime } from "./summarize-play-time";
 import { useFormatOnlineDuration } from "@/utils/date/format-duration";
 
-const PREVIOUS_ONLINE_HISTORY_DAYS = 112;
-
 const rangeEnding = (to: string, days: number) => {
   const from = new Date(`${to}T12:00:00Z`);
   from.setUTCDate(from.getUTCDate() - days + 1);
@@ -22,7 +20,7 @@ const rangeEnding = (to: string, days: number) => {
 export function StatisticsActivity({ data, search }: StatisticsTabProps) {
   const { t } = useTranslation();
 
-  const yearly = useUsersActivityControllerGetOnline(
+  const online = useUsersActivityControllerGetOnline(
     {
       ...rangeEnding(data.meta.endDate, search.days),
       world: search.world,
@@ -30,29 +28,12 @@ export function StatisticsActivity({ data, search }: StatisticsTabProps) {
     { query: { staleTime: 60_000 } },
   );
 
-  const rejected =
-    yearly.error?.status === 400 && search.days > PREVIOUS_ONLINE_HISTORY_DAYS;
-
-  const previous = useUsersActivityControllerGetOnline(
-    {
-      ...rangeEnding(data.meta.endDate, PREVIOUS_ONLINE_HISTORY_DAYS),
-      world: search.world,
-    },
-    { query: { staleTime: 60_000, enabled: rejected } },
-  );
-
-  const online = rejected ? previous : yearly;
-
   const formatOnlineDuration = useFormatOnlineDuration();
 
-  const countedWorld = (online.data?.world ?? null) === (search.world ?? null);
-
   const available =
-    online.data !== undefined &&
-    online.data.status !== "unavailable" &&
-    countedWorld;
+    online.data !== undefined && online.data.status !== "unavailable";
 
-  const days = (countedWorld ? (online.data?.days ?? []) : []).map((day) =>
+  const days = (online.data?.days ?? []).map((day) =>
     search.world && !day.worldsComplete ? { ...day, onlineSeconds: null } : day,
   );
 
@@ -67,13 +48,6 @@ export function StatisticsActivity({ data, search }: StatisticsTabProps) {
         available={available}
         world={search.world}
         characterSelected={Boolean(search.characterId)}
-        coverage={
-          rejected
-            ? t("statistics.onlineLastDays", {
-                days: PREVIOUS_ONLINE_HISTORY_DAYS,
-              })
-            : undefined
-        }
         formatDuration={formatOnlineDuration}
       />
       <StatsSectionColumns className="xl:grid-cols-3 xl:*:first:col-span-2">
