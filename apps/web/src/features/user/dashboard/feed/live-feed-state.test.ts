@@ -121,12 +121,13 @@ it("limits live entries to the newest twenty and rejects records older than 24 h
   expect(state.items?.[19]?.id).toBe("kill:5");
 });
 
-it("groups copies of one source event and keeps all its organizations within the twenty-entry limit", () => {
+it("groups copies of one source event, keeps all its organizations within the twenty-entry limit and shows the largest kill count", () => {
   const entries = Array.from({ length: 25 }, (_, index) => ({
     ...feedKill,
     id: `copy:${index}`,
     groupKey: "same-event",
     guild: { ...feedKill.guild, id: `org:${index}` },
+    count: index === 7 ? 3 : 1,
   }));
 
   const state = liveFeedReducer(initialLiveFeedState, {
@@ -137,7 +138,7 @@ it("groups copies of one source event and keeps all its organizations within the
   const groups = groupFeedItems(state.items ?? []);
   expect(groups).toHaveLength(1);
   expect(groups[0]?.organizations).toHaveLength(25);
-  expect(groups[0]?.kill?.count).toBe(1);
+  expect(groups[0]?.kill?.count).toBe(3);
 });
 
 it("does not group unrelated kills in the same minute and removes organizations on snapshot replacement", () => {
