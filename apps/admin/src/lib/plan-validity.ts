@@ -12,6 +12,12 @@ export type PlanValidityChoice = (typeof PLAN_VALIDITY_CHOICES)[number];
 
 const EXTENSION_DAYS = { "30d": 30, "90d": 90, "365d": 365 } as const;
 
+export type PlanPeriod = keyof typeof EXTENSION_DAYS;
+
+export const isPlanPeriod = (
+  choice: PlanValidityChoice,
+): choice is PlanPeriod => Object.hasOwn(EXTENSION_DAYS, choice);
+
 const DAY_MS = 24 * 60 * 60 * 1_000;
 
 export const planValidUntil = (

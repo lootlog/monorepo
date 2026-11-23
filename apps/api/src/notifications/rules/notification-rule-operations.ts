@@ -12,11 +12,10 @@ import {
   readNotificationTestUsage,
 } from "../jobs/notification-test-usage.js";
 import { randomUUID } from "node:crypto";
-import { and, count, desc, eq, inArray, isNull, ne, or } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import type { AccountOrganizationOperationError } from "#src/guilds/account-organization-data";
-import { guildTable } from "#src/database/drizzle/organization.schema";
 import { readOrganizationLimits } from "#src/plans/entitlements";
 import { notificationRuleLimits } from "./notification-rule-limits.js";
 import {

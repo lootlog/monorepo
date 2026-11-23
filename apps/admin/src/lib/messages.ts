@@ -8,7 +8,7 @@ import type { DiscordGuildSyncStatus } from "@lootlog/schema/discord";
 import type { PersonalCharacterAuraId } from "@lootlog/schema/character-aura";
 import type { PlatformRole } from "@lootlog/schema/platform-roles";
 import type { Plan } from "@lootlog/schema/plans";
-import type { PlanValidityChoice } from "@/lib/plan-validity";
+import type { PlanPeriod, PlanValidityChoice } from "@/lib/plan-validity";
 import type { OrganizationAction } from "@/lib/organization-action";
 import type { BanDuration, UserAction } from "@/lib/user-action";
 
@@ -62,6 +62,12 @@ export const planText: Record<Plan, string> = {
 export const planValidityText: Record<PlanValidityChoice, string> = {
   keep: "Bez zmian",
   unlimited: "Bezterminowo",
+  "30d": "30 dni od teraz",
+  "90d": "90 dni od teraz",
+  "365d": "365 dni od teraz",
+};
+
+export const planExtensionText: Record<PlanPeriod, string> = {
   "30d": "Przedłuż o 30 dni",
   "90d": "Przedłuż o 90 dni",
   "365d": "Przedłuż o 365 dni",

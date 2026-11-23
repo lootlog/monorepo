@@ -27,8 +27,7 @@ export class UserThemeLimitReached extends TaggedErrorClass<
   UserThemeLimitReached,
   { readonly brand: unique symbol }
 >()("UserThemeLimitReached", {
-  status: Schema.Literal(409),
-  code: Schema.Literal("USER_THEME_LIMIT_REACHED"),
+  customThemeLimit: Schema.Int,
 }) {}
 
 export class UserThemesPersistenceError extends TaggedErrorClass<
@@ -51,7 +50,10 @@ export class UserThemesData extends Context.Service<
     readonly create: (
       userId: string,
       payload: CreateUserThemeRequest,
-    ) => Persisted<StoredUserTheme | null>;
+    ) => Effect.Effect<
+      StoredUserTheme,
+      UserThemeLimitReached | UserThemesPersistenceError
+    >;
     readonly update: (
       userId: string,
       themeId: string,
@@ -107,8 +109,8 @@ export class UserThemesData extends Context.Service<
               .pipe(Effect.map((rows) => rows[0] ?? null)),
           ),
         create: (userId, payload) =>
-          persisted(
-            database.transaction((transaction) =>
+          database
+            .transaction((transaction) =>
               Effect.gen(function* () {
                 yield* transaction.execute(
                   sql`SELECT pg_advisory_xact_lock(hashtext(${`user-theme:${userId}`}))`,
@@ -124,7 +126,11 @@ export class UserThemesData extends Context.Service<
                   userId,
                 );
 
-                if ((existing?.value ?? 0) >= customThemes) return null;
+                if ((existing?.value ?? 0) >= customThemes) {
+                  return yield* new UserThemeLimitReached({
+                    customThemeLimit: customThemes,
+                  });
+                }
 
                 const createdAt = yield* now;
 
@@ -140,10 +146,22 @@ export class UserThemesData extends Context.Service<
                   })
                   .returning();
 
-                return theme ?? null;
+                if (!theme) {
+                  return yield* Effect.die(
+                    new Error("Theme insert returned no row"),
+                  );
+                }
+
+                return theme;
               }),
+            )
+            .pipe(
+              Effect.mapError((cause) =>
+                cause instanceof UserThemeLimitReached
+                  ? cause
+                  : new UserThemesPersistenceError({ cause }),
+              ),
             ),
-          ),
         update: (userId, themeId, payload) =>
           persisted(
             Effect.gen(function* () {

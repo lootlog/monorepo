@@ -370,7 +370,7 @@ describe("character auras", () => {
   });
 
   it("keeps a personal aura to the User it was granted to, whatever else they may choose", async () => {
-    const { run, verify } = await setup(["admin"]);
+    const { announced, run, verify } = await setup(["admin"]);
 
     await verify("granted", "101");
     await verify("holder", "202");
@@ -417,6 +417,11 @@ describe("character auras", () => {
     expect(
       (await run((data) => data.getOwnAura("holder"))).personalAuraIds,
     ).toEqual([]);
+
+    announced.length = 0;
+    await run((data) => data.grantPersonalAura("admin", "holder", "skyborne"));
+
+    expect(announced).toEqual([{ auras: [shown("202", "skyborne")] }]);
   });
 
   it("serves stored reads until a write changes who shows which aura", async () => {

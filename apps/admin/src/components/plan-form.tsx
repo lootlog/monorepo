@@ -16,8 +16,14 @@ import {
 } from "@lootlog/ui/components/select";
 import { useState } from "react";
 import { formatDateTime } from "@/lib/format";
-import { planText, planValidityText, text } from "@/lib/messages";
 import {
+  planExtensionText,
+  planText,
+  planValidityText,
+  text,
+} from "@/lib/messages";
+import {
+  isPlanPeriod,
   PLAN_VALIDITY_CHOICES,
   type PlanValidityChoice,
   planValidUntil,
@@ -113,6 +119,19 @@ const grantStatus = (grant: PlanGrant, activePlan: Plan) => {
       );
 };
 
+const validityLabel = (
+  choice: PlanValidityChoice,
+  grant: PlanGrant,
+  extendsGrant: boolean,
+) => {
+  if (choice === "keep" && grant.validUntil !== null)
+    return text.planValidityKeepUntil(formatDateTime(grant.validUntil));
+
+  if (isPlanPeriod(choice) && extendsGrant) return planExtensionText[choice];
+
+  return planValidityText[choice];
+};
+
 export function PlanForm({
   id,
   entitlement,
@@ -126,25 +145,23 @@ export function PlanForm({
   pending: boolean;
   onSave: (change: PlanFormChange) => void;
 }) {
-  const { grant } = entitlement;
-  const [plan, setPlan] = useState<Plan>(grant.plan);
+  const { grant, activePlan } = entitlement;
+  const runningGrant = activePlan === "premium";
+  const [plan, setPlan] = useState<Plan>(activePlan);
 
   const [validity, setValidity] = useState<PlanValidityChoice>(
-    grant.plan === "premium" ? "keep" : "30d",
+    runningGrant ? "keep" : "30d",
   );
 
-  const [values, setValues] = useState(() =>
-    initialValues(fields, entitlement.overrides),
-  );
+  const initial = initialValues(fields, entitlement.overrides);
+  const [values, setValues] = useState(initial);
+  const extendsGrant = runningGrant && grant.validUntil !== null;
 
   const validityItems = PLAN_VALIDITY_CHOICES.filter(
-    (choice) => choice !== "keep" || grant.plan === "premium",
+    (choice) => choice !== "keep" || runningGrant,
   ).map((choice) => ({
     value: choice,
-    label:
-      choice === "keep" && grant.validUntil !== null
-        ? text.planValidityKeepUntil(formatDateTime(grant.validUntil))
-        : planValidityText[choice],
+    label: validityLabel(choice, grant, extendsGrant),
   }));
 
   const featureItems = (key: string) =>
@@ -163,6 +180,11 @@ export function PlanForm({
   const valid = fields.every(
     (field) => field.kind === "feature" || isLimit(values[field.key] ?? ""),
   );
+
+  const changed =
+    plan !== activePlan ||
+    (plan === "premium" && validity !== "keep") ||
+    fields.some((field) => values[field.key] !== initial[field.key]);
 
   const submit = () => {
     const overrides = Object.fromEntries(
@@ -189,7 +211,7 @@ export function PlanForm({
       onSubmit={(event) => {
         event.preventDefault();
 
-        if (valid) submit();
+        if (valid && changed) submit();
       }}
     >
       <dl className="grid gap-1 text-sm">
@@ -318,7 +340,11 @@ export function PlanForm({
         </div>
       </fieldset>
       <div>
-        <Button type="submit" loading={pending} disabled={!valid || pending}>
+        <Button
+          type="submit"
+          loading={pending}
+          disabled={!valid || !changed || pending}
+        >
           {text.planSave}
         </Button>
       </div>

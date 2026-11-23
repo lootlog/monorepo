@@ -483,7 +483,7 @@ export const makeCharacterAurasData = (
               ],
             })
             .pipe(Effect.mapError(operationError));
-          yield* cache.invalidate;
+          yield* refreshUser(userId);
         }),
       revokePersonalAuras: (userId) =>
         database

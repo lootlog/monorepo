@@ -1,4 +1,7 @@
-import { getApiErrorStringField } from "@lootlog/client/transport";
+import {
+  getApiErrorNumberDetail,
+  getApiErrorStringField,
+} from "@lootlog/client/transport";
 import {
   CUSTOM_THEME_NAME_MAX_LENGTH,
   type CustomThemeDefinition,
@@ -8,13 +11,11 @@ import { useTranslation } from "react-i18next";
 import { toast } from "@lootlog/ui/lib/toast";
 import { ROUTES } from "@/config/routes";
 import { useCreateUserTheme } from "@/hooks/api/user/use-user-themes";
-import { useUserLimits } from "@/hooks/api/user/use-user-limits";
 
 export const useCreateTheme = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const createTheme = useCreateUserTheme();
-  const { data: limits } = useUserLimits();
 
   const create = (name: string, definition: CustomThemeDefinition) =>
     createTheme.mutate(
@@ -22,15 +23,18 @@ export const useCreateTheme = () => {
       {
         onSuccess: (theme) =>
           navigate({ to: ROUTES.user.settings.theme(theme.id) }),
-        onError: (error) =>
+        onError: (error) => {
+          const limit =
+            getApiErrorStringField(error, "code") === "USER_THEME_LIMIT_REACHED"
+              ? getApiErrorNumberDetail(error, "customThemeLimit")
+              : undefined;
+
           toast.error(
-            getApiErrorStringField(error, "code") ===
-              "USER_THEME_LIMIT_REACHED" && limits
-              ? t("settings.appearance.customSection.limitReached", {
-                  limit: limits.customThemes,
-                })
-              : t("settings.appearance.createError"),
-          ),
+            limit === undefined
+              ? t("settings.appearance.createError")
+              : t("settings.appearance.customSection.limitReached", { limit }),
+          );
+        },
       },
     );
 

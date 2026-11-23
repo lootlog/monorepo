@@ -245,7 +245,10 @@ export const writeUserEntitlement = (
 
   const stored = {
     ...values,
-    planExpiryAnnouncedAt: null,
+    planExpiryAnnouncedAt:
+      values.planValidUntil !== null && values.planValidUntil <= now
+        ? now
+        : null,
     updatedByUserId: operatorUserId,
     updatedAt: now,
   };

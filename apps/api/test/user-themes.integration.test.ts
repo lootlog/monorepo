@@ -136,9 +136,14 @@ describe("User themes against migrated PostgreSQL", () => {
       CUSTOM_THEME_LIMIT,
     );
     expect(await as(owner, getUserThemes())).toHaveLength(CUSTOM_THEME_LIMIT);
-    expect(
-      await failureOf(owner, createUserTheme({ name: "x", definition })),
-    ).toBeInstanceOf(UserThemeLimitReached);
+
+    const failure = await failureOf(
+      owner,
+      createUserTheme({ name: "x", definition }),
+    );
+
+    expect(failure).toBeInstanceOf(UserThemeLimitReached);
+    expect(failure).toMatchObject({ customThemeLimit: CUSTOM_THEME_LIMIT });
     expect(await create(stranger)).toMatchObject({ name: "Mój motyw" });
   });
 

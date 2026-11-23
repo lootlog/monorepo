@@ -1,5 +1,5 @@
 import type { UserEntitlementChange } from "@lootlog/schema/plans";
-import { and, isNotNull, isNull, lte } from "drizzle-orm";
+import { and, eq, isNotNull, isNull, lte } from "drizzle-orm";
 import { Clock, Context, Effect, Layer } from "effect";
 import { CharacterAurasData } from "#src/character-auras/character-auras-data";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -50,10 +50,26 @@ export const makeUserPlans = (
       )
       .returning({ userId: userEntitlementTable.userId });
 
-    yield* Effect.forEach(expired, ({ userId }) => auras.refreshUser(userId), {
-      concurrency: ANNOUNCE_CONCURRENCY,
-      discard: true,
-    });
+    const releaseClaim = (userId: string) =>
+      database
+        .update(userEntitlementTable)
+        .set({ planExpiryAnnouncedAt: null })
+        .where(eq(userEntitlementTable.userId, userId));
+
+    yield* Effect.forEach(
+      expired,
+      ({ userId }) =>
+        auras.refreshUser(userId).pipe(
+          Effect.tapError((error) =>
+            Effect.logWarning("Expired plan announcement failed", {
+              userId,
+              error,
+            }),
+          ),
+          Effect.catch(() => releaseClaim(userId)),
+        ),
+      { concurrency: ANNOUNCE_CONCURRENCY, discard: true },
+    );
   }),
 });
 
