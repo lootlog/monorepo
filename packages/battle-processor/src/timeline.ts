@@ -22,23 +22,28 @@ type BattleTimelineAction = {
   handled: boolean;
 };
 
-type BattleTimelineWarriorDelta = {
-  damageDealt: number;
-  damageTaken: number;
-  healingDone: number;
-  healingReceived: number;
-  mitigation: number;
-  resourceDelta: number;
-  resourcePressure: number;
-  energyPressure: number;
-  manaPressure: number;
-  absorbGained: number;
-  absorbSpent: number;
-  magicAbsorbGained: number;
-  magicAbsorbSpent: number;
-  controlApplied: number;
-  controlTaken: number;
-};
+const WARRIOR_DELTA_FIELDS = [
+  "damageDealt",
+  "damageTaken",
+  "healingDone",
+  "healingReceived",
+  "mitigation",
+  "resourceDelta",
+  "resourcePressure",
+  "energyPressure",
+  "manaPressure",
+  "absorbGained",
+  "absorbSpent",
+  "magicAbsorbGained",
+  "magicAbsorbSpent",
+  "controlApplied",
+  "controlTaken",
+] as const;
+
+type BattleTimelineWarriorDelta = Record<
+  (typeof WARRIOR_DELTA_FIELDS)[number],
+  number
+>;
 
 export type BattleTimelineWarriorCumulative = BattleTimelineWarriorDelta;
 
@@ -295,11 +300,7 @@ export class TimelineRecorder {
     for (const [warriorId, delta] of Object.entries(row.byWarrior)) {
       const total = this.cumulative.get(warriorId) ?? createEmptyDelta();
 
-      // SAFETY: deltas are only built by createEmptyDelta, so their keys are
-      // exactly the numeric delta fields.
-      for (const field of Object.keys(delta) as Array<
-        keyof BattleTimelineWarriorDelta
-      >) {
+      for (const field of WARRIOR_DELTA_FIELDS) {
         total[field] += delta[field];
       }
 
