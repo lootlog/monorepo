@@ -1,0 +1,1 @@
+DROP INDEX "BossKill_killedAt_idx";

@@ -242,7 +242,6 @@ export const bossKillTable = pgTable(
       columns: [table.world, table.npcId, table.killedAt],
       name: "BossKill_pkey",
     }),
-    index("BossKill_killedAt_idx").on(table.killedAt.desc()),
   ],
 );
 
