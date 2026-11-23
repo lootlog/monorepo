@@ -9,6 +9,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@lootlog/ui/components/sheet";
+import { useEquipmentSet } from "@/contexts/equipment-set-context";
 import { useSetSummary } from "@/hooks/use-set-summary";
 import { t } from "@/i18n/messages";
 import { EQUIPMENT_SLOTS } from "@/lib/equipment-slots";
@@ -20,6 +21,7 @@ import { EquipmentSetStats } from "./equipment-set-stats";
 
 export function EquipmentSetDock() {
   const { wornItems } = useSetSummary();
+  const { lastEquip } = useEquipmentSet();
 
   const count = (
     <span className="text-xs font-medium text-muted-foreground tabular-nums">
@@ -48,8 +50,15 @@ export function EquipmentSetDock() {
           </div>
           <ul className="flex min-w-0 gap-1.5 overflow-x-auto py-1 [scrollbar-width:none]">
             {EQUIPMENT_SLOTS.map((slot) => (
-              <li key={slot.id} className="size-11 shrink-0">
+              <li key={slot.id} className="relative size-11 shrink-0">
                 <EquipmentSetSlot slot={slot} worn={wornItems.get(slot.id)} />
+                {lastEquip?.slotId === slot.id ? (
+                  <span
+                    key={lastEquip.serial}
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-0 animate-arrival rounded-lg motion-reduce:animate-none"
+                  />
+                ) : null}
               </li>
             ))}
           </ul>

@@ -49,7 +49,7 @@ export function ClosingCta() {
               render={
                 <a href={links.installationGuide}>
                   {t("landing.closingCta.guide")}
-                  <ArrowUpRight className="size-4" />
+                  <ArrowUpRight className="landing-action-arrow size-4" />
                 </a>
               }
               nativeButton={false}
@@ -57,6 +57,7 @@ export function ClosingCta() {
           </div>
         </div>
         <div aria-hidden="true" className="landing-cta-emblem">
+          <span className="landing-cta-glow animate-glow-breathe motion-reduce:animate-none" />
           <LootlogMark />
         </div>
       </div>

@@ -34,7 +34,10 @@ export function HowItWorks() {
         />
         <ol className="landing-steps">
           {steps.map(({ key, icon: Icon, tone }, index) => (
-            <li key={key} className={`landing-step landing-tone-${tone}`}>
+            <li
+              key={key}
+              className={`landing-step landing-reveal landing-tone-${tone}`}
+            >
               <span className="landing-step-badge">
                 <Icon className="size-7" aria-hidden="true" />
                 <span className="landing-number" aria-hidden="true">
@@ -51,7 +54,10 @@ export function HowItWorks() {
           className="landing-action landing-action-solid mt-12 w-full sm:w-fit lg:mt-14"
         >
           {t("landing.workflow.guide")}
-          <ArrowUpRight className="size-4" aria-hidden="true" />
+          <ArrowUpRight
+            className="landing-action-arrow size-4"
+            aria-hidden="true"
+          />
         </a>
       </div>
     </section>

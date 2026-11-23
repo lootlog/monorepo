@@ -62,7 +62,7 @@ export function HeroSection() {
                 render={
                   <a href={links.dashboard}>
                     {t("landing.hero.openDashboard")}
-                    <ArrowUpRight className="size-4" />
+                    <ArrowUpRight className="landing-action-arrow size-4" />
                   </a>
                 }
                 nativeButton={false}
