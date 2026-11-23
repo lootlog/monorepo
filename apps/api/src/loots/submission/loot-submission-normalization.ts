@@ -22,7 +22,7 @@ import { getProfByShortname } from "@lootlog/domain/profession";
 import { parseRequiredProfessions } from "#src/loots/required-professions";
 import { parseCharacterIdentity } from "#src/shared/margonem/player-snapshot.repository";
 
-export const LEGACY_ID = { legacyCombinedId: true } as const;
+const LEGACY_ID = { legacyCombinedId: true } as const;
 
 const lootNpcIdentity = (npc: CreateLootRequest["npcs"][number]) => {
   if (npc.templateId !== undefined && npc.templateId !== null) {
@@ -86,12 +86,36 @@ export function mapItems(items: CreateLootRequest["loots"]) {
   return items.map((item) => ({ ...item, ...getItemStats(item) }));
 }
 
-export function mapPlayers(players: CreateLootRequest["players"]) {
-  return players.map((player) => {
-    const { accountId, characterId } = normalizeCharacterAndAccount(
+export type AcceptedPlayer = CreateLootRequest["players"][number] & {
+  readonly identity: {
+    readonly accountId: number;
+    readonly characterId: number;
+  };
+};
+
+export function parsePlayers(
+  players: CreateLootRequest["players"],
+): AcceptedPlayer[] | null {
+  const accepted: AcceptedPlayer[] = [];
+
+  for (const player of players) {
+    const identity = parseCharacterIdentity(
       player.id,
       player.accountId,
+      LEGACY_ID,
     );
+
+    if (!identity) return null;
+
+    accepted.push({ ...player, identity });
+  }
+
+  return accepted;
+}
+
+export function mapPlayers(players: ReadonlyArray<AcceptedPlayer>) {
+  return players.map((player) => {
+    const { accountId, characterId } = player.identity;
 
     return {
       id: playerSearchId(characterId, accountId),
@@ -139,16 +163,12 @@ export function mapLootItemsToPersistence(
 }
 
 export function mapLootPlayersToPersistence(
-  players: CreateLootRequest["players"],
+  players: ReadonlyArray<AcceptedPlayer>,
   world: string,
 ) {
   return players.map((player) => {
     const prof = getProfByShortname(player.prof) ?? null;
-
-    const { accountId, characterId } = normalizeCharacterAndAccount(
-      player.id,
-      player.accountId,
-    );
+    const { accountId, characterId } = player.identity;
 
     return {
       lvl: player.lvl,
@@ -160,17 +180,6 @@ export function mapLootPlayersToPersistence(
       icon: player.icon,
     };
   });
-}
-
-export function normalizeCharacterAndAccount(
-  id: string | number,
-  accountId: string | number,
-) {
-  const identity = parseCharacterIdentity(id, accountId, LEGACY_ID);
-
-  if (!identity) throw new InvalidRequestError("Invalid player id");
-
-  return identity;
 }
 
 export function mapLootNpcsToPersistence(npcs: CreateLootRequest["npcs"]) {
