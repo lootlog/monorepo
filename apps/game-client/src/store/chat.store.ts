@@ -29,8 +29,6 @@ export type ChatReplyDraft = {
 };
 
 interface ChatState {
-  isIntegratedMode: boolean;
-  toggleIntegratedMode: () => void;
   commandGuildId: string | null;
   setCommandGuildId: (guildId: string) => void;
   chatFilter: ChatFilter;
@@ -53,12 +51,6 @@ interface ChatState {
 export const useChatStore = create<ChatState>()(
   persist(
     (set) => ({
-      isIntegratedMode: false,
-      toggleIntegratedMode: () => {
-        set((state) => ({
-          isIntegratedMode: !state.isIntegratedMode,
-        }));
-      },
       commandGuildId: null,
       setCommandGuildId: (guildId) => set({ commandGuildId: guildId }),
       chatFilter: "all",
@@ -119,7 +111,6 @@ export const useChatStore = create<ChatState>()(
       name: STORAGE_KEY,
       partialize: (state) => ({
         selectedGuildByCharacter: state.selectedGuildByCharacter,
-        isIntegratedMode: state.isIntegratedMode,
         commandGuildId: state.commandGuildId,
         chatFilter: state.chatFilter,
         filtersVisible: state.filtersVisible,
@@ -139,7 +130,7 @@ export const useChatStore = create<ChatState>()(
 
         return {
           ...current,
-          ...persisted,
+          ...omit(persisted, ["isIntegratedMode"]),
           chatFilter:
             chatFilter === "normal" || chatFilter === "reports"
               ? chatFilter

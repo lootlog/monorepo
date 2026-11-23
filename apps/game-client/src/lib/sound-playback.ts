@@ -1,4 +1,7 @@
-import { resolveSoundUrl } from "@/lib/default-sounds";
+import {
+  resolveCategorySoundUrl,
+  type SoundCategory,
+} from "@/lib/default-sounds";
 import {
   readSoundSettings,
   type SoundSettings,
@@ -8,8 +11,6 @@ import {
   playSoundRequest,
 } from "@/lib/shared-audio-playback";
 import { useSettingsStore } from "@/store/settings.store";
-
-type SoundCategory = "notifications" | "detector" | "timers" | "pings";
 
 export type SoundPlaybackProfile = {
   playbackRate?: number;
@@ -32,10 +33,7 @@ export function playSound(
 
   if (soundsMuted || masterVolume === 0 || categoryVolume === 0) return;
 
-  const soundUrl = resolveSoundUrl(
-    category === "pings" ? undefined : settings[`${category}Config`],
-    key,
-  );
+  const soundUrl = resolveCategorySoundUrl(settings, category, key);
 
   if (!soundUrl) return;
 

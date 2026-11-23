@@ -1,0 +1,45 @@
+{
+  "detector": {
+    "description": "Każdy wiersz to jeden typ potwora. Włącz „Wykrywaj”, a potem dobierz pozostałe opcje. Najedź na nagłówek kolumny, aby zobaczyć wyjaśnienie.",
+    "toggles": {
+      "detect": "Wykrywaj",
+      "autoSend": "Autowysyłka",
+      "notifyWindow": "Okno",
+      "highlight": "Podświetlenie",
+      "notifySound": "Dźwięk",
+      "detectDescription": "Główny włącznik. Gdy jest wyłączony, wykrywacz pomija potwory tego typu.",
+      "autoSendDescription": "Wysyła wykrycie do Lootlogów od razu, bez pytania. Lootlogi ustawisz w sekcji „Gdzie wysyłać powiadomienia” poniżej.",
+      "notifyWindowDescription": "Pokazuje okno z wykrytym potworem.",
+      "highlightDescription": "Wyróżnia wykrytego potwora kolorem tego typu.",
+      "notifySoundDescription": "Odtwarza dźwięk przy wykryciu. Dźwięki zmienisz w zakładce Dźwięki."
+    },
+    "routing": {
+      "sectionTitle": "Gdzie wysyłać powiadomienia",
+      "sectionDescription": "Wykryty potwór trafia do Lootlogów z każdej reguły, do której pasuje jego poziom i świat. Bez pasującej reguły powiadomienie nie zostanie wysłane.",
+      "addRuleButton": "Dodaj regułę",
+      "emptyState": "Wykrywacz nie wysyła jeszcze powiadomień do żadnego Lootloga. Dodaj regułę i wybierz, dokąd mają trafiać.",
+      "ruleLabel": "Reguła {{index}}",
+      "ruleNameLabel": "Nazwa reguły",
+      "ruleNamePlaceholder": "Reguła {{index}} – nadaj jej nazwę",
+      "minLevelLabel": "Poziom od",
+      "maxLevelLabel": "Poziom do",
+      "levelRangeLabel": "Poziom potwora",
+      "worldLabel": "Świat",
+      "worldPlaceholder": "Każdy świat",
+      "useCurrentWorldLabel": "Wstaw aktualny świat",
+      "guildSelectionLabel": "Lootlogi",
+      "selectedCount": "{{selected}} z {{total}}",
+      "guildPickerLabel": "Lootlogi: {{name}}",
+      "deleteRuleLabel": "Usuń regułę {{name}}",
+      "noGuildsBadge": "Nic nie wysyła – zaznacz Lootlog"
+    },
+    "characterTitle": "Ta postać",
+    "characterAutoSend": {
+      "label": "Autowysyłka na tej postaci",
+      "description": "Gdy wyłączysz, ta postać nie wysyła wykrytych potworów do Lootlogów, niezależnie od kolumny „Autowysyłka” poniżej. Działa tylko na postaci, którą teraz grasz. Możesz to też przełączać skrótem z zakładki Skróty klawiszowe."
+    },
+    "typesTitle": "Które potwory wykrywać",
+    "categoryHeader": "Typ",
+    "cellLabel": "{{category}}: {{setting}}"
+  }
+}

@@ -1,8 +1,7 @@
 import { render, waitFor } from "@testing-library/react";
-import { describe, expect, it, onTestFinished } from "vitest";
+import { describe, expect, it } from "vitest";
 import { getChatControllerGetChatMessagesQueryKey } from "@lootlog/client/main";
 import { useWindowsStore } from "@/store/windows.store";
-import { useChatStore } from "@/store/chat.store";
 import { createRealtimeTest } from "@/test/realtime-test";
 import { createChatMessage } from "@/test/chat-fixtures";
 import { Chat } from "./chat";
@@ -11,10 +10,6 @@ describe("Chat", () => {
   it("keeps socket ingress active without loading history or rendering a closed chat", async () => {
     const harness = createRealtimeTest();
     useWindowsStore.getState().setOpen("chat", false);
-    useChatStore.setState({ isIntegratedMode: false });
-    onTestFinished(() => {
-      useChatStore.setState(useChatStore.getInitialState(), true);
-    });
 
     const key = getChatControllerGetChatMessagesQueryKey({
       guildId: "guild-1",

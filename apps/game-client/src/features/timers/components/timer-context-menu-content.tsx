@@ -11,6 +11,7 @@ import { TimerActionConfirmation } from "./timer-action-confirmation";
 import { TimerColorPicker } from "./timer-color-picker";
 import { TimerHistoryPopover } from "./timer-history-popover";
 import { TimerListsPopover } from "./timer-lists-popover";
+import { TimerSoundMenuItem } from "./timer-sound-menu-item";
 import { getTimerResetScopes } from "../utils/get-timer-reset-scopes";
 
 type CustomColor = {
@@ -175,6 +176,7 @@ export const TimerContextMenuContent: FC<TimerContextMenuContentProps> = ({
             : t("contextMenu.showAlways")}
         </ContextMenuItem>
       )}
+      <TimerSoundMenuItem npcName={timer.npc.name} npcType={timer.npc.type} />
       {canReset && (
         <TimerActionConfirmation
           action="reset"

@@ -102,6 +102,11 @@ type SoundSettingValuesInput = {
   notificationsConfig?: SoundSettings["notificationsConfig"] | null;
   detectorConfig?: SoundSettings["detectorConfig"] | null;
   timersConfig?: SoundSettings["timersConfig"] | null;
+  timerWindowSoonSound?: boolean;
+  timerWindowSoonMinutes?: number;
+  timerWindowOpenSound?: boolean;
+  timerWindowEndSound?: boolean;
+  timerSoundNpcNames?: string[];
 };
 
 export const soundSettingValues = (settings: SoundSettingValuesInput) => ({
@@ -112,6 +117,11 @@ export const soundSettingValues = (settings: SoundSettingValuesInput) => ({
   "sounds.notificationsConfig": settings.notificationsConfig ?? undefined,
   "sounds.detectorConfig": settings.detectorConfig ?? undefined,
   "sounds.timersConfig": settings.timersConfig ?? undefined,
+  "sounds.timerWindowSoonSound": settings.timerWindowSoonSound,
+  "sounds.timerWindowSoonMinutes": settings.timerWindowSoonMinutes,
+  "sounds.timerWindowOpenSound": settings.timerWindowOpenSound,
+  "sounds.timerWindowEndSound": settings.timerWindowEndSound,
+  "sounds.timerSoundNpcNames": settings.timerSoundNpcNames,
 });
 
 export const userPreferenceValues = (

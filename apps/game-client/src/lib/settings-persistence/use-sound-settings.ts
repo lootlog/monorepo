@@ -15,6 +15,7 @@ import { useSettingsDocuments } from "./use-settings-documents";
 export type NpcTypeSoundConfig = {
   volume: number;
   soundUrl: string;
+  enabled?: boolean;
 };
 
 type SoundCategoryConfig = Record<string, NpcTypeSoundConfig>;
@@ -29,12 +30,22 @@ export interface SoundSettings {
   timersConfig: SoundCategoryConfig;
 }
 
+export interface TimerSoundSettings {
+  timersConfig: SoundCategoryConfig;
+  timerWindowSoonSound: boolean;
+  timerWindowSoonMinutes: number;
+  timerWindowOpenSound: boolean;
+  timerWindowEndSound: boolean;
+  timerSoundNpcNames: string[];
+}
+
 type SoundSettingsPatch = Partial<
-  Omit<SoundSettings, `${string}Config`> & {
-    notificationsConfig: Record<string, Partial<NpcTypeSoundConfig>>;
-    detectorConfig: Record<string, Partial<NpcTypeSoundConfig>>;
-    timersConfig: Record<string, Partial<NpcTypeSoundConfig>>;
-  }
+  Omit<SoundSettings, `${string}Config`> &
+    Omit<TimerSoundSettings, "timersConfig"> & {
+      notificationsConfig: Record<string, Partial<NpcTypeSoundConfig>>;
+      detectorConfig: Record<string, Partial<NpcTypeSoundConfig>>;
+      timersConfig: Record<string, Partial<NpcTypeSoundConfig>>;
+    }
 >;
 
 const normalizeSoundCategoryConfig = (value: unknown): SoundCategoryConfig => {
@@ -51,6 +62,7 @@ const normalizeSoundCategoryConfig = (value: unknown): SoundCategoryConfig => {
       result[key] = {
         volume: getNumber(config.volume, 0.5),
         soundUrl: getString(config.soundUrl),
+        ...(config.enabled === true && { enabled: true }),
       };
 
       return result;
@@ -83,6 +95,34 @@ const getSoundSettingsFromDocuments = (
 ): SoundSettings | undefined =>
   documents?.domains.sounds ? projectSoundSettings(documents) : undefined;
 
+const projectTimerSoundSettings = memoizeByDocuments(
+  (documents): TimerSoundSettings => ({
+    timersConfig: normalizeSoundCategoryConfig(
+      selectSettingsValue(documents, "sounds.timersConfig"),
+    ),
+    timerWindowSoonSound: selectSettingsValue(
+      documents,
+      "sounds.timerWindowSoonSound",
+    ),
+    timerWindowSoonMinutes: selectSettingsValue(
+      documents,
+      "sounds.timerWindowSoonMinutes",
+    ),
+    timerWindowOpenSound: selectSettingsValue(
+      documents,
+      "sounds.timerWindowOpenSound",
+    ),
+    timerWindowEndSound: selectSettingsValue(
+      documents,
+      "sounds.timerWindowEndSound",
+    ),
+    timerSoundNpcNames: selectSettingsValue(
+      documents,
+      "sounds.timerSoundNpcNames",
+    ),
+  }),
+);
+
 export const readSoundSettings = () =>
   getSoundSettingsFromDocuments(readCurrentSettingsDocuments());
 
@@ -93,6 +133,14 @@ export const useSoundSettings = () => {
     ...query,
     data: getSoundSettingsFromDocuments(query.data),
   };
+};
+
+export const useTimerSoundSettings = (): TimerSoundSettings | undefined => {
+  const { data: documents } = useSettingsDocuments();
+
+  return documents?.domains.sounds
+    ? projectTimerSoundSettings(documents)
+    : undefined;
 };
 
 export const useUpdateSoundSettings = () => {
