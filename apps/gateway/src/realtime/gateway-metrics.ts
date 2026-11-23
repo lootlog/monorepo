@@ -127,6 +127,12 @@ const uniquePlayers = Metric.gauge("lootlog_gateway_cluster_unique_players", {
   attributes: { unit: "" },
 });
 
+const sampleDuration = Metric.gauge("lootlog_gateway_cluster_sample_seconds", {
+  description:
+    "Duration of the cluster metrics Redis script including its round trip; it grows with replicas and players",
+  attributes: { unit: "s" },
+});
+
 const runtimeGauges = {
   available: Metric.gauge("lootlog_gateway_available", {
     description:
@@ -276,6 +282,8 @@ export class GatewayMetrics {
         addUser(worldPlayers, presence.character.world, data.userId);
     }
 
+    const sampleStartedAt = performance.now();
+
     const counts = yield* Effect.tryPromise(() =>
       this.redis.eval(
         SAMPLE,
@@ -292,6 +300,11 @@ export class GatewayMetrics {
           worldPlayerIds: listUsers(worldPlayers),
         }),
       ),
+    );
+
+    yield* Metric.update(
+      sampleDuration,
+      (performance.now() - sampleStartedAt) / 1_000,
     );
 
     const [
