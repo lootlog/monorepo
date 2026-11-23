@@ -33,8 +33,10 @@ export const makeNotificationJobRecovery = (
   enqueue: (jobId: string, delay: number) => Effect.Effect<void, unknown>,
   finalize: NotificationJobFinalization,
   scheduleNext: (ruleId: number) => Effect.Effect<void, unknown>,
-) =>
-  Effect.fn("notifications.jobs.recoverOverdue")(function* () {
+) => {
+  let stalledRuleCursor = 0;
+
+  return Effect.fn("notifications.jobs.recoverOverdue")(function* () {
     const now = yield* Clock.currentTimeMillis;
 
     const overdue = yield* store.findOverdue(
@@ -71,8 +73,11 @@ export const makeNotificationJobRecovery = (
 
     const stalled = yield* store.findStalledRecurringRules(
       new Date(now - OVERDUE_AFTER_MS),
+      stalledRuleCursor,
       BATCH_SIZE,
     );
+
+    stalledRuleCursor = stalled.length < BATCH_SIZE ? 0 : (stalled.at(-1) ?? 0);
 
     yield* Effect.forEach(
       stalled,
@@ -88,6 +93,7 @@ export const makeNotificationJobRecovery = (
       { discard: true },
     );
   });
+};
 
 export type NotificationJobRecovery = ReturnType<
   typeof makeNotificationJobRecovery

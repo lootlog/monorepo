@@ -9,12 +9,15 @@ import {
   asc,
   desc,
   eq,
+  gt,
+  gte,
   inArray,
   isNotNull,
   isNull,
   lt,
   ne,
   notExists,
+  or,
   sql,
 } from "drizzle-orm";
 import { Clock, Effect } from "effect";
@@ -224,16 +227,25 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
       .limit(limit)
       .pipe(Effect.mapError(failure("notifications.jobStore.findOverdue")));
 
-  const findStalledRecurringRules = (before: Date, limit: number) =>
+  const findStalledRecurringRules = (
+    before: Date,
+    afterRuleId: number,
+    limit: number,
+  ) =>
     database
       .select({ id: notificationRuleTable.id })
       .from(notificationRuleTable)
       .where(
         and(
+          gt(notificationRuleTable.id, afterRuleId),
           eq(notificationRuleTable.enabled, true),
           isNotNull(notificationRuleTable.scheduleIntervalType),
           ne(notificationRuleTable.scheduleIntervalType, "ONCE"),
           lt(notificationRuleTable.scheduledAt, before),
+          or(
+            isNull(notificationRuleTable.scheduledUntil),
+            gte(notificationRuleTable.scheduledUntil, before),
+          ),
           notExists(
             database
               .select({ id: notificationJobTable.id })
@@ -255,7 +267,7 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
           ),
         ),
       )
-      .orderBy(asc(notificationRuleTable.scheduledAt))
+      .orderBy(asc(notificationRuleTable.id))
       .limit(limit)
       .pipe(
         Effect.mapBoth({
