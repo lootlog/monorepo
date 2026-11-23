@@ -26,9 +26,7 @@ import {
 } from "#src/database/drizzle/notification.schema";
 import {
   characterAuraTable,
-  userCharacterAuraGameAccountTable,
   userCharacterAuraGrantTable,
-  userCharacterAuraTable,
   userCharactersLootlogSettingsTable,
   userMargonemAccountTable,
   userPersonalCharacterAuraGrantTable,
@@ -165,17 +163,11 @@ const deletePersistedAccount = (
         .delete(characterAuraTable)
         .where(eq(characterAuraTable.userId, identity.userId));
       yield* transaction
-        .delete(userCharacterAuraTable)
-        .where(eq(userCharacterAuraTable.userId, identity.userId));
-      yield* transaction
         .delete(userCharacterAuraGrantTable)
         .where(eq(userCharacterAuraGrantTable.userId, identity.userId));
       yield* transaction
         .delete(userPersonalCharacterAuraGrantTable)
         .where(eq(userPersonalCharacterAuraGrantTable.userId, identity.userId));
-      yield* transaction
-        .delete(userCharacterAuraGameAccountTable)
-        .where(eq(userCharacterAuraGameAccountTable.userId, identity.userId));
       yield* transaction
         .delete(userMargonemAccountTable)
         .where(eq(userMargonemAccountTable.userId, identity.userId));
