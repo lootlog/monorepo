@@ -35,16 +35,16 @@ describe("durable private online history retention", () => {
         const sql = yield* PgClient.PgClient;
         const db = yield* ActivityDatabase;
         yield* sql`DELETE FROM "UserOnlineRetention"`;
-        yield* sql`INSERT INTO "UserOnlineInterval" ("userId", "sessionId", "segmentId", "world", "startedAt", "endedAt", "observedAt")
-          SELECT 'batch-' || kind, n::text, n::text, 'luvia', ${cutoff}::timestamptz - interval '1 hour',
+        yield* sql`INSERT INTO "UserOnlineInterval" ("userId", "sessionId", "segmentStartedAt", "world", "startedAt", "endedAt", "observedAt")
+          SELECT 'batch-' || kind, gen_random_uuid(), ${cutoff}::timestamptz - interval '1 hour', 'luvia', ${cutoff}::timestamptz - interval '1 hour',
             ${cutoff}::timestamptz + CASE WHEN kind = 'expired' THEN interval '0 hours' ELSE interval '1 hour' END,
             ${cutoff}::timestamptz + interval '1 hour'
           FROM generate_series(1, 2001) n CROSS JOIN (VALUES ('expired'), ('retained')) kinds(kind)`;
         yield* db.insert(userOnlineIntervals).values([
           {
             userId: "batch-expired",
-            sessionId: "cutoff",
-            segmentId: "cutoff",
+            sessionId: crypto.randomUUID(),
+            segmentStartedAt: new Date(cutoff),
             world: "luvia",
             startedAt: new Date(cutoff),
             endedAt: new Date(cutoff),
@@ -52,8 +52,8 @@ describe("durable private online history retention", () => {
           },
           {
             userId: "batch-retained",
-            sessionId: "long",
-            segmentId: "long",
+            sessionId: crypto.randomUUID(),
+            segmentStartedAt: new Date(Date.parse(cutoff) - 7 * 86_400_000),
             world: "luvia",
             startedAt: new Date(Date.parse(cutoff) - 7 * 86_400_000),
             endedAt: new Date(Date.parse(cutoff) + 7200_000),
@@ -142,7 +142,7 @@ describe("durable private online history retention", () => {
       Effect.gen(function* () {
         const sql = yield* PgClient.PgClient;
         yield* sql`DELETE FROM "UserOnlineRetention"`;
-        yield* sql`INSERT INTO "UserOnlineInterval" ("userId", "sessionId", "segmentId", "startedAt", "endedAt", "observedAt") VALUES ('window-first', 's', 's', '2020-01-01', '2020-01-02', '2020-01-02')`;
+        yield* sql`INSERT INTO "UserOnlineInterval" ("userId", "sessionId", "segmentStartedAt", "startedAt", "endedAt", "observedAt") VALUES ('window-first', gen_random_uuid(), '2020-01-01', '2020-01-01', '2020-01-02', '2020-01-02')`;
       }).pipe(Effect.provide(harness.database)),
     );
 
@@ -160,7 +160,7 @@ describe("durable private online history retention", () => {
           yield* sql`SELECT 1 FROM "UserOnlineInterval" WHERE "userId" = 'window-first'`;
 
         expect(rows).toHaveLength(0);
-        yield* sql`INSERT INTO "UserOnlineInterval" ("userId", "sessionId", "segmentId", "startedAt", "endedAt", "observedAt") VALUES ('window-next', 's', 's', '2020-01-01', '2020-01-02', '2020-01-02')`;
+        yield* sql`INSERT INTO "UserOnlineInterval" ("userId", "sessionId", "segmentStartedAt", "startedAt", "endedAt", "observedAt") VALUES ('window-next', gen_random_uuid(), '2020-01-01', '2020-01-01', '2020-01-02', '2020-01-02')`;
       }).pipe(Effect.provide(harness.database)),
     );
     await harness.runAt("2026-09-06T12:59:00Z", prune);
@@ -193,8 +193,8 @@ describe("durable private online history retention", () => {
       Effect.gen(function* () {
         const sql = yield* PgClient.PgClient;
         yield* sql`DELETE FROM "UserOnlineRetention"`;
-        yield* sql`INSERT INTO "UserOnlineInterval" ("userId", "sessionId", "segmentId", "startedAt", "endedAt", "observedAt")
-          SELECT 'recovery', n::text, n::text, '2020-01-01', '2020-01-02', '2020-01-02' FROM generate_series(1, 2001) n`;
+        yield* sql`INSERT INTO "UserOnlineInterval" ("userId", "sessionId", "segmentStartedAt", "startedAt", "endedAt", "observedAt")
+          SELECT 'recovery', gen_random_uuid(), '2020-01-01', '2020-01-01', '2020-01-02', '2020-01-02' FROM generate_series(1, 2001) n`;
         yield* sql`CREATE SEQUENCE retention_failure_counter`;
         yield* sql`CREATE FUNCTION fail_retention_once() RETURNS trigger LANGUAGE plpgsql AS $$
           BEGIN
@@ -262,7 +262,7 @@ describe("durable private online history retention", () => {
       Effect.gen(function* () {
         const sql = yield* PgClient.PgClient;
         yield* sql`DELETE FROM "UserOnlineRetention"`;
-        yield* sql`INSERT INTO "UserOnlineInterval" ("userId","sessionId","segmentId","startedAt","endedAt","observedAt") VALUES ('expired','old','old','2020-01-01','2020-01-02','2020-01-02')`;
+        yield* sql`INSERT INTO "UserOnlineInterval" ("userId", "sessionId", "segmentStartedAt", "startedAt", "endedAt", "observedAt") VALUES ('expired', gen_random_uuid(), '2020-01-01', '2020-01-01','2020-01-02','2020-01-02')`;
       }).pipe(Effect.provide(harness.database)),
     );
     await harness.run(

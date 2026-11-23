@@ -1,0 +1,138 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "8ba02d88-c4b1-4961-a7db-0d092ee02356",
+  "prevIds": ["eda9a7c5-da23-46c2-9978-6a739404f318"],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "UserOnlineInterval",
+        "segmentStartedAt"
+      ],
+      "writes": [
+        "s|col|public.UserOnlineInterval.segmentStartedAt",
+        "n|col|public.UserOnlineInterval.segmentStartedAt",
+        "e|col|public.UserOnlineInterval.segmentStartedAt"
+      ],
+      "reads": ["n|tbl|public.UserOnlineInterval", "n|sch|public"]
+    },
+    {
+      "statementType": "drop_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "UserOnlineInterval",
+        "segmentId"
+      ],
+      "writes": [
+        "s|col|public.UserOnlineInterval.segmentId",
+        "n|col|public.UserOnlineInterval.segmentId",
+        "e|col|public.UserOnlineInterval.segmentId"
+      ],
+      "reads": ["n|tbl|public.UserOnlineInterval", "n|sch|public"]
+    },
+    {
+      "statementType": "alter_pk",
+      "statementTarget": ["table", "public", "UserOnlineInterval"],
+      "writes": ["s|pk|public.UserOnlineInterval"],
+      "reads": [
+        "n|tbl|public.UserOnlineInterval",
+        "n|sch|public",
+        "n|col|public.UserOnlineInterval.userId",
+        "n|col|public.UserOnlineInterval.sessionId",
+        "n|col|public.UserOnlineInterval.segmentStartedAt"
+      ],
+      "sharedWrites": [
+        "e|uniqueness|public.UserOnlineInterval.segmentId.sessionId.userId"
+      ]
+    },
+    {
+      "statementType": "alter_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "UserOnlineInterval",
+        "sessionId"
+      ],
+      "writes": [
+        "s|colprop|public.UserOnlineInterval.sessionId.type",
+        "s|colprop|public.UserOnlineInterval.sessionId.default"
+      ],
+      "reads": [
+        "n|tbl|public.UserOnlineInterval",
+        "n|sch|public",
+        "n|col|public.UserOnlineInterval.sessionId"
+      ],
+      "sqlHash": "8643ca0c30346564"
+    },
+    {
+      "statementType": "recreate_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "UserOnlineInterval",
+        "UserOnlineInterval_startedAt_idx"
+      ],
+      "writes": [
+        "s|idx|public.UserOnlineInterval_startedAt_idx",
+        "n|idx|public.UserOnlineInterval_startedAt_idx",
+        "e|idx|public.UserOnlineInterval_startedAt_idx",
+        "n|rel|public.UserOnlineInterval_startedAt_idx"
+      ],
+      "reads": [
+        "n|tbl|public.UserOnlineInterval",
+        "n|sch|public",
+        "n|col|public.UserOnlineInterval.startedAt"
+      ],
+      "sharedWrites": [],
+      "sqlHash": "a46539f955c94e15"
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "UserOnlineInterval",
+        "name": "segmentStartedAt",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"UserOnlineInterval\",\"segmentId\"]"
+    },
+    {
+      "op": "alter",
+      "key": "columns\u0000[\"public\",\"UserOnlineInterval\",\"sessionId\"]",
+      "set": {
+        "type": "uuid"
+      }
+    },
+    {
+      "op": "alter",
+      "key": "indexes\u0000[\"public\",\"UserOnlineInterval_startedAt_idx\"]",
+      "set": {
+        "method": "brin"
+      }
+    },
+    {
+      "op": "alter",
+      "key": "pks\u0000[\"public\",\"UserOnlineInterval\",\"UserOnlineInterval_pkey\"]",
+      "set": {
+        "columns": ["userId", "sessionId", "segmentStartedAt"]
+      }
+    }
+  ]
+}

@@ -1,13 +1,14 @@
 import { OperationError } from "@lootlog/instrumentation/operation";
 import { acquireBullQueue, acquireBullWorker } from "@lootlog/database/bullmq";
 import { reconnectingBunRedisLayer } from "@lootlog/database/bun-redis";
-import { Context, Effect, FiberSet, Layer, Redacted } from "effect";
+import { Context, Effect, FiberSet, Layer, Redacted, Schedule } from "effect";
 import { Redis } from "effect/persistence";
 import {
   makeBattlelogOperations,
   type BattlelogOperations,
 } from "#src/battles/battlelog-operations";
 import { makeBattles } from "#src/battles/battles.service";
+import { pruneBattleSubmissions } from "#src/battles/submission/battle-submission-retention";
 import { DELETE_USER_BATTLES_QUEUE } from "#src/battles/deletion/delete-user-battles-queue";
 import {
   makeDeleteUserBattlesProcessor,
@@ -88,6 +89,14 @@ export class BattlelogApplication extends Context.Service<
         DELETE_USER_BATTLES_QUEUE,
         config.redisUrl,
         (job) => runWorker(processor.process(job)),
+      );
+
+      yield* pruneBattleSubmissions(drizzle).pipe(
+        Effect.catch((error) =>
+          Effect.logWarning("Battle submission retention failed", error),
+        ),
+        Effect.repeat(Schedule.spaced("1 hour")),
+        Effect.forkScoped,
       );
 
       const operations = makeBattlelogOperations(

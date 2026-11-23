@@ -1,0 +1,36 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "a4a655c1-06c9-4daf-86cc-d50b4e0fd21c",
+  "prevIds": ["794ab97c-0207-4ce9-bef7-1d9bc77852e2"],
+  "footprints": [
+    {
+      "statementType": "drop_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "BossKill",
+        "BossKill_killedAt_idx"
+      ],
+      "writes": [
+        "s|idx|public.BossKill_killedAt_idx",
+        "n|idx|public.BossKill_killedAt_idx",
+        "e|idx|public.BossKill_killedAt_idx",
+        "n|rel|public.BossKill_killedAt_idx"
+      ],
+      "reads": [
+        "e|tbl|public.BossKill",
+        "n|sch|public",
+        "e|col|public.BossKill.killedAt"
+      ],
+      "sharedWrites": []
+    }
+  ],
+  "deltas": [
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"BossKill_killedAt_idx\"]"
+    }
+  ]
+}

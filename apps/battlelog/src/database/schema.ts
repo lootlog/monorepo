@@ -147,7 +147,6 @@ export const userCharacters = pgTable(
       table.characterId,
       table.world,
     ),
-    index("user_characters_userId_idx").on(table.userId),
   ],
 );
 

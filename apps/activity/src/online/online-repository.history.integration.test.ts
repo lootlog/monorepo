@@ -2,6 +2,7 @@ import { Permissions } from "#src/activities/activity-permissions";
 import { ActivityRepository } from "#src/activities/activity-repository";
 import { ActivityReadiness, ActivityRoutes } from "#src/http/activity-http";
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import { PgClient } from "@effect/sql-pg";
 import { Effect, Layer } from "effect";
 import { HttpRouter, HttpServer } from "effect/http";
 import { TestClock } from "effect/testing";
@@ -402,5 +403,57 @@ describe("durable private online history", () => {
     } finally {
       await boundary.dispose();
     }
+  });
+});
+
+describe("compacted online interval keys", () => {
+  const legacy = checkpoint(
+    "compacted",
+    "legacy",
+    "2026-09-01T08:00:00Z",
+    "2026-09-01T09:00:00Z",
+  );
+
+  let harness: OnlineRepositoryHarness;
+
+  beforeAll(async () => {
+    harness = await startOnlineRepositoryHarness(
+      `INSERT INTO "UserOnlineInterval" ("userId", "sessionId", "segmentId", "world", "startedAt", "endedAt", "observedAt")
+      VALUES ('${legacy.userId}', '${legacy.sessionId}', '${legacy.sessionId}:${Date.parse(legacy.startedAt)}.0', 'luvia', '${legacy.startedAt}', '${legacy.endedAt}', '${legacy.endedAt}')`,
+    );
+  }, 60_000);
+
+  afterAll(async () => {
+    await harness?.stop();
+  });
+
+  it("keeps segments recorded before compaction and extends them on redelivery", async () => {
+    const intervals = await harness.runAt(
+      "2026-09-02T00:00:00Z",
+      Effect.gen(function* () {
+        const repo = yield* OnlineRepository;
+        yield* repo.ingest({
+          ...legacy,
+          world: "luvia",
+          endedAt: "2026-09-01T10:00:00Z",
+          observedAt: "2026-09-01T10:00:00Z",
+        });
+
+        const sql = yield* PgClient.PgClient;
+
+        return yield* sql<{
+          segmentStartedAt: string;
+          endedAt: string;
+        }>`SELECT "segmentStartedAt"::text AS "segmentStartedAt", "endedAt"::text AS "endedAt"
+          FROM "UserOnlineInterval" WHERE "userId" = ${legacy.userId}`;
+      }).pipe(Effect.provide(harness.database)),
+    );
+
+    expect(intervals).toEqual([
+      {
+        segmentStartedAt: "2026-09-01 08:00:00+00",
+        endedAt: "2026-09-01 10:00:00+00",
+      },
+    ]);
   });
 });

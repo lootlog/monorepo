@@ -1,0 +1,61 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "faf12807-4391-4437-822a-f2c7ba27c12d",
+  "prevIds": ["8ba02d88-c4b1-4961-a7db-0d092ee02356"],
+  "footprints": [
+    {
+      "statementType": "drop_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "Activity",
+        "Activity_createdAt_guildId_idx"
+      ],
+      "writes": [
+        "s|idx|public.Activity_createdAt_guildId_idx",
+        "n|idx|public.Activity_createdAt_guildId_idx",
+        "e|idx|public.Activity_createdAt_guildId_idx",
+        "n|rel|public.Activity_createdAt_guildId_idx"
+      ],
+      "reads": [
+        "e|tbl|public.Activity",
+        "n|sch|public",
+        "e|col|public.Activity.guildId"
+      ],
+      "sharedWrites": []
+    },
+    {
+      "statementType": "drop_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "Activity",
+        "Activity_createdAt_userId_idx"
+      ],
+      "writes": [
+        "s|idx|public.Activity_createdAt_userId_idx",
+        "n|idx|public.Activity_createdAt_userId_idx",
+        "e|idx|public.Activity_createdAt_userId_idx",
+        "n|rel|public.Activity_createdAt_userId_idx"
+      ],
+      "reads": [
+        "e|tbl|public.Activity",
+        "n|sch|public",
+        "e|col|public.Activity.userId"
+      ],
+      "sharedWrites": []
+    }
+  ],
+  "deltas": [
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"Activity_createdAt_guildId_idx\"]"
+    },
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"Activity_createdAt_userId_idx\"]"
+    }
+  ]
+}
