@@ -12,7 +12,7 @@ export function ApiKeysList({
   userId: string;
   apiKeys: ReadonlyArray<AdminApiKey>;
 }) {
-  const { run } = useUserAction(userId);
+  const { run, pending } = useUserAction(userId);
 
   if (apiKeys.length === 0)
     return <p className="text-sm text-muted-foreground">{text.apiKeysEmpty}</p>;
@@ -22,10 +22,14 @@ export function ApiKeysList({
       {apiKeys.map((key) => {
         const name = key.name || text.apiKeyUnnamed;
 
+        const revoking =
+          pending?.action === "revoke-api-key" && pending.keyId === key.id;
+
         return (
           <li
             key={key.id}
-            className="flex flex-col gap-3 py-3 first:pt-0 last:pb-0 md:flex-row md:items-center md:justify-between"
+            aria-busy={revoking}
+            className={`flex flex-col gap-3 py-3 transition-opacity duration-300 first:pt-0 last:pb-0 md:flex-row md:items-center md:justify-between ${revoking ? "opacity-40" : ""}`}
           >
             <div className="grid min-w-0 gap-1">
               <p className="break-words text-sm font-medium">{name}</p>
@@ -53,6 +57,7 @@ export function ApiKeysList({
               description={text.apiKeyConfirmDescription}
               confirmButtonLabel={text.apiKeyRevoke}
               cancelButtonLabel={text.cancel}
+              disabled={pending !== undefined}
               onConfirm={() => run({ action: "revoke-api-key", keyId: key.id })}
               trigger={
                 <Button

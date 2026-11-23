@@ -20,6 +20,8 @@ type CatalogItemGridProps = {
   maxLevel?: number;
   attackSpeed?: AttackSpeedRanking;
   dropRateOf?: Pick<CatalogDropSourceDtoOutput, "name" | "type">;
+  isStale?: boolean;
+  appendedFrom?: number;
 };
 
 export function CatalogItemGrid({
@@ -32,6 +34,8 @@ export function CatalogItemGrid({
   maxLevel,
   attackSpeed,
   dropRateOf,
+  isStale = false,
+  appendedFrom,
 }: CatalogItemGridProps) {
   if (isError) {
     return (
@@ -63,9 +67,23 @@ export function CatalogItemGrid({
 
   return (
     <TooltipProvider delay={100}>
-      <ul className={ITEM_LIST_CLASS}>
-        {items.map((item) => (
-          <li key={item.id}>
+      <ul
+        aria-busy={isStale || undefined}
+        className={cn(
+          ITEM_LIST_CLASS,
+          "transition-opacity duration-200 motion-reduce:transition-none",
+          isStale && "opacity-60",
+        )}
+      >
+        {items.map((item, index) => (
+          <li
+            key={item.id}
+            className={cn(
+              appendedFrom !== undefined &&
+                index >= appendedFrom &&
+                "animate-rise-in motion-reduce:animate-none",
+            )}
+          >
             <CatalogItemCard
               item={item}
               showSource={showSource}

@@ -65,6 +65,10 @@ const EMPTY_LOOTS: Loot[] = [];
 
 const EMPTY_GRID_ROWS: Loot[][] = [];
 
+const EMPTY_LOOT_IDS: ReadonlySet<Loot["id"]> = new Set();
+
+const ARRIVAL_HIGHLIGHT_MS = 1_600;
+
 type LootsInfiniteData = InfiniteData<LootPageResponseDto>;
 
 const getCurrentGuildId = (
@@ -170,9 +174,40 @@ export const useLiveLootList = () => {
     );
   };
 
+  const [arrivedLootIds, setArrivedLootIds] = useState(EMPTY_LOOT_IDS);
+
+  // oxlint-disable-next-line lootlog/no-unreasoned-state-sync -- timer that clears the arrival highlight
+  useEffect(() => {
+    if (arrivedLootIds.size === 0) return;
+
+    const timeout = setTimeout(
+      () => setArrivedLootIds(EMPTY_LOOT_IDS),
+      ARRIVAL_HIGHLIGHT_MS,
+    );
+
+    return () => clearTimeout(timeout);
+  }, [arrivedLootIds]);
+
   const placeLoots = (placed: readonly Loot[]) => {
-    if (guildId && applyLootSnapshots(queryClient, guildId, placed))
+    if (!guildId) return;
+
+    const listedIds = new Set(
+      queryClient
+        .getQueryData<LootsInfiniteData>(queryKey)
+        ?.pages.flatMap((page) => page.items.map((loot) => loot.id)),
+    );
+
+    if (applyLootSnapshots(queryClient, guildId, placed))
       reconciliationRef.current?.markDirty();
+
+    const arrived = queryClient
+      .getQueryData<LootsInfiniteData>(queryKey)
+      ?.pages.flatMap((page) => page.items)
+      .filter((loot) => !listedIds.has(loot.id))
+      .map((loot) => loot.id);
+
+    if (arrived?.length)
+      setArrivedLootIds((current) => new Set([...current, ...arrived]));
   };
 
   const handleLootShareUpdate = useEffectEvent(
@@ -486,6 +521,7 @@ export const useLiveLootList = () => {
     virtualItems,
     totalCount,
     allLoots,
+    arrivedLootIds,
     world,
     hasActiveFilters,
     clearFilters,

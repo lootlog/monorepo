@@ -12,6 +12,7 @@ import { GuildsSelector } from "@/components/layout/guilds-selector";
 import type { MenuItem } from "./types";
 import { SidebarNavItem } from "./sidebar-nav-item";
 import { useWarmRouteChunks } from "@/lib/router/use-warm-route-chunks";
+import { EASE_EMPHASIZED } from "@/lib/motion";
 import {
   ThemeSidebarBackground,
   ThemeSidebarFooterDecoration,
@@ -27,7 +28,7 @@ const headingRuleVariants: Variants = {
   hidden: { scaleX: 0 },
   visible: {
     scaleX: 1,
-    transition: { duration: 0.4, ease: [0.2, 0, 0, 1] },
+    transition: { duration: 0.4, ease: EASE_EMPHASIZED },
   },
 };
 

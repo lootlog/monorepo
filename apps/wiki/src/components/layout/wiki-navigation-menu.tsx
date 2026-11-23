@@ -11,12 +11,14 @@ import {
 } from "@lootlog/ui/components/navigation-menu";
 import { cn } from "cn";
 import { EquipmentSlotIcon } from "@/components/equipment/equipment-slot-icon";
+import { useItemComparison } from "@/contexts/item-comparison-context";
 import { t } from "@/i18n/messages";
 import { EQUIPMENT_SLOTS } from "@/lib/equipment-slots";
 import {
   EMPTY_ITEMS_SEARCH,
   WIKI_NAVIGATION,
 } from "@/navigation/wiki-navigation";
+import { WikiNavigationCount } from "./wiki-navigation-count";
 import { WikiNavigationMenuLink } from "./wiki-navigation-menu-link";
 
 type WikiSection = (typeof WIKI_NAVIGATION)[number];
@@ -36,6 +38,7 @@ type WikiNavigationMenuProps = {
 export function WikiNavigationMenu({ activeSection }: WikiNavigationMenuProps) {
   const [openPanel, setOpenPanel] = useState<string | null>(null);
   const collapsed = useMaxWidth(INLINE_MIN_WIDTH);
+  const comparison = useItemComparison();
 
   if (collapsed && openPanel !== null) setOpenPanel(null);
 
@@ -47,6 +50,11 @@ export function WikiNavigationMenu({ activeSection }: WikiNavigationMenuProps) {
         label={t(section.labelKey)}
         description={
           section.descriptionKey ? t(section.descriptionKey) : undefined
+        }
+        badge={
+          section.link.to === "/compare" ? (
+            <WikiNavigationCount count={comparison.items.length} />
+          ) : undefined
         }
         active={section === activeSection}
       />

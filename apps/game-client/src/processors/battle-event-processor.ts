@@ -18,6 +18,7 @@ import {
   type BattleWarriorsWithAccountId,
 } from "@/store/game-store/battle.store";
 import type { GameEvent } from "@lootlog/margonem/game-events";
+import { reportSubmissionOutcome } from "@/store/game-store/submission-feedback.store";
 import { createKill, createBattle, recordWeaponKills } from "@/api/battle.api";
 import { findFinishingBlows } from "@lootlog/battle-processor/finishing-blows";
 import { getHeroMainWeaponItemId } from "@/lib/margonem-runtime/adapters/item-tip-runtime-adapter";
@@ -576,9 +577,12 @@ export class BattleEventProcessor {
     }
 
     if (killIntent) {
-      createKill(killIntent).catch((error) => {
-        console.warn("[BattleEventProcessor] Failed to create kill:", error);
-      });
+      createKill(killIntent)
+        .then(() => reportSubmissionOutcome("kill", "logged"))
+        .catch((error) => {
+          reportSubmissionOutcome("kill", "failed");
+          console.warn("[BattleEventProcessor] Failed to create kill:", error);
+        });
     }
 
     if (battleIntent) {

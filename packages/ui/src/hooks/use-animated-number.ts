@@ -10,6 +10,7 @@ export function useAnimatedNumber(target: number) {
   const [value, setValue] = useState(target);
   const shown = useRef(target);
 
+  // oxlint-disable-next-line lootlog/no-unreasoned-state-sync -- requestAnimationFrame loop that eases the shown value toward the target
   useEffect(() => {
     const from = shown.current;
 

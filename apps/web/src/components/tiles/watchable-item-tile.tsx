@@ -4,6 +4,7 @@ import type { Item } from "@/lib/loots/loot-types";
 import type { WatchedItemScope } from "@/lib/user-notifications/watched-item-scope";
 import { wikiItemUrl } from "@lootlog/domain/wiki-links";
 import { WikiContextMenuItem } from "@/components/common/wiki-context-menu-item";
+import { CopyStatusAnnouncement } from "@/components/common/copy-status-announcement";
 
 import {
   ContextMenu,
@@ -16,6 +17,7 @@ import {
 import { Bell, BellOff, Check, Copy, ListFilter, Plus } from "lucide-react";
 
 import { Button } from "@lootlog/ui/components/button";
+import { CopyStateIcon } from "@lootlog/ui/components/copy-state-icon";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { cn } from "cn";
 
@@ -35,7 +37,8 @@ export const WatchableItemTile = ({
 }: WatchableItemTileProps) => {
   const {
     t,
-    isCopyPending,
+    copyState,
+    copiedMessage,
     isAddingThisItem,
     state,
     isQuickAddPending,
@@ -98,11 +101,14 @@ export const WatchableItemTile = ({
         <ContextMenuItem
           className="w-full justify-start gap-2"
           closeOnClick={false}
-          disabled={isCopyPending}
           render=<Button
             variant="ghost"
-            loading={isCopyPending}
-            icon={<Copy className="size-4 text-muted-foreground" />}
+            icon={
+              <CopyStateIcon
+                state={copyState}
+                idleIcon={<Copy className="size-4 text-muted-foreground" />}
+              />
+            }
           />
           onClick={() => {
             void handleCopyItemId();
@@ -110,6 +116,10 @@ export const WatchableItemTile = ({
         >
           {t("loots.list.itemActions.copyId")}
         </ContextMenuItem>
+        <CopyStatusAnnouncement
+          state={copyState}
+          copiedMessage={copiedMessage}
+        />
         <ContextMenuItem
           className="gap-2"
           disabled={!effectiveGuildId}

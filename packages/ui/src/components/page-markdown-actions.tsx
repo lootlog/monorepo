@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
-import { CheckIcon, CopyIcon, FileTextIcon } from "lucide-react";
+import { FileTextIcon } from "lucide-react";
+import { useClipboardCopy } from "../hooks/use-clipboard-copy";
 import { Button } from "./button";
+import { CopyStateIcon } from "./copy-state-icon";
 
 type PageMarkdownActionsProps = {
   markdownUrl: string;
@@ -12,25 +13,14 @@ type PageMarkdownActionsProps = {
   };
 };
 
-type CopyState = "idle" | "copying" | "copied" | "failed";
-
 export function PageMarkdownActions({
   markdownUrl,
   labels,
 }: PageMarkdownActionsProps) {
-  const [state, setState] = useState<CopyState>("idle");
+  const { state, copyWith } = useClipboardCopy();
 
-  useEffect(() => {
-    if (state !== "copied" && state !== "failed") return;
-    const timeout = setTimeout(() => setState("idle"), 2000);
-
-    return () => clearTimeout(timeout);
-  }, [state]);
-
-  const copy = async () => {
-    setState("copying");
-
-    try {
+  const copy = () =>
+    copyWith(async () => {
       const text = fetch(markdownUrl).then(async (response) => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
@@ -40,11 +30,7 @@ export function PageMarkdownActions({
       await navigator.clipboard.write([
         new ClipboardItem({ "text/plain": text }),
       ]);
-      setState("copied");
-    } catch {
-      setState("failed");
-    }
-  };
+    });
 
   const copyLabel =
     state === "copied"
@@ -59,7 +45,7 @@ export function PageMarkdownActions({
         variant="outline"
         size="sm"
         loading={state === "copying"}
-        icon={state === "copied" ? <CheckIcon /> : <CopyIcon />}
+        icon=<CopyStateIcon state={state} />
         onClick={copy}
       >
         <span aria-live="polite">{copyLabel}</span>

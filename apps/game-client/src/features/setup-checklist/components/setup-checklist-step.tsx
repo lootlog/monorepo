@@ -1,5 +1,5 @@
 import { Circle, CircleCheck, LoaderCircle } from "lucide-react";
-import type { FC } from "react";
+import { useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "cn";
 import { Button } from "@/components/ui/button";
@@ -48,10 +48,24 @@ export const SetupChecklistStep: FC<SetupChecklistStepProps> = ({
 }) => {
   const { t } = useTranslation("quickAccess");
   const todo = step.status === "todo";
+  const [shownStatus, setShownStatus] = useState(step.status);
+  const [justDone, setJustDone] = useState(false);
+
+  if (shownStatus !== step.status) {
+    setShownStatus(step.status);
+    setJustDone(step.status === "done");
+  }
 
   return (
     <li className="ll:flex ll:items-start ll:gap-2">
-      {STATUS_ICON[step.status]}
+      {justDone ? (
+        <CircleCheck
+          aria-hidden
+          className={cn(ICON_CLASS_NAME, "ll-pop-in ll:text-green-400")}
+        />
+      ) : (
+        STATUS_ICON[step.status]
+      )}
       <div className="ll:flex ll:min-w-0 ll:flex-1 ll:flex-col ll:gap-0.5">
         <span
           className={cn(

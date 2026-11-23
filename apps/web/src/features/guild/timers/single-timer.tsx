@@ -20,6 +20,7 @@ import {
   type TimerCountdownMode,
 } from "@lootlog/domain/timers";
 import { formatLevel } from "@lootlog/domain/profession";
+import { useChangeCount } from "@lootlog/ui/hooks/use-change-count";
 import { subscribeToSecondClock } from "@/hooks/utils/second-clock";
 import { MemberIdentity } from "@/components/common/member-identity";
 import { MetaItem } from "@/components/common/meta-item";
@@ -39,7 +40,6 @@ type SingleTimerProps = {
   paint: TimerColorPaint;
   countdownMode: TimerCountdownMode;
   removeTimerAfterMs: number;
-  isPinned: boolean;
   showWorld?: boolean;
   heroSighting?: HeroSightingResponseDto;
 };
@@ -49,7 +49,6 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   paint,
   countdownMode,
   removeTimerAfterMs,
-  isPinned,
   showWorld = false,
   heroSighting,
 }) => {
@@ -61,8 +60,10 @@ export const SingleTimer: FC<SingleTimerProps> = ({
 
   const timeLeft = getTimerTimeLeft(timer, now);
   const phase = getTimerPhase(timeLeft, removeTimerAfterMs);
+  const phaseChangeCount = useChangeCount(phase);
 
-  if (phase === "expired" && !isPinned) return null;
+  const announcesPhase =
+    phaseChangeCount > 0 && (phase === "window" || phase === "entrance");
 
   const fill = veil(paint.fill, phase === "expired");
   const wash = `color-mix(in srgb, ${fill} 25%, transparent)`;
@@ -85,6 +86,13 @@ export const SingleTimer: FC<SingleTimerProps> = ({
         phase === "expired" && "opacity-75",
       )}
     >
+      {announcesPhase && (
+        <span
+          key={phaseChangeCount}
+          aria-hidden
+          className="pointer-events-none absolute inset-0 animate-arrival motion-reduce:animate-none"
+        />
+      )}
       <Popover>
         <PopoverTrigger
           openOnHover

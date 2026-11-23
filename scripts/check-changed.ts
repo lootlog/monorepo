@@ -205,7 +205,14 @@ export function planChecks(input: {
   steps.push(step("lint ratchet", ["bun", "run", "lint:ratchet"]));
 
   if (ciPlan.runClientCheck) {
-    steps.push(step("generated client", ["bun", "run", "client:check"]));
+    steps.push(
+      step(
+        "generated client",
+        ["bun", "run", "client:check"],
+        repositoryRoot,
+        concurrency,
+      ),
+    );
     leftToCi.push("SDK package installation");
   }
 

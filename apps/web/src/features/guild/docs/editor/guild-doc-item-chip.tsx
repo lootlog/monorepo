@@ -1,3 +1,4 @@
+import { CopyStatusAnnouncement } from "@/components/common/copy-status-announcement";
 import { ItemTile } from "@/components/tiles/item-tile";
 import { useLootItemByHid } from "@/hooks/api/use-loot-item-by-hid";
 import { useGuildId } from "@/hooks/context/use-guild-id";
@@ -6,11 +7,12 @@ import { parseItemHid } from "@/lib/utils/hid-detection";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { useLexicalEditable } from "@lexical/react/useLexicalEditable";
 import { Button } from "@lootlog/ui/components/button";
+import { CopyStateIcon } from "@lootlog/ui/components/copy-state-icon";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { resolveItemRarity } from "@lootlog/domain/item-rarity";
 import { LOOT_RARITY_TEXT_CLASS } from "@lootlog/ui/lib/item-rarity-colors";
 import { cn } from "cn";
-import { Copy, PackageSearch, PackageX, Pencil } from "lucide-react";
+import { PackageSearch, PackageX, Pencil } from "lucide-react";
 import { $getNodeByKey, type NodeKey } from "lexical";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
@@ -31,7 +33,7 @@ export const GuildDocItemChip = ({ item, nodeKey }: GuildDocItemChipProps) => {
   const { t } = useTranslation();
   const [editor] = useLexicalComposerContext();
   const editable = useLexicalEditable();
-  const { copyItemId, copyingId } = useCopyItemId();
+  const { copyItemId, copyState, copiedMessage } = useCopyItemId();
   const { snapshot: savedSnapshot, itemId } = item;
 
   const lootItemQuery = useLootItemByHid(
@@ -122,15 +124,19 @@ export const GuildDocItemChip = ({ item, nodeKey }: GuildDocItemChipProps) => {
           type="button"
           size="icon-xs"
           variant="ghost"
-          className="shrink-0 text-muted-foreground"
+          className="shrink-0 text-muted-foreground [&_svg:not([class*='size-'])]:size-3.5"
           aria-label={t("docs.item.copyId", { name: label })}
           title={itemId}
-          loading={copyingId === itemId}
-          disabled={copyingId !== null}
           onClick={() => void copyItemId(itemId)}
         >
-          <Copy className="size-3.5" />
+          <CopyStateIcon state={copyState} />
         </Button>
+      )}
+      {itemId && (
+        <CopyStatusAnnouncement
+          state={copyState}
+          copiedMessage={copiedMessage}
+        />
       )}
       {editable && (
         <Button

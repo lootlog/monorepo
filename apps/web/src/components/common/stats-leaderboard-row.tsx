@@ -1,6 +1,10 @@
 import { Link, type LinkProps } from "@tanstack/react-router";
+import * as m from "framer-motion/m";
+import { useChangeCount } from "@lootlog/ui/hooks/use-change-count";
 import { useId, type ReactNode } from "react";
 import { RankBadge } from "@/components/common/rank-badge";
+import { RankChangeIndicator } from "@/components/common/rank-change-indicator";
+import { useRankChange } from "@/components/common/use-rank-change";
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
@@ -20,6 +24,7 @@ type StatsLeaderboardRowProps = {
   link?: LinkProps;
   isViewer?: boolean;
   pinned?: boolean;
+  live?: boolean;
 };
 
 export const StatsLeaderboardRow = ({
@@ -32,8 +37,11 @@ export const StatsLeaderboardRow = ({
   link,
   isViewer = false,
   pinned = false,
+  live = false,
 }: StatsLeaderboardRowProps) => {
   const contentId = useId();
+  const rankChange = useRankChange(rank);
+  const valueChangeCount = useChangeCount(value);
 
   const content = (
     <span id={contentId} className="flex min-w-0 flex-1 items-center gap-3">
@@ -49,7 +57,18 @@ export const StatsLeaderboardRow = ({
           </span>
         )}
       </span>
-      <span className="shrink-0 text-sm font-semibold tabular-nums">
+      {live && rankChange !== 0 && (
+        <RankChangeIndicator key={rankChange} places={rankChange} />
+      )}
+      <span
+        key={live ? valueChangeCount : undefined}
+        className={cn(
+          "shrink-0 text-sm font-semibold tabular-nums",
+          live &&
+            valueChangeCount > 0 &&
+            "-mx-1 animate-arrival rounded-sm px-1 motion-reduce:animate-none",
+        )}
+      >
         {formatValue(value)}
       </span>
     </span>
@@ -61,7 +80,9 @@ export const StatsLeaderboardRow = ({
   );
 
   return (
-    <li
+    <m.li
+      layout={live && !pinned ? "position" : undefined}
+      initial={false}
       data-list-tile
       aria-current={isViewer || undefined}
       className={cn(
@@ -92,6 +113,6 @@ export const StatsLeaderboardRow = ({
           {content}
         </div>
       )}
-    </li>
+    </m.li>
   );
 };

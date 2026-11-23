@@ -332,14 +332,89 @@ body.si .ll-theme-boundary .ll-custom-cursor-pointer * {
   }
 }
 
-#lootlog-root .ll-count-bump {
+/* Lootlog UI animations match host portals too (timers under the bag),
+   which render outside #lootlog-root inside an .ll-theme-boundary. */
+:is(#lootlog-root, .ll-theme-boundary) .ll-count-bump {
   animation: ll-bump 340ms var(--ll-ease-enter) both;
   transform-origin: right center;
 }
 
-#lootlog-root .ll-settings-bump {
+:is(#lootlog-root, .ll-theme-boundary) .ll-icon-bump {
   animation: ll-bump 340ms var(--ll-ease-enter) both;
   transform-origin: center;
+}
+
+/* Something that just appeared or changed scales in once from its centre. */
+@keyframes ll-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+:is(#lootlog-root, .ll-theme-boundary) .ll-pop-in {
+  animation: ll-pop-in var(--ll-transition-duration-medium)
+    var(--ll-ease-overshoot) both;
+}
+
+/* A loot or kill submission answered: a dot on the connection icon lights up
+   green or red and fades. With animations off it stays steady until the
+   component removes it. */
+@keyframes ll-submission-dot {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  15%,
+  70% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+:is(#lootlog-root, .ll-theme-boundary) .ll-submission-dot {
+  animation: ll-submission-dot 1200ms var(--ll-ease-enter) both;
+}
+
+:is(#lootlog-root, .ll-theme-boundary).ll-reduced-motion .ll-submission-dot {
+  animation: none !important;
+}
+
+/* The realtime connection came back: a green ring leaves the icon once. */
+@keyframes ll-connection-recovered {
+  from {
+    opacity: 0.9;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+}
+
+:is(#lootlog-root, .ll-theme-boundary) .ll-connection-recovered {
+  animation: ll-connection-recovered 700ms ease-out both;
+}
+
+/* A notice leaving a window fades up instead of vanishing. */
+@keyframes ll-notice-exit {
+  to {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+:is(#lootlog-root, .ll-theme-boundary) .ll-notice-exit {
+  animation: ll-notice-exit var(--ll-transition-duration-short)
+    var(--ll-ease-exit) both;
 }
 
 /* Keybind field waiting for a key: the outline breathes instead of blinking. */
@@ -389,6 +464,24 @@ body.si .ll-theme-boundary .ll-custom-cursor-pointer * {
   animation: ll-timer-standing-pulse 1.2s ease-in-out infinite;
 }
 
+/* A timer entering its spawn window or entrance: the tile flashes once in
+   its phase colour, over the fill. */
+@keyframes ll-timer-phase-flash {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.35;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+:is(#lootlog-root, .ll-theme-boundary) .ll-timer-phase-flash {
+  animation: ll-timer-phase-flash 900ms ease-out both;
+}
+
 /* A detected NPC or a new notification: the row slides into place, lights
    up in its accent colour and a sheen crosses it once.
    Everything animates opacity or transform only. */
@@ -433,38 +526,27 @@ body.si .ll-theme-boundary .ll-custom-cursor-pointer * {
   }
 }
 
-#lootlog-root .ll-row-enter {
+:is(#lootlog-root, .ll-theme-boundary) .ll-row-enter {
   animation: ll-row-enter var(--ll-transition-duration-long)
     var(--ll-ease-enter) both;
 }
 
-#lootlog-root .ll-row-settle {
+:is(#lootlog-root, .ll-theme-boundary) .ll-row-settle {
   animation: ll-row-settle var(--ll-transition-duration-long)
     var(--ll-ease-enter) both;
 }
 
-#lootlog-root .ll-row-arrival-tint {
+:is(#lootlog-root, .ll-theme-boundary) .ll-row-arrival-tint {
   animation: ll-row-arrival-tint 760ms ease-out both;
 }
 
-#lootlog-root .ll-row-arrival-sheen {
+:is(#lootlog-root, .ll-theme-boundary) .ll-row-arrival-sheen {
   animation: ll-row-arrival-sheen 680ms var(--ll-ease-in-out) 80ms both;
 }
 
 /* Battle pings: an icon pops onto the warrior and a request for the hero
    radiates gold twice. They run in the game's battle window, outside
    #lootlog-root. */
-@keyframes ll-battle-ping-pop {
-  from {
-    opacity: 0;
-    transform: scale(0.4);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
 @keyframes ll-battle-ping-radiate {
   from {
     opacity: 0.9;
@@ -477,7 +559,7 @@ body.si .ll-theme-boundary .ll-custom-cursor-pointer * {
 }
 
 .ll-battle-ping-pop {
-  animation: ll-battle-ping-pop var(--ll-transition-duration-medium)
+  animation: ll-pop-in var(--ll-transition-duration-medium)
     var(--ll-ease-overshoot) both;
 }
 

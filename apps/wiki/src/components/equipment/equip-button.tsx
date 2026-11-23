@@ -44,7 +44,14 @@ export function EquipButton({
       title={compact ? label : undefined}
       onClick={() => equip(item, upgrade)}
     >
-      {isWorn ? <Check aria-hidden="true" /> : <Plus aria-hidden="true" />}
+      {isWorn ? (
+        <Check
+          aria-hidden="true"
+          className="animate-pop-in motion-reduce:animate-none"
+        />
+      ) : (
+        <Plus aria-hidden="true" />
+      )}
       {compact ? null : label}
     </Button>
   );

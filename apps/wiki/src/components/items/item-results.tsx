@@ -24,11 +24,17 @@ type ItemResultsProps = {
 };
 
 export function ItemResults({ params, query, filters }: ItemResultsProps) {
-  const { data, isError, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useInfiniteQuery({
-      ...itemResultsQueryOptions(params),
-      placeholderData: keepPreviousData,
-    });
+  const {
+    data,
+    isError,
+    isPlaceholderData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    ...itemResultsQueryOptions(params),
+    placeholderData: keepPreviousData,
+  });
 
   const items = data?.pages.flatMap((page) => page.hits);
   const total = data?.pages[0]?.estimatedTotalHits ?? 0;
@@ -63,6 +69,8 @@ export function ItemResults({ params, query, filters }: ItemResultsProps) {
         highlight={query}
         maxLevel={params.maxLevel}
         attackSpeed={ATTACK_SPEED_RANKINGS.get(params.sort)}
+        isStale={isPlaceholderData}
+        appendedFrom={data?.pages[0]?.hits.length}
       />
       {items && hasNextPage ? (
         <ShowMoreResults

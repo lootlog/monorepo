@@ -18,7 +18,8 @@ export function TimerIllustration() {
     return () => window.clearInterval(interval);
   }, []);
 
-  const countdown = `00:${String(Math.floor(remaining / 60)).padStart(2, "0")}:${String(remaining % 60).padStart(2, "0")}`;
+  const minutes = String(Math.floor(remaining / 60)).padStart(2, "0");
+  const seconds = String(remaining % 60).padStart(2, "0");
 
   return (
     <figure className="landing-timer relative mx-auto w-full max-w-xl px-1 py-3 sm:px-6 sm:py-8">
@@ -37,14 +38,17 @@ export function TimerIllustration() {
           aria-live="off"
           className="mt-2 font-mono text-[clamp(2.75rem,6.8vw,5rem)] font-bold leading-none tracking-[-0.07em] tabular-nums"
         >
-          {countdown}
+          {`00:${minutes}:${seconds.slice(0, 1)}`}
+          <span key={remaining} className="landing-timer-second">
+            {seconds.slice(1)}
+          </span>
         </p>
         <div
           aria-hidden="true"
           className="mt-4 h-2 overflow-hidden sm:mt-7 rounded-full bg-[var(--broadcast-ink)]/15"
         >
           <div
-            className="h-full rounded-full bg-[var(--broadcast-ink)]"
+            className="h-full rounded-full bg-[var(--broadcast-ink)] transition-[width] duration-1000 ease-linear motion-reduce:transition-none"
             style={{ width: `${(remaining / (60 * 60)) * 100}%` }}
           />
         </div>
@@ -65,7 +69,10 @@ export function TimerIllustration() {
             {t("landing.illustrations.items.gem")}
           </p>
         </div>
-        <Check className="size-5 shrink-0" aria-hidden="true" />
+        <Check
+          className="landing-timer-toast-check size-5 shrink-0"
+          aria-hidden="true"
+        />
       </div>
       <figcaption className="landing-caption text-[var(--broadcast-text-subtle)]">
         {t("landing.illustrations.example")}

@@ -102,6 +102,8 @@ export function BanForm({ user, own }: { user: AdminUser; own: boolean }) {
           confirmButtonLabel={text.banSubmit}
           cancelButtonLabel={text.cancel}
           disabled={reason.trim() === ""}
+          confirmText={duration === "permanent" ? text.confirmWord : undefined}
+          confirmLabel={text.confirmWordLabel(text.confirmWord)}
           onConfirm={async () => {
             if (await attempt({ action: "ban", reason, duration }))
               setReason("");

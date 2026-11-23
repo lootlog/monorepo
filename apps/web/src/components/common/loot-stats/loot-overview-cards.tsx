@@ -1,4 +1,5 @@
 import { StatsTile, StatsTileGrid } from "@/components/common/stats-tile";
+import { StatsTileNumber } from "@/components/common/stats-tile-number";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import type { LootStatsResponseDtoOutputOverview } from "@lootlog/client/main";
 import { Crown, Layers, Package, Sword } from "lucide-react";
@@ -75,7 +76,7 @@ export const LootOverviewCards = ({
             isLoading ? (
               <Skeleton className="h-7 w-24" />
             ) : (
-              formatNumber(kpi.value)
+              <StatsTileNumber value={kpi.value} />
             )
           }
           detail={isLoading ? <Skeleton className="h-4 w-16" /> : kpi.detail}

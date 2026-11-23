@@ -281,6 +281,11 @@ Before calling a change complete, account for every applicable item:
 - Import from the module that owns a symbol. Do not create source files that
   only re-export symbols.
 - When importing node built-in modules, first, look for Bun built-ins and only then Node built-ins.
+- Split a file that the staged size check rejects only along a real seam.
+  When the file holds one cohesive concept, such as one translation
+  namespace, the stylesheet of one surface, or one data table, keep it whole:
+  add its path to `.gitattributes` with `size-limit-exempt` and a comment
+  that says why.
 
 ### Keep UI and UX consistent
 

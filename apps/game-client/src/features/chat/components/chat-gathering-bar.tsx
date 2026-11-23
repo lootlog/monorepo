@@ -260,6 +260,11 @@ export function ChatGatheringBar({
             (candidate) => candidate.notificationId === roomId,
           )}
           pending={application.isPending}
+          joinedRoomId={
+            application.isSuccess
+              ? application.variables.notificationId
+              : undefined
+          }
           stale={discovery.isStale}
           onApply={apply}
           onHide={hideGathering}

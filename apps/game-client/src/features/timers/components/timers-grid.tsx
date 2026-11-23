@@ -1,7 +1,7 @@
 import { cn } from "cn";
 import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
-import type { FC } from "react";
+import { useState, type FC } from "react";
 import { SingleTimer } from "./single-timer";
 import { getGuildIds, getGuildNamesById } from "@/lib/api/generated-helpers";
 import { getGuildPermissionsQueryOptions } from "@/hooks/api/guild-permissions-query";
@@ -17,6 +17,25 @@ const getTimerTileKey = (timer: TimerWithTimeLeft) =>
   timer.mergedGuildIds
     ? `${timer.world}-${getTimerGroupingKey(timer)}`
     : `${timer.world}-${timer.guildId}-${timer.timerKey}`;
+
+const MAX_ANIMATED_ARRIVALS = 5;
+
+const resolveArrivedKeys = (
+  previousKeys: ReadonlySet<string>,
+  keys: readonly string[],
+): ReadonlySet<string> => {
+  const arrivedKeys = keys.filter((key) => !previousKeys.has(key));
+  const continuesPreviousList = keys.some((key) => previousKeys.has(key));
+
+  return continuesPreviousList && arrivedKeys.length <= MAX_ANIMATED_ARRIVALS
+    ? new Set(arrivedKeys)
+    : new Set();
+};
+
+type TimerArrivals = {
+  keys: ReadonlySet<string>;
+  arrivedKeys: ReadonlySet<string>;
+};
 
 type TimersGridProps = {
   timers: TimerWithTimeLeft[];
@@ -62,6 +81,23 @@ export const TimersGrid: FC<TimersGridProps> = ({
     timers.map((timer) => [getTimerTileKey(timer), timer]),
   );
 
+  const tileKeys = [...timersByKey.keys()];
+
+  const [arrivals, setArrivals] = useState<TimerArrivals>(() => ({
+    keys: new Set(tileKeys),
+    arrivedKeys: new Set(),
+  }));
+
+  if (
+    arrivals.keys.size !== tileKeys.length ||
+    tileKeys.some((key) => !arrivals.keys.has(key))
+  ) {
+    setArrivals({
+      keys: new Set(tileKeys),
+      arrivedKeys: resolveArrivedKeys(arrivals.keys, tileKeys),
+    });
+  }
+
   return (
     <TimerMapPresenceProvider timers={timers}>
       <TimerClockProvider>
@@ -92,6 +128,7 @@ export const TimersGrid: FC<TimersGridProps> = ({
                 timer={timer}
                 settingsKey={settingsKey}
                 isHidden={isHidden}
+                arrives={arrivals.arrivedKeys.has(tileKey)}
               />
             );
           })}

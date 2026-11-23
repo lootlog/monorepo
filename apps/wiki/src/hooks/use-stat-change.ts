@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useAnimatedNumber } from "@/hooks/use-animated-number";
+import { useAnimatedNumber } from "@lootlog/ui/hooks/use-animated-number";
 
 const CHANGE_SHOWN_MS = 2500;
 

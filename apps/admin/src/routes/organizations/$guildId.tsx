@@ -1,6 +1,4 @@
-import { Alert, AlertDescription } from "@lootlog/ui/components/alert";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { Option, Schema } from "effect";
 import { OrganizationAuditTable } from "@/components/organization-audit-table";
 import { OrganizationDiscord } from "@/components/organization-discord";
 import { OrganizationMembers } from "@/components/organization-members";
@@ -11,42 +9,21 @@ import { OrganizationSummary } from "@/components/organization-summary";
 import { OrganizationSuspension } from "@/components/organization-suspension";
 import { OrganizationVanityUrl } from "@/components/organization-vanity-url";
 import { Section } from "@/components/section";
-import { organizationNoticeText, text } from "@/lib/messages";
-import type { OrganizationAction } from "@/lib/organization-action";
+import { text } from "@/lib/messages";
 import { readPage, readText } from "@/lib/search-params";
 import { getOrganization } from "@/server/organizations";
 import { getWebUrl } from "@/server/queries";
 
 type OrganizationPageSearch = {
-  notice?: OrganizationAction["action"] | undefined;
-  error?: "failed" | "cooldown" | undefined;
   members?: string | undefined;
   page?: number | undefined;
 };
 
-const readNotice = Schema.decodeUnknownOption(
-  Schema.Literals([
-    "plan",
-    "clear-vanity-url",
-    "refresh-discord-sync",
-    "suspend",
-    "resume",
-  ]) satisfies Schema.Codec<OrganizationAction["action"]>,
-);
-
-const readError = Schema.decodeUnknownOption(
-  Schema.Literals(["failed", "cooldown"]),
-);
-
 export const Route = createFileRoute("/organizations/$guildId")({
   validateSearch: (search: {
-    notice?: unknown;
-    error?: unknown;
     members?: unknown;
     page?: unknown;
   }): OrganizationPageSearch => ({
-    notice: Option.getOrUndefined(readNotice(search.notice)),
-    error: Option.getOrUndefined(readError(search.error)),
     members: readText(search.members),
     page: readPage(search.page),
   }),
@@ -65,12 +42,13 @@ export const Route = createFileRoute("/organizations/$guildId")({
 
     return { ...organization, webUrl };
   },
+  remountDeps: ({ params }) => params.guildId,
   component: OrganizationPage,
 });
 
 function OrganizationPage() {
   const { details, members, webUrl } = Route.useLoaderData();
-  const { notice, error, members: memberSearch, page } = Route.useSearch();
+  const { members: memberSearch, page } = Route.useSearch();
   const { organization } = details;
 
   return (
@@ -81,18 +59,6 @@ function OrganizationPage() {
       >
         ← {text.backToOrganizations}
       </Link>
-      {notice ? (
-        <Alert variant="ready" role="status">
-          <AlertDescription>{organizationNoticeText[notice]}</AlertDescription>
-        </Alert>
-      ) : null}
-      {error ? (
-        <Alert variant="destructive">
-          <AlertDescription>
-            {error === "cooldown" ? text.discordCooldown : text.actionFailed}
-          </AlertDescription>
-        </Alert>
-      ) : null}
       <OrganizationSummary details={details} webUrl={webUrl} />
       <div className="grid gap-6 lg:grid-cols-2">
         <Section

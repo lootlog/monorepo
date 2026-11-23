@@ -1,3 +1,4 @@
+import { cn } from "cn";
 import { X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
@@ -19,6 +20,7 @@ type HeroDetectionNoticeProps = {
   sightings: readonly HeroSightingResponseDto[];
   userId: string | undefined;
   writableGuildIds: ReadonlySet<string>;
+  className?: string;
   onDismiss: () => void;
 };
 
@@ -27,6 +29,7 @@ export function HeroDetectionNotice({
   sightings,
   userId,
   writableGuildIds,
+  className,
   onDismiss,
 }: HeroDetectionNoticeProps) {
   const { t } = useTranslation("heroSightings");
@@ -51,7 +54,10 @@ export function HeroDetectionNotice({
   return (
     <div
       role="status"
-      className="ll:-mt-px ll:flex ll:shrink-0 ll:items-center ll:gap-1 ll:border-x-0 ll:border-y ll:border-solid ll:border-amber-400/40 ll:bg-amber-400/10 ll:px-2 ll:py-1.5 ll:text-[11px] ll:font-semibold"
+      className={cn(
+        "ll:-mt-px ll:flex ll:shrink-0 ll:items-center ll:gap-1 ll:border-x-0 ll:border-y ll:border-solid ll:border-amber-400/40 ll:bg-amber-400/10 ll:px-2 ll:py-1.5 ll:text-[11px] ll:font-semibold",
+        className,
+      )}
     >
       <span className="ll:flex ll:min-w-0 ll:flex-1 ll:flex-col ll:gap-0.5">
         <span className="ll:text-amber-200">

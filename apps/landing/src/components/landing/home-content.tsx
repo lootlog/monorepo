@@ -57,7 +57,10 @@ export function HomeContent() {
                   className="landing-action landing-action-light"
                 >
                   {t("landing.faq.discord")}
-                  <ArrowUpRight className="size-4" aria-hidden="true" />
+                  <ArrowUpRight
+                    className="landing-action-arrow size-4"
+                    aria-hidden="true"
+                  />
                 </a>
               </div>
             </div>

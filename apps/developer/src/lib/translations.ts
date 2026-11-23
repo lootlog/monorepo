@@ -124,7 +124,12 @@ export const portalText = {
   dismiss: "I saved the key",
   copy: "Copy",
   copied: "Copied",
-  copyFailed: "Could not copy the key. Select and copy it manually.",
+  copyFailed: "Could not copy",
+  copyRequest: "Copy request",
+  close: "Close",
+  keyCreated: "API key created.",
+  keyRenamed: "Key renamed.",
+  keyDeleted: (name: string) => `Deleted “${name}”.`,
   error: "The request failed. Try again.",
   keyListRefreshFailed:
     "Your change was saved, but the key list could not be refreshed. Refresh the list to continue.",

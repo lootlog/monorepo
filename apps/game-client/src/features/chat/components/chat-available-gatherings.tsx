@@ -19,6 +19,7 @@ type Props = {
   room: PartyReadyRoomProjection | null;
   roomSummary?: PartyGatheringSummary;
   pending: boolean;
+  joinedRoomId?: string;
   stale: boolean;
   organizer?: boolean;
   hasOwnGathering?: boolean;
@@ -32,6 +33,7 @@ export function ChatAvailableGatherings({
   room,
   roomSummary,
   pending,
+  joinedRoomId,
   stale,
   organizer = false,
   hasOwnGathering = false,
@@ -68,6 +70,7 @@ export function ChatAvailableGatherings({
           organizer={organizer}
           summary={roomSummary}
           stale={stale}
+          justJoined={room.notificationId === joinedRoomId}
         />
       </div>
     </li>

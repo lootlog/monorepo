@@ -1,4 +1,5 @@
 import { Button } from "@lootlog/ui/components/button";
+import { CopyStateIcon } from "@lootlog/ui/components/copy-state-icon";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,6 +10,7 @@ import {
 } from "@lootlog/ui/components/dropdown-menu";
 import { Copy } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { CopyStatusAnnouncement } from "@/components/common/copy-status-announcement";
 import { useCopyItemId } from "@/hooks/use-copy-item-id";
 import { formatItemHid } from "@/lib/utils/hid-detection";
 
@@ -20,24 +22,28 @@ export const LootItemIdButton = ({
   world: string;
 }) => {
   const { t } = useTranslation();
-  const { copyItemId, copyingId } = useCopyItemId();
+  const { copyItemId, copyState, copiedMessage } = useCopyItemId();
   const formattedHids = hids.map((hid) => formatItemHid(hid, world));
   const [onlyHid] = formattedHids;
 
   if (formattedHids.length === 1 && onlyHid) {
     return (
-      <Button
-        size="icon-sm"
-        variant="ghost"
-        className="shrink-0 text-muted-foreground"
-        onClick={() => void copyItemId(onlyHid)}
-        loading={copyingId === onlyHid}
-        disabled={copyingId !== null}
-        aria-label={t("loots.details.copyId")}
-        title={`${t("loots.details.copyId")}\n${onlyHid}`}
-      >
-        <Copy className="size-4" />
-      </Button>
+      <>
+        <Button
+          size="icon-sm"
+          variant="ghost"
+          className="shrink-0 text-muted-foreground"
+          onClick={() => void copyItemId(onlyHid)}
+          aria-label={t("loots.details.copyId")}
+          title={`${t("loots.details.copyId")}\n${onlyHid}`}
+        >
+          <CopyStateIcon state={copyState} />
+        </Button>
+        <CopyStatusAnnouncement
+          state={copyState}
+          copiedMessage={copiedMessage}
+        />
+      </>
     );
   }
 
@@ -62,7 +68,9 @@ export const LootItemIdButton = ({
           {formattedHids.map((formattedHid, index) => (
             <DropdownMenuItem
               key={formattedHid}
-              onClick={() => void copyItemId(formattedHid)}
+              onClick={() =>
+                void copyItemId(formattedHid, { toastOnSuccess: true })
+              }
             >
               <Copy className="size-4" />
               <span className="shrink-0">

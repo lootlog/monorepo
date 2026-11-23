@@ -73,6 +73,8 @@ export function OrganizationSuspension({
           confirmButtonLabel={text.suspendSubmit}
           cancelButtonLabel={text.cancel}
           disabled={reason.trim() === ""}
+          confirmText={text.confirmWord}
+          confirmLabel={text.confirmWordLabel(text.confirmWord)}
           onConfirm={async () => {
             if (await attempt({ action: "suspend", reason })) setReason("");
           }}

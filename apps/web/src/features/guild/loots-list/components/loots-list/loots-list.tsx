@@ -10,12 +10,13 @@ import { cn } from "cn";
 import { SharedTooltipProvider } from "@lootlog/ui/components/shared-tooltip-provider";
 
 import { ThemeEmptyStateIcon } from "@/themes/adapters";
-import { Button } from "@lootlog/ui/components/button";
+import { AnimatePresence } from "framer-motion";
 import { EmptyMedia } from "@lootlog/ui/components/empty";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { ArrowUp, CircleAlert, PackageOpen, SearchX } from "lucide-react";
+import { CircleAlert, PackageOpen, SearchX } from "lucide-react";
 
 import { useLiveLootList } from "./use-live-loot-list";
+import { NewLootsPill } from "./new-loots-pill";
 import { LootsListToolbar } from "./loots-list-toolbar";
 import { LootListItemStacksProvider } from "./loot-list-item-stacks-provider";
 import { RetryButton } from "@/components/common/retry-button";
@@ -23,6 +24,8 @@ import { ClearFiltersButton } from "@/components/common/clear-filters-button";
 
 const REFRESHABLE_LIST_CLASS =
   "relative w-full transition-opacity duration-200 motion-reduce:transition-none";
+
+const ARRIVAL_CLASS = "animate-arrival motion-reduce:animate-none";
 
 export const LootsList = () => {
   "use no memo";
@@ -50,6 +53,7 @@ export const LootsList = () => {
     virtualItems,
     totalCount,
     allLoots,
+    arrivedLootIds,
     world,
     hasActiveFilters,
     clearFilters,
@@ -116,16 +120,11 @@ export const LootsList = () => {
           aria-live="polite"
           className="pointer-events-none fixed inset-x-0 top-[calc(var(--page-sticky-top)+var(--filter-bar-height,0px)+0.5rem)] z-10 flex justify-center md:sticky md:inset-x-auto md:h-0"
         >
-          {newLootCount > 0 && (
-            <Button
-              type="button"
-              className="pointer-events-auto"
-              onClick={showNewLoots}
-            >
-              <ArrowUp className="size-4" aria-hidden />
-              {t("loots.list.newLoots", { count: newLootCount })}
-            </Button>
-          )}
+          <AnimatePresence initial={false}>
+            {newLootCount > 0 && (
+              <NewLootsPill count={newLootCount} onShow={showNewLoots} />
+            )}
+          </AnimatePresence>
         </div>
         <div ref={listRef}>
           {isPending ? (
@@ -168,7 +167,10 @@ export const LootsList = () => {
                           <div
                             key={loot.id}
                             data-list-tile
-                            className={LOOTS_GRID_CELL_CLASS}
+                            className={cn(
+                              LOOTS_GRID_CELL_CLASS,
+                              arrivedLootIds.has(loot.id) && ARRIVAL_CLASS,
+                            )}
                           >
                             <LootsListItem
                               loot={loot}
@@ -201,7 +203,10 @@ export const LootsList = () => {
                     data-index={virtualItem.index}
                     ref={virtualizer.measureElement}
                     data-list-tile={isLoaderRow ? undefined : ""}
-                    className="absolute inset-x-0 top-0"
+                    className={cn(
+                      "absolute inset-x-0 top-0",
+                      loot && arrivedLootIds.has(loot.id) && ARRIVAL_CLASS,
+                    )}
                     style={{
                       transform: `translateY(${virtualItem.start - virtualizer.options.scrollMargin}px)`,
                     }}

@@ -39,6 +39,8 @@ const guildId = "docs-integration-guild";
 
 const otherGuildId = "docs-other-guild";
 
+const SEEDED_AT = new Date("2026-11-23T12:00:00.000Z");
+
 const create = () =>
   runtime.runPromise(
     Effect.flatMap(DocsRepository, (repository) =>
@@ -101,19 +103,19 @@ describe("DocsRepository against migrated PostgreSQL", () => {
             id: guildId,
             name: "Documents",
             ownerId: "owner",
-            updatedAt: new Date(),
+            updatedAt: SEEDED_AT,
           },
           {
             id: otherGuildId,
             name: "Other",
             ownerId: "other",
-            updatedAt: new Date(),
+            updatedAt: SEEDED_AT,
           },
         ]);
         yield* db.insert(organizationEntitlementTable).values({
           guildId,
           documentLimit: 1,
-          updatedAt: new Date(),
+          updatedAt: SEEDED_AT,
         });
       }),
     );

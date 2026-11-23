@@ -54,12 +54,12 @@ export const useHeroSightingClaim = (sighting: HeroSightingResponseDto) => {
     canToggle: guildId !== undefined,
     isClaimed,
     isPending: claim.isPending || unclaim.isPending,
-    toggle: () => {
+    toggle: (onToggled: () => void) => {
       if (guildId === undefined) return;
       const pathParams = { guildId, sightingId: String(sighting.id) };
 
-      if (isClaimed) unclaim.mutate({ pathParams });
-      else claim.mutate({ pathParams, data: {} });
+      if (isClaimed) unclaim.mutate({ pathParams }, { onSuccess: onToggled });
+      else claim.mutate({ pathParams, data: {} }, { onSuccess: onToggled });
     },
   };
 };

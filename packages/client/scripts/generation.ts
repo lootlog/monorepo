@@ -105,8 +105,13 @@ export const assertNoGeneratedDrift = (
     );
   }
 
-  if (result.stdout.trim()) {
-    process.stderr.write(result.stdout);
+  const unstaged = result.stdout
+    .split("\n")
+    .filter((line) => line.length > 1 && line[1] !== " ")
+    .join("\n");
+
+  if (unstaged) {
+    process.stderr.write(`${unstaged}\n`);
     throw new Error(`${description} are stale`);
   }
 };

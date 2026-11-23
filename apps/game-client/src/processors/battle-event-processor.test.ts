@@ -12,6 +12,7 @@ import { EventDispatcher } from "@/lib/event-dispatcher";
 import { testRuntimeWindow } from "@/test/test-runtime-window";
 import { useNpcsStore } from "@/store/npcs.store";
 import { useLogsStore } from "@/store/logs.store";
+import { useSubmissionFeedbackStore } from "@/store/game-store/submission-feedback.store";
 
 const pvpStart = (moves = ["start"]): GameEvent => ({
   f: {
@@ -23,7 +24,10 @@ const pvpStart = (moves = ["start"]): GameEvent => ({
 
 const end: GameEvent = { f: { endBattle: 1, m: ["end"] } };
 
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.restoreAllMocks();
+  useSubmissionFeedbackStore.setState({ latest: null });
+});
 
 it("ignores nonbattle packets and publishes combined initialization/warriors in one transaction", async () => {
   createBattleTest();
@@ -278,6 +282,12 @@ it("records only the highest-weight defeated NPC", async () => {
     character: { name: "TestPlayer", lvl: 500, icon: "player.gif" },
     npc: { id: -200, name: "Titan", wt: 101 },
   });
+  await waitFor(() =>
+    expect(useSubmissionFeedbackStore.getState().latest).toMatchObject({
+      kind: "kill",
+      outcome: "logged",
+    }),
+  );
 });
 
 it("reports the party with who survived, which decides the loot rolls", async () => {
@@ -577,30 +587,31 @@ it("releases completed state after a digest failure and allows its compact repla
   expect(fixture.battles()).toHaveLength(1);
 });
 
-it.each(["battle", "kill"] as const)(
-  "reports a %s HTTP failure",
-  async (kind) => {
-    const fixture = createBattleTest();
-    fixture.fail();
-    const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
-    const processor = new BattleEventProcessor();
+it.each([
+  { kind: "battle", feedback: null },
+  { kind: "kill", feedback: { sequence: 1, kind: "kill", outcome: "failed" } },
+] as const)("reports a $kind HTTP failure", async ({ kind, feedback }) => {
+  const fixture = createBattleTest();
+  fixture.fail();
+  const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
+  const processor = new BattleEventProcessor();
 
-    const warriors: W =
-      kind === "battle"
-        ? { "111": createBattleWarrior(111), "222": createBattleWarrior(222) }
-        : { "-100": createBattleWarrior(-100) };
+  const warriors: W =
+    kind === "battle"
+      ? { "111": createBattleWarrior(111), "222": createBattleWarrior(222) }
+      : { "-100": createBattleWarrior(-100) };
 
-    await processor.handle({ f: { init: "1", m: ["start"], w: warriors } });
-    await processor.handle(end);
-    await waitFor(() =>
-      expect(warning).toHaveBeenCalledWith(
-        `[BattleEventProcessor] Failed to create ${kind}:`,
-        expect.any(Error),
-      ),
-    );
-    expect(fixture.requests).toHaveLength(1);
-  },
-);
+  await processor.handle({ f: { init: "1", m: ["start"], w: warriors } });
+  await processor.handle(end);
+  await waitFor(() =>
+    expect(warning).toHaveBeenCalledWith(
+      `[BattleEventProcessor] Failed to create ${kind}:`,
+      expect.any(Error),
+    ),
+  );
+  expect(fixture.requests).toHaveLength(1);
+  expect(useSubmissionFeedbackStore.getState().latest).toEqual(feedback);
+});
 
 const repeatOfPvpBattle: GameEvent = {
   f: { ...pvpStart().f, endBattle: 1, m: ["start", "end"] },
