@@ -1,0 +1,79 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "d9877b43-5446-4ee2-b667-ec20504c0136",
+  "prevIds": ["fe7e43bb-5028-47f1-ad8c-5ec0e3846b69"],
+  "footprints": [
+    {
+      "statementType": "drop_table",
+      "statementTarget": ["table", "public", "UserCharacterAuraGameAccount"],
+      "writes": [
+        "s|tbl|public.UserCharacterAuraGameAccount",
+        "n|tbl|public.UserCharacterAuraGameAccount",
+        "e|tbl|public.UserCharacterAuraGameAccount",
+        "n|rel|public.UserCharacterAuraGameAccount",
+        "n|type|public.UserCharacterAuraGameAccount"
+      ],
+      "reads": ["n|sch|public"]
+    },
+    {
+      "statementType": "drop_table",
+      "statementTarget": ["table", "public", "UserCharacterAura"],
+      "writes": [
+        "s|tbl|public.UserCharacterAura",
+        "n|tbl|public.UserCharacterAura",
+        "e|tbl|public.UserCharacterAura",
+        "n|rel|public.UserCharacterAura",
+        "n|type|public.UserCharacterAura"
+      ],
+      "reads": ["n|sch|public"]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "drop",
+      "key": "tables\u0000[\"public\",\"UserCharacterAuraGameAccount\"]"
+    },
+    {
+      "op": "drop",
+      "key": "tables\u0000[\"public\",\"UserCharacterAura\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"UserCharacterAuraGameAccount\",\"gameAccountId\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"UserCharacterAuraGameAccount\",\"userId\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"UserCharacterAuraGameAccount\",\"linkedAt\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"UserCharacterAura\",\"userId\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"UserCharacterAura\",\"auraId\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"UserCharacterAura\",\"updatedAt\"]"
+    },
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"UserCharacterAuraGameAccount_userId_idx\"]"
+    },
+    {
+      "op": "drop",
+      "key": "pks\u0000[\"public\",\"UserCharacterAuraGameAccount\",\"UserCharacterAuraGameAccount_pkey\"]"
+    },
+    {
+      "op": "drop",
+      "key": "pks\u0000[\"public\",\"UserCharacterAura\",\"UserCharacterAura_pkey\"]"
+    }
+  ]
+}
