@@ -1,4 +1,8 @@
 import { Alert, AlertDescription } from "@lootlog/ui/components/alert";
+import { SectionCard } from "@lootlog/ui/components/section-card";
+import { SectionCardContent } from "@lootlog/ui/components/section-card-content";
+import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
+import { cn } from "cn";
 import { useState, type ReactNode } from "react";
 import {
   SectionOutcomeContext,
@@ -9,11 +13,13 @@ export function Section({
   id,
   title,
   description,
+  flush = false,
   children,
 }: {
   id: string;
   title: string;
   description?: string;
+  flush?: boolean;
   children: ReactNode;
 }) {
   const [outcome, setOutcome] = useState<
@@ -24,27 +30,17 @@ export function Section({
     setOutcome((current) => ({ ...next, count: (current?.count ?? 0) + 1 }));
 
   return (
-    <section
-      aria-labelledby={id}
-      className="relative rounded-lg border border-border bg-card"
-    >
-      {outcome?.tone === "ready" ? (
-        <span
-          key={outcome.count}
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 rounded-[inherit] animate-arrival motion-reduce:animate-none"
-        />
-      ) : null}
-      <div className="border-b border-border px-4 py-3 md:px-5">
-        <h2 id={id} className="text-base font-semibold">
-          {title}
-        </h2>
-        {description ? (
-          <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+    <section aria-labelledby={id} className="min-w-0">
+      <SectionCard>
+        {outcome?.tone === "ready" ? (
+          <span
+            key={outcome.count}
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 rounded-[inherit] animate-arrival motion-reduce:animate-none"
+          />
         ) : null}
-      </div>
-      <div className="flex flex-col gap-4 px-4 py-4 md:px-5">
-        <div role="status" className="empty:hidden">
+        <SectionCardHeader id={id} title={title} description={description} />
+        <div role="status" className="p-3 pb-0 empty:hidden">
           {outcome ? (
             <Alert
               key={outcome.count}
@@ -57,9 +53,11 @@ export function Section({
           ) : null}
         </div>
         <SectionOutcomeContext value={report}>
-          <div>{children}</div>
+          <SectionCardContent className={cn(flush && "p-0")}>
+            {children}
+          </SectionCardContent>
         </SectionOutcomeContext>
-      </div>
+      </SectionCard>
     </section>
   );
 }

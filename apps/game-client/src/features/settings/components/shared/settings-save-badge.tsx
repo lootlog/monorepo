@@ -25,9 +25,9 @@ export const SettingsSaveBadge: FC<SettingsSaveBadgeProps> = ({
       SETTINGS_SAVE_ICON_ENTER_CLASS_NAME,
       "ll:size-4 ll:justify-center ll:rounded-full ll:fill-mode-backwards",
       status === "error"
-        ? "ll:bg-destructive ll:text-white"
+        ? "ll:bg-destructive ll:text-foreground"
         : status === "saved"
-          ? "ll:bg-emerald-500 ll:text-white"
+          ? "ll:bg-success ll:text-black"
           : "ll:bg-black/60 ll:text-muted-foreground",
       className,
     )}

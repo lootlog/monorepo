@@ -390,7 +390,7 @@ export const SingleNotification = memo(function SingleNotification({
             >
               {senderName}
             </span>
-            <span className="ll:min-w-0 ll:truncate ll:text-[10px] ll:text-gray-300">
+            <span className="ll:min-w-0 ll:truncate ll:text-[10px] ll:text-foreground/80">
               {metaText}
             </span>
           </div>
@@ -423,7 +423,6 @@ export const SingleNotification = memo(function SingleNotification({
           />
           {showCloseButton ? (
             <IconButton
-              variant="quiet-destructive"
               label={t("actions.closeAria")}
               onClick={handleRemoveNotification}
             >

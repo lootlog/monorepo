@@ -97,10 +97,7 @@ export const GlobalChatInput = ({
         mutate({ data });
       }}
     >
-      <WindowFooter
-        className="ll:relative"
-        rowClassName="ll:gap-0.5 ll:pl-1 ll:pr-0.5"
-      >
+      <WindowFooter className="ll:relative" rowClassName="ll:pl-1 ll:pr-0.5">
         <Input
           variant="borderless"
           value={draft}

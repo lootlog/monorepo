@@ -3,7 +3,8 @@ import {
   formatSignedBattleMetric,
 } from "@/components/battle/utils/value-utils";
 import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
-import { StatsTile, StatsTileGrid } from "@/components/common/stats-tile";
+import { StatsTile } from "@lootlog/ui/components/stats-tile";
+import { StatsTileGrid } from "@lootlog/ui/components/stats-tile-grid";
 import type { CombatProfileResponseDtoOutput } from "@lootlog/client/battlelog";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import {

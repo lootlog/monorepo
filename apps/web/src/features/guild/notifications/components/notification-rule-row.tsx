@@ -91,7 +91,7 @@ export const NotificationRuleRow = ({
                 {viewModel.displayName}
               </span>
               {!rule.enabled && (
-                <Badge variant="outline" className="h-5 shrink-0 px-2 text-2xs">
+                <Badge variant="outline" size="sm" className="shrink-0">
                   {viewModel.enabledLabel}
                 </Badge>
               )}

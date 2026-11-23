@@ -1,6 +1,7 @@
 import { Empty, EmptyDescription } from "@lootlog/ui/components/empty";
 import { Alert, AlertDescription } from "@lootlog/ui/components/alert";
 import { Button } from "@lootlog/ui/components/button";
+import { Card } from "@lootlog/ui/components/card";
 import { useState } from "react";
 import { KeyRow } from "@/components/key-row";
 import type { ApiKey } from "@/lib/key-client";
@@ -50,20 +51,22 @@ export function KeyList({
           className={`transition-opacity duration-300 ${refreshing ? "opacity-60" : ""}`}
         >
           {keys.length ? (
-            <ul className="overflow-hidden rounded-xl border border-border bg-card">
-              {keys.map((key) => (
-                <KeyRow
-                  key={key.id}
-                  apiKey={key}
-                  organizations={organizations}
-                  observedAt={observedAt}
-                  arrived={!initialKeyIds.has(key.id)}
-                  onChange={onRefresh}
-                />
-              ))}
-            </ul>
+            <Card className="gap-0 py-0">
+              <ul>
+                {keys.map((key) => (
+                  <KeyRow
+                    key={key.id}
+                    apiKey={key}
+                    organizations={organizations}
+                    observedAt={observedAt}
+                    arrived={!initialKeyIds.has(key.id)}
+                    onChange={onRefresh}
+                  />
+                ))}
+              </ul>
+            </Card>
           ) : (
-            <Empty className="rounded-xl border border-dashed border-border">
+            <Empty>
               <EmptyDescription>{t.empty}</EmptyDescription>
             </Empty>
           )}

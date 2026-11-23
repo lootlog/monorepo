@@ -3,26 +3,21 @@ import {
   ADMIN_ORGANIZATION_STATUSES,
 } from "@lootlog/schema/admin-organizations";
 import { Button } from "@lootlog/ui/components/button";
-import { Input } from "@lootlog/ui/components/input";
-import { Label } from "@lootlog/ui/components/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@lootlog/ui/components/select";
-import { buttonVariants } from "@lootlog/ui/lib/button-variants";
-import { Link } from "@tanstack/react-router";
+import { FilterPopover } from "@lootlog/ui/components/filter-popover";
+import { useNavigate } from "@tanstack/react-router";
+import { FilterBarRow } from "@/components/filter-bar-row";
+import { SearchForm } from "@/components/search-form";
 import {
   organizationSortText,
   organizationStatusText,
   syncStatusText,
   text,
 } from "@/lib/messages";
-import type { OrganizationsSearch } from "@/lib/organizations-search";
-
-const ANY = "any";
+import {
+  hasOrganizationsFilters,
+  type OrganizationsSearch,
+} from "@/lib/organizations-search";
+import { toggleSearchValue } from "@/lib/search-params";
 
 const SYNC_STATUSES = [
   "SYNCED",
@@ -32,119 +27,101 @@ const SYNC_STATUSES = [
   "NOT_FOUND",
 ] as const;
 
-const filters = [
-  {
-    name: "status",
-    label: text.organizationsFilterStatus,
-    defaultValue: ANY,
-    items: [
-      { value: ANY, label: text.organizationsFilterAnyStatus },
-      ...ADMIN_ORGANIZATION_STATUSES.map((status) => ({
-        value: status,
-        label: organizationStatusText[status],
-      })),
-    ],
-  },
-  {
-    name: "sync",
-    label: text.organizationsFilterSync,
-    defaultValue: ANY,
-    items: [
-      { value: ANY, label: text.organizationsFilterAnySync },
-      ...SYNC_STATUSES.map((status) => ({
-        value: status,
-        label: syncStatusText[status],
-      })),
-    ],
-  },
-  {
-    name: "missing",
-    label: text.organizationsFilterPermissions,
-    defaultValue: ANY,
-    items: [
-      { value: ANY, label: text.organizationsFilterAnyPermissions },
-      { value: "yes", label: text.organizationsFilterMissingPermissions },
-      { value: "no", label: text.organizationsFilterAllPermissions },
-    ],
-  },
-  {
-    name: "sort",
-    label: text.organizationsFilterSort,
-    defaultValue: "created",
-    items: ADMIN_ORGANIZATION_SORTS.map((sort) => ({
-      value: sort,
-      label: organizationSortText[sort],
-    })),
-  },
-] as const;
+const DEFAULT_SORT = "created";
+
+const statusOptions = ADMIN_ORGANIZATION_STATUSES.map((status) => ({
+  value: status,
+  label: organizationStatusText[status],
+}));
+
+const syncOptions = SYNC_STATUSES.map((status) => ({
+  value: status,
+  label: syncStatusText[status],
+}));
+
+const permissionOptions = [
+  { value: "yes" as const, label: text.organizationsFilterMissingPermissions },
+  { value: "no" as const, label: text.organizationsFilterAllPermissions },
+];
+
+const sortOptions = ADMIN_ORGANIZATION_SORTS.map((sort) => ({
+  value: sort,
+  label: organizationSortText[sort],
+}));
 
 export function OrganizationsFilter({
   search,
 }: {
   search: OrganizationsSearch;
 }) {
-  const values: Record<(typeof filters)[number]["name"], string | undefined> = {
-    status: search.status,
-    sync: search.sync,
-    missing: search.missing,
-    sort: search.sort,
-  };
+  const navigate = useNavigate();
+
+  const update = (patch: Partial<OrganizationsSearch>) =>
+    void navigate({
+      to: "/organizations",
+      search: { ...search, ...patch, page: undefined },
+    });
 
   return (
-    <form
-      key={[
-        search.search,
-        search.status,
-        search.sync,
-        search.missing,
-        search.sort,
-      ].join("\n")}
-      method="get"
-      action="/organizations"
-      role="search"
-      className="grid gap-3 rounded-lg border border-border bg-card p-4 md:grid-cols-4 md:items-end xl:grid-cols-[minmax(0,1fr)_10rem_10rem_11rem_11rem_auto]"
-    >
-      <div className="grid gap-1.5 md:col-span-4 xl:col-span-1">
-        <Label htmlFor="filter-search">{text.filterSearch}</Label>
-        <Input
-          id="filter-search"
-          name="search"
-          type="search"
-          maxLength={100}
-          defaultValue={search.search ?? ""}
+    <FilterBarRow
+      search={
+        <SearchForm
+          value={search.search}
           placeholder={text.organizationsFilterSearchPlaceholder}
+          onSearch={(value) => update({ search: value })}
         />
-      </div>
-      {filters.map((filter) => (
-        <div key={filter.name} className="grid gap-1.5">
-          <Label htmlFor={`filter-${filter.name}`}>{filter.label}</Label>
-          <Select
-            name={filter.name}
-            items={filter.items}
-            defaultValue={values[filter.name] ?? filter.defaultValue}
-          >
-            <SelectTrigger id={`filter-${filter.name}`} className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {filter.items.map((item) => (
-                <SelectItem key={item.value} value={item.value}>
-                  {item.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      ))}
-      <div className="flex gap-2 md:col-span-4 xl:col-span-1">
-        <Button type="submit">{text.filterApply}</Button>
-        <Link
-          to="/organizations"
-          className={buttonVariants({ variant: "outline" })}
+      }
+    >
+      <FilterPopover
+        options={statusOptions}
+        value={search.status}
+        onValueChange={(status) =>
+          update({ status: toggleSearchValue(search.status, status) })
+        }
+        placeholder={text.organizationsFilterStatus}
+        showSearch={false}
+        active={search.status !== undefined}
+      />
+      <FilterPopover
+        options={syncOptions}
+        value={search.sync}
+        onValueChange={(sync) =>
+          update({ sync: toggleSearchValue(search.sync, sync) })
+        }
+        placeholder={text.organizationsFilterSync}
+        showSearch={false}
+        active={search.sync !== undefined}
+      />
+      <FilterPopover
+        options={permissionOptions}
+        value={search.missing}
+        onValueChange={(missing) =>
+          update({ missing: toggleSearchValue(search.missing, missing) })
+        }
+        placeholder={text.organizationsFilterPermissions}
+        showSearch={false}
+        active={search.missing !== undefined}
+      />
+      <FilterPopover
+        options={sortOptions}
+        value={search.sort ?? DEFAULT_SORT}
+        onValueChange={(sort) =>
+          update({ sort: sort === DEFAULT_SORT ? undefined : sort })
+        }
+        placeholder={text.organizationsFilterSort}
+        showSearch={false}
+        active={search.sort !== undefined}
+      />
+      {hasOrganizationsFilters(search) || search.sort !== undefined ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="xs"
+          onClick={() => void navigate({ to: "/organizations", search: {} })}
         >
           {text.filterClear}
-        </Link>
-      </div>
-    </form>
+        </Button>
+      ) : null}
+    </FilterBarRow>
   );
 }

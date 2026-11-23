@@ -1,10 +1,10 @@
 import { useTranslation } from "react-i18next";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { BandSection } from "@/components/common/band-section";
-import { SkeletonLine } from "@/components/common/skeleton-line";
 import { KillStatsOverview } from "@/components/common/kill-analytics/kill-stats-overview";
 import { KillAnalyticsTrendSkeleton } from "@/components/common/kill-analytics/kill-analytics-trend-skeleton";
-import { StatsTile, StatsTileGrid } from "@/components/common/stats-tile";
+import { StatsTile } from "@lootlog/ui/components/stats-tile";
+import { StatsTileGrid } from "@lootlog/ui/components/stats-tile-grid";
 import { TRACKABLE_NPC_TYPES } from "@lootlog/domain/npc-type";
 import { StatsLeaderboardSection } from "@/components/common/stats-leaderboard-section";
 import { StatsSectionColumns } from "@/components/common/stats-section-columns";
@@ -18,12 +18,6 @@ export function StatisticsOverviewSkeleton() {
     <div role="status" aria-label={t("common.loading")}>
       <KillStatsOverview
         isLoading
-        loadingTotalDetail={
-          <span className="flex flex-wrap items-center gap-1">
-            <SkeletonLine className="h-3 w-24" />
-            <SkeletonLine className="h-3 w-40" />
-          </span>
-        }
         types={TRACKABLE_NPC_TYPES.flatMap((type) =>
           type === "ELITE3" ? [] : [{ type, kills: 0 }],
         )}

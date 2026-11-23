@@ -151,7 +151,7 @@
     "newLootsNoun_one": "nowy łup",
     "newLootsNoun_few": "nowe łupy",
     "newLootsNoun_many": "nowych łupów",
-    "loadError": "Nie udało się wczytać łupów",
+    "loadError": "Nie udało się wczytać łupów.",
     "loadErrorDescription": "Sprawdź połączenie i spróbuj ponownie.",
     "loadingMore": "Ładowanie kolejnych łupów...",
     "loadingMoreCat": "Kotek poluje na kolejne łupy...",

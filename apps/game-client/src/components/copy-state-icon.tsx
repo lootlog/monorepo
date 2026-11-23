@@ -10,7 +10,7 @@ type CopyStateIconProps = {
 export const CopyStateIcon: FC<CopyStateIconProps> = ({ state, IdleIcon }) => {
   if (state === "copied")
     return (
-      <Check key="copied" aria-hidden className="ll-pop-in ll:text-green-400" />
+      <Check key="copied" aria-hidden className="ll-pop-in ll:text-success" />
     );
 
   if (state === "failed")

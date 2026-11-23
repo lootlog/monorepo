@@ -1,9 +1,9 @@
 import {
   STATS_TILE_CELL_CLASS,
-  StatsTileGrid,
-} from "@/components/common/stats-tile";
+  StatsTile,
+} from "@lootlog/ui/components/stats-tile";
+import { StatsTileGrid } from "@lootlog/ui/components/stats-tile-grid";
 import type { KilledNpcType } from "@/constants/npc";
-import { SkeletonLine } from "@/components/common/skeleton-line";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { cn } from "cn";
 import { sum } from "es-toolkit";
@@ -29,7 +29,6 @@ const shareFormatter = new Intl.NumberFormat(PRODUCT_LOCALE, {
 type KillStatsOverviewProps = {
   total?: number;
   totalDetail?: ReactNode;
-  loadingTotalDetail?: ReactNode;
   types: { type: KilledNpcType; kills: number; detail?: ReactNode }[];
   isLoading?: boolean;
   selectedType?: KilledNpcType;
@@ -39,7 +38,6 @@ type KillStatsOverviewProps = {
 export const KillStatsOverview = ({
   total = 0,
   totalDetail,
-  loadingTotalDetail,
   types,
   isLoading = false,
   selectedType,
@@ -51,7 +49,7 @@ export const KillStatsOverview = ({
   return (
     <StatsTileGrid
       className={cn(
-        "grid-cols-2 [&>:last-child:nth-child(even)]:col-span-2 lg:[&>:last-child:nth-child(even)]:col-span-1",
+        "sm:grid-cols-3",
         types.length > 5
           ? "lg:grid-cols-[minmax(0,1.4fr)_repeat(6,minmax(0,1fr))]"
           : types.length > 4
@@ -59,57 +57,43 @@ export const KillStatsOverview = ({
             : "lg:grid-cols-[minmax(0,1.4fr)_repeat(4,minmax(0,1fr))]",
       )}
     >
-      <div
-        className={cn(
-          "col-span-2 flex flex-col gap-1 p-4 lg:col-span-1",
-          STATS_TILE_CELL_CLASS,
-        )}
-      >
-        <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-          <Swords className="size-4 text-primary" aria-hidden="true" />
-          {t("kills.overview.totalKills")}
-        </div>
-        <div className="text-4xl leading-tight font-semibold tabular-nums">
-          {isLoading ? (
-            <SkeletonLine className="h-9 w-32" />
+      <StatsTile
+        className="sm:col-span-3 lg:col-span-1"
+        icon={Swords}
+        label={t("kills.overview.totalKills")}
+        value={
+          isLoading ? <Skeleton className="h-7 w-24" /> : formatNumber(total)
+        }
+        detail={isLoading ? <Skeleton className="h-4 w-24" /> : totalDetail}
+        footer={
+          isLoading ? (
+            <Skeleton className="h-1.5 w-full rounded-full" />
           ) : (
-            formatNumber(total)
-          )}
-        </div>
-        {isLoading ? (
-          <div className="text-xs">
-            {loadingTotalDetail ?? <SkeletonLine className="h-3 w-24" />}
-          </div>
-        ) : (
-          totalDetail && (
-            <div className="text-xs text-muted-foreground">{totalDetail}</div>
+            <div
+              aria-hidden
+              className="flex h-1.5 gap-0.5 overflow-hidden rounded-full bg-muted"
+            >
+              {total > 0 &&
+                [...types, { type: undefined, kills: otherKills }].map(
+                  ({ type, kills }) =>
+                    kills > 0 && (
+                      <span
+                        key={type ?? "other"}
+                        className={cn(
+                          "min-w-1 transition-opacity duration-200",
+                          type
+                            ? NPC_TYPE_FILLS[type]
+                            : "bg-muted-foreground/30",
+                          selectedType && type !== selectedType && "opacity-50",
+                        )}
+                        style={{ flexGrow: kills }}
+                      />
+                    ),
+                )}
+            </div>
           )
-        )}
-        {isLoading ? (
-          <Skeleton className="mt-2 h-1.5 w-full rounded-full" />
-        ) : (
-          <div
-            aria-hidden
-            className="mt-2 flex h-1.5 gap-0.5 overflow-hidden rounded-full bg-muted"
-          >
-            {total > 0 &&
-              [...types, { type: undefined, kills: otherKills }].map(
-                ({ type, kills }) =>
-                  kills > 0 && (
-                    <span
-                      key={type ?? "other"}
-                      className={cn(
-                        "min-w-1 transition-opacity duration-200",
-                        type ? NPC_TYPE_FILLS[type] : "bg-muted-foreground/30",
-                        selectedType && type !== selectedType && "opacity-50",
-                      )}
-                      style={{ flexGrow: kills }}
-                    />
-                  ),
-              )}
-          </div>
-        )}
-      </div>
+        }
+      />
 
       {types.map(({ type, kills, detail }) => {
         const selected = type === selectedType;

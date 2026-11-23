@@ -3,7 +3,7 @@ import {
   RESULTS_TABLE_MEDIA_QUERY,
 } from "@/components/common/page-sticky-table-header";
 import { useMediaQuery } from "usehooks-ts";
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { RankBadge } from "@/components/common/rank-badge";
 import { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
@@ -33,8 +33,8 @@ import { formatDuration } from "@/utils/date/format-duration";
 
 type EventRankingTableProps = {
   rankings: EventRanking[];
-  guildId?: string;
-  eventId?: string;
+  guildId: string;
+  eventId: string;
   canEdit?: boolean;
   currentMemberId?: number;
 };
@@ -55,19 +55,19 @@ const getColumnClassName = (columnId: string) => {
   }
 
   if (columnId === "kills") {
-    return "hidden w-20 text-right @md/ranking:table-cell";
+    return "w-20 text-right";
   }
 
   if (columnId === "time") {
-    return "hidden w-28 text-right lg:table-cell";
+    return "w-28 text-right";
   }
 
   if (columnId === "afk") {
-    return "hidden w-20 text-right xl:table-cell";
+    return "w-20 text-right";
   }
 
   if (columnId === "points") {
-    return "w-28 text-right md:w-36";
+    return "w-36 text-right";
   }
 
   if (columnId === "actions") {
@@ -158,7 +158,7 @@ export const EventRankingTable = ({
           ranking={row.original}
           guildId={guildId}
           eventId={eventId}
-          nameClassName="text-xs font-semibold @md/ranking:text-sm"
+          nameClassName="text-sm font-semibold"
         />
       ),
       enableSorting: false,
@@ -202,10 +202,7 @@ export const EventRankingTable = ({
 
         return (
           <span className="flex justify-end">
-            <Badge
-              variant="secondary"
-              className="px-1.5 py-0 text-2xs tabular-nums"
-            >
+            <Badge variant="secondary" size="sm" className="tabular-nums">
               {afkPercentage}%
             </Badge>
           </span>
@@ -313,7 +310,7 @@ export const EventRankingTable = ({
       );
     }
 
-    if (!usesTable && guildId && eventId) {
+    if (!usesTable) {
       return (
         <EventRankingTiles
           rankings={sortedRankings}

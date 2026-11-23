@@ -29,3 +29,8 @@ export const validateUsersSearch = (search: {
   aura: readYesNo(search.aura),
   page: readPage(search.page),
 });
+
+export const hasUsersFilters = (search: UsersSearch) =>
+  [search.search, search.role, search.banned, search.aura].some(
+    (value) => value !== undefined,
+  );

@@ -53,7 +53,7 @@ export const TimerColorPicker: FC<TimerColorPickerProps> = ({
     <div
       role="group"
       aria-label={t("contextMenu.color")}
-      className="ll:w-full ll:border-0 ll:border-b ll:border-gray-400/40 ll:p-1"
+      className="ll:w-full ll:border-0 ll:border-b ll:border-separator ll:p-1"
     >
       <div className="ll:grid ll:grid-cols-7 ll:justify-items-center ll:gap-0.5">
         {colors.map((color) => (

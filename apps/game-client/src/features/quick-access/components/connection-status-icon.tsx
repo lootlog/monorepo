@@ -32,7 +32,7 @@ export const ConnectionStatusIcon: FC<ConnectionStatusIconProps> = ({
         <span
           key={recoveryCount}
           aria-hidden="true"
-          className="ll-connection-recovered ll:pointer-events-none ll:absolute ll:-inset-1 ll:rounded-full ll:border-2 ll:border-solid ll:border-green-400"
+          className="ll-connection-recovered ll:pointer-events-none ll:absolute ll:-inset-1 ll:rounded-full ll:border-2 ll:border-solid ll:border-success"
         />
       ) : null}
       {feedback ? (
@@ -41,7 +41,9 @@ export const ConnectionStatusIcon: FC<ConnectionStatusIconProps> = ({
           aria-hidden="true"
           className={cn(
             "ll-submission-dot ll:pointer-events-none ll:absolute ll:-top-0.5 ll:-right-0.5 ll:size-1.5 ll:rounded-full ll:ring-1 ll:ring-black/80",
-            feedback.outcome === "logged" ? "ll:bg-green-400" : "ll:bg-red-500",
+            feedback.outcome === "logged"
+              ? "ll:bg-success"
+              : "ll:bg-destructive",
           )}
         />
       ) : null}

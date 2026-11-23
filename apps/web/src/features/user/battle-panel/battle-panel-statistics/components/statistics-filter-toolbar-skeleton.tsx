@@ -8,6 +8,6 @@ export const StatisticsFilterToolbarSkeleton = () =>
     <Skeleton
       key={width}
       aria-hidden="true"
-      className={cn("hidden h-10 rounded-lg xl:block", width)}
+      className={cn("hidden h-10 rounded-md xl:block", width)}
     />
   ));

@@ -27,7 +27,7 @@ export const ChatNpcTextName: FC<ChatNpcTextNameProps> = ({
       <span
         className={cn(
           "ll:rounded-sm ll:px-0.5 ll:font-semibold ll:select-text",
-          { "ll:text-gray-100": isMsgYesterday },
+          { "ll:text-foreground": isMsgYesterday },
         )}
         style={{ backgroundColor, color: textColor }}
       >

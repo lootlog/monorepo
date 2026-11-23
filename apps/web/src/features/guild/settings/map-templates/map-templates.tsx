@@ -3,12 +3,13 @@ import { useTranslation } from "react-i18next";
 
 import { Button } from "@lootlog/ui/components/button";
 import { FileText, Plus, SearchX } from "lucide-react";
-import { ListToolbar } from "@/components/common/list-toolbar";
+import { ResultsSurface } from "@/components/common/results-surface";
+import { KillStatsSearch } from "@/components/common/kill-stats-search";
 import { toast } from "@lootlog/ui/lib/toast";
 import { MapTemplateFormDialog } from "./map-template-form-dialog";
 import { MapTemplateRowsSkeleton } from "./map-template-rows-skeleton";
 import { MapTemplateTile } from "./map-template-tile";
-import { SettingsClearFilterButton } from "@/components/common/settings-clear-filter-button";
+import { ClearFiltersButton } from "@/components/common/clear-filters-button";
 import { SettingsListEmpty } from "@/components/common/settings-list-empty";
 import { SettingsListError } from "@/components/common/settings-list-error";
 import { SettingsTabPage } from "@/components/common/settings-tab-page";
@@ -130,13 +131,9 @@ export const MapTemplatesSettings = () => {
       return (
         <SettingsListEmpty
           icon={SearchX}
-          title={t("settings.mapTemplates.noResults", {
-            query: searchValue.trim(),
-          })}
+          title={t("settings.mapTemplates.noResults")}
           description={t("settings.mapTemplates.noResultsDescription")}
-          action={
-            <SettingsClearFilterButton onClear={() => setSearchValue("")} />
-          }
+          action={<ClearFiltersButton onClear={() => setSearchValue("")} />}
         />
       );
     }
@@ -157,17 +154,18 @@ export const MapTemplatesSettings = () => {
 
   return (
     <SettingsTabPage title={t("settings.mapTemplates.title")}>
-      <ListToolbar
-        search={searchValue}
-        onSearchChange={setSearchValue}
-        placeholder={t("settings.mapTemplates.filterPlaceholder")}
-        label={t("settings.mapTemplates.filterPlaceholder")}
-        clearLabel={t("settings.clearFilter")}
-        disabled={!hasTemplates}
+      <ResultsSurface
+        search={
+          <KillStatsSearch
+            value={searchValue}
+            placeholder={t("settings.mapTemplates.filterPlaceholder")}
+            onChange={setSearchValue}
+          />
+        }
+        filters={hasTemplates && renderCreateButton("sm")}
       >
-        {hasTemplates && renderCreateButton("sm")}
-      </ListToolbar>
-      {renderContent()}
+        {renderContent()}
+      </ResultsSurface>
 
       <MapTemplateFormDialog
         mode="create"

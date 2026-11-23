@@ -12,6 +12,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useGlobalChatUnmute } from "../hooks/use-global-chat-moderation";
+import { EmptyState } from "@/components/empty-state";
 
 export const GlobalChatMutes = () => {
   const { t } = useTranslation("globalChat");
@@ -39,9 +40,7 @@ export const GlobalChatMutes = () => {
           retryLabel={t("actions.retry", { ns: "common" })}
         >
           {mutes.data?.mutes.length === 0 ? (
-            <p className="ll:m-0 ll:text-xs ll:text-muted-foreground">
-              {t("mutes.empty")}
-            </p>
+            <EmptyState description={t("mutes.empty")} />
           ) : (
             <ScrollArea className="ll:max-h-48">
               <ul className="ll:m-0 ll:flex ll:list-none ll:flex-col ll:gap-1 ll:p-0 ll:pr-2">

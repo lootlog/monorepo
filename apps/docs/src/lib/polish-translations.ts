@@ -8,14 +8,39 @@ export const docsTranslations = {
   },
   header: {
     closeNavigation: "Zamknij nawigację",
-    developers: "Dla programistów",
-    discord: "Discord",
-    github: "GitHub",
-    home: "Strona główna",
     menu: "Menu",
     navigation: "Nawigacja",
     section: "Dokumentacja",
+    sites: "Serwisy Lootlog",
     skipToContent: "Przejdź do treści",
+  },
+  siteNames: {
+    lootlog: "Lootlog",
+    docs: "Dokumentacja",
+    wiki: "Wiki",
+    developer: "Dla programistów",
+    github: "GitHub",
+    discord: "Discord",
+  },
+  footer: {
+    brand: "Lootlog",
+    copyright: (year: number) => `© ${year} Lootlog · open source`,
+    legalNotice:
+      "Grafiki wykorzystane na stronie są własnością Garmory sp. z o.o.",
+    navigation: "Linki w stopce",
+    privacy: "Prywatność",
+    tagline: "Darmowy dodatek open source do Margonem dla graczy i klanów.",
+    terms: "Regulamin",
+  },
+  status: {
+    backHome: "Wróć do dokumentacji",
+    errorDescription:
+      "Nie udało się wyświetlić tej strony. Spróbuj ponownie za chwilę.",
+    errorTitle: "Coś poszło nie tak",
+    notFoundDescription:
+      "Adres jest nieaktualny albo strona została przeniesiona.",
+    notFoundTitle: "Nie znaleźliśmy tej strony",
+    retry: "Spróbuj ponownie",
   },
   editOnGitHub: "Edytuj na GitHubie",
   markdownActions: {

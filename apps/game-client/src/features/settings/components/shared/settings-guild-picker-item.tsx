@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { GuildAvatar } from "@/components/guild-avatar";
 import { SettingsPickerCard } from "@/features/settings/components/shared/settings-picker-card";
 import type { GuildIdentity as Guild } from "@/lib/api/generated-helpers";
 import { Check } from "lucide-react";
@@ -17,21 +17,7 @@ export const SettingsGuildPickerItem: FC<SettingsGuildPickerItemProps> = ({
     value={guild.id}
     label={guild.name}
     className={className}
-    leading={
-      <Avatar
-        aria-hidden
-        className="ll:flex ll:size-8 ll:shrink-0 ll:rounded-sm ll:bg-black/25"
-      >
-        <AvatarImage
-          src={guild.icon ?? undefined}
-          alt=""
-          className="ll:size-full ll:rounded-sm ll:object-cover"
-        />
-        <AvatarFallback className="ll:flex ll:size-full ll:items-center ll:justify-center ll:rounded-sm ll:bg-black/25 ll:text-xs ll:font-semibold ll:text-foreground">
-          {guild.name.charAt(0).toUpperCase()}
-        </AvatarFallback>
-      </Avatar>
-    }
+    leading=<GuildAvatar guild={guild} size="lg" />
     title={guild.name}
     trailing={
       <span

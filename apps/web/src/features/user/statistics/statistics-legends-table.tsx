@@ -2,9 +2,12 @@ import { cn } from "cn";
 import { upperFirst } from "es-toolkit";
 import { type ColumnDef, useTable } from "@tanstack/react-table";
 import type { UserLootStatsResponseDtoOutputLegendsItem } from "@lootlog/client/main";
-import { Crown } from "lucide-react";
+import { Crown, SearchX } from "lucide-react";
+import { useMediaQuery } from "usehooks-ts";
+import { ClearFiltersButton } from "@/components/common/clear-filters-button";
+import { RESULTS_TABLE_MEDIA_QUERY } from "@/components/common/page-sticky-table-header";
 import { useTranslation } from "react-i18next";
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { RankBadge } from "@/components/common/rank-badge";
 import { ResultsSurface } from "@/components/common/results-surface";
 import { StatsCountCell } from "@/components/common/stats-count-cell";
@@ -53,7 +56,7 @@ type StatisticsLegendsTableProps = {
   legends: Legend[];
   sort: StatisticsSortValue;
   onSortChange: (sort: StatisticsSortValue) => void;
-  filtered?: boolean;
+  onClearSearch?: () => void;
   showCharacters?: boolean;
 };
 
@@ -61,10 +64,11 @@ export function StatisticsLegendsTable({
   legends,
   sort,
   onSortChange,
-  filtered = false,
+  onClearSearch,
   showCharacters = false,
 }: StatisticsLegendsTableProps) {
   const { t } = useTranslation();
+  const usesTable = useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
 
   const sorted = sortStatisticsRows(
     legends,
@@ -180,66 +184,77 @@ export function StatisticsLegendsTable({
   if (!legends.length)
     return (
       <div className="p-3">
-        <EmptyState
-          fill
-          icon={Crown}
-          title={t(
-            filtered ? "common.noResults" : "loots.stats.topItems.noData",
-          )}
-        />
+        {onClearSearch ? (
+          <EmptyState
+            fill
+            icon={SearchX}
+            title={t("statistics.noMatchingLegends")}
+            description={t("statistics.noMatchingLegendsDescription")}
+            action={<ClearFiltersButton onClear={onClearSearch} />}
+          />
+        ) : (
+          <EmptyState
+            fill
+            icon={Crown}
+            title={t("loots.stats.topItems.noData")}
+          />
+        )}
       </div>
     );
 
   return (
     <ResultsSurface>
-      <ul className="xl:hidden">
-        {sorted.map((legend, index) => (
-          <li
-            key={legendKey(legend)}
-            data-list-tile
-            className={cn(
-              "flex min-w-0 items-center gap-3 py-3",
-              LIST_TILE_RULE_CLASS,
-              LIST_TILE_INSET_CLASS,
-            )}
-          >
-            <RankBadge rank={index + 1} />
-            <StatisticsLegendItem legend={legend} />
-            <span className="flex min-w-0 flex-1 flex-col">
-              <span className="truncate text-sm font-medium">
-                {legend.name}
-              </span>
-              <span className="truncate text-xs text-muted-foreground">
-                {[
-                  legend.npc.name,
-                  upperFirst(legend.world),
-                  t("statistics.legendsTable.killsDetail", {
-                    count: legend.npcKills,
-                  }),
-                ].join(" · ")}
-              </span>
-              {showCharacters && legend.caughtBy.length > 0 && (
-                <StatisticsLegendCharacters
-                  characters={legend.caughtBy}
-                  label={(characters) =>
-                    t("statistics.legend.caughtBy", { characters })
-                  }
-                  className="text-xs text-muted-foreground"
-                />
+      {usesTable ? (
+        <StatsTable table={table} className="border-b" />
+      ) : (
+        <ul>
+          {sorted.map((legend, index) => (
+            <li
+              key={legendKey(legend)}
+              data-list-tile
+              className={cn(
+                "flex min-w-0 items-center gap-3 py-3",
+                LIST_TILE_RULE_CLASS,
+                LIST_TILE_INSET_CLASS,
               )}
-            </span>
-            <span className="flex shrink-0 flex-col items-end">
-              <span className="text-sm font-semibold tabular-nums">
-                {formatNumber(legend.count)}
+            >
+              <RankBadge rank={index + 1} />
+              <StatisticsLegendItem legend={legend} />
+              <span className="flex min-w-0 flex-1 flex-col">
+                <span className="truncate text-sm font-medium">
+                  {legend.name}
+                </span>
+                <span className="truncate text-xs text-muted-foreground">
+                  {[
+                    legend.npc.name,
+                    upperFirst(legend.world),
+                    t("statistics.legendsTable.killsDetail", {
+                      count: legend.npcKills,
+                    }),
+                  ].join(" · ")}
+                </span>
+                {showCharacters && legend.caughtBy.length > 0 && (
+                  <StatisticsLegendCharacters
+                    characters={legend.caughtBy}
+                    label={(characters) =>
+                      t("statistics.legend.caughtBy", { characters })
+                    }
+                    className="text-xs text-muted-foreground"
+                  />
+                )}
               </span>
-              <span className="text-xs text-muted-foreground">
-                {t("statistics.legend.caught", { count: legend.caught })}
+              <span className="flex shrink-0 flex-col items-end">
+                <span className="text-sm font-semibold tabular-nums">
+                  {formatNumber(legend.count)}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {t("statistics.legend.caught", { count: legend.caught })}
+                </span>
               </span>
-            </span>
-          </li>
-        ))}
-      </ul>
-      <StatsTable table={table} className="hidden border-b xl:table" />
+            </li>
+          ))}
+        </ul>
+      )}
     </ResultsSurface>
   );
 }

@@ -1,7 +1,6 @@
 {
   "navigationLabel": "Ustawienia",
   "filtersLabel": "Filtry",
-  "clearFilter": "Wyczyść filtr",
   "loadErrorDescription": "Sprawdź połączenie i spróbuj ponownie.",
   "servers": {
     "navigation": "Lootlogi",
@@ -23,11 +22,11 @@
     "hiddenToast": "Ukryto {{name}} w grze",
     "shownToast": "Pokazano {{name}} w grze",
     "loading": "Ładowanie Lootlogów...",
-    "loadError": "Nie udało się pobrać Lootlogów.",
+    "loadError": "Nie udało się wczytać Lootlogów.",
     "noGuilds": "Nie masz jeszcze dostępu do żadnego Lootloga.",
     "noGuildsDescription": "Lootlogi pojawią się tutaj, gdy dołączysz do serwera Discord z Lootlogiem.",
-    "noResults": "Nie znaleziono Lootlogów pasujących do wyszukiwania i filtra.",
-    "noResultsDescription": "Zmień frazę albo wybierz inny filtr widoczności.",
+    "noResults": "Brak pasujących Lootlogów",
+    "noResultsDescription": "Zmień kryteria albo wyczyść filtry, aby zobaczyć więcej Lootlogów.",
     "saving": "Zapisywanie...",
     "saved": "Zapisano",
     "saveError": "Nie udało się zapisać zmiany. Przywróciliśmy ostatni zapisany stan."
@@ -67,7 +66,7 @@
       "disabledPreview": "Obraz jest wyłączony",
       "disabledPreviewDescription": "Włącz opcję i zapisz ustawienia, aby udostępnić publiczny obraz statystyk.",
       "saveToEnablePreview": "Zapisz ustawienia, aby włączyć podgląd",
-      "previewError": "Nie udało się załadować podglądu obrazu.",
+      "previewError": "Nie udało się wczytać podglądu obrazu.",
       "copyLink": "Kopiuj link",
       "copySuccess": "Skopiowano link do obrazu statystyk",
       "copyError": "Nie udało się skopiować linka do obrazu statystyk",
@@ -95,9 +94,9 @@
       "title": "Brak ról",
       "description": "Role pochodzą z serwera Discord tego Lootloga. Pojawią się tutaj po synchronizacji z Discordem.",
       "checkSync": "Sprawdź synchronizację",
-      "filteredTitle": "Brak ról pasujących do „{{query}}”",
-      "filteredDescription": "Sprawdź pisownię nazwy albo wyczyść filtr.",
-      "loadError": "Nie udało się pobrać ról"
+      "filteredTitle": "Brak pasujących ról",
+      "filteredDescription": "Zmień kryteria albo wyczyść filtry, aby zobaczyć więcej ról.",
+      "loadError": "Nie udało się wczytać ról."
     },
     "backToList": "Wróć do ról",
     "roleNotFound": "Nie znaleziono roli",
@@ -118,9 +117,9 @@
     "empty": {
       "title": "Brak ustawień potworów",
       "description": "Ten Lootlog nie ma jeszcze ustawień zbieranych łupów dla żadnego rodzaju potworów.",
-      "filteredTitle": "Brak potworów pasujących do „{{query}}”",
-      "filteredDescription": "Sprawdź pisownię nazwy albo wyczyść filtr.",
-      "loadError": "Nie udało się pobrać ustawień potworów"
+      "filteredTitle": "Brak pasujących potworów",
+      "filteredDescription": "Zmień kryteria albo wyczyść filtry, aby zobaczyć więcej potworów.",
+      "loadError": "Nie udało się wczytać ustawień potworów."
     },
     "backToList": "Wróć do potworów",
     "npcNotFound": "Nie znaleziono potwora",
@@ -193,7 +192,7 @@
       "revokeInvitation": "Wycofaj zaproszenie",
       "revokeTitle": "Wycofać zaproszenie?",
       "revokeDescription": "Link zaproszenia przestanie działać. W każdej chwili możesz utworzyć nowe.",
-      "loadError": "Nie udało się pobrać współdzielonych rezerwacji",
+      "loadError": "Nie udało się wczytać współdzielonych rezerwacji.",
       "loadErrorDescription": "Spróbuj ponownie, aby odświeżyć Lootlogi w sojuszu i oczekujące zaproszenia.",
       "noPartners": "Brak Lootlogów w sojuszu. Utwórz zaproszenie i wyślij link liderowi drugiego Lootloga.",
       "noPending": "Brak oczekujących zaproszeń.",
@@ -207,6 +206,7 @@
   "members": {
     "title": "Członkowie",
     "searchPlaceholder": "Filtruj po nicku lub Discord ID…",
+    "filtersLabel": "Filtry członków",
     "owner": "Właściciel Lootloga",
     "filters": {
       "all": "Wszyscy",
@@ -349,11 +349,11 @@
     "empty": {
       "title": "Brak członków",
       "description": "Członkowie pochodzą z serwera Discord tego Lootloga. Odśwież wszystkich, aby pobrać ich ponownie.",
-      "filteredTitle": "Brak członków pasujących do „{{query}}”",
-      "filteredDescription": "Sprawdź pisownię nicku albo wpisz pełne Discord ID.",
+      "filteredTitle": "Brak pasujących członków",
+      "filteredDescription": "Zmień kryteria albo wyczyść filtry, aby zobaczyć więcej członków.",
       "filteredInOtherStatuses": "W grupie „{{status}}” nikt nie pasuje do filtra, ale pasujące osoby są w innych grupach.",
       "showAll": "Pokaż wszystkich",
-      "loadError": "Nie udało się pobrać członków",
+      "loadError": "Nie udało się wczytać członków.",
       "status": {
         "active": {
           "title": "Brak aktywnych członków",
@@ -410,7 +410,6 @@
     "historyFilterPlaceholder": "Filtruj po nazwie reguły…",
     "historyFilterLabel": "Filtruj historię po nazwie reguły",
     "historyStatusesLabel": "Statusy wysyłek",
-    "clearFilter": "Wyczyść filtr",
     "ruleFilterPlaceholder": "Filtruj reguły po nazwie…",
     "ruleFilterLabel": "Filtruj reguły po nazwie",
     "channelFilterPlaceholder": "Filtruj kanały po nazwie…",
@@ -460,6 +459,7 @@
       "title": "Historia powiadomień"
     },
     "actions": {
+      "backToRules": "Wróć do reguł",
       "addTarget": "Dodaj kanał docelowy",
       "addTargetShort": "Dodaj kanał",
       "addRule": "Dodaj regułę",
@@ -583,15 +583,17 @@
     },
     "empty": {
       "targets": "Brak skonfigurowanych kanałów docelowych",
-      "filteredTargets": "Żaden kanał nie pasuje do filtra",
+      "filteredTargets": "Brak pasujących kanałów",
+      "filteredTargetsDescription": "Zmień kryteria albo wyczyść filtry, aby zobaczyć więcej kanałów.",
       "rules": "Brak skonfigurowanych reguł",
-      "filteredRules": "Żadna reguła nie pasuje do filtra",
+      "filteredRules": "Brak pasujących reguł",
+      "filteredRulesDescription": "Zmień kryteria albo wyczyść filtry, aby zobaczyć więcej reguł.",
       "rulesDescription": "Dodaj regułę, aby Lootlog wysyłał powiadomienia na kanały Discorda.",
       "targetsDescription": "Dodaj kanał Discorda, na który reguły będą wysyłać powiadomienia.",
-      "filteredDescription": "Sprawdź pisownię nazwy albo wyczyść filtr.",
-      "loadError": "Nie udało się pobrać powiadomień",
+      "loadError": "Nie udało się wczytać powiadomień.",
       "historyJobs": "Brak historii powiadomień",
-      "filteredHistory": "Żadna wysyłka nie pasuje do filtrów",
+      "filteredHistory": "Brak pasujących wysyłek",
+      "filteredHistoryDescription": "Zmień kryteria albo wyczyść filtry, aby zobaczyć więcej wysyłek.",
       "availableChannels": "Wszystkie dostępne kanały są już dodane.",
       "npcs": "Brak pasujących NPC.",
       "targetsSelect": "Brak dostępnych kanałów docelowych."
@@ -600,8 +602,9 @@
       "availableChannels": "Pobieranie kanałów Discorda..."
     },
     "errors": {
-      "loadFailed": "Nie udało się załadować danych powiadomień.",
-      "ruleNotFound": "Nie znaleziono reguły powiadomień."
+      "loadFailed": "Nie udało się wczytać danych powiadomień.",
+      "ruleNotFound": "Nie znaleziono reguły powiadomień",
+      "ruleNotFoundDescription": "Reguła mogła zostać usunięta albo link jest nieaktualny."
     },
     "validation": {
       "channelRequired": "Wybierz kanał Discorda",
@@ -792,7 +795,7 @@
     }
   },
   "userNotifications": {
-    "loadError": "Nie udało się pobrać Twoich powiadomień",
+    "loadError": "Nie udało się wczytać Twoich powiadomień.",
     "title": "Powiadomienia",
     "description": "Obserwuj przedmioty na wybranym świecie w swoich Lootlogach, a informację o dropie dostaniesz w prywatnej wiadomości na Discordzie.",
     "dm": {
@@ -848,7 +851,7 @@
       "dmRequired": "Najpierw włącz powiadomienia w ustawieniach.",
       "limitReached": "Osiągnięto limit {{limit}} obserwowanych przedmiotów.",
       "loading": "Ładowanie obserwacji...",
-      "loadError": "Nie udało się załadować obserwacji.",
+      "loadError": "Nie udało się wczytać obserwacji.",
       "scopeUnavailable": "Nie udało się ustalić Lootlogów dla tej obserwacji.",
       "openNotifications": "Przejdź do powiadomień",
       "configureDm": "Włącz powiadomienia",
@@ -979,9 +982,9 @@
     "title": "Szablony map",
     "newTemplate": "Nowy szablon",
     "filterPlaceholder": "Filtruj po nazwie szablonu…",
-    "noResults": "Brak szablonów pasujących do „{{query}}”",
-    "noResultsDescription": "Sprawdź pisownię nazwy albo wyczyść filtr.",
-    "loadError": "Nie udało się pobrać szablonów map",
+    "noResults": "Brak pasujących szablonów",
+    "noResultsDescription": "Zmień kryteria albo wyczyść filtry, aby zobaczyć więcej szablonów.",
+    "loadError": "Nie udało się wczytać szablonów map.",
     "editTemplate": "Edytuj szablon {{name}}",
     "deleteTemplate": "Usuń szablon {{name}}",
     "cancel": "Anuluj",

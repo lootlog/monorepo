@@ -207,12 +207,12 @@ export const OnlinePlayersAccountListEntry: FC<
             />
             <span className="ll:flex ll:min-w-0 ll:flex-col ll:py-0.5 ll:leading-tight">
               <PlayerName
-                className="ll:text-[11px] ll:text-white"
+                className="ll:text-[11px] ll:text-foreground"
                 name={player?.name || t("player.unknown")}
                 level={character.lvl}
                 profession={character.prof}
               />
-              <span className="ll:truncate ll:text-[10px] ll:font-normal ll:text-white/65">
+              <span className="ll:truncate ll:text-[10px] ll:font-normal ll:text-foreground/65">
                 {visibleLocationName}
               </span>
             </span>

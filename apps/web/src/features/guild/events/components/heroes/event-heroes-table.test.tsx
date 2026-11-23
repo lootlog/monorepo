@@ -10,7 +10,8 @@ import {
   render as renderElement,
   screen,
 } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { stubResultsTableViewport } from "@/lib/testing/viewport";
 import { EMPTY_VALUE } from "@/constants/empty-value";
 import { EventHeroesTable } from "./event-heroes-table";
 import type { MyHeroScore } from "../../utils/my-hero-scores";
@@ -25,7 +26,12 @@ async function render(element: ReactNode) {
   return renderElement(<RouterProvider router={router} />);
 }
 
-afterEach(cleanup);
+beforeEach(stubResultsTableViewport);
+
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
 
 describe("EventHeroesTable", () => {
   const defaultProps = {

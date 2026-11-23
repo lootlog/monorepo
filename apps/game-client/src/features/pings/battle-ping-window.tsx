@@ -1,3 +1,5 @@
+import { cn } from "cn";
+import { SECTION_LABEL_CLASS_NAME } from "@/components/section-label";
 import { formatSeenAgo } from "@/utils/format-seen-ago";
 import { DraggableWindow } from "@/components/draggable-window/draggable-window";
 import { WindowMaxHeightAction } from "@/components/draggable-window/window-max-height-action";
@@ -94,7 +96,7 @@ export const BattlePingWindow = () => {
         <div className="ll:flex ll:flex-col ll:gap-1.5 ll:pb-1">
           {target ? (
             <section className="ll:flex ll:flex-col ll:gap-1 ll:px-1 ll:pt-1">
-              <h3 className="ll:m-0 ll:text-[10px] ll:font-semibold ll:uppercase ll:tracking-wider ll:text-muted-foreground">
+              <h3 className={cn("ll:m-0", SECTION_LABEL_CLASS_NAME)}>
                 {t("battle.target")}
               </h3>
               <BattlePingTargetRow
@@ -109,7 +111,7 @@ export const BattlePingWindow = () => {
           ) : null}
           <section className="ll:flex ll:flex-col ll:gap-1">
             {target ? (
-              <h3 className="ll:m-0 ll:px-1 ll:text-[10px] ll:font-semibold ll:uppercase ll:tracking-wider ll:text-muted-foreground">
+              <h3 className={cn("ll:m-0 ll:px-1", SECTION_LABEL_CLASS_NAME)}>
                 {t("battle.recent")}
               </h3>
             ) : null}

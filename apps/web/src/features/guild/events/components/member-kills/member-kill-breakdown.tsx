@@ -23,12 +23,12 @@ export const MemberKillBreakdown = ({ kill }: MemberKillBreakdownProps) => {
         {(kill.isManualClose || hasManualPointsAdjustment) && (
           <div className="mt-1 flex flex-wrap items-center gap-2">
             {kill.isManualClose && (
-              <span className="text-2xs font-medium text-amber-400">
+              <span className="text-2xs font-medium text-signal-timer">
                 {t("events.kills.manualClose")}
               </span>
             )}
             {hasManualPointsAdjustment && (
-              <span className="inline-flex items-center gap-1 text-2xs font-medium text-amber-400">
+              <span className="inline-flex items-center gap-1 text-2xs font-medium text-signal-timer">
                 <Info className="size-3" />
                 {t("events.points.modified")}
               </span>

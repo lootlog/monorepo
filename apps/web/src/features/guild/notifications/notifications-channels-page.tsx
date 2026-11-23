@@ -1,6 +1,7 @@
 import { GuildDiscordSyncNotice } from "@/components/common/guild-discord-sync-notice";
-import { ListToolbar } from "@/components/common/list-toolbar";
-import { SettingsClearFilterButton } from "@/components/common/settings-clear-filter-button";
+import { ResultsSurface } from "@/components/common/results-surface";
+import { KillStatsSearch } from "@/components/common/kill-stats-search";
+import { ClearFiltersButton } from "@/components/common/clear-filters-button";
 import { SettingsListEmpty } from "@/components/common/settings-list-empty";
 import { SettingsListError } from "@/components/common/settings-list-error";
 import type { NotificationTargetResponseDto } from "@lootlog/client/main";
@@ -52,8 +53,10 @@ export const NotificationsChannelsPage = () => {
         <SettingsListEmpty
           icon={SearchX}
           title={t("settings.notifications.empty.filteredTargets")}
-          description={t("settings.notifications.empty.filteredDescription")}
-          action={<SettingsClearFilterButton onClear={() => setSearch("")} />}
+          description={t(
+            "settings.notifications.empty.filteredTargetsDescription",
+          )}
+          action={<ClearFiltersButton onClear={() => setSearch("")} />}
         />
       ) : (
         <SettingsListEmpty
@@ -83,15 +86,16 @@ export const NotificationsChannelsPage = () => {
           <GuildDiscordSyncNotice sync={overview.sync} />
         </div>
       )}
-      <div>
-        <ListToolbar
-          search={search}
-          onSearchChange={setSearch}
-          placeholder={t("settings.notifications.channelFilterPlaceholder")}
-          label={t("settings.notifications.channelFilterLabel")}
-          clearLabel={t("settings.notifications.clearFilter")}
-          disabled={overview.isLoading}
-        >
+      <ResultsSurface
+        search={
+          <KillStatsSearch
+            value={search}
+            placeholder={t("settings.notifications.channelFilterPlaceholder")}
+            onChange={setSearch}
+          />
+        }
+        filtersLabel={t("settings.notifications.channelFilterLabel")}
+        filters={
           <div className="flex items-center gap-2">
             <Button
               type="button"
@@ -104,9 +108,10 @@ export const NotificationsChannelsPage = () => {
             </Button>
             <NotificationsInfoButton />
           </div>
-        </ListToolbar>
+        }
+      >
         {renderChannels()}
-      </div>
+      </ResultsSurface>
 
       <NotificationTargetDialog
         open={isCreateOpen}

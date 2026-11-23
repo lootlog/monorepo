@@ -1,6 +1,8 @@
 import type { AdminApiKey } from "@lootlog/schema/admin";
 import { Button } from "@lootlog/ui/components/button";
 import { ConfirmDialog } from "@lootlog/ui/components/confirm-dialog";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
+import { KeyRound } from "lucide-react";
 import { formatDate } from "@/lib/format";
 import { text } from "@/lib/messages";
 import { useUserAction } from "@/lib/use-user-action";
@@ -15,7 +17,7 @@ export function ApiKeysList({
   const { run, pending } = useUserAction(userId);
 
   if (apiKeys.length === 0)
-    return <p className="text-sm text-muted-foreground">{text.apiKeysEmpty}</p>;
+    return <EmptyState compact icon={KeyRound} title={text.apiKeysEmpty} />;
 
   return (
     <ul className="flex flex-col divide-y divide-border">

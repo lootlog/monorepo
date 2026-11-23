@@ -1,5 +1,7 @@
-import { EmptyState } from "@/components/common/empty-state";
-import { ListToolbar } from "@/components/common/list-toolbar";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
+import { ResultsSurface } from "@/components/common/results-surface";
+import { KillStatsSearch } from "@/components/common/kill-stats-search";
+import { ClearFiltersButton } from "@/components/common/clear-filters-button";
 import { EventListCard } from "./event-list-card";
 import { EventListCardSkeleton } from "./event-list-card-skeleton";
 import { EventLoadError } from "./components/event-load-error";
@@ -92,15 +94,7 @@ export const Events = () => {
             icon={SearchX}
             title={t("events.noResults")}
             description={t("events.noResultsDescription")}
-            action={
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setSearchValue("")}
-              >
-                {t("events.clearSearch")}
-              </Button>
-            }
+            action={<ClearFiltersButton onClear={() => setSearchValue("")} />}
           />
         </div>
       );
@@ -126,24 +120,28 @@ export const Events = () => {
     <div className="flex h-full min-h-0 flex-col">
       <h1 className="sr-only">{t("events.title")}</h1>
       <ScrollArea data-under-top-bar className="min-h-0 flex-1">
-        <ListToolbar
-          search={searchValue}
-          onSearchChange={setSearchValue}
-          placeholder={t("events.filterPlaceholder")}
-          label={t("events.filterLabel")}
-          clearLabel={t("events.clearSearch")}
-          disabled={isLoading}
+        <ResultsSurface
+          search={
+            <KillStatsSearch
+              value={searchValue}
+              placeholder={t("events.filterPlaceholder")}
+              onChange={setSearchValue}
+            />
+          }
+          filters={
+            <Button
+              size="sm"
+              className="shrink-0"
+              onClick={() => setCreateDialogOpen(true)}
+              icon=<Plus className="size-4" />
+            >
+              {t("events.create")}
+            </Button>
+          }
+          filtersLabel={t("events.filterLabel")}
         >
-          <Button
-            size="sm"
-            className="shrink-0"
-            onClick={() => setCreateDialogOpen(true)}
-            icon=<Plus className="size-4" />
-          >
-            {t("events.create")}
-          </Button>
-        </ListToolbar>
-        {renderContent()}
+          {renderContent()}
+        </ResultsSurface>
       </ScrollArea>
       <EventCreateDialog
         open={createDialogOpen}

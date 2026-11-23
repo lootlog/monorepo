@@ -43,7 +43,7 @@ export const LootSplitChoiceChip: FC<LootSplitChoiceChipProps> = ({
         role="img"
         aria-label={label}
         title={label}
-        className="ll:inline-flex ll:h-5 ll:w-6 ll:items-center ll:justify-center ll:text-white/30"
+        className="ll:inline-flex ll:h-5 ll:w-6 ll:items-center ll:justify-center ll:text-foreground/30"
       >
         –
       </span>

@@ -22,14 +22,12 @@ export function ReservationOrganizationBadge({
   return (
     <Badge
       variant="outline"
-      className={cn(
-        "h-6 max-w-full gap-1.5 rounded-md border-border/60 bg-muted/40 px-1.5 text-2xs font-medium normal-case tracking-normal text-muted-foreground shadow-none",
-        className,
-      )}
+      size="sm"
+      className={cn("max-w-full pl-0.5", className)}
     >
-      <Avatar className="size-4 shrink-0 rounded-[4px]">
+      <Avatar className="size-4 shrink-0">
         <AvatarImage src={iconUrl ?? undefined} alt="" />
-        <AvatarFallback className="rounded-[4px] text-[8px] font-semibold">
+        <AvatarFallback className="text-[8px] font-semibold">
           {fallback}
         </AvatarFallback>
       </Avatar>

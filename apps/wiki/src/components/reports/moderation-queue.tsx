@@ -14,7 +14,7 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@lootlog/ui/components/toggle-group";
-import { PageHeader } from "@/components/common/page-header";
+import { PortalPageHeader } from "@lootlog/ui/components/portal-page-header";
 import { ReportedSubjectCard } from "@/components/reports/reported-subject-card";
 import { useSignedInCatalogRequest } from "@/hooks/use-signed-in-catalog-request";
 import { t } from "@/i18n/messages";
@@ -61,7 +61,7 @@ export function ModerationQueue() {
 
   return (
     <div className="flex flex-col gap-6 py-6">
-      <PageHeader
+      <PortalPageHeader
         title={t("moderation.title")}
         description={t("moderation.description")}
       />

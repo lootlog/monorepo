@@ -1,14 +1,12 @@
-import {
-  Outlet,
-  HeadContent,
-  Scripts,
-  createRootRoute,
-} from "@tanstack/react-router";
+import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router";
 import { RootProvider } from "fumadocs-ui/provider/tanstack";
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
 import { Toaster } from "@lootlog/ui/components/sonner";
 import { preventIosFocusZoom } from "@lootlog/ui/lib/ios-focus-zoom";
 import { portalText } from "@/lib/translations";
+import { DeveloperError } from "@/components/developer-error";
+import { DeveloperFooter } from "@/components/developer-footer";
+import { DeveloperNotFound } from "@/components/developer-not-found";
 import { PortalNav } from "@/components/portal-nav";
 import {
   COMMUNITY_LINKS,
@@ -38,7 +36,7 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { name: "theme-color", content: "#081421" },
+      { name: "theme-color", content: "#060607" },
       { name: "color-scheme", content: "dark" },
       { title: portalText.title },
       { name: "description", content: portalText.description },
@@ -50,10 +48,12 @@ export const Route = createRootRoute({
     ],
     scripts: [{ type: "application/ld+json", children: structuredData }],
   }),
-  component: RootComponent,
+  shellComponent: RootComponent,
+  notFoundComponent: DeveloperNotFound,
+  errorComponent: DeveloperError,
 });
 
-function RootComponent() {
+function RootComponent({ children }: { children: ReactNode }) {
   useEffect(preventIosFocusZoom, []);
 
   return (
@@ -61,15 +61,20 @@ function RootComponent() {
       <head>
         <HeadContent />
       </head>
-      <body className="min-h-screen bg-background text-foreground antialiased">
+      <body className="flex min-h-screen flex-col bg-background text-foreground antialiased">
         <RootProvider
           theme={{ enabled: false }}
           search={{ options: { api: `${import.meta.env.BASE_URL}api/search` } }}
         >
           <PortalNav />
-          <div id="portal-content" tabIndex={-1} className="outline-none">
-            <Outlet />
+          <div
+            id="portal-content"
+            tabIndex={-1}
+            className="flex-1 outline-none"
+          >
+            {children}
           </div>
+          <DeveloperFooter />
           <Toaster toastOptions={{ closeButtonAriaLabel: portalText.close }} />
         </RootProvider>
         <Scripts />

@@ -1,17 +1,14 @@
 import type { HeroSightingResponseDto } from "@lootlog/client/main";
-import { Alert, AlertDescription } from "@lootlog/ui/components/alert";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { AlertCircle, Plus, Radar, SearchX } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { ResultsSurface } from "@/components/common/results-surface";
 import { GuildWorldHeaderSwitcher } from "@/components/layout/guild-world-header-switcher";
-import { HeaderSlotPortal } from "@/components/layout/header-slot-portal";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
-import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
-import { KillStatsSearch } from "@/features/kills/components/kill-stats-search";
+import { KillStatsSearch } from "@/components/common/kill-stats-search";
 import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 import {
   HeroSightingHistoryDialog,
@@ -28,11 +25,12 @@ import { useGuildHeroTimers } from "./use-guild-hero-timers";
 import { useGuildTimers } from "@/features/guild/timers/use-guild-timers";
 import { useTimerDisplaySettings } from "@/features/guild/timers/use-timer-display-settings";
 import { RetryButton } from "@/components/common/retry-button";
+import { ClearFiltersButton } from "@/components/common/clear-filters-button";
+import { QueryErrorNotice } from "@/components/common/query-error-notice";
 
 export const HeroSightings = () => {
   const { t } = useTranslation();
   const now = useMinuteTimestamp();
-  const isMobile = useIsMobile();
   const [search, setSearch] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const { data: accessPolicy } = useGuildPermissions();
@@ -88,15 +86,8 @@ export const HeroSightings = () => {
               fill
               icon={SearchX}
               title={t("heroSightings.noResults")}
-              action={
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setSearch("")}
-                >
-                  {t("heroSightings.clearSearch")}
-                </Button>
-              }
+              description={t("heroSightings.noResultsDescription")}
+              action={<ClearFiltersButton onClear={() => setSearch("")} />}
             />
           ) : (
             <EmptyState
@@ -139,39 +130,6 @@ export const HeroSightings = () => {
     <div className="flex h-full min-h-0 flex-col">
       <h1 className="sr-only">{t("heroSightings.title")}</h1>
       <GuildWorldHeaderSwitcher />
-      {canAdd && (
-        <HeaderSlotPortal slot="actions">
-          {isMobile ? (
-            <Button
-              type="button"
-              size="icon-lg"
-              className="rounded-full"
-              aria-label={t("heroSightings.add.open")}
-              onClick={() => setIsAdding(true)}
-            >
-              <Plus />
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              size="sm"
-              onClick={() => setIsAdding(true)}
-              icon=<Plus className="size-4" />
-            >
-              {t("heroSightings.add.open")}
-            </Button>
-          )}
-        </HeaderSlotPortal>
-      )}
-      {isError && sightings !== undefined && (
-        <Alert
-          variant="destructive"
-          className="m-3 flex w-auto flex-wrap items-center justify-between gap-3"
-        >
-          <AlertDescription>{t("heroSightings.refreshError")}</AlertDescription>
-          {retryButton}
-        </Alert>
-      )}
       <ScrollArea data-under-top-bar className="min-h-0 flex-1">
         <ResultsSurface
           search={
@@ -181,8 +139,28 @@ export const HeroSightings = () => {
               onChange={setSearch}
             />
           }
+          filters={
+            canAdd && (
+              <Button
+                type="button"
+                size="sm"
+                className="shrink-0"
+                onClick={() => setIsAdding(true)}
+                icon=<Plus className="size-4" />
+              >
+                {t("heroSightings.add.open")}
+              </Button>
+            )
+          }
           filtersLabel={t("heroSightings.filtersLabel")}
         >
+          {isError && sightings !== undefined && (
+            <QueryErrorNotice
+              message={t("heroSightings.refreshError")}
+              onRetry={() => refetch()}
+              isRetrying={isFetching}
+            />
+          )}
           {renderResults()}
         </ResultsSurface>
       </ScrollArea>

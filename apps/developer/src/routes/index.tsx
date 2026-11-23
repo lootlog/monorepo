@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Gamepad2, Globe, Package, Radio } from "lucide-react";
+import { Card } from "@lootlog/ui/components/card";
+import { PortalPageHeader } from "@lootlog/ui/components/portal-page-header";
 import { buttonVariants } from "@lootlog/ui/lib/button-variants";
-import { PortalFooter } from "@/components/portal-footer";
 import { RequestSample } from "@/components/request-sample";
 import { ResourceCard } from "@/components/resource-card";
 import {
@@ -68,93 +69,87 @@ const integrations = [
 
 function Overview() {
   return (
-    <>
-      <main className="portal-page flex flex-col gap-20 md:gap-24">
-        <header className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,30rem)] lg:gap-14">
-          <div className="flex max-w-xl flex-col gap-6">
-            <h1 className="text-4xl font-semibold leading-[1.08] tracking-[-0.04em] text-balance md:text-5xl">
-              {t.overviewTitle}
-            </h1>
-            <p className="text-base leading-relaxed text-pretty text-text-supporting md:text-lg">
-              {t.overviewDescription}
-            </p>
-            <div className="flex flex-wrap gap-3 pt-2">
-              <Link to="/keys" className={buttonVariants({ size: "lg" })}>
-                {t.createKey}
-              </Link>
-              <Link
-                to="/docs/$"
-                params={{ _splat: "http" }}
-                className={buttonVariants({ variant: "outline", size: "lg" })}
-              >
-                {t.readGuide}
-              </Link>
-            </div>
-          </div>
-          <RequestSample />
-        </header>
-
-        <section aria-labelledby="quick-start" className="flex flex-col gap-6">
-          <div className="flex flex-col gap-1.5">
-            <h2
-              id="quick-start"
-              className="text-xl font-semibold tracking-tight"
+    <main className="portal-page flex flex-col gap-20 md:gap-24">
+      <header className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,30rem)] lg:gap-14">
+        <PortalPageHeader
+          title={t.overviewTitle}
+          description={t.overviewDescription}
+        >
+          <div className="flex flex-wrap gap-3 pt-4">
+            <Link to="/keys" className={buttonVariants({ size: "lg" })}>
+              {t.createKey}
+            </Link>
+            <Link
+              to="/docs/$"
+              params={{ _splat: "http" }}
+              className={buttonVariants({ variant: "outline", size: "lg" })}
             >
-              {t.quickStart}
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              {t.quickStartDescription}
-            </p>
+              {t.readGuide}
+            </Link>
           </div>
-          <ol className="grid gap-4 md:grid-cols-3">
-            {steps.map((step, index) => (
-              <li key={step.title} className="flex">
-                <ResourceCard
-                  icon={
-                    <span className="font-mono text-xs font-semibold">
-                      {index + 1}
-                    </span>
-                  }
-                  title={step.title}
-                  description={step.description}
-                  link={step.link}
-                />
-              </li>
-            ))}
-          </ol>
-        </section>
+        </PortalPageHeader>
+        <RequestSample />
+      </header>
 
-        <section aria-labelledby="integrations" className="flex flex-col gap-6">
-          <div className="flex flex-col gap-1.5">
-            <h2
-              id="integrations"
-              className="text-xl font-semibold tracking-tight"
-            >
-              {t.integrationHeading}
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              {t.integrationDescription}
-            </p>
-          </div>
-          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {integrations.map((integration) => (
-              <li key={integration.title} className="flex">
-                <ResourceCard {...integration} />
-              </li>
-            ))}
-          </ul>
-        </section>
+      <section aria-labelledby="quick-start" className="flex flex-col gap-6">
+        <div className="flex flex-col gap-1.5">
+          <h2 id="quick-start" className="text-xl font-semibold tracking-tight">
+            {t.quickStart}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {t.quickStartDescription}
+          </p>
+        </div>
+        <ol className="grid gap-4 md:grid-cols-3">
+          {steps.map((step, index) => (
+            <li key={step.title} className="flex">
+              <ResourceCard
+                icon={
+                  <span className="font-mono text-xs font-semibold">
+                    {index + 1}
+                  </span>
+                }
+                title={step.title}
+                description={step.description}
+                link={step.link}
+              />
+            </li>
+          ))}
+        </ol>
+      </section>
 
-        <section aria-labelledby="services" className="flex flex-col gap-6">
-          <div className="flex flex-col gap-1.5">
-            <h2 id="services" className="text-xl font-semibold tracking-tight">
-              {t.servicesHeading}
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              {t.servicesDescription}
-            </p>
-          </div>
-          <ul className="overflow-hidden rounded-xl border border-border bg-card">
+      <section aria-labelledby="integrations" className="flex flex-col gap-6">
+        <div className="flex flex-col gap-1.5">
+          <h2
+            id="integrations"
+            className="text-xl font-semibold tracking-tight"
+          >
+            {t.integrationHeading}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {t.integrationDescription}
+          </p>
+        </div>
+        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {integrations.map((integration) => (
+            <li key={integration.title} className="flex">
+              <ResourceCard {...integration} />
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section aria-labelledby="services" className="flex flex-col gap-6">
+        <div className="flex flex-col gap-1.5">
+          <h2 id="services" className="text-xl font-semibold tracking-tight">
+            {t.servicesHeading}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {t.servicesDescription}
+          </p>
+        </div>
+        <Card className="gap-0 py-0">
+          <ul>
             {PUBLIC_API_SERVICES.map((service) => (
               <li
                 key={service}
@@ -176,9 +171,8 @@ function Overview() {
               </li>
             ))}
           </ul>
-        </section>
-      </main>
-      <PortalFooter />
-    </>
+        </Card>
+      </section>
+    </main>
   );
 }

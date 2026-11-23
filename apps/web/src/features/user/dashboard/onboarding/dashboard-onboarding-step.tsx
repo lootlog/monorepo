@@ -3,7 +3,7 @@ import { Check } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "cn";
-import { STATS_TILE_CELL_CLASS } from "@/components/common/stats-tile";
+import { STATS_TILE_CELL_CLASS } from "@lootlog/ui/components/stats-tile";
 import type { OnboardingStepStatus } from "./onboarding-steps";
 
 type DashboardOnboardingStepProps = {

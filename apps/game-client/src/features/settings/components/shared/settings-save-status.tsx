@@ -57,7 +57,7 @@ export const SettingsSaveStatus: FC = () => {
               />
             ) : (
               <Check
-                className="ll:size-3.5 ll:text-emerald-300"
+                className="ll:size-3.5 ll:text-success"
                 strokeWidth={1.5}
                 aria-hidden="true"
               />

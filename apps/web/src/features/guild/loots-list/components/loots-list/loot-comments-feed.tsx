@@ -1,4 +1,4 @@
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { LoadingSlot } from "@/components/common/loading-slot";
 import { RetryButton } from "@/components/common/retry-button";
 import { CircleAlert, MessageSquare } from "lucide-react";

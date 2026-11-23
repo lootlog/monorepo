@@ -1,4 +1,5 @@
-import { ListToolbarSkeleton } from "@/components/common/list-toolbar-skeleton";
+import { FilterBar } from "@/components/common/filter-bar";
+import { InlineSearchFieldSkeleton } from "@/components/common/inline-search-field-skeleton";
 import type { ReactNode } from "react";
 
 export const NotificationsTabSkeleton = ({
@@ -9,9 +10,9 @@ export const NotificationsTabSkeleton = ({
   children: ReactNode;
 }) => (
   <div aria-busy="true">
-    <ListToolbarSkeleton>
+    <FilterBar search={<InlineSearchFieldSkeleton />}>
       <div className="flex items-center gap-2">{actions}</div>
-    </ListToolbarSkeleton>
+    </FilterBar>
     {children}
   </div>
 );

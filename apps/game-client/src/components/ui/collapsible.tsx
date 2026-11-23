@@ -15,7 +15,7 @@ const CollapsibleContent = React.forwardRef<
       className={cn(
         "ll:overflow-hidden ll:origin-top",
         animationEffectsEnabled &&
-          "data-[starting-style]:ll:animate-in data-[starting-style]:ll:fade-in-0 data-[starting-style]:ll:zoom-in-95 data-[starting-style]:ll:duration-150 data-[ending-style]:ll:animate-out data-[ending-style]:ll:fade-out-0 data-[ending-style]:ll:zoom-out-95 data-[ending-style]:ll:duration-100",
+          "ll:animate-in ll:fade-in-0 ll:zoom-in-95 ll:duration-150 ll:data-[ending-style]:animate-out ll:data-[ending-style]:fade-out-0 ll:data-[ending-style]:zoom-out-95 ll:data-[ending-style]:duration-100",
         className,
       )}
       {...props}

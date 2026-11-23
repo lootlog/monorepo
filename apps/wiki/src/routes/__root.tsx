@@ -11,7 +11,9 @@ import { preventIosFocusZoom } from "@lootlog/ui/lib/ios-focus-zoom";
 import { ItemComparisonProvider } from "@/components/comparison/item-comparison-provider";
 import { EquipmentSetProvider } from "@/components/equipment/equipment-set-provider";
 import { SetItemPickerProvider } from "@/components/equipment/set-item-picker-provider";
+import { WikiError } from "@/components/layout/wiki-error";
 import { WikiLayout } from "@/components/layout/wiki-layout";
+import { WikiNotFound } from "@/components/layout/wiki-not-found";
 import { QueryDevtools } from "@/components/query-devtools";
 import { UserTheme } from "@/components/user-theme";
 import { getRuntimeConfig } from "@/config/runtime-config";
@@ -34,6 +36,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           name: "viewport",
           content: "width=device-width, initial-scale=1",
         },
+        { name: "theme-color", content: "#060607" },
+        { name: "color-scheme", content: "dark" },
         {
           title: t("meta.title"),
         },
@@ -77,6 +81,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     },
     staleTime: Number.POSITIVE_INFINITY,
     shellComponent: RootDocument,
+    notFoundComponent: WikiNotFound,
+    errorComponent: WikiError,
   },
 );
 

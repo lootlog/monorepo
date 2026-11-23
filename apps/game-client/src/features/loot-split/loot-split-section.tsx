@@ -66,7 +66,7 @@ export const LootSplitSection: FC<LootSplitSectionProps> = ({
     <section
       aria-label={title}
       className={cn(
-        "ll:flex ll:flex-col ll:border-b ll:border-white/10 ll:px-2 ll:pt-1.5 ll:pb-2 ll:last:border-b-0",
+        "ll:flex ll:flex-col ll:border-b ll:border-separator-subtle ll:px-2 ll:pt-1.5 ll:pb-2 ll:last:border-b-0",
         split.phase !== "open" && "ll:opacity-60",
       )}
     >
@@ -98,13 +98,13 @@ export const LootSplitSection: FC<LootSplitSectionProps> = ({
                   status="unknown"
                   count={unknown}
                   label={t("unknownCount", { count: unknown })}
-                  className="ll:text-white/55"
+                  className="ll:text-foreground/55"
                 />
               ) : null}
             </span>
           ) : null}
         </div>
-        <span className="ll:tabular-nums ll:text-white/70">
+        <span className="ll:tabular-nums ll:text-foreground/70">
           {split.phase === "open"
             ? t("secondsLeft", {
                 seconds: Math.max(0, Math.ceil((split.deadline - now) / 1_000)),
@@ -168,7 +168,7 @@ export const LootSplitSection: FC<LootSplitSectionProps> = ({
                     className={cn(
                       "ll:max-w-26 ll:truncate",
                       participant.characterId === heroId && "ll:text-sky-300",
-                      status === "unknown" && "ll:text-white/50",
+                      status === "unknown" && "ll:text-foreground/50",
                     )}
                   >
                     {participant.name}
@@ -210,7 +210,7 @@ export const LootSplitSection: FC<LootSplitSectionProps> = ({
                   "ll:p-0 ll:pt-1 ll:text-center ll:text-[10px] ll:leading-3 ll:tabular-nums",
                   wanted[index]
                     ? "ll:font-semibold ll:text-emerald-300"
-                    : "ll:text-white/45",
+                    : "ll:text-foreground/45",
                 )}
               >
                 {wanted[index]}

@@ -147,7 +147,7 @@ export const HeroManageDialog = ({
                 placeholder={t("events.createDialog.heroIdPlaceholder")}
                 {...register("npcId")}
                 disabled={false}
-                className="text-sm font-mono"
+                className="font-mono"
               />
             </div>
             <div className="space-y-2">
@@ -158,7 +158,6 @@ export const HeroManageDialog = ({
                 id={npcNameInputId}
                 placeholder={t("events.createDialog.heroNamePlaceholder")}
                 {...register("npcName", { required: true })}
-                className="text-sm"
               />
             </div>
           </div>

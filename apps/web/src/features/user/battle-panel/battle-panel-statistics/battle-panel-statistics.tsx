@@ -15,7 +15,7 @@ import { StatisticsQueryPanel } from "./components/statistics-query-panel";
 import { BattleAnalyticsOverview } from "./components/battle-analytics-overview";
 import { useTranslation } from "react-i18next";
 import { BattlePanelStatisticsSkeleton } from "./battle-panel-statistics-skeleton";
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { Swords } from "lucide-react";
 
 export function BattlePanelStatistics() {

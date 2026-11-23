@@ -39,7 +39,7 @@ export const SingleNotificationNpc: FC<SingleNotificationNpcProps> = ({
         )}
         <CountBadge count={getNotificationReportCount(notification)} />
       </div>
-      <div className="ll:flex ll:gap-1 ll:overflow-hidden ll:text-[11px] ll:text-gray-300">
+      <div className="ll:flex ll:gap-1 ll:overflow-hidden ll:text-[11px] ll:text-foreground/80">
         <span className="ll:min-w-0 ll:truncate">
           {notification.npc.location}
         </span>

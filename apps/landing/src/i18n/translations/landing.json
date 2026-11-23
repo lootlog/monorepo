@@ -14,8 +14,6 @@
   },
   "header": {
     "brand": "Lootlog",
-    "docs": "Dokumentacja",
-    "wiki": "Wiki",
     "support": "Wesprzyj",
     "openMenu": "Otwórz menu",
     "closeMenu": "Zamknij menu",
@@ -155,13 +153,8 @@
     "guide": "Zobacz instrukcję"
   },
   "footer": {
-    "developer": "Dla programistów",
-    "wiki": "Wiki",
     "tagline": "Darmowy dodatek open source do Margonem dla graczy i\u00a0klanów.",
     "navigationLabel": "Linki w\u00a0stopce",
-    "docs": "Dokumentacja",
-    "discord": "Discord",
-    "github": "GitHub",
     "privacy": "Prywatność",
     "terms": "Regulamin",
     "support": "Wesprzyj",
@@ -193,7 +186,6 @@
     "more": "Inne poradniki",
     "author": "Zespół Lootlog",
     "updated": "Aktualizacja",
-    "skip": "Przejdź do treści",
     "notFoundTitle": "Nie znaleźliśmy tego poradnika.",
     "notFoundDescription": "Sprawdź adres lub wybierz artykuł z listy poradników.",
     "posts": {
@@ -210,5 +202,20 @@
         "description": "Położenie i rozmiar okien, przypisanie skrótów, przywracanie ustawień."
       }
     }
+  },
+  "skipToContent": "Przejdź do treści",
+  "sites": {
+    "lootlog": "Lootlog",
+    "docs": "Dokumentacja",
+    "wiki": "Wiki",
+    "developer": "Dla programistów",
+    "github": "GitHub",
+    "discord": "Discord"
+  },
+  "notFound": {
+    "title": "Nie znaleźliśmy tej strony.",
+    "description": "Sprawdź adres albo wróć na stronę główną Lootloga.",
+    "home": "Strona główna",
+    "blog": "Poradniki"
   }
 }

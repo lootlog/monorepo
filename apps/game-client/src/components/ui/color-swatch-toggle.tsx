@@ -41,7 +41,7 @@ export const ColorSwatchToggle: FC<ColorSwatchToggleProps> = ({
         {selected ? (
           <span
             aria-hidden="true"
-            className="ll:absolute ll:flex ll:size-3 ll:items-center ll:justify-center ll:rounded-full ll:bg-black/80 ll:text-white"
+            className="ll:absolute ll:flex ll:size-3 ll:items-center ll:justify-center ll:rounded-full ll:bg-black/80 ll:text-foreground"
           >
             <Check size={10} strokeWidth={3} />
           </span>

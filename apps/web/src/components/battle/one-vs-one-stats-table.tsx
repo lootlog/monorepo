@@ -3,8 +3,8 @@ import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import {
   INLINE_SEARCH_INPUT_CLASS,
   InlineSearchField,
-} from "@/components/common/inline-search-field";
-import { EmptyState } from "@/components/common/empty-state";
+} from "@lootlog/ui/components/inline-search-field";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Swords } from "lucide-react";
 import { Table } from "@lootlog/ui/components/table";

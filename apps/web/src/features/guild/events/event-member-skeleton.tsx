@@ -1,5 +1,6 @@
 import { DetailSkeleton } from "@/components/common/detail-skeleton";
-import { StatsTile, StatsTileGrid } from "@/components/common/stats-tile";
+import { StatsTile } from "@lootlog/ui/components/stats-tile";
+import { StatsTileGrid } from "@lootlog/ui/components/stats-tile-grid";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { SkeletonLine } from "@/components/common/skeleton-line";
 import { Clock, Moon, Sparkles, Swords } from "lucide-react";
@@ -26,13 +27,13 @@ export const EventMemberSkeleton = () => {
       }
     >
       <SkeletonFilterBar />
-      <StatsTileGrid className="grid-cols-2 xl:grid-cols-4">
+      <StatsTileGrid className="sm:grid-cols-2 xl:grid-cols-4">
         {KPIS.map((kpi) => (
           <StatsTile
             key={kpi.labelKey}
             icon={kpi.icon}
             label={t(kpi.labelKey)}
-            value={<Skeleton className="my-0.5 h-6 w-16" />}
+            value={<Skeleton className="h-7 w-16" />}
           />
         ))}
       </StatsTileGrid>

@@ -44,7 +44,8 @@ export function WikiUserMenu() {
         size="sm"
         variant="outline"
         className="shrink-0"
-        disabled={signIn.isPending}
+        loading={signIn.isPending}
+        icon={<LogIn aria-hidden="true" />}
         aria-label={t("userMenu.signIn")}
         title={signIn.hasError ? t("userMenu.signInFailed") : undefined}
         onClick={() =>
@@ -54,11 +55,6 @@ export function WikiUserMenu() {
           })
         }
       >
-        {signIn.isPending ? (
-          <Spinner className="size-4" />
-        ) : (
-          <LogIn aria-hidden="true" />
-        )}
         <span className="max-sm:hidden">{t("userMenu.signInShort")}</span>
       </Button>
     );

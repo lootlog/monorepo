@@ -1,6 +1,7 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { MemberStatsPage } from "@/features/guild/stats/member-stats-page";
 import { StatsDetailPageSkeleton } from "@/features/guild/stats/stats-detail-page-skeleton";
+import { StatsMobileListSkeleton } from "@/features/guild/stats/components/stats-mobile-list-skeleton";
 import { buildMemberKillsParams } from "@/features/guild/stats/utils/build-stats-query-params";
 import {
   getKillsControllerGetMemberKillsQueryOptions,
@@ -74,5 +75,9 @@ export const Route = createFileRoute(
       }
     }),
   component: MemberStatsPage,
-  pendingComponent: StatsDetailPageSkeleton,
+  pendingComponent: () => (
+    <StatsDetailPageSkeleton
+      mobileSkeleton={<StatsMobileListSkeleton media="npcTile" />}
+    />
+  ),
 });

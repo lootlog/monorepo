@@ -1,7 +1,7 @@
 import {
   INLINE_SEARCH_INPUT_CLASS,
   InlineSearchField,
-} from "@/components/common/inline-search-field";
+} from "@lootlog/ui/components/inline-search-field";
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,

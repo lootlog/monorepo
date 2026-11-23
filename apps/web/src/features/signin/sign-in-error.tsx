@@ -1,6 +1,6 @@
-import { PageHeader } from "@/components/common/page-header";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { SectionCardFooter } from "@/components/common/section-card/section-card-footer";
+import { PageHeader } from "@lootlog/ui/components/page-header";
+import { SectionCardContent } from "@lootlog/ui/components/section-card-content";
+import { SectionCardFooter } from "@lootlog/ui/components/section-card-footer";
 import { DiscordIcon } from "@/features/signin/discord-icon";
 import { signInErrorKind } from "@/features/signin/sign-in-error-kind";
 import { signInRetryUrl } from "@/features/signin/sign-in-retry-url";

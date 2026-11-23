@@ -26,7 +26,7 @@ export function TimerMapPlayersAdornment({
       )}
       {occupancy && <TimerMapPresenceIndicator occupancy={occupancy} />}
       {threat && <TimerMapThreatIndicator threat={threat} />}
-      <span aria-hidden="true" className="ll:text-white/35">
+      <span aria-hidden="true" className="ll:text-foreground/35">
         ·
       </span>
     </span>

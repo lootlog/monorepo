@@ -20,7 +20,7 @@ import { upperFirst } from "es-toolkit";
 import { AlertCircle, History, X } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { IconDialogHeader } from "@/components/common/icon-dialog-header";
 import { LoadingSlot } from "@/components/common/loading-slot";
 import { useGuildId } from "@/hooks/context/use-guild-id";

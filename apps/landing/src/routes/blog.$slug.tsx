@@ -3,7 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { BlogGuideCard } from "../components/blog/blog-guide-card";
 import { BlogGuideIcon } from "../components/blog/blog-guide-icon";
-import { BlogLayout } from "../components/blog/blog-layout";
+import { SiteLayout } from "@/components/site-layout";
 import { BlogNotFound } from "../components/blog/blog-not-found";
 import { blogNotFoundHead, blogPageHead, blogPosts } from "../config/blog";
 import type { ComponentType } from "react";
@@ -71,7 +71,7 @@ function BlogArticle() {
   };
 
   return (
-    <BlogLayout>
+    <SiteLayout>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -122,6 +122,6 @@ function BlogArticle() {
           </ul>
         </section>
       </div>
-    </BlogLayout>
+    </SiteLayout>
   );
 }

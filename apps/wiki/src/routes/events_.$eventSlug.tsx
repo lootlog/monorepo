@@ -1,6 +1,10 @@
-import { createFileRoute, linkOptions } from "@tanstack/react-router";
+import { Link, createFileRoute, linkOptions } from "@tanstack/react-router";
 import { orderBy } from "es-toolkit";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { PortalPageHeader } from "@lootlog/ui/components/portal-page-header";
+import { PageState } from "@lootlog/ui/components/page-state";
+import { Button } from "@lootlog/ui/components/button";
+import { SearchXIcon } from "lucide-react";
 import { PageBreadcrumbs } from "@/components/article/page-breadcrumbs";
 import { CatalogItemGrid } from "@/components/catalog/catalog-item-grid";
 import { NpcPortrait } from "@/components/common/npc-portrait";
@@ -62,9 +66,16 @@ function EventRoute() {
 
   if (items && !name) {
     return (
-      <p className="py-6 text-sm text-muted-foreground">
-        {t("catalog.eventNotFound")}
-      </p>
+      <PageState
+        className="my-6"
+        icon={<SearchXIcon />}
+        title={t("catalog.eventNotFound")}
+        description={t("catalog.notFoundDescription")}
+      >
+        <Button nativeButton={false} render={<Link to="/events" />}>
+          {t("catalog.backToEvents")}
+        </Button>
+      </PageState>
     );
   }
 
@@ -90,28 +101,33 @@ function EventRoute() {
           ...(name ? [{ label: name }] : []),
         ]}
       />
-      <header className="flex flex-col gap-5">
-        <div className="flex flex-col gap-1.5">
-          {name && isHeroTrackersEvent(name) ? (
-            <p className="text-sm font-medium text-muted-foreground">
-              {t("npc.heroTrackers")}
-            </p>
-          ) : null}
-          {name ? (
-            <h1 className="text-3xl font-semibold tracking-tight text-balance text-foreground md:text-4xl">
-              {name}
-            </h1>
-          ) : (
+      <div className="flex flex-col gap-5">
+        {name ? (
+          <PortalPageHeader
+            eyebrow={
+              isHeroTrackersEvent(name) ? (
+                <p className="font-medium text-muted-foreground">
+                  {t("npc.heroTrackers")}
+                </p>
+              ) : null
+            }
+            title={name}
+            description={
+              items
+                ? t("catalog.eventDescription", {
+                    count: formatNumber(items.length),
+                  })
+                : t("search.loading")
+            }
+          />
+        ) : (
+          <div className="flex flex-col gap-1.5">
             <Skeleton className="h-10 w-72" />
-          )}
-          <p className="text-sm text-muted-foreground md:text-[0.9375rem]">
-            {items
-              ? t("catalog.eventDescription", {
-                  count: formatNumber(items.length),
-                })
-              : t("search.loading")}
-          </p>
-        </div>
+            <p className="text-sm text-muted-foreground md:text-[0.9375rem]">
+              {t("search.loading")}
+            </p>
+          </div>
+        )}
         {items ? (
           <nav aria-label={t("catalog.eventMonsters")}>
             <ul className="flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none]">
@@ -139,7 +155,7 @@ function EventRoute() {
             </ul>
           </nav>
         ) : null}
-      </header>
+      </div>
       {items ? (
         monsters.map(({ monster, items: monsterItems }) => (
           <EventMonsterItems

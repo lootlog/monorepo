@@ -87,11 +87,11 @@ export const AppErrorBoundaryFallback = ({
           <p className="ll:m-0 ll:text-xs ll:leading-4 ll:text-muted-foreground">
             {t("stackLabel")}
           </p>
-          <pre className="ll:m-0 ll:min-h-0 ll:flex-1 ll:overflow-auto ll:whitespace-pre-wrap ll:break-words ll:rounded-sm ll:border ll:border-border/20 ll:bg-muted/40 ll:p-2 ll:font-mono ll:text-xs ll:leading-4 ll:text-foreground">
+          <pre className="ll:m-0 ll:min-h-0 ll:flex-1 ll:overflow-auto ll:whitespace-pre-wrap ll:break-words ll:rounded-sm ll:border ll:border-separator-subtle ll:bg-muted/40 ll:p-2 ll:font-mono ll:text-xs ll:leading-4 ll:text-foreground">
             {errorDetails.stack}
           </pre>
         </div>
-        <WindowFooter rowClassName="ll:justify-between ll:gap-1 ll:px-1">
+        <WindowFooter rowClassName="ll:justify-between">
           <CopyDiagnosticsButton getReport={getReport} variant="ghost" />
           <Button type="button" size="xs" onClick={resetErrorBoundary}>
             <RotateCcw aria-hidden />

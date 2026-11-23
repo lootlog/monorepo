@@ -31,7 +31,7 @@ export function ChatGatheringMenu({
       <PopoverContent
         side={side}
         align="end"
-        className="ll:w-auto ll:min-w-36 ll:p-1"
+        className="ll-action-menu ll:w-auto ll:min-w-36 ll:overflow-hidden ll:p-0"
         onClick={() => setOpen(false)}
       >
         {children}

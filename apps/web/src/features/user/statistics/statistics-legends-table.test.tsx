@@ -8,8 +8,9 @@ import {
 } from "@testing-library/react";
 import type { UserLootStatsResponseDtoOutputLegendsItem } from "@lootlog/client/main";
 import { useState } from "react";
-import { afterEach, expect, it } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import "@/i18n/config";
+import { RESULTS_TABLE_MEDIA_QUERY } from "@/components/common/page-sticky-table-header";
 import { StatisticsLegendsTable } from "./statistics-legends-table";
 import type { StatisticsSortValue } from "./statistics-sort";
 
@@ -32,7 +33,24 @@ function SortedLegendsTable({
   );
 }
 
-afterEach(cleanup);
+beforeEach(() => {
+  const nativeMatchMedia = window.matchMedia.bind(window);
+
+  vi.stubGlobal("matchMedia", (query: string) => {
+    const result = nativeMatchMedia(query);
+
+    Object.defineProperty(result, "matches", {
+      value: query === RESULTS_TABLE_MEDIA_QUERY,
+    });
+
+    return result;
+  });
+});
+
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
 
 let nextId = 1;
 

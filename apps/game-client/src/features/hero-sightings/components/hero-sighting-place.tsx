@@ -36,7 +36,7 @@ export function HeroSightingPlace({
           className={
             isCurrent && sighting.state === "SPAWNING"
               ? "ll:text-green-300"
-              : "ll:text-white"
+              : "ll:text-foreground"
           }
         >
           {sighting.mapName}

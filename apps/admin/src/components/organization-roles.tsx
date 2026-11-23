@@ -1,4 +1,5 @@
 import type { AdminOrganizationDetails } from "@lootlog/schema/admin-organizations";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { Badge } from "@lootlog/ui/components/badge";
 import {
   Table,
@@ -8,6 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@lootlog/ui/components/table";
+import { ShieldCheck } from "lucide-react";
 import { text } from "@/lib/messages";
 
 export function OrganizationRoles({
@@ -16,7 +18,7 @@ export function OrganizationRoles({
   roles: AdminOrganizationDetails["roles"];
 }) {
   if (roles.length === 0)
-    return <p className="text-sm text-muted-foreground">{text.rolesEmpty}</p>;
+    return <EmptyState compact icon={ShieldCheck} title={text.rolesEmpty} />;
 
   return (
     <Table>

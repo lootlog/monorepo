@@ -11,7 +11,7 @@ const STATUS_ICON = {
   done: (
     <CircleCheck
       aria-hidden
-      className={cn(ICON_CLASS_NAME, "ll:text-green-400")}
+      className={cn(ICON_CLASS_NAME, "ll:text-success")}
     />
   ),
   todo: (
@@ -61,7 +61,7 @@ export const SetupChecklistStep: FC<SetupChecklistStepProps> = ({
       {justDone ? (
         <CircleCheck
           aria-hidden
-          className={cn(ICON_CLASS_NAME, "ll-pop-in ll:text-green-400")}
+          className={cn(ICON_CLASS_NAME, "ll-pop-in ll:text-success")}
         />
       ) : (
         STATUS_ICON[step.status]

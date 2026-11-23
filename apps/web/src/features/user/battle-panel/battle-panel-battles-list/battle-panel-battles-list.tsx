@@ -163,59 +163,62 @@ export const BattlePanelBattlesList = () => {
   );
 
   return (
-    <BattlesList
-      activeFilterChips={activeFilterChips}
-      battlesResponse={battlesResponse}
-      clearFiltersLabel={t("battlePanel.filters.clear")}
-      params={{
-        cursor: optionalQueryValue(queryState.cursor),
-        size: pageSize,
-        world: filters.world,
-        type: filters.type,
-        search: filters.search,
-        result: filters.result,
-        ph: filters.ph,
-        matchmaking: filters.matchmaking,
-        characterId: filters.characterId,
-        startDate: optionalQueryValue(queryState.startDate),
-        endDate: optionalQueryValue(queryState.endDate),
-        minLevel: filters.minLevel,
-        maxLevel: filters.maxLevel,
-      }}
-      onClearFilters={handleClearFilters}
-      onCursorChange={handleCursorChange}
-      onFiltersChange={handleFiltersChange}
-      pageIndex={pageIndex}
-      pageSize={pageSize}
-      showPagination
-      isLoading={isBattlesLoading}
-      isRefreshing={isBattlesRefreshing}
-      hasError={isBattlesError}
-      isRetrying={isBattlesFetching}
-      onRetry={() => void refetchBattles()}
-      enableScrollToTop
-      search={
-        <>
-          <WarriorSearchFilter
-            selectedWarriors={selectedWarriors}
-            onWarriorToggle={handleWarriorToggle}
+    <>
+      <h1 className="sr-only">{t("battlePanel.navigation.battles")}</h1>
+      <BattlesList
+        activeFilterChips={activeFilterChips}
+        battlesResponse={battlesResponse}
+        clearFiltersLabel={t("battlePanel.filters.clear")}
+        params={{
+          cursor: optionalQueryValue(queryState.cursor),
+          size: pageSize,
+          world: filters.world,
+          type: filters.type,
+          search: filters.search,
+          result: filters.result,
+          ph: filters.ph,
+          matchmaking: filters.matchmaking,
+          characterId: filters.characterId,
+          startDate: optionalQueryValue(queryState.startDate),
+          endDate: optionalQueryValue(queryState.endDate),
+          minLevel: filters.minLevel,
+          maxLevel: filters.maxLevel,
+        }}
+        onClearFilters={handleClearFilters}
+        onCursorChange={handleCursorChange}
+        onFiltersChange={handleFiltersChange}
+        pageIndex={pageIndex}
+        pageSize={pageSize}
+        showPagination
+        isLoading={isBattlesLoading}
+        isRefreshing={isBattlesRefreshing}
+        hasError={isBattlesError}
+        isRetrying={isBattlesFetching}
+        onRetry={() => void refetchBattles()}
+        enableScrollToTop
+        search={
+          <>
+            <WarriorSearchFilter
+              selectedWarriors={selectedWarriors}
+              onWarriorToggle={handleWarriorToggle}
+            />
+            <CharacterSelector
+              characters={characters}
+              multiple
+              characterIds={filters.characterId}
+              onCharacterToggle={handleCharacterChange}
+            />
+          </>
+        }
+        toolbar={tableToolbar}
+        stackedFilters={
+          <BattlesListStackedFilters
+            filters={filters}
+            onFiltersChange={handleFiltersChange}
+            worlds={worlds}
           />
-          <CharacterSelector
-            characters={characters}
-            multiple
-            characterIds={filters.characterId}
-            onCharacterToggle={handleCharacterChange}
-          />
-        </>
-      }
-      toolbar={tableToolbar}
-      stackedFilters={
-        <BattlesListStackedFilters
-          filters={filters}
-          onFiltersChange={handleFiltersChange}
-          worlds={worlds}
-        />
-      }
-    />
+        }
+      />
+    </>
   );
 };

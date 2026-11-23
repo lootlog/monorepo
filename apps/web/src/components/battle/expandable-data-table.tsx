@@ -13,6 +13,9 @@ import {
   useTable,
 } from "@tanstack/react-table";
 import { cn } from "cn";
+import { Swords } from "lucide-react";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
+import { SCROLLER_STICKY_TABLE_HEADER_CLASS } from "@/components/common/page-sticky-table-header";
 import { Fragment, type ReactNode, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import * as m from "framer-motion/m";
@@ -74,9 +77,21 @@ export function ExpandableDataTable<TData extends Warrior>({
     },
   });
 
+  const rows = table.getRowModel().rows;
+
+  if (rows.length === 0) {
+    return (
+      <EmptyState
+        compact
+        icon={Swords}
+        title={t("battleUi.statsTable.empty")}
+      />
+    );
+  }
+
   return (
     <Table className="min-w-[700px] text-[13px]">
-      <TableHeader className="sticky top-0 z-20 bg-sidebar">
+      <TableHeader className={cn(SCROLLER_STICKY_TABLE_HEADER_CLASS, "z-20")}>
         {table.getHeaderGroups().map((headerGroup) => (
           <TableRow key={headerGroup.id} className="hover:bg-transparent">
             {headerGroup.headers.map((header, headerIndex) => {
@@ -126,98 +141,84 @@ export function ExpandableDataTable<TData extends Warrior>({
         ))}
       </TableHeader>
       <TableBody>
-        {table.getRowModel().rows?.length ? (
-          table.getRowModel().rows.map((row) => {
-            const warrior = row.original;
-            const expansionType = expandedRows.get(warrior.originalId);
+        {rows.map((row) => {
+          const warrior = row.original;
+          const expansionType = expandedRows.get(warrior.originalId);
 
-            return (
-              <Fragment key={row.id}>
-                <TableRow className="group/row">
-                  {row.getVisibleCells().map((cell, cellIndex) => (
+          return (
+            <Fragment key={row.id}>
+              <TableRow className="group/row">
+                {row.getVisibleCells().map((cell, cellIndex) => (
+                  <TableCell
+                    key={cell.id}
+                    className={cn(
+                      "h-10 px-0.5 py-0.5",
+                      cellIndex === 0 &&
+                        "sticky left-0 z-10 max-w-40 bg-background group-hover/row:bg-[color-mix(in_oklab,var(--accent)_35%,var(--background))]",
+                    )}
+                  >
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </TableCell>
+                ))}
+              </TableRow>
+              <AnimatePresence>
+                {expansionType ? (
+                  <m.tr
+                    key={`${row.id}-expanded`}
+                    layout
+                    data-state="expanded-detail"
+                    className="border-b transition-colors"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{
+                      layout: {
+                        duration: MOTION_DURATION.long,
+                        ease: EASE_EMPHASIZED,
+                      },
+                      opacity: {
+                        duration: MOTION_DURATION.medium,
+                        ease: EASE_EMPHASIZED,
+                      },
+                    }}
+                  >
                     <TableCell
-                      key={cell.id}
-                      className={cn(
-                        "h-10 px-0.5 py-0.5",
-                        cellIndex === 0 &&
-                          "sticky left-0 z-10 max-w-40 bg-background group-hover/row:bg-[color-mix(in_oklab,var(--accent)_35%,var(--background))]",
-                      )}
+                      colSpan={columns.length}
+                      className="p-0 overflow-hidden"
                     >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-                <AnimatePresence>
-                  {expansionType ? (
-                    <m.tr
-                      key={`${row.id}-expanded`}
-                      layout
-                      data-state="expanded-detail"
-                      className="border-b transition-colors"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{
-                        layout: {
+                      <m.div
+                        initial={{ opacity: 0, scaleY: 0.96 }}
+                        animate={{ opacity: 1, scaleY: 1 }}
+                        exit={{ opacity: 0, scaleY: 0.96 }}
+                        style={{ transformOrigin: "top" }}
+                        transition={{
                           duration: MOTION_DURATION.long,
                           ease: EASE_EMPHASIZED,
-                        },
-                        opacity: {
-                          duration: MOTION_DURATION.medium,
-                          ease: EASE_EMPHASIZED,
-                        },
-                      }}
-                    >
-                      <TableCell
-                        colSpan={columns.length}
-                        className="p-0 overflow-hidden"
+                        }}
+                        layout
                       >
-                        <m.div
-                          initial={{ opacity: 0, scaleY: 0.96 }}
-                          animate={{ opacity: 1, scaleY: 1 }}
-                          exit={{ opacity: 0, scaleY: 0.96 }}
-                          style={{ transformOrigin: "top" }}
-                          transition={{
-                            duration: MOTION_DURATION.long,
-                            ease: EASE_EMPHASIZED,
-                          }}
-                          layout
-                        >
-                          <AnimatePresence mode="wait">
-                            <m.div
-                              key={`${warrior.originalId}-${expansionType}`}
-                              initial={{ opacity: 0, scale: 0.95 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              exit={{ opacity: 0, scale: 0.95 }}
-                              transition={{
-                                duration: MOTION_DURATION.medium,
-                                ease: EASE_EMPHASIZED,
-                              }}
-                            >
-                              {renderExpandedContent(expansionType, warrior)}
-                            </m.div>
-                          </AnimatePresence>
-                        </m.div>
-                      </TableCell>
-                    </m.tr>
-                  ) : null}
-                </AnimatePresence>
-              </Fragment>
-            );
-          })
-        ) : (
-          <TableRow>
-            <TableCell
-              colSpan={columns.length}
-              className="h-24 text-center text-sm text-muted-foreground"
-            >
-              {t("battleUi.statsTable.empty")}
-            </TableCell>
-          </TableRow>
-        )}
+                        <AnimatePresence mode="wait">
+                          <m.div
+                            key={`${warrior.originalId}-${expansionType}`}
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            transition={{
+                              duration: MOTION_DURATION.medium,
+                              ease: EASE_EMPHASIZED,
+                            }}
+                          >
+                            {renderExpandedContent(expansionType, warrior)}
+                          </m.div>
+                        </AnimatePresence>
+                      </m.div>
+                    </TableCell>
+                  </m.tr>
+                ) : null}
+              </AnimatePresence>
+            </Fragment>
+          );
+        })}
       </TableBody>
     </Table>
   );

@@ -34,7 +34,7 @@ export const WindowMaxHeightAction: FC<WindowMaxHeightActionProps> = ({
             "ll:h-4 ll:min-w-10 ll:px-1.5 ll:text-[10px] ll:leading-none",
             isArmed
               ? "ll:border-blue-400/70 ll:bg-blue-400/15 ll:text-blue-200"
-              : "ll:border-gray-500/40 ll:bg-transparent ll:text-gray-300 ll:hover:border-gray-400/50 ll:hover:text-gray-200",
+              : "ll:border-separator ll:bg-transparent ll:text-foreground/80 ll:hover:border-separator ll:hover:text-foreground/90",
           )}
           onClick={onClick}
         >

@@ -1,19 +1,19 @@
 export const BATTLE_TEXT_COLORS = {
-  neutral: "text-white",
-  muted: "text-gray-400",
+  neutral: "text-foreground",
+  muted: "text-muted-foreground",
   team: {
     friendly: "text-green-500",
     enemy: "text-red-400",
     enemyStrong: "text-red-500",
   },
   result: {
-    won: "text-green-400",
-    lost: "text-red-400",
-    flee: "text-yellow-400",
+    won: "text-signal-ready",
+    lost: "text-signal-alert",
+    flee: "text-signal-timer",
   },
   metric: {
-    positive: "text-green-400",
-    negative: "text-red-400",
+    positive: "text-signal-ready",
+    negative: "text-signal-alert",
     average: "text-yellow-500",
     secondary: "text-purple-400",
     winStreak: "text-orange-500",
@@ -129,10 +129,10 @@ export const BATTLE_BADGE_COLORS = {
     wound: "border-orange-500/20 bg-orange-500/5 text-orange-300",
   },
   result: {
-    won: "border-green-500/25 bg-green-500/10 text-green-400",
-    lost: "border-red-500/25 bg-red-500/10 text-red-400",
-    flee: "border-yellow-500/25 bg-yellow-500/10 text-yellow-400",
-    draw: "border-sky-500/25 bg-sky-500/10 text-sky-400",
+    won: "border-signal-ready/25 bg-signal-ready/10 text-signal-ready",
+    lost: "border-signal-alert/25 bg-signal-alert/10 text-signal-alert",
+    flee: "border-signal-timer/25 bg-signal-timer/10 text-signal-timer",
+    draw: "border-signal-live/25 bg-signal-live/10 text-signal-live",
     unfinished: "border-border bg-muted/40 text-muted-foreground",
   },
 } as const;
@@ -151,17 +151,14 @@ export const BATTLE_SEGMENT_COLORS = {
 
 export const BATTLE_SURFACE_COLORS = {
   log: {
-    neutral: "bg-gray-100/10",
+    neutral: "bg-foreground/10",
     friendly: "bg-green-400/10",
     enemy: "bg-red-400/10",
     friendlyStrong: "bg-green-400/[15%]",
     enemyStrong: "bg-red-400/[15%]",
   },
-  metric: {
-    positiveBox: "bg-green-500/10 border-green-500/20",
-    negativeBox: "bg-red-500/10 border-red-500/20",
-  },
   team: {
+    userWarrior: "bg-green-500/10 ring-1 ring-inset ring-green-500/40",
     friendlyCell: "bg-green-400/10",
     enemyCell: "bg-red-400/10",
     friendlyHeader: "bg-green-950 text-green-50",

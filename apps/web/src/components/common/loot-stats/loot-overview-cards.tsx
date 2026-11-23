@@ -1,5 +1,6 @@
-import { StatsTile, StatsTileGrid } from "@/components/common/stats-tile";
-import { StatsTileNumber } from "@/components/common/stats-tile-number";
+import { StatsTile } from "@lootlog/ui/components/stats-tile";
+import { StatsTileGrid } from "@lootlog/ui/components/stats-tile-grid";
+import { StatsTileNumber } from "@lootlog/ui/components/stats-tile-number";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import type { LootStatsResponseDtoOutputOverview } from "@lootlog/client/main";
 import { Crown, Layers, Package, Sword } from "lucide-react";

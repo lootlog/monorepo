@@ -32,14 +32,16 @@ export function ChatGatheringCardView({
 }: Props) {
   return (
     <div
-      className="ll-party-gathering-card ll:relative ll:flex ll:min-w-0 ll:flex-col ll:gap-0 ll:px-[8px] ll:pt-[2px] ll:pb-[4px]"
+      className="ll:relative ll:flex ll:min-w-0 ll:flex-col ll:gap-0 ll:px-[8px] ll:pt-[2px] ll:pb-[4px] ll:bg-gathering ll:data-[joined=true]:bg-gathering-joined"
       data-joined={joined}
     >
       {control}
       <div className="ll:flex ll:min-h-[24px] ll:items-center ll:gap-1">
         <div className="ll:flex ll:min-w-0 ll:flex-1 ll:items-center ll:gap-1.5">
           <ChatGatheringHeader organizer={organizer} />
-          <span className="ll:shrink-0 ll:text-[#b7adbe]">{counters}</span>
+          <span className="ll:shrink-0 ll:text-gathering-muted-foreground">
+            {counters}
+          </span>
           <ReadyRoomMinutesLeft expiresAt={expiresAt} />
         </div>
         <div className="ll:h-[24px] ll:w-[28px] ll:shrink-0 ll:mr-[-6px]">

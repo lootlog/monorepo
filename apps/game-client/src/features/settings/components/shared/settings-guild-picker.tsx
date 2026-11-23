@@ -1,7 +1,7 @@
 import { ToggleGroup } from "@/components/ui/toggle-group";
 import { SettingsGuildPickerItem } from "@/features/settings/components/shared/settings-guild-picker-item";
 import { settingsPickerGridClassName } from "@/features/settings/components/shared/settings-picker-card";
-import { SettingsNoLootlogEmptyState } from "@/features/settings/components/shared/settings-no-lootlog-empty-state";
+import { NoLootlogEmptyState } from "@/components/no-lootlog-empty-state";
 import type { GuildIdentity as Guild } from "@/lib/api/generated-helpers";
 import { cn } from "cn";
 import { xor } from "es-toolkit";
@@ -25,7 +25,7 @@ export const SettingsGuildPicker: FC<SettingsGuildPickerProps> = ({
   disabled,
 }) => {
   if (!guilds || guilds.length === 0) {
-    return <SettingsNoLootlogEmptyState />;
+    return <NoLootlogEmptyState />;
   }
 
   return (

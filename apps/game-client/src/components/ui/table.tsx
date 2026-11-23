@@ -44,7 +44,7 @@ function TableRow({ className, ...props }: ComponentProps<"tr">) {
     <tr
       data-slot="table-row"
       className={cn(
-        "ll:border-0 ll:border-b ll:border-solid ll:border-gray-400/20 ll:transition-colors ll:hover:bg-white/5 ll:data-[state=selected]:bg-primary/15 ll:data-[state=expanded-detail]:bg-black/20 ll:data-[state=expanded-detail]:hover:bg-black/20",
+        "ll:border-0 ll:border-b ll:border-solid ll:border-separator-subtle ll:transition-colors ll:hover:bg-white/5 ll:data-[state=selected]:bg-primary/15 ll:data-[state=expanded-detail]:bg-black/20 ll:data-[state=expanded-detail]:hover:bg-black/20",
         className,
       )}
       {...props}
@@ -70,7 +70,7 @@ function TableCell({ className, ...props }: ComponentProps<"td">) {
     <td
       data-slot="table-cell"
       className={cn(
-        "ll:h-7 ll:whitespace-nowrap ll:px-2 ll:py-1 ll:align-middle ll:text-gray-100",
+        "ll:h-7 ll:whitespace-nowrap ll:px-2 ll:py-1 ll:align-middle ll:text-foreground",
         className,
       )}
       {...props}

@@ -14,7 +14,7 @@ import {
 import { TextLink } from "@lootlog/ui/components/text-link";
 import { getCatalogControllerGetItemsQueryOptions } from "@lootlog/client/catalog";
 import { ArticleSection } from "@/components/article/article-section";
-import { PageHeader } from "@/components/common/page-header";
+import { PortalPageHeader } from "@lootlog/ui/components/portal-page-header";
 import { ChestCard } from "@/components/sockets/chest-card";
 import { SymbolCard } from "@/components/sockets/symbol-card";
 import { socketItemsQuery } from "@/hooks/use-socket-items";
@@ -43,7 +43,7 @@ function SocketsRoute() {
 
   return (
     <div className="flex flex-col gap-10 py-6">
-      <PageHeader
+      <PortalPageHeader
         title={t("socket.page.metaTitle")}
         description={t("socket.page.description")}
       />

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCatalogReportsControllerGetViewer } from "@lootlog/client/catalog";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
-import { PageHeader } from "@/components/common/page-header";
+import { PortalPageHeader } from "@lootlog/ui/components/portal-page-header";
 import { ModerationQueue } from "@/components/reports/moderation-queue";
 import { useSession } from "@/hooks/use-session";
 import { useSignedInCatalogRequest } from "@/hooks/use-signed-in-catalog-request";
@@ -38,7 +38,7 @@ function ModerationRoute() {
   if (!session || !viewer.data?.canModerate) {
     return (
       <div className="flex flex-col gap-6 py-6">
-        <PageHeader title={t("moderation.title")} />
+        <PortalPageHeader title={t("moderation.title")} />
         <p
           role={viewer.isError ? "alert" : undefined}
           className="text-sm text-muted-foreground"

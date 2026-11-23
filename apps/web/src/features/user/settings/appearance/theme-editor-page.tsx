@@ -1,5 +1,5 @@
 import { MetaItem } from "@/components/common/meta-item";
-import { SettingsDetailNotFound } from "@/components/common/settings-detail-not-found";
+import { DetailNotFound } from "@/components/common/detail-not-found";
 import { ROUTES } from "@/config/routes";
 import { useUserThemes } from "@/hooks/api/user/use-user-themes";
 import { useTheme } from "@/hooks/context/use-theme";
@@ -35,7 +35,7 @@ export const ThemeEditorPage = () => {
 
   if (userThemes && !theme) {
     return (
-      <SettingsDetailNotFound
+      <DetailNotFound
         icon={PaletteIcon}
         title={t("settings.appearance.editor.notFound")}
         description={t("settings.appearance.editor.notFoundDescription")}

@@ -8,6 +8,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  CONNECTION_STATUS_TONE,
+  CONNECTION_TONE_TEXT_CLASS_NAME,
+  SIGNED_OUT_CONNECTION_TONE,
+} from "@/components/connection-status-tone";
 import { useSocket } from "@/contexts/socket-context";
 import { useSignInRequired } from "@/hooks/auth/use-login-state";
 import { useWindowsStore } from "@/store/windows.store";
@@ -18,20 +23,36 @@ import { LoaderCircle, LogIn, Wifi, WifiOff } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 const STATUS_ICON = {
-  online: { Icon: Wifi, className: "ll:text-green-400" },
+  online: {
+    Icon: Wifi,
+    className: CONNECTION_TONE_TEXT_CLASS_NAME[CONNECTION_STATUS_TONE.online],
+  },
   connecting: {
     Icon: LoaderCircle,
-    className:
-      "ll:text-yellow-400 ll:animate-spin ll:motion-reduce:animate-none",
+    className: cn(
+      CONNECTION_TONE_TEXT_CLASS_NAME[CONNECTION_STATUS_TONE.connecting],
+      "ll:animate-spin ll:motion-reduce:animate-none",
+    ),
   },
-  reconnecting: { Icon: WifiOff, className: "ll:text-red-400" },
-  unreachable: { Icon: WifiOff, className: "ll:text-red-400" },
+  reconnecting: {
+    Icon: WifiOff,
+    className:
+      CONNECTION_TONE_TEXT_CLASS_NAME[CONNECTION_STATUS_TONE.reconnecting],
+  },
+  unreachable: {
+    Icon: WifiOff,
+    className:
+      CONNECTION_TONE_TEXT_CLASS_NAME[CONNECTION_STATUS_TONE.unreachable],
+  },
 } as const satisfies Record<
   RealtimeConnectionStatus,
   { Icon: typeof Wifi; className: string }
 >;
 
-const SIGNED_OUT_ICON = { Icon: LogIn, className: "ll:text-yellow-400" };
+const SIGNED_OUT_ICON = {
+  Icon: LogIn,
+  className: CONNECTION_TONE_TEXT_CLASS_NAME[SIGNED_OUT_CONNECTION_TONE],
+};
 
 const LATENCY_PROBE_INTERVAL_MS = 2_000;
 

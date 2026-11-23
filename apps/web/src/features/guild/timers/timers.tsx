@@ -1,13 +1,11 @@
-import { Alert, AlertDescription } from "@lootlog/ui/components/alert";
 import { getNpcTypeStrengthRank } from "@lootlog/domain/npc-type";
 import { findNpcType } from "@/constants/npc";
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { useTimerExpiry } from "./use-timer-expiry";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { Button } from "@lootlog/ui/components/button";
 import { EmptyMedia } from "@lootlog/ui/components/empty";
 import { groupBy, sortBy } from "es-toolkit";
-import { CircleAlert, Clock3, SearchX } from "lucide-react";
+import { AlertCircle, Clock3, SearchX } from "lucide-react";
 import { useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import * as m from "framer-motion/m";
@@ -22,7 +20,8 @@ import {
 } from "./timers-layout";
 import { ListGroupHeading } from "@/components/common/list-group-heading";
 import { cn } from "cn";
-import { TimersToolbar } from "./timers-toolbar";
+import { TimersFilters } from "./timers-filters";
+import { KillStatsSearch } from "@/components/common/kill-stats-search";
 
 import { GuildWorldHeaderSwitcher } from "@/components/layout/guild-world-header-switcher";
 import { useViewMode } from "@/hooks/use-view-mode";
@@ -45,6 +44,9 @@ import { useTimerDisplaySettings } from "./use-timer-display-settings";
 import { useTimerExpiryClock } from "./use-timer-expiry-clock";
 import { ThemeEmptyStateIcon } from "@/themes/adapters";
 import { RetryButton } from "@/components/common/retry-button";
+import { ClearFiltersButton } from "@/components/common/clear-filters-button";
+import { QueryErrorNotice } from "@/components/common/query-error-notice";
+import { ResultsSurface } from "@/components/common/results-surface";
 
 const getTimerListState = <Timer extends { npc?: { name: string } | null }>(
   timers: Timer[] | undefined,
@@ -145,22 +147,17 @@ export const Timers = () => {
     ([key]) => activeGroupKeys.size === 0 || activeGroupKeys.has(key),
   );
 
-  const toolbar = (
-    <TimersToolbar
-      search={search}
-      onSearchChange={setSearch}
-      groups={Object.entries(groups).map(([key, groupTimers]) => ({
-        key,
-        label: groupLabel(key),
-        count: groupTimers.length,
-      }))}
-      selectedGroups={activeGroups}
-      onSelectedGroupsChange={setSelectedGroups}
-      viewMode={viewMode}
-      onViewModeChange={setViewMode}
-      canChooseViewMode={canChooseViewMode}
-    />
-  );
+  const groupChips = activeGroups.map((key) => ({
+    id: key,
+    label: groupLabel(key),
+    onRemove: () =>
+      setSelectedGroups(activeGroups.filter((group) => group !== key)),
+  }));
+
+  const clearFilters = () => {
+    setSearch("");
+    setSelectedGroups([]);
+  };
 
   const retryButton = (
     <RetryButton onRetry={() => refetch()} isRetrying={isFetching} />
@@ -172,7 +169,7 @@ export const Timers = () => {
         <div className="p-3">
           <EmptyState
             fill
-            icon={CircleAlert}
+            icon={AlertCircle}
             title={t("timers.loadError")}
             description={t("timers.loadErrorDescription")}
             action={retryButton}
@@ -182,37 +179,19 @@ export const Timers = () => {
     }
 
     if (isPending) {
-      return (
-        <ScrollArea className="min-h-0 flex-1">
-          <TimersListSkeleton
-            viewMode={viewMode}
-            canChooseViewMode={canChooseViewMode}
-          />
-        </ScrollArea>
-      );
+      return <TimersListSkeleton viewMode={viewMode} />;
     }
 
     if (!hasFilteredTimers) {
       return (
         <div className="p-3">
-          {showsNoSearchResults && (
-            <div className="-mx-3 -mt-3 mb-3">{toolbar}</div>
-          )}
           {showsNoSearchResults ? (
             <EmptyState
               fill
               icon={SearchX}
               title={t("timers.noResults")}
               description={t("timers.noResultsDescription")}
-              action={
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setSearch("")}
-                >
-                  {t("timers.clearSearch")}
-                </Button>
-              }
+              action={<ClearFiltersButton onClear={clearFilters} />}
             />
           ) : (
             <EmptyState
@@ -230,74 +209,87 @@ export const Timers = () => {
       );
     }
 
-    return (
-      <ScrollArea data-under-top-bar className="min-h-0 flex-1">
-        {toolbar}
-        {visibleGroups.map(([key, groupTimers]) => {
-          return (
-            <section key={key} aria-labelledby={`timers-group-${key}`}>
-              <ListGroupHeading
-                id={`timers-group-${key}`}
-                count={groupTimers.length}
-              >
-                {groupLabel(key)}
-              </ListGroupHeading>
-              <div className="overflow-hidden">
-                <div
-                  className={cn(getTimerGroupClassName(viewMode), "relative")}
+    return visibleGroups.map(([key, groupTimers]) => (
+      <section key={key} aria-labelledby={`timers-group-${key}`}>
+        <ListGroupHeading id={`timers-group-${key}`} count={groupTimers.length}>
+          {groupLabel(key)}
+        </ListGroupHeading>
+        <div className="overflow-hidden">
+          <div className={cn(getTimerGroupClassName(viewMode), "relative")}>
+            <AnimatePresence initial={false} mode="popLayout">
+              {groupTimers.map((timer) => (
+                <m.div
+                  key={getTimerIdentityKey(timer)}
+                  layout="position"
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{
+                    duration: MOTION_DURATION.long,
+                    ease: EASE_EMPHASIZED,
+                  }}
+                  data-list-tile
+                  className={getTimerCellClassName(viewMode)}
                 >
-                  <AnimatePresence initial={false} mode="popLayout">
-                    {groupTimers.map((timer) => (
-                      <m.div
-                        key={getTimerIdentityKey(timer)}
-                        layout="position"
-                        initial={{ opacity: 0, y: -8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0 }}
-                        transition={{
-                          duration: MOTION_DURATION.long,
-                          ease: EASE_EMPHASIZED,
-                        }}
-                        data-list-tile
-                        className={getTimerCellClassName(viewMode)}
-                      >
-                        <SingleTimer
-                          timer={timer}
-                          paint={getPaint(timer.npc?.name ?? "")}
-                          countdownMode={countdownMode}
-                          removeTimerAfterMs={removeTimerAfterMs}
-                          showWorld={world === null}
-                          heroSighting={findTimerHeroSighting(sightings, timer)}
-                        />
-                      </m.div>
-                    ))}
-                  </AnimatePresence>
-                </div>
-              </div>
-            </section>
-          );
-        })}
-      </ScrollArea>
-    );
+                  <SingleTimer
+                    timer={timer}
+                    paint={getPaint(timer.npc?.name ?? "")}
+                    countdownMode={countdownMode}
+                    removeTimerAfterMs={removeTimerAfterMs}
+                    showWorld={world === null}
+                    heroSighting={findTimerHeroSighting(sightings, timer)}
+                  />
+                </m.div>
+              ))}
+            </AnimatePresence>
+          </div>
+        </div>
+      </section>
+    ));
   };
 
   return (
     <div className="flex h-full min-h-0 flex-col">
       <h1 className="sr-only">{t("layout.navigation.timers")}</h1>
       <GuildWorldHeaderSwitcher />
-
-      <div className="flex min-h-0 flex-1 flex-col">
-        {isError && timers !== undefined && (
-          <Alert
-            variant="destructive"
-            className="m-3 flex w-auto flex-wrap items-center justify-between gap-3"
-          >
-            <AlertDescription>{t("timers.refreshError")}</AlertDescription>
-            {retryButton}
-          </Alert>
-        )}
-        {renderContent()}
-      </div>
+      <ScrollArea data-under-top-bar className="min-h-0 flex-1">
+        <ResultsSurface
+          search={
+            <KillStatsSearch
+              value={search}
+              placeholder={t("timers.filterPlaceholder")}
+              onChange={setSearch}
+            />
+          }
+          filters={
+            <TimersFilters
+              groups={Object.entries(groups).map(([key, groupTimers]) => ({
+                key,
+                label: groupLabel(key),
+                count: groupTimers.length,
+              }))}
+              selectedGroups={activeGroups}
+              onSelectedGroupsChange={setSelectedGroups}
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
+              canChooseViewMode={canChooseViewMode}
+            />
+          }
+          filtersLabel={t("timers.filterLabel")}
+          chips={groupChips}
+          clearFiltersLabel={t("common.actions.clearFilters")}
+          onClearFilters={clearFilters}
+        >
+          {isError && timers !== undefined && (
+            <QueryErrorNotice
+              message={t("timers.refreshError")}
+              onRetry={() => refetch()}
+              isRetrying={isFetching}
+            />
+          )}
+          {renderContent()}
+        </ResultsSurface>
+      </ScrollArea>
     </div>
   );
 };

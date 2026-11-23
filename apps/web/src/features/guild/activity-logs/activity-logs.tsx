@@ -1,5 +1,5 @@
 import { RESULTS_TABLE_MEDIA_QUERY } from "@/components/common/page-sticky-table-header";
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { InfiniteListStatusRow } from "@/components/common/infinite-list-status-row";
 import { ResultsSurface } from "@/components/common/results-surface";
 import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";

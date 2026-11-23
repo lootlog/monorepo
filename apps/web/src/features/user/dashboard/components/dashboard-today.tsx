@@ -14,8 +14,9 @@ import {
   type UserOnlineResponseDto,
 } from "@lootlog/client/activity";
 import { BandSection } from "@/components/common/band-section";
-import { StatsTile, StatsTileGrid } from "@/components/common/stats-tile";
-import { StatsTileNumber } from "@/components/common/stats-tile-number";
+import { StatsTile } from "@lootlog/ui/components/stats-tile";
+import { StatsTileGrid } from "@lootlog/ui/components/stats-tile-grid";
+import { StatsTileNumber } from "@lootlog/ui/components/stats-tile-number";
 import { calendarRange } from "@/components/common/activity-heatmap/activity-calendar";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import { EMPTY_VALUE } from "@/constants/empty-value";
@@ -101,11 +102,7 @@ export function DashboardToday() {
           });
 
   const loading = (value: ReactNode) =>
-    week.isPending ? (
-      <Skeleton className="my-0.5 h-6 w-16" />
-    ) : (
-      (value ?? EMPTY_VALUE)
-    );
+    week.isPending ? <Skeleton className="h-7 w-16" /> : (value ?? EMPTY_VALUE);
 
   const failed = [
     { query: week, message: t("statistics.loadError") },
@@ -128,7 +125,7 @@ export function DashboardToday() {
         </ChevronLink>
       }
     >
-      <StatsTileGrid className="grid-cols-2 xl:grid-cols-4">
+      <StatsTileGrid className="sm:grid-cols-2 xl:grid-cols-4">
         <StatsTile
           icon={Swords}
           label={t("statistics.today.kills")}
@@ -155,7 +152,7 @@ export function DashboardToday() {
           label={t("statistics.today.online")}
           value={
             online.isPending ? (
-              <Skeleton className="my-0.5 h-6 w-20" />
+              <Skeleton className="h-7 w-20" />
             ) : (
               formatOnline(todayOnline)
             )

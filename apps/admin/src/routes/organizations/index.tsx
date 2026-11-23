@@ -1,10 +1,21 @@
+import type { AdminOrganizationsOverview } from "@lootlog/schema/admin-organizations";
+import { Button } from "@lootlog/ui/components/button";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
+import { PageHeader } from "@lootlog/ui/components/page-header";
+import { SectionCard } from "@lootlog/ui/components/section-card";
+import { StatsTile } from "@lootlog/ui/components/stats-tile";
+import { StatsTileGrid } from "@lootlog/ui/components/stats-tile-grid";
+import { StatsTileNumber } from "@lootlog/ui/components/stats-tile-number";
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { Building2, SearchX } from "lucide-react";
 import { OrganizationsFilter } from "@/components/organizations-filter";
 import { OrganizationsTable } from "@/components/organizations-table";
 import { Pagination } from "@/components/pagination";
-import { StatTiles } from "@/components/stat-tiles";
 import { text } from "@/lib/messages";
-import { validateOrganizationsSearch } from "@/lib/organizations-search";
+import {
+  hasOrganizationsFilters,
+  validateOrganizationsSearch,
+} from "@/lib/organizations-search";
 import {
   ORGANIZATIONS_PAGE_SIZE,
   getOrganizationsOverview,
@@ -35,35 +46,59 @@ export const Route = createFileRoute("/organizations/")({
   component: OrganizationsPage,
 });
 
+const overviewTiles = (overview: AdminOrganizationsOverview) => [
+  { label: text.organizationsOverviewTotal, value: overview.total },
+  { label: text.organizationsOverviewActive, value: overview.active },
+  { label: text.organizationsOverviewSuspended, value: overview.suspended },
+  { label: text.organizationsOverviewSyncFailing, value: overview.syncFailing },
+];
+
 function OrganizationsPage() {
   const { overview, page } = Route.useLoaderData();
   const search = Route.useSearch();
+  const filtered = hasOrganizationsFilters(search);
 
   return (
     <>
-      <StatTiles
-        tiles={[
-          { label: text.organizationsOverviewTotal, value: overview.total },
-          { label: text.organizationsOverviewActive, value: overview.active },
-          {
-            label: text.organizationsOverviewSuspended,
-            value: overview.suspended,
-          },
-          {
-            label: text.organizationsOverviewSyncFailing,
-            value: overview.syncFailing,
-          },
-        ]}
+      <PageHeader
+        icon={Building2}
+        title={text.navOrganizations}
+        description={text.organizationsCount(
+          page.organizations.length,
+          page.total,
+        )}
       />
-      <div className="flex flex-col gap-3">
-        <div className="flex items-baseline justify-between gap-3">
-          <h1 className="text-xl font-semibold">{text.navOrganizations}</h1>
-          <p className="text-sm text-muted-foreground">
-            {text.organizationsCount(page.organizations.length, page.total)}
-          </p>
-        </div>
+      <StatsTileGrid framed className="sm:grid-cols-2 xl:grid-cols-4">
+        {overviewTiles(overview).map((tile) => (
+          <StatsTile
+            key={tile.label}
+            label={tile.label}
+            value={<StatsTileNumber value={tile.value} />}
+          />
+        ))}
+      </StatsTileGrid>
+      <SectionCard>
         <OrganizationsFilter search={search} />
-        <OrganizationsTable organizations={page.organizations} />
+        <OrganizationsTable
+          organizations={page.organizations}
+          empty={
+            <EmptyState
+              icon={filtered ? SearchX : Building2}
+              title={text.organizationsEmpty}
+              action={
+                filtered ? (
+                  <Button
+                    variant="outline"
+                    nativeButton={false}
+                    render={<Link to="/organizations" />}
+                  >
+                    {text.filterClear}
+                  </Button>
+                ) : null
+              }
+            />
+          }
+        />
         <Pagination
           page={search.page ?? 1}
           pageSize={ORGANIZATIONS_PAGE_SIZE}
@@ -79,7 +114,7 @@ function OrganizationsPage() {
             </Link>
           )}
         />
-      </div>
+      </SectionCard>
     </>
   );
 }

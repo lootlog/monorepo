@@ -72,7 +72,7 @@ export function useBattleTableColumns({
             checked={headerCheckboxState === true}
             indeterminate={headerCheckboxState === "indeterminate"}
             aria-label={t("battlePanel.bulk.selectRows")}
-            className="relative size-5 border-muted-foreground/70 transition-colors data-checked:border-primary data-indeterminate:border-primary"
+            className="relative"
             onClick={stopBattleTableAction}
             onCheckedChange={(checked) =>
               handleHeaderSelectionChange(checked === true)
@@ -99,7 +99,7 @@ export function useBattleTableColumns({
             id={`${selectionId}-${row.original.id}`}
             checked={selectedBattleIds.has(row.original.id)}
             aria-label={t("battlePanel.bulk.selectRow")}
-            className="relative size-5 border-muted-foreground/70 transition-colors data-checked:border-primary data-indeterminate:border-primary"
+            className="relative"
             onClick={stopBattleTableAction}
             onCheckedChange={(checked) =>
               handleSelectionChange(row.original.id, checked === true)

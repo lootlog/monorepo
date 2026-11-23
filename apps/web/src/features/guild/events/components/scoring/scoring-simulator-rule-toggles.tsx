@@ -56,7 +56,7 @@ export function ScoringSimulatorRuleToggles({
                 </span>
                 {isActive &&
                   (fired ? (
-                    <CheckCircle2 className="size-3.5 text-green-400 shrink-0" />
+                    <CheckCircle2 className="size-3.5 text-signal-ready shrink-0" />
                   ) : (
                     <Minus className="size-3.5 text-muted-foreground/30 shrink-0" />
                   ))}

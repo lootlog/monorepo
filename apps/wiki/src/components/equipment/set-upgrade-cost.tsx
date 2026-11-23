@@ -15,7 +15,8 @@ import {
 } from "@lootlog/domain/item-rarity";
 import { ArticleSection } from "@/components/article/article-section";
 import { ItemNameLink } from "@/components/catalog/item-name-link";
-import { StatTiles } from "@/components/common/stat-tiles";
+import { StatsTile } from "@lootlog/ui/components/stats-tile";
+import { StatsTileGrid } from "@lootlog/ui/components/stats-tile-grid";
 import { useWornItems } from "@/hooks/use-worn-items";
 import { t } from "@/i18n/messages";
 import {
@@ -97,17 +98,27 @@ export function SetUpgradeCost() {
         </p>
       ) : (
         <>
-          <StatTiles
-            className="grid-cols-2 sm:grid-cols-3 xl:grid-cols-4"
-            tiles={[
-              {
-                label: t("upgrade.cost.points"),
-                value: formatNumber(points),
-              },
-              { label: t("upgrade.cost.gold"), value: formatGold(gold) },
-              ...currencyTiles,
-            ]}
-          />
+          <StatsTileGrid
+            framed
+            aria-live="polite"
+            className="sm:grid-cols-2 xl:grid-cols-4"
+          >
+            <StatsTile
+              label={t("upgrade.cost.points")}
+              value={formatNumber(points)}
+            />
+            <StatsTile
+              label={t("upgrade.cost.gold")}
+              value={formatGold(gold)}
+            />
+            {currencyTiles.map((tile) => (
+              <StatsTile
+                key={tile.label}
+                label={tile.label}
+                value={tile.value}
+              />
+            ))}
+          </StatsTileGrid>
           <ul
             aria-label={t("setPage.upgradeCostItems")}
             className="divide-y divide-border/60 overflow-hidden rounded-lg border border-border bg-card"

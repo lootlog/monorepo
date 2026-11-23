@@ -1,3 +1,4 @@
+import { UnreadDot } from "@/components/unread-dot";
 import { ListChecks } from "lucide-react";
 import { useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
@@ -55,11 +56,10 @@ export const SetupChecklistButton: FC = () => {
             icon={
               <>
                 <ListChecks aria-hidden="true" className="ll:size-4" />
-                <span
+                <UnreadDot
                   ref={dotRef}
                   key={remaining}
-                  aria-hidden
-                  className="ll:pointer-events-none ll:absolute ll:right-0.5 ll:top-0.5 ll:size-2 ll:rounded-full ll:bg-red-500"
+                  className="ll:absolute ll:right-0.5 ll:top-0.5 ll:ring-1 ll:ring-black/80"
                 />
               </>
             }

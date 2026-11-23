@@ -15,7 +15,7 @@ import { Kbd } from "@lootlog/ui/components/kbd";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { useRef } from "react";
 import { LootDirectSearchNotice } from "./loot-direct-search-notice";
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { AnimatedToggleGroup } from "@/components/ui/animated-toggle-group";
 import {
   ArrowRight,
@@ -218,20 +218,20 @@ export const LootSearchCommand = (
               initial="hidden"
               animate="visible"
               exit="exit"
-              className="flex h-full flex-col items-center justify-center px-6 py-8 text-center"
+              className="flex h-full flex-col"
             >
-              <div className="flex size-11 items-center justify-center rounded-lg border border-signal-timer/30 bg-signal-timer/10">
-                <CircleAlert className="size-5 text-signal-timer" />
-              </div>
-              <h3 className="mt-4 text-sm font-semibold text-foreground">
-                {t("loots.searchCommand.hidInvalidTitle")}
-              </h3>
-              <p className="mt-1 max-w-sm text-sm leading-5 text-muted-foreground">
-                {t("loots.searchCommand.hidInvalidDescription")}
-              </p>
-              <code className="mt-3 rounded-md bg-background px-2.5 py-1.5 font-mono text-xs text-foreground">
-                {t("loots.searchCommand.hidExample")}
-              </code>
+              <EmptyState
+                compact
+                icon={CircleAlert}
+                title={t("loots.searchCommand.hidInvalidTitle")}
+                description={t("loots.searchCommand.hidInvalidDescription")}
+                action={
+                  <code className="rounded-md bg-background px-2.5 py-1.5 font-mono text-xs text-foreground">
+                    {t("loots.searchCommand.hidExample")}
+                  </code>
+                }
+                className="flex-1"
+              />
             </m.div>,
           )}
 
@@ -243,15 +243,19 @@ export const LootSearchCommand = (
               initial="hidden"
               animate="visible"
               exit="exit"
-              className="flex h-full flex-col items-center justify-center px-6 py-8 text-center"
+              className="flex h-full flex-col"
             >
-              <LoadingSlot size="small" />
-              <h3 className="mt-4 text-sm font-semibold text-foreground">
-                {t("loots.searchCommand.hidLoadingTitle")}
-              </h3>
-              <code className="mt-2 max-w-full truncate font-mono text-xs text-muted-foreground">
-                {trimmedSearch}
-              </code>
+              <EmptyState
+                compact
+                media={<LoadingSlot size="small" />}
+                title={t("loots.searchCommand.hidLoadingTitle")}
+                action={
+                  <code className="max-w-full truncate font-mono text-xs text-muted-foreground">
+                    {trimmedSearch}
+                  </code>
+                }
+                className="flex-1"
+              />
             </m.div>,
           )}
 
@@ -263,17 +267,15 @@ export const LootSearchCommand = (
               initial="hidden"
               animate="visible"
               exit="exit"
-              className="flex h-full flex-col items-center justify-center px-6 py-8 text-center"
+              className="flex h-full flex-col"
             >
-              <div className="flex size-11 items-center justify-center rounded-lg border border-destructive/30 bg-destructive/10">
-                <CircleAlert className="size-5 text-destructive" />
-              </div>
-              <h3 className="mt-4 text-sm font-semibold text-foreground">
-                {t("loots.searchCommand.hidErrorTitle")}
-              </h3>
-              <p className="mt-1 max-w-sm text-sm leading-5 text-muted-foreground">
-                {t("loots.searchCommand.hidErrorDescription")}
-              </p>
+              <EmptyState
+                compact
+                icon={CircleAlert}
+                title={t("loots.searchCommand.hidErrorTitle")}
+                description={t("loots.searchCommand.hidErrorDescription")}
+                className="flex-1"
+              />
             </m.div>,
           )}
 
@@ -285,20 +287,20 @@ export const LootSearchCommand = (
               initial="hidden"
               animate="visible"
               exit="exit"
-              className="flex h-full flex-col items-center justify-center px-6 py-8 text-center"
+              className="flex h-full flex-col"
             >
-              <div className="flex size-11 items-center justify-center rounded-lg border border-border bg-background">
-                <SearchX className="size-5 text-muted-foreground" />
-              </div>
-              <h3 className="mt-4 text-sm font-semibold text-foreground">
-                {t("loots.searchCommand.hidNotFoundTitle")}
-              </h3>
-              <p className="mt-1 max-w-sm text-sm leading-5 text-muted-foreground">
-                {t("loots.searchCommand.hidNotFoundDescription")}
-              </p>
-              <code className="mt-3 max-w-full truncate font-mono text-xs text-muted-foreground">
-                {trimmedSearch}
-              </code>
+              <EmptyState
+                compact
+                icon={SearchX}
+                title={t("loots.searchCommand.hidNotFoundTitle")}
+                description={t("loots.searchCommand.hidNotFoundDescription")}
+                action={
+                  <code className="max-w-full truncate font-mono text-xs text-muted-foreground">
+                    {trimmedSearch}
+                  </code>
+                }
+                className="flex-1"
+              />
             </m.div>,
           )}
 

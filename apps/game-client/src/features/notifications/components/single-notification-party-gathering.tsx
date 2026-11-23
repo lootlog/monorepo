@@ -26,7 +26,7 @@ export const SingleNotificationPartyGathering: FC<
           <span
             className={
               meetsLevelReq
-                ? "ll:shrink-0 ll:text-[10px] ll:text-gray-300"
+                ? "ll:shrink-0 ll:text-[10px] ll:text-foreground/80"
                 : "ll:shrink-0 ll:text-[10px] ll:text-red-300"
             }
           >
@@ -38,7 +38,7 @@ export const SingleNotificationPartyGathering: FC<
         )}
       </div>
       {notification.description && (
-        <p className="ll:m-0 ll:text-[11px] ll:leading-4 ll:text-gray-200 ll:italic">
+        <p className="ll:m-0 ll:text-[11px] ll:leading-4 ll:text-foreground/90 ll:italic">
           {notification.description}
         </p>
       )}

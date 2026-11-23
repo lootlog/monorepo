@@ -3,9 +3,11 @@ import {
   LIST_TILE_RULE_CLASS,
 } from "@/components/common/list-tile";
 import { ListTileSkeleton } from "@/components/common/list-tile-skeleton";
-import { ListToolbar } from "@/components/common/list-toolbar";
-import { PillToggleGroup } from "@/components/common/pill-toggle-group";
-import { SettingsClearFilterButton } from "@/components/common/settings-clear-filter-button";
+import { ResultsSurface } from "@/components/common/results-surface";
+import { KillStatsSearch } from "@/components/common/kill-stats-search";
+import { ClearFiltersButton } from "@/components/common/clear-filters-button";
+import { FilterOptionCount } from "@/components/common/filter-option-count";
+import { FilterPopover } from "@lootlog/ui/components/filter-popover";
 import { SettingsListEmpty } from "@/components/common/settings-list-empty";
 import { SettingsListError } from "@/components/common/settings-list-error";
 import { SettingsTabPage } from "@/components/common/settings-tab-page";
@@ -118,6 +120,14 @@ export const ServerVisibilitySettings = () => {
     );
   };
 
+  const clearFilters = () => {
+    setQuery("");
+    setVisibilityFilter("all");
+  };
+
+  const visibilityLabel = (filter: GuildVisibilityFilter) =>
+    t(`settings.servers.filters.${filter}`);
+
   const renderContent = () => {
     if (isLoading) {
       return (
@@ -163,11 +173,7 @@ export const ServerVisibilitySettings = () => {
           icon={SearchX}
           title={t("settings.servers.noResults")}
           description={t("settings.servers.noResultsDescription")}
-          action={
-            query.trim() ? (
-              <SettingsClearFilterButton onClear={() => setQuery("")} />
-            ) : undefined
-          }
+          action={<ClearFiltersButton onClear={clearFilters} />}
         />
       );
     }
@@ -229,65 +235,97 @@ export const ServerVisibilitySettings = () => {
         {updatePreferences.isPending ? t("settings.servers.saving") : null}
         {isSaved ? t("settings.servers.saved") : null}
       </span>
-      <ListToolbar
-        search={query}
-        onSearchChange={setQuery}
-        placeholder={t("settings.servers.searchPlaceholder")}
-        label={t("settings.servers.searchPlaceholder")}
-        clearLabel={t("settings.clearFilter")}
-        disabled={orderedGuilds.length === 0}
-      >
-        <PillToggleGroup
-          label={t("settings.servers.visibilityFilterLabel")}
-          value={visibilityFilter}
-          onValueChange={setVisibilityFilter}
-          options={GUILD_VISIBILITY_FILTERS.map((filter) => ({
-            value: filter,
-            label: t(`settings.servers.filters.${filter}`),
-            count: filterCounts[filter],
-          }))}
-        />
-        <Button
-          variant="outline"
-          size="sm"
-          icon=<Eye />
-          disabled={hiddenCount === 0 || updatePreferences.isPending}
-          loading={isShowingAll}
-          onClick={showAll}
-        >
-          {t("settings.servers.showAll")}
-        </Button>
-      </ListToolbar>
-
-      {(updatePreferences.isError || isRetrying) && (
-        <div
-          data-list-tile
-          role="alert"
-          className={cn(
-            "flex min-h-12 items-center justify-between gap-3 bg-destructive/[0.06] py-2",
-            LIST_TILE_RULE_CLASS,
-            LIST_TILE_INSET_CLASS,
-          )}
-        >
-          <p className="text-xs text-destructive">
-            {t("settings.servers.saveError")}
-          </p>
-          {updatePreferences.variables ? (
-            <RetryButton
-              onRetry={() => {
-                setIsRetrying(true);
-                updatePreferences.mutate(updatePreferences.variables, {
-                  onSettled: () => setIsRetrying(false),
-                });
-              }}
-              isRetrying={isRetrying}
-              size="sm"
+      <ResultsSurface
+        search={
+          <KillStatsSearch
+            value={query}
+            placeholder={t("settings.servers.searchPlaceholder")}
+            onChange={setQuery}
+          />
+        }
+        filters={
+          <>
+            <FilterPopover
+              options={GUILD_VISIBILITY_FILTERS.filter(
+                (filter) => filter !== "all",
+              ).map((filter) => ({
+                value: filter,
+                label: visibilityLabel(filter),
+                render: () => (
+                  <FilterOptionCount
+                    label={visibilityLabel(filter)}
+                    count={filterCounts[filter]}
+                  />
+                ),
+              }))}
+              value={visibilityFilter === "all" ? undefined : visibilityFilter}
+              onValueChange={(filter) =>
+                setVisibilityFilter(
+                  filter === visibilityFilter ? "all" : filter,
+                )
+              }
+              placeholder={t("settings.servers.visibilityFilterLabel")}
+              icon={Eye}
+              showSearch={false}
+              active={visibilityFilter !== "all"}
             />
-          ) : null}
-        </div>
-      )}
+            <Button
+              variant="outline"
+              size="sm"
+              icon=<Eye />
+              disabled={hiddenCount === 0 || updatePreferences.isPending}
+              loading={isShowingAll}
+              onClick={showAll}
+            >
+              {t("settings.servers.showAll")}
+            </Button>
+          </>
+        }
+        filtersLabel={t("settings.servers.visibilityFilterLabel")}
+        chips={
+          visibilityFilter === "all"
+            ? []
+            : [
+                {
+                  id: visibilityFilter,
+                  label: visibilityLabel(visibilityFilter),
+                  onRemove: () => setVisibilityFilter("all"),
+                },
+              ]
+        }
+        clearFiltersLabel={t("common.actions.clearFilters")}
+        onClearFilters={clearFilters}
+      >
+        {(updatePreferences.isError || isRetrying) && (
+          <div
+            data-list-tile
+            role="alert"
+            className={cn(
+              "flex min-h-12 items-center justify-between gap-3 bg-destructive/[0.06] py-2",
+              LIST_TILE_RULE_CLASS,
+              LIST_TILE_INSET_CLASS,
+            )}
+          >
+            <p className="text-xs text-destructive">
+              {t("settings.servers.saveError")}
+            </p>
+            {updatePreferences.variables ? (
+              <RetryButton
+                onRetry={() => {
+                  setIsRetrying(true);
+                  updatePreferences.mutate(updatePreferences.variables, {
+                    onSettled: () => setIsRetrying(false),
+                  });
+                }}
+                isRetrying={isRetrying}
+                size="sm"
+              />
+            ) : null}
+          </div>
+        )}
 
-      {renderContent()}
+        {renderContent()}
+      </ResultsSurface>
     </SettingsTabPage>
   );
 };

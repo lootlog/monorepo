@@ -1,4 +1,5 @@
 import {
+  Link,
   Navigate,
   createFileRoute,
   linkOptions,
@@ -8,6 +9,10 @@ import {
   getCatalogControllerGetItemsQueryOptions,
   useCatalogControllerGetItems,
 } from "@lootlog/client/catalog";
+import { PortalPageHeader } from "@lootlog/ui/components/portal-page-header";
+import { PageState } from "@lootlog/ui/components/page-state";
+import { Button } from "@lootlog/ui/components/button";
+import { SearchXIcon } from "lucide-react";
 import { itemIconUrl } from "@lootlog/domain/margonem-cdn";
 import { ITEM_RARITY_STYLES } from "@lootlog/ui/lib/item-rarity-colors";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
@@ -189,9 +194,19 @@ function ItemRoute() {
 
   if (id === undefined || (data && !item)) {
     return (
-      <p className="py-6 text-sm text-muted-foreground">
-        {t("catalog.itemNotFound")}
-      </p>
+      <PageState
+        className="my-6"
+        icon={<SearchXIcon />}
+        title={t("catalog.itemNotFound")}
+        description={t("catalog.notFoundDescription")}
+      >
+        <Button
+          nativeButton={false}
+          render={<Link to="/items" search={EMPTY_ITEMS_SEARCH} />}
+        >
+          {t("catalog.backToItems")}
+        </Button>
+      </PageState>
     );
   }
 
@@ -264,8 +279,8 @@ function ItemRoute() {
         ]}
       />
 
-      <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
-        <div className="flex min-w-0 items-center gap-4">
+      <PortalPageHeader
+        media={
           <span className="flex size-16 shrink-0 items-center justify-center rounded-xl border border-[color-mix(in_oklab,var(--item-rarity)_45%,var(--border))] bg-[radial-gradient(60%_60%_at_50%_50%,color-mix(in_oklab,var(--item-rarity)_25%,var(--background)),var(--background))] md:size-20">
             <img
               src={itemIconUrl(item.icon)}
@@ -275,40 +290,40 @@ function ItemRoute() {
               className="size-12 [image-rendering:pixelated] md:size-16"
             />
           </span>
-          <div className="flex min-w-0 flex-col gap-1">
-            <p className="text-sm">
-              <span className={cn("font-semibold", styles.label)}>
-                {ITEM_TILE_LABELS.rarity[rarity]}
+        }
+        eyebrow={
+          <p>
+            <span className={cn("font-semibold", styles.label)}>
+              {ITEM_TILE_LABELS.rarity[rarity]}
+            </span>
+            {typeLabel ? (
+              <span className="text-muted-foreground"> · {typeLabel}</span>
+            ) : null}
+            {looted.lvl > 0 ? (
+              <span className="text-muted-foreground tabular-nums">
+                {" "}
+                · {t("common.levelShort", { level: looted.lvl })}
               </span>
-              {typeLabel ? (
-                <span className="text-muted-foreground"> · {typeLabel}</span>
-              ) : null}
-              {looted.lvl > 0 ? (
-                <span className="text-muted-foreground tabular-nums">
-                  {" "}
-                  · {t("common.levelShort", { level: looted.lvl })}
-                </span>
-              ) : null}
-            </p>
-            <h1 className="text-3xl font-semibold tracking-tight text-balance text-foreground md:text-4xl">
-              {item.name}
-            </h1>
+            ) : null}
+          </p>
+        }
+        title={item.name}
+        actions={
+          <div
+            role="group"
+            aria-label={t("item.actions")}
+            className="flex flex-wrap gap-2"
+          >
+            <EquipButton item={item} upgrade={upgrade} />
+            <CompareButton item={item} upgrade={upgrade} />
+            <ReportButton
+              subjectType="ITEM"
+              subjectId={item.id}
+              name={item.name}
+            />
           </div>
-        </div>
-        <div
-          role="group"
-          aria-label={t("item.actions")}
-          className="flex flex-wrap gap-2"
-        >
-          <EquipButton item={item} upgrade={upgrade} />
-          <CompareButton item={item} upgrade={upgrade} />
-          <ReportButton
-            subjectType="ITEM"
-            subjectId={item.id}
-            name={item.name}
-          />
-        </div>
-      </header>
+        }
+      />
 
       <ItemEventLinks stat={item.stat} />
 

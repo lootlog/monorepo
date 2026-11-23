@@ -1,7 +1,4 @@
-const INHERITED_THEME_CLASS_NAMES = [
-  "dark-theme",
-  "ll-reduced-motion",
-] as const;
+const INHERITED_THEME_CLASS_NAMES = ["ll-reduced-motion"] as const;
 
 export function getLootlogPortalContainer(): HTMLElement | undefined {
   return document.getElementById("lootlog-root") ?? undefined;

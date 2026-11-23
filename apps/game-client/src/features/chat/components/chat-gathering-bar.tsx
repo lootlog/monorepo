@@ -236,7 +236,7 @@ export function ChatGatheringBar({
     showBar && (
       <div
         ref={barRef}
-        className="ll:overflow-hidden ll:border-x-0 ll:border-t-0 ll:border-b ll:border-gray-400/40 ll:shadow-lg ll:text-[11px] ll:leading-[14px] ll:[--ll-chat-detail-font-size:11px] ll:[--ll-chat-detail-line-height:14px] ll:text-gray-100"
+        className="ll:overflow-hidden ll:border-x-0 ll:border-t-0 ll:border-b ll:border-separator ll:shadow-lg ll:text-[11px] ll:leading-[14px] ll:[--ll-chat-detail-font-size:11px] ll:[--ll-chat-detail-line-height:14px] ll:text-foreground"
         onMouseEnter={() => {
           setFrozen(target);
           setHovered(true);
@@ -329,7 +329,7 @@ export function ChatGatheringBar({
       />
     ),
     ownedRoom && (
-      <div className="ll:shrink-0 ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40 ll:text-[11px] ll:leading-[14px] ll:text-gray-100">
+      <div className="ll:shrink-0 ll:border-t ll:border-x-0 ll:border-b-0 ll:border-separator ll:text-[11px] ll:leading-[14px] ll:text-foreground">
         <ChatAvailableGatherings
           candidates={[]}
           target={null}

@@ -158,6 +158,8 @@ const permissionForms: Partial<Record<Intl.LDMLPluralRule, string>> = {
 
 export const text = {
   title: "Lootlog Admin",
+  brandSection: "Admin",
+  navigation: "Nawigacja panelu",
   navUsers: "Użytkownicy",
   navAudit: "Dziennik",
   navOrganizations: "Lootlogi",
@@ -169,27 +171,23 @@ export const text = {
   notAdminDescription:
     "Zalogowane konto Lootlog nie jest na liście administratorów (ADMIN_ACCOUNT_IDS). Zaloguj się w Lootlogu na właściwe konto i wróć tutaj.",
   signInOpen: "Otwórz Lootlog",
-  signInRetry: "Spróbuj ponownie",
   skipToContent: "Przejdź do treści",
 
   overviewUsers: "Użytkownicy",
   overviewBanned: "Zbanowani",
   overviewSessions: "Aktywne sesje",
 
-  filterSearch: "Szukaj",
+  filterSearchClear: "Wyczyść wyszukiwanie",
+  filtersLabel: "Filtry",
   filterSearchPlaceholder: "Nazwa, e-mail, ID użytkownika lub Discord ID",
   filterRole: "Rola",
-  filterAnyRole: "Dowolna",
   filterStatus: "Status",
-  filterAnyStatus: "Wszyscy",
   filterBanned: "Zbanowani",
   filterNotBanned: "Bez bana",
   filterAura: "Aury",
-  filterAnyAura: "Wszyscy",
   filterWithAura: "Z nadanymi aurami",
   filterWithoutAura: "Bez nadanych aur",
-  filterApply: "Filtruj",
-  filterClear: "Wyczyść",
+  filterClear: "Wyczyść filtry",
 
   columnUser: "Użytkownik",
   columnRoles: "Role",
@@ -343,6 +341,8 @@ export const text = {
   notFoundTitle: "Nie znaleziono",
   notFoundDescription:
     "Taka strona, taki użytkownik albo taki Lootlog nie istnieje.",
+  backHome: "Wróć do użytkowników",
+  retry: "Spróbuj ponownie",
   organizationsOverviewTotal: "Lootlogi",
   organizationsOverviewActive: "Aktywne",
   organizationsOverviewSuspended: "Zawieszone",
@@ -351,11 +351,8 @@ export const text = {
   organizationsFilterSearchPlaceholder:
     "Nazwa, własny adres, ID serwera lub Discord ID właściciela",
   organizationsFilterStatus: "Status",
-  organizationsFilterAnyStatus: "Wszystkie",
   organizationsFilterSync: "Discord",
-  organizationsFilterAnySync: "Dowolny",
   organizationsFilterPermissions: "Uprawnienia bota",
-  organizationsFilterAnyPermissions: "Dowolne",
   organizationsFilterMissingPermissions: "Brakuje uprawnień",
   organizationsFilterAllPermissions: "Komplet uprawnień",
   organizationsFilterSort: "Sortuj",

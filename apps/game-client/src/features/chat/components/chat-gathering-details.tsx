@@ -41,7 +41,7 @@ export function ChatGatheringDetails({
         <div className="ll:flex ll:min-h-[32px] ll:min-w-0 ll:items-center ll:gap-[6px]">
           <div className="ll:flex ll:min-h-[32px] ll:min-w-0 ll:flex-1 ll:flex-col ll:justify-center ll:gap-0">
             <div
-              className="ll:truncate ll:text-[10px] ll:font-semibold ll:text-inherit"
+              className="ll:truncate ll:text-[10px] ll:leading-[14px] ll:font-semibold"
               title={npc.name}
             >
               {npc.name}
@@ -50,7 +50,7 @@ export function ChatGatheringDetails({
               )}
             </div>
             {location && (
-              <div className="ll:text-[10px] ll:text-muted-foreground">
+              <div className="ll:text-[10px] ll:leading-[15px] ll:text-muted-foreground">
                 {location}
               </div>
             )}
@@ -61,12 +61,10 @@ export function ChatGatheringDetails({
       {(!npc || description || level) && (
         <div className="ll:flex ll:min-h-[32px] ll:min-w-0 ll:items-center ll:gap-[6px]">
           <div className="ll:flex ll:min-w-0 ll:flex-1 ll:flex-col ll:gap-[2px]">
-            <div className="ll:whitespace-pre-wrap ll:text-[11px] ll:text-white">
+            <div className="ll:whitespace-pre-wrap ll:text-[11px]">
               {description || (!npc && t("gatherings.noDescription"))}
             </div>
-            {level && (
-              <div className="ll:text-[10px] ll:text-white">{level}</div>
-            )}
+            {level && <div className="ll:text-[10px]">{level}</div>}
           </div>
           {!npc && action}
         </div>

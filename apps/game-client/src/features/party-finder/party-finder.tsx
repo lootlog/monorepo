@@ -72,7 +72,7 @@ export const PartyFinder = () => {
           className={cn(
             toolbarStripClassName,
             toolbarStripRowClassName,
-            "ll:-mt-px ll:shrink-0 ll:items-center ll:justify-between ll:gap-2 ll:px-1.5 ll:text-[11px]",
+            "ll:shrink-0 ll:items-center ll:justify-between ll:gap-2 ll:px-1.5 ll:text-[11px]",
           )}
         >
           {isOrganizerCharacter ? (
@@ -103,7 +103,7 @@ export const PartyFinder = () => {
         <ScrollArea className="ll:flex-1">
           <ReadyRoomParticipantsList room={readyRoom} />
         </ScrollArea>
-        <WindowFooter rowClassName="ll:gap-1 ll:px-1.5">
+        <WindowFooter>
           {isOrganizerCharacter ? (
             <Button
               size="xs"

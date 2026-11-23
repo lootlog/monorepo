@@ -4,6 +4,7 @@ import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { TimerHistoryListEntry } from "./timer-history-list-entry";
 import { AsyncStatusIndicator } from "@/components/async-status-indicator";
+import { EmptyState } from "@/components/empty-state";
 
 type TimerHistoryListProps = {
   history: TimerHistoryResponseDto[];
@@ -50,7 +51,7 @@ export const TimerHistoryList: FC<TimerHistoryListProps> = ({
         retryLabel={t("actions.retry", { ns: "common" })}
       />
       {!showLoading && !isError && history.length === 0 && (
-        <div className="ll:text-muted-foreground">{t("history.empty")}</div>
+        <EmptyState description={t("history.empty")} />
       )}
       {!isLoading && history.length > 0 && (
         <div className="ll:flex ll:flex-col ll:gap-1">

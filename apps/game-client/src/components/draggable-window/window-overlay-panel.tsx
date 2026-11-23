@@ -42,16 +42,16 @@ export const WindowOverlayPanel = ({
         className={cn(
           toolbarStripClassName,
           toolbarStripRowClassName,
-          "ll:-mt-px ll:shrink-0 ll:items-center ll:px-3",
+          "ll:shrink-0 ll:items-center ll:px-3",
         )}
       >
         <span
           id={titleId}
-          className="ll:flex ll:min-w-0 ll:items-baseline ll:gap-1.5 ll:text-xs ll:font-semibold ll:text-gray-100"
+          className="ll:flex ll:min-w-0 ll:items-baseline ll:gap-1.5 ll:text-xs ll:font-semibold ll:text-foreground"
         >
           {title}
           {subtitle ? (
-            <span className="ll:truncate ll:text-[11px] ll:font-normal ll:text-gray-400">
+            <span className="ll:truncate ll:text-[11px] ll:font-normal ll:text-muted-foreground">
               {subtitle}
             </span>
           ) : null}

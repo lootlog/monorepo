@@ -22,7 +22,6 @@ import { Input } from "./input";
 const renderInsideLootlogRoot = (element: ReactElement) => {
   const lootlogRoot = document.createElement("div");
   lootlogRoot.id = "lootlog-root";
-  lootlogRoot.className = "dark-theme";
   document.body.append(lootlogRoot);
 
   return render(element, { container: lootlogRoot });
@@ -31,7 +30,7 @@ const renderInsideLootlogRoot = (element: ReactElement) => {
 const expectContentInsideThemeBoundary = (testId: string) => {
   const content = screen.getByTestId(testId);
 
-  expect(content.closest("#lootlog-root.dark-theme")).not.toBeNull();
+  expect(content.closest("#lootlog-root")).not.toBeNull();
 };
 
 describe("overlay theme boundary", () => {

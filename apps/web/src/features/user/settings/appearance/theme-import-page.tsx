@@ -2,7 +2,7 @@ import { DetailPage } from "@/components/common/detail-page";
 import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
 import { cn } from "cn";
 import { MetaItem } from "@/components/common/meta-item";
-import { SettingsDetailNotFound } from "@/components/common/settings-detail-not-found";
+import { DetailNotFound } from "@/components/common/detail-not-found";
 import { ROUTES } from "@/config/routes";
 import { useTheme } from "@/hooks/context/use-theme";
 import { getCustomThemePreview } from "@/themes/theme-preview";
@@ -42,7 +42,7 @@ export const ThemeImportPage = () => {
 
   if (isError) {
     return (
-      <SettingsDetailNotFound
+      <DetailNotFound
         icon={Link2Off}
         title={t("settings.appearance.import.notFound")}
         description={t("settings.appearance.import.notFoundDescription")}

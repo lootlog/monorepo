@@ -5,6 +5,8 @@ import {
 } from "@lootlog/client/auth-session";
 import { Alert, AlertDescription } from "@lootlog/ui/components/alert";
 import { Button } from "@lootlog/ui/components/button";
+import { Card } from "@lootlog/ui/components/card";
+import { PortalPageHeader } from "@lootlog/ui/components/portal-page-header";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useState } from "react";
 import { KeyManager } from "@/components/key-manager";
@@ -31,26 +33,22 @@ export function KeySession({ authClient }: { authClient: LootlogAuthClient }) {
 
   return (
     <main className="flex min-w-0 flex-col gap-8">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div className="flex max-w-2xl flex-col gap-2">
-          <h1 className="text-3xl font-semibold tracking-[-0.03em]">
-            {t.keys}
-          </h1>
-          <p className="text-base text-pretty text-muted-foreground">
-            {t.keysDescription}
-          </p>
-        </div>
-        {session.data && (
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={isLoggingOut}
-            onClick={signOut}
-          >
-            {t.logout}
-          </Button>
-        )}
-      </header>
+      <PortalPageHeader
+        title={t.keys}
+        description={t.keysDescription}
+        actions={
+          session.data && (
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={isLoggingOut}
+              onClick={signOut}
+            >
+              {t.logout}
+            </Button>
+          )
+        }
+      />
       {session.isPending && (
         <div role="status" className="flex flex-col gap-4">
           <span className="sr-only">{t.loading}</span>
@@ -59,7 +57,7 @@ export function KeySession({ authClient }: { authClient: LootlogAuthClient }) {
         </div>
       )}
       {!session.isPending && !session.data && (
-        <section className="flex max-w-xl flex-col items-start gap-4 rounded-xl border border-border bg-card p-6">
+        <Card className="max-w-xl items-start gap-4 px-6">
           <div className="flex flex-col gap-1.5">
             <h2 className="text-base font-semibold">{t.signInTitle}</h2>
             <p className="text-sm text-muted-foreground">{t.signedOut}</p>
@@ -71,7 +69,7 @@ export function KeySession({ authClient }: { authClient: LootlogAuthClient }) {
           >
             {t.login}
           </Button>
-        </section>
+        </Card>
       )}
       {session.data && (
         <KeyManager key={session.data.user.id} userId={session.data.user.id} />

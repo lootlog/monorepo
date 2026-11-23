@@ -1,3 +1,4 @@
+import { SECTION_LABEL_CLASS_NAME } from "@/components/section-label";
 import { getActorCharacterLabel } from "@/features/timers/utils/timer-helpers";
 import { IconButton } from "@/components/ui/icon-button";
 import {
@@ -30,19 +31,19 @@ const getNpcLabel = (entry: TimerHistoryResponseDto) => {
 const ACTION_CONFIG = {
   CREATE: {
     Icon: Plus,
-    iconClassName: "ll:text-emerald-700 ll:in-[.dark-theme]:text-emerald-300",
+    iconClassName: "ll:text-emerald-300",
   },
   RESET: {
     Icon: RotateCcw,
-    iconClassName: "ll:text-sky-700 ll:in-[.dark-theme]:text-sky-300",
+    iconClassName: "ll:text-sky-300",
   },
   DELETE: {
     Icon: Trash2,
-    iconClassName: "ll:text-red-700 ll:in-[.dark-theme]:text-red-300",
+    iconClassName: "ll:text-red-300",
   },
   RESTORE: {
     Icon: Undo2,
-    iconClassName: "ll:text-teal-700 ll:in-[.dark-theme]:text-teal-300",
+    iconClassName: "ll:text-teal-300",
   },
 } satisfies Record<
   TimerHistoryResponseDto["action"],
@@ -161,17 +162,17 @@ export const TimerHistoryListEntry: FC<TimerHistoryListEntryProps> = ({
             </div>
 
             <div className="ll:mt-2 ll:pt-2">
-              <div className="ll:text-[10px] ll:uppercase ll:tracking-wide ll:text-muted-foreground">
+              <div className={SECTION_LABEL_CLASS_NAME}>
                 {t("history.details.npc")}
               </div>
-              <div className="ll:truncate ll:text-sm ll:font-semibold ll:text-popover-foreground">
+              <div className="ll:truncate ll:text-xs ll:font-semibold ll:text-popover-foreground">
                 {getNpcLabel(entry)}
               </div>
             </div>
 
             <div className="ll:mt-2 ll:grid ll:gap-1 ll:pt-2">
               <div className="ll:min-w-0">
-                <div className="ll:text-[10px] ll:uppercase ll:tracking-wide ll:text-muted-foreground">
+                <div className={SECTION_LABEL_CLASS_NAME}>
                   {t("history.details.member")}
                 </div>
                 <div className="ll:truncate ll:text-[11px] ll:font-semibold ll:text-popover-foreground">
@@ -180,7 +181,7 @@ export const TimerHistoryListEntry: FC<TimerHistoryListEntryProps> = ({
               </div>
               {entry.actorCharacter && (
                 <div className="ll:min-w-0">
-                  <div className="ll:text-[10px] ll:uppercase ll:tracking-wide ll:text-muted-foreground">
+                  <div className={SECTION_LABEL_CLASS_NAME}>
                     {t("history.details.character")}
                   </div>
                   <div className="ll:truncate ll:text-[11px] ll:text-popover-foreground">

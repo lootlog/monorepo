@@ -11,7 +11,7 @@ export const BattlePanelStatisticsSkeleton = () => {
     <div aria-busy="true" aria-label={t("common.loading")} className="min-w-0">
       <FilterBar
         search={
-          <Skeleton aria-hidden="true" className="h-10 w-55 rounded-lg" />
+          <Skeleton aria-hidden="true" className="h-10 w-55 rounded-md" />
         }
       >
         <StatisticsFilterToolbarSkeleton />

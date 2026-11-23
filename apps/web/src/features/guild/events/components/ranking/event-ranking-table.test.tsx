@@ -263,7 +263,11 @@ describe("EventRankingTable", () => {
     const createRankingTable = () => (
       <QueryClientProvider client={queryClient}>
         <Profiler id="ranking" onRender={() => (commitCount += 1)}>
-          <EventRankingTable rankings={[ranking]} />
+          <EventRankingTable
+            rankings={[ranking]}
+            guildId="guild-1"
+            eventId="event-1"
+          />
         </Profiler>
       </QueryClientProvider>
     );

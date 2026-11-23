@@ -1,6 +1,7 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { NpcKillersPage } from "@/features/guild/stats/npc-killers-page";
 import { StatsDetailPageSkeleton } from "@/features/guild/stats/stats-detail-page-skeleton";
+import { StatsMobileListSkeleton } from "@/features/guild/stats/components/stats-mobile-list-skeleton";
 import { buildNpcKillersParams } from "@/features/guild/stats/utils/build-stats-query-params";
 import {
   getKillsControllerGetNpcKillersQueryOptions,
@@ -71,5 +72,10 @@ export const Route = createFileRoute(
       }
     }),
   component: NpcKillersPage,
-  pendingComponent: () => <StatsDetailPageSkeleton rowContent="text" />,
+  pendingComponent: () => (
+    <StatsDetailPageSkeleton
+      rowContent="text"
+      mobileSkeleton={<StatsMobileListSkeleton media="avatar" />}
+    />
+  ),
 });

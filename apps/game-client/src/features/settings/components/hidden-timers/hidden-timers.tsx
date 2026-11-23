@@ -1,4 +1,4 @@
-import { SettingsEmptyState } from "@/features/settings/components/shared/settings-empty-state";
+import { EmptyState } from "@/components/empty-state";
 import { IconButton } from "@/components/ui/icon-button";
 import { SettingsList } from "@/features/settings/components/shared/settings-list";
 import { SettingsListRow } from "@/features/settings/components/shared/settings-list-row";
@@ -30,11 +30,7 @@ export const HiddenTimers: FC<HiddenTimersProps> = ({ guildId }) => {
   ).sort((a, b) => a.localeCompare(b));
 
   if (!key || uniqueHiddenTimers.length === 0) {
-    return (
-      <SettingsEmptyState>
-        {t("settings.hiddenTimers.emptyState")}
-      </SettingsEmptyState>
-    );
+    return <EmptyState description={t("settings.hiddenTimers.emptyState")} />;
   }
 
   return (

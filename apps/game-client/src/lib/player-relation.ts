@@ -62,3 +62,16 @@ export const PLAYER_RELATION_FILLS: Record<PlayerRelation, string> = {
 };
 
 export const PLAYER_AFK_FILL = playerRowFill("orange");
+
+export const PLAYER_RELATION_TEXT_CLASS_NAMES: Record<PlayerRelation, string> =
+  {
+    self: "ll:text-teal-300",
+    party: "ll:text-purple-300",
+    clan: "ll:text-green-300",
+    enemy: "ll:text-red-300",
+    "clan-enemy": "ll:text-red-300",
+    friend: "ll:text-sky-300",
+    "clan-ally": "ll:text-yellow-300",
+  };
+
+export const PLAYER_AFK_TEXT_CLASS_NAME = "ll:text-orange-300";

@@ -179,12 +179,12 @@
       },
       "500": {
         "title": "Wystąpił błąd",
-        "description": "Nie udało się załadować tej strony. Spróbuj ponownie za chwilę."
+        "description": "Nie udało się wczytać tej strony. Spróbuj ponownie za chwilę."
       }
     }
   },
   "activityLogs": {
-    "loadError": "Nie udało się załadować aktywności.",
+    "loadError": "Nie udało się wczytać aktywności.",
     "empty": "Nie znaleziono żadnych aktywności.",
     "noResults": "Brak pasujących aktywności",
     "noResultsDescription": "Zmień kryteria albo wyczyść filtry, aby zobaczyć więcej aktywności.",
@@ -209,7 +209,11 @@
   },
   "filters": {
     "title": "Filtry",
-    "activeCount": "Aktywne filtry: {{count}}"
+    "activeCount": "Aktywne filtry: {{count}}",
+    "selectedCount_one": "{{count}} wybrany",
+    "selectedCount_few": "{{count}} wybrane",
+    "selectedCount_many": "{{count}} wybranych",
+    "selectedCount_other": "{{count}} wybranych"
   },
   "inactiveMember": "(nieaktywny)",
   "memberProfile": {

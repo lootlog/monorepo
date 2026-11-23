@@ -29,7 +29,7 @@ export function ChatGatheringListItem({
   const { t } = useTranslation("chat");
 
   return (
-    <li className="ll-party-gathering-card ll:min-w-0 ll:border-x-0 ll:border-t-0 ll:border-b ll:border-gray-400/20 ll:p-2 ll:last:border-b-0">
+    <li className="ll:min-w-0 ll:border-x-0 ll:border-t-0 ll:border-b ll:border-separator-subtle ll:bg-gathering ll:p-2 ll:last:border-b-0">
       <div className="ll:flex ll:min-w-0 ll:items-center ll:gap-1">
         <div className="ll:flex ll:min-w-0 ll:flex-1">
           <ChatGatheringHeader organizer={getSummaryOrganizer(gathering)} />
@@ -64,7 +64,7 @@ export function ChatGatheringListItem({
             {t("gatherings.showInChat")}
           </Button>
         ) : (
-          <span className="ll:text-[10px] ll:text-muted-foreground">
+          <span className="ll:text-[10px] ll:leading-[15px] ll:text-muted-foreground">
             {t("gatherings.visibleInChat")}
           </span>
         )}

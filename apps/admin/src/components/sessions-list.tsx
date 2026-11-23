@@ -1,6 +1,8 @@
 import type { AdminSession, AdminUser } from "@lootlog/schema/admin";
 import { Button } from "@lootlog/ui/components/button";
 import { ConfirmDialog } from "@lootlog/ui/components/confirm-dialog";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
+import { MonitorSmartphone } from "lucide-react";
 import { formatDateTime } from "@/lib/format";
 import { text } from "@/lib/messages";
 import { useUserAction } from "@/lib/use-user-action";
@@ -16,7 +18,7 @@ export function SessionsList({
 
   if (sessions.length === 0)
     return (
-      <p className="text-sm text-muted-foreground">{text.sessionsEmpty}</p>
+      <EmptyState compact icon={MonitorSmartphone} title={text.sessionsEmpty} />
     );
 
   const isRevoking = (sessionId: string) =>

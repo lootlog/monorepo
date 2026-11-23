@@ -4,9 +4,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Avatar } from "@/components/ui/avatar";
 import type { FC, PropsWithChildren } from "react";
 import { Button } from "@/components/ui/button";
+import { UnreadDot } from "@/components/unread-dot";
 
 type GuildButtonProps = PropsWithChildren<{
   isSelected: boolean;
@@ -16,10 +16,10 @@ type GuildButtonProps = PropsWithChildren<{
 }>;
 
 const STRIP_CLASS_NAME =
-  "ll:group ll:rounded-none ll:border-0 ll:border-l ll:border-solid ll:border-gray-400/40 ll:bg-transparent ll:transition-[background-color] ll:motion-reduce:transition-none ll:hover:bg-white/5";
+  "ll:group ll:rounded-none ll:border-0 ll:border-l ll:border-solid ll:border-separator ll:bg-transparent ll:transition-[background-color] ll:motion-reduce:transition-none ll:hover:bg-white/5";
 
 const STRIP_SELECTED_CLASS_NAME =
-  "ll:after:pointer-events-none ll:after:absolute ll:after:inset-x-0 ll:after:bottom-0 ll:after:h-0.5 ll:after:bg-blue-400";
+  "ll:after:pointer-events-none ll:after:absolute ll:after:inset-x-0 ll:after:bottom-0 ll:after:h-0.5 ll:after:bg-selected";
 
 const IDLE_AVATAR_CLASS_NAME =
   "ll:opacity-50 ll:grayscale ll:transition-[opacity,filter] ll:motion-reduce:transition-none ll:group-hover:opacity-100 ll:group-hover:grayscale-0";
@@ -48,19 +48,16 @@ export const GuildButton: FC<GuildButtonProps> = ({
           isSelected && STRIP_SELECTED_CLASS_NAME,
         )}
       >
-        <Avatar
+        <span
           className={cn(
-            "ll:flex ll:size-full ll:items-center ll:justify-center ll:rounded-none",
+            "ll:flex ll:size-full ll:items-center ll:justify-center",
             !isSelected && IDLE_AVATAR_CLASS_NAME,
           )}
         >
           {children}
-        </Avatar>
+        </span>
         {unreadLabel ? (
-          <span
-            aria-hidden
-            className="ll:pointer-events-none ll:absolute ll:right-px ll:top-px ll:size-2 ll:rounded-full ll:bg-red-500"
-          />
+          <UnreadDot className="ll:absolute ll:right-px ll:top-px ll:ring-1 ll:ring-black/80" />
         ) : null}
       </Button>
     </TooltipTrigger>

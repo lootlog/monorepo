@@ -1,7 +1,7 @@
 import type { StatisticsSearch } from "./statistics-search";
 import { StatisticsAllLegendsLink } from "./statistics-all-legends-link";
 import { StatisticsLegends } from "./statistics-legends";
-import { StatisticsQueryState } from "./statistics-query-state";
+import { StatisticsQueryState } from "@/components/common/statistics-query-state";
 import { STATISTICS_PREVIEW_SIZE } from "./statistics-top-npcs";
 import { useStatisticsLootStats } from "./use-statistics-loot-stats";
 

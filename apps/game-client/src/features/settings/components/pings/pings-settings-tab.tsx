@@ -1,4 +1,4 @@
-import { SettingsEmptyState } from "@/features/settings/components/shared/settings-empty-state";
+import { EmptyState } from "@/components/empty-state";
 import { SettingsRow } from "@/features/settings/components/shared/settings-row";
 import { SettingsSection } from "@/features/settings/components/shared/settings-section";
 import { SettingsTabLayout } from "@/features/settings/components/shared/settings-tab-layout";
@@ -69,9 +69,7 @@ export const PingsSettingsTab: FC = () => {
             </SettingsRow>
           </>
         ) : (
-          <SettingsEmptyState>
-            {t("pings.settings.newInterfaceOnly")}
-          </SettingsEmptyState>
+          <EmptyState description={t("pings.settings.newInterfaceOnly")} />
         )}
       </SettingsSection>
     </SettingsTabLayout>

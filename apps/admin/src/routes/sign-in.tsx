@@ -1,6 +1,8 @@
-import { buttonVariants } from "@lootlog/ui/lib/button-variants";
+import { Button } from "@lootlog/ui/components/button";
+import { PageState } from "@lootlog/ui/components/page-state";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { Option, Schema } from "effect";
+import { LogIn, ShieldX } from "lucide-react";
 import { text } from "@/lib/messages";
 import { getWebUrl } from "@/server/queries";
 
@@ -25,27 +27,21 @@ function SignInPage() {
   const notAdmin = reason === "not-admin";
 
   return (
-    <div className="mx-auto flex w-full max-w-md flex-col gap-4 rounded-lg border border-border bg-card p-6">
-      <div>
-        <h1 className="text-lg font-semibold">
-          {notAdmin ? text.notAdminTitle : text.signInTitle}
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {notAdmin ? text.notAdminDescription : text.signInDescription}
-        </p>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        <a href={webUrl} className={buttonVariants()}>
-          {text.signInOpen}
-        </a>
-        <Link
-          to="/"
-          reloadDocument
-          className={buttonVariants({ variant: "outline" })}
-        >
-          {text.signInRetry}
-        </Link>
-      </div>
-    </div>
+    <PageState
+      icon={notAdmin ? <ShieldX /> : <LogIn />}
+      title={notAdmin ? text.notAdminTitle : text.signInTitle}
+      description={notAdmin ? text.notAdminDescription : text.signInDescription}
+    >
+      <Button nativeButton={false} render={<a href={webUrl} />}>
+        {text.signInOpen}
+      </Button>
+      <Button
+        variant="outline"
+        nativeButton={false}
+        render={<Link to="/" reloadDocument />}
+      >
+        {text.retry}
+      </Button>
+    </PageState>
   );
 }

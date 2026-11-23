@@ -2,7 +2,7 @@ import { OrganizationPresenceStatus } from "@/components/common/organization-pre
 import { useMemberActivity } from "@/features/guild/settings/members/use-member-activity";
 import { MetaItem } from "@/components/common/meta-item";
 import { ROUTES } from "@/config/routes";
-import { SettingsDetailNotFound } from "@/components/common/settings-detail-not-found";
+import { DetailNotFound } from "@/components/common/detail-not-found";
 import { SettingsListError } from "@/components/common/settings-list-error";
 import { MemberSettingsDetailSkeleton } from "./member-settings-detail-skeleton";
 import { RefreshCw, UserRoundX } from "lucide-react";
@@ -97,7 +97,7 @@ export const MemberSettingsDetailPageContent = () => {
 
   if (members && !member) {
     return (
-      <SettingsDetailNotFound
+      <DetailNotFound
         icon={UserRoundX}
         title={t("settings.members.memberNotFound")}
         description={t("settings.members.memberNotFoundDescription")}

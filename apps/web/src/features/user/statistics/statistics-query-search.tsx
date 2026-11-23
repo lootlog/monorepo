@@ -1,6 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { KillStatsSearch } from "@/features/kills/components/kill-stats-search";
+import { KillStatsSearch } from "@/components/common/kill-stats-search";
 import type { StatisticsSearch, StatisticsSortTab } from "./statistics-search";
 
 type StatisticsQuerySearchProps = {

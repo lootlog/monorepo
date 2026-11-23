@@ -1,5 +1,5 @@
 import { GuildButton } from "@/components/guild-button";
-import { AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { GuildAvatar } from "@/components/guild-avatar";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -29,21 +29,14 @@ export const GuildSwitcherItem: FC<GuildSwitcherItemProps> = ({
 }) => (
   <ContextMenu>
     <ContextMenuTrigger asChild>
-      <div className="ll:border-0 ll:border-solid ll:border-gray-400/40 ll:last:border-r">
+      <div className="ll:border-0 ll:border-solid ll:border-separator ll:last:border-r">
         <GuildButton
           isSelected={isSelected}
           onClick={onClick}
           tooltipLabel={guild.name}
           unreadLabel={unreadLabel}
         >
-          <AvatarImage
-            src={guild.icon ?? undefined}
-            alt={guild.name}
-            className="ll:size-full ll:rounded-none ll:object-cover"
-          />
-          <AvatarFallback className="ll:flex ll:h-full ll:w-full ll:items-center ll:justify-center ll:rounded-none ll:text-xs ll:font-semibold ll:leading-none">
-            {guild.name.charAt(0).toUpperCase()}
-          </AvatarFallback>
+          <GuildAvatar guild={guild} size="sm" />
         </GuildButton>
       </div>
     </ContextMenuTrigger>

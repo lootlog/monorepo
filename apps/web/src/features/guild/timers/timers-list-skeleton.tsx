@@ -6,21 +6,11 @@ import {
   LIST_GROUP_HEADING_CLASS,
   LIST_TILE_INSET_CLASS,
 } from "@/components/common/list-tile";
-import { ListToolbarSkeleton } from "@/components/common/list-toolbar-skeleton";
 
 const GROUP_SIZES = [3, 5];
 
-export const TimersListSkeleton = ({
-  viewMode,
-  canChooseViewMode,
-}: {
-  viewMode: ViewMode;
-  canChooseViewMode: boolean;
-}) => (
+export const TimersListSkeleton = ({ viewMode }: { viewMode: ViewMode }) => (
   <div aria-hidden="true">
-    <ListToolbarSkeleton>
-      {canChooseViewMode && <Skeleton className="h-8 w-16 rounded-lg" />}
-    </ListToolbarSkeleton>
     {GROUP_SIZES.map((size, groupIndex) => (
       <div key={groupIndex}>
         <div className={cn(LIST_GROUP_HEADING_CLASS, LIST_TILE_INSET_CLASS)}>

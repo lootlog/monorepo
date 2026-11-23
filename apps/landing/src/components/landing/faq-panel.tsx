@@ -7,6 +7,7 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@lootlog/ui/components/accordion";
+import { TextLink } from "@lootlog/ui/components/text-link";
 
 const faqItems = [
   { key: "1", guide: links.battleGuide },
@@ -29,7 +30,7 @@ export function FaqPanel() {
             value={`item-${index}`}
             className="landing-faq-item rounded-[var(--broadcast-radius-card)] bg-[var(--broadcast-ink-soft)] px-4 sm:px-6"
           >
-            <AccordionTrigger className="landing-faq-trigger min-h-20 gap-4 rounded-[var(--broadcast-radius-control)] px-0 py-4 text-left text-[var(--broadcast-white)] hover:text-[var(--broadcast-lime)] hover:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--broadcast-lime)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--broadcast-ink)]">
+            <AccordionTrigger className="landing-faq-trigger min-h-20 gap-4 rounded-[var(--broadcast-radius-control)] px-0 py-4 text-left text-[var(--broadcast-white)] hover:text-[var(--broadcast-lime)] hover:no-underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background">
               <span className="flex items-center gap-4">
                 <span className="landing-faq-number">
                   {String(index + 1).padStart(2, "0")}
@@ -42,10 +43,13 @@ export function FaqPanel() {
                 {t(`landing.faq.a${item.key}`)}
               </p>
               {"guide" in item && (
-                <a href={item.guide} className="landing-footer-link mt-3">
+                <TextLink
+                  href={item.guide}
+                  className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm"
+                >
                   {t(`landing.faq.guide${item.key}`)}
                   <ArrowUpRight className="size-4" aria-hidden="true" />
-                </a>
+                </TextLink>
               )}
             </AccordionContent>
           </AccordionItem>

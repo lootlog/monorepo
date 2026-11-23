@@ -184,7 +184,7 @@ export const CreatePartyGatheringForm = () => {
         </div>
       </ScrollArea>
 
-      <WindowFooter rowClassName="ll:justify-end ll:gap-1 ll:px-3">
+      <WindowFooter rowClassName="ll:justify-end">
         <Button
           variant="secondary"
           size="xs"

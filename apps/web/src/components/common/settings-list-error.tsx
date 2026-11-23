@@ -1,4 +1,4 @@
-import { CircleAlert } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { SettingsListEmpty } from "@/components/common/settings-list-empty";
 import { RetryButton } from "@/components/common/retry-button";
@@ -18,7 +18,7 @@ export const SettingsListError = ({
 
   return (
     <SettingsListEmpty
-      icon={CircleAlert}
+      icon={AlertCircle}
       title={title}
       description={t("settings.loadErrorDescription")}
       action={<RetryButton onRetry={onRetry} isRetrying={isRetrying} />}

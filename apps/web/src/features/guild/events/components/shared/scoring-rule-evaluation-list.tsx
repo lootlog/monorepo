@@ -22,9 +22,9 @@ interface ScoringRuleEvaluationListProps {
 }
 
 const OUTCOME_ICONS = {
-  MET: { icon: CircleCheck, className: "text-emerald-400" },
+  MET: { icon: CircleCheck, className: "text-signal-ready" },
   NOT_MET: { icon: CircleX, className: "text-muted-foreground" },
-  UNKNOWN: { icon: CircleHelp, className: "text-amber-400" },
+  UNKNOWN: { icon: CircleHelp, className: "text-signal-timer" },
 } as const;
 
 export const ScoringRuleEvaluationList = ({

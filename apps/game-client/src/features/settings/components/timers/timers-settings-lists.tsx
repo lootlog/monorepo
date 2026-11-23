@@ -1,4 +1,4 @@
-import { SettingsEmptyState } from "@/features/settings/components/shared/settings-empty-state";
+import { EmptyState } from "@/components/empty-state";
 import { SettingsList } from "@/features/settings/components/shared/settings-list";
 import { SettingsListRow } from "@/features/settings/components/shared/settings-list-row";
 import { SettingsSection } from "@/features/settings/components/shared/settings-section";
@@ -75,9 +75,7 @@ export const TimersSettingsLists: FC = () => {
         }
       >
         {lists.length === 0 ? (
-          <SettingsEmptyState>
-            {t("settings.timers.lists.emptyState")}
-          </SettingsEmptyState>
+          <EmptyState description={t("settings.timers.lists.emptyState")} />
         ) : null}
       </SettingsSection>
       {lists.map((list) => {
@@ -145,9 +143,7 @@ export const TimersSettingsLists: FC = () => {
                 ))}
               </SettingsList>
             ) : (
-              <SettingsEmptyState>
-                {t("settings.timers.lists.emptyList")}
-              </SettingsEmptyState>
+              <EmptyState description={t("settings.timers.lists.emptyList")} />
             )}
           </SettingsSection>
         );

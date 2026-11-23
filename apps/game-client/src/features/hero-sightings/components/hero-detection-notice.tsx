@@ -1,4 +1,3 @@
-import { cn } from "cn";
 import { X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
@@ -7,6 +6,7 @@ import {
 } from "@lootlog/domain/hero-sightings";
 import { formatLevel } from "@lootlog/domain/profession";
 import type { HeroSightingResponseDto } from "@lootlog/client/main";
+import { Notice } from "@/components/notice";
 import { TruncatedText } from "@/components/truncated-text";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/icon-button";
@@ -52,18 +52,12 @@ export function HeroDetectionNotice({
   );
 
   return (
-    <div
-      role="status"
-      className={cn(
-        "ll:-mt-px ll:flex ll:shrink-0 ll:items-center ll:gap-1 ll:border-x-0 ll:border-y ll:border-solid ll:border-amber-400/40 ll:bg-amber-400/10 ll:px-2 ll:py-1.5 ll:text-[11px] ll:font-semibold",
-        className,
-      )}
-    >
-      <span className="ll:flex ll:min-w-0 ll:flex-1 ll:flex-col ll:gap-0.5">
-        <span className="ll:text-amber-200">
+    <Notice role="status" tone="warning" layout="strip" className={className}>
+      <span className="ll:flex ll:min-w-0 ll:flex-1 ll:flex-col ll:gap-0.5 ll:font-semibold">
+        <span className="ll:text-warning">
           {t(first.manual ? "notice.manualTitle" : "notice.title")}
         </span>
-        <TruncatedText className="ll:text-white">
+        <TruncatedText>
           {first.hero.name}
           <span className="ll:ml-1 ll:font-normal ll:text-muted-foreground">
             ({formatLevel(first.hero.lvl, first.hero.prof)})
@@ -93,6 +87,6 @@ export function HeroDetectionNotice({
       >
         <X aria-hidden="true" />
       </IconButton>
-    </div>
+    </Notice>
   );
 }

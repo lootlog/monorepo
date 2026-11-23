@@ -7,86 +7,83 @@ import {
   TableHeader,
   TableRow,
 } from "@lootlog/ui/components/table";
+import { TextLink } from "@lootlog/ui/components/text-link";
 import { Link } from "@tanstack/react-router";
+import type { ReactNode } from "react";
 import { OrganizationStatusBadge } from "@/components/organization-status-badge";
 import { OrganizationTiles } from "@/components/organization-tiles";
 import { SyncStatusBadge } from "@/components/sync-status-badge";
 import { UserAvatar } from "@/components/user-avatar";
 import { formatDate } from "@/lib/format";
+import { RESULT_NAME_LINK_CLASS, RESULT_TABLE_CLASS } from "@/lib/list-classes";
 import { text } from "@/lib/messages";
-
-const link =
-  "rounded-control underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring";
 
 export function OrganizationsTable({
   organizations,
+  empty,
 }: {
   organizations: ReadonlyArray<AdminOrganization>;
+  empty: ReactNode;
 }) {
-  if (organizations.length === 0)
-    return (
-      <p className="rounded-lg border border-border bg-card px-4 py-10 text-center text-sm text-muted-foreground">
-        {text.organizationsEmpty}
-      </p>
-    );
+  if (organizations.length === 0) return empty;
 
   return (
     <>
-      <div className="md:hidden">
-        <OrganizationTiles organizations={organizations} />
-      </div>
-      <div className="hidden rounded-lg border border-border bg-card md:block">
+      <OrganizationTiles organizations={organizations} />
+      <div className={RESULT_TABLE_CLASS}>
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>{text.columnOrganization}</TableHead>
-              <TableHead className="hidden lg:table-cell">
-                {text.columnOwner}
-              </TableHead>
+              <TableHead>{text.columnOwner}</TableHead>
               <TableHead>{text.columnStatus}</TableHead>
               <TableHead>{text.columnDiscord}</TableHead>
               <TableHead className="text-right">{text.columnMembers}</TableHead>
-              <TableHead className="hidden xl:table-cell">
-                {text.columnCreated}
-              </TableHead>
+              <TableHead>{text.columnCreated}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {organizations.map((organization) => (
               <TableRow key={organization.id}>
                 <TableCell>
-                  <Link
-                    to="/organizations/$guildId"
-                    params={{ guildId: organization.id }}
-                    className="flex min-w-0 items-center gap-3 rounded-control outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  <TextLink
+                    render={
+                      <Link
+                        to="/organizations/$guildId"
+                        params={{ guildId: organization.id }}
+                      />
+                    }
+                    className={RESULT_NAME_LINK_CLASS}
                   >
                     <UserAvatar
                       name={organization.name}
                       image={organization.icon}
                     />
                     <span className="grid min-w-0">
-                      <span className="truncate font-medium underline-offset-4 hover:underline">
-                        {organization.name}
-                      </span>
-                      <span className="truncate text-xs text-muted-foreground">
+                      <span className="truncate">{organization.name}</span>
+                      <span className="truncate text-xs font-normal text-muted-foreground">
                         {organization.vanityUrl ?? organization.id}
                       </span>
                     </span>
-                  </Link>
+                  </TextLink>
                 </TableCell>
-                <TableCell className="hidden lg:table-cell">
+                <TableCell>
                   {organization.owner.userId === null ? (
                     <span className="text-muted-foreground">
                       {organization.owner.name ?? text.unknownOwner}
                     </span>
                   ) : (
-                    <Link
-                      to="/users/$userId"
-                      params={{ userId: organization.owner.userId }}
-                      className={link}
+                    <TextLink
+                      render={
+                        <Link
+                          to="/users/$userId"
+                          params={{ userId: organization.owner.userId }}
+                        />
+                      }
+                      className="text-sm"
                     >
                       {organization.owner.name ?? text.unknownOwner}
-                    </Link>
+                    </TextLink>
                   )}
                 </TableCell>
                 <TableCell>
@@ -101,7 +98,7 @@ export function OrganizationsTable({
                 <TableCell className="text-right tabular-nums">
                   {organization.activeMembers}
                 </TableCell>
-                <TableCell className="hidden text-muted-foreground xl:table-cell">
+                <TableCell className="text-muted-foreground">
                   {formatDate(organization.createdAt)}
                 </TableCell>
               </TableRow>

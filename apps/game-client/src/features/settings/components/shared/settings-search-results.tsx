@@ -1,3 +1,5 @@
+import { cn } from "cn";
+import { SECTION_LABEL_CLASS_NAME } from "@/components/section-label";
 import type { FC, ReactNode } from "react";
 import {
   findSearchMatchRanges,
@@ -80,7 +82,12 @@ export const SettingsSearchResults: FC<SettingsSearchResultsProps> = ({
       return (
         <div key={result.controlId} className="ll:flex ll:flex-col ll:gap-px">
           {startsGroup ? (
-            <div className="ll:mt-3 ll:mb-1 ll:truncate ll:px-2 ll:text-[11px] ll:font-semibold ll:uppercase ll:leading-4 ll:tracking-wide ll:text-muted-foreground ll:first:mt-0">
+            <div
+              className={cn(
+                SECTION_LABEL_CLASS_NAME,
+                "ll:mt-3 ll:mb-1 ll:truncate ll:px-2 ll:first:mt-0",
+              )}
+            >
               {result.categoryLabel}
               {showSubsection ? (
                 <>

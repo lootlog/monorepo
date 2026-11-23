@@ -42,7 +42,7 @@ export const WindowLauncher: FC<WindowLauncherProps> = ({
   return (
     <button
       type="button"
-      className="ll-custom-cursor-pointer ll:pointer-events-auto ll:absolute ll:inline-flex ll:h-8 ll:items-center ll:gap-1.5 ll:rounded-lg ll:border ll:border-white/50 ll:bg-black/75 ll:px-2.5 ll:text-xs ll:text-white ll:shadow-[2px_2px_3px_3px_rgba(12,13,13,0.4)] ll:transition-colors ll:motion-reduce:transition-none ll:hover:bg-black ll:focus-visible:outline-2 ll:focus-visible:outline-ring"
+      className="ll-custom-cursor-pointer ll:pointer-events-auto ll:absolute ll:inline-flex ll:h-8 ll:items-center ll:gap-1.5 ll:rounded-lg ll:border ll:border-white/50 ll:bg-black/75 ll:px-2.5 ll:text-xs ll:text-foreground ll:shadow-[2px_2px_3px_3px_rgba(12,13,13,0.4)] ll:transition-colors ll:motion-reduce:transition-none ll:hover:bg-black ll:focus-visible:outline-2 ll:focus-visible:outline-ring"
       style={{ left: position.x, top }}
       onClick={(event) => {
         event.stopPropagation();

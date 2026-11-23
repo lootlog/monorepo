@@ -14,6 +14,7 @@ import {
 } from "fumadocs-ui/page";
 import { use } from "react";
 import { PageMarkdownActions } from "@lootlog/ui/components/page-markdown-actions";
+import { useScrollToTop } from "@lootlog/ui/hooks/use-scroll-to-top";
 import { COMMUNITY_LINKS } from "@lootlog/domain/public-sites";
 import { portalSite } from "@/lib/llms";
 import { pageHead } from "@/lib/seo";
@@ -82,6 +83,8 @@ function Documentation() {
   const { pageTree, path, markdownPath } = useFumadocsLoader(
     Route.useLoaderData(),
   );
+
+  useScrollToTop(path);
 
   const page = docs.getPage(path);
 

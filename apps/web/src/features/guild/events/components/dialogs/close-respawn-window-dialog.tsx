@@ -184,11 +184,7 @@ export const CloseRespawnWindowDialog = ({
                           {t("events.respawn.minSpawnTime")}
                         </FormLabel>
                         <FormControl
-                          render=<Input
-                            type="datetime-local"
-                            className="text-sm"
-                            {...field}
-                          />
+                          render=<Input type="datetime-local" {...field} />
                         />
                         <FormMessage />
                       </FormItem>
@@ -204,11 +200,7 @@ export const CloseRespawnWindowDialog = ({
                           {t("events.respawn.maxSpawnTime")}
                         </FormLabel>
                         <FormControl
-                          render=<Input
-                            type="datetime-local"
-                            className="text-sm"
-                            {...field}
-                          />
+                          render=<Input type="datetime-local" {...field} />
                         />
                         <FormMessage />
                       </FormItem>

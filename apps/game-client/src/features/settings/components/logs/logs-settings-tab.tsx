@@ -1,4 +1,4 @@
-import { SettingsEmptyState } from "@/features/settings/components/shared/settings-empty-state";
+import { EmptyState } from "@/components/empty-state";
 import { SettingsRow } from "@/features/settings/components/shared/settings-row";
 import { SettingsSection } from "@/features/settings/components/shared/settings-section";
 import { SettingsTabLayout } from "@/features/settings/components/shared/settings-tab-layout";
@@ -256,11 +256,13 @@ export const LogsSettingsTab: FC = () => {
             </Table>
           </div>
         ) : (
-          <SettingsEmptyState>
-            {actions.length === 0
-              ? t("settings.logs.noActions")
-              : t("settings.logs.emptyState")}
-          </SettingsEmptyState>
+          <EmptyState
+            description={
+              actions.length === 0
+                ? t("settings.logs.noActions")
+                : t("settings.logs.emptyState")
+            }
+          />
         )}
       </SettingsSection>
     </SettingsTabLayout>

@@ -176,7 +176,7 @@ export const NpcListItem = ({
             <HeroTrackerStatus entranceClosesAt={npc.entranceClosesAt} />
           )}
         </div>
-        <div className="ll:flex ll:gap-1 ll:overflow-hidden ll:text-[11px] ll:text-gray-300">
+        <div className="ll:flex ll:gap-1 ll:overflow-hidden ll:text-[11px] ll:text-foreground/80">
           <span className="ll:min-w-0 ll:truncate">{npc.location}</span>
           <span className="ll:shrink-0 ll:tabular-nums">
             ({npc.x}, {npc.y})
@@ -235,7 +235,6 @@ export const NpcListItem = ({
         )}
         {hasMultipleNpcs && (
           <IconButton
-            variant="quiet-destructive"
             label={t("actions.removeNpcAria")}
             onClick={() => removeNpc(npc.id)}
           >

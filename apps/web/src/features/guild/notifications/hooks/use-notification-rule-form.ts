@@ -1,4 +1,3 @@
-import { MARGONEM_TIME_ZONE } from "@lootlog/datetime";
 import { getNotificationFieldVisibility } from "../utils/notification-field-visibility";
 import { Schema } from "effect";
 import { useEffect, useRef, useState } from "react";
@@ -11,12 +10,9 @@ import { useNavigate, useParams } from "@tanstack/react-router";
 import { getApiErrorMessage } from "@lootlog/client/transport";
 import {
   CreateNotificationRuleDtoScheduleAnchor as NotificationScheduleAnchor,
-  CreateNotificationRuleDtoScheduleIntervalType as NotificationScheduleIntervalType,
   CreateNotificationRuleDtoScheduleStrategy as NotificationScheduleStrategy,
   CreateNotificationRuleDtoTriggerType as NotificationTriggerType,
-  type CreateNotificationRuleDtoTriggerType,
   type NotificationTargetResponseDto,
-  type NotificationRuleResponseDto,
   useNotificationsGuildControllerCreateGuildRule,
   useNotificationsGuildControllerGetGuildRules,
   useNotificationsGuildControllerGetGuildTargets,
@@ -30,19 +26,9 @@ import {
 
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  getDefaultGuildNotificationRuleContentTemplate,
-  getDefaultScheduledMessageContentTemplate,
-  getDefaultHeroSightingContentTemplate,
-  getDefaultLootDrawContentTemplate,
-  getGuildNotificationRuleNpcIds,
-  getGuildNotificationRuleTargetIds,
   getGuildNotificationTargetLabel,
   mergeGuildNotificationTargets,
 } from "../utils/notification-settings.utils";
-import {
-  formatDateTimeLocalInputValue,
-  parseDateTimeLocalInputToIsoString,
-} from "../utils/notification-schedule-time.utils";
 import {
   ruleFormSchema,
   ALL_WORLDS_VALUE,
@@ -62,141 +48,12 @@ import { ROUTES } from "@/config/routes";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 
 import { invalidateGuildNotificationQueries } from "../notifications-api";
-
-const getDefaultContentTemplate = (
-  triggerType: CreateNotificationRuleDtoTriggerType,
-) => {
-  switch (triggerType) {
-    case NotificationTriggerType.SCHEDULED_MESSAGE:
-      return getDefaultScheduledMessageContentTemplate();
-    case NotificationTriggerType.HERO_SIGHTED:
-      return getDefaultHeroSightingContentTemplate();
-    case NotificationTriggerType.LOOT_DRAW_RESOLVED:
-      return getDefaultLootDrawContentTemplate();
-    default:
-      return getDefaultGuildNotificationRuleContentTemplate();
-  }
-};
-
-const getEmptyRuleFormValues = (): RuleFormValues => ({
-  name: "",
-  triggerType: NotificationTriggerType.TIMER_BEFORE_SPAWN,
-  world: ALL_WORLDS_VALUE,
-  npcIds: [],
-  manualNpcEntry: false,
-  manualNpcIds: "",
-  contentTemplate: getDefaultGuildNotificationRuleContentTemplate(),
-  scheduleAnchor: NotificationScheduleAnchor.MIN_SPAWN,
-  scheduleOffsetMinutes: "0",
-  scheduledAt: "",
-  scheduleIntervalType: NotificationScheduleIntervalType.ONCE,
-  scheduleIntervalValue: "",
-  scheduleTimeOfDay: "",
-  scheduleWeekday: "",
-  scheduledUntil: "",
-  targetIds: [],
-  enabled: true,
-});
-
-const getScheduledUntilPayload = (
-  values: RuleFormValues,
-  isRecurring: boolean,
-  savedScheduledUntil: string | null | undefined,
-) => {
-  if (!isRecurring) return undefined;
-
-  const scheduledUntil = parseDateTimeLocalInputToIsoString(
-    values.scheduledUntil,
-    MARGONEM_TIME_ZONE,
-  );
-
-  if (scheduledUntil) return scheduledUntil;
-
-  return savedScheduledUntil ? null : undefined;
-};
-
-const getScheduledMessagePayload = (
-  values: RuleFormValues,
-  savedScheduledUntil: string | null | undefined,
-) => {
-  const visibleFields = getNotificationFieldVisibility(
-    values.triggerType,
-    values.scheduleIntervalType ?? NotificationScheduleIntervalType.ONCE,
-  );
-
-  return {
-    scheduledAt: visibleFields.showScheduledAtField
-      ? parseDateTimeLocalInputToIsoString(
-          values.scheduledAt,
-          MARGONEM_TIME_ZONE,
-        )
-      : undefined,
-    scheduleIntervalType:
-      values.scheduleIntervalType ?? NotificationScheduleIntervalType.ONCE,
-    scheduleIntervalValue:
-      visibleFields.showIntervalValueField && values.scheduleIntervalValue
-        ? Number(values.scheduleIntervalValue)
-        : undefined,
-    scheduleTimeOfDay: visibleFields.showTimeOfDayField
-      ? values.scheduleTimeOfDay || undefined
-      : undefined,
-    scheduleWeekday:
-      visibleFields.showWeekdayField && values.scheduleWeekday !== ""
-        ? Number(values.scheduleWeekday)
-        : undefined,
-    scheduledUntil: getScheduledUntilPayload(
-      values,
-      visibleFields.isRecurring,
-      savedScheduledUntil,
-    ),
-    scheduleTimezone: MARGONEM_TIME_ZONE,
-  };
-};
-
-const stringifyNullable = (value: number | null | undefined, fallback = "") =>
-  value === null || value === undefined ? fallback : String(value);
-
-const formatRuleDate = (value: string | null, timezone: string | null) =>
-  value
-    ? formatDateTimeLocalInputValue(value, timezone ?? MARGONEM_TIME_ZONE)
-    : "";
-
-const getRuleFormDefaultValues = (
-  rule: NotificationRuleResponseDto | undefined,
-): RuleFormValues => {
-  if (!rule) {
-    return getEmptyRuleFormValues();
-  }
-
-  const triggerType =
-    rule.triggerType ?? NotificationTriggerType.TIMER_BEFORE_SPAWN;
-
-  const npcIds = getGuildNotificationRuleNpcIds(rule);
-
-  return {
-    name: rule.name ?? "",
-    triggerType,
-    world: rule.world ?? ALL_WORLDS_VALUE,
-    npcIds,
-    manualNpcEntry: false,
-    manualNpcIds: npcIds.join("\n"),
-    contentTemplate:
-      rule.contentTemplate ?? getDefaultContentTemplate(triggerType),
-    scheduleAnchor: rule.scheduleAnchor ?? NotificationScheduleAnchor.MIN_SPAWN,
-    scheduleOffsetMinutes: stringifyNullable(rule.scheduleOffsetMinutes, "0"),
-    scheduledAt: formatRuleDate(rule.scheduledAt, rule.scheduleTimezone),
-    scheduleIntervalType:
-      rule.scheduleIntervalType ?? NotificationScheduleIntervalType.ONCE,
-    scheduleIntervalValue: stringifyNullable(rule.scheduleIntervalValue),
-    scheduleTimeOfDay: rule.scheduleTimeOfDay ?? "",
-    scheduleWeekday: stringifyNullable(rule.scheduleWeekday),
-    scheduledUntil: formatRuleDate(rule.scheduledUntil, rule.scheduleTimezone),
-    npcLevelMin: rule.filters?.npcLevelMin,
-    npcLevelMax: rule.filters?.npcLevelMax,
-    targetIds: getGuildNotificationRuleTargetIds(rule),
-    enabled: rule.enabled ?? true,
-  };
-};
+import {
+  getDefaultContentTemplate,
+  getEmptyRuleFormValues,
+  getRuleFormDefaultValues,
+  getScheduledMessagePayload,
+} from "../utils/notification-rule-form-values.utils";
 
 const getWorldOptions = (
   worlds: string[],
@@ -536,6 +393,13 @@ export const useNotificationRuleForm = () => {
   const isSubmitting = createRule.isPending || updateRule.isPending;
   const isLoading = targetsQuery.isLoading || rulesQuery.isLoading;
   const isError = targetsQuery.isError || rulesQuery.isError;
+  const isRetrying = targetsQuery.isFetching || rulesQuery.isFetching;
+
+  const retry = () => {
+    if (targetsQuery.isError) void targetsQuery.refetch();
+
+    if (rulesQuery.isError) void rulesQuery.refetch();
+  };
 
   const navigateBack = () => {
     if (guildId) {
@@ -690,6 +554,9 @@ export const useNotificationRuleForm = () => {
     isCreateMode,
     isLoading,
     isError,
+    isRetrying,
+    retry,
+    guildId,
     isSubmitting,
     isScheduledMessage,
     isHeroSighting,

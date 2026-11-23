@@ -27,10 +27,10 @@
   --scalar-color-accent: var(--portal-link);
   --scalar-color-red: var(--signal-alert);
   --scalar-color-green: var(--signal-ready);
-  --scalar-color-blue: #7d9bff;
+  --scalar-color-blue: var(--chart-1);
   --scalar-color-orange: var(--signal-timer);
-  --scalar-color-yellow: #e6ce80;
-  --scalar-color-purple: #b79bff;
+  --scalar-color-yellow: var(--chart-4);
+  --scalar-color-purple: var(--chart-5);
   --scalar-link-color: var(--portal-link);
   --scalar-link-color-hover: var(--foreground);
   --scalar-border-color: var(--separator);

@@ -2,7 +2,8 @@ import { RotateCcw } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@lootlog/ui/components/button";
 import { ArticleSection } from "@/components/article/article-section";
-import { StatTiles } from "@/components/common/stat-tiles";
+import { StatsTile } from "@lootlog/ui/components/stats-tile";
+import { StatsTileGrid } from "@lootlog/ui/components/stats-tile-grid";
 import { useEquipmentSet } from "@/contexts/equipment-set-context";
 import { useSkillTree } from "@/hooks/use-skill-tree";
 import { useWornItems } from "@/hooks/use-worn-items";
@@ -74,18 +75,17 @@ export function SetSkillTree() {
       ) : (
         <>
           <div className="flex flex-col gap-2">
-            <StatTiles
-              className="grid-cols-1 sm:max-w-xs"
-              tiles={[
-                {
-                  label: t("skills.points"),
-                  value: t("skills.pointsValue", { spent, total }),
-                  hint: t("skills.pointsLeft", {
+            <div className="sm:max-w-xs">
+              <StatsTileGrid framed aria-live="polite">
+                <StatsTile
+                  label={t("skills.points")}
+                  value={t("skills.pointsValue", { spent, total })}
+                  detail={t("skills.pointsLeft", {
                     left: Math.max(0, total - spent),
-                  }),
-                },
-              ]}
-            />
+                  })}
+                />
+              </StatsTileGrid>
+            </div>
             {spent > total ? (
               <p className="text-sm text-destructive">
                 {t("skills.overBudget", { over: spent - total })}

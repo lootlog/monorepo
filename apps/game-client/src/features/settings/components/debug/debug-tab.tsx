@@ -274,7 +274,7 @@ export const DebugTab: FC = () => {
           controlClassName="ll:flex-col ll:items-stretch ll:gap-1.5"
           description={
             jsonError ? (
-              <span className="ll:text-red-400">{jsonError}</span>
+              <span className="ll:text-destructive">{jsonError}</span>
             ) : (
               t("settings.debug.rawJsonDescription")
             )
@@ -284,7 +284,7 @@ export const DebugTab: FC = () => {
           layout="stacked"
         >
           <textarea
-            className="ll:w-full ll:min-h-24 ll:resize-y ll:rounded-sm ll:border ll:border-input ll:bg-black/25 ll:p-2 ll:font-mono ll:text-xs ll:text-gray-100 ll:outline-none ll:focus-visible:border-ring"
+            className="ll:w-full ll:min-h-24 ll:resize-y ll:rounded-sm ll:border ll:border-input ll:bg-black/25 ll:p-2 ll:font-mono ll:text-xs ll:text-foreground ll:outline-none ll:focus-visible:border-ring"
             id="debug-raw-json"
             onChange={(event) => {
               setRawJson(event.target.value);
@@ -334,14 +334,14 @@ export const DebugTab: FC = () => {
                 </span>
                 <span
                   className={
-                    entry.success ? "ll:text-emerald-200" : "ll:text-red-400"
+                    entry.success ? "ll:text-success" : "ll:text-destructive"
                   }
                 >
                   {entry.success
                     ? t("settings.debug.statusOk")
                     : t("settings.debug.statusFail")}
                 </span>
-                <span className="ll:text-gray-100">{entry.eventType}</span>
+                <span className="ll:text-foreground">{entry.eventType}</span>
               </div>
             ))
           )}

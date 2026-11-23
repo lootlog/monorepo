@@ -1,5 +1,8 @@
-import { ListToolbar } from "@/components/common/list-toolbar";
-import { PillToggleGroup } from "@/components/common/pill-toggle-group";
+import { ResultsSurface } from "@/components/common/results-surface";
+import { KillStatsSearch } from "@/components/common/kill-stats-search";
+import { FilterOptionCount } from "@/components/common/filter-option-count";
+import { FilterPopover } from "@lootlog/ui/components/filter-popover";
+import { UserRound } from "lucide-react";
 import { OrganizationPresenceStatus } from "@/components/common/organization-presence-status";
 import { useMemberActivity } from "@/features/guild/settings/members/use-member-activity";
 import {
@@ -115,6 +118,9 @@ export const MembersSettingsContent = () => {
     startTransition(() => setStatusFilter(filter));
   };
 
+  const statusLabel = (filter: MemberStatusFilter) =>
+    t(`settings.members.filters.${filter}`);
+
   const renderContent = () => {
     if (!members && isError) {
       return (
@@ -167,36 +173,68 @@ export const MembersSettingsContent = () => {
 
   return (
     <SettingsTabPage title={t("settings.members.title")}>
-      <ListToolbar
-        search={searchValue}
-        onSearchChange={setSearchValue}
-        placeholder={t("settings.members.searchPlaceholder")}
-        label={t("settings.members.searchPlaceholder")}
-        clearLabel={t("settings.clearFilter")}
-        disabled={!members?.length}
-      >
-        <PillToggleGroup
-          label={t("settings.members.table.status")}
-          value={statusFilter}
-          onValueChange={changeStatusFilter}
-          options={statusFilters.map((filter) => {
-            const count = memberStats[STATUS_FILTER_COUNTS[filter]];
+      <ResultsSurface
+        search={
+          <KillStatsSearch
+            value={searchValue}
+            placeholder={t("settings.members.searchPlaceholder")}
+            onChange={setSearchValue}
+          />
+        }
+        filters={
+          <>
+            <FilterPopover
+              options={statusFilters.map((filter) => {
+                const count = memberStats[STATUS_FILTER_COUNTS[filter]];
+                const label = statusLabel(filter);
 
-            return {
-              value: filter,
-              label: t(`settings.members.filters.${filter}`),
-              count,
-              countClassName:
-                filter === "problems" && count > 0
-                  ? "text-signal-timer"
-                  : undefined,
-            };
-          })}
-        />
-        <RefreshMembersButton />
-      </ListToolbar>
-      <OrganizationPresenceStatus guildId={resolvedGuildId} />
-      {renderContent()}
+                return {
+                  value: filter,
+                  label,
+                  render: () => (
+                    <FilterOptionCount
+                      label={label}
+                      count={count}
+                      countClassName={
+                        filter === "problems" && count > 0
+                          ? "text-signal-timer"
+                          : undefined
+                      }
+                    />
+                  ),
+                };
+              })}
+              value={statusFilter}
+              onValueChange={changeStatusFilter}
+              placeholder={t("settings.members.table.status")}
+              icon={UserRound}
+              showSearch={false}
+              active={statusFilter !== defaultStatusFilter}
+            />
+            <RefreshMembersButton />
+          </>
+        }
+        filtersLabel={t("settings.members.filtersLabel")}
+        chips={
+          statusFilter === defaultStatusFilter
+            ? []
+            : [
+                {
+                  id: statusFilter,
+                  label: statusLabel(statusFilter),
+                  onRemove: () => changeStatusFilter(defaultStatusFilter),
+                },
+              ]
+        }
+        clearFiltersLabel={t("common.actions.clearFilters")}
+        onClearFilters={() => {
+          setSearchValue("");
+          changeStatusFilter(defaultStatusFilter);
+        }}
+      >
+        <OrganizationPresenceStatus guildId={resolvedGuildId} />
+        {renderContent()}
+      </ResultsSurface>
     </SettingsTabPage>
   );
 };

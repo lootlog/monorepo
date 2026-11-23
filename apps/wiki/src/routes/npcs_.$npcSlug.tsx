@@ -1,4 +1,5 @@
 import {
+  Link,
   Navigate,
   createFileRoute,
   linkOptions,
@@ -9,6 +10,10 @@ import {
   getCatalogControllerGetNpcsQueryOptions,
   useCatalogControllerGetNpcs,
 } from "@lootlog/client/catalog";
+import { PortalPageHeader } from "@lootlog/ui/components/portal-page-header";
+import { PageState } from "@lootlog/ui/components/page-state";
+import { Button } from "@lootlog/ui/components/button";
+import { SearchXIcon } from "lucide-react";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { CatalogItemGrid } from "@/components/catalog/catalog-item-grid";
 import { NpcDrops } from "@/components/npcs/npc-drops";
@@ -103,9 +108,19 @@ function NpcRoute() {
 
   if (!query || (npcQuery.data && !npc)) {
     return (
-      <p className="py-6 text-sm text-muted-foreground">
-        {t("catalog.npcNotFound")}
-      </p>
+      <PageState
+        className="my-6"
+        icon={<SearchXIcon />}
+        title={t("catalog.npcNotFound")}
+        description={t("catalog.notFoundDescription")}
+      >
+        <Button
+          nativeButton={false}
+          render={<Link to="/npcs" search={EMPTY_NPCS_SEARCH} />}
+        >
+          {t("catalog.backToNpcs")}
+        </Button>
+      </PageState>
     );
   }
 
@@ -135,21 +150,17 @@ function NpcRoute() {
         ]}
       />
 
-      <header className="flex flex-col gap-4">
-        <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
-          {npc ? (
-            <>
-              <div className="flex min-w-0 items-center gap-4">
-                <NpcPortrait key={npc.icon} icon={npc.icon} size="md" />
-                <div className="flex min-w-0 flex-col gap-1">
-                  <p className="text-sm text-muted-foreground">
-                    <NpcKindLevel npc={npc} />
-                  </p>
-                  <h1 className="text-3xl font-semibold tracking-tight text-balance text-foreground md:text-4xl">
-                    {npc.name}
-                  </h1>
-                </div>
-              </div>
+      <div className="flex flex-col gap-4">
+        {npc ? (
+          <PortalPageHeader
+            media={<NpcPortrait key={npc.icon} icon={npc.icon} size="md" />}
+            eyebrow={
+              <p className="text-muted-foreground">
+                <NpcKindLevel npc={npc} />
+              </p>
+            }
+            title={npc.name}
+            actions={
               <div
                 role="group"
                 aria-label={t("npc.actions")}
@@ -161,19 +172,17 @@ function NpcRoute() {
                   name={npc.name}
                 />
               </div>
-            </>
-          ) : (
-            <>
-              <div className="flex min-w-0 items-center gap-4">
-                <Skeleton className="size-24 shrink-0 rounded-lg" />
-                <div className="flex min-w-0 flex-col gap-2">
-                  <Skeleton className="h-4 w-40" />
-                  <Skeleton className="h-10 w-72 max-w-full" />
-                </div>
-              </div>
-            </>
-          )}
-        </div>
+            }
+          />
+        ) : (
+          <div className="flex min-w-0 items-center gap-4">
+            <Skeleton className="size-24 shrink-0 rounded-lg" />
+            <div className="flex min-w-0 flex-col gap-2">
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-10 w-72 max-w-full" />
+            </div>
+          </div>
+        )}
         {npc ? (
           <>
             <NpcFacts npc={npc} />
@@ -182,7 +191,7 @@ function NpcRoute() {
         ) : (
           <Skeleton className="h-16 w-full" />
         )}
-      </header>
+      </div>
 
       <div className="flex min-w-0 flex-col gap-12">
         <ArticleSection

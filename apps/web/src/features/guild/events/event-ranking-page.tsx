@@ -118,8 +118,8 @@ export const EventRankingPage = () => {
         {(!rankingError || rankings.length > 0) && (
           <EventRankingTable
             rankings={filteredRankings}
-            guildId={guildId}
-            eventId={eventId}
+            guildId={queryGuildId}
+            eventId={queryEventId}
             canEdit={canEditPoints}
             currentMemberId={currentMember?.id}
           />

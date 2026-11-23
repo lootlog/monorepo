@@ -18,7 +18,7 @@ export const KillsPageSkeleton = () => {
           <Skeleton
             key={index}
             aria-hidden="true"
-            className={`hidden h-10 rounded-lg xl:block ${width}`}
+            className={`hidden h-10 rounded-md xl:block ${width}`}
           />
         ))}
         footer={<TablePaginationFooterSkeleton />}

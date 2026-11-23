@@ -9,7 +9,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { SettingsClearFilterButton } from "@/components/common/settings-clear-filter-button";
+import { ClearFiltersButton } from "@/components/common/clear-filters-button";
 import { SettingsListEmpty } from "@/components/common/settings-list-empty";
 import type { MemberStatusFilter } from "./member-list-item.utils";
 
@@ -62,7 +62,7 @@ export const MembersEmptyState = ({
     return (
       <SettingsListEmpty
         icon={SearchX}
-        title={t("settings.members.empty.filteredTitle", { query })}
+        title={t("settings.members.empty.filteredTitle")}
         description={
           matchesElsewhere
             ? t("settings.members.empty.filteredInOtherStatuses", {
@@ -73,7 +73,7 @@ export const MembersEmptyState = ({
         action={
           <div className="flex flex-wrap justify-center gap-2">
             {matchesElsewhere && showAllButton}
-            <SettingsClearFilterButton onClear={onClearSearch} />
+            <ClearFiltersButton onClear={onClearSearch} />
           </div>
         }
       />

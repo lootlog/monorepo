@@ -1,3 +1,4 @@
+import { cn } from "cn";
 import { ScrollArea as BaseScrollArea } from "@base-ui/react/scroll-area";
 import { MessageScroller } from "@shadcn/react/message-scroller";
 import type { ComponentType, ReactElement, ReactNode, RefObject } from "react";
@@ -53,7 +54,10 @@ export const ChatTranscriptViewport = ({
         data-chat-viewport={selectableText || undefined}
         data-scroll-fade-viewport
         data-ll-draggable="false"
-        className="ll:scroll-fade-y ll:scroll-fade-4 ll:size-full ll:min-h-0 ll:overflow-y-auto ll:overscroll-contain ll:rounded ll:outline-none ll:focus-visible:ring-1 ll:focus-visible:ring-inset ll:focus-visible:ring-ring"
+        className={cn(
+          "ll:scroll-fade-y ll:scroll-fade-4 ll:size-full ll:min-h-0 ll:overflow-y-auto ll:overscroll-contain ll:rounded ll:outline-none ll:focus-visible:ring-1 ll:focus-visible:ring-inset ll:focus-visible:ring-ring",
+          selectableText && "ll-selectable-text",
+        )}
         style={{ overflowAnchor: "auto", overflowX: "hidden" }}
         onPointerDown={holdPosition}
         onScroll={() => {

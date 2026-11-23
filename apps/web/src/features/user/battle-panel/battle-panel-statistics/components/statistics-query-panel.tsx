@@ -1,5 +1,5 @@
 import { BandSection } from "@/components/common/band-section";
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { LIST_TILE_RULE_CLASS } from "@/components/common/list-tile";
 import { QueryErrorNotice } from "@/components/common/query-error-notice";
 import { CircleAlert } from "lucide-react";

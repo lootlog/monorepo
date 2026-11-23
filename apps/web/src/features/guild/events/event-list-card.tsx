@@ -25,6 +25,7 @@ import {
   getEventStatusAtTimestamp,
 } from "./utils/event-activity";
 import { formatDateRange } from "./utils/format-date";
+import { PINNED_STAR_CLASS } from "@/components/common/pinned-star";
 
 type Props = Pick<
   ReturnType<typeof useEventList>,
@@ -104,7 +105,7 @@ export const EventListCard = ({
               <h3 className="min-w-0 break-words text-sm font-semibold">
                 {event.name}
               </h3>
-              <Badge variant={eventStatusVariant} className="h-5 px-2 text-2xs">
+              <Badge variant={eventStatusVariant} size="sm">
                 {t(eventStatusLabelKey)}
               </Badge>
             </div>
@@ -141,7 +142,7 @@ export const EventListCard = ({
             <Star
               className={cn(
                 "size-4 text-muted-foreground",
-                isPinned(event.id) && "fill-yellow-500 text-yellow-500",
+                isPinned(event.id) && PINNED_STAR_CLASS,
               )}
             />
           </Button>

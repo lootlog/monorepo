@@ -23,6 +23,7 @@ export const StatsTablePageSkeleton = ({
       isLoading
       rowContent={rowContent}
       mobileSkeleton={mobileSkeleton}
+      tiles={null}
     >
       {null}
     </StatsTableResults>

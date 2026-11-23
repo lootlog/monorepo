@@ -36,7 +36,7 @@ export const HeroTrackerStatus: FC<HeroTrackerStatusProps> = ({
     return (
       <span
         title={label}
-        className="ll:flex ll:shrink-0 ll:items-center ll:gap-0.5 ll:text-gray-400"
+        className="ll:flex ll:shrink-0 ll:items-center ll:gap-0.5 ll:text-muted-foreground"
       >
         <DoorClosed size={12} aria-hidden="true" />
         <span className="ll:sr-only">{label}</span>

@@ -58,7 +58,7 @@ export const ChatNpcMessageView: FC<ChatNpcMessageViewProps> = (props) => {
   const sender = (
     <span
       className={cn("ll:select-text ll:font-bold", {
-        "ll:text-gray-100": isMsgYesterday,
+        "ll:text-foreground": isMsgYesterday,
       })}
       style={{ color: `#${memberColor}` }}
     >

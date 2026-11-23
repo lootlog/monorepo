@@ -1,4 +1,5 @@
-import { ListToolbar } from "@/components/common/list-toolbar";
+import { ResultsSurface } from "@/components/common/results-surface";
+import { KillStatsSearch } from "@/components/common/kill-stats-search";
 import { ListTileSkeleton } from "@/components/common/list-tile-skeleton";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
@@ -8,7 +9,7 @@ import {
 import { SearchX, Settings2 } from "lucide-react";
 import { startTransition, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { SettingsClearFilterButton } from "@/components/common/settings-clear-filter-button";
+import { ClearFiltersButton } from "@/components/common/clear-filters-button";
 import { SettingsListEmpty } from "@/components/common/settings-list-empty";
 import { SettingsListError } from "@/components/common/settings-list-error";
 import { SettingsTabPage } from "@/components/common/settings-tab-page";
@@ -81,12 +82,10 @@ export const NpcsSettingsContent = () => {
       return (
         <SettingsListEmpty
           icon={SearchX}
-          title={t("settings.npcs.empty.filteredTitle", {
-            query: searchValue.trim(),
-          })}
+          title={t("settings.npcs.empty.filteredTitle")}
           description={t("settings.npcs.empty.filteredDescription")}
           action={
-            <SettingsClearFilterButton
+            <ClearFiltersButton
               onClear={() => startTransition(() => setSearchValue(""))}
             />
           }
@@ -101,15 +100,17 @@ export const NpcsSettingsContent = () => {
 
   return (
     <SettingsTabPage title={t("settings.npcs.title")}>
-      <ListToolbar
-        search={searchValue}
-        onSearchChange={setSearchValue}
-        placeholder={t("settings.npcs.searchPlaceholder")}
-        label={t("settings.npcs.searchPlaceholder")}
-        clearLabel={t("settings.clearFilter")}
-        disabled={configuredNpcs.length === 0}
-      />
-      {renderContent()}
+      <ResultsSurface
+        search={
+          <KillStatsSearch
+            value={searchValue}
+            placeholder={t("settings.npcs.searchPlaceholder")}
+            onChange={setSearchValue}
+          />
+        }
+      >
+        {renderContent()}
+      </ResultsSurface>
     </SettingsTabPage>
   );
 };

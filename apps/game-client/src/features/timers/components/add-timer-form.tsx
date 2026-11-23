@@ -15,7 +15,6 @@ import {
 import type { SearchTimersNpcResponseDtoOutput } from "@lootlog/client/main";
 import { AutocompleteSuggestions } from "@/components/ui/autocomplete-suggestions";
 import { getNpcTypeNames } from "@/constants/margonem";
-import { cn } from "cn";
 import { FormFieldError } from "@/components/form-field-error";
 import {
   formFieldLabelClassName,
@@ -122,7 +121,7 @@ export function AddTimerForm(props: AddTimerFormProps) {
               onSelect={handleNpcSelect}
               selectedIndex={suggestions.selectedIndex}
               keyExtractor={(npc) => npc.npcId}
-              renderItem={(npc, _index, isSelected) => {
+              renderItem={(npc) => {
                 const longname = getNpcTypeNames(npc.type)
                   ? t(`npcType:${npc.type}`)
                   : t("addForm.mobFallback");
@@ -131,19 +130,14 @@ export function AddTimerForm(props: AddTimerFormProps) {
                   npc.lvl > 0 && npc.prof ? formatLevel(npc.lvl, npc.prof) : "";
 
                 return (
-                  <div
-                    className={cn(
-                      "ll:border-b ll:border-x-0 ll:border-t-0 ll:border-gray-600/50 ll:px-2 ll:py-1.5 ll:text-xs last:ll:border-b-0",
-                      isSelected ? "ll:bg-blue-500/30" : "ll:hover:bg-white/5",
-                    )}
-                  >
-                    <div className="ll:font-semibold ll:text-white">
+                  <>
+                    <span className="ll:block ll:font-semibold">
                       {npc.name}
-                    </div>
-                    <div className="ll:text-[10px] ll:text-gray-400">
+                    </span>
+                    <span className="ll:block ll:text-[10px] ll:text-muted-foreground">
                       {[longname, npcDetails].filter(Boolean).join(" • ")}
-                    </div>
-                  </div>
+                    </span>
+                  </>
                 );
               }}
               noResultsMessage={t("addForm.npcNotFound")}
@@ -261,7 +255,7 @@ export function AddTimerForm(props: AddTimerFormProps) {
             />
             <Label
               htmlFor="customDates"
-              className="ll:text-[11px] ll:font-medium ll:text-gray-300"
+              className="ll:text-[11px] ll:font-medium ll:text-foreground/80"
             >
               {t("addForm.customDates")}
             </Label>
@@ -298,7 +292,7 @@ export function AddTimerForm(props: AddTimerFormProps) {
                 />
               </div>
               {startDate && endDate && (
-                <p className="ll:text-[11px] ll:text-gray-400">
+                <p className="ll:text-[11px] ll:text-muted-foreground">
                   {t("addForm.windowLabel")}{" "}
                   {getSpawnWindowLabel(
                     startDate,
@@ -312,7 +306,7 @@ export function AddTimerForm(props: AddTimerFormProps) {
         </div>
       </ScrollArea>
 
-      <WindowFooter rowClassName="ll:justify-end ll:gap-1 ll:px-3">
+      <WindowFooter rowClassName="ll:justify-end">
         <Button
           type="button"
           size="xs"

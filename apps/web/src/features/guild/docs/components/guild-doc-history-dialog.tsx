@@ -12,7 +12,7 @@ import {
   type GuildDocumentHistoryResponseDtoItemsItem,
 } from "@lootlog/client/main";
 
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { MemberIdentity } from "@/components/common/member-identity";
 import { IconDialogHeader } from "@/components/common/icon-dialog-header";
 import { GuildDocEditor } from "../editor/guild-doc-editor";
@@ -136,7 +136,7 @@ export const GuildDocHistoryDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         aria-describedby={undefined}
-        className="flex h-[calc(100vh-2rem)] max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-none flex-col gap-0 overflow-hidden border-border/70 bg-background/95 p-0 shadow-2xl shadow-background/40  sm:max-w-none lg:h-[min(92vh,860px)] lg:max-h-[min(92vh,860px)] xl:w-[1200px]"
+        className="flex h-[calc(100vh-2rem)] max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-none flex-col gap-0 overflow-hidden p-0 sm:max-w-none lg:h-[min(92vh,860px)] lg:max-h-[min(92vh,860px)] xl:w-[1200px]"
       >
         <IconDialogHeader icon={FileClock} title={t("docs.history.title")} />
 
@@ -145,7 +145,7 @@ export const GuildDocHistoryDialog = ({
             <SectionCardHeader
               title={t("docs.history.versions")}
               actions={
-                <Badge variant="secondary" className="h-5 px-2 text-2xs">
+                <Badge variant="secondary" size="sm">
                   {historyItems.length}
                 </Badge>
               }
@@ -196,7 +196,7 @@ export const GuildDocHistoryDialog = ({
                     version: snapshotQuery.data.version,
                   })}
                   actions={
-                    <Badge variant="outline" className="bg-background">
+                    <Badge variant="outline">
                       {t(`docs.history.actions.${snapshotQuery.data.action}`)}
                     </Badge>
                   }

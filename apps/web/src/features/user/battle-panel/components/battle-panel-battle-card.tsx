@@ -53,7 +53,7 @@ export const BattlePanelBattleCard = ({
         <Checkbox
           checked={isChecked}
           aria-label={t("battlePanel.bulk.selectRow")}
-          className="relative z-10 size-5 border-muted-foreground/70 data-checked:border-primary"
+          className="relative z-10"
           onCheckedChange={(checked) =>
             onSelectionChange(battle.id, checked === true)
           }

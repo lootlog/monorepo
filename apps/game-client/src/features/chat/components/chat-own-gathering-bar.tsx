@@ -105,7 +105,7 @@ export function ChatOwnGatheringBar({
         <div className="ll:flex ll:min-w-0 ll:items-center ll:gap-1.5">
           <div className="ll:flex ll:min-w-0 ll:flex-1 ll:items-center ll:gap-1.5">
             <span
-              className="ll:min-w-0 ll:truncate ll:text-[12px] ll:font-semibold"
+              className="ll:min-w-0 ll:truncate ll:text-xs ll:font-semibold"
               title={room.npc?.name}
             >
               {room.npc?.name ?? t("gatherings.ownTitle")}
@@ -127,33 +127,33 @@ export function ChatOwnGatheringBar({
             <Button
               size="xs"
               variant="menu"
-              className="ll:w-full ll:justify-start ll:gap-2"
+              className="ll:w-full"
               onClick={() => openAndFocus("party-finder")}
             >
-              <Settings2 size={16} aria-hidden />
+              <Settings2 aria-hidden />
               {t("gatherings.manage")}
             </Button>
             <Button
               size="xs"
               variant="menu"
-              className="ll:mt-1 ll:w-full ll:justify-start ll:gap-2"
+              className="ll:w-full"
               title={t("gatherings.extendLabel")}
               disabled={extension.isPending}
               onClick={() => extension.mutate()}
             >
-              <TimerReset size={16} aria-hidden />
+              <TimerReset aria-hidden />
               {t("gatherings.extend")}
             </Button>
             <Button
               size="xs"
-              variant="menu"
-              className="ll:mt-1 ll:w-full ll:justify-start ll:gap-2 ll:text-red-400"
+              variant="menu-destructive"
+              className="ll:w-full"
               aria-label={actionLabel}
               aria-busy={cancellation.isPending}
               disabled={cancellation.isPending}
               onClick={() => cancellation.mutate()}
             >
-              <Ban size={14} aria-hidden />
+              <Ban aria-hidden />
               {actionLabel}
             </Button>
           </ChatGatheringMenu>

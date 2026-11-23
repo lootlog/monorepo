@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { BlogLayout } from "../components/blog/blog-layout";
+import { SiteLayout } from "@/components/site-layout";
 import { BlogGuideCard } from "../components/blog/blog-guide-card";
 import { blogPageHead, blogPosts } from "../config/blog";
 import translations from "../i18n/translations/landing.json";
@@ -19,7 +19,7 @@ function BlogIndex() {
   const { t } = useTranslation();
 
   return (
-    <BlogLayout>
+    <SiteLayout>
       <div className="landing-container">
         <header className="blog-index-header">
           <h1 className="landing-heading-display text-balance">
@@ -37,6 +37,6 @@ function BlogIndex() {
           ))}
         </ul>
       </div>
-    </BlogLayout>
+    </SiteLayout>
   );
 }

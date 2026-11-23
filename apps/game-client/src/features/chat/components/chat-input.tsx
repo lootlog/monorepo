@@ -75,7 +75,7 @@ export function ChatInput(props: ChatInputProps) {
       )}
     >
       {replyDraft && (
-        <div className="ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40">
+        <div className="ll:border-t ll:border-x-0 ll:border-b-0 ll:border-separator">
           <ChatReplyPreview
             variant="compact"
             reply={replyDraft}
@@ -99,9 +99,7 @@ export function ChatInput(props: ChatInputProps) {
         onSelect={handleSuggestionSelect}
       />
       {variant === "borderless" ? (
-        <WindowFooter rowClassName="ll:gap-1 ll:pl-1">
-          {composeRow}
-        </WindowFooter>
+        <WindowFooter rowClassName="ll:pl-1 ll:pr-0">{composeRow}</WindowFooter>
       ) : (
         <div className="ll:flex ll:items-center ll:gap-1">{composeRow}</div>
       )}

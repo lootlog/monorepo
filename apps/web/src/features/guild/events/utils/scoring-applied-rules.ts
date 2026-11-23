@@ -2,6 +2,7 @@ import {
   calculateRespawnProgressPercentage,
   evaluateEventScoring as evaluateSharedEventScoring,
   explainEventScoring,
+  type EventScoringAction,
   type EventScoringContext,
   type EventScoringExplanation,
   type EventScoringRules,
@@ -37,7 +38,7 @@ type ScoringSimulationAppliedRule = {
   ruleId: string;
   ruleName: string | null;
   points: number;
-  actionType: string;
+  actionType: EventScoringAction["type"];
 };
 
 export type ScoringSimulationResult = {

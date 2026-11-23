@@ -92,7 +92,7 @@
     "emptyDescription": "Nowe walki pojawią się tutaj automatycznie.",
     "noResults": "Brak pasujących walk",
     "noResultsDescription": "Zmień kryteria albo wyczyść filtry, aby zobaczyć więcej walk.",
-    "loadError": "Nie udało się pobrać walk",
+    "loadError": "Nie udało się wczytać walk.",
     "showingBattles": "Pokazano {{from}}-{{to}} z {{total}}",
     "openBattle": "Otwórz walkę",
     "columns": {
@@ -163,6 +163,7 @@
     "seasonTabs": "Sekcje sezonu",
     "seasonTitle": "Sezon {{range}}",
     "seasonNotFound": "Nie znaleziono tego sezonu",
+    "seasonNotFoundDescription": "Link może być nieaktualny albo sezon należy do innej postaci.",
     "backToSeasons": "Wróć do sezonów",
     "ratingValue": "{{value}} ratingu"
   },
@@ -260,7 +261,7 @@
       "unsupported": "Dostępne dla walk 1v1",
       "unsupportedDescription": "Historia z tym przeciwnikiem pojawia się tylko dla jednoznacznych walk 1v1.",
       "empty": "Brak wcześniejszych walk z tym przeciwnikiem.",
-      "error": "Nie udało się pobrać ostatnich walk.",
+      "error": "Nie udało się wczytać ostatnich walk.",
       "current": "Aktualna",
       "openDialog": "Pokaż ostatnie walki",
       "viewAll": "Wszystkie",
@@ -293,7 +294,7 @@
     "showingRecords": "Pokazano {{from}}-{{to}} z {{total}}",
     "empty": {
       "title": "Brak danych",
-      "errorTitle": "Nie udało się pobrać danych"
+      "errorTitle": "Nie udało się wczytać danych."
     },
     "combatProfile": {
       "cards": {

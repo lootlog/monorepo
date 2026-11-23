@@ -12,7 +12,7 @@ export const QuickAccessCollapsedBar: FC = () => {
       {locked ? null : (
         <span
           aria-hidden="true"
-          className="ll:flex ll:h-6 ll:w-4 ll:cursor-grab ll:items-center ll:justify-center ll:text-gray-400"
+          className="ll:flex ll:h-6 ll:w-4 ll:cursor-grab ll:items-center ll:justify-center ll:text-muted-foreground"
         >
           <GripVertical className="ll:size-4" />
         </span>

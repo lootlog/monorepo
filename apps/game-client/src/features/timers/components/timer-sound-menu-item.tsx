@@ -25,7 +25,7 @@ export const TimerSoundMenuItem: FC<TimerSoundMenuItemProps> = ({
 
   if (isTypeEnabled && !isSelected) {
     return (
-      <ContextMenuItem disabled className="ll:text-white">
+      <ContextMenuItem disabled className="ll:text-foreground">
         <Volume2 className="ll:h-4 ll:w-4 ll:mr-2" />
         {t("contextMenu.soundByType")}
       </ContextMenuItem>
@@ -43,7 +43,7 @@ export const TimerSoundMenuItem: FC<TimerSoundMenuItemProps> = ({
         })
       }
       data-active={isSelected}
-      className="ll:text-white ll:data-[active=true]:bg-primary ll:data-[active=true]:text-primary-foreground ll:data-[active=true]:data-[highlighted]:bg-primary/90 ll:data-[active=true]:hover:bg-primary/90 ll:data-[active=true]:focus-visible:bg-primary/90"
+      className="ll:text-foreground ll:data-[active=true]:bg-primary ll:data-[active=true]:text-primary-foreground ll:data-[active=true]:data-[highlighted]:bg-primary/90 ll:data-[active=true]:hover:bg-primary/90 ll:data-[active=true]:focus-visible:bg-primary/90"
     >
       {isSelected ? (
         <VolumeX className="ll:h-4 ll:w-4 ll:mr-2" />

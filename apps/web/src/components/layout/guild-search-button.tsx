@@ -2,7 +2,7 @@ import { Button } from "@lootlog/ui/components/button";
 import { Kbd } from "@lootlog/ui/components/kbd";
 import { Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { getPrimaryModifierKeyLabel } from "@/utils/platform/get-primary-modifier-key-label";
+import { getPrimaryModifierKeyLabel } from "@lootlog/ui/lib/primary-modifier-key";
 
 type GuildSearchButtonProps = {
   onClick: () => void;

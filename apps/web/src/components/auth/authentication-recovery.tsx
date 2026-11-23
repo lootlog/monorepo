@@ -1,8 +1,8 @@
 import { Button } from "@lootlog/ui/components/button";
 import { Alert, AlertDescription } from "@lootlog/ui/components/alert";
-import { PageHeader } from "@/components/common/page-header";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { SectionCardFooter } from "@/components/common/section-card/section-card-footer";
+import { PageHeader } from "@lootlog/ui/components/page-header";
+import { SectionCardContent } from "@lootlog/ui/components/section-card-content";
+import { SectionCardFooter } from "@lootlog/ui/components/section-card-footer";
 import { ShieldAlert } from "lucide-react";
 import { useTranslation } from "react-i18next";
 

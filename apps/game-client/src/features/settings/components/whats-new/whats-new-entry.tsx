@@ -1,3 +1,4 @@
+import { LINK_CLASS_NAME } from "@/components/ui/button";
 import {
   formatChangelogDay,
   type ChangelogEntryType,
@@ -5,6 +6,7 @@ import {
 } from "@lootlog/changelog/changelog";
 import { docsPageUrl } from "@lootlog/domain/public-sites";
 import { cn } from "cn";
+import { UnreadDot } from "@/components/unread-dot";
 import { useTranslation } from "react-i18next";
 
 type WhatsNewEntryProps = {
@@ -47,10 +49,7 @@ export const WhatsNewEntry = ({ item, isUnread }: WhatsNewEntryProps) => {
       <h4 className="ll:m-0 ll:flex ll:items-baseline ll:gap-1.5 ll:text-[13px] ll:font-semibold ll:leading-[18px] ll:text-pretty ll:text-foreground">
         {isUnread ? (
           <>
-            <span
-              aria-hidden="true"
-              className="ll:size-2 ll:shrink-0 ll:rounded-full ll:bg-amber-400"
-            />
+            <UnreadDot />
             <span className="ll:sr-only">{t("settings.whatsNew.unread")}</span>
           </>
         ) : null}
@@ -66,7 +65,10 @@ export const WhatsNewEntry = ({ item, isUnread }: WhatsNewEntryProps) => {
           href={docsPageUrl(item.docs)}
           target="_blank"
           rel="noopener noreferrer"
-          className="ll:self-start ll:text-xs ll:font-semibold ll:text-foreground ll:underline ll:underline-offset-2 ll:hover:text-primary"
+          className={cn(
+            "ll:self-start ll:text-xs ll:font-semibold",
+            LINK_CLASS_NAME,
+          )}
         >
           {t("settings.whatsNew.howItWorks")}
         </a>

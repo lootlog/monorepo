@@ -1,6 +1,11 @@
 import { NpcTile } from "@/components/tiles/npc-tile";
 import { cn } from "cn";
 import { Swords } from "lucide-react";
+import {
+  NPC_TYPE_SURFACE_CLASS,
+  NPC_TYPE_TEXT_CLASS,
+  npcTypeColorStyle,
+} from "@lootlog/ui/lib/npc-type-colors";
 
 type HeroAvatarProps = {
   hero: {
@@ -18,8 +23,10 @@ export const HeroAvatar = ({ hero, size = "default" }: HeroAvatarProps) => (
       size === "default" && "size-10 rounded-lg",
       size === "portrait" && "rounded-xl",
       size === "portrait" && (hero.npcIcon ? "h-16" : "size-16"),
-      !hero.npcIcon && "bg-yellow-500/10 ring-1 ring-inset ring-border/70",
+      !hero.npcIcon &&
+        cn(NPC_TYPE_SURFACE_CLASS, "ring-1 ring-inset ring-border/70"),
     )}
+    style={hero.npcIcon ? undefined : npcTypeColorStyle("HERO")}
   >
     {hero.npcIcon ? (
       <NpcTile
@@ -35,7 +42,7 @@ export const HeroAvatar = ({ hero, size = "default" }: HeroAvatarProps) => (
     ) : (
       <Swords
         className={cn(
-          "text-yellow-500",
+          NPC_TYPE_TEXT_CLASS,
           size === "portrait" ? "size-6" : "size-4",
         )}
         aria-hidden="true"

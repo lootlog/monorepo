@@ -12,7 +12,7 @@ import { SearchX } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { BandSection } from "@/components/common/band-section";
 import { ClearFiltersButton } from "@/components/common/clear-filters-button";
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { FilterBar } from "@/components/common/filter-bar";
 import type { FilterChip } from "@/components/common/filter-chip-list";
 import {
@@ -22,7 +22,7 @@ import {
 import { useWhatsNew } from "@/components/whats-new/use-whats-new";
 import { useWhatsNewFilters } from "@/components/whats-new/use-whats-new-filters";
 import { WhatsNewEntry } from "@/components/whats-new/whats-new-entry";
-import { KillStatsSearch } from "@/features/kills/components/kill-stats-search";
+import { KillStatsSearch } from "@/components/common/kill-stats-search";
 import { WhatsNewFilterFields } from "./whats-new-filter-fields";
 
 export const WhatsNew = () => {

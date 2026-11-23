@@ -1,30 +1,29 @@
-import { useMaxWidth } from "@lootlog/ui/hooks/use-max-width";
-import { useLocalStorage } from "usehooks-ts";
+import { useLocalStorage, useMediaQuery } from "usehooks-ts";
+import { RESULTS_TABLE_MEDIA_QUERY } from "@/components/common/page-sticky-table-header";
+import { FilterBar } from "@/components/common/filter-bar";
+import { InlineSearchFieldSkeleton } from "@/components/common/inline-search-field-skeleton";
 import { useViewMode } from "@/hooks/use-view-mode";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { cn } from "cn";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
-import { ListToolbarSkeleton } from "@/components/common/list-toolbar-skeleton";
 import { LootFiltersRailSkeleton } from "./components/loots-filters/loot-filters-rail-skeleton";
 import { LootsFiltersSidebarSkeleton } from "./components/loots-filters/loots-filters-sidebar-skeleton";
 import { LootsListSkeleton } from "./components/loots-list/loots-list-skeleton";
 import {
-  LOOTS_COMPACT_FILTERS_BREAKPOINT,
   LOOTS_FILTERS_OPEN_KEY,
-  LOOTS_GRID_MEDIA_QUERY,
   LOOTS_VIEW_MODE_KEY,
 } from "./loots-list-layout";
 
 export const LootsListPageSkeleton = () => {
   const isMobile = useIsMobile();
-  const usesOverlayFilters = useMaxWidth(LOOTS_COMPACT_FILTERS_BREAKPOINT);
+  const usesOverlayFilters = !useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
   const [isFiltersOpen] = useLocalStorage(LOOTS_FILTERS_OPEN_KEY, true);
   const isPanelDocked = !usesOverlayFilters && isFiltersOpen;
 
   const { viewMode, canChooseViewMode } = useViewMode(
     LOOTS_VIEW_MODE_KEY,
     "grid",
-    LOOTS_GRID_MEDIA_QUERY,
+    RESULTS_TABLE_MEDIA_QUERY,
   );
 
   return (
@@ -34,9 +33,9 @@ export const LootsListPageSkeleton = () => {
     >
       <div className="flex flex-1 overflow-hidden">
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-          <ListToolbarSkeleton>
+          <FilterBar search={<InlineSearchFieldSkeleton />}>
             {canChooseViewMode && <Skeleton className="h-8 w-16 rounded-lg" />}
-          </ListToolbarSkeleton>
+          </FilterBar>
           <LootsListSkeleton viewMode={viewMode} />
         </div>
         {!isMobile && (

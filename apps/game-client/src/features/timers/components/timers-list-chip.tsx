@@ -22,7 +22,7 @@ export const TimersListChip: FC<TimersListChipProps> = ({
     variant="outline"
     pressed={pressed}
     title={title}
-    className="ll:min-w-0 ll:max-w-40 ll:text-muted-foreground ll:data-pressed:border-gray-400/60 ll:data-pressed:text-white"
+    className="ll:min-w-0 ll:max-w-40 ll:text-muted-foreground ll:data-pressed:border-separator ll:data-pressed:text-foreground"
     onPressedChange={onPressedChange}
     onContextMenu={
       onContextMenu

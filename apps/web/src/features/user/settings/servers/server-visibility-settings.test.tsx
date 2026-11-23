@@ -50,7 +50,11 @@ await initializeTestTranslations({
   "settings.servers.hiddenInGameClient": "Ukryty w grze",
   "settings.servers.visibleInGameClient": "Widoczny w grze",
   "settings.servers.noResults": "Brak wyników",
+  "settings.servers.visibilityFilterLabel": "Widoczność w grze",
 });
+
+const openVisibilityFilter = () =>
+  fireEvent.click(screen.getByRole("combobox", { name: /^Widoczność w grze/ }));
 
 describe("ServerVisibilitySettings", () => {
   afterEach(cleanup);
@@ -107,11 +111,14 @@ describe("ServerVisibilitySettings", () => {
     );
   });
 
-  it("renders ordered guilds and visibility counts", () => {
+  it("renders ordered guilds and visibility counts", async () => {
     renderSettings();
 
-    expect(screen.getByRole("button", { name: "Widoczne 2" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Ukryte 1" })).toBeTruthy();
+    openVisibilityFilter();
+    expect(
+      await screen.findByRole("option", { name: /Widoczne\s*2/ }),
+    ).toBeTruthy();
+    expect(screen.getByRole("option", { name: /Ukryte\s*1/ })).toBeTruthy();
     expect(
       screen
         .getAllByRole("switch")
@@ -126,11 +133,17 @@ describe("ServerVisibilitySettings", () => {
   it("filters, saves snapshots and preserves unavailable hidden IDs", async () => {
     renderSettings();
 
-    fireEvent.click(screen.getByRole("button", { name: "Ukryte 1" }));
+    openVisibilityFilter();
+    fireEvent.click(await screen.findByRole("option", { name: /Ukryte\s*1/ }));
+    expect(
+      screen.getByRole("combobox", { name: "Widoczność w grze: Ukryte" }),
+    ).toBeTruthy();
     expect(screen.getByText("Beta")).toBeTruthy();
     expect(screen.queryByText("Alpha")).toBeNull();
 
-    fireEvent.click(screen.getByRole("button", { name: "Wszystkie 3" }));
+    openVisibilityFilter();
+    fireEvent.click(await screen.findByRole("option", { name: /Ukryte\s*1/ }));
+    expect(screen.getByText("Alpha")).toBeTruthy();
     fireEvent.change(screen.getByPlaceholderText("Szukaj serwera"), {
       target: { value: "alpha" },
     });

@@ -29,3 +29,8 @@ export const readPage = (value: {} | null | undefined): number | undefined => {
 
   return page === undefined ? readPageNumber(value) : Number(page);
 };
+
+export const toggleSearchValue = <T extends string>(
+  current: T | undefined,
+  next: T,
+) => (next === current ? undefined : next);

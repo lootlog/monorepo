@@ -8,6 +8,7 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { cn } from "cn";
+import { BATTLE_SURFACE_COLORS } from "@/components/battle/utils/battle-color-palette";
 import { formatBattleTeamNames } from "@/components/battle/utils/battle-result-presentation";
 
 type BattlePanelTeamSummaryProps = {
@@ -29,7 +30,7 @@ const renderSprite = (
     key={warrior.originalId}
     className={cn(
       "relative h-9 w-6 shrink-0 rounded-sm",
-      isUserWarrior && "bg-green-500/10 ring-1 ring-inset ring-green-500/40",
+      isUserWarrior && BATTLE_SURFACE_COLORS.team.userWarrior,
       isInGroup && "z-1",
     )}
   >

@@ -3,7 +3,7 @@ import {
   RESULTS_TABLE_MEDIA_QUERY,
 } from "@/components/common/page-sticky-table-header";
 import { useMediaQuery } from "usehooks-ts";
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { QueryErrorNotice } from "@/components/common/query-error-notice";
 import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 import { useTranslation } from "react-i18next";
@@ -211,6 +211,7 @@ export const EventKillsTable = (props: EventKillsTableProps) => {
     if (hasError && kills.length === 0) {
       return (
         <EmptyState
+          compact
           icon={CircleAlert}
           title={t("events.error")}
           action={
@@ -221,7 +222,9 @@ export const EventKillsTable = (props: EventKillsTableProps) => {
     }
 
     if (kills.length === 0) {
-      return <EmptyState icon={Skull} title={t("events.kills.noKills")} />;
+      return (
+        <EmptyState compact icon={Skull} title={t("events.kills.noKills")} />
+      );
     }
 
     return killsTable;

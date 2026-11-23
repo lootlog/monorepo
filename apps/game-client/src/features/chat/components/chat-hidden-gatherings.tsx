@@ -5,11 +5,16 @@ import type { PartyGatheringSummary } from "@lootlog/schema/party-ready-room";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/icon-button";
 import {
+  SegmentedControl,
+  SegmentedControlItem,
+} from "@/components/ui/segmented-control";
+import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { ChatGatheringListItem } from "./chat-gathering-list-item";
+import { EmptyState } from "@/components/empty-state";
 
 export function ChatHiddenGatherings({
   gatherings,
@@ -63,9 +68,9 @@ export function ChatHiddenGatherings({
         side="top"
         align="end"
         aria-label={t("gatherings.listTitle")}
-        className="ll:w-[240px] ll:max-w-[calc(100vw-32px)] ll:overflow-hidden ll:rounded-[7px] ll:border-gray-400/40 ll:bg-[#130d1a] ll:p-0 ll:text-gray-100"
+        className="ll:w-[240px] ll:max-w-[calc(100vw-32px)] ll:overflow-hidden ll:p-0"
       >
-        <div className="ll:flex ll:items-center ll:justify-between ll:px-2 ll:py-1 ll:text-[12px]">
+        <div className="ll:flex ll:items-center ll:justify-between ll:px-2 ll:py-1 ll:text-xs">
           <strong>{t("gatherings.listTitle")}</strong>
           <IconButton
             label={t("gatherings.closeList")}
@@ -74,22 +79,19 @@ export function ChatHiddenGatherings({
             <X aria-hidden />
           </IconButton>
         </div>
-        <div className="ll:flex ll:border-x-0 ll:border-y ll:border-gray-400/40">
-          {[false, true].map((isHidden) => (
-            <Button
-              size="xs"
-              key={String(isHidden)}
-              variant="ghost"
-              aria-pressed={hidden === isHidden}
-              className="ll:flex-1 ll:h-7 ll:rounded-none ll:border-0 ll:text-[11px] ll:aria-pressed:bg-primary ll:aria-pressed:text-primary-foreground ll:aria-pressed:hover:bg-primary/90 ll:aria-pressed:hover:text-primary-foreground"
-              onClick={() => setHidden(isHidden)}
-            >
-              {t(isHidden ? "gatherings.hiddenTab" : "gatherings.activeTab", {
-                count: isHidden ? gatherings.length : activeGatherings.length,
-              })}
-            </Button>
-          ))}
-        </div>
+        <SegmentedControl
+          value={hidden ? "hidden" : "active"}
+          onValueChange={(next) => setHidden(next === "hidden")}
+          aria-label={t("gatherings.listTitle")}
+          className="ll:border-x-0 ll:border-y ll:border-separator"
+        >
+          <SegmentedControlItem value="active">
+            {t("gatherings.activeTab", { count: activeGatherings.length })}
+          </SegmentedControlItem>
+          <SegmentedControlItem value="hidden">
+            {t("gatherings.hiddenTab", { count: gatherings.length })}
+          </SegmentedControlItem>
+        </SegmentedControl>
         <ul className="ll:m-0 ll:max-h-48 ll:list-none ll:overflow-y-auto ll:p-0">
           {visible.map((gathering) => (
             <ChatGatheringListItem
@@ -111,9 +113,7 @@ export function ChatHiddenGatherings({
           ))}
         </ul>
         {visible.length === 0 && (
-          <p className="ll:m-0 ll:p-3 ll:text-[11px] ll:text-muted-foreground">
-            {t("gatherings.emptyList")}
-          </p>
+          <EmptyState description={t("gatherings.emptyList")} />
         )}
       </PopoverContent>
     </Popover>

@@ -1,8 +1,8 @@
 import { AlertCircle, Loader2, RotateCcw, WifiOff } from "lucide-react";
 import type { FC, ReactNode } from "react";
-import { cn } from "cn";
 import { useDelayedVisibility } from "@/hooks/ui/use-delayed-visibility";
 import { IconButton } from "@/components/ui/icon-button";
+import { Notice } from "@/components/notice";
 
 type AsyncStatusIndicatorProps = {
   active: boolean;
@@ -15,6 +15,12 @@ type AsyncStatusIndicatorProps = {
   className?: string;
   layout?: "inline" | "strip";
 };
+
+const ASYNC_STATUS_TONE = {
+  error: "destructive",
+  loading: "neutral",
+  warning: "warning",
+} as const;
 
 export const AsyncStatusIndicator: FC<AsyncStatusIndicatorProps> = ({
   active,
@@ -35,42 +41,32 @@ export const AsyncStatusIndicator: FC<AsyncStatusIndicatorProps> = ({
   }
 
   return (
-    <div
+    <Notice
       aria-live="polite"
-      className={cn(
-        "ll:min-h-5 ll:items-center ll:gap-1.5 ll:rounded-sm ll:border ll:px-2 ll:py-0.5 ll:text-[10px] ll:leading-none ll:shadow-sm",
-        layout === "strip"
-          ? "ll:-mt-px ll:flex ll:h-7 ll:w-full ll:rounded-none ll:border-x-0 ll:shadow-none"
-          : "ll:inline-flex",
-        kind === "error"
-          ? "ll:border-red-500/50 ll:bg-red-950/85 ll:text-red-200"
-          : kind === "warning"
-            ? "ll:border-amber-500/50 ll:bg-amber-950/85 ll:text-amber-100"
-            : "ll:border-gray-600 ll:bg-gray-900/85 ll:text-gray-200",
-        className,
-      )}
+      className={className}
+      icon={
+        kind === "loading" ? (
+          <Loader2 className="ll:animate-spin ll:motion-reduce:animate-none" />
+        ) : kind === "warning" ? (
+          <WifiOff />
+        ) : (
+          <AlertCircle />
+        )
+      }
+      layout={layout}
       role="status"
+      tone={ASYNC_STATUS_TONE[kind]}
     >
-      {kind === "loading" ? (
-        <Loader2
-          aria-hidden
-          className="ll:size-3 ll:animate-spin ll:motion-reduce:animate-none"
-        />
-      ) : kind === "warning" ? (
-        <WifiOff aria-hidden className="ll:size-3" />
-      ) : (
-        <AlertCircle aria-hidden className="ll:size-3" />
-      )}
-      <span className="ll:min-w-0 ll:flex-1">{label}</span>
+      <span className="ll:min-w-0 ll:flex-1 ll:truncate">{label}</span>
       {onRetry && retryLabel ? (
         <IconButton
           label={retryLabel}
           className="ll:-my-1.5 ll:-mr-1.5"
           onClick={onRetry}
         >
-          {retryIcon ?? <RotateCcw aria-hidden className="ll:size-3" />}
+          {retryIcon ?? <RotateCcw aria-hidden />}
         </IconButton>
       ) : null}
-    </div>
+    </Notice>
   );
 };

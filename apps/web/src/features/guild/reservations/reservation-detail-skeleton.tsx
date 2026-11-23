@@ -1,4 +1,3 @@
-import { LoadingSlot } from "@/components/common/loading-slot";
 import { SkeletonLine } from "@/components/common/skeleton-line";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { cn } from "cn";
@@ -8,12 +7,20 @@ import { TopBarItemGroup } from "@/components/layout/top-bar-item-group";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { ScheduleBar } from "./schedule/schedule-bar";
 import { useCompactScheduleLayout } from "./schedule/use-compact-schedule-layout";
+import {
+  DAYS,
+  HEADER_HEIGHT,
+  HOURS,
+  LABEL_COLUMN_WIDTH,
+  MIN_ROW_HEIGHT,
+} from "./schedule/constants";
 
 export const ReservationDetailSkeleton = () => {
   const { t } = useTranslation();
   const { containerRef, isCompact } = useCompactScheduleLayout();
   const isMobile = useIsMobile();
   const iconButton = isCompact ? "size-10" : "size-8";
+  const dayCount = isCompact ? 1 : DAYS.length;
 
   const actionToolbar = isCompact ? (
     <HeaderSlotPortal slot="actions">
@@ -69,9 +76,36 @@ export const ReservationDetailSkeleton = () => {
 
       {isCompact && actionToolbar}
 
-      <div className="flex justify-center py-16" role="status">
-        <LoadingSlot size="small" />
-        <span className="sr-only">{t("common.loading")}</span>
+      <div
+        role="status"
+        aria-label={t("common.loading")}
+        className="grid min-h-0 w-full flex-1 overflow-hidden"
+        style={{
+          gridTemplateRows: `${HEADER_HEIGHT}px repeat(${HOURS.length}, ${MIN_ROW_HEIGHT}px)`,
+          gridTemplateColumns: `${LABEL_COLUMN_WIDTH}px repeat(${dayCount}, minmax(0, 1fr))`,
+        }}
+      >
+        <div className="border-r border-b" />
+        {Array.from({ length: dayCount }, (_, dayIndex) => (
+          <div
+            key={dayIndex}
+            className="flex flex-col items-center justify-center gap-1.5 border-r border-b"
+          >
+            <SkeletonLine className="h-3 w-6" />
+            <Skeleton className="size-7 rounded-full" />
+          </div>
+        ))}
+        {HOURS.flatMap((hour) => [
+          <div
+            key={hour}
+            className="flex justify-end border-r border-b pt-1 pr-2"
+          >
+            <SkeletonLine className="h-2.5 w-7" />
+          </div>,
+          ...Array.from({ length: dayCount }, (_, dayIndex) => (
+            <div key={`${hour}-${dayIndex}`} className="border-r border-b" />
+          )),
+        ])}
       </div>
     </div>
   );

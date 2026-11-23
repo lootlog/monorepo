@@ -1,5 +1,6 @@
-import { StatsTile, StatsTileGrid } from "@/components/common/stats-tile";
-import { StatsTileNumber } from "@/components/common/stats-tile-number";
+import { StatsTile } from "@lootlog/ui/components/stats-tile";
+import { StatsTileGrid } from "@lootlog/ui/components/stats-tile-grid";
+import { StatsTileNumber } from "@lootlog/ui/components/stats-tile-number";
 import { formatPoints } from "../../utils/format-points";
 import { useTranslation } from "react-i18next";
 import { Clock, Moon, Sparkles, Swords } from "lucide-react";
@@ -44,7 +45,7 @@ export const MemberSummaryStrip = ({
     contextStats.totalKills > 0 ? 100 - contextStats.avgAfkPercentage : null;
 
   return (
-    <StatsTileGrid className="grid-cols-2 xl:grid-cols-4">
+    <StatsTileGrid className="sm:grid-cols-2 xl:grid-cols-4">
       <StatsTile
         icon={Swords}
         label={t("events.kills.kpiKills")}

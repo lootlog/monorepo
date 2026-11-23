@@ -9,7 +9,8 @@ import {
 } from "@lootlog/domain/item-upgrade";
 import { ArticleSection } from "@/components/article/article-section";
 import { ChoiceCard } from "@/components/common/choice-card";
-import { StatTiles } from "@/components/common/stat-tiles";
+import { StatsTile } from "@lootlog/ui/components/stats-tile";
+import { StatsTileGrid } from "@lootlog/ui/components/stats-tile-grid";
 import { SymbolRecipe } from "@/components/sockets/symbol-recipe";
 import { useSocketOptions } from "@/hooks/use-socket-items";
 import { t } from "@/i18n/messages";
@@ -103,20 +104,17 @@ export function ItemSocketSection({
 
       {chosen ? (
         <div className="flex flex-col gap-4">
-          <StatTiles
-            className="grid-cols-2"
-            tiles={[
-              {
-                label: t("socket.symbol"),
-                value: t(`legendaryBonus.${chosen.bonus}`),
-                hint: t("socket.bonusLevel", { level: bonusLevel }),
-              },
-              {
-                label: t("socket.fusionCost"),
-                value: formatGold(fusionGoldCost(chosen.tier)),
-              },
-            ]}
-          />
+          <StatsTileGrid framed aria-live="polite" className="sm:grid-cols-2">
+            <StatsTile
+              label={t("socket.symbol")}
+              value={t(`legendaryBonus.${chosen.bonus}`)}
+              detail={t("socket.bonusLevel", { level: bonusLevel })}
+            />
+            <StatsTile
+              label={t("socket.fusionCost")}
+              value={formatGold(fusionGoldCost(chosen.tier))}
+            />
+          </StatsTileGrid>
           <section
             aria-labelledby="item-socket-recipe"
             className="flex flex-col gap-3"

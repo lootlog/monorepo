@@ -1,3 +1,4 @@
+import { cn } from "cn";
 import { ChatGatheringJoinButton } from "./chat-gathering-join-button";
 import { ChatGatheringCardView } from "./chat-gathering-card-view";
 import { ChatOwnGatheringBar } from "./chat-own-gathering-bar";
@@ -62,7 +63,7 @@ export function ChatAvailableGatherings({
   const currentRoom = room && (
     <li
       key={room.notificationId}
-      className="ll:min-w-0 ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40 ll:first:border-t-0"
+      className="ll:min-w-0 ll:border-t ll:border-x-0 ll:border-b-0 ll:border-separator ll:first:border-t-0"
     >
       <div className={organizer ? "ll:px-1.5 ll:py-0.5" : ""}>
         <ChatOwnGatheringBar
@@ -78,8 +79,10 @@ export function ChatAvailableGatherings({
 
   return (
     <ul
-      className="ll:m-0 ll:flex ll:min-w-0 ll:max-h-64 ll:flex-col ll:list-none ll:overflow-auto ll:p-0"
-      data-organizer={organizer}
+      className={cn(
+        "ll:m-0 ll:flex ll:min-w-0 ll:max-h-64 ll:flex-col ll:list-none ll:overflow-auto ll:p-0",
+        organizer && "ll:bg-gathering",
+      )}
     >
       {!organizer && currentRoom}
       {(expanded
@@ -99,7 +102,7 @@ export function ChatAvailableGatherings({
         return (
           <li
             key={candidate.notificationId}
-            className="ll:min-w-0 ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40 ll:first:border-t-0"
+            className="ll:min-w-0 ll:border-t ll:border-x-0 ll:border-b-0 ll:border-separator ll:first:border-t-0"
           >
             <ChatGatheringCardView
               organizer={getSummaryOrganizer(candidate)}
@@ -134,7 +137,7 @@ export function ChatAvailableGatherings({
             size="xs"
             type="button"
             variant="ghost"
-            className="ll:w-full ll:h-7 ll:gap-1 ll:rounded-none ll:border-0 ll:border-t ll:border-gray-400/20 ll:text-[10px]"
+            className="ll:w-full ll:h-7 ll:gap-1 ll:rounded-none ll:border-0 ll:border-t ll:border-separator-subtle ll:text-[10px]"
             aria-expanded={expanded}
             onClick={() => setExpanded(!expanded)}
           >

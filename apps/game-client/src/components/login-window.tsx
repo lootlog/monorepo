@@ -5,7 +5,7 @@ import { LOOTLOG_APP_URL } from "@/config/app";
 import { DraggableWindow } from "@/components/draggable-window/draggable-window";
 import { WindowFooter } from "@/components/draggable-window/window-footer";
 import { WindowLauncher } from "@/components/window-launcher";
-import { Button } from "@/components/ui/button";
+import { Button, LINK_CLASS_NAME } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { detectCookieBrowser } from "@/hooks/auth/detect-cookie-browser";
 import { useWindowViewport } from "@/hooks/ui/window-viewport";
@@ -73,7 +73,7 @@ export function LoginWindow() {
           <div className="ll:flex ll:min-h-0 ll:flex-1 ll:flex-col ll:gap-2 ll:overflow-auto ll:p-3">
             <p
               role="status"
-              className="ll:m-0 ll:flex ll:items-start ll:gap-1.5 ll:leading-relaxed ll:text-gray-200"
+              className="ll:m-0 ll:flex ll:items-start ll:gap-1.5 ll:leading-relaxed ll:text-foreground/90"
             >
               {busy ? (
                 <Spinner className="ll:mt-0.5 ll:size-3.5 ll:shrink-0" />
@@ -82,12 +82,12 @@ export function LoginWindow() {
             </p>
             {state === "cookiesBlocked" ? (
               <>
-                <p className="ll:m-0 ll:leading-relaxed ll:text-gray-300">
+                <p className="ll:m-0 ll:leading-relaxed ll:text-foreground/80">
                   {t(`auth.cookieGuidance.${detectCookieBrowser()}`)}
                 </p>
-                <p className="ll:m-0 ll:leading-relaxed ll:text-gray-300">
+                <p className="ll:m-0 ll:leading-relaxed ll:text-foreground/80">
                   <a
-                    className="ll:text-blue-300 ll:underline ll:underline-offset-2 ll:focus-visible:outline-2"
+                    className={LINK_CLASS_NAME}
                     href={`${LOOTLOG_APP_URL}/docs/faq`}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -98,7 +98,7 @@ export function LoginWindow() {
               </>
             ) : null}
           </div>
-          <WindowFooter rowClassName="ll:justify-end ll:gap-1 ll:px-3">
+          <WindowFooter rowClassName="ll:justify-end">
             <Button
               variant="secondary"
               size="xs"

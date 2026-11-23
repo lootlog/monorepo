@@ -60,7 +60,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
             onClick={onClear}
             className="ll:absolute ll:end-0.5 ll:top-1/2 ll:-translate-y-1/2"
           >
-            <X strokeWidth={1.5} aria-hidden="true" />
+            <X aria-hidden="true" />
           </IconButton>
         ) : null}
       </div>

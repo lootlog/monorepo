@@ -1,8 +1,10 @@
-import { EmptyState } from "@/components/common/empty-state";
-import { ListToolbar } from "@/components/common/list-toolbar";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
+import { ResultsSurface } from "@/components/common/results-surface";
+import { KillStatsSearch } from "@/components/common/kill-stats-search";
+import { ClearFiltersButton } from "@/components/common/clear-filters-button";
 import { ConfirmDialog } from "@lootlog/ui/components/confirm-dialog";
 import { Button } from "@lootlog/ui/components/button";
-import { Archive, FileText, FileX2, Plus, SearchX } from "lucide-react";
+import { AlertCircle, Archive, FileText, Plus, SearchX } from "lucide-react";
 
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 
@@ -86,6 +88,25 @@ export const GuildDocsListPage = () => {
   );
 
   const renderContent = () => {
+    if (documentsQuery.isError) {
+      return (
+        <div className="p-3">
+          <EmptyState
+            fill
+            icon={AlertCircle}
+            title={t("docs.list.loadError")}
+            description={t("docs.list.loadErrorDescription")}
+            action={
+              <RetryButton
+                onRetry={() => documentsQuery.refetch()}
+                isRetrying={documentsQuery.isFetching}
+              />
+            }
+          />
+        </div>
+      );
+    }
+
     if (documentsQuery.isLoading) {
       return (
         <div aria-hidden="true">
@@ -125,15 +146,7 @@ export const GuildDocsListPage = () => {
             icon={SearchX}
             title={t("docs.list.emptySearchTitle")}
             description={t("docs.list.emptySearchDescription")}
-            action={
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setSearchValue("")}
-              >
-                {t("docs.list.clearSearch")}
-              </Button>
-            }
+            action={<ClearFiltersButton onClear={() => setSearchValue("")} />}
           />
         </div>
       );
@@ -158,36 +171,21 @@ export const GuildDocsListPage = () => {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <h1 className="sr-only">{t("docs.list.title")}</h1>
-      {documentsQuery.isError ? (
-        <div className="p-3">
-          <EmptyState
-            fill
-            icon={FileX2}
-            title={t("docs.list.loadError")}
-            description={t("docs.list.loadErrorDescription")}
-            action={
-              <RetryButton
-                onRetry={() => documentsQuery.refetch()}
-                isRetrying={documentsQuery.isFetching}
-              />
-            }
-          />
-        </div>
-      ) : (
-        <ScrollArea data-under-top-bar className="min-h-0 flex-1">
-          <ListToolbar
-            search={searchValue}
-            onSearchChange={setSearchValue}
-            placeholder={t("docs.list.filterPlaceholder")}
-            label={t("docs.list.filterLabel")}
-            clearLabel={t("docs.list.clearSearch")}
-            disabled={documentsQuery.isLoading}
-          >
-            {toolbarActions}
-          </ListToolbar>
+      <ScrollArea data-under-top-bar className="min-h-0 flex-1">
+        <ResultsSurface
+          search={
+            <KillStatsSearch
+              value={searchValue}
+              placeholder={t("docs.list.filterPlaceholder")}
+              onChange={setSearchValue}
+            />
+          }
+          filters={toolbarActions}
+          filtersLabel={t("docs.list.filterLabel")}
+        >
           {renderContent()}
-        </ScrollArea>
-      )}
+        </ResultsSurface>
+      </ScrollArea>
 
       <GuildDocCreateDialog
         canCreate={canCreate}

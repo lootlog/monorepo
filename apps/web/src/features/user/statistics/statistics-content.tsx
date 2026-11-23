@@ -1,7 +1,7 @@
 import type { UserKillAnalyticsResponseDtoOutput } from "@lootlog/client/main";
 import { useTranslation } from "react-i18next";
 import { BarChart3 } from "lucide-react";
-import { EmptyState } from "@/components/common/empty-state";
+import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { StatisticsOverview } from "./statistics-overview";
 import { StatisticsActivity } from "./statistics-activity";
 import { StatisticsMonsters } from "./statistics-monsters";

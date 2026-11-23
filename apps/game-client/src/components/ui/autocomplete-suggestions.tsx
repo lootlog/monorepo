@@ -1,15 +1,28 @@
 import type React from "react";
 import { useTranslation } from "react-i18next";
 import { Loader2, RotateCcw } from "lucide-react";
+import { cn } from "cn";
 import { useDelayedVisibility } from "@/hooks/ui/use-delayed-visibility";
 import { IconButton } from "@/components/ui/icon-button";
+
+export const SUGGESTIONS_PANEL_CLASS_NAME =
+  "ll:z-50 ll:w-full ll:border ll:border-solid ll:border-separator ll:bg-black/95";
+
+export const SUGGESTIONS_STATUS_CLASS_NAME =
+  "ll:m-0 ll:flex ll:items-center ll:justify-center ll:gap-2 ll:px-3 ll:py-2 ll:text-center ll:text-xs ll:text-muted-foreground";
+
+export const getSuggestionOptionClassName = (isSelected: boolean) =>
+  cn(
+    "ll:w-full ll:appearance-none ll:rounded-none ll:border-0 ll:text-left ll:text-xs ll:text-foreground ll:focus-visible:outline-2 ll:focus-visible:-outline-offset-2 ll:focus-visible:outline-ring ll-custom-cursor-pointer",
+    isSelected ? "ll:bg-primary/15" : "ll:bg-transparent ll:hover:bg-white/5",
+  );
 
 interface AutocompleteSuggestionsProps<T> {
   items: T[];
   isOpen: boolean;
   onSelect: (item: T) => void;
   selectedIndex: number;
-  renderItem: (item: T, index: number, isSelected: boolean) => React.ReactNode;
+  renderItem: (item: T) => React.ReactNode;
   keyExtractor: (item: T) => string | number;
   noResultsMessage?: string;
   showNoResults?: boolean;
@@ -29,7 +42,7 @@ export const AutocompleteSuggestions = <T,>({
   keyExtractor,
   noResultsMessage,
   showNoResults = false,
-  className = "",
+  className,
   errorMessage,
   isLoading = false,
   loadingMessage,
@@ -39,8 +52,11 @@ export const AutocompleteSuggestions = <T,>({
   const showLoading = useDelayedVisibility(isLoading);
   const hasResults = items.length > 0;
 
-  const resolvedNoResultsMessage =
-    noResultsMessage ?? t("autocomplete.noResults");
+  const panelClassName = cn(
+    SUGGESTIONS_PANEL_CLASS_NAME,
+    "ll:absolute ll:mt-1 ll:rounded-sm",
+    className,
+  );
 
   if (isLoading) {
     if (!showLoading) {
@@ -49,7 +65,7 @@ export const AutocompleteSuggestions = <T,>({
 
     return (
       <div
-        className={`ll:absolute ll:z-50 ll:mt-1 ll:flex ll:w-full ll:items-center ll:justify-center ll:gap-2 ll:rounded-sm ll:border ll:border-border ll:bg-black/95 ll:px-3 ll:py-2 ll:text-xs ll:text-muted-foreground ${className}`}
+        className={cn(panelClassName, SUGGESTIONS_STATUS_CLASS_NAME)}
         role="status"
       >
         <Loader2
@@ -64,7 +80,11 @@ export const AutocompleteSuggestions = <T,>({
   if (errorMessage) {
     return (
       <div
-        className={`ll:absolute ll:z-50 ll:mt-1 ll:flex ll:w-full ll:items-center ll:justify-center ll:gap-2 ll:rounded-sm ll:border ll:border-red-500/60 ll:bg-black/95 ll:px-3 ll:py-2 ll:text-xs ll:text-red-200 ${className}`}
+        className={cn(
+          panelClassName,
+          SUGGESTIONS_STATUS_CLASS_NAME,
+          "ll:border-destructive/60 ll:text-destructive",
+        )}
         role="alert"
       >
         <span>{errorMessage}</span>
@@ -83,11 +103,9 @@ export const AutocompleteSuggestions = <T,>({
 
   if (showNoResults && !hasResults) {
     return (
-      <div
-        className={`ll:absolute ll:z-50 ll:w-full ll:mt-1 ll:bg-black/95 ll:border ll:border-border ll:rounded-sm ${className}`}
-      >
-        <p className="ll:text-xs ll:text-muted-foreground ll:text-center ll:px-3 ll:py-2">
-          {resolvedNoResultsMessage}
+      <div className={panelClassName}>
+        <p className={SUGGESTIONS_STATUS_CLASS_NAME}>
+          {noResultsMessage ?? t("autocomplete.noResults")}
         </p>
       </div>
     );
@@ -95,23 +113,20 @@ export const AutocompleteSuggestions = <T,>({
 
   if (isOpen && hasResults) {
     return (
-      <div
-        className={`ll:absolute ll:z-50 ll:w-full ll:mt-1 ll:bg-black/95 ll:border ll:border-border ll:rounded-sm ll:max-h-48 ll:overflow-y-auto ${className}`}
-      >
-        {items.map((item, index) => {
-          const isSelected = index === selectedIndex;
-
-          return (
-            <button
-              type="button"
-              key={keyExtractor(item)}
-              onClick={() => onSelect(item)}
-              className="ll:cursor-pointer ll:block ll:w-full ll:border-0 ll:bg-transparent ll:p-0 ll:text-left ll:text-inherit ll:focus-visible:outline-2 ll:focus-visible:outline-ring"
-            >
-              {renderItem(item, index, isSelected)}
-            </button>
-          );
-        })}
+      <div className={cn(panelClassName, "ll:max-h-48 ll:overflow-y-auto")}>
+        {items.map((item, index) => (
+          <button
+            type="button"
+            key={keyExtractor(item)}
+            onClick={() => onSelect(item)}
+            className={cn(
+              getSuggestionOptionClassName(index === selectedIndex),
+              "ll:block ll:border-b ll:border-solid ll:border-separator-subtle ll:px-2 ll:py-1.5 ll:last:border-b-0",
+            )}
+          >
+            {renderItem(item)}
+          </button>
+        ))}
       </div>
     );
   }

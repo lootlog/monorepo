@@ -3,6 +3,8 @@ import { Link } from "@tanstack/react-router";
 import { OrganizationStatusBadge } from "@/components/organization-status-badge";
 import { SyncStatusBadge } from "@/components/sync-status-badge";
 import { UserAvatar } from "@/components/user-avatar";
+import { RESULT_TILE_LINK_CLASS, RESULT_TILES_CLASS } from "@/lib/list-classes";
+import { formatDate } from "@/lib/format";
 import { text } from "@/lib/messages";
 
 export function OrganizationTiles({
@@ -11,22 +13,23 @@ export function OrganizationTiles({
   organizations: ReadonlyArray<AdminOrganization>;
 }) {
   return (
-    <ul className="flex flex-col gap-2">
+    <ul className={RESULT_TILES_CLASS}>
       {organizations.map((organization) => (
         <li key={organization.id}>
           <Link
             to="/organizations/$guildId"
             params={{ guildId: organization.id }}
-            className="flex flex-col gap-3 rounded-lg border border-border bg-card p-3 outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className={RESULT_TILE_LINK_CLASS}
           >
             <span className="flex min-w-0 items-center gap-3">
               <UserAvatar name={organization.name} image={organization.icon} />
               <span className="grid min-w-0 flex-1">
-                <span className="truncate font-medium">
+                <span className="truncate text-sm font-medium">
                   {organization.name}
                 </span>
                 <span className="truncate text-xs text-muted-foreground">
-                  {text.columnMembers}: {organization.activeMembers}
+                  {text.columnMembers}: {organization.activeMembers} ·{" "}
+                  {formatDate(organization.createdAt)}
                 </span>
               </span>
               <OrganizationStatusBadge status={organization.status} />

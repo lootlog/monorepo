@@ -25,13 +25,10 @@ export const GlobalChatOnline = () => {
 
   return (
     <span
-      className="ll:flex ll:shrink-0 ll:items-center ll:gap-1 ll:px-1.5 ll:text-[11px] ll:font-semibold ll:tabular-nums ll:text-gray-200"
+      className="ll:flex ll:shrink-0 ll:items-center ll:gap-1 ll:px-1.5 ll:text-[11px] ll:font-semibold ll:tabular-nums ll:text-foreground/90"
       title={onlineLabel ?? undefined}
     >
-      <span
-        aria-hidden
-        className="ll:size-1.5 ll:rounded-full ll:bg-green-500"
-      />
+      <span aria-hidden className="ll:size-1.5 ll:rounded-full ll:bg-success" />
       <span aria-hidden>{stats ? stats.online : "–"}</span>
       {onlineLabel ? <span className="ll:sr-only">{onlineLabel}</span> : null}
     </span>

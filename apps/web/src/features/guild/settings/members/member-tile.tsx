@@ -134,7 +134,7 @@ export const MemberTile = ({
                   <Tooltip>
                     <TooltipTrigger
                       render={
-                        <span className="inline-flex size-5 shrink-0 items-center justify-center rounded-md bg-amber-500/10 text-amber-400">
+                        <span className="inline-flex size-5 shrink-0 items-center justify-center rounded-md bg-signal-timer/10 text-signal-timer">
                           <Crown className="size-3.5" />
                         </span>
                       }

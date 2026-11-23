@@ -7,10 +7,14 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  CONNECTION_STATUS_TONE,
+  CONNECTION_TONE_DOT_CLASS_NAME,
+  SIGNED_OUT_CONNECTION_TONE,
+} from "@/components/connection-status-tone";
 import { useSocket } from "@/contexts/socket-context";
 import type { LoginState } from "@/hooks/auth/login-state";
 import { useLoginState } from "@/hooks/auth/use-login-state";
-import type { RealtimeConnectionStatus } from "@/lib/realtime-connection-status";
 import { useWindowsStore } from "@/store/windows.store";
 import { cn } from "cn";
 import type { FC } from "react";
@@ -18,13 +22,6 @@ import { useTranslation } from "react-i18next";
 
 const STATUS_VALUE_CLASS_NAME =
   "ll:min-w-0 ll:flex-1 ll:select-text ll:truncate ll:text-right ll:text-xs ll:text-muted-foreground";
-
-const CONNECTION_DOT_CLASS_NAME = {
-  online: "ll:bg-green-400",
-  connecting: "ll:bg-yellow-400",
-  reconnecting: "ll:bg-red-400",
-  unreachable: "ll:bg-red-400",
-} satisfies Record<RealtimeConnectionStatus, string>;
 
 const ACCOUNT_VALUE_KEY = {
   signedIn: "settings.general.accountSignedIn",
@@ -81,7 +78,7 @@ export const AddonStatusSection: FC = () => {
         <span
           className={cn(
             STATUS_VALUE_CLASS_NAME,
-            signedOut && "ll:text-destructive-foreground ll:text-left",
+            signedOut && "ll:text-destructive ll:text-left",
           )}
           title={accountValue}
         >
@@ -114,9 +111,11 @@ export const AddonStatusSection: FC = () => {
               aria-hidden
               className={cn(
                 "ll:size-2 ll:shrink-0 ll:rounded-full",
-                signedIn
-                  ? CONNECTION_DOT_CLASS_NAME[connection]
-                  : "ll:bg-gray-400",
+                CONNECTION_TONE_DOT_CLASS_NAME[
+                  signedIn
+                    ? CONNECTION_STATUS_TONE[connection]
+                    : SIGNED_OUT_CONNECTION_TONE
+                ],
               )}
             />
             <span className="ll:truncate">{connectionLabel}</span>
