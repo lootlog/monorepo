@@ -15,6 +15,7 @@ import { useOthersStore } from "@/store/others.store";
 import { useNpcsStore } from "@/store/npcs.store";
 import { clearReadyRoomCache } from "@/features/party-finder/hooks/use-ready-rooms";
 import { usePartyStore } from "@/store/party.store";
+import { resetReauthentication } from "@/store/reauthentication.store";
 import { settingsPatchQueue } from "@/lib/settings-persistence/settings-patch-client";
 
 export function resetTransientRuntimeState(): void {
@@ -31,6 +32,7 @@ export function resetTransientRuntimeState(): void {
   useOthersStore.getState().clearOthers();
   clearReadyRoomCache();
   usePartyStore.getState().clearParty();
+  resetReauthentication();
 
   const battleStore = useBattleStore.getState();
   battleStore.clearEvents();

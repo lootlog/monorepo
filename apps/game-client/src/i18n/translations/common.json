@@ -33,7 +33,8 @@
       "checking": "Sprawdzanie sesji…",
       "signedOut": "Zaloguj się na stronie Lootloga, a potem wróć do gry. Dodatek sam sprawdzi sesję.",
       "checkFailed": "Nie udało się sprawdzić sesji Lootloga. Sprawdź połączenie z internetem i spróbuj ponownie za chwilę.",
-      "cookiesBlocked": "Dodatek nadal nie widzi Twojej sesji. Jeśli jesteś już zalogowany na stronie Lootloga, przeglądarka blokuje pliki cookie innych firm dla lootlog.pl."
+      "cookiesBlocked": "Dodatek nadal nie widzi Twojej sesji. Jeśli jesteś już zalogowany na stronie Lootloga, przeglądarka blokuje pliki cookie innych firm dla lootlog.pl.",
+      "reauthRequired": "Lootlog stracił dostęp do Twojego konta Discord, więc łupy i timery się nie zapisują. Otwórz stronę Lootloga, zaloguj się ponownie przez Discord i wróć do gry."
     },
     "cookieGuidance": {
       "chrome": "Chrome, Edge lub Opera: kliknij ikonę oka albo ustawień strony w pasku adresu, zezwól na pliki cookie innych firm dla tej strony i kliknij „Sprawdź sesję”.",

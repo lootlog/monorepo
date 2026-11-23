@@ -7,7 +7,7 @@ import { AsyncStatusIndicator } from "@/components/async-status-indicator";
 import { useSocket } from "@/contexts/socket-context";
 import { useDelayedVisibility } from "@/hooks/ui/use-delayed-visibility";
 import { useNoticePresence } from "@/hooks/ui/use-notice-presence";
-import { authClient, isSessionSignedOut } from "@/lib/auth-client";
+import { useSignInRequired } from "@/hooks/auth/use-login-state";
 import type { RealtimeConnectionStatus } from "@/lib/realtime-connection-status";
 import { useWindowsStore } from "@/store/windows.store";
 
@@ -94,9 +94,8 @@ export const ConnectionStatusStrip: FC<ConnectionStatusStripProps> = ({
 }) => {
   const { t } = useTranslation("common");
   const { status } = useSocket();
-  const session = authClient.useSession();
   const openAndFocus = useWindowsStore((state) => state.openAndFocus);
-  const signedOut = isSessionSignedOut(session);
+  const signedOut = useSignInRequired();
 
   const connectionDue = useDelayedVisibility(
     hasData && status !== "online",
