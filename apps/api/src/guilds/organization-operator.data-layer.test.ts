@@ -1,9 +1,14 @@
 import { afterEach, expect, test } from "bun:test";
+import { eq } from "drizzle-orm";
 import { Effect } from "effect";
 import { Capability } from "@lootlog/schema/permissions";
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
 import { createOrganizationLootRecordFixture } from "../../test/loot-fixtures.js";
-import { createNotificationRuleFixture } from "../../test/notification-fixtures.js";
+import {
+  createNotificationJobFixture,
+  createNotificationRuleFixture,
+  createNotificationTargetFixture,
+} from "../../test/notification-fixtures.js";
 import {
   createGuildFixture,
   createMemberFixture,
@@ -12,7 +17,19 @@ import {
   lootTable,
   organizationLootRecordTable,
 } from "#src/database/drizzle/loot.schema";
-import { notificationRuleTable } from "#src/database/drizzle/notification.schema";
+import {
+  notificationJobTable,
+  notificationRuleTable,
+  notificationRuleTargetTable,
+  notificationTargetTable,
+} from "#src/database/drizzle/notification.schema";
+import { isOrganizationOperational } from "#src/guilds/organization-operational";
+import { makeNotificationJobDispatch } from "#src/notifications/jobs/notification-job-dispatch";
+import { makeNotificationJobFinalization } from "#src/notifications/jobs/notification-job-finalization";
+import { makeNotificationJobRecovery } from "#src/notifications/jobs/notification-job-recovery";
+import { makeNotificationJobRecurrence } from "#src/notifications/jobs/notification-job-recurrence";
+import { makeNotificationJobScheduler } from "#src/notifications/jobs/notification-job-scheduler";
+import { makeNotificationJobStore } from "#src/notifications/jobs/notification-job.repository";
 import {
   guildTable,
   memberTable,
@@ -281,4 +298,134 @@ test("counts the last month's loot by loot time even when loot ids are out of cr
   const details = await boundary.run(data.getOrganization("guild-1"));
 
   expect(details.usage.lootsLastMonth).toBe(2);
+});
+
+test("a recurring rule whose due job is skipped and loses its finalization while resuming gets a future job", async () => {
+  const { boundary } = await setup();
+  const { database } = boundary;
+  const store = makeNotificationJobStore(database);
+
+  const target = createNotificationTargetFixture({
+    ownerType: "GUILD",
+    ownerId: "guild-1",
+    targetType: "CHANNEL",
+    externalId: "channel-1",
+  });
+
+  await boundary.run(database.insert(notificationTargetTable).values(target));
+  await boundary.run(
+    database
+      .insert(notificationRuleTargetTable)
+      .values({ ruleId: 1, targetId: target.id }),
+  );
+
+  const scheduler = makeNotificationJobScheduler(database, {
+    remove: () => Effect.void,
+    add: () => Effect.void,
+  });
+
+  const recurrence = makeNotificationJobRecurrence(
+    {
+      findRule: store.findRule,
+      cycleStatuses: store.cycleStatuses,
+      advance: store.advanceRule,
+    },
+    () => Effect.succeed(true),
+    { scheduledMessage: () => ({}) },
+    scheduler,
+  );
+
+  const dispatch = makeNotificationJobDispatch(
+    {
+      find: store.findJobWithRelations,
+      update: store.updateJob,
+      claim: store.claimJob,
+      failClaim: store.failClaim,
+      cancel: store.cancelJob,
+      block: store.blockJob,
+    },
+    {
+      hasRequiredGuildPermissions: () => Effect.succeed(true),
+      isOrganizationOperational: (guildId) =>
+        isOrganizationOperational(database, guildId),
+      canReadLootSource: () => Effect.succeed(true),
+    },
+    { publish: () => Effect.die("a suspended job is not published") },
+    () => Effect.fail(new Error("finalization lost")),
+    () => undefined,
+    { filesFor: () => Effect.succeed([]) },
+  );
+
+  const [rule] = await boundary.run(
+    database
+      .select({ scheduledAt: notificationRuleTable.scheduledAt })
+      .from(notificationRuleTable)
+      .where(eq(notificationRuleTable.id, 1)),
+  );
+
+  const data = makeOrganizationOperatorData(database, {
+    refreshDiscordSync: () => Effect.void,
+    deliverMemberChanges: () => Effect.void,
+    invalidateUserGuildPermissions: () => Effect.void,
+    clearCachePattern: () => Effect.void,
+    clearCacheKey: () => Effect.void,
+    restoreNotificationRule: (ruleId) =>
+      ruleId === 1
+        ? database
+            .insert(notificationJobTable)
+            .values(
+              createNotificationJobFixture({
+                id: "due-during-resume",
+                idempotencyKey: "due-during-resume",
+                ruleId: 1,
+                targetId: target.id,
+                ownerType: "GUILD",
+                ownerId: "guild-1",
+                jobKind: "SCHEDULED",
+                status: "PENDING",
+                attemptCount: 0,
+                scheduledFor: rule?.scheduledAt ?? new Date(0),
+                sourceEntityType: "scheduled-message",
+                sourceEntityId: "1",
+              }),
+            )
+            .pipe(
+              Effect.andThen(
+                Effect.ignore(
+                  dispatch("due-during-resume", { retrying: false }),
+                ),
+              ),
+            )
+        : Effect.void,
+  });
+
+  await boundary.run(data.suspend(operator, "Spam"));
+  await boundary.run(data.resume(operator));
+
+  const recover = makeNotificationJobRecovery(
+    store,
+    scheduler.enqueue,
+    makeNotificationJobFinalization(() => Effect.void, recurrence),
+    recurrence,
+  );
+
+  const startedAt = Date.now();
+  await boundary.run(recover());
+
+  const jobs = await boundary.run(
+    database
+      .select()
+      .from(notificationJobTable)
+      .where(eq(notificationJobTable.ruleId, 1)),
+  );
+
+  expect(jobs.find(({ id }) => id === "due-during-resume")?.status).toBe(
+    "CANCELED",
+  );
+  expect(
+    jobs.some(
+      ({ status, scheduledFor }) =>
+        status === "PENDING" && scheduledFor.getTime() > startedAt,
+    ),
+  ).toBeTrue();
 });
