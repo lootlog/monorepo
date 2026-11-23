@@ -15,7 +15,7 @@ export function OrganizationSuspension({
 }) {
   const { organization, suspension } = details;
   const [reason, setReason] = useState("");
-  const { run } = useOrganizationAction(organization.id);
+  const { run, attempt } = useOrganizationAction(organization.id);
 
   if (suspension !== null)
     return (
@@ -74,8 +74,7 @@ export function OrganizationSuspension({
           cancelButtonLabel={text.cancel}
           disabled={reason.trim() === ""}
           onConfirm={async () => {
-            await run({ action: "suspend", reason });
-            setReason("");
+            if (await attempt({ action: "suspend", reason })) setReason("");
           }}
           trigger={<Button variant="destructive">{text.suspendSubmit}</Button>}
         />

@@ -16,6 +16,8 @@ import {
   isOperationalGuild,
   operationalGuild,
 } from "#src/guilds/organization-operational";
+import { RateLimitedError } from "@lootlog/protocol/http/errors";
+import type { AccountOrganizationOperationError } from "#src/guilds/account-organization-data";
 
 export type Database = typeof ApiDatabase.Service;
 
@@ -105,3 +107,8 @@ export const requireOrganization = (
     ),
   );
 };
+
+export const syncRefreshFailure = (error: AccountOrganizationOperationError) =>
+  error.cause instanceof RateLimitedError
+    ? new OrganizationSyncCooldown()
+    : new OrganizationOperatorError({ cause: error });

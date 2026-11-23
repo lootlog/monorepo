@@ -1,13 +1,10 @@
-import { Effect, Layer, Predicate } from "effect";
+import { Effect, Layer } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   OrganizationOperatorData,
   makeOrganizationOperatorData,
 } from "#src/guilds/organization-operator.data-layer";
-import {
-  OrganizationOperatorError,
-  OrganizationSyncCooldown,
-} from "#src/guilds/organization-operator.shared";
+import { syncRefreshFailure } from "#src/guilds/organization-operator.shared";
 import { GuildDiscordSync } from "#src/runtime/features/organizations";
 import { MemberServices } from "#src/runtime/features/members";
 import { NotificationsServices } from "#src/runtime/features/notifications";
@@ -27,13 +24,7 @@ export const organizationOperatorData = Layer.effect(
       refreshDiscordSync: (guildId) =>
         discordSync
           .refreshGuildDiscordSync(guildId)
-          .pipe(
-            Effect.mapError((error) =>
-              Predicate.isTagged(error.cause, "RateLimitedError")
-                ? new OrganizationSyncCooldown()
-                : new OrganizationOperatorError({ cause: error }),
-            ),
-          ),
+          .pipe(Effect.mapError(syncRefreshFailure)),
       deliverMemberChanges: memberDelivery.deliverAll,
       invalidateUserGuildPermissions: (discordId) =>
         redis.invalidateScopes(getUserGuildPermissionsCacheScope(discordId)),

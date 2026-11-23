@@ -204,6 +204,7 @@ describe("notification dispatch with BullMQ and PostgreSQL", () => {
           return store.failClaim(...args);
         },
         block: store.blockJob,
+        cancel: store.cancelJob,
       },
       {
         hasRequiredGuildPermissions: () => Effect.succeed(true),

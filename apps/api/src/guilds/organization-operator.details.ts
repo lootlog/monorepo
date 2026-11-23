@@ -51,6 +51,8 @@ const DAY_MS = 24 * 60 * 60 * 1_000;
 
 const RECENT_AUDIT_ENTRIES = 20;
 
+const LOOT_ID_SLACK_MS = 60 * 60 * 1_000;
+
 export const organizationDetailQueries = (
   database: Database,
   {
@@ -114,10 +116,15 @@ export const organizationDetailQueries = (
 
     const monthAgo = new Date((yield* Clock.currentTimeMillis) - 30 * DAY_MS);
 
-    const firstLootOfMonth = database
+    const lootIdFloor = database
       .select({ id: lootTable.id })
       .from(lootTable)
-      .where(gte(lootTable.createdAt, monthAgo))
+      .where(
+        gte(
+          lootTable.createdAt,
+          new Date(monthAgo.getTime() - LOOT_ID_SLACK_MS),
+        ),
+      )
       .orderBy(lootTable.createdAt)
       .limit(1);
 
@@ -173,7 +180,8 @@ export const organizationDetailQueries = (
           .where(
             and(
               eq(organizationLootRecordTable.guildId, guildId),
-              gte(organizationLootRecordTable.lootId, firstLootOfMonth),
+              gte(organizationLootRecordTable.lootId, lootIdFloor),
+              gte(organizationLootRecordTable.lootCreatedAt, monthAgo),
             ),
           ),
         database

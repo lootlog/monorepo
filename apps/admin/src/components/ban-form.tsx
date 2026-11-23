@@ -24,7 +24,7 @@ const durationItems = BAN_DURATIONS.map((duration) => ({
 export function BanForm({ user, own }: { user: AdminUser; own: boolean }) {
   const [reason, setReason] = useState("");
   const [duration, setDuration] = useState<BanDuration>("7d");
-  const { run } = useUserAction(user.id);
+  const { run, attempt } = useUserAction(user.id);
 
   if (user.ban !== null)
     return (
@@ -103,8 +103,8 @@ export function BanForm({ user, own }: { user: AdminUser; own: boolean }) {
           cancelButtonLabel={text.cancel}
           disabled={reason.trim() === ""}
           onConfirm={async () => {
-            await run({ action: "ban", reason, duration });
-            setReason("");
+            if (await attempt({ action: "ban", reason, duration }))
+              setReason("");
           }}
           trigger={<Button variant="destructive">{text.banSubmit}</Button>}
         />

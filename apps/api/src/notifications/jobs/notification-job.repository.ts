@@ -169,6 +169,25 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
       .where(eligibleJobForAttempt(jobId, retrying))
       .pipe(Effect.mapError(failure("notifications.jobStore.block")));
 
+  const cancelJob = (jobId: string, reason: string, retrying = false) =>
+    database
+      .update(notificationJobTable)
+      .set({
+        status: "CANCELED",
+        blockedReason: reason,
+        lastError: reason,
+        processedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eligibleJobForAttempt(jobId, retrying))
+      .returning({ id: notificationJobTable.id })
+      .pipe(
+        Effect.mapBoth({
+          onSuccess: (rows) => rows.length > 0,
+          onFailure: failure("notifications.jobStore.cancel"),
+        }),
+      );
+
   const findOverdue = (before: Date, limit: number) =>
     database
       .select({
@@ -366,6 +385,7 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
   return {
     advanceRule,
     blockJob,
+    cancelJob,
     claimJob,
     closeMissed,
     cycleStatuses,

@@ -134,6 +134,7 @@ export const notificationsServicesLive = Layer.effect(
         claim: jobsStore.claimJob,
         failClaim: jobsStore.failClaim,
         block: jobsStore.blockJob,
+        cancel: jobsStore.cancelJob,
       },
       {
         hasRequiredGuildPermissions: guildSync.hasRequiredGuildPermissions,

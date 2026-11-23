@@ -182,6 +182,7 @@ describe("notification job dispatch", () => {
         claim: store.claimJob,
         failClaim: store.failClaim,
         block: store.blockJob,
+        cancel: store.cancelJob,
       };
 
       const firstAttempt = { retrying: false };
@@ -346,6 +347,7 @@ describe("notification job dispatch", () => {
           Effect.sync(() => {
             updates.push(values);
           }),
+        cancel: () => Effect.succeed(false),
         block: (_jobId, reason) =>
           Effect.sync(() => {
             updates.push({
@@ -391,8 +393,9 @@ describe("notification job dispatch", () => {
     expect(published).toBeFalse();
   });
 
-  it("blocks an Organization job while the Organization is suspended", async () => {
-    const blocked: string[] = [];
+  it("skips an Organization job while the Organization is suspended and lets its schedule move on", async () => {
+    const canceled: string[] = [];
+    const finalized: number[] = [];
     let published = false;
 
     const dispatch = makeNotificationJobDispatch(
@@ -404,12 +407,15 @@ describe("notification job dispatch", () => {
             ownerId: "guild-1",
           }),
         update: () => Effect.void,
-        block: (_jobId, reason) =>
+        cancel: (_jobId, reason) =>
           Effect.sync(() => {
-            blocked.push(reason);
+            canceled.push(reason);
+
+            return true;
           }),
+        block: () => Effect.die("a suspended Organization job is not blocked"),
         claim: () => Effect.die("a suspended Organization job is not claimed"),
-        failClaim: () => Effect.die("blocked jobs cannot fail a claim"),
+        failClaim: () => Effect.die("skipped jobs cannot fail a claim"),
       },
       {
         hasRequiredGuildPermissions: () => Effect.succeed(true),
@@ -423,14 +429,18 @@ describe("notification job dispatch", () => {
             published = true;
           }),
       },
-      () => Effect.void,
+      (skipped) =>
+        Effect.sync(() => {
+          finalized.push(skipped.ruleId);
+        }),
       () => undefined,
       { filesFor: () => Effect.succeed([]) },
     );
 
     await Effect.runPromise(dispatch("job-1", { retrying: false }));
 
-    expect(blocked).toEqual(["Organization is inactive or suspended"]);
+    expect(canceled).toEqual(["Organization is inactive or suspended"]);
+    expect(finalized).toEqual([job(true).ruleId]);
     expect(published).toBeFalse();
   });
 
@@ -441,6 +451,7 @@ describe("notification job dispatch", () => {
         update: () => Effect.die("delivery must remain final"),
         claim: () => Effect.die("delivered jobs cannot be claimed again"),
         failClaim: () => Effect.die("delivered jobs cannot fail"),
+        cancel: () => Effect.die("delivered jobs cannot be canceled"),
         block: () => Effect.die("delivered jobs cannot be blocked"),
       },
       {

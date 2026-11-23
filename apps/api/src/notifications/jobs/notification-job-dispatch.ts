@@ -34,6 +34,9 @@ export interface NotificationDispatchStore {
   readonly failClaim: (
     ...args: Parameters<NotificationJobStore["failClaim"]>
   ) => Effect.Effect<boolean, unknown, never>;
+  readonly cancel: (
+    ...args: Parameters<NotificationJobStore["cancelJob"]>
+  ) => ReturnType<NotificationJobStore["cancelJob"]>;
   readonly block: (
     ...args: Parameters<NotificationJobStore["blockJob"]>
   ) => Effect.Effect<void, OperationError>;
@@ -153,11 +156,13 @@ export const makeNotificationJobDispatch = (
 
     if (job.ownerType === NotificationOwnerType.GUILD) {
       if (!(yield* permissions.isOrganizationOperational(job.ownerId))) {
-        yield* store.block(
+        const canceled = yield* store.cancel(
           job.id,
           "Organization is inactive or suspended",
           attempt.retrying,
         );
+
+        if (canceled) yield* finalize(job);
 
         return;
       }

@@ -16,8 +16,8 @@ export function usePageAction<
   const [pending, setPending] = useState<Action>();
   const inFlight = useRef(false);
 
-  const run = async (action: Action) => {
-    if (inFlight.current) return;
+  const attempt = async (action: Action): Promise<boolean> => {
+    if (inFlight.current) return false;
 
     inFlight.current = true;
     setPending(action);
@@ -27,13 +27,21 @@ export function usePageAction<
 
       await router.invalidate();
       await report(refusal ? { error: refusal } : { notice: action.action });
+
+      return !refusal;
     } catch {
       await report({ error: "failed" });
+
+      return false;
     } finally {
       inFlight.current = false;
       setPending(undefined);
     }
   };
 
-  return { run, pending };
+  const run = async (action: Action) => {
+    await attempt(action);
+  };
+
+  return { run, attempt, pending };
 }
