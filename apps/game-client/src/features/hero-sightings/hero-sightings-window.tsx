@@ -13,6 +13,7 @@ import { useHeroSightingRows } from "@/features/hero-sightings/hooks/use-hero-si
 import { useHeroSightingWriteAccess } from "@/features/hero-sightings/hooks/use-hero-sighting-write-access";
 import { useTimersWorld } from "@/features/timers/hooks/use-timers-world";
 import { useSession } from "@/hooks/auth/use-session";
+import { useNoticePresence } from "@/hooks/ui/use-notice-presence";
 import { useHeroSightingsStore } from "@/store/hero-sightings.store";
 import { useWindowsStore } from "@/store/windows.store";
 
@@ -29,6 +30,17 @@ export const HeroSightingsWindow = ({ isOpen }: HeroSightingsWindowProps) => {
   const dismissOwnDetection = useHeroSightingsStore(
     (state) => state.dismissOwnDetection,
   );
+
+  const [mountedDetection] = useState(ownDetection);
+  const [shownDetection, setShownDetection] = useState(ownDetection);
+
+  if (ownDetection && ownDetection !== shownDetection) {
+    setShownDetection(ownDetection);
+  }
+
+  const detectionNotice = useNoticePresence(ownDetection !== null, {
+    minVisibleMs: 0,
+  });
 
   const { query, sightings, rows } = useHeroSightingRows();
   const { world } = useTimersWorld();
@@ -68,12 +80,19 @@ export const HeroSightingsWindow = ({ isOpen }: HeroSightingsWindowProps) => {
       }
     >
       <div className="ll:relative ll:flex ll:h-full ll:flex-col">
-        {ownDetection ? (
+        {detectionNotice.mounted && shownDetection ? (
           <HeroDetectionNotice
-            detection={ownDetection}
+            detection={shownDetection}
             sightings={sightings}
             userId={userId}
             writableGuildIds={writableGuildIds}
+            className={
+              detectionNotice.leaving
+                ? "ll-notice-exit"
+                : shownDetection !== mountedDetection
+                  ? "ll-row-enter"
+                  : undefined
+            }
             onDismiss={dismissOwnDetection}
           />
         ) : null}

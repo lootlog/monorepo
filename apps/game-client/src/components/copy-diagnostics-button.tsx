@@ -1,9 +1,9 @@
-import { useState, type FC } from "react";
+import { useClipboardCopy } from "@lootlog/ui/hooks/use-clipboard-copy";
+import type { FC } from "react";
 import { useTranslation } from "react-i18next";
-import { Check, ClipboardCopy, TriangleAlert } from "lucide-react";
+import { ClipboardCopy } from "lucide-react";
+import { CopyStateIcon } from "@/components/copy-state-icon";
 import { Button } from "@/components/ui/button";
-
-type CopyState = "idle" | "success" | "error";
 
 type CopyDiagnosticsButtonProps = {
   getReport: () => string;
@@ -11,35 +11,20 @@ type CopyDiagnosticsButtonProps = {
   variant?: "secondary" | "outline" | "ghost";
 };
 
-const COPY_ICON = {
-  idle: ClipboardCopy,
-  success: Check,
-  error: TriangleAlert,
-} as const;
-
 export const CopyDiagnosticsButton: FC<CopyDiagnosticsButtonProps> = ({
   getReport,
   className,
   variant = "outline",
 }) => {
   const { t } = useTranslation("common");
-  const [copyState, setCopyState] = useState<CopyState>("idle");
-  const Icon = COPY_ICON[copyState];
+  const { state, copyWith } = useClipboardCopy();
 
   const label = {
     idle: t("diagnostics.copy"),
-    success: t("diagnostics.copied"),
-    error: t("diagnostics.copyFailed"),
-  }[copyState];
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(getReport());
-      setCopyState("success");
-    } catch {
-      setCopyState("error");
-    }
-  };
+    copying: t("diagnostics.copy"),
+    copied: t("diagnostics.copied"),
+    failed: t("diagnostics.copyFailed"),
+  }[state];
 
   return (
     <Button
@@ -47,9 +32,11 @@ export const CopyDiagnosticsButton: FC<CopyDiagnosticsButtonProps> = ({
       size="xs"
       variant={variant}
       className={className}
-      onClick={() => void handleCopy()}
+      onClick={() =>
+        void copyWith(() => navigator.clipboard.writeText(getReport()))
+      }
     >
-      <Icon aria-hidden />
+      <CopyStateIcon state={state} IdleIcon={ClipboardCopy} />
       <span aria-live="polite">{label}</span>
     </Button>
   );

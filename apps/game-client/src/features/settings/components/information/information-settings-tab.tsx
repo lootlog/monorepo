@@ -1,5 +1,4 @@
 import { CopyDiagnosticsButton } from "@/components/copy-diagnostics-button";
-import { IconButton } from "@/components/ui/icon-button";
 import { SettingsRow } from "@/features/settings/components/shared/settings-row";
 import { SettingsSection } from "@/features/settings/components/shared/settings-section";
 import { SettingsTabLayout } from "@/features/settings/components/shared/settings-tab-layout";
@@ -12,9 +11,8 @@ import {
 import { createDiagnosticsReport } from "@/lib/diagnostics-report";
 import { margonemRuntimeBridge } from "@/lib/margonem-runtime/margonem-runtime-bridge";
 import { once } from "es-toolkit";
-import { Copy } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
+import { CopyBuildValueButton } from "@/features/settings/components/information/copy-build-value-button";
 import { PRODUCT_LOCALE } from "@lootlog/domain/locale";
 
 const getBuildTimestampFormatter = once(
@@ -57,15 +55,6 @@ export const InformationSettingsTab = () => {
     },
   ];
 
-  const copyToClipboard = async (value: string) => {
-    try {
-      await navigator.clipboard.writeText(value);
-      showRuntimeMessage(t("settings.information.copied"));
-    } catch {
-      showRuntimeMessage(t("settings.information.copyFailed"));
-    }
-  };
-
   return (
     <SettingsTabLayout>
       <SettingsSection
@@ -86,14 +75,7 @@ export const InformationSettingsTab = () => {
               {row.value}
             </span>
             {copyValue ? (
-              <IconButton
-                label={t("settings.information.copy", { label: row.label })}
-                onClick={() => {
-                  void copyToClipboard(copyValue);
-                }}
-              >
-                <Copy aria-hidden />
-              </IconButton>
+              <CopyBuildValueButton label={row.label} value={copyValue} />
             ) : null}
           </SettingsRow>
         ))}
