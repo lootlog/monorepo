@@ -62,6 +62,7 @@ describe("CommandHandler session lifecycle", () => {
           epochId: "epoch-1",
           epochStartedAt: 1_700_000_000_000,
           revision: 3,
+          serverTime: 1_700_000_001_000,
           targets: [],
         },
       ],

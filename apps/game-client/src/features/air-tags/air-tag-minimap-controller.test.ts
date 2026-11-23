@@ -41,6 +41,7 @@ const report = (targets: AirTagTarget[]) => {
         epochId: "epoch",
         epochStartedAt: 1,
         revision: 1,
+        serverTime: Date.now(),
         targets,
       },
     ],
