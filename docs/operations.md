@@ -84,6 +84,8 @@ development value.
 | discord-bot | gateway     | `getOrganizationPresence`                            |
 | discord-bot | catalog     | `searchItems`                                        |
 | api         | discord-bot | `refreshGuildChannels`                               |
+| admin       | auth        | the operator procedures (`AuthOperatorRpcGroup`)     |
+| admin       | api         | the aura grant procedures (`ApiOperatorRpcGroup`)    |
 
 A new edge needs the caller listed on the procedure in `packages/rpc`, the
 token in both deployments, and the caller added to the callee's
@@ -96,23 +98,24 @@ so a request published while Battlelog is down waits for it.
 ## Admin panel
 
 `apps/admin` manages platform roles, bans, sessions, and API keys of Users. It
-holds no data: every read and write goes through the auth service's admin API
-(`/admin/*`), which records each change in `admin_audit_log`.
+holds no data: every read and write goes through the auth service's operator
+procedures over internal RPC (`AUTH_RPC_URL`), which record each change in
+`admin_audit_log`. Neither the auth service nor the API serves an admin
+endpoint over HTTP.
 
 The panel is also the only place to grant and revoke character auras, from a
 User's page. A grant belongs to that User, who wears the aura on characters
-of the Margonem accounts they proved to play. Those calls go to the main
-API's `/character-auras/grants/users/:userId` endpoints at `LOOTLOG_API_URL`, the
-API as the edge serves it, with the operator's Lootlog session and without
-the Access cookie. The edge's forward-auth resolves the session, and the API
-allows them only to holders of the `admin` platform role, so the operator
-needs that role too. The user list's aura filter asks the API for every
-holder of an aura grant (`/character-auras/grants`) under the same rule and
-passes their ids to the auth service's `POST /admin/users/search` as
-`userIds` or `excludedUserIds`, in the body so the list has no URL-length
-limit. `GET /admin/users` stays for panels deployed before it. These changes
-are not written to `admin_audit_log`. The panel refuses to start without
-`LOOTLOG_API_URL`, and its egress must reach that host.
+of the Margonem accounts they proved to play. Those calls go to the API's
+aura grant procedures over internal RPC (`API_RPC_URL`). The API trusts the
+`admin` caller and cannot see the operator's session, so the panel asks the
+auth service to authorize the operator before every aura call and passes the
+operator's User id, which the API stores as the granter. The operator does not
+need the `admin` platform role. The user list's aura filter asks the API for
+every holder of an aura grant and passes their ids to the auth service's
+`searchUsers` as `userIds` or `excludedUserIds`. These changes are not written
+to `admin_audit_log`. The panel refuses to start without `AUTH_RPC_URL` and
+`API_RPC_URL`, and the NetworkPolicy of both services must admit its pods on
+the RPC port.
 
 The panel is reachable only through the Cloudflare tunnel that also serves
 Grafana, on its own public hostname guarded by its own Cloudflare Access
@@ -127,12 +130,12 @@ the Lootlog session of a User listed in the auth service's
   the email to be listed in `ADMIN_OPERATOR_EMAILS`. A production build refuses
   to start without `CF_ACCESS_TEAM_DOMAIN`, `CF_ACCESS_AUD`, and an operator.
 - State-changing requests must carry the panel's own origin (`ADMIN_ORIGIN`).
-- The auth service serves `/admin/*` only to a request that carries both the
-  `ADMIN_API_SECRET` bearer credential, which only the panel holds, and the
-  session cookie of a User in `ADMIN_ACCOUNT_IDS`. It reads that session from
-  the store on every request, so a sign-out, ban, or revoked session closes
-  the panel at once. The edge denies `/admin` on the auth host. Without the
-  secret, or with an empty admin list, the admin API refuses everyone.
+- The auth service serves the operator procedures only to a call that carries
+  both the `RPC_TOKEN_ADMIN_TO_AUTH` bearer token, which only the panel holds,
+  and the session cookie of a User in `ADMIN_ACCOUNT_IDS`, which the panel
+  forwards in the payload without the Access cookie. It reads that session
+  from the store on every call, so a sign-out, ban, or revoked session closes
+  the panel at once. With an empty admin list the procedures refuse everyone.
 
 The panel answers with `Cache-Control: no-transform`, because the zone's Rocket
 Loader would otherwise rewrite its script tags and break the page.
@@ -152,8 +155,8 @@ the User's page shows what holds.
 An operator cannot ban their own account: the ban would end their session and
 block the sign-in back. Another operator can still ban them.
 
-Rotate `ADMIN_API_SECRET` by changing `adminApiSecret` in `admin-secrets` and
-restarting the `auth` and `admin` Deployments. To remove an operator, delete
+Rotate `RPC_TOKEN_ADMIN_TO_AUTH` or `RPC_TOKEN_ADMIN_TO_API` by changing it on
+both ends and restarting the `admin` Deployment together with `auth` or `api`. To remove an operator, delete
 the User id from `ADMIN_ACCOUNT_IDS` and the email from the Access policy and
 `ADMIN_OPERATOR_EMAILS`.
 

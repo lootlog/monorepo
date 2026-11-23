@@ -23,8 +23,6 @@ import { AdminService } from "./admin-service.js";
 
 const ACTOR = "Operator (operator-1)";
 
-const SECRET = "integration-admin-secret";
-
 const AUTH_SECRET = "integration-only-secret-01234567890123456789";
 
 const adminAccountIds: string[] = [];
@@ -79,7 +77,6 @@ describe("AdminService against PostgreSQL and Better Auth", () => {
       cookieDomain: ".example.test",
       cookiePrefix: "test",
       adminAccountIds,
-      adminApiSecret: Redacted.make(SECRET),
       rpc: { port: 0, callerTokens: {}, api: testRpcUpstream },
       authSecret: Redacted.make(AUTH_SECRET),
       discordClientId: "test-discord-client",
@@ -163,14 +160,11 @@ describe("AdminService against PostgreSQL and Better Auth", () => {
       const signature = await makeSignature(session.token, AUTH_SECRET);
       const cookie = encodeURIComponent(`${session.token}.${signature}`);
 
-      return new Headers({
-        authorization: `Bearer ${SECRET}`,
-        cookie: `${provider.sessionCookieNames.token}=${cookie}`,
-      });
+      return Redacted.make(`${provider.sessionCookieNames.token}=${cookie}`);
     };
 
-    const authorize = (headers: Headers) =>
-      admin((service) => service.authorize(headers));
+    const authorize = (sessionCookie: Redacted.Redacted<string>) =>
+      admin((service) => service.authorize(sessionCookie));
 
     const operatorRequest = await panelRequest(operator.id);
 

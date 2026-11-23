@@ -21,7 +21,8 @@ import {
 
 const fixture = makeHttpBoundaryFixture();
 
-const { request, callRpc, requestRpcPort, databaseRuntime } = fixture;
+const { request, callRpc, callOperatorRpc, requestRpcPort, databaseRuntime } =
+  fixture;
 
 let database: ApiDatabaseValue;
 
@@ -90,6 +91,40 @@ describe("API RPC boundary", () => {
     expect(otherWorld).toEqual([]);
     expect(forbidden._tag).toBe("RpcForbiddenError");
     expect(["RpcForbiddenError", "RpcNotFoundError"]).toContain(stranger._tag);
+  });
+
+  it("lets the panel grant and revoke auras, which decides whether the User may choose one", async () => {
+    const ownAura = async () =>
+      (await request("/users/@me/character-aura")).json();
+
+    expect(await ownAura()).toMatchObject({ canChange: false });
+
+    const grants = await callOperatorRpc((client) =>
+      Effect.andThen(
+        client.grantCharacterAuras({
+          userId: caller.userId,
+          operatorUserId: "operator-1",
+        }),
+        client.getCharacterAuraGrants({ userId: caller.userId }),
+      ),
+    );
+
+    expect(grants).toEqual({
+      admin: false,
+      granted: true,
+      personalAuraIds: [],
+    });
+    expect(await ownAura()).toMatchObject({ canChange: true });
+
+    const holders = await callOperatorRpc((client) =>
+      Effect.andThen(
+        client.revokeCharacterAuras({ userId: caller.userId }),
+        client.listCharacterAuraGrantHolders(),
+      ),
+    );
+
+    expect(holders).toEqual({ holders: [] });
+    expect(await ownAura()).toMatchObject({ canChange: false });
   });
 
   it("resolves a member identity only for an active member of that Organization", async () => {

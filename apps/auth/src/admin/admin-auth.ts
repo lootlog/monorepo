@@ -3,22 +3,16 @@ import {
   AuthenticationRequiredError,
   PermissionDeniedError,
 } from "@lootlog/protocol/http/errors";
-import { hasServiceAuthorization } from "@lootlog/protocol/http/service-auth";
+import type { AdminOperator, AdminUser } from "@lootlog/schema/admin";
 import {
   parsePlatformRoles,
   type PlatformRole,
 } from "@lootlog/schema/platform-roles";
 import { and, eq, gt, isNull, or, sql } from "drizzle-orm";
-import { Effect, type Redacted } from "effect";
+import { Effect, Redacted } from "effect";
 import { authUsers } from "#src/database/drizzle.schema";
-import type { AdminUser } from "#src/http-api/contracts/admin/schemas";
 
 type UserRow = typeof authUsers.$inferSelect;
-
-export type AdminOperator = {
-  readonly userId: string;
-  readonly name: string;
-};
 
 export const escapeLike = (text: string) => text.replace(/[\\%_]/gu, "\\$&");
 
@@ -54,42 +48,33 @@ export const toUser = (
   activeSessions,
 });
 
-export const authorizeAdminRequest = Effect.fn("authorizeAdminRequest")(
-  function* (
-    headers: Headers,
-    access: {
-      readonly secret: Redacted.Redacted<string> | undefined;
-      readonly adminUserIds: ReadonlyArray<string>;
-      readonly getFreshSession: (
-        headers: Headers,
-      ) => Effect.Effect<AdminOperator | null, ApplicationError>;
-    },
-  ) {
-    if (
-      !hasServiceAuthorization(
-        headers.get("authorization") ?? undefined,
-        access.secret,
-      )
-    )
-      return yield* new AuthenticationRequiredError();
-
-    const operator = yield* access.getFreshSession(headers);
-
-    if (!operator)
-      return yield* new AuthenticationRequiredError({
-        code: "ADMIN_SESSION_REQUIRED",
-        message: "Sign in to Lootlog first",
-      });
-
-    if (!access.adminUserIds.includes(operator.userId))
-      return yield* new PermissionDeniedError({
-        code: "ADMIN_ACCESS_REQUIRED",
-        message: "Not an admin account",
-      });
-
-    return operator;
+export const authorizeOperator = Effect.fn("authorizeOperator")(function* (
+  sessionCookie: Redacted.Redacted<string>,
+  access: {
+    readonly adminUserIds: ReadonlyArray<string>;
+    readonly getFreshSession: (
+      headers: Headers,
+    ) => Effect.Effect<AdminOperator | null, ApplicationError>;
   },
-);
+) {
+  const operator = yield* access.getFreshSession(
+    new Headers({ cookie: Redacted.value(sessionCookie) }),
+  );
+
+  if (!operator)
+    return yield* new AuthenticationRequiredError({
+      code: "ADMIN_SESSION_REQUIRED",
+      message: "Sign in to Lootlog first",
+    });
+
+  if (!access.adminUserIds.includes(operator.userId))
+    return yield* new PermissionDeniedError({
+      code: "ADMIN_ACCESS_REQUIRED",
+      message: "Not an admin account",
+    });
+
+  return operator;
+});
 
 export const auditActor = (operator: AdminOperator) =>
   `${operator.name} (${operator.userId})`;

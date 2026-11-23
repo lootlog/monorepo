@@ -54,6 +54,7 @@ export default async function setup() {
       "API_TO_AUTH",
       "API_TO_DISCORD_BOT",
       "ACTIVITY_TO_API",
+      "ADMIN_TO_API",
       "AUTH_TO_API",
       "DISCORD_BOT_TO_API",
       "GATEWAY_TO_API",

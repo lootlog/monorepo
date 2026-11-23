@@ -1,10 +1,8 @@
-import { authorizeAdminRequest } from "#src/admin/admin-auth";
-import { AdminService } from "#src/admin/admin-service";
 import { ApiKeyService } from "#src/auth/api-key-service";
 import { afterAll, describe, expect, it, mock } from "bun:test";
 import { betterAuth } from "better-auth";
 import { APIError } from "better-auth/api";
-import { Effect, Layer, Redacted } from "effect";
+import { Effect, Layer } from "effect";
 import { HttpRouter, HttpServer } from "effect/http";
 import { AuthService, createAuthService } from "#src/auth/auth-service";
 import { BetterAuthRuntime } from "#src/auth/provider/better-auth";
@@ -16,15 +14,7 @@ const SESSION_TOKEN_COOKIE = "local.session_token";
 
 const SESSION_DATA_COOKIE = "local.session_data";
 
-const makeRuntime = (
-  authenticated = true,
-  idpTokenSecret: string | null = "idp-test-secret",
-  adminApiSecret: string | null = "admin-test-secret",
-  adminSession: { userId: string; name: string } | null = {
-    userId: "user-1",
-    name: "Operator",
-  },
-) => {
+const makeRuntime = (authenticated = true) => {
   const betterAuthHandler = mock((request: Request) =>
     Promise.resolve(
       new Response(request.url, {
@@ -85,38 +75,9 @@ const makeRuntime = (
     findDiscordAccountId: () => Effect.succeed("account-row-1"),
   });
 
-  const listUsers = mock(() => Effect.succeed({ users: [], total: 0 }));
-
   const boundary = HttpRouter.toWebHandler(
     AuthRoutes.pipe(
       Layer.provideMerge(Layer.succeed(AuthService, service)),
-      Layer.provideMerge(
-        Layer.succeed(
-          AdminService,
-          AdminService.of({
-            authorize: (headers) =>
-              authorizeAdminRequest(headers, {
-                secret:
-                  adminApiSecret === null
-                    ? undefined
-                    : Redacted.make(adminApiSecret),
-                adminUserIds: ["user-1"],
-                getFreshSession: () => Effect.succeed(adminSession),
-              }),
-            overview: Effect.die("Not configured"),
-            listUsers,
-            getUser: () => Effect.die("Not configured"),
-            setRoles: () => Effect.die("Not configured"),
-            ban: () => Effect.die("Not configured"),
-            unban: () => Effect.die("Not configured"),
-            revokeSessions: () => Effect.die("Not configured"),
-            revokeSession: () => Effect.die("Not configured"),
-            revokeApiKey: () => Effect.die("Not configured"),
-            listRoleHolders: () => Effect.die("Not configured"),
-            listAudit: () => Effect.die("Not configured"),
-          }),
-        ),
-      ),
       Layer.provideMerge(
         Layer.succeed(
           ApiKeyService,
@@ -145,7 +106,6 @@ const makeRuntime = (
     getSession,
     getSessionWithCookies,
     getAccessToken: auth.api.getAccessToken,
-    listUsers,
     run,
   };
 };
@@ -213,147 +173,6 @@ describe("Auth HttpApi contract", () => {
     );
 
     expect(response.status).toBe(404);
-  });
-
-  const adminCaller = {
-    authorization: "Bearer admin-test-secret",
-    cookie: "local.session_token=test-session",
-  };
-
-  it.each<Record<string, string>>([
-    {},
-    { cookie: adminCaller.cookie },
-    { ...adminCaller, authorization: "Bearer wrong-secret" },
-    { "x-auth-user-id": "user-1", "x-auth-roles": "admin" },
-  ])(
-    "refuses the admin API without the panel's credential, even to an admin's session: %j",
-    async (headers) => {
-      const caller = makeRuntime();
-
-      try {
-        const response = await caller.run(
-          new Request("http://localhost/admin/users", { headers }),
-        );
-
-        expect(response.status).toBe(401);
-        expect(caller.listUsers).not.toHaveBeenCalled();
-      } finally {
-        await caller.dispose();
-      }
-    },
-  );
-
-  it("keeps the admin API closed while its secret is not configured", async () => {
-    const caller = makeRuntime(true, "idp-test-secret", null);
-
-    try {
-      const response = await caller.run(
-        new Request("http://localhost/admin/users", {
-          headers: { ...adminCaller, authorization: "Bearer " },
-        }),
-      );
-
-      expect(response.status).toBe(401);
-      expect(caller.listUsers).not.toHaveBeenCalled();
-    } finally {
-      await caller.dispose();
-    }
-  });
-
-  it.each([
-    ["nobody is signed in", null, 401, "ADMIN_SESSION_REQUIRED"],
-    [
-      "the signed-in user is not an admin account",
-      { userId: "user-2", name: "Player" },
-      403,
-      "ADMIN_ACCESS_REQUIRED",
-    ],
-  ] as const)(
-    "refuses the panel's credential while %s",
-    async (_case, session, status, code) => {
-      const caller = makeRuntime(true, "idp-test-secret", undefined, session);
-
-      try {
-        const response = await caller.run(
-          new Request("http://localhost/admin/users", { headers: adminCaller }),
-        );
-
-        expect(response.status).toBe(status);
-        expect(await response.json()).toMatchObject({ code });
-        expect(caller.listUsers).not.toHaveBeenCalled();
-      } finally {
-        await caller.dispose();
-      }
-    },
-  );
-
-  it("serves the admin API to the panel acting for a signed-in admin account", async () => {
-    const caller = makeRuntime();
-
-    try {
-      const session = await caller.run(
-        new Request("http://localhost/admin/session", { headers: adminCaller }),
-      );
-
-      expect(await session.json()).toEqual({
-        userId: "user-1",
-        name: "Operator",
-      });
-
-      const users = await caller.run(
-        new Request("http://localhost/admin/users?banned=true&limit=10", {
-          headers: adminCaller,
-        }),
-      );
-
-      expect(users.status).toBe(200);
-      expect(users.headers.get("cache-control")).toBe("no-store");
-      expect(await users.json()).toEqual({ users: [], total: 0 });
-      expect(caller.listUsers).toHaveBeenCalledWith({
-        banned: true,
-        limit: 10,
-      });
-
-      const holders = Array.from(
-        { length: 600 },
-        (_, index) => `user-${index}`,
-      );
-
-      const searched = await caller.run(
-        new Request("http://localhost/admin/users/search", {
-          method: "POST",
-          headers: { ...adminCaller, "content-type": "application/json" },
-          body: JSON.stringify({ excludedUserIds: holders, limit: 10 }),
-        }),
-      );
-
-      expect(searched.status).toBe(200);
-      expect(caller.listUsers).toHaveBeenLastCalledWith({
-        excludedUserIds: holders,
-        limit: 10,
-      });
-    } finally {
-      await caller.dispose();
-    }
-  });
-
-  it("refuses an operator's ban of their own account", async () => {
-    const caller = makeRuntime();
-
-    try {
-      const response = await caller.run(
-        new Request("http://localhost/admin/users/user-1/ban", {
-          method: "PUT",
-          headers: { ...adminCaller, "content-type": "application/json" },
-          body: JSON.stringify({ reason: "Mistake", expiresAt: null }),
-        }),
-      );
-
-      expect(response.status).toBe(400);
-      expect(await response.json()).toMatchObject({ code: "CANNOT_BAN_SELF" });
-    } finally {
-      await caller.dispose();
-    }
   });
 
   it("serves the existing health status", async () => {

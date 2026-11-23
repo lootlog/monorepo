@@ -1,4 +1,3 @@
-import { AdminHandlers } from "./admin-handlers.js";
 import { ApiKeyHandlers } from "./api-key-handlers.js";
 import {
   serviceApiRoutes,
@@ -75,7 +74,7 @@ const BetterAuthRawRoutes = HttpRouter.use((router) =>
 
 export const AuthRoutes = Layer.merge(
   serviceApiRoutes(AuthApi).pipe(
-    Layer.provide(Layer.mergeAll(AuthHandlers, ApiKeyHandlers, AdminHandlers)),
+    Layer.provide(Layer.merge(AuthHandlers, ApiKeyHandlers)),
     Layer.provide(SchemaErrorResponseLive),
   ),
   BetterAuthRawRoutes,

@@ -1,4 +1,3 @@
-import { Alert, AlertDescription } from "@lootlog/ui/components/alert";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { OverviewTiles } from "@/components/overview-tiles";
 import { Pagination } from "@/components/pagination";
@@ -45,11 +44,6 @@ function UsersPage() {
           </p>
         </div>
         <UsersFilter search={search} />
-        {users.aurasForbidden ? (
-          <Alert variant="destructive">
-            <AlertDescription>{text.aurasForbidden}</AlertDescription>
-          </Alert>
-        ) : null}
         <UsersTable users={users.users} />
         <Pagination
           page={search.page ?? 1}

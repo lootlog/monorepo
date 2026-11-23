@@ -1,4 +1,8 @@
-import { ApiRpcGroup } from "@lootlog/rpc/api";
+import {
+  ApiOperatorRpcGroup,
+  ApiRpcGroup,
+  ApiServedRpcGroup,
+} from "@lootlog/rpc/api";
 import {
   RpcForbiddenError,
   RpcNotFoundError,
@@ -20,6 +24,10 @@ import {
   HttpServer,
 } from "effect/http";
 import { HttpApiClient } from "effect/http-api";
+import {
+  CharacterAurasData,
+  type CharacterAurasOperationError,
+} from "#src/character-auras/character-auras-data";
 import { InternalGuildsData } from "#src/guilds/internal-guilds-data";
 import { LootlogApi } from "#src/http-api/lootlog-api";
 import {
@@ -73,6 +81,15 @@ const memberCalls =
       ),
     );
 
+const auraGrantsUnavailable = <A>(
+  operation: Effect.Effect<A, CharacterAurasOperationError>,
+) =>
+  Effect.catchTag(operation, "CharacterAurasOperationError", (error) =>
+    Effect.logError("Character aura grant operation failed", error.cause).pipe(
+      Effect.andThen(Effect.fail(new RpcUnavailableError())),
+    ),
+  );
+
 const makeApiRpcHandlers = <E, R>(routes: Layer.Layer<never, E, R>) =>
   Layer.unwrap(
     Effect.gen(function* () {
@@ -80,6 +97,8 @@ const makeApiRpcHandlers = <E, R>(routes: Layer.Layer<never, E, R>) =>
         InternalGuildsData,
         yield* InternalGuildsData,
       );
+
+      const auras = yield* CharacterAurasData;
 
       const context = (yield* Effect.context<
         Exclude<
@@ -140,7 +159,7 @@ const makeApiRpcHandlers = <E, R>(routes: Layer.Layer<never, E, R>) =>
         ),
       });
 
-      return ApiRpcGroup.toLayer({
+      const memberHandlers = ApiRpcGroup.toLayer({
         getUserGuildPermissions: (query) =>
           getUserGuildPermissions(query).pipe(withInternalGuilds),
         getGuildByIdOrVanityUrl: (lookup) =>
@@ -236,6 +255,23 @@ const makeApiRpcHandlers = <E, R>(routes: Layer.Layer<never, E, R>) =>
             api.reservations.listReservationSpots({ params: { guildId } }),
           ),
       });
+
+      const operatorHandlers = ApiOperatorRpcGroup.toLayer({
+        listCharacterAuraGrantHolders: () =>
+          auraGrantsUnavailable(auras.listGrantHolders),
+        getCharacterAuraGrants: ({ userId }) =>
+          auraGrantsUnavailable(auras.getGrants(userId)),
+        grantCharacterAuras: ({ operatorUserId, userId }) =>
+          auraGrantsUnavailable(auras.grantAuras(operatorUserId, userId)),
+        grantPersonalCharacterAura: ({ operatorUserId, userId, auraId }) =>
+          auraGrantsUnavailable(
+            auras.grantPersonalAura(operatorUserId, userId, auraId),
+          ),
+        revokeCharacterAuras: ({ userId }) =>
+          auraGrantsUnavailable(auras.revokeAuras(userId)),
+      });
+
+      return Layer.merge(memberHandlers, operatorHandlers);
     }),
   );
 
@@ -243,7 +279,7 @@ export const makeApiRpcRoutes = <E, R>(routes: Layer.Layer<never, E, R>) =>
   Layer.unwrap(
     Effect.map(ApiRuntimeConfig, (config) =>
       serviceRpcRoutes({
-        group: ApiRpcGroup,
+        group: ApiServedRpcGroup,
         handlers: makeApiRpcHandlers(routes),
         callerTokens: config.rpc.callerTokens,
         spanPrefix: "api.rpc",
@@ -255,7 +291,7 @@ export const makeApiRpcServer = <E, R>(routes: Layer.Layer<never, E, R>) =>
   Layer.unwrap(
     Effect.map(ApiRuntimeConfig, (config) =>
       serviceRpcServer({
-        group: ApiRpcGroup,
+        group: ApiServedRpcGroup,
         handlers: makeApiRpcHandlers(routes),
         callerTokens: config.rpc.callerTokens,
         port: config.rpc.port,

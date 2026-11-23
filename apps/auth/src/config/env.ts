@@ -4,7 +4,7 @@ import {
   commaSeparatedConfig,
   redisUrlConfig,
 } from "@lootlog/instrumentation/service-config";
-import { AuthRpcGroup } from "@lootlog/rpc/auth";
+import { AuthServedRpcGroup } from "@lootlog/rpc/auth";
 import {
   type CallerTokens,
   type RpcUpstream,
@@ -22,7 +22,6 @@ export interface AuthConfig extends BaseServiceConfiguration {
     readonly callerTokens: CallerTokens;
     readonly api: RpcUpstream;
   };
-  readonly adminApiSecret?: Redacted.Redacted<string>;
   readonly apiKeysEnabled?: boolean;
   readonly trustedOrigins: ReadonlyArray<string>;
   readonly cookieDomain: string;
@@ -48,12 +47,9 @@ const authConfig: Config.Config<AuthConfig> = Config.all({
   base: baseServiceConfig("auth"),
   rpc: Config.all({
     port: rpcPortConfig,
-    callerTokens: rpcCallerTokensConfig("auth", AuthRpcGroup),
+    callerTokens: rpcCallerTokensConfig("auth", AuthServedRpcGroup),
     api: rpcUpstreamConfig("auth", "api"),
   }),
-  adminApiSecret: Config.option(Config.Redacted("ADMIN_API_SECRET")).pipe(
-    Config.map(Option.getOrUndefined),
-  ),
   apiKeysEnabled: Config.Boolean("API_KEYS_ENABLED").pipe(
     Config.withDefault(false),
   ),

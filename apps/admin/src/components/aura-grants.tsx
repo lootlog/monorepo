@@ -1,5 +1,7 @@
-import type { CharacterAuraGrantsResponseDto } from "@lootlog/client/main";
-import { PERSONAL_CHARACTER_AURA_IDS } from "@lootlog/schema/character-aura";
+import {
+  type CharacterAuraGrants,
+  PERSONAL_CHARACTER_AURA_IDS,
+} from "@lootlog/schema/character-aura";
 import { Button } from "@lootlog/ui/components/button";
 import { ConfirmDialog } from "@lootlog/ui/components/confirm-dialog";
 import { GrantBadge } from "@/components/grant-badge";
@@ -11,7 +13,7 @@ export function AuraGrants({
   grants,
 }: {
   user: { readonly id: string; readonly name: string };
-  grants: CharacterAuraGrantsResponseDto;
+  grants: CharacterAuraGrants;
 }) {
   const { run, pending } = useUserAction(user.id);
   const busy = pending !== undefined;

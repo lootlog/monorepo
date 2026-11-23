@@ -42,9 +42,14 @@ const refuse = (status: 401 | 403, message: string) =>
     headers: { "content-type": "text/plain; charset=utf-8" },
   });
 
+export type GuardConfig = Pick<
+  AdminConfig,
+  "origin" | "access" | "operatorEmails" | "devOperator"
+>;
+
 export const authorizeRequest = async (
   request: Request,
-  config: AdminConfig,
+  config: GuardConfig,
   verifyAccessToken: (
     token: string,
     access: NonNullable<AdminConfig["access"]>,

@@ -1,4 +1,4 @@
-import type { AdminOverview } from "@lootlog/client/auth";
+import type { AdminOverview } from "@lootlog/schema/admin";
 import { roleText, text } from "@/lib/messages";
 
 export function OverviewTiles({ overview }: { overview: AdminOverview }) {

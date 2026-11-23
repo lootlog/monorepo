@@ -1,13 +1,8 @@
 import { describe, expect, it, mock } from "bun:test";
-import type { AdminConfig } from "./config.js";
-import { authorizeRequest } from "./guard.js";
+import { type GuardConfig, authorizeRequest } from "./guard.js";
 
-const config: AdminConfig = {
-  authUrl: "http://auth:4000",
-  adminApiSecret: "secret",
-  apiUrl: "https://api.example.test/",
+const config: GuardConfig = {
   origin: "https://admin.example.test",
-  webUrl: "https://example.test/",
   access: { teamDomain: "team.cloudflareaccess.com", audience: "aud" },
   operatorEmails: new Set(["operator@example.test"]),
   devOperator: undefined,

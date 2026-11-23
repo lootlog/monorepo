@@ -2,7 +2,7 @@ import {
   RabbitMessaging,
   type RabbitMessagingService,
 } from "@lootlog/messaging";
-import { ApiRpcGroup } from "@lootlog/rpc/api";
+import { ApiOperatorRpcGroup, ApiRpcGroup } from "@lootlog/rpc/api";
 import { AuthRpcGroup } from "@lootlog/rpc/auth";
 import { makeRpcClient, type ServiceRpcClient } from "@lootlog/rpc/client";
 import {
@@ -165,6 +165,19 @@ export const makeHttpBoundaryFixture = () => {
   const requestRpcPort = (path: string) =>
     rpcBoundary.handler(new Request(`http://api.test${path}`, { headers }));
 
+  const rpcPortClient = FetchHttpClient.layer.pipe(
+    Layer.provide(
+      Layer.succeed(
+        FetchHttpClient.Fetch,
+        Object.assign(
+          (input: RequestInfo | URL, init?: RequestInit) =>
+            rpcBoundary.handler(new Request(input, init)),
+          { preconnect: globalThis.fetch.preconnect },
+        ),
+      ),
+    ),
+  );
+
   const callRpc = <A, E>(
     token: Redacted.Redacted<string>,
     use: (client: ServiceRpcClient<typeof ApiRpcGroup>) => Effect.Effect<A, E>,
@@ -177,20 +190,23 @@ export const makeHttpBoundaryFixture = () => {
       }).pipe(
         Effect.flatMap(use),
         Effect.scoped,
-        Effect.provide(
-          FetchHttpClient.layer.pipe(
-            Layer.provide(
-              Layer.succeed(
-                FetchHttpClient.Fetch,
-                Object.assign(
-                  (input: RequestInfo | URL, init?: RequestInit) =>
-                    rpcBoundary.handler(new Request(input, init)),
-                  { preconnect: globalThis.fetch.preconnect },
-                ),
-              ),
-            ),
-          ),
-        ),
+        Effect.provide(rpcPortClient),
+      ),
+    );
+
+  const callOperatorRpc = <A, E>(
+    use: (
+      client: ServiceRpcClient<typeof ApiOperatorRpcGroup>,
+    ) => Effect.Effect<A, E>,
+  ) =>
+    Effect.runPromise(
+      makeRpcClient(ApiOperatorRpcGroup, {
+        ...testRpcUpstream,
+        spanPrefix: "test.api-rpc",
+      }).pipe(
+        Effect.flatMap(use),
+        Effect.scoped,
+        Effect.provide(rpcPortClient),
       ),
     );
 
@@ -323,6 +339,7 @@ export const makeHttpBoundaryFixture = () => {
     publishedMessages,
     answerAuthService,
     callRpc,
+    callOperatorRpc,
     requestRpcPort,
     issueRevokedDiscordToken,
     boundary,

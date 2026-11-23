@@ -1,12 +1,14 @@
 import { describe, expect, it } from "bun:test";
+import { Redacted } from "effect";
 import { readAdminConfig } from "./config.js";
 
 const base = {
-  AUTH_INTERNAL_URL: "http://auth:4000",
-  ADMIN_API_SECRET: "secret",
+  AUTH_RPC_URL: "http://auth:4100",
+  API_RPC_URL: "http://api:4100",
+  RPC_TOKEN_ADMIN_TO_AUTH: "auth-edge-token",
+  RPC_TOKEN_ADMIN_TO_API: "api-edge-token",
   ADMIN_ORIGIN: "https://admin.example.test/",
   LOOTLOG_WEB_URL: "https://example.test",
-  LOOTLOG_API_URL: "https://api.example.test",
 };
 
 const access = {
@@ -21,6 +23,17 @@ describe("readAdminConfig", () => {
     ["an operator", { ...access, ADMIN_OPERATOR_EMAILS: " , " }],
   ])("refuses to start a production build without %s", (_case, overrides) => {
     expect(() => readAdminConfig({ ...base, ...overrides }, true)).toThrow();
+  });
+
+  it("refuses to start a production build without the token of an RPC edge, whatever ENV says", () => {
+    const { RPC_TOKEN_ADMIN_TO_API: _token, ...withoutToken } = base;
+
+    expect(() =>
+      readAdminConfig({ ...withoutToken, ...access }, true),
+    ).toThrow();
+    expect(
+      Redacted.value(readAdminConfig(withoutToken, false).rpc.api.token),
+    ).not.toBe("");
   });
 
   it("never grants the development operator to a production build", () => {

@@ -247,30 +247,14 @@ describe("character auras", () => {
     expect(await run((data) => data.getAuras)).toEqual({ auras: [] });
   });
 
-  it("lets an admin grant auras to a User, and revoking removes the auras they chose", async () => {
+  it("grants auras to a User, and revoking removes the auras they chose", async () => {
     const { run, verify } = await setup(["admin"]);
 
     await verify("player", "101");
     await verify("admin", "202");
     await run((data) => data.updateOwnAura("admin", character("202"), "void"));
 
-    const refused = await run((data) =>
-      Effect.all([
-        Effect.flip(data.grantAuras("player", "player")),
-        Effect.flip(data.grantPersonalAura("player", "player", "joker")),
-        Effect.flip(data.revokeAuras("player", "admin")),
-        Effect.flip(data.getGrants("player", "player")),
-      ]),
-    );
-
-    expect(refused.map((error) => error._tag)).toEqual([
-      "CharacterAuraAccessDenied",
-      "CharacterAuraAccessDenied",
-      "CharacterAuraAccessDenied",
-      "CharacterAuraAccessDenied",
-    ]);
-
-    const playerGrants = () => run((data) => data.getGrants("admin", "player"));
+    const playerGrants = () => run((data) => data.getGrants("player"));
 
     expect(await playerGrants()).toEqual({
       admin: false,
@@ -290,14 +274,11 @@ describe("character auras", () => {
       granted: true,
       personalAuraIds: ["joker"],
     });
-    expect(await run((data) => data.listGrantHolders("admin"))).toEqual({
+    expect(await run((data) => data.listGrantHolders)).toEqual({
       holders: [
         { userId: "player", granted: true, personalAuraIds: ["joker"] },
       ],
     });
-    expect(
-      (await run((data) => Effect.flip(data.listGrantHolders("player"))))._tag,
-    ).toBe("CharacterAuraAccessDenied");
     await run((data) =>
       Effect.all([
         data.updateOwnAura("player", character("101"), "frost"),
@@ -314,10 +295,7 @@ describe("character auras", () => {
     });
 
     await run((data) =>
-      Effect.all([
-        data.revokeAuras("admin", "player"),
-        data.revokeAuras("admin", "admin"),
-      ]),
+      Effect.all([data.revokeAuras("player"), data.revokeAuras("admin")]),
     );
 
     expect(await run((data) => data.getAuras)).toEqual({
@@ -328,7 +306,7 @@ describe("character auras", () => {
       granted: false,
       personalAuraIds: [],
     });
-    expect(await run((data) => data.listGrantHolders("admin"))).toEqual({
+    expect(await run((data) => data.listGrantHolders)).toEqual({
       holders: [],
     });
     expect(await run((data) => data.getOwnAura("player"))).toEqual({
@@ -371,12 +349,10 @@ describe("character auras", () => {
         ),
         Effect.flip(data.updateOwnAura("holder", character("202"), "joker")),
         Effect.flip(data.updateOwnAura("holder", character("202"), "frost")),
-        Effect.flip(data.grantPersonalAura("holder", "granted", "skyborne")),
       ]),
     );
 
     expect(refused.map((error) => error._tag)).toEqual([
-      "CharacterAuraAccessDenied",
       "CharacterAuraAccessDenied",
       "CharacterAuraAccessDenied",
       "CharacterAuraAccessDenied",
@@ -396,7 +372,7 @@ describe("character auras", () => {
       auras: [shown("202", "skyborne")],
     });
 
-    await run((data) => data.revokeAuras("admin", "holder"));
+    await run((data) => data.revokeAuras("holder"));
 
     expect(await run((data) => data.getAuras)).toEqual({ auras: [] });
     expect(
@@ -452,7 +428,7 @@ describe("character auras", () => {
               seen.push(yield* see);
               yield* data.updateOwnAura("player", character("101"), "frost");
               seen.push(yield* see);
-              yield* data.revokeAuras("admin", "player");
+              yield* data.revokeAuras("player");
               seen.push(yield* see);
               yield* data.updateOwnAura("admin", character("202"), null);
               seen.push(yield* see);
@@ -490,8 +466,8 @@ describe("character auras", () => {
         yield* data.grantAuras("admin", "player");
         yield* data.updateOwnAura("player", character("303"), "tide");
         yield* data.updateOwnAura("player", character("303", 2), "venom");
-        yield* data.revokeAuras("admin", "player");
-        yield* data.revokeAuras("admin", "admin");
+        yield* data.revokeAuras("player");
+        yield* data.revokeAuras("admin");
         yield* data.updateOwnAura("admin", character("101", 2), null);
         yield* data.updateOwnAura("admin", character("101"), null);
       }),

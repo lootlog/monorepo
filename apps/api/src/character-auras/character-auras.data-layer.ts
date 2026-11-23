@@ -246,9 +246,6 @@ export const makeCharacterAurasData = (
       }),
     );
 
-    const requireAdmin = (callerUserId: string) =>
-      admins.has(callerUserId) ? Effect.void : accessDenied();
-
     const announce = (characters: ReadonlyArray<CharacterAuraCharacter>) =>
       Effect.gen(function* () {
         if (characters.length === 0) return;
@@ -367,48 +364,43 @@ export const makeCharacterAurasData = (
 
           return yield* getOwnAura(userId);
         }),
-      listGrantHolders: (callerUserId) =>
+      listGrantHolders: Effect.gen(function* () {
+        const [granted, personalGrants] = yield* Effect.all([
+          database
+            .select({ userId: userCharacterAuraGrantTable.userId })
+            .from(userCharacterAuraGrantTable),
+          database
+            .select({
+              userId: userPersonalCharacterAuraGrantTable.userId,
+              auraId: userPersonalCharacterAuraGrantTable.auraId,
+            })
+            .from(userPersonalCharacterAuraGrantTable),
+        ]).pipe(Effect.mapError(operationError));
+
+        const grantedUserIds = new Set(granted.map((row) => row.userId));
+
+        const personal = Map.groupBy(personalGrants, (row) => row.userId);
+
+        const userIds = new Set([...grantedUserIds, ...personal.keys()]);
+
+        return {
+          holders: [...userIds].toSorted().map((userId) => {
+            const held = new Set(
+              personal.get(userId)?.map((row) => row.auraId),
+            );
+
+            return {
+              userId,
+              granted: grantedUserIds.has(userId),
+              personalAuraIds: PERSONAL_CHARACTER_AURA_IDS.filter((auraId) =>
+                held.has(auraId),
+              ),
+            };
+          }),
+        };
+      }),
+      getGrants: (userId) =>
         Effect.gen(function* () {
-          yield* requireAdmin(callerUserId);
-
-          const [granted, personalGrants] = yield* Effect.all([
-            database
-              .select({ userId: userCharacterAuraGrantTable.userId })
-              .from(userCharacterAuraGrantTable),
-            database
-              .select({
-                userId: userPersonalCharacterAuraGrantTable.userId,
-                auraId: userPersonalCharacterAuraGrantTable.auraId,
-              })
-              .from(userPersonalCharacterAuraGrantTable),
-          ]).pipe(Effect.mapError(operationError));
-
-          const grantedUserIds = new Set(granted.map((row) => row.userId));
-
-          const personal = Map.groupBy(personalGrants, (row) => row.userId);
-
-          const userIds = new Set([...grantedUserIds, ...personal.keys()]);
-
-          return {
-            holders: [...userIds].toSorted().map((userId) => {
-              const held = new Set(
-                personal.get(userId)?.map((row) => row.auraId),
-              );
-
-              return {
-                userId,
-                granted: grantedUserIds.has(userId),
-                personalAuraIds: PERSONAL_CHARACTER_AURA_IDS.filter((auraId) =>
-                  held.has(auraId),
-                ),
-              };
-            }),
-          };
-        }),
-      getGrants: (callerUserId, userId) =>
-        Effect.gen(function* () {
-          yield* requireAdmin(callerUserId);
-
           const [granted, personalGrants] = yield* Effect.all([
             isGranted(userId),
             database
@@ -427,21 +419,19 @@ export const makeCharacterAurasData = (
             ),
           };
         }),
-      grantAuras: (callerUserId, userId) =>
+      grantAuras: (operatorUserId, userId) =>
         Effect.gen(function* () {
-          yield* requireAdmin(callerUserId);
           const grantedAt = yield* now;
 
           yield* database
             .insert(userCharacterAuraGrantTable)
-            .values({ userId, grantedByUserId: callerUserId, grantedAt })
+            .values({ userId, grantedByUserId: operatorUserId, grantedAt })
             .onConflictDoNothing({ target: userCharacterAuraGrantTable.userId })
             .pipe(Effect.mapError(operationError));
           yield* cache.invalidate;
         }),
-      grantPersonalAura: (callerUserId, userId, auraId) =>
+      grantPersonalAura: (operatorUserId, userId, auraId) =>
         Effect.gen(function* () {
-          yield* requireAdmin(callerUserId);
           const grantedAt = yield* now;
 
           yield* database
@@ -449,7 +439,7 @@ export const makeCharacterAurasData = (
             .values({
               userId,
               auraId,
-              grantedByUserId: callerUserId,
+              grantedByUserId: operatorUserId,
               grantedAt,
             })
             .onConflictDoNothing({
@@ -461,10 +451,8 @@ export const makeCharacterAurasData = (
             .pipe(Effect.mapError(operationError));
           yield* cache.invalidate;
         }),
-      revokeAuras: (callerUserId, userId) =>
+      revokeAuras: (userId) =>
         Effect.gen(function* () {
-          yield* requireAdmin(callerUserId);
-
           const removed = yield* database
             .transaction((transaction) =>
               Effect.gen(function* () {
