@@ -14,8 +14,8 @@ import type { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { stableJsonStringify } from "@lootlog/schema/stable-json";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import {
-  LOOT_SHARE_ITEM_REGEX,
-  LOOT_SHARE_MSG_REGEX,
+  matchLootShareItems,
+  matchLootShares,
 } from "#src/loots/loot-share-message";
 import { ErrorKey } from "#src/loots/error-key";
 import {
@@ -44,12 +44,10 @@ export interface LootAllocationPublisher {
 const parseChatAllocation = (message: string) => {
   const allocation: Record<string, string[]> = {};
 
-  for (const [, player = "", itemList = ""] of message.matchAll(
-    LOOT_SHARE_MSG_REGEX,
-  )) {
+  for (const { player, items: itemList } of matchLootShares(message)) {
     const nickname = player.trim();
 
-    for (const [, hid = ""] of itemList.matchAll(LOOT_SHARE_ITEM_REGEX)) {
+    for (const { hid } of matchLootShareItems(itemList)) {
       const items = allocation[nickname];
 
       if (items) items.push(hid);
