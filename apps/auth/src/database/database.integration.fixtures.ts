@@ -102,6 +102,7 @@ export const makeApiKeysRuntimeFactory = ({
       listGuildLoots: unused,
       listUserReservations: unused,
       listGuildReservationSpots: unused,
+      getGuildStatsCard: unused,
     }),
     ["auth"],
   );
