@@ -21,7 +21,6 @@ import { currentMargonemAccountPlayers } from "#src/users/margonem-accounts";
 import {
   CharacterAuraAccessDenied,
   type CharacterAuraCharacter,
-  CharacterAuraGrantTargetNotFound,
   CharacterAurasData,
   CharacterAurasOperationError,
 } from "./character-auras-data.js";
@@ -33,9 +32,6 @@ const operationError = (cause: unknown) =>
 
 const accessDenied = () =>
   Effect.fail(new CharacterAuraAccessDenied({ status: 403 }));
-
-const notFound = () =>
-  Effect.fail(new CharacterAuraGrantTargetNotFound({ status: 404 }));
 
 const byCharacter = (
   left: CharacterAuraCharacter,
@@ -250,24 +246,8 @@ export const makeCharacterAurasData = (
       }),
     );
 
-    const grantTarget = (callerUserId: string, gameAccountId: string) =>
-      Effect.gen(function* () {
-        if (!admins.has(callerUserId)) return yield* accessDenied();
-
-        const players = currentMargonemAccountPlayers(
-          database,
-          eq(userMargonemAccountTable.accountId, gameAccountId),
-        );
-
-        const [player] = yield* database
-          .select({ userId: players.userId })
-          .from(players)
-          .where(eq(players.accountId, gameAccountId))
-          .limit(1)
-          .pipe(Effect.mapError(operationError));
-
-        return player ? player.userId : yield* notFound();
-      });
+    const requireAdmin = (callerUserId: string) =>
+      admins.has(callerUserId) ? Effect.void : accessDenied();
 
     const announce = (characters: ReadonlyArray<CharacterAuraCharacter>) =>
       Effect.gen(function* () {
@@ -389,7 +369,7 @@ export const makeCharacterAurasData = (
         }),
       listGrantHolders: (callerUserId) =>
         Effect.gen(function* () {
-          if (!admins.has(callerUserId)) return yield* accessDenied();
+          yield* requireAdmin(callerUserId);
 
           const [granted, personalGrants] = yield* Effect.all([
             database
@@ -425,9 +405,9 @@ export const makeCharacterAurasData = (
             }),
           };
         }),
-      getGrants: (callerUserId, gameAccountId) =>
+      getGrants: (callerUserId, userId) =>
         Effect.gen(function* () {
-          const userId = yield* grantTarget(callerUserId, gameAccountId);
+          yield* requireAdmin(callerUserId);
 
           const [granted, personalGrants] = yield* Effect.all([
             isGranted(userId),
@@ -440,7 +420,6 @@ export const makeCharacterAurasData = (
           const personal = new Set(personalGrants.map((row) => row.auraId));
 
           return {
-            userId,
             admin: admins.has(userId),
             granted,
             personalAuraIds: PERSONAL_CHARACTER_AURA_IDS.filter((auraId) =>
@@ -448,9 +427,9 @@ export const makeCharacterAurasData = (
             ),
           };
         }),
-      grantAuras: (callerUserId, gameAccountId) =>
+      grantAuras: (callerUserId, userId) =>
         Effect.gen(function* () {
-          const userId = yield* grantTarget(callerUserId, gameAccountId);
+          yield* requireAdmin(callerUserId);
           const grantedAt = yield* now;
 
           yield* database
@@ -460,9 +439,9 @@ export const makeCharacterAurasData = (
             .pipe(Effect.mapError(operationError));
           yield* cache.invalidate;
         }),
-      grantPersonalAura: (callerUserId, gameAccountId, auraId) =>
+      grantPersonalAura: (callerUserId, userId, auraId) =>
         Effect.gen(function* () {
-          const userId = yield* grantTarget(callerUserId, gameAccountId);
+          yield* requireAdmin(callerUserId);
           const grantedAt = yield* now;
 
           yield* database
@@ -482,9 +461,9 @@ export const makeCharacterAurasData = (
             .pipe(Effect.mapError(operationError));
           yield* cache.invalidate;
         }),
-      revokeAuras: (callerUserId, gameAccountId) =>
+      revokeAuras: (callerUserId, userId) =>
         Effect.gen(function* () {
-          const userId = yield* grantTarget(callerUserId, gameAccountId);
+          yield* requireAdmin(callerUserId);
 
           const removed = yield* database
             .transaction((transaction) =>

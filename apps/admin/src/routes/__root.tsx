@@ -77,13 +77,6 @@ function RootComponent() {
                   >
                     {text.navUsers}
                   </Link>
-                  <Link
-                    to="/auras"
-                    activeOptions={{ includeSearch: false }}
-                    className={navLink}
-                  >
-                    {text.navAuras}
-                  </Link>
                   <Link to="/audit" className={navLink}>
                     {text.navAudit}
                   </Link>

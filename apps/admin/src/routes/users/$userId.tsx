@@ -2,6 +2,7 @@ import { Alert, AlertDescription } from "@lootlog/ui/components/alert";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { Option, Schema } from "effect";
 import { ApiKeysList } from "@/components/api-keys-list";
+import { AuraGrants } from "@/components/aura-grants";
 import { AuditTable } from "@/components/audit-table";
 import { BanForm } from "@/components/ban-form";
 import { RolesForm } from "@/components/roles-form";
@@ -25,6 +26,9 @@ const readNotice = Schema.decodeUnknownOption(
     "revoke-sessions",
     "revoke-session",
     "revoke-api-key",
+    "grant-auras",
+    "grant-personal-aura",
+    "revoke-auras",
   ]) satisfies Schema.Codec<UserAction["action"]>,
 );
 
@@ -43,7 +47,7 @@ export const Route = createFileRoute("/users/$userId")({
 });
 
 function UserPage() {
-  const { user, sessions, apiKeys, audit } = Route.useLoaderData();
+  const { user, sessions, apiKeys, audit, auras } = Route.useLoaderData();
   const { notice, error } = Route.useSearch();
   const { operator } = Route.useRouteContext();
 
@@ -86,6 +90,23 @@ function UserPage() {
           <BanForm user={user} own={operator?.userId === user.id} />
         </Section>
       </div>
+      <Section
+        id="auras"
+        title={text.aurasHeading}
+        description={text.aurasDescription}
+      >
+        {auras.status === "ok" ? (
+          <AuraGrants user={user} grants={auras.value} />
+        ) : (
+          <Alert variant="destructive">
+            <AlertDescription>
+              {auras.status === "forbidden"
+                ? text.aurasForbidden
+                : text.aurasUnavailable}
+            </AlertDescription>
+          </Alert>
+        )}
+      </Section>
       <Section
         id="sessions"
         title={text.sessionsHeading}

@@ -16,11 +16,6 @@ export class CharacterAuraAccessDenied extends TaggedErrorClass<
   { readonly brand: unique symbol }
 >()("CharacterAuraAccessDenied", { status: Schema.Literal(403) }) {}
 
-export class CharacterAuraGrantTargetNotFound extends TaggedErrorClass<
-  CharacterAuraGrantTargetNotFound,
-  { readonly brand: unique symbol }
->()("CharacterAuraGrantTargetNotFound", { status: Schema.Literal(404) }) {}
-
 export class CharacterAurasOperationError extends TaggedErrorClass<
   CharacterAurasOperationError,
   { readonly brand: unique symbol }
@@ -33,7 +28,6 @@ export interface CharacterAuraCharacter {
 
 export type CharacterAurasFailure =
   | CharacterAuraAccessDenied
-  | CharacterAuraGrantTargetNotFound
   | CharacterAurasOperationError;
 
 type Operation<A> = Effect.Effect<A, CharacterAurasFailure>;
@@ -58,20 +52,20 @@ export class CharacterAurasData extends Context.Service<
     ) => Operation<CharacterAuraGrantHoldersResponse>;
     readonly getGrants: (
       callerUserId: string,
-      gameAccountId: string,
+      userId: string,
     ) => Operation<CharacterAuraGrantsResponse>;
     readonly grantAuras: (
       callerUserId: string,
-      gameAccountId: string,
+      userId: string,
     ) => Operation<void>;
     readonly grantPersonalAura: (
       callerUserId: string,
-      gameAccountId: string,
+      userId: string,
       auraId: PersonalCharacterAuraId,
     ) => Operation<void>;
     readonly revokeAuras: (
       callerUserId: string,
-      gameAccountId: string,
+      userId: string,
     ) => Operation<void>;
   }
 >()("@lootlog/api/http-api/character-auras/data") {}

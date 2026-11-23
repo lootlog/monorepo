@@ -1,7 +1,6 @@
 import type { AdminAuditEntryAction } from "@lootlog/client/auth";
 import type { PersonalCharacterAuraId } from "@lootlog/schema/character-aura";
 import type { PlatformRole } from "@lootlog/schema/platform-roles";
-import type { AuraAction, AuraRefusal } from "@/lib/aura-action";
 import type { BanDuration, UserAction } from "@/lib/user-action";
 
 export const roleText: Record<
@@ -40,6 +39,10 @@ export const noticeText: Record<UserAction["action"], string> = {
   "revoke-sessions": "Zakończono wszystkie sesje użytkownika.",
   "revoke-session": "Zakończono sesję.",
   "revoke-api-key": "Usunięto klucz API.",
+  "grant-auras": "Użytkownik może teraz wybrać aurę w ustawieniach Lootloga.",
+  "grant-personal-aura":
+    "Użytkownik może teraz wybrać aurę osobistą w ustawieniach Lootloga.",
+  "revoke-auras": "Odebrano aury.",
 };
 
 export const personalAuraText: Record<PersonalCharacterAuraId, string> = {
@@ -55,21 +58,6 @@ export const personalAuraText: Record<PersonalCharacterAuraId, string> = {
   tulipwind: "Tulipanowy wiatr",
 };
 
-export const auraNoticeText: Record<AuraAction["action"], string> = {
-  grant: "Gracz może teraz wybrać aurę w ustawieniach Lootloga.",
-  "grant-personal":
-    "Gracz może teraz wybrać aurę osobistą w ustawieniach Lootloga.",
-  revoke: "Odebrano aury.",
-};
-
-export const auraRefusalText: Record<AuraRefusal | "failed", string> = {
-  forbidden:
-    "Aury nadaje i odbiera tylko konto z rolą Administrator. Nadaj tę rolę swojemu kontu; zmiana działa w ciągu minuty.",
-  "no-player":
-    "Nikt nie potwierdził w Lootlogu, że gra na tym koncie. Gracz musi wejść do gry z dodatkiem.",
-  failed: "Nie udało się zmienić aur. Spróbuj ponownie.",
-};
-
 export const auditActionText: Record<AdminAuditEntryAction, string> = {
   "roles.set": "Zmiana ról",
   "ban.set": "Ban",
@@ -83,7 +71,6 @@ export const text = {
   title: "Lootlog Admin",
   navUsers: "Użytkownicy",
   navAudit: "Dziennik",
-  navAuras: "Aury",
   operator: "Operator",
   signInTitle: "Zaloguj się do Lootloga",
   signInDescription:
@@ -107,10 +94,10 @@ export const text = {
   filterAnyStatus: "Wszyscy",
   filterBanned: "Zbanowani",
   filterNotBanned: "Bez bana",
-  filterAura: "Aura",
-  filterAnyAura: "Dowolna",
-  filterWithAura: "Z aurą",
-  filterWithoutAura: "Bez aury",
+  filterAura: "Aury",
+  filterAnyAura: "Wszyscy",
+  filterWithAura: "Z nadanymi aurami",
+  filterWithoutAura: "Bez nadanych aur",
   filterApply: "Filtruj",
   filterClear: "Wyczyść",
 
@@ -194,19 +181,14 @@ export const text = {
 
   aurasHeading: "Aury",
   aurasDescription:
-    "Wklej link do profilu gracza w Margonem albo ID konta. Aury dostaje użytkownik Lootloga, który ostatni potwierdził grę na tym koncie.",
-  aurasAccountLabel: "Profil gracza",
-  aurasAccountPlaceholder:
-    "https://www.margonem.pl/profile/view,10145667#char_36132,luvia",
-  aurasAccountInvalid:
-    "Nie rozpoznano konta. Wklej link w postaci https://www.margonem.pl/profile/view,ID albo samo ID konta.",
-  aurasLookup: "Sprawdź",
-  aurasAccountHeading: (account: string) => `Konto Margonem ${account}`,
-  aurasProfileLink: "Profil w Margonem",
-  aurasLootlogUser: "Użytkownik Lootloga",
+    "Nadania dotyczą tego użytkownika. Aurę założy na postaciach z kont Margonem, na których potwierdził grę w Lootlogu.",
+  aurasForbidden:
+    "Aury nadaje i odbiera tylko konto z rolą Administrator. Nadaj tę rolę swojemu kontu; zmiana działa w ciągu minuty.",
+  aurasUnavailable:
+    "Nie udało się wczytać aur. Odśwież stronę za chwilę; pozostałe dane użytkownika są aktualne.",
   aurasAdmin:
     "Administrator: wybiera każdą aurę bez nadania, a odebranie nadań nie zdejmuje jego aur.",
-  aurasGeneralHeading: "Aury",
+  aurasGeneralHeading: "Wybór aur",
   aurasGeneralDescription:
     "Pozwala wybrać każdą aurę poza aurami administratorów i osobistymi.",
   aurasGranted: "Nadane",
@@ -218,10 +200,10 @@ export const text = {
   aurasGrantPersonal: "Nadaj",
   aurasGrantPersonalLabel: (aura: string) => `Nadaj aurę osobistą: ${aura}`,
   aurasRevoke: "Odbierz wszystkie aury",
-  aurasRevokeConfirmTitle: (account: string) =>
-    `Odebrać aury graczowi z konta ${account}?`,
+  aurasRevokeConfirmTitle: (name: string) =>
+    `Odebrać aury użytkownikowi ${name}?`,
   aurasRevokeConfirmDescription:
-    "Znikną nadanie aur i wszystkie aury osobiste, a postacie gracza od razu przestaną nosić wybrane aury.",
+    "Znikną nadanie aur i wszystkie aury osobiste, a postacie użytkownika od razu przestaną nosić wybrane aury.",
 
   cancel: "Anuluj",
   banConfirmTitle: (name: string) => `Zbanować użytkownika ${name}?`,

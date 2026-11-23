@@ -8,6 +8,11 @@ import {
 } from "@lootlog/client/auth";
 import { type UserAction, banExpiry } from "@/lib/user-action";
 import { asPanel } from "./auth-api.js";
+import {
+  grantAuras,
+  grantPersonalAura,
+  revokeAuras,
+} from "./character-auras.js";
 
 export const runUserAction = async (id: string, action: UserAction) => {
   switch (action.action) {
@@ -45,6 +50,15 @@ export const runUserAction = async (id: string, action: UserAction) => {
         { id, keyId: action.keyId },
         asPanel(),
       );
+      break;
+    case "grant-auras":
+      await grantAuras(id);
+      break;
+    case "grant-personal-aura":
+      await grantPersonalAura(id, action.auraId);
+      break;
+    case "revoke-auras":
+      await revokeAuras(id);
       break;
   }
 };

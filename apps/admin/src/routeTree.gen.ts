@@ -11,7 +11,6 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuditRouteImport } from './routes/audit'
-import { Route as AurasRouteImport } from './routes/auras'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as UsersUserIdRouteImport } from './routes/users/$userId'
 
@@ -23,11 +22,6 @@ const IndexRoute = IndexRouteImport.update({
 const AuditRoute = AuditRouteImport.update({
   id: '/audit',
   path: '/audit',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AurasRoute = AurasRouteImport.update({
-  id: '/auras',
-  path: '/auras',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignInRoute = SignInRouteImport.update({
@@ -44,14 +38,12 @@ const UsersUserIdRoute = UsersUserIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/audit': typeof AuditRoute
-  '/auras': typeof AurasRoute
   '/sign-in': typeof SignInRoute
   '/users/$userId': typeof UsersUserIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/audit': typeof AuditRoute
-  '/auras': typeof AurasRoute
   '/sign-in': typeof SignInRoute
   '/users/$userId': typeof UsersUserIdRoute
 }
@@ -59,22 +51,20 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/audit': typeof AuditRoute
-  '/auras': typeof AurasRoute
   '/sign-in': typeof SignInRoute
   '/users/$userId': typeof UsersUserIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/audit' | '/auras' | '/sign-in' | '/users/$userId'
+  fullPaths: '/' | '/audit' | '/sign-in' | '/users/$userId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/audit' | '/auras' | '/sign-in' | '/users/$userId'
-  id: '__root__' | '/' | '/audit' | '/auras' | '/sign-in' | '/users/$userId'
+  to: '/' | '/audit' | '/sign-in' | '/users/$userId'
+  id: '__root__' | '/' | '/audit' | '/sign-in' | '/users/$userId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuditRoute: typeof AuditRoute
-  AurasRoute: typeof AurasRoute
   SignInRoute: typeof SignInRoute
   UsersUserIdRoute: typeof UsersUserIdRoute
 }
@@ -93,13 +83,6 @@ declare module '@tanstack/react-router' {
       path: '/audit'
       fullPath: '/audit'
       preLoaderRoute: typeof AuditRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auras': {
-      id: '/auras'
-      path: '/auras'
-      fullPath: '/auras'
-      preLoaderRoute: typeof AurasRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sign-in': {
@@ -122,7 +105,6 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuditRoute: AuditRoute,
-  AurasRoute: AurasRoute,
   SignInRoute: SignInRoute,
   UsersUserIdRoute: UsersUserIdRoute,
 }

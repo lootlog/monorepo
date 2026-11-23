@@ -4,7 +4,7 @@ import { OverviewTiles } from "@/components/overview-tiles";
 import { Pagination } from "@/components/pagination";
 import { UsersFilter } from "@/components/users-filter";
 import { UsersTable } from "@/components/users-table";
-import { auraRefusalText, text } from "@/lib/messages";
+import { text } from "@/lib/messages";
 import { validateUsersSearch } from "@/lib/users-search";
 import { USERS_PAGE_SIZE, getOverview, listUsers } from "@/server/queries";
 
@@ -45,13 +45,11 @@ function UsersPage() {
           </p>
         </div>
         <UsersFilter search={search} />
-        {users.auraRefusal === undefined ? null : (
+        {users.aurasForbidden ? (
           <Alert variant="destructive">
-            <AlertDescription>
-              {auraRefusalText[users.auraRefusal]}
-            </AlertDescription>
+            <AlertDescription>{text.aurasForbidden}</AlertDescription>
           </Alert>
-        )}
+        ) : null}
         <UsersTable users={users.users} />
         <Pagination
           page={search.page ?? 1}
