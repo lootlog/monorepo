@@ -197,22 +197,7 @@ export const organizationChangeCommands = (
   const resume = Effect.fn("organizationOperator.resume")(function* (
     operator: OrganizationOperator & { readonly guildId: string },
   ) {
-    yield* audited(
-      operator,
-      "resume",
-      (transaction, now) =>
-        transaction
-          .update(guildTable)
-          .set({
-            suspendedAt: null,
-            suspendedReason: null,
-            suspendedBy: null,
-            updatedAt: now,
-          })
-          .where(eq(guildTable.id, operator.guildId))
-          .pipe(Effect.as(null)),
-      { accessChanged: true },
-    );
+    yield* requireOrganization(database, operator.guildId);
 
     const rules = yield* database
       .select({ id: notificationRuleTable.id })
@@ -228,6 +213,23 @@ export const organizationChangeCommands = (
       rules,
       ({ id }) => ports.restoreNotificationRule(id),
       { concurrency: NOTIFICATION_REBUILD_CONCURRENCY, discard: true },
+    );
+
+    yield* audited(
+      operator,
+      "resume",
+      (transaction, now) =>
+        transaction
+          .update(guildTable)
+          .set({
+            suspendedAt: null,
+            suspendedReason: null,
+            suspendedBy: null,
+            updatedAt: now,
+          })
+          .where(eq(guildTable.id, operator.guildId))
+          .pipe(Effect.as(null)),
+      { accessChanged: true },
     );
   });
 

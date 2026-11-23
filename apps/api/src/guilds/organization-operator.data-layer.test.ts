@@ -2,11 +2,16 @@ import { afterEach, expect, test } from "bun:test";
 import { Effect } from "effect";
 import { Capability } from "@lootlog/schema/permissions";
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
+import { createOrganizationLootRecordFixture } from "../../test/loot-fixtures.js";
 import { createNotificationRuleFixture } from "../../test/notification-fixtures.js";
 import {
   createGuildFixture,
   createMemberFixture,
 } from "../../test/organization-fixtures.js";
+import {
+  lootTable,
+  organizationLootRecordTable,
+} from "#src/database/drizzle/loot.schema";
 import { notificationRuleTable } from "#src/database/drizzle/notification.schema";
 import {
   guildTable,
@@ -33,7 +38,7 @@ const operator = {
   operatorName: "Operator",
 };
 
-const setup = async () => {
+const setup = async ({ failedRestores = 0 } = {}) => {
   const boundary = await createDatabaseBoundary();
   boundaries.push(boundary);
 
@@ -105,6 +110,7 @@ const setup = async () => {
 
   const updated: string[] = [];
   const rebuiltRules: number[] = [];
+  let restoreFailures = failedRestores;
   const cleared: string[] = [];
 
   const delivery = makeMemberDelivery(makeMemberStore(boundary.database), {
@@ -130,9 +136,11 @@ const setup = async () => {
         cleared.push(key);
       }),
     restoreNotificationRule: (ruleId) =>
-      Effect.sync(() => {
-        rebuiltRules.push(ruleId);
-      }),
+      restoreFailures-- > 0
+        ? Effect.fail(new Error("notification queue unavailable"))
+        : Effect.sync(() => {
+            rebuiltRules.push(ruleId);
+          }),
   });
 
   const accessible = () =>
@@ -206,4 +214,71 @@ test("search filters Organizations by status", async () => {
   expect(page.organizations.map(({ id }) => id)).toEqual(["guild-2"]);
   expect(page.total).toBe(1);
   expect(page.organizations[0]?.activeMembers).toBe(1);
+});
+
+test("a resume whose notification restore fails leaves the Organization suspended so it can be retried", async () => {
+  const { boundary, data, rebuiltRules, accessible } = await setup({
+    failedRestores: 1,
+  });
+
+  await boundary.run(data.suspend(operator, "Spam"));
+
+  const failure = await boundary.run(Effect.flip(data.resume(operator)));
+
+  expect(failure._tag).toBe("OrganizationOperatorError");
+  expect(
+    (await boundary.run(data.getOrganization("guild-1"))).organization.status,
+  ).toBe("suspended");
+  expect(
+    (await boundary.run(data.listAudit(10, 0))).entries.map(
+      ({ action }) => action,
+    ),
+  ).toEqual(["suspend"]);
+
+  await boundary.run(data.resume(operator));
+
+  expect(rebuiltRules).toEqual([1]);
+  expect(await accessible()).toEqual(["guild-1", "guild-2"]);
+});
+
+test("counts the last month's loot by loot time even when loot ids are out of creation order", async () => {
+  const { boundary, data } = await setup();
+  const day = 24 * 60 * 60 * 1_000;
+  const now = Date.now();
+
+  const loots = [
+    { id: 5, createdAt: new Date(now - 40 * day) },
+    { id: 11, createdAt: new Date(now - 20 * day) },
+    { id: 10, createdAt: new Date(now - 19 * day) },
+  ];
+
+  await boundary.run(
+    boundary.database.insert(lootTable).values(
+      loots.map(({ id, createdAt }) => ({
+        id,
+        uniqueId: `loot-${id}`,
+        world: "test",
+        gameVersion: "pl" as const,
+        source: "FIGHT" as const,
+        location: "Katakumby",
+        createdAt,
+        updatedAt: createdAt,
+      })),
+    ),
+  );
+  await boundary.run(
+    boundary.database.insert(organizationLootRecordTable).values(
+      loots.map(({ id, createdAt }) =>
+        createOrganizationLootRecordFixture({
+          lootId: id,
+          guildId: "guild-1",
+          lootCreatedAt: createdAt,
+        }),
+      ),
+    ),
+  );
+
+  const details = await boundary.run(data.getOrganization("guild-1"));
+
+  expect(details.usage.lootsLastMonth).toBe(2);
 });

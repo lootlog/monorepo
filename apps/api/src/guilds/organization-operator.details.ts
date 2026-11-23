@@ -9,10 +9,12 @@ import {
   count,
   desc,
   eq,
+  gt,
   gte,
   ilike,
   inArray,
   isNull,
+  lt,
   not,
   or,
   sql,
@@ -51,7 +53,7 @@ const DAY_MS = 24 * 60 * 60 * 1_000;
 
 const RECENT_AUDIT_ENTRIES = 20;
 
-const LOOT_ID_SLACK_MS = 60 * 60 * 1_000;
+const LOOT_TRANSACTION_SLACK_MS = 60 * 60 * 1_000;
 
 export const organizationDetailQueries = (
   database: Database,
@@ -116,16 +118,16 @@ export const organizationDetailQueries = (
 
     const monthAgo = new Date((yield* Clock.currentTimeMillis) - 30 * DAY_MS);
 
-    const lootIdFloor = database
+    const lootIdsBeforeWindow = database
       .select({ id: lootTable.id })
       .from(lootTable)
       .where(
-        gte(
+        lt(
           lootTable.createdAt,
-          new Date(monthAgo.getTime() - LOOT_ID_SLACK_MS),
+          new Date(monthAgo.getTime() - LOOT_TRANSACTION_SLACK_MS),
         ),
       )
-      .orderBy(lootTable.createdAt)
+      .orderBy(desc(lootTable.createdAt))
       .limit(1);
 
     const roleMembers = database
@@ -180,7 +182,10 @@ export const organizationDetailQueries = (
           .where(
             and(
               eq(organizationLootRecordTable.guildId, guildId),
-              gte(organizationLootRecordTable.lootId, lootIdFloor),
+              gt(
+                organizationLootRecordTable.lootId,
+                sql`coalesce((${lootIdsBeforeWindow}), 0)`,
+              ),
               gte(organizationLootRecordTable.lootCreatedAt, monthAgo),
             ),
           ),
