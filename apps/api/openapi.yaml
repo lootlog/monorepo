@@ -1310,6 +1310,8 @@ paths:
                     - LOOTLOG_TIMERS_DELETE
                     - LOOTLOG_TIMERS_TITANS_READ
                     - LOOTLOG_TIMERS_HEROES_READ
+                    - LOOTLOG_HERO_SIGHTINGS_READ
+                    - LOOTLOG_HERO_SIGHTINGS_WRITE
                     - LOOTLOG_RESERVATIONS_READ
                     - LOOTLOG_RESERVATIONS_WRITE
                     - LOOTLOG_MEMBERS_READ
@@ -27892,6 +27894,8 @@ components:
                         - LOOTLOG_TIMERS_DELETE
                         - LOOTLOG_TIMERS_TITANS_READ
                         - LOOTLOG_TIMERS_HEROES_READ
+                        - LOOTLOG_HERO_SIGHTINGS_READ
+                        - LOOTLOG_HERO_SIGHTINGS_WRITE
                         - LOOTLOG_RESERVATIONS_READ
                         - LOOTLOG_RESERVATIONS_WRITE
                         - LOOTLOG_MEMBERS_READ
@@ -28226,6 +28230,8 @@ components:
                         - LOOTLOG_TIMERS_DELETE
                         - LOOTLOG_TIMERS_TITANS_READ
                         - LOOTLOG_TIMERS_HEROES_READ
+                        - LOOTLOG_HERO_SIGHTINGS_READ
+                        - LOOTLOG_HERO_SIGHTINGS_WRITE
                         - LOOTLOG_RESERVATIONS_READ
                         - LOOTLOG_RESERVATIONS_WRITE
                         - LOOTLOG_MEMBERS_READ
@@ -28662,6 +28668,8 @@ components:
               - LOOTLOG_TIMERS_DELETE
               - LOOTLOG_TIMERS_TITANS_READ
               - LOOTLOG_TIMERS_HEROES_READ
+              - LOOTLOG_HERO_SIGHTINGS_READ
+              - LOOTLOG_HERO_SIGHTINGS_WRITE
               - LOOTLOG_RESERVATIONS_READ
               - LOOTLOG_RESERVATIONS_WRITE
               - LOOTLOG_MEMBERS_READ
@@ -28716,6 +28724,8 @@ components:
               - LOOTLOG_TIMERS_DELETE
               - LOOTLOG_TIMERS_TITANS_READ
               - LOOTLOG_TIMERS_HEROES_READ
+              - LOOTLOG_HERO_SIGHTINGS_READ
+              - LOOTLOG_HERO_SIGHTINGS_WRITE
               - LOOTLOG_RESERVATIONS_READ
               - LOOTLOG_RESERVATIONS_WRITE
               - LOOTLOG_MEMBERS_READ
@@ -28860,6 +28870,8 @@ components:
                     - LOOTLOG_TIMERS_DELETE
                     - LOOTLOG_TIMERS_TITANS_READ
                     - LOOTLOG_TIMERS_HEROES_READ
+                    - LOOTLOG_HERO_SIGHTINGS_READ
+                    - LOOTLOG_HERO_SIGHTINGS_WRITE
                     - LOOTLOG_RESERVATIONS_READ
                     - LOOTLOG_RESERVATIONS_WRITE
                     - LOOTLOG_MEMBERS_READ
@@ -29259,6 +29271,8 @@ components:
                     - LOOTLOG_TIMERS_DELETE
                     - LOOTLOG_TIMERS_TITANS_READ
                     - LOOTLOG_TIMERS_HEROES_READ
+                    - LOOTLOG_HERO_SIGHTINGS_READ
+                    - LOOTLOG_HERO_SIGHTINGS_WRITE
                     - LOOTLOG_RESERVATIONS_READ
                     - LOOTLOG_RESERVATIONS_WRITE
                     - LOOTLOG_MEMBERS_READ
@@ -29451,6 +29465,8 @@ components:
                     - LOOTLOG_TIMERS_DELETE
                     - LOOTLOG_TIMERS_TITANS_READ
                     - LOOTLOG_TIMERS_HEROES_READ
+                    - LOOTLOG_HERO_SIGHTINGS_READ
+                    - LOOTLOG_HERO_SIGHTINGS_WRITE
                     - LOOTLOG_RESERVATIONS_READ
                     - LOOTLOG_RESERVATIONS_WRITE
                     - LOOTLOG_MEMBERS_READ
@@ -29801,6 +29817,8 @@ components:
                 - LOOTLOG_TIMERS_DELETE
                 - LOOTLOG_TIMERS_TITANS_READ
                 - LOOTLOG_TIMERS_HEROES_READ
+                - LOOTLOG_HERO_SIGHTINGS_READ
+                - LOOTLOG_HERO_SIGHTINGS_WRITE
                 - LOOTLOG_RESERVATIONS_READ
                 - LOOTLOG_RESERVATIONS_WRITE
                 - LOOTLOG_MEMBERS_READ

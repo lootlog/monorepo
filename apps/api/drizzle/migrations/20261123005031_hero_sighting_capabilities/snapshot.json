@@ -1,0 +1,60 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "5efb2885-e946-4ad0-af23-50cdcbf303ea",
+  "prevIds": ["9e261729-4a58-4930-a994-1ff73d191612"],
+  "footprints": [
+    {
+      "statementType": "alter_enum",
+      "statementTarget": ["enum", "public", "Permission"],
+      "writes": ["s|enum|public.Permission"],
+      "reads": ["n|sch|public"]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "alter",
+      "key": "enums\u0000[\"public\",\"Permission\"]",
+      "set": {
+        "values": [
+          "OWNER",
+          "ADMIN",
+          "LOOTLOG_MANAGE",
+          "LOOTLOG_ACCESS",
+          "LOOTLOG_LOOTS_READ",
+          "LOOTLOG_LOOTS_WRITE",
+          "LOOTLOG_LOOTS_TITANS_READ",
+          "LOOTLOG_LOOTS_HEROES_READ",
+          "LOOTLOG_TIMERS_READ",
+          "LOOTLOG_TIMERS_WRITE",
+          "LOOTLOG_TIMERS_RESET",
+          "LOOTLOG_TIMERS_DELETE",
+          "LOOTLOG_TIMERS_TITANS_READ",
+          "LOOTLOG_TIMERS_HEROES_READ",
+          "LOOTLOG_RESERVATIONS_READ",
+          "LOOTLOG_RESERVATIONS_WRITE",
+          "LOOTLOG_MEMBERS_READ",
+          "LOOTLOG_CHAT_READ",
+          "LOOTLOG_CHAT_WRITE",
+          "LOOTLOG_CHAT_TITANS_READ",
+          "LOOTLOG_CHAT_HEROES_READ",
+          "LOOTLOG_NOTIFICATIONS_READ",
+          "LOOTLOG_NOTIFICATIONS_SEND",
+          "LOOTLOG_NOTIFICATIONS_TITANS_READ",
+          "LOOTLOG_NOTIFICATIONS_HEROES_READ",
+          "LOOTLOG_EVENTS_MANAGE",
+          "LOOTLOG_EVENTS_READ",
+          "LOOTLOG_EVENTS_WRITE",
+          "LOOTLOG_ONLINE_PLAYERS_READ",
+          "LOOTLOG_DOCS_READ",
+          "LOOTLOG_DOCS_WRITE",
+          "LOOTLOG_LOOTS_ARCHIVE",
+          "LOOTLOG_PRESENCE_LOCATION_READ",
+          "LOOTLOG_HERO_SIGHTINGS_READ",
+          "LOOTLOG_HERO_SIGHTINGS_WRITE"
+        ]
+      }
+    }
+  ]
+}

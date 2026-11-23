@@ -82,9 +82,14 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
       {
         pathParams: { guildId: guildId ?? "", roleId: role.id },
         data: {
-          permissions: PERMISSIONS.filter(
-            (permission) => values.permissions[permission],
-          ),
+          permissions: [
+            ...role.permissions.filter(
+              (permission) => !PERMISSIONS.includes(permission),
+            ),
+            ...PERMISSIONS.filter(
+              (permission) => values.permissions[permission],
+            ),
+          ],
           lvlRangeFrom: Number(values.lvlRangeFrom),
           lvlRangeTo: Number(values.lvlRangeTo),
         },

@@ -50,7 +50,10 @@ type Transaction = Parameters<typeof queueMemberDeliveries>[0];
 const adminPermissions = (admin: boolean): Permission[] =>
   admin
     ? Object.values(Permission).filter(
-        (permission) => permission !== Permission.OWNER,
+        (permission) =>
+          permission !== Permission.OWNER &&
+          permission !== Permission.LOOTLOG_HERO_SIGHTINGS_READ &&
+          permission !== Permission.LOOTLOG_HERO_SIGHTINGS_WRITE,
       )
     : [];
 

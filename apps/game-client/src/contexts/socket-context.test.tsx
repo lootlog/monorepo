@@ -74,7 +74,7 @@ describe("SocketProvider", () => {
     expect(command.data).toEqual({
       world: "alpha",
       character: expectedJoinData,
-      features: ["character-auras"],
+      features: ["character-auras", "hero-sighting-capabilities"],
     });
     expect(command.data).not.toHaveProperty("location");
     const requestId = command.requestId;
