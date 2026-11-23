@@ -46,10 +46,6 @@ function OrganizationsPage() {
           { label: text.organizationsOverviewTotal, value: overview.total },
           { label: text.organizationsOverviewActive, value: overview.active },
           {
-            label: text.organizationsOverviewActiveLastWeek,
-            value: overview.activeLastWeek,
-          },
-          {
             label: text.organizationsOverviewSuspended,
             value: overview.suspended,
           },

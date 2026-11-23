@@ -14,7 +14,7 @@
   "apps/api/src/guilds/current-user-guilds.data-layer.test.ts": 1,
   "apps/api/src/guilds/guild-channel-deleted-outbox.test.ts": 2,
   "apps/api/src/guilds/guild-discord-sync.data-layer.test.ts": 3,
-  "apps/api/src/guilds/organization-operator.data-layer.test.ts": 2,
+  "apps/api/src/guilds/organization-operator.data-layer.test.ts": 1,
   "apps/api/src/hero-sightings/hero-sightings.data-layer.test.ts": 9,
   "apps/api/src/http-api/handlers/party-ready-room/ready-room-active.test.ts": 2,
   "apps/api/src/kills/kill-creation.dedup.test.ts": 2,

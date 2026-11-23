@@ -9,22 +9,15 @@ import {
   count,
   desc,
   eq,
-  gt,
-  gte,
   ilike,
   inArray,
   isNull,
-  lt,
   not,
   or,
   sql,
 } from "drizzle-orm";
-import { Clock, Effect } from "effect";
+import { Effect } from "effect";
 import { guildDocumentTable } from "#src/database/drizzle/guild-document.schema";
-import {
-  lootTable,
-  organizationLootRecordTable,
-} from "#src/database/drizzle/loot.schema";
 import {
   notificationJobTable,
   notificationRuleTable,
@@ -50,11 +43,7 @@ import {
 } from "./organization-operator.shared.js";
 import type { organizationListQueries } from "./organization-operator.list.js";
 
-const DAY_MS = 24 * 60 * 60 * 1_000;
-
 const RECENT_AUDIT_ENTRIES = 20;
-
-const LOOT_TRANSACTION_SLACK_MS = 60 * 60 * 1_000;
 
 export const organizationDetailQueries = (
   database: Database,
@@ -117,20 +106,6 @@ export const organizationDetailQueries = (
 
     if (!row) return yield* new OrganizationNotFound();
 
-    const monthAgo = new Date((yield* Clock.currentTimeMillis) - 30 * DAY_MS);
-
-    const lootIdsBeforeWindow = database
-      .select({ id: lootTable.id })
-      .from(lootTable)
-      .where(
-        lt(
-          lootTable.createdAt,
-          new Date(monthAgo.getTime() - LOOT_TRANSACTION_SLACK_MS),
-        ),
-      )
-      .orderBy(desc(lootTable.createdAt))
-      .limit(1);
-
     const roleMembers = database
       .select({ value: count().as("value") })
       .from(memberToRoleTable)
@@ -142,7 +117,6 @@ export const organizationDetailQueries = (
       inactiveMembers,
       documents,
       rules,
-      loots,
       discord,
       notifications,
       lastNotificationError,
@@ -176,19 +150,6 @@ export const organizationDetailQueries = (
             and(
               eq(notificationRuleTable.ownerType, "GUILD"),
               eq(notificationRuleTable.ownerId, guildId),
-            ),
-          ),
-        database
-          .select({ value: count() })
-          .from(organizationLootRecordTable)
-          .where(
-            and(
-              eq(organizationLootRecordTable.guildId, guildId),
-              gt(
-                organizationLootRecordTable.lootId,
-                sql`coalesce((${lootIdsBeforeWindow}), 0)`,
-              ),
-              gte(organizationLootRecordTable.lootCreatedAt, monthAgo),
             ),
           ),
         database
@@ -265,7 +226,6 @@ export const organizationDetailQueries = (
         inactiveMembers: inactiveMembers[0]?.value ?? 0,
         documents: documents[0]?.value ?? 0,
         notificationRules: rules[0]?.value ?? 0,
-        lootsLastMonth: loots[0]?.value ?? 0,
       },
       discord: state
         ? {

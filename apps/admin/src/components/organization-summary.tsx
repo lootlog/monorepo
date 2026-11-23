@@ -83,7 +83,6 @@ export function OrganizationSummary({
         tiles={[
           { label: text.usageMembers, value: organization.activeMembers },
           { label: text.usageInactiveMembers, value: usage.inactiveMembers },
-          { label: text.usageLootsLastMonth, value: usage.lootsLastMonth },
           {
             label: text.usageDocuments(limits.documents),
             value: usage.documents,

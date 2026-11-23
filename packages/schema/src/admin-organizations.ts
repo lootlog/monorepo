@@ -20,11 +20,7 @@ export const AdminOrganizationStatus = Schema.Literals(
 
 export type AdminOrganizationStatus = typeof AdminOrganizationStatus.Type;
 
-export const ADMIN_ORGANIZATION_SORTS = [
-  "created",
-  "members",
-  "activity",
-] as const;
+export const ADMIN_ORGANIZATION_SORTS = ["created", "members"] as const;
 
 export const AdminOrganizationSort = Schema.Literals(ADMIN_ORGANIZATION_SORTS);
 
@@ -61,7 +57,6 @@ export const AdminOrganization = Schema.Struct({
   owner: AdminOrganizationOwner,
   status: AdminOrganizationStatus,
   activeMembers: NonNegativeSafeInteger,
-  lastLootAt: Schema.NullOr(DateTimeString),
   syncStatus: Schema.NullOr(DiscordGuildSyncStatus),
   hasRequiredPermissions: Schema.Boolean,
   createdAt: DateTimeString,
@@ -80,7 +75,6 @@ export const AdminOrganizationsOverview = Schema.Struct({
   total: NonNegativeSafeInteger,
   active: NonNegativeSafeInteger,
   suspended: NonNegativeSafeInteger,
-  activeLastWeek: NonNegativeSafeInteger,
   syncFailing: NonNegativeSafeInteger,
 });
 
@@ -169,7 +163,6 @@ export const AdminOrganizationDetails = Schema.Struct({
     inactiveMembers: NonNegativeSafeInteger,
     documents: NonNegativeSafeInteger,
     notificationRules: NonNegativeSafeInteger,
-    lootsLastMonth: NonNegativeSafeInteger,
   }),
   discord: Schema.NullOr(AdminOrganizationDiscord),
   notifications: AdminOrganizationNotifications,
