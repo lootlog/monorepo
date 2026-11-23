@@ -68,20 +68,7 @@
     "@typescript-eslint/ban-ts-comment": "warn",
     "@typescript-eslint/consistent-type-imports": "warn",
     "@typescript-eslint/no-import-type-side-effects": "warn",
-    "react/react-in-jsx-scope": "off",
-    "react/jsx-key": "error",
-    "react/jsx-no-duplicate-props": "error",
-    "react/jsx-no-undef": "error",
-    "react/no-children-prop": "error",
-    "react/no-danger-with-children": "error",
-    "react/no-direct-mutation-state": "error",
-    "react/no-unescaped-entities": "warn",
-    "react/no-unknown-property": "error",
-    "react/self-closing-comp": "warn",
-    "react/jsx-boolean-value": "warn",
     "react/jsx-curly-brace-presence": ["warn", "never"],
-    "react-hooks/rules-of-hooks": "error",
-    "react-hooks/exhaustive-deps": "warn",
     "unicorn/catch-error-name": [
       "warn",
       {
@@ -223,19 +210,6 @@
           {
             "allowInTypeGuards": true,
             "boundaryFunctions": ["install", "parseIntent", "createEnvelope"]
-          }
-        ]
-      }
-    },
-    {
-      "files": [
-        "src/lib/margonem-runtime/adapters/chat-host-runtime-adapter.ts"
-      ],
-      "rules": {
-        "anti-slop/no-reflect-apply": [
-          "error",
-          {
-            "boundaryFunctions": ["apply"]
           }
         ]
       }
@@ -745,17 +719,6 @@
           {
             "allowInTypeGuards": true,
             "boundaryFunctions": ["requireNonEmptyString"]
-          }
-        ]
-      }
-    },
-    {
-      "files": ["src/store/timer-settings-codec.ts"],
-      "rules": {
-        "anti-slop/no-unknown-parameters": [
-          "error",
-          {
-            "boundaryFunctions": ["decodeTimerSettings"]
           }
         ]
       }

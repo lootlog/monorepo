@@ -56,11 +56,6 @@
     "extend": "Przedłuż",
     "extendLabel": "Przedłuż zbiórkę o 10 minut"
   },
-  "integration": {
-    "tab": "Lootlog",
-    "attach": "Przenieś do czatu gry",
-    "detach": "Otwórz w osobnym oknie"
-  },
   "window": {
     "title": "Czat"
   },
