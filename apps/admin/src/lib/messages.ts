@@ -184,6 +184,8 @@ export const text = {
     "Nadania dotyczą tego użytkownika. Aurę założy na postaciach z kont Margonem, na których potwierdził grę w Lootlogu.",
   aurasForbidden:
     "Aury nadaje i odbiera tylko konto z rolą Administrator. Nadaj tę rolę swojemu kontu; zmiana działa w ciągu minuty.",
+  aurasUnavailable:
+    "Nie udało się wczytać aur. Odśwież stronę za chwilę; pozostałe dane użytkownika są aktualne.",
   aurasAdmin:
     "Administrator: wybiera każdą aurę bez nadania, a odebranie nadań nie zdejmuje jego aur.",
   aurasGeneralHeading: "Wybór aur",

@@ -118,7 +118,7 @@ export const getUser = createServerFn({ method: "GET" })
     try {
       const [details, auras] = await Promise.all([
         adminControllerGetUser({ id }, asPanel()),
-        getAuraGrants(id),
+        getAuraGrants(id).catch(() => ({ status: "unavailable" as const })),
       ]);
 
       return { ...details, audit: details.audit.map(toAuditRow), auras };
