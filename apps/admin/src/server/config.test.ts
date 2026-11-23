@@ -1,5 +1,4 @@
 import { describe, expect, it } from "bun:test";
-import { Redacted } from "effect";
 import { readAdminConfig } from "./config.js";
 
 const base = {
@@ -25,15 +24,17 @@ describe("readAdminConfig", () => {
     expect(() => readAdminConfig({ ...base, ...overrides }, true)).toThrow();
   });
 
-  it("treats a production build without ENV as prod, so a missing RPC edge token stops it", () => {
+  it("requires the RPC edge tokens of a production build unless ENV names local", () => {
     const { RPC_TOKEN_ADMIN_TO_API: _token, ...withoutToken } = base;
+    const production = { ...withoutToken, ...access };
 
+    expect(() => readAdminConfig(production, true)).toThrow();
     expect(() =>
-      readAdminConfig({ ...withoutToken, ...access }, true),
+      readAdminConfig({ ...production, ENV: "prod" }, true),
     ).toThrow();
-    expect(
-      Redacted.value(readAdminConfig(withoutToken, false).rpc.api.token),
-    ).not.toBe("");
+    expect(() =>
+      readAdminConfig({ ...production, ENV: "local" }, true),
+    ).not.toThrow();
   });
 
   it("never grants the development operator to a production build", () => {
