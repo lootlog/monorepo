@@ -188,7 +188,7 @@ test("new user event rules keep the effective key organizations when their filte
 
     const created = await boundary.run(
       rules
-        .createUser("discord-1", {
+        .createUser("discord-1", identity.userId, {
           triggerType: NotificationTriggerType.WATCHED_ITEM_DROPPED,
           targetIds: [9],
           itemIds: [10],
@@ -365,7 +365,7 @@ test("personal API keys cannot cancel Organization reservation reminders through
     expect(removeFromQueue).not.toHaveBeenCalled();
     await expect(
       run(
-        rules.createUser("discord-1", {
+        rules.createUser("discord-1", identity.userId, {
           name: "__system:reservation-reminder__",
           triggerType: NotificationTriggerType.SCHEDULED_MESSAGE,
           targetIds: [9],

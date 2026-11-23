@@ -47,8 +47,8 @@ export const makeOrganizationOperatorData = (
       operation(details.listUserOrganizations(discordId)),
     listAudit: (limit: number, offset: number) =>
       operation(details.listAudit(limit, offset)),
-    setLimits: (...args: Parameters<typeof changes.setLimits>) =>
-      operation(changes.setLimits(...args)),
+    setEntitlement: (...args: Parameters<typeof changes.setEntitlement>) =>
+      operation(changes.setEntitlement(...args)),
     clearVanityUrl: (...args: Parameters<typeof changes.clearVanityUrl>) =>
       operation(changes.clearVanityUrl(...args)),
     refreshDiscordSync: (

@@ -92,7 +92,6 @@ describe("docs service", () => {
       guildId: "guild-1",
       discordId: "discord-1",
       title: "Plan",
-      defaultLimit: 50,
       content: {
         root: {
           children: [

@@ -78,7 +78,9 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
       const { adapter, internalAdapter } = await auth.$context;
       const createdAt = new Date("2026-01-02T03:04:05.123Z");
 
-      const user = await adapter.create<typeof authUsers.$inferSelect>({
+      const user = await adapter.create<
+        Omit<typeof authUsers.$inferSelect, "apiKeyLimit">
+      >({
         model: "user",
         data: {
           name: "Adapter user",
@@ -327,12 +329,15 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
         { id: "123", hasLootlogAccess: true, isAccessDataStale: false },
       ];
 
+      let apiKeyLimit = 10;
+
       const makeKeysRuntime = makeApiKeysRuntimeFactory({
         redis,
         db,
         auth,
         config: options.config,
         getGrantOrganizations: () => grantOrganizations,
+        getApiKeyLimit: () => apiKeyLimit,
       });
 
       const keysRuntime = makeKeysRuntime(true);
@@ -537,10 +542,30 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
         expect(
           attempts.filter(({ status }) => status === "fulfilled"),
         ).toHaveLength(10);
+
+        const planKey = (name: string) =>
+          keys.create(user.id, {
+            name,
+            organizationIds: ["123"],
+            mode: "read",
+            personalData: false,
+            expiresIn: null,
+          });
+
+        await expect(
+          keysRuntime.runPromise(planKey("Above free limit")),
+        ).rejects.toMatchObject({ kind: "conflict" });
+        apiKeyLimit = 11;
+        await expect(
+          keysRuntime.runPromise(planKey("Premium slot")),
+        ).resolves.toMatchObject({ name: "Premium slot" });
+        await expect(
+          keysRuntime.runPromise(planKey("Above premium limit")),
+        ).rejects.toMatchObject({ kind: "conflict" });
         const { id: _removedId, ...removedData } = user;
 
         const removedOwner = await adapter.create<
-          typeof authUsers.$inferSelect
+          Omit<typeof authUsers.$inferSelect, "apiKeyLimit">
         >({
           model: "user",
           data: {

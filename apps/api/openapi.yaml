@@ -217,6 +217,72 @@ paths:
             schema:
               $ref: "#/components/schemas/UpdateUserPreferencesDto"
         required: true
+  /users/@me/limits:
+    get:
+      tags:
+        - users
+      operationId: UsersController_getUserLimits
+      parameters: []
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notificationRules:
+                    type: integer
+                    minimum: 0
+                    maximum: 9007199254740991
+                  watchedItems:
+                    type: integer
+                    minimum: 0
+                    maximum: 9007199254740991
+                  customThemes:
+                    type: integer
+                    minimum: 0
+                    maximum: 9007199254740991
+                  apiKeys:
+                    type: integer
+                    minimum: 0
+                    maximum: 9007199254740991
+                required:
+                  - notificationRules
+                  - watchedItems
+                  - customThemes
+                  - apiKeys
+                additionalProperties: false
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired | HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+      description: Return how many personal notification rules, watched items, custom themes and active API keys the authenticated user may hold.
+      summary: Get user limits
   /users/@me/guilds:
     get:
       tags:

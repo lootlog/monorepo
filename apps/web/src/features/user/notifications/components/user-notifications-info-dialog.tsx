@@ -7,11 +7,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@lootlog/ui/components/dialog";
-import { USER_WATCHED_ITEMS_LIMIT } from "@/lib/user-notifications/user-watched-items-limit";
 
 type UserNotificationsInfoDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  watchedItemsLimit: number;
 };
 
 const sections = [
@@ -36,6 +36,7 @@ const sections = [
 export const UserNotificationsInfoDialog = ({
   open,
   onOpenChange,
+  watchedItemsLimit,
 }: UserNotificationsInfoDialogProps) => {
   const { t } = useTranslation();
 
@@ -55,7 +56,7 @@ export const UserNotificationsInfoDialog = ({
                 title={t(`settings.userNotifications.infoDialog.${key}.title`)}
                 description={t(
                   `settings.userNotifications.infoDialog.${key}.description`,
-                  { limit: USER_WATCHED_ITEMS_LIMIT },
+                  { limit: watchedItemsLimit },
                 )}
               />
             </section>

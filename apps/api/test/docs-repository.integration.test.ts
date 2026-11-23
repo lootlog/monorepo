@@ -17,6 +17,7 @@ import {
   guildDocumentTable,
 } from "../src/database/drizzle/guild-document.schema.js";
 import { guildTable } from "../src/database/drizzle/organization.schema.js";
+import { organizationEntitlementTable } from "../src/database/drizzle/plan.schema.js";
 import {
   DOCUMENT_HISTORY_RETAINED_ENTRIES,
   DocsPersistenceError,
@@ -46,7 +47,6 @@ const create = () =>
         discordId: "editor-1",
         title: "Plan",
         content,
-        defaultLimit: 50,
       }),
     ),
   );
@@ -101,7 +101,6 @@ describe("DocsRepository against migrated PostgreSQL", () => {
             id: guildId,
             name: "Documents",
             ownerId: "owner",
-            documentLimit: 1,
             updatedAt: new Date(),
           },
           {
@@ -111,6 +110,11 @@ describe("DocsRepository against migrated PostgreSQL", () => {
             updatedAt: new Date(),
           },
         ]);
+        yield* db.insert(organizationEntitlementTable).values({
+          guildId,
+          documentLimit: 1,
+          updatedAt: new Date(),
+        });
       }),
     );
   });

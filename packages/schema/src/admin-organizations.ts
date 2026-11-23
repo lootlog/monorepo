@@ -6,6 +6,7 @@ import {
   PageSize,
 } from "./http-scalars.js";
 import { CapabilitySchema } from "./permissions.js";
+import { AdminOrganizationEntitlement } from "./plans.js";
 
 export const ADMIN_ORGANIZATION_STATUSES = [
   "active",
@@ -28,22 +29,6 @@ export const ADMIN_ORGANIZATION_SORTS = [
 export const AdminOrganizationSort = Schema.Literals(ADMIN_ORGANIZATION_SORTS);
 
 export type AdminOrganizationSort = typeof AdminOrganizationSort.Type;
-
-export const ORGANIZATION_LIMIT_BOUNDS = { min: 0, max: 1_000 } as const;
-
-const OrganizationLimit = Schema.Int.check(
-  Schema.isBetween({
-    minimum: ORGANIZATION_LIMIT_BOUNDS.min,
-    maximum: ORGANIZATION_LIMIT_BOUNDS.max,
-  }),
-);
-
-export const OrganizationLimits = Schema.Struct({
-  notificationRuleLimit: OrganizationLimit,
-  documentLimit: OrganizationLimit,
-});
-
-export type OrganizationLimits = typeof OrganizationLimits.Type;
 
 export const SuspensionReason = Schema.Trim.check(
   Schema.isMinLength(1),
@@ -178,7 +163,7 @@ export const AdminOrganizationDetails = Schema.Struct({
       by: Schema.NullOr(Schema.String),
     }),
   ),
-  limits: OrganizationLimits,
+  entitlement: AdminOrganizationEntitlement,
   publicStatsCardEnabled: Schema.Boolean,
   usage: Schema.Struct({
     inactiveMembers: NonNegativeSafeInteger,

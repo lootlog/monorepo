@@ -4,7 +4,6 @@ import {
   getApiErrorNumberDetail,
   getApiErrorStringField,
 } from "@lootlog/client/transport";
-import { USER_WATCHED_ITEMS_LIMIT } from "@/lib/user-notifications/user-watched-items-limit";
 
 type TranslateFunction = (key: string, options?: TOptions) => string;
 
@@ -28,9 +27,7 @@ export const getUserNotificationsErrorMessage = (
 
   if (code === "USER_WATCHED_ITEM_LIMIT_REACHED") {
     return t("settings.userNotifications.validation.watchLimitReached", {
-      limit:
-        getApiErrorNumberDetail(cause, "watchedItemLimit") ??
-        USER_WATCHED_ITEMS_LIMIT,
+      limit: getApiErrorNumberDetail(cause, "watchedItemLimit"),
     });
   }
 

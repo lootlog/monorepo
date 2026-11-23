@@ -2,6 +2,7 @@ import type { RoleHolders } from "#src/platform-roles/role-holders";
 import { and, asc, eq, inArray, isNotNull, or, type SQL } from "drizzle-orm";
 import { Clock, Effect, Layer, Schema } from "effect";
 import {
+  type CharacterAuraId,
   CharacterAuraIdSchema,
   isAdminCharacterAuraId,
   isPersonalCharacterAuraId,
@@ -12,10 +13,15 @@ import { ignorePublicationFailure } from "#src/shared/best-effort-publication";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   characterAuraTable,
-  userCharacterAuraGrantTable,
   userMargonemAccountTable,
   userPersonalCharacterAuraGrantTable,
 } from "#src/database/drizzle/user.schema";
+import { userEntitlementTable } from "#src/database/drizzle/plan.schema";
+import {
+  readUserEntitlements,
+  type UserEntitlementRow,
+  userEntitlements,
+} from "#src/plans/entitlements";
 import type { CharacterAurasResponse } from "#src/contracts/character-auras/schemas";
 import { currentMargonemAccountPlayers } from "#src/users/margonem-accounts";
 import {
@@ -104,75 +110,81 @@ export const makeCharacterAurasData = (
         ),
       );
 
-      return database
-        .select({
-          gameAccountId: characterAuraTable.accountId,
-          characterId: characterAuraTable.characterId,
-          userId: characterAuraTable.userId,
-          auraId: characterAuraTable.auraId,
-          personalHolder: userPersonalCharacterAuraGrantTable.userId,
-        })
-        .from(characterAuraTable)
-        .innerJoin(
-          players,
-          and(
-            eq(players.accountId, characterAuraTable.accountId),
-            eq(players.userId, characterAuraTable.userId),
-          ),
-        )
-        .leftJoin(
-          userCharacterAuraGrantTable,
-          eq(userCharacterAuraGrantTable.userId, characterAuraTable.userId),
-        )
-        .leftJoin(
-          userPersonalCharacterAuraGrantTable,
-          and(
-            eq(
-              userPersonalCharacterAuraGrantTable.userId,
-              characterAuraTable.userId,
+      return Effect.zip(
+        now,
+        database
+          .select({
+            gameAccountId: characterAuraTable.accountId,
+            characterId: characterAuraTable.characterId,
+            userId: characterAuraTable.userId,
+            auraId: characterAuraTable.auraId,
+            personalHolder: userPersonalCharacterAuraGrantTable.userId,
+            entitlement: userEntitlementTable,
+          })
+          .from(characterAuraTable)
+          .innerJoin(
+            players,
+            and(
+              eq(players.accountId, characterAuraTable.accountId),
+              eq(players.userId, characterAuraTable.userId),
             ),
-            eq(
-              userPersonalCharacterAuraGrantTable.auraId,
-              characterAuraTable.auraId,
+          )
+          .leftJoin(
+            userEntitlementTable,
+            eq(userEntitlementTable.userId, characterAuraTable.userId),
+          )
+          .leftJoin(
+            userPersonalCharacterAuraGrantTable,
+            and(
+              eq(
+                userPersonalCharacterAuraGrantTable.userId,
+                characterAuraTable.userId,
+              ),
+              eq(
+                userPersonalCharacterAuraGrantTable.auraId,
+                characterAuraTable.auraId,
+              ),
             ),
-          ),
-        )
-        .where(
-          and(
-            where,
-            or(
-              isNotNull(userCharacterAuraGrantTable.userId),
-              isNotNull(userPersonalCharacterAuraGrantTable.userId),
-              admins.ids().length === 0
-                ? undefined
-                : inArray(characterAuraTable.userId, [...admins.ids()]),
+          )
+          .where(
+            and(
+              where,
+              or(
+                isNotNull(userEntitlementTable.userId),
+                isNotNull(userPersonalCharacterAuraGrantTable.userId),
+                admins.ids().length === 0
+                  ? undefined
+                  : inArray(characterAuraTable.userId, [...admins.ids()]),
+              ),
             ),
+          )
+          .orderBy(
+            asc(characterAuraTable.accountId),
+            asc(characterAuraTable.characterId),
           ),
-        )
-        .orderBy(
-          asc(characterAuraTable.accountId),
-          asc(characterAuraTable.characterId),
-        )
-        .pipe(
-          Effect.map((rows) =>
-            rows.flatMap(
-              ({
-                gameAccountId,
-                characterId,
-                userId,
-                auraId,
-                personalHolder,
-              }) =>
-                isCharacterAuraId(auraId) &&
-                (admins.has(userId) ||
-                  (isPersonalCharacterAuraId(auraId)
-                    ? personalHolder !== null
-                    : !isAdminCharacterAuraId(auraId)))
-                  ? [{ gameAccountId, characterId, auraId }]
-                  : [],
-            ),
+      ).pipe(
+        Effect.map(([at, rows]) =>
+          rows.flatMap(
+            ({
+              gameAccountId,
+              characterId,
+              userId,
+              auraId,
+              personalHolder,
+              entitlement,
+            }) =>
+              isCharacterAuraId(auraId) &&
+              (admins.has(userId) ||
+                (isPersonalCharacterAuraId(auraId)
+                  ? personalHolder !== null
+                  : !isAdminCharacterAuraId(auraId) &&
+                    userEntitlements(entitlement ?? undefined, at)
+                      .characterAuras))
+                ? [{ gameAccountId, characterId, auraId }]
+                : [],
           ),
-        );
+        ),
+      );
     };
 
     const isCharacter = ({
@@ -185,12 +197,26 @@ export const makeCharacterAurasData = (
       );
 
     const isGranted = (userId: string) =>
+      readUserEntitlements(database, userId).pipe(
+        Effect.map((entitlements) => entitlements.characterAuras),
+      );
+
+    const generalAuraHolderIds = Effect.zipWith(
+      now,
       database
-        .select({ userId: userCharacterAuraGrantTable.userId })
-        .from(userCharacterAuraGrantTable)
-        .where(eq(userCharacterAuraGrantTable.userId, userId))
-        .limit(1)
-        .pipe(Effect.map((rows) => rows.length > 0));
+        .select()
+        .from(userEntitlementTable)
+        .where(
+          or(
+            isNotNull(userEntitlementTable.plan),
+            isNotNull(userEntitlementTable.characterAuras),
+          ),
+        ),
+      (at, rows: ReadonlyArray<UserEntitlementRow>) =>
+        rows.flatMap((row) =>
+          userEntitlements(row, at).characterAuras ? [row.userId] : [],
+        ),
+    );
 
     const canChange = (userId: string) =>
       admins.has(userId) ? Effect.succeed(true) : isGranted(userId);
@@ -233,10 +259,7 @@ export const makeCharacterAurasData = (
             auraId: characterAuraTable.auraId,
           })
           .from(characterAuraTable),
-        grantedUserIds: database
-          .select({ userId: userCharacterAuraGrantTable.userId })
-          .from(userCharacterAuraGrantTable)
-          .pipe(Effect.map((rows) => rows.map((row) => row.userId))),
+        grantedUserIds: generalAuraHolderIds,
         personalGrants: database
           .select({
             userId: userPersonalCharacterAuraGrantTable.userId,
@@ -276,22 +299,46 @@ export const makeCharacterAurasData = (
           ),
         );
 
+        const admin = admins.has(userId);
+        const canChange = admin || grantedUserIds.includes(userId);
+
+        const wears = (auraId: CharacterAuraId) =>
+          admin ||
+          (isPersonalCharacterAuraId(auraId)
+            ? granted.has(auraId)
+            : !isAdminCharacterAuraId(auraId) && canChange);
+
         return {
           auras: auras
             .flatMap(
               ({ userId: holder, gameAccountId, characterId, auraId }) =>
-                holder === userId && isCharacterAuraId(auraId)
+                holder === userId && isCharacterAuraId(auraId) && wears(auraId)
                   ? [{ gameAccountId, characterId, auraId }]
                   : [],
             )
             .toSorted(byCharacter),
-          canChange: admins.has(userId) || grantedUserIds.includes(userId),
+          canChange,
           personalAuraIds: PERSONAL_CHARACTER_AURA_IDS.filter(
             (auraId) => admins.has(userId) || granted.has(auraId),
           ),
           canGrant: admins.has(userId),
         };
       }).pipe(Effect.mapError(operationError));
+
+    const refreshUser = (userId: string) =>
+      Effect.gen(function* () {
+        const characters = yield* database
+          .select({
+            gameAccountId: characterAuraTable.accountId,
+            characterId: characterAuraTable.characterId,
+          })
+          .from(characterAuraTable)
+          .where(eq(characterAuraTable.userId, userId))
+          .pipe(Effect.mapError(operationError));
+
+        yield* cache.invalidate;
+        yield* announce(characters.toSorted(byCharacter));
+      });
 
     return CharacterAurasData.of({
       getAuras: cache.list(
@@ -366,9 +413,7 @@ export const makeCharacterAurasData = (
         }),
       listGrantHolders: Effect.gen(function* () {
         const [granted, personalGrants] = yield* Effect.all([
-          database
-            .select({ userId: userCharacterAuraGrantTable.userId })
-            .from(userCharacterAuraGrantTable),
+          generalAuraHolderIds,
           database
             .select({
               userId: userPersonalCharacterAuraGrantTable.userId,
@@ -377,7 +422,7 @@ export const makeCharacterAurasData = (
             .from(userPersonalCharacterAuraGrantTable),
         ]).pipe(Effect.mapError(operationError));
 
-        const grantedUserIds = new Set(granted.map((row) => row.userId));
+        const grantedUserIds = new Set(granted);
 
         const personal = Map.groupBy(personalGrants, (row) => row.userId);
 
@@ -419,17 +464,6 @@ export const makeCharacterAurasData = (
             ),
           };
         }),
-      grantAuras: (operatorUserId, userId) =>
-        Effect.gen(function* () {
-          const grantedAt = yield* now;
-
-          yield* database
-            .insert(userCharacterAuraGrantTable)
-            .values({ userId, grantedByUserId: operatorUserId, grantedAt })
-            .onConflictDoNothing({ target: userCharacterAuraGrantTable.userId })
-            .pipe(Effect.mapError(operationError));
-          yield* cache.invalidate;
-        }),
       grantPersonalAura: (operatorUserId, userId, auraId) =>
         Effect.gen(function* () {
           const grantedAt = yield* now;
@@ -451,36 +485,15 @@ export const makeCharacterAurasData = (
             .pipe(Effect.mapError(operationError));
           yield* cache.invalidate;
         }),
-      revokeAuras: (userId) =>
-        Effect.gen(function* () {
-          const removed = yield* database
-            .transaction((transaction) =>
-              Effect.gen(function* () {
-                yield* transaction
-                  .delete(userCharacterAuraGrantTable)
-                  .where(eq(userCharacterAuraGrantTable.userId, userId));
-                yield* transaction
-                  .delete(userPersonalCharacterAuraGrantTable)
-                  .where(
-                    eq(userPersonalCharacterAuraGrantTable.userId, userId),
-                  );
-
-                if (admins.has(userId)) return [];
-
-                return yield* transaction
-                  .delete(characterAuraTable)
-                  .where(eq(characterAuraTable.userId, userId))
-                  .returning({
-                    gameAccountId: characterAuraTable.accountId,
-                    characterId: characterAuraTable.characterId,
-                  });
-              }),
-            )
-            .pipe(Effect.mapError(operationError));
-
-          yield* cache.invalidate;
-          yield* announce(removed.toSorted(byCharacter));
-        }),
+      revokePersonalAuras: (userId) =>
+        database
+          .delete(userPersonalCharacterAuraGrantTable)
+          .where(eq(userPersonalCharacterAuraGrantTable.userId, userId))
+          .pipe(
+            Effect.mapError(operationError),
+            Effect.andThen(refreshUser(userId)),
+          ),
+      refreshUser,
     });
   });
 

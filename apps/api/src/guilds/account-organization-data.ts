@@ -6,6 +6,7 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
 import type { UpdateUserPreferencesRequest } from "#src/contracts/users/schemas";
 import type { UserPreferences } from "@lootlog/schema/user-preferences";
+import type { UserLimits } from "@lootlog/schema/plans";
 
 export type AuthenticatedIdentity = {
   readonly userId: string;
@@ -30,6 +31,7 @@ export class AccountOrganizationData extends Context.Service<
     readonly getUserPreferences: (
       userId: string,
     ) => DataEffect<UserPreferences>;
+    readonly getUserLimits: (userId: string) => DataEffect<UserLimits>;
     readonly userOwnsTheme: (
       userId: string,
       themeId: string,

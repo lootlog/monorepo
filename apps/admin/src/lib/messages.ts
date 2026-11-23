@@ -7,6 +7,8 @@ import type {
 import type { DiscordGuildSyncStatus } from "@lootlog/schema/discord";
 import type { PersonalCharacterAuraId } from "@lootlog/schema/character-aura";
 import type { PlatformRole } from "@lootlog/schema/platform-roles";
+import type { Plan } from "@lootlog/schema/plans";
+import type { PlanValidityChoice } from "@/lib/plan-validity";
 import type { OrganizationAction } from "@/lib/organization-action";
 import type { BanDuration, UserAction } from "@/lib/user-action";
 
@@ -46,10 +48,23 @@ export const noticeText: Record<UserAction["action"], string> = {
   "revoke-sessions": "Zakończono wszystkie sesje użytkownika.",
   "revoke-session": "Zakończono sesję.",
   "revoke-api-key": "Usunięto klucz API.",
-  "grant-auras": "Użytkownik może teraz wybrać aurę w ustawieniach Lootloga.",
+  plan: "Zapisano plan i limity.",
   "grant-personal-aura":
     "Użytkownik może teraz wybrać aurę osobistą w ustawieniach Lootloga.",
-  "revoke-auras": "Odebrano aury.",
+  "revoke-personal-auras": "Odebrano aury osobiste.",
+};
+
+export const planText: Record<Plan, string> = {
+  free: "Free",
+  premium: "Premium",
+};
+
+export const planValidityText: Record<PlanValidityChoice, string> = {
+  keep: "Bez zmian",
+  unlimited: "Bezterminowo",
+  "30d": "Przedłuż o 30 dni",
+  "90d": "Przedłuż o 90 dni",
+  "365d": "Przedłuż o 365 dni",
 };
 
 export const personalAuraText: Record<PersonalCharacterAuraId, string> = {
@@ -108,7 +123,7 @@ export const organizationNoticeText: Record<
   OrganizationAction["action"],
   string
 > = {
-  limits: "Zapisano limity.",
+  plan: "Zapisano plan i limity.",
   "clear-vanity-url":
     "Usunięto własny adres. Lootlog jest dostępny pod ID serwera.",
   "refresh-discord-sync": "Odświeżono stan serwera Discord.",
@@ -121,7 +136,7 @@ export const organizationAuditActionText: Record<
   OrganizationOperatorAction,
   string
 > = {
-  "limits.set": "Zmiana limitów",
+  "limits.set": "Zmiana planu i limitów",
   "vanity-url.clear": "Usunięcie własnego adresu",
   "discord-sync.refresh": "Odświeżenie Discorda",
   suspend: "Zawieszenie",
@@ -256,22 +271,53 @@ export const text = {
     "Nie udało się wczytać aur. Odśwież stronę za chwilę; pozostałe dane użytkownika są aktualne.",
   aurasAdmin:
     "Administrator: wybiera każdą aurę bez nadania, a odebranie nadań nie zdejmuje jego aur.",
-  aurasGeneralHeading: "Wybór aur",
-  aurasGeneralDescription:
-    "Pozwala wybrać każdą aurę poza aurami administratorów i osobistymi.",
+  aurasGeneral: (allowed: boolean) =>
+    allowed
+      ? "Może wybrać każdą aurę poza aurami administratorów i osobistymi. Wybór aur daje plan albo nadpisanie w sekcji Plan."
+      : "Nie może wybierać aur ogólnych. Wybór aur daje plan Premium albo nadpisanie w sekcji Plan.",
   aurasGranted: "Nadane",
   aurasNotGranted: "Brak",
-  aurasGrant: "Nadaj aury",
   aurasPersonalHeading: "Aury osobiste",
-  aurasPersonalDescription:
-    "Każdą nadaje się osobno; nadanie aur nie obejmuje aur osobistych.",
+  aurasPersonalDescription: "Każdą nadaje się osobno i nie zależy od planu.",
   aurasGrantPersonal: "Nadaj",
   aurasGrantPersonalLabel: (aura: string) => `Nadaj aurę osobistą: ${aura}`,
-  aurasRevoke: "Odbierz wszystkie aury",
+  aurasRevoke: "Odbierz aury osobiste",
   aurasRevokeConfirmTitle: (name: string) =>
-    `Odebrać aury użytkownikowi ${name}?`,
+    `Odebrać aury osobiste użytkownikowi ${name}?`,
   aurasRevokeConfirmDescription:
-    "Znikną nadanie aur i wszystkie aury osobiste, a postacie użytkownika od razu przestaną nosić wybrane aury.",
+    "Postacie użytkownika od razu przestaną nosić aury osobiste. Aury ogólne zależą od planu i zostają.",
+
+  planHeading: "Plan",
+  planUserDescription:
+    "Plan i nadpisania limitów tego użytkownika. Obniżenie limitu nie usuwa istniejących elementów; blokuje tylko tworzenie nowych.",
+  planOrganizationDescription:
+    "Plan i nadpisania limitów tego Lootloga. Obniżenie limitu nie usuwa istniejących dokumentów ani reguł; blokuje tylko tworzenie nowych.",
+  planUnavailable:
+    "Nie udało się wczytać planu. Odśwież stronę za chwilę; pozostałe dane użytkownika są aktualne.",
+  planLabel: "Plan",
+  planValidityLabel: "Ważność",
+  planValidityKeepUntil: (date: string) => `Bez zmian (do ${date})`,
+  planStatusFree: "Plan Free",
+  planStatusUnlimited: (plan: string) => `Plan ${plan} bezterminowo`,
+  planStatusUntil: (plan: string, date: string) => `Plan ${plan} do ${date}`,
+  planStatusExpired: (date: string) =>
+    `Plan Premium wygasł ${date}; obowiązuje Free`,
+  planChanged: (date: string) => `Ostatnia zmiana: ${date}`,
+  planOverridesHeading: "Nadpisania",
+  planOverridesDescription:
+    "Puste pole oznacza wartość z planu. Nadpisanie obowiązuje także po wygaśnięciu planu, dopóki go nie usuniesz.",
+  planLimitPlaceholder: (value: string) => `Z planu: ${value}`,
+  planFeatureFromPlan: (value: string) => `Z planu: ${value}`,
+  planFeatureOn: "Tak",
+  planFeatureOff: "Nie",
+  planSave: "Zapisz plan",
+  planLimitDocuments: "Dokumenty",
+  planLimitNotificationRules: "Reguły powiadomień",
+  planLimitPersonalRules: "Reguły powiadomień osobistych",
+  planLimitWatchedItems: "Obserwowane przedmioty",
+  planLimitCustomThemes: "Własne motywy",
+  planLimitApiKeys: "Aktywne klucze API",
+  planFeatureCharacterAuras: "Wybór aur",
 
   cancel: "Anuluj",
   banConfirmTitle: (name: string) => `Zbanować użytkownika ${name}?`,
@@ -354,13 +400,6 @@ export const text = {
     "Członkowie odzyskają dostęp według ról na Discordzie.",
   inactiveNotice:
     "Bot nie jest na tym serwerze, więc Lootlog jest nieaktywny niezależnie od zawieszenia.",
-
-  limitsHeading: "Limity",
-  limitsDescription:
-    "Zmniejszenie limitu nie usuwa istniejących dokumentów ani reguł; blokuje tylko tworzenie nowych.",
-  limitDocuments: "Dokumenty",
-  limitNotificationRules: "Reguły powiadomień",
-  limitsSave: "Zapisz limity",
 
   vanityHeading: "Własny adres",
   vanityDescription:

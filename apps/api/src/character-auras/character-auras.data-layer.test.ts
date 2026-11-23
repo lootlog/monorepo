@@ -9,10 +9,51 @@ import type {
   CharacterAurasChanged,
 } from "@lootlog/schema/character-aura";
 import type { CharacterAurasResponse } from "#src/contracts/character-auras/schemas";
+import { userEntitlementTable } from "#src/database/drizzle/plan.schema";
+import { writeUserEntitlement } from "#src/plans/entitlements";
+import { makeUserPlans } from "#src/plans/user-plans";
+import type { UserOverrides } from "@lootlog/schema/plans";
+import { eq } from "drizzle-orm";
 import {
   makeCharacterAurasData,
   type CharacterAuraHolders,
 } from "./character-auras.data-layer.js";
+
+type Boundary = Awaited<ReturnType<typeof createDatabaseBoundary>>;
+
+type AurasData = Effect.Success<ReturnType<typeof makeCharacterAurasData>>;
+
+const NO_OVERRIDES: UserOverrides = {
+  notificationRules: null,
+  watchedItems: null,
+  customThemes: null,
+  apiKeys: null,
+  characterAuras: null,
+};
+
+const entitle = (
+  boundary: Boundary,
+  userId: string,
+  change: Parameters<typeof writeUserEntitlement>[2],
+) =>
+  writeUserEntitlement(boundary.database, userId, change, "admin", new Date());
+
+const withGrants = (boundary: Boundary, data: AurasData) => ({
+  ...data,
+  grantAuras: (_operatorUserId: string, userId: string) =>
+    entitle(boundary, userId, {
+      grant: { plan: "free", validUntil: null },
+      overrides: { ...NO_OVERRIDES, characterAuras: true },
+    }),
+  revokeAuras: (userId: string) =>
+    Effect.andThen(
+      entitle(boundary, userId, {
+        grant: { plan: "free", validUntil: null },
+        overrides: NO_OVERRIDES,
+      }),
+      data.revokePersonalAuras(userId),
+    ),
+});
 
 const boundaries: Array<Awaited<ReturnType<typeof createDatabaseBoundary>>> =
   [];
@@ -55,14 +96,12 @@ const setup = async (
     verify,
     events,
     run: <A, E>(
-      operation: (
-        data: Effect.Success<ReturnType<typeof makeCharacterAurasData>>,
-      ) => Effect.Effect<A, E>,
+      operation: (data: ReturnType<typeof withGrants>) => Effect.Effect<A, E>,
     ) =>
       boundary.run(
         Effect.flatMap(
           makeCharacterAurasData(fixedRoleHolders(entitledUserIds), events),
-          operation,
+          (data) => operation(withGrants(boundary, data)),
         ),
       ),
   };
@@ -247,7 +286,7 @@ describe("character auras", () => {
     expect(await run((data) => data.getAuras)).toEqual({ auras: [] });
   });
 
-  it("grants auras to a User, and revoking removes the auras they chose", async () => {
+  it("grants auras to a User, hides the auras they chose on revoking, and shows them again on regranting", async () => {
     const { run, verify } = await setup(["admin"]);
 
     await verify("player", "101");
@@ -323,7 +362,7 @@ describe("character auras", () => {
     );
 
     expect(regranted).toEqual({
-      auras: [],
+      auras: [shown("101", "frost"), shown("101", "tide", 2)],
       canChange: true,
       personalAuraIds: [],
       canGrant: false,
@@ -410,8 +449,10 @@ describe("character auras", () => {
               holders = undefined;
             }),
           }),
-          (data) =>
+          (plain) =>
             Effect.gen(function* () {
+              const data = withGrants(boundary, plain);
+
               const see = Effect.all([
                 Effect.map(data.getAuras, ({ auras }) => auras),
                 Effect.map(
@@ -478,6 +519,7 @@ describe("character auras", () => {
       { auras: [shown("303", "tide")] },
       { auras: [shown("303", "venom", 2)] },
       { auras: [shown("303", null), shown("303", null, 2)] },
+      { auras: [shown("101", "frost")] },
       { auras: [shown("101", null)] },
     ]);
   });
@@ -501,6 +543,49 @@ describe("character auras", () => {
     expect(await run((data) => data.getAuras)).toEqual({
       auras: [shown("101", "frost")],
     });
+  });
+
+  it("shows general auras only while a premium plan lasts and announces once when it ends", async () => {
+    const { announced, boundary, run, verify } = await setup([]);
+
+    await verify("player", "101");
+    await boundary.run(
+      entitle(boundary, "player", {
+        grant: {
+          plan: "premium",
+          validUntil: new Date(Date.now() + 60 * 60 * 1_000).toISOString(),
+        },
+        overrides: NO_OVERRIDES,
+      }),
+    );
+    await run((data) =>
+      data.updateOwnAura("player", character("101"), "frost"),
+    );
+
+    expect(await run((data) => data.getAuras)).toEqual({
+      auras: [shown("101", "frost")],
+    });
+
+    await boundary.run(
+      boundary.database
+        .update(userEntitlementTable)
+        .set({ planValidUntil: new Date(Date.now() - 1_000) })
+        .where(eq(userEntitlementTable.userId, "player")),
+    );
+
+    expect(await run((data) => data.getAuras)).toEqual({ auras: [] });
+
+    announced.length = 0;
+
+    const announceExpired = () =>
+      run(
+        (data) => makeUserPlans(boundary.database, data).announceExpiredPlans,
+      );
+
+    await announceExpired();
+    await announceExpired();
+
+    expect(announced).toEqual([{ auras: [shown("101", null)] }]);
   });
 
   it("removes the auras and their accounts with the Lootlog account", async () => {

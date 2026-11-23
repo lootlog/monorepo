@@ -4,7 +4,6 @@ import { Package, Plus } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import { useTranslation } from "react-i18next";
 import type { ReactNode } from "react";
-import { USER_WATCHED_ITEMS_LIMIT } from "@/lib/user-notifications/user-watched-items-limit";
 import { WatchedItemTile } from "@/features/user/notifications/components/watched-item-tile";
 import type { WatchedItemResponseDto } from "@lootlog/client/main";
 
@@ -13,6 +12,7 @@ const getWatchedItemGuildIds = (filters: { guildIds?: string[] } | null) =>
 
 type WatchedItemsSectionProps = {
   watchedItems: WatchedItemResponseDto[];
+  watchedItemsLimit: number;
   guilds: Array<{ id: string; name: string }>;
   canAddWatch: boolean;
   onAddWatch: () => void;
@@ -21,6 +21,7 @@ type WatchedItemsSectionProps = {
 
 export const WatchedItemsSection = ({
   watchedItems,
+  watchedItemsLimit,
   guilds,
   canAddWatch,
   onAddWatch,
@@ -28,7 +29,7 @@ export const WatchedItemsSection = ({
 }: WatchedItemsSectionProps) => {
   const { t } = useTranslation();
   const watchedItemsCount = watchedItems.length;
-  const canAdd = canAddWatch && watchedItemsCount < USER_WATCHED_ITEMS_LIMIT;
+  const canAdd = canAddWatch && watchedItemsCount < watchedItemsLimit;
   const addLabel = t("settings.userNotifications.actions.addWatch");
 
   return (
@@ -38,7 +39,7 @@ export const WatchedItemsSection = ({
       description={t("settings.userNotifications.description")}
       count={t("settings.userNotifications.watchLimitStatus", {
         count: watchedItemsCount,
-        limit: USER_WATCHED_ITEMS_LIMIT,
+        limit: watchedItemsLimit,
       })}
       tiled
       trailing={

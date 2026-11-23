@@ -428,7 +428,7 @@ export const NotificationsHandlers = HttpApiBuilder.group(
       NotificationsUserControllerCreateUserRule: ({ payload }) =>
         user("NotificationsUserControllerCreateUserRule", (caller) =>
           services.rules
-            .createUser(caller.discordId, payload)
+            .createUser(caller.discordId, caller.userId, payload)
             .pipe(
               Effect.map((rule) =>
                 encodeUnknownResponse(NotificationRuleResponse, rule),

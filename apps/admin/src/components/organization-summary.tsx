@@ -17,7 +17,8 @@ export function OrganizationSummary({
   details: AdminOrganizationDetails;
   webUrl: string;
 }) {
-  const { organization, usage, limits } = details;
+  const { organization, usage } = details;
+  const limits = details.entitlement.effective;
 
   const facts = [
     { label: text.organizationId, value: organization.id },
@@ -84,11 +85,11 @@ export function OrganizationSummary({
           { label: text.usageInactiveMembers, value: usage.inactiveMembers },
           { label: text.usageLootsLastMonth, value: usage.lootsLastMonth },
           {
-            label: text.usageDocuments(limits.documentLimit),
+            label: text.usageDocuments(limits.documents),
             value: usage.documents,
           },
           {
-            label: text.usageNotificationRules(limits.notificationRuleLimit),
+            label: text.usageNotificationRules(limits.notificationRules),
             value: usage.notificationRules,
           },
         ]}

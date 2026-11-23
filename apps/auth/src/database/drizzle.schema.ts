@@ -41,6 +41,7 @@ export const authUsers = pgTable(
       withTimezone: true,
     }),
     discordId: text("discordId").notNull(),
+    apiKeyLimit: integer("apiKeyLimit").default(10).notNull(),
   },
   (table) => [
     uniqueIndex("user_email_key").on(table.email),

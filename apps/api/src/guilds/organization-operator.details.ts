@@ -38,6 +38,7 @@ import {
   roleTable,
 } from "#src/database/drizzle/organization.schema";
 import { containsPattern } from "#src/shared/sql-like";
+import { readOrganizationEntitlementView } from "#src/plans/entitlements";
 import {
   activeMember,
   auditEntry,
@@ -147,6 +148,7 @@ export const organizationDetailQueries = (
       lastNotificationError,
       roles,
       audit,
+      entitlement,
     ] = yield* Effect.all(
       [
         database
@@ -234,6 +236,7 @@ export const organizationDetailQueries = (
           .where(eq(roleTable.guildId, guildId))
           .orderBy(desc(roleTable.position), roleTable.name),
         auditPage(guildId, RECENT_AUDIT_ENTRIES),
+        readOrganizationEntitlementView(database, guildId),
       ],
       { concurrency: 4 },
     );
@@ -256,10 +259,7 @@ export const organizationDetailQueries = (
               reason: guild.suspendedReason ?? "",
               by: guild.suspendedBy,
             },
-      limits: {
-        notificationRuleLimit: guild.notificationRuleLimit,
-        documentLimit: guild.documentLimit,
-      },
+      entitlement,
       publicStatsCardEnabled: guild.publicStatsCardEnabled,
       usage: {
         inactiveMembers: inactiveMembers[0]?.value ?? 0,

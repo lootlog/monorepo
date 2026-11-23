@@ -41,6 +41,14 @@ export const MAIN_ACCOUNT_OPERATIONS = [
   {
     service: "main",
     method: "GET",
+    path: "/users/@me/limits",
+    operationId: "UsersController_getUserLimits",
+    access: "session-only",
+    data: "personal",
+  },
+  {
+    service: "main",
+    method: "GET",
     path: "/users/@me/guilds",
     operationId: "UsersController_getCurrentUserGuilds",
     access: "read",

@@ -335,7 +335,27 @@ export class ApiKeyService extends Context.Service<
               .where(eq(authApiKeys.referenceId, userId)),
           );
 
-          if (rows.filter((row) => active(row, Date.now())).length >= 10)
+          const limits = yield* apiRpc.getUserLimits({ userId }).pipe(
+            Effect.timeout("5 seconds"),
+            Effect.mapError(
+              () =>
+                new DependencyUnavailableError(
+                  API_KEY_ERRORS.organizationServiceUnavailable,
+                ),
+            ),
+          );
+
+          yield* query(
+            database
+              .update(authUsers)
+              .set({ apiKeyLimit: limits.apiKeys })
+              .where(eq(authUsers.id, userId)),
+          );
+
+          if (
+            rows.filter((row) => active(row, Date.now())).length >=
+            limits.apiKeys
+          )
             return yield* new ResourceConflictError(
               API_KEY_ERRORS.limitReached,
             );

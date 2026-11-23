@@ -69,6 +69,12 @@ export const updateCurrentUserPreferences = Effect.fn(
   return yield* decode(UserPreferencesResponse, value);
 });
 
+const getCurrentUserLimits = Effect.fn("getCurrentUserLimits")(function* () {
+  const current = yield* identity;
+
+  return yield* data((service) => service.getUserLimits(current.userId));
+});
+
 const getCurrentUserGuilds = Effect.fn("getCurrentUserGuilds")(function* (
   refresh: boolean,
 ) {
@@ -120,6 +126,9 @@ export const UsersHandlers = HttpApiBuilder.group(
         toAccountOrganizationHttpResponse(
           updateCurrentUserPreferences(payload),
         ),
+      )
+      .handle("UsersControllerGetUserLimits", () =>
+        toAccountOrganizationHttpResponse(getCurrentUserLimits()),
       )
       .handle("UsersControllerGetCurrentUserGuilds", () =>
         toAccountOrganizationHttpResponse(getCurrentUserGuilds(false)),

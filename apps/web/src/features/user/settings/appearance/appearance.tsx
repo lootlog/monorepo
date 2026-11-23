@@ -3,6 +3,7 @@ import { ListTileEmpty } from "@/components/common/list-tile-empty";
 import { SettingsTabPage } from "@/components/common/settings-tab-page";
 import { ROUTES } from "@/config/routes";
 import { useUserThemes } from "@/hooks/api/user/use-user-themes";
+import { useUserLimits } from "@/hooks/api/user/use-user-limits";
 import { useTheme } from "@/hooks/context/use-theme";
 import { THEME_CATALOG } from "@lootlog/ui/themes/catalog";
 import {
@@ -16,7 +17,6 @@ import {
   getBuiltInThemePreview,
   getCustomThemePreview,
 } from "@/themes/theme-preview";
-import { CUSTOM_THEME_LIMIT } from "@lootlog/schema/custom-theme";
 import { Button } from "@lootlog/ui/components/button";
 import { Link, useSearch } from "@tanstack/react-router";
 import { cn } from "cn";
@@ -42,6 +42,7 @@ export const AppearanceSettings: FC = () => {
   const { t } = useTranslation();
   const { selection, setTheme } = useTheme();
   const { data: userThemes, isPending } = useUserThemes();
+  const { data: limits } = useUserLimits();
   const { create, isPending: isCreating } = useCreateTheme();
 
   const { theme: themeParam } = useSearch({
@@ -59,7 +60,10 @@ export const AppearanceSettings: FC = () => {
   }, [themeParam]);
 
   const themeCount = userThemes?.length ?? 0;
-  const canCreate = !isPending && themeCount < CUSTOM_THEME_LIMIT;
+
+  const canCreate =
+    !isPending && limits !== undefined && themeCount < limits.customThemes;
+
   const createLabel = t("settings.appearance.customSection.create");
   const importLabel = t("settings.appearance.import.action");
   const inUseLabel = t("settings.appearance.actions.inUse");
@@ -79,7 +83,7 @@ export const AppearanceSettings: FC = () => {
       <BandSection
         id="appearance-custom-themes"
         title={t("settings.appearance.customSection.title")}
-        count={`${themeCount}/${CUSTOM_THEME_LIMIT}`}
+        count={limits ? `${themeCount}/${limits.customThemes}` : undefined}
         tiled
         trailing={
           <span className="flex items-center gap-1.5">

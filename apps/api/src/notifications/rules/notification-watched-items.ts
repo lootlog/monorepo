@@ -12,6 +12,7 @@ import { and, count, desc, eq, or } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import { pickGuildByIdOrVanityUrl } from "#src/guilds/active-guild-lookup";
+import { readUserEntitlements } from "#src/plans/entitlements";
 import { itemSnapshotTable } from "#src/database/drizzle/loot.schema";
 import {
   notificationRuleTable,
@@ -38,8 +39,6 @@ import {
   NotificationOwnerType,
   NotificationTargetType,
 } from "@lootlog/schema/notifications";
-
-const WATCHED_ITEM_LIMIT = 20;
 
 export interface NotificationWatchedItemGuilds {
   readonly list: (
@@ -287,6 +286,7 @@ export const makeNotificationWatchedItems = (
 
   const upsert = Effect.fn("notifications.watchedItems.upsert")(function* (
     discordId: string,
+    userId: string,
     params: {
       readonly itemId: number;
       readonly itemName: string;
@@ -326,11 +326,13 @@ export const makeNotificationWatchedItems = (
 
       const currentCount = rows[0]?.value ?? 0;
 
-      if (currentCount >= WATCHED_ITEM_LIMIT) {
+      const { watchedItems } = yield* readUserEntitlements(database, userId);
+
+      if (currentCount >= watchedItems) {
         return yield* new ResourceConflictError({
           code: NotificationError.USER_WATCHED_ITEM_LIMIT_REACHED,
           details: {
-            watchedItemLimit: WATCHED_ITEM_LIMIT,
+            watchedItemLimit: watchedItems,
             watchedItemCount: currentCount,
           },
         });
@@ -427,7 +429,7 @@ export const makeNotificationWatchedItems = (
     Effect.flatMap(
       resolveGuildIds(discordId, userId, data.guildIds),
       (guildIds) =>
-        upsert(discordId, { ...data, guildIds, mergeGuilds: false }),
+        upsert(discordId, userId, { ...data, guildIds, mergeGuilds: false }),
     );
 
   const quickAdd = (
@@ -437,7 +439,8 @@ export const makeNotificationWatchedItems = (
   ) =>
     Effect.flatMap(
       resolveGuildIds(discordId, userId, [data.guildId]),
-      (guildIds) => upsert(discordId, { ...data, guildIds, mergeGuilds: true }),
+      (guildIds) =>
+        upsert(discordId, userId, { ...data, guildIds, mergeGuilds: true }),
     );
 
   const remove = Effect.fn("notifications.watchedItems.delete")(function* (

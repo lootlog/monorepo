@@ -15,7 +15,6 @@ import {
 import { Input } from "@lootlog/ui/components/input";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { MultiSelect } from "@/components/ui/multi-select";
-import { USER_WATCHED_ITEMS_LIMIT } from "@/lib/user-notifications/user-watched-items-limit";
 import { WatchedItemSelector } from "@/features/user/notifications/components/watched-item-selector";
 
 import type { WatchedItemResponseDto } from "@lootlog/client/main";
@@ -24,6 +23,7 @@ type WatchFormDialogContentProps = {
   onOpenChange: (open: boolean) => void;
   hasActiveDm: boolean;
   watchedItems: WatchedItemResponseDto[];
+  watchedItemsLimit: number;
   guildOptions: Array<{ value: string; label: string }>;
 };
 
@@ -31,6 +31,7 @@ export const WatchFormDialogContent = ({
   onOpenChange,
   hasActiveDm,
   watchedItems,
+  watchedItemsLimit,
   guildOptions,
 }: WatchFormDialogContentProps) => {
   const {
@@ -49,7 +50,12 @@ export const WatchFormDialogContent = ({
     createWatchedItem,
     handleCreateWatchedItem,
     handleWorldChange,
-  } = useWatchItemForm({ hasActiveDm, watchedItems, onOpenChange });
+  } = useWatchItemForm({
+    hasActiveDm,
+    watchedItems,
+    watchedItemsLimit,
+    onOpenChange,
+  });
 
   return (
     <>
@@ -259,13 +265,13 @@ export const WatchFormDialogContent = ({
             <p className="text-xs text-muted-foreground">
               {t("settings.userNotifications.watchForm.limitStatus", {
                 count: watchedItemsCount,
-                limit: USER_WATCHED_ITEMS_LIMIT,
+                limit: watchedItemsLimit,
               })}
             </p>
             {isWatchedItemLimitReached ? (
               <p className="text-xs text-destructive">
                 {t("settings.userNotifications.validation.watchLimitReached", {
-                  limit: USER_WATCHED_ITEMS_LIMIT,
+                  limit: watchedItemsLimit,
                 })}
               </p>
             ) : null}

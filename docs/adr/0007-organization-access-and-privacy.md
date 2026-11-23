@@ -97,12 +97,19 @@ player lists, link previews) and must carry no identifiers.
 
 ### Character auras
 
-- **`makeCharacterAurasData`** (`apps/api/src/character-auras/character-auras.data-layer.ts`): Auras belong to holders of the `admin` platform role, the only Users who grant them, and to Users an admin granted them to; global chat moderation gives no aura rights, and show only while the chooser is the User who last proved to play the account and still has access. Revoking a grant deletes the User's auras; a User dropped from the admins keeps hidden choices and may only remove them.
+- **`makeCharacterAurasData`** (`apps/api/src/character-auras/character-auras.data-layer.ts`): Auras belong to holders of the `admin` platform role and to Users whose plan entitlement allows them (Premium, or an operator's override); global chat moderation gives no aura rights, and auras show only while the chooser is the User who last proved to play the account and still has access. Losing the entitlement, an expired plan, or a revoked personal grant hides the User's choices without deleting them, so a renewal shows them again; a hidden choice may only be removed.
 - **`PERSONAL_CHARACTER_AURA_IDS`** (`packages/schema/src/character-aura.ts`): Personal auras are granted to a User by name only; a general grant does not cover them, and admin auras are chosen only by admins.
 - **`CharacterAurasCache`** (`apps/api/src/character-auras/character-auras.data-layer.ts`): All auras and grants are cached as one shared copy, because they belong to a handful of Users and every Game client reads them at startup.
 - **`shownAuras`** (`apps/api/src/character-auras/character-auras.data-layer.ts`): The `DISTINCT ON ("accountId")` latest-proof lookup is limited to accounts that have an aura, avoiding a full scan of `UserMargonemAccount`.
 - **`isCharacterAuraId`** (`apps/api/src/character-auras/character-auras.data-layer.ts`): A stored aura the Game client no longer draws reads as no aura, so removing one from the catalogue never breaks reads.
 - **`characterAuraTable`** (`apps/api/src/database/drizzle/user.schema.ts`): `userId` has no foreign key because Users live in the auth service's database; `GlobalChatMute.userId` in `apps/api/src/database/drizzle/global-chat.schema.ts` follows the same rule, with one mute per User where null lasts until lifted.
+
+### Plans and limits
+
+- **`userEntitlements`** and **`organizationLimits`** (`apps/api/src/plans/entitlements.ts`): A limit is the operator's override when set, otherwise the value of the plan that is active now. A plan past its `planValidUntil` counts as Free without any write, overrides outlive the plan, and a limit gates only creating new items, so lowering one never deletes or disables existing documents, rules, watched items, themes, or API keys.
+- **`countPersonalRules`** (`apps/api/src/notifications/rules/notification-rule-limits.ts`): The personal rule limit counts only rules a User made by hand; rules behind watched items and reservation reminders are bounded by their own features, so watching items never uses up the personal rule quota.
+- **`announceExpiredPlans`** (`apps/api/src/plans/user-plans.ts`): Expiry changes which auras show without any write, so a sweep every minute claims each expired User plan once through `planExpiryAnnouncedAt` and announces the User's characters to Game clients.
+- **`enforce_api_key_limit`** (`apps/auth/drizzle/20261123175130_api-key-plan-limit/migration.sql`): The auth database keeps its trigger against concurrent key creation, but reads the per-User `apiKeyLimit`, which the auth service refreshes from the API's plan entitlement before each creation, because the auth service does not own plans.
 
 ### Untrusted input
 

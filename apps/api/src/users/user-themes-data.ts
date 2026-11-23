@@ -3,10 +3,10 @@ import { Clock, Context, Effect, Layer, Schema } from "effect";
 import { and, asc, count, eq, isNull, sql } from "drizzle-orm";
 import {
   BuiltInThemeIdSchema,
-  CUSTOM_THEME_LIMIT,
   CUSTOM_THEME_PREFERENCE_PREFIX,
 } from "@lootlog/schema/custom-theme";
 import { ApiDatabase } from "#src/database/drizzle/database";
+import { readUserEntitlements } from "#src/plans/entitlements";
 import {
   userSettingsTable,
   userThemeTable,
@@ -119,7 +119,12 @@ export class UserThemesData extends Context.Service<
                   .from(userThemeTable)
                   .where(eq(userThemeTable.userId, userId));
 
-                if ((existing?.value ?? 0) >= CUSTOM_THEME_LIMIT) return null;
+                const { customThemes } = yield* readUserEntitlements(
+                  transaction,
+                  userId,
+                );
+
+                if ((existing?.value ?? 0) >= customThemes) return null;
 
                 const createdAt = yield* now;
 

@@ -2,10 +2,11 @@ import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { afterAll, beforeEach, describe, expect, it } from "bun:test";
 import { eq, inArray } from "drizzle-orm";
 import { Effect, Layer, ManagedRuntime } from "effect";
-import {
-  CUSTOM_THEME_LIMIT,
-  type CustomThemeDefinition,
-} from "@lootlog/schema/custom-theme";
+import type { CustomThemeDefinition } from "@lootlog/schema/custom-theme";
+import { USER_PLANS } from "../src/plans/plan-catalog.js";
+
+const CUSTOM_THEME_LIMIT = USER_PLANS.free.customThemes;
+
 import {
   ApiDatabase,
   ApiDatabaseLive,
