@@ -63,6 +63,24 @@ function createOther(id = "617"): Other {
   return other;
 }
 
+function cacheTipWithAvatar(other: Other) {
+  let tipWithAvatar = "";
+  let tooltipHtml = "";
+
+  other.tipUpdate = vi.fn<() => void>(() => {
+    tipWithAvatar = tips.createStrTip({ nick: other.d.nick, object: other });
+  });
+  other.tipUpdate();
+
+  const createTipWrapper = vi.fn<
+    (container: Element | null, other: Other) => void
+  >(() => {
+    tooltipHtml = tipWithAvatar;
+  });
+
+  return { createTipWrapper, readTooltipHtml: () => tooltipHtml };
+}
+
 function appendWhoIsHereRow(characterId = "617"): HTMLElement {
   const row = document.createElement("div");
   row.className = "one-other tw-list-item";
@@ -522,16 +540,7 @@ describe("useWhoIsHereLootlogHighlight", () => {
   it("sets active other and refreshes whoIsHere tooltip on hover with shift", async () => {
     const row = appendWhoIsHereRow();
     const other = createOther();
-    let tooltipHtml = "";
-
-    const createTipWrapper = vi.fn<
-      (container: Element | null, other: Other) => void
-    >((_tipContainer, tooltipOther) => {
-      tooltipHtml = tips.createStrTip({
-        nick: tooltipOther.d.nick,
-        object: tooltipOther,
-      });
-    });
+    const { createTipWrapper, readTooltipHtml } = cacheTipWithAvatar(other);
 
     characterTooltipTransforms.register(appendCatchingGuildsTooltipSection);
     seedRuntimeOthers({ "617": other });
@@ -558,9 +567,9 @@ describe("useWhoIsHereLootlogHighlight", () => {
     expect(useCharacterTooltipCatchingGuildsStore.getState().activeOther).toBe(
       other,
     );
-    expect(tooltipHtml).toContain("Gra dla:");
-    expect(tooltipHtml).toContain("Blue Guild");
-    expect(tooltipHtml).not.toContain("player-discord");
+    expect(readTooltipHtml()).toContain("Gra dla:");
+    expect(readTooltipHtml()).toContain("Blue Guild");
+    expect(readTooltipHtml()).not.toContain("player-discord");
 
     act(() => {
       row.dispatchEvent(
@@ -579,16 +588,7 @@ describe("useWhoIsHereLootlogHighlight", () => {
   it("refreshes the hovered whoIsHere tooltip when shift toggles off", async () => {
     const row = appendWhoIsHereRow();
     const other = createOther();
-    let tooltipHtml = "";
-
-    const createTipWrapper = vi.fn<
-      (container: Element | null, other: Other) => void
-    >((_tipContainer, tooltipOther) => {
-      tooltipHtml = tips.createStrTip({
-        nick: tooltipOther.d.nick,
-        object: tooltipOther,
-      });
-    });
+    const { createTipWrapper, readTooltipHtml } = cacheTipWithAvatar(other);
 
     characterTooltipTransforms.register(appendCatchingGuildsTooltipSection);
     seedRuntimeOthers({ "617": other });
@@ -611,24 +611,24 @@ describe("useWhoIsHereLootlogHighlight", () => {
     await waitFor(() => {
       expect(createTipWrapper).toHaveBeenCalled();
     });
-    expect(tooltipHtml).toBe("<div>Other 617</div>");
+    expect(readTooltipHtml()).toBe("<div>Other 617</div>");
 
     act(() => {
       useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
     });
 
     await waitFor(() => {
-      expect(tooltipHtml).toContain("Gra dla:");
+      expect(readTooltipHtml()).toContain("Gra dla:");
     });
-    expect(tooltipHtml).toContain("Guild Member");
-    expect(tooltipHtml).toContain("Blue Guild");
+    expect(readTooltipHtml()).toContain("Guild Member");
+    expect(readTooltipHtml()).toContain("Blue Guild");
 
     act(() => {
       useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(false);
     });
 
     await waitFor(() => {
-      expect(tooltipHtml).toBe("<div>Other 617</div>");
+      expect(readTooltipHtml()).toBe("<div>Other 617</div>");
     });
     expect(
       useCharacterTooltipCatchingGuildsStore.getState().activeOther,

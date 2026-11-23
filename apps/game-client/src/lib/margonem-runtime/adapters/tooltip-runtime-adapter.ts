@@ -119,6 +119,13 @@ export function refreshWhoIsHereRuntimeTooltip(
 ): void {
   const runtimeWindow = getRuntimeWindow();
   const whoIsHere = runtimeWindow.Engine?.whoIsHere;
+
+  try {
+    other.tipUpdate?.();
+  } catch (error) {
+    console.warn("[MargonemTooltips] Failed to rebuild tooltip:", error);
+  }
+
   const listEntry = whoIsHere?.getWhoIsHereOther?.(characterId);
   let tipContainer = listEntry?.$?.find?.(".tip-container");
 
