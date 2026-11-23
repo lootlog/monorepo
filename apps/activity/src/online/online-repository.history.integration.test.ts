@@ -419,7 +419,8 @@ describe("compacted online interval keys", () => {
   beforeAll(async () => {
     harness = await startOnlineRepositoryHarness(
       `INSERT INTO "UserOnlineInterval" ("userId", "sessionId", "segmentId", "world", "startedAt", "endedAt", "observedAt")
-      VALUES ('${legacy.userId}', '${legacy.sessionId}', '${legacy.sessionId}:${Date.parse(legacy.startedAt)}.0', 'luvia', '${legacy.startedAt}', '${legacy.endedAt}', '${legacy.endedAt}')`,
+      VALUES ('${legacy.userId}', '${legacy.sessionId}', '${legacy.sessionId}:${Date.parse(legacy.startedAt)}.0', 'luvia', '${legacy.startedAt}', '${legacy.endedAt}', '${legacy.endedAt}'),
+        ('${legacy.userId}', '${legacy.sessionId}', '${legacy.sessionId}:${Date.parse(legacy.startedAt)}', 'luvia', '${legacy.startedAt}', '2026-09-01T09:30:00Z', '2026-09-01T09:30:00Z')`,
     );
   }, 60_000);
 
@@ -427,7 +428,7 @@ describe("compacted online interval keys", () => {
     await harness?.stop();
   });
 
-  it("keeps segments recorded before compaction and extends them on redelivery", async () => {
+  it("merges a segment recorded under both id spellings before compaction and extends it on redelivery", async () => {
     const intervals = await harness.runAt(
       "2026-09-02T00:00:00Z",
       Effect.gen(function* () {
