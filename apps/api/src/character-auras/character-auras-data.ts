@@ -1,12 +1,12 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
 import type {
+  CharacterAuraGrantHolders,
+  CharacterAuraGrants,
   CharacterAuraId,
   PersonalCharacterAuraId,
 } from "@lootlog/schema/character-aura";
 import type {
-  CharacterAuraGrantHoldersResponse,
-  CharacterAuraGrantsResponse,
   CharacterAurasResponse,
   OwnCharacterAuraResponse,
 } from "#src/contracts/character-auras/schemas";
@@ -32,6 +32,8 @@ export type CharacterAurasFailure =
 
 type Operation<A> = Effect.Effect<A, CharacterAurasFailure>;
 
+type GrantOperation<A> = Effect.Effect<A, CharacterAurasOperationError>;
+
 export class CharacterAurasData extends Context.Service<
   CharacterAurasData,
   {
@@ -47,25 +49,17 @@ export class CharacterAurasData extends Context.Service<
       character: CharacterAuraCharacter,
       auraId: CharacterAuraId | null,
     ) => Operation<OwnCharacterAuraResponse>;
-    readonly listGrantHolders: (
-      callerUserId: string,
-    ) => Operation<CharacterAuraGrantHoldersResponse>;
-    readonly getGrants: (
-      callerUserId: string,
-      userId: string,
-    ) => Operation<CharacterAuraGrantsResponse>;
+    readonly listGrantHolders: GrantOperation<CharacterAuraGrantHolders>;
+    readonly getGrants: (userId: string) => GrantOperation<CharacterAuraGrants>;
     readonly grantAuras: (
-      callerUserId: string,
+      operatorUserId: string,
       userId: string,
-    ) => Operation<void>;
+    ) => GrantOperation<void>;
     readonly grantPersonalAura: (
-      callerUserId: string,
+      operatorUserId: string,
       userId: string,
       auraId: PersonalCharacterAuraId,
-    ) => Operation<void>;
-    readonly revokeAuras: (
-      callerUserId: string,
-      userId: string,
-    ) => Operation<void>;
+    ) => GrantOperation<void>;
+    readonly revokeAuras: (userId: string) => GrantOperation<void>;
   }
 >()("@lootlog/api/http-api/character-auras/data") {}

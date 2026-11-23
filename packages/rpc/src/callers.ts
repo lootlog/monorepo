@@ -6,8 +6,11 @@ import { Headers } from "effect/http";
 import { RpcMiddleware } from "effect/rpc";
 import { RpcCallerRejectedError } from "./errors.js";
 
+export const RPC_PATH = "/rpc";
+
 export type RpcService =
   | "activity"
+  | "admin"
   | "api"
   | "auth"
   | "catalog"

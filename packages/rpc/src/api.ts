@@ -1,4 +1,9 @@
 import {
+  CharacterAuraGrantHolders,
+  CharacterAuraGrants,
+  PersonalCharacterAuraIdSchema,
+} from "@lootlog/schema/character-aura";
+import {
   InternalMemberIdentityResponse,
   InternalUserPermissionsQuery,
 } from "@lootlog/schema/internal-guilds";
@@ -333,3 +338,38 @@ export class ApiRpcGroup extends RpcGroup.make(
     error: MemberReadError,
   }).annotate(RpcCallers, ["discord-bot"]),
 ).middleware(CallerAuth) {}
+
+const AuraGrantUser = {
+  userId: Schema.NonEmptyString,
+};
+
+const AuraGrantByOperator = {
+  ...AuraGrantUser,
+  operatorUserId: Schema.NonEmptyString,
+};
+
+export class ApiOperatorRpcGroup extends RpcGroup.make(
+  Rpc.make("listCharacterAuraGrantHolders", {
+    success: CharacterAuraGrantHolders,
+    error: RpcUnavailableError,
+  }).annotate(RpcCallers, ["admin"]),
+  Rpc.make("getCharacterAuraGrants", {
+    payload: AuraGrantUser,
+    success: CharacterAuraGrants,
+    error: RpcUnavailableError,
+  }).annotate(RpcCallers, ["admin"]),
+  Rpc.make("grantCharacterAuras", {
+    payload: AuraGrantByOperator,
+    error: RpcUnavailableError,
+  }).annotate(RpcCallers, ["admin"]),
+  Rpc.make("grantPersonalCharacterAura", {
+    payload: { ...AuraGrantByOperator, auraId: PersonalCharacterAuraIdSchema },
+    error: RpcUnavailableError,
+  }).annotate(RpcCallers, ["admin"]),
+  Rpc.make("revokeCharacterAuras", {
+    payload: AuraGrantUser,
+    error: RpcUnavailableError,
+  }).annotate(RpcCallers, ["admin"]),
+).middleware(CallerAuth) {}
+
+export const ApiServedRpcGroup = ApiRpcGroup.merge(ApiOperatorRpcGroup);

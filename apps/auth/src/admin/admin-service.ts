@@ -22,31 +22,32 @@ import {
   or,
   sql,
 } from "drizzle-orm";
-import { Context, Effect, Layer } from "effect";
+import type {
+  AdminAuditAction,
+  AdminAuditDetails,
+  AdminAuditEntry,
+  AdminOperator,
+  AdminUser,
+  AdminUserBan,
+  AdminUsersSearch,
+} from "@lootlog/schema/admin";
+import { Context, Effect, Layer, type Redacted } from "effect";
 import { BetterAuthRuntime } from "#src/auth/provider/better-auth";
 import { AppConfig } from "#src/config/env";
 import { AuthDatabase } from "#src/database/drizzle";
 import {
-  authorizeAdminRequest,
+  authorizeOperator,
   escapeLike,
   holdsRole,
   inForce,
   toUser,
-  type AdminOperator,
 } from "./admin-auth.js";
-import type { AdminAuditAction, AdminAuditDetails } from "./audit.js";
 import {
   adminAuditLog,
   authApiKeys,
   authSessions,
   authUsers,
 } from "#src/database/drizzle.schema";
-import type {
-  AdminAuditEntry,
-  AdminUser,
-  SearchAdminUsers,
-  BanAdminUser,
-} from "#src/http-api/contracts/admin/schemas";
 
 const USER_AUDIT_LIMIT = 25;
 
@@ -59,7 +60,7 @@ export class AdminService extends Context.Service<
   AdminService,
   {
     readonly authorize: (
-      headers: Headers,
+      sessionCookie: Redacted.Redacted<string>,
     ) => Effect.Effect<AdminOperator, ApplicationError>;
     readonly overview: Effect.Effect<
       {
@@ -71,7 +72,7 @@ export class AdminService extends Context.Service<
       ApplicationError
     >;
     readonly listUsers: (
-      query: SearchAdminUsers,
+      query: AdminUsersSearch,
     ) => Effect.Effect<
       { users: ReadonlyArray<AdminUser>; total: number },
       ApplicationError
@@ -107,7 +108,7 @@ export class AdminService extends Context.Service<
     readonly ban: (
       actor: string,
       userId: string,
-      ban: BanAdminUser,
+      ban: AdminUserBan,
     ) => Effect.Effect<{ user: AdminUser }, ApplicationError>;
     readonly unban: (
       actor: string,
@@ -307,9 +308,8 @@ export class AdminService extends Context.Service<
       });
 
       return AdminService.of({
-        authorize: (headers) =>
-          authorizeAdminRequest(headers, {
-            secret: config.adminApiSecret,
+        authorize: (sessionCookie) =>
+          authorizeOperator(sessionCookie, {
             adminUserIds: config.adminAccountIds,
             getFreshSession: (sessionHeaders) =>
               account((accounts) => accounts.getFreshSession(sessionHeaders)),

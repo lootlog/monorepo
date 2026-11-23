@@ -30,37 +30,6 @@ export const UpdateOwnCharacterAuraRequest = Schema.Struct({
 export type UpdateOwnCharacterAuraRequest =
   typeof UpdateOwnCharacterAuraRequest.Type;
 
-export const CharacterAuraGrantUserParams = Schema.Struct({
-  userId: Schema.NonEmptyString,
-});
-
-export const PersonalCharacterAuraGrantParams = Schema.Struct({
-  userId: Schema.NonEmptyString,
-  auraId: PersonalCharacterAuraIdSchema,
-});
-
-export const CharacterAuraGrantsResponse = Schema.Struct({
-  admin: Schema.Boolean,
-  granted: Schema.Boolean,
-  personalAuraIds: Schema.Array(PersonalCharacterAuraIdSchema),
-}).annotate({ identifier: "CharacterAuraGrantsResponseDto" });
-
-export type CharacterAuraGrantsResponse =
-  typeof CharacterAuraGrantsResponse.Type;
-
-export const CharacterAuraGrantHoldersResponse = Schema.Struct({
-  holders: Schema.Array(
-    Schema.Struct({
-      userId: Schema.String,
-      granted: Schema.Boolean,
-      personalAuraIds: Schema.Array(PersonalCharacterAuraIdSchema),
-    }),
-  ),
-}).annotate({ identifier: "CharacterAuraGrantHoldersResponseDto" });
-
-export type CharacterAuraGrantHoldersResponse =
-  typeof CharacterAuraGrantHoldersResponse.Type;
-
 export const CharacterAurasResponse = Schema.Struct({
   auras: Schema.Array(CharacterAuraResponse),
 }).annotate({ identifier: "CharacterAurasResponseDto" });

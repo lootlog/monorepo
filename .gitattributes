@@ -21,3 +21,8 @@ packages/sdk/openapi/*.json linguist-generated=true
 .agents/skills/web-design-guidelines/** linguist-vendored=true
 tools/oxlint/anti-slop/vendor/** linguist-vendored=true
 apps/web/public/lottie/** linguist-vendored=true
+
+# Documentation reads better whole, so the staged file size limit skips it
+docs/** size-limit-exempt
+apps/docs/content/** size-limit-exempt
+apps/developer/content/** size-limit-exempt

@@ -11,9 +11,7 @@ import {
   RpcSerialization,
   RpcServer,
 } from "effect/rpc";
-import { callerAuthServer, type CallerTokens } from "./callers.js";
-
-export const RPC_PATH = "/rpc";
+import { callerAuthServer, type CallerTokens, RPC_PATH } from "./callers.js";
 
 const RPC_PORT_OFFSET = 100;
 

@@ -128,3 +128,23 @@ export const CharacterAurasChangedSchema = Schema.Struct({
 });
 
 export type CharacterAurasChanged = typeof CharacterAurasChangedSchema.Type;
+
+export const CharacterAuraGrants = Schema.Struct({
+  admin: Schema.Boolean,
+  granted: Schema.Boolean,
+  personalAuraIds: Schema.Array(PersonalCharacterAuraIdSchema),
+});
+
+export type CharacterAuraGrants = typeof CharacterAuraGrants.Type;
+
+export const CharacterAuraGrantHolders = Schema.Struct({
+  holders: Schema.Array(
+    Schema.Struct({
+      userId: Schema.String,
+      granted: Schema.Boolean,
+      personalAuraIds: Schema.Array(PersonalCharacterAuraIdSchema),
+    }),
+  ),
+});
+
+export type CharacterAuraGrantHolders = typeof CharacterAuraGrantHolders.Type;

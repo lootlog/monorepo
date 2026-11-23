@@ -1,4 +1,15 @@
 import {
+  AdminAuditPage,
+  AdminAuditPageRequest,
+  AdminOperator,
+  AdminOverview,
+  AdminUser,
+  AdminUserBan,
+  AdminUserDetails,
+  AdminUsersPage,
+  AdminUsersSearch,
+} from "@lootlog/schema/admin";
+import {
   ApiKeyStatusRequest,
   ApiKeyStatusResponse,
 } from "@lootlog/schema/api-key-access";
@@ -12,6 +23,8 @@ import { Rpc, RpcGroup } from "effect/rpc";
 import { CallerAuth, RpcCallers } from "./callers.js";
 import {
   RpcBadRequestError,
+  RpcForbiddenError,
+  RpcNotFoundError,
   RpcUnauthorizedError,
   RpcUnavailableError,
 } from "./errors.js";
@@ -52,3 +65,86 @@ export class AuthRpcGroup extends RpcGroup.make(
     error: RpcUnavailableError,
   }).annotate(RpcCallers, ["gateway"]),
 ).middleware(CallerAuth) {}
+
+const OperatorSession = {
+  sessionCookie: Schema.RedactedFromValue(Schema.String),
+};
+
+const OperatorOnUser = {
+  ...OperatorSession,
+  userId: NonEmptyTrimmedString,
+};
+
+const OperatorError = Schema.Union([
+  RpcBadRequestError,
+  RpcUnauthorizedError,
+  RpcForbiddenError,
+  RpcUnavailableError,
+]);
+
+const OperatorOnUserError = Schema.Union([
+  RpcBadRequestError,
+  RpcUnauthorizedError,
+  RpcForbiddenError,
+  RpcNotFoundError,
+  RpcUnavailableError,
+]);
+
+const ChangedUser = Schema.Struct({ user: AdminUser });
+
+export class AuthOperatorRpcGroup extends RpcGroup.make(
+  Rpc.make("getOperator", {
+    payload: OperatorSession,
+    success: AdminOperator,
+    error: OperatorError,
+  }).annotate(RpcCallers, ["admin"]),
+  Rpc.make("getUsersOverview", {
+    payload: OperatorSession,
+    success: AdminOverview,
+    error: OperatorError,
+  }).annotate(RpcCallers, ["admin"]),
+  Rpc.make("searchUsers", {
+    payload: { ...OperatorSession, ...AdminUsersSearch.fields },
+    success: AdminUsersPage,
+    error: OperatorError,
+  }).annotate(RpcCallers, ["admin"]),
+  Rpc.make("getUserDetails", {
+    payload: OperatorOnUser,
+    success: AdminUserDetails,
+    error: OperatorOnUserError,
+  }).annotate(RpcCallers, ["admin"]),
+  Rpc.make("setUserRoles", {
+    payload: { ...OperatorOnUser, roles: Schema.Array(PlatformRole) },
+    success: ChangedUser,
+    error: OperatorOnUserError,
+  }).annotate(RpcCallers, ["admin"]),
+  Rpc.make("banUser", {
+    payload: { ...OperatorOnUser, ...AdminUserBan.fields },
+    success: ChangedUser,
+    error: OperatorOnUserError,
+  }).annotate(RpcCallers, ["admin"]),
+  Rpc.make("unbanUser", {
+    payload: OperatorOnUser,
+    success: ChangedUser,
+    error: OperatorOnUserError,
+  }).annotate(RpcCallers, ["admin"]),
+  Rpc.make("revokeUserSessions", {
+    payload: OperatorOnUser,
+    error: OperatorOnUserError,
+  }).annotate(RpcCallers, ["admin"]),
+  Rpc.make("revokeUserSession", {
+    payload: { ...OperatorOnUser, sessionId: NonEmptyTrimmedString },
+    error: OperatorOnUserError,
+  }).annotate(RpcCallers, ["admin"]),
+  Rpc.make("revokeUserApiKey", {
+    payload: { ...OperatorOnUser, keyId: NonEmptyTrimmedString },
+    error: OperatorOnUserError,
+  }).annotate(RpcCallers, ["admin"]),
+  Rpc.make("listAuditLog", {
+    payload: { ...OperatorSession, ...AdminAuditPageRequest.fields },
+    success: AdminAuditPage,
+    error: OperatorError,
+  }).annotate(RpcCallers, ["admin"]),
+).middleware(CallerAuth) {}
+
+export const AuthServedRpcGroup = AuthRpcGroup.merge(AuthOperatorRpcGroup);

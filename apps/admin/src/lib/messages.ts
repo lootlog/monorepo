@@ -1,4 +1,4 @@
-import type { AdminAuditEntryAction } from "@lootlog/client/auth";
+import type { AdminAuditAction } from "@lootlog/schema/admin";
 import type { PersonalCharacterAuraId } from "@lootlog/schema/character-aura";
 import type { PlatformRole } from "@lootlog/schema/platform-roles";
 import type { BanDuration, UserAction } from "@/lib/user-action";
@@ -10,7 +10,7 @@ export const roleText: Record<
   admin: {
     name: "Administrator",
     description:
-      "Ma uprawnienia wszystkich pozostałych ról, jako jedyny nadaje i odbiera aury oraz nosi aury administratorów. Nadawaj tylko osobom, którym ufasz w pełni.",
+      "Ma uprawnienia wszystkich pozostałych ról i nosi aury administratorów. Nadawaj tylko osobom, którym ufasz w pełni.",
   },
   "wiki-moderator": {
     name: "Moderator Wiki",
@@ -58,7 +58,7 @@ export const personalAuraText: Record<PersonalCharacterAuraId, string> = {
   tulipwind: "Tulipanowy wiatr",
 };
 
-export const auditActionText: Record<AdminAuditEntryAction, string> = {
+export const auditActionText: Record<AdminAuditAction, string> = {
   "roles.set": "Zmiana ról",
   "ban.set": "Ban",
   "ban.lift": "Zdjęcie bana",
@@ -182,8 +182,6 @@ export const text = {
   aurasHeading: "Aury",
   aurasDescription:
     "Nadania dotyczą tego użytkownika. Aurę założy na postaciach z kont Margonem, na których potwierdził grę w Lootlogu.",
-  aurasForbidden:
-    "Aury nadaje i odbiera tylko konto z rolą Administrator. Nadaj tę rolę swojemu kontu; zmiana działa w ciągu minuty.",
   aurasUnavailable:
     "Nie udało się wczytać aur. Odśwież stronę za chwilę; pozostałe dane użytkownika są aktualne.",
   aurasAdmin:

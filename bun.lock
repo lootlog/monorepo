@@ -54,7 +54,7 @@
       "version": "0.0.1",
       "dependencies": {
         "@base-ui/react": "^1.9.0",
-        "@lootlog/client": "workspace:*",
+        "@lootlog/rpc": "workspace:*",
         "@lootlog/schema": "workspace:*",
         "@lootlog/ui": "workspace:*",
         "@tanstack/react-router": "catalog:",

@@ -1,7 +1,9 @@
+import { type RpcUpstream, rpcUpstreamConfig } from "@lootlog/rpc/callers";
+import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
+import { Config, ConfigProvider, Effect } from "effect";
+
 export interface AdminConfig {
-  readonly authUrl: string;
-  readonly adminApiSecret: string;
-  readonly apiUrl: string;
+  readonly rpc: { readonly auth: RpcUpstream; readonly api: RpcUpstream };
   readonly origin: string;
   readonly webUrl: string;
   readonly access:
@@ -20,6 +22,23 @@ const required = (environment: Environment, name: string) => {
 
   return value;
 };
+
+const rpcUpstreams = Config.all({
+  auth: rpcUpstreamConfig("admin", "auth"),
+  api: rpcUpstreamConfig("admin", "api"),
+});
+
+const readRpcUpstreams = (environment: Environment, production: boolean) =>
+  Effect.runSync(
+    rpcUpstreams.parse(
+      ConfigProvider.fromEnvRecord({
+        ...environment,
+        ENV:
+          environment.ENV ??
+          (production ? RuntimeEnvironment.PROD : RuntimeEnvironment.LOCAL),
+      }),
+    ),
+  );
 
 export const readAdminConfig = (
   environment: Environment,
@@ -43,9 +62,7 @@ export const readAdminConfig = (
     );
 
   return {
-    authUrl: required(environment, "AUTH_INTERNAL_URL"),
-    adminApiSecret: required(environment, "ADMIN_API_SECRET"),
-    apiUrl: new URL(required(environment, "LOOTLOG_API_URL")).href,
+    rpc: readRpcUpstreams(environment, production),
     origin: new URL(required(environment, "ADMIN_ORIGIN")).origin,
     webUrl: new URL(required(environment, "LOOTLOG_WEB_URL")).href,
     access,

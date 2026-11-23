@@ -7,8 +7,7 @@ import {
   type RpcGroup,
   RpcSerialization,
 } from "effect/rpc";
-import { callerAuthClient, type RpcUpstream } from "./callers.js";
-import { RPC_PATH } from "./server.js";
+import { callerAuthClient, RPC_PATH, type RpcUpstream } from "./callers.js";
 
 export type ServiceRpcClient<Group> =
   Group extends RpcGroup.RpcGroup<infer Rpcs>

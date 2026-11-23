@@ -8,7 +8,10 @@ import {
   boolean,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
-import type { AdminAuditAction, AdminAuditDetails } from "#src/admin/audit";
+import type {
+  AdminAuditAction,
+  AdminAuditDetails,
+} from "@lootlog/schema/admin";
 
 export const authUsers = pgTable(
   "user",

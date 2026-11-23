@@ -1,22 +1,17 @@
 import {
-  type AdminAuditEntry,
-  type AdminUsersResponse,
-  type SearchAdminUsers,
-  adminControllerGetUser,
-  adminControllerListAudit,
-  adminControllerSearchUsers,
-  adminControllerOverview,
-  adminControllerSession,
-} from "@lootlog/client/auth";
-import { ApiError } from "@lootlog/client/transport";
+  RpcForbiddenError,
+  RpcNotFoundError,
+  RpcUnauthorizedError,
+} from "@lootlog/rpc/errors";
+import type { AdminAuditEntry, AdminUsersSearch } from "@lootlog/schema/admin";
 import { PlatformRole } from "@lootlog/schema/platform-roles";
 import { notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { Predicate, Schema } from "effect";
+import { Predicate, Schema, type Types } from "effect";
 import { UserActionRequest } from "@/lib/user-action";
-import { asPanel } from "./auth-api.js";
 import { getAuraGrants, listAuraHolderIds } from "./character-auras.js";
 import { adminConfig } from "./config.js";
+import { asOperator } from "./rpc.js";
 import { runUserAction } from "./user-actions.js";
 
 export type AuditRow = Omit<AdminAuditEntry, "details"> & {
@@ -53,8 +48,6 @@ const UsersInput = Schema.Struct({
   page: Page,
 });
 
-type UsersPage = AdminUsersResponse & { readonly aurasForbidden?: true };
-
 export type OperatorAccess =
   | { readonly status: "admin"; readonly userId: string; readonly name: string }
   | { readonly status: "signed-out" | "not-admin" };
@@ -62,15 +55,16 @@ export type OperatorAccess =
 export const getOperatorAccess = createServerFn({ method: "GET" }).handler(
   async (): Promise<OperatorAccess> => {
     try {
-      const operator = await adminControllerSession(asPanel());
+      const operator = await asOperator(({ auth }, session) =>
+        auth.getOperator(session),
+      );
 
       return { status: "admin", userId: operator.userId, name: operator.name };
     } catch (error) {
-      if (error instanceof ApiError && error.status === 401)
+      if (error instanceof RpcUnauthorizedError)
         return { status: "signed-out" };
 
-      if (error instanceof ApiError && error.status === 403)
-        return { status: "not-admin" };
+      if (error instanceof RpcForbiddenError) return { status: "not-admin" };
 
       throw error;
     }
@@ -82,13 +76,13 @@ export const getWebUrl = createServerFn({ method: "GET" }).handler(
 );
 
 export const getOverview = createServerFn({ method: "GET" }).handler(() =>
-  adminControllerOverview(asPanel()),
+  asOperator(({ auth }, session) => auth.getUsersOverview(session)),
 );
 
 export const listUsers = createServerFn({ method: "GET" })
   .validator(Schema.decodeUnknownSync(UsersInput))
-  .handler(async ({ data }): Promise<UsersPage> => {
-    const query: SearchAdminUsers = {
+  .handler(async ({ data }) => {
+    const query: Types.Mutable<AdminUsersSearch> = {
       limit: USERS_PAGE_SIZE,
       offset: (data.page - 1) * USERS_PAGE_SIZE,
     };
@@ -102,28 +96,32 @@ export const listUsers = createServerFn({ method: "GET" })
     if (data.aura !== undefined) {
       const holders = await listAuraHolderIds();
 
-      if (holders.status !== "ok")
-        return { users: [], total: 0, aurasForbidden: true };
-
-      if (data.aura) query.userIds = [...holders.value];
-      else query.excludedUserIds = [...holders.value];
+      if (data.aura) query.userIds = holders;
+      else query.excludedUserIds = holders;
     }
 
-    return adminControllerSearchUsers(query, asPanel());
+    return asOperator(({ auth }, session) =>
+      auth.searchUsers({ ...session, ...query }),
+    );
   });
 
 export const getUser = createServerFn({ method: "GET" })
   .validator(Schema.decodeUnknownSync(Schema.NonEmptyString))
-  .handler(async ({ data: id }) => {
+  .handler(async ({ data: userId }) => {
     try {
       const [details, auras] = await Promise.all([
-        adminControllerGetUser({ id }, asPanel()),
-        getAuraGrants(id).catch(() => ({ status: "unavailable" as const })),
+        asOperator(({ auth }, session) =>
+          auth.getUserDetails({ ...session, userId }),
+        ),
+        getAuraGrants(userId).then(
+          (value) => ({ status: "ok" as const, value }),
+          () => ({ status: "unavailable" as const }),
+        ),
       ]);
 
       return { ...details, audit: details.audit.map(toAuditRow), auras };
     } catch (error) {
-      if (error instanceof ApiError && error.status === 404) throw notFound();
+      if (error instanceof RpcNotFoundError) throw notFound();
 
       throw error;
     }
@@ -132,12 +130,12 @@ export const getUser = createServerFn({ method: "GET" })
 export const listAudit = createServerFn({ method: "GET" })
   .validator(Schema.decodeUnknownSync(Page))
   .handler(async ({ data: page }) => {
-    const audit = await adminControllerListAudit(
-      {
-        limit: `${AUDIT_PAGE_SIZE}`,
-        offset: `${(page - 1) * AUDIT_PAGE_SIZE}`,
-      },
-      asPanel(),
+    const audit = await asOperator(({ auth }, session) =>
+      auth.listAuditLog({
+        ...session,
+        limit: AUDIT_PAGE_SIZE,
+        offset: (page - 1) * AUDIT_PAGE_SIZE,
+      }),
     );
 
     return { total: audit.total, entries: audit.entries.map(toAuditRow) };

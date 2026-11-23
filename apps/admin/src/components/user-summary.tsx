@@ -1,4 +1,4 @@
-import type { AdminUser } from "@lootlog/client/auth";
+import type { AdminUser } from "@lootlog/schema/admin";
 import { RoleBadges } from "@/components/role-badges";
 import { StatusBadge } from "@/components/status-badge";
 import { UserAvatar } from "@/components/user-avatar";

@@ -1,64 +1,60 @@
-import {
-  adminControllerBanUser,
-  adminControllerRevokeUserApiKey,
-  adminControllerRevokeUserSession,
-  adminControllerRevokeUserSessions,
-  adminControllerSetUserRoles,
-  adminControllerUnbanUser,
-} from "@lootlog/client/auth";
 import { type UserAction, banExpiry } from "@/lib/user-action";
-import { asPanel } from "./auth-api.js";
 import {
   grantAuras,
   grantPersonalAura,
   revokeAuras,
 } from "./character-auras.js";
+import { asOperator } from "./rpc.js";
 
-export const runUserAction = async (id: string, action: UserAction) => {
+export const runUserAction = async (userId: string, action: UserAction) => {
   switch (action.action) {
     case "roles":
-      await adminControllerSetUserRoles(
-        { id },
-        { roles: [...action.roles] },
-        asPanel(),
+      await asOperator(({ auth }, session) =>
+        auth.setUserRoles({ ...session, userId, roles: action.roles }),
       );
       break;
     case "ban":
-      await adminControllerBanUser(
-        { id },
-        {
+      await asOperator(({ auth }, session) =>
+        auth.banUser({
+          ...session,
+          userId,
           reason: action.reason,
           expiresAt: banExpiry(action.duration, Date.now()),
-        },
-        asPanel(),
+        }),
       );
       break;
     case "unban":
-      await adminControllerUnbanUser({ id }, asPanel());
+      await asOperator(({ auth }, session) =>
+        auth.unbanUser({ ...session, userId }),
+      );
       break;
     case "revoke-sessions":
-      await adminControllerRevokeUserSessions({ id }, asPanel());
+      await asOperator(({ auth }, session) =>
+        auth.revokeUserSessions({ ...session, userId }),
+      );
       break;
     case "revoke-session":
-      await adminControllerRevokeUserSession(
-        { id, sessionId: action.sessionId },
-        asPanel(),
+      await asOperator(({ auth }, session) =>
+        auth.revokeUserSession({
+          ...session,
+          userId,
+          sessionId: action.sessionId,
+        }),
       );
       break;
     case "revoke-api-key":
-      await adminControllerRevokeUserApiKey(
-        { id, keyId: action.keyId },
-        asPanel(),
+      await asOperator(({ auth }, session) =>
+        auth.revokeUserApiKey({ ...session, userId, keyId: action.keyId }),
       );
       break;
     case "grant-auras":
-      await grantAuras(id);
+      await grantAuras(userId);
       break;
     case "grant-personal-aura":
-      await grantPersonalAura(id, action.auraId);
+      await grantPersonalAura(userId, action.auraId);
       break;
     case "revoke-auras":
-      await revokeAuras(id);
+      await revokeAuras(userId);
       break;
   }
 };

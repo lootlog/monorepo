@@ -1,53 +1,51 @@
-import {
-  characterAurasControllerGetGrants,
-  characterAurasControllerGrantAuras,
-  characterAurasControllerGrantPersonalAura,
-  characterAurasControllerListGrantHolders,
-  characterAurasControllerRevokeAuras,
-} from "@lootlog/client/main";
-import { ApiError } from "@lootlog/client/transport";
 import type { PersonalCharacterAuraId } from "@lootlog/schema/character-aura";
-import { asOperator } from "./lootlog-api.js";
+import { Effect } from "effect";
+import { asOperator } from "./rpc.js";
 
-export type AuraResult<A> =
-  | { readonly status: "ok"; readonly value: A }
-  | { readonly status: "forbidden" };
+export const listAuraHolderIds = () =>
+  asOperator(({ auth, api }, session) =>
+    Effect.gen(function* () {
+      yield* auth.getOperator(session);
 
-const settle = async <A>(request: Promise<A>): Promise<AuraResult<A>> => {
-  try {
-    return { status: "ok", value: await request };
-  } catch (error) {
-    if (error instanceof ApiError && error.status === 403)
-      return { status: "forbidden" };
+      const { holders } = yield* api.listCharacterAuraGrantHolders();
 
-    throw error;
-  }
-};
-
-export const listAuraHolderIds = async () => {
-  const result = await settle(
-    characterAurasControllerListGrantHolders(asOperator()),
+      return holders.map((holder) => holder.userId);
+    }),
   );
 
-  return result.status === "ok"
-    ? {
-        status: result.status,
-        value: result.value.holders.map((holder) => holder.userId),
-      }
-    : result;
-};
-
 export const getAuraGrants = (userId: string) =>
-  settle(characterAurasControllerGetGrants({ userId }, asOperator()));
+  asOperator(({ auth, api }, session) =>
+    Effect.andThen(
+      auth.getOperator(session),
+      api.getCharacterAuraGrants({ userId }),
+    ),
+  );
 
 export const grantAuras = (userId: string) =>
-  characterAurasControllerGrantAuras({ userId }, asOperator());
+  asOperator(({ auth, api }, session) =>
+    Effect.flatMap(auth.getOperator(session), (operator) =>
+      api.grantCharacterAuras({ userId, operatorUserId: operator.userId }),
+    ),
+  );
 
 export const grantPersonalAura = (
   userId: string,
   auraId: PersonalCharacterAuraId,
 ) =>
-  characterAurasControllerGrantPersonalAura({ userId, auraId }, asOperator());
+  asOperator(({ auth, api }, session) =>
+    Effect.flatMap(auth.getOperator(session), (operator) =>
+      api.grantPersonalCharacterAura({
+        userId,
+        auraId,
+        operatorUserId: operator.userId,
+      }),
+    ),
+  );
 
 export const revokeAuras = (userId: string) =>
-  characterAurasControllerRevokeAuras({ userId }, asOperator());
+  asOperator(({ auth, api }, session) =>
+    Effect.andThen(
+      auth.getOperator(session),
+      api.revokeCharacterAuras({ userId }),
+    ),
+  );

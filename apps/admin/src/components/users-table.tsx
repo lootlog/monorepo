@@ -1,4 +1,4 @@
-import type { AdminUser } from "@lootlog/client/auth";
+import type { AdminUser } from "@lootlog/schema/admin";
 import {
   Table,
   TableBody,

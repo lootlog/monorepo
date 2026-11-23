@@ -3,7 +3,7 @@ import {
   baseServiceConfig,
   redisUrlConfig,
 } from "@lootlog/instrumentation/service-config";
-import { ApiRpcGroup } from "@lootlog/rpc/api";
+import { ApiServedRpcGroup } from "@lootlog/rpc/api";
 import {
   type CallerTokens,
   type RpcUpstream,
@@ -49,7 +49,7 @@ export const apiConfiguration: Config.Config<ApiConfiguration> = Config.all({
   base: baseServiceConfig("api"),
   rpc: Config.all({
     port: rpcPortConfig,
-    callerTokens: rpcCallerTokensConfig("api", ApiRpcGroup),
+    callerTokens: rpcCallerTokensConfig("api", ApiServedRpcGroup),
     auth: rpcUpstreamConfig("api", "auth"),
     discordBot: rpcUpstreamConfig("api", "discord-bot"),
   }),

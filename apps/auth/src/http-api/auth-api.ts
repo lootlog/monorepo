@@ -1,4 +1,3 @@
-import { AdminGroup } from "./contracts/admin/api.js";
 import { ApiKeysGroup } from "./contracts/auth/api-keys.js";
 import { HttpApi, OpenApi } from "effect/http-api";
 import { healthGroup } from "@lootlog/instrumentation/service";
@@ -13,5 +12,5 @@ export class AuthApi extends HttpApi.make("AuthApi")
     "Authentication and identity service documentation",
   )
   .annotate(OpenApi.Servers, [])
-  .add(healthGroup(), AuthGroup, ApiKeysGroup, AdminGroup)
+  .add(healthGroup(), AuthGroup, ApiKeysGroup)
   .middleware(SchemaErrorResponse) {}

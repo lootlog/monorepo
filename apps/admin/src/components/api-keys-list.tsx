@@ -1,4 +1,4 @@
-import type { AdminApiKey } from "@lootlog/client/auth";
+import type { AdminApiKey } from "@lootlog/schema/admin";
 import { Button } from "@lootlog/ui/components/button";
 import { ConfirmDialog } from "@lootlog/ui/components/confirm-dialog";
 import { formatDate } from "@/lib/format";

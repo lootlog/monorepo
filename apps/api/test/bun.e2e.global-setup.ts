@@ -60,6 +60,8 @@ export default async function setup() {
     ])
       process.env[`RPC_TOKEN_${edge}`] = "test-rpc-token";
 
+    process.env.RPC_TOKEN_ADMIN_TO_API = "test-admin-rpc-token";
+
     process.env.RESERVATIONS_CARDS_URL = "http://cards.test";
     process.env.MAPS_API_URL = "http://maps.test";
 

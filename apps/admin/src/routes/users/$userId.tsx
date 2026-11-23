@@ -99,11 +99,7 @@ function UserPage() {
           <AuraGrants user={user} grants={auras.value} />
         ) : (
           <Alert variant="destructive">
-            <AlertDescription>
-              {auras.status === "forbidden"
-                ? text.aurasForbidden
-                : text.aurasUnavailable}
-            </AlertDescription>
+            <AlertDescription>{text.aurasUnavailable}</AlertDescription>
           </Alert>
         )}
       </Section>

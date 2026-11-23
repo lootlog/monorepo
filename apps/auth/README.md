@@ -3,7 +3,8 @@
 ## Internal service communication
 
 Synchronous service-to-service operations (`getIdpToken`, `listPlatformRoleHolders`,
-`getApiKeyStatuses`) are served over Effect RPC (`@lootlog/rpc/auth`) on the
+`getApiKeyStatuses`, and the admin panel's operator procedures) are served over
+Effect RPC (`@lootlog/rpc/auth`) on the
 internal port `RPC_PORT` (default `PORT + 100`, path `/rpc`). No Traefik
 `IngressRoute` targets that port and its procedures are excluded from
 `openapi.yaml`. Each procedure lists the services allowed to call it; a caller
