@@ -9,7 +9,7 @@ import {
 import { configureApiClients } from "@lootlog/client/transport";
 import { afterEach, expect, it, vi } from "vitest";
 import type { RouterContext } from "@/App";
-import { Route } from "../../routes/_authenticated/$guildId";
+import { loadOrganizationRoute } from "./organization-loader";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -41,24 +41,7 @@ it("finishes organization navigation with an error after bounded lookup retries"
   const route = createRoute({
     getParentRoute: () => root,
     path: "/$guildId",
-    loader: (context) => {
-      const loader = Route.options.loader;
-
-      if (!loader || "handler" in loader)
-        throw new Error("Missing organization loader");
-
-      // SAFETY: The file route's parent type includes authentication; this loader only
-      // consumes params, queryClient and abortController supplied by this router.
-      return loader({
-        abortController: context.abortController,
-        params: context.params,
-        context: {
-          ...context.context,
-          guildId: context.params.guildId,
-          session: { data: null, error: null },
-        },
-      } as Parameters<typeof loader>[0]);
-    },
+    loader: loadOrganizationRoute,
   });
 
   const router = createRouter({
