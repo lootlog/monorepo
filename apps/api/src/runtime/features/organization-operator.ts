@@ -10,6 +10,7 @@ import {
 } from "#src/guilds/organization-operator.shared";
 import { GuildDiscordSync } from "#src/runtime/features/organizations";
 import { MemberServices } from "#src/runtime/features/members";
+import { NotificationsServices } from "#src/runtime/features/notifications";
 import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
 import { getUserGuildPermissionsCacheScope } from "#src/shared/cache";
 
@@ -20,6 +21,7 @@ export const organizationOperatorData = Layer.effect(
     const redis = yield* ApiRedis;
     const discordSync = yield* GuildDiscordSync;
     const { memberDelivery } = yield* MemberServices;
+    const { rebuild } = yield* NotificationsServices;
 
     return makeOrganizationOperatorData(database, {
       refreshDiscordSync: (guildId) =>
@@ -37,6 +39,7 @@ export const organizationOperatorData = Layer.effect(
         redis.invalidateScopes(getUserGuildPermissionsCacheScope(discordId)),
       clearCachePattern: (pattern) => redis.deleteByPattern(pattern),
       clearCacheKey: (key) => redis.del(key),
+      rebuildNotificationRule: rebuild.rebuildRule,
     });
   }),
 );

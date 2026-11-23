@@ -10,6 +10,7 @@ import {
   memberTable,
   organizationOperatorAuditTable,
 } from "#src/database/drizzle/organization.schema";
+import { notificationRuleTable } from "#src/database/drizzle/notification.schema";
 import { getGuildCacheKey } from "#src/guilds/guild-configuration-cache";
 import type { MemberDelivery } from "#src/members/member-delivery.operations";
 import { queueMemberDeliveries } from "#src/members/member.repository";
@@ -26,6 +27,8 @@ import {
 
 const POST_COMMIT_DELIVERY_TIMEOUT = "3 seconds";
 
+const NOTIFICATION_REBUILD_CONCURRENCY = 4;
+
 export interface OrganizationOperatorPorts {
   readonly refreshDiscordSync: (
     guildId: string,
@@ -41,6 +44,9 @@ export interface OrganizationOperatorPorts {
     pattern: string,
   ) => Effect.Effect<unknown, unknown>;
   readonly clearCacheKey: (key: string) => Effect.Effect<unknown, unknown>;
+  readonly rebuildNotificationRule: (
+    ruleId: number,
+  ) => Effect.Effect<void, unknown>;
 }
 
 export const organizationChangeCommands = (
@@ -206,6 +212,22 @@ export const organizationChangeCommands = (
           .where(eq(guildTable.id, operator.guildId))
           .pipe(Effect.as(null)),
       { accessChanged: true },
+    );
+
+    const rules = yield* database
+      .select({ id: notificationRuleTable.id })
+      .from(notificationRuleTable)
+      .where(
+        and(
+          eq(notificationRuleTable.ownerType, "GUILD"),
+          eq(notificationRuleTable.ownerId, operator.guildId),
+        ),
+      );
+
+    yield* Effect.forEach(
+      rules,
+      ({ id }) => ports.rebuildNotificationRule(id),
+      { concurrency: NOTIFICATION_REBUILD_CONCURRENCY, discard: true },
     );
   });
 

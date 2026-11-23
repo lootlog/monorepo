@@ -138,7 +138,10 @@ bot has left: member access, the Discord bot's slash commands, Organization
 notifications, and the public stats card all refuse it. Suspension and
 resumption queue a member sync delivery for every active Member, so the
 gateway rebalances open sessions and the API drops cached permissions within
-seconds. The Discord Guild owner without a Member row keeps cached gateway
+seconds. Organization notifications that come due while suspended are blocked
+rather than sent late; resuming rebuilds every Organization notification rule,
+so its future scheduled messages and timer reminders return. The Discord Guild
+owner without a Member row keeps cached gateway
 access until that cache expires, as after the bot leaves. Suspension does not
 touch Discord: when the bot rejoins the server, the Organization stays
 suspended until an operator resumes it.

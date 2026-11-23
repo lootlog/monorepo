@@ -2,10 +2,12 @@ import { afterEach, expect, test } from "bun:test";
 import { Effect } from "effect";
 import { Capability } from "@lootlog/schema/permissions";
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
+import { createNotificationRuleFixture } from "../../test/notification-fixtures.js";
 import {
   createGuildFixture,
   createMemberFixture,
 } from "../../test/organization-fixtures.js";
+import { notificationRuleTable } from "#src/database/drizzle/notification.schema";
 import {
   guildTable,
   memberTable,
@@ -84,7 +86,25 @@ const setup = async () => {
     ]),
   );
 
+  await boundary.run(
+    boundary.database.insert(notificationRuleTable).values([
+      createNotificationRuleFixture({
+        id: 1,
+        ownerType: "GUILD",
+        ownerId: "guild-1",
+        guildId: "guild-1",
+      }),
+      createNotificationRuleFixture({
+        id: 2,
+        ownerType: "GUILD",
+        ownerId: "guild-2",
+        guildId: "guild-2",
+      }),
+    ]),
+  );
+
   const updated: string[] = [];
+  const rebuiltRules: number[] = [];
   const cleared: string[] = [];
 
   const delivery = makeMemberDelivery(makeMemberStore(boundary.database), {
@@ -109,6 +129,10 @@ const setup = async () => {
       Effect.sync(() => {
         cleared.push(key);
       }),
+    rebuildNotificationRule: (ruleId) =>
+      Effect.sync(() => {
+        rebuiltRules.push(ruleId);
+      }),
   });
 
   const accessible = () =>
@@ -116,11 +140,12 @@ const setup = async () => {
       .run(selectAccessibleGuilds(boundary.database, "discord-1"))
       .then((rows) => rows.map(({ guild }) => guild.id).toSorted());
 
-  return { boundary, data, updated, cleared, accessible };
+  return { boundary, data, updated, cleared, rebuiltRules, accessible };
 };
 
 test("suspension removes only that Organization from member access until it is resumed", async () => {
-  const { boundary, data, updated, cleared, accessible } = await setup();
+  const { boundary, data, updated, cleared, rebuiltRules, accessible } =
+    await setup();
 
   expect(await accessible()).toEqual(["guild-1", "guild-2"]);
 
@@ -142,6 +167,7 @@ test("suspension removes only that Organization from member access until it is r
 
   expect(await accessible()).toEqual(["guild-1", "guild-2"]);
   expect(updated).toEqual(["guild-1", "guild-1"]);
+  expect(rebuiltRules).toEqual([1]);
 
   const audit = await boundary.run(data.listAudit(10, 0));
 
