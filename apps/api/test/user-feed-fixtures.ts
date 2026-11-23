@@ -128,7 +128,10 @@ export const makeUserFeedFixture = () => {
     );
 
     if (!loot) throw new Error("Missing loot");
-    await client.query(refreshOrganizationLootRecordFactsSql);
+    await client.query(
+      `${refreshOrganizationLootRecordFactsSql} WHERE "lootId" = $1`,
+      [loot.id],
+    );
 
     return loot.id;
   };

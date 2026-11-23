@@ -140,7 +140,10 @@ describe("personal Organization activity feed", () => {
       INSERT INTO "OrganizationLootRecord" ("lootId","guildId","createdAt","updatedAt","lootWorld","lootCreatedAt","lootRarityMask","npcTypeMask","npcVisibility") SELECT id,$1,now()-(id%86400)*interval '1 second',now(),world,"createdAt",0,0,'{[-1,0)}' FROM loots`,
       [guild.id, randomUUID()],
     );
-    await client.query(refreshOrganizationLootRecordFactsSql);
+    await client.query(
+      `${refreshOrganizationLootRecordFactsSql} WHERE "guildId" = $1`,
+      [guild.id],
+    );
     await client.query(
       `ANALYZE "GuildKillActivity"; ANALYZE "OrganizationLootRecord"; ANALYZE "LootNpc"; ANALYZE "NpcSnapshot"`,
     );

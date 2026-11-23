@@ -76,7 +76,10 @@ describe("personal Organization activity feed loots", () => {
       `WITH inserted AS (INSERT INTO "PlayerSnapshot" (world,"accountId","characterId","snapshotHash",name,prof,icon) VALUES ('tempest',1,2,$2,'Participant','WARRIOR','player.png') RETURNING id) INSERT INTO "LootPlayer" ("lootId","playerSnapshotId",lvl,hpp) SELECT $1,id,120,75 FROM inserted`,
       [loot.id, randomUUID()],
     );
-    await client.query(refreshOrganizationLootRecordFactsSql);
+    await client.query(
+      `${refreshOrganizationLootRecordFactsSql} WHERE "guildId" = $1`,
+      [guild.id],
+    );
     await client.query(
       `UPDATE "Loot" SET "lootShare"='{"Participant":["1"]}'::jsonb WHERE id=$1`,
       [loot.id],
@@ -136,7 +139,10 @@ describe("personal Organization activity feed loots", () => {
     await client.query(`UPDATE "NpcSnapshot" SET type='HERO' WHERE id=$1`, [
       npc.id,
     ]);
-    await client.query(refreshOrganizationLootRecordFactsSql);
+    await client.query(
+      `${refreshOrganizationLootRecordFactsSql} WHERE "guildId" = $1`,
+      [guild.id],
+    );
     expect((await run(makeUserFeed(database)(reader))).items).toEqual([]);
     await client.query(
       `UPDATE "OrganizationLootRecord" SET "archivedAt"=now() WHERE "lootId"=$1`,
@@ -232,7 +238,10 @@ describe("personal Organization activity feed loots", () => {
     );
 
     if (!loot) throw new Error("Missing loot");
-    await client.query(refreshOrganizationLootRecordFactsSql);
+    await client.query(
+      `${refreshOrganizationLootRecordFactsSql} WHERE "guildId" = $1`,
+      [guild.id],
+    );
 
     const feed = (query: UserFeedQuery = {}) =>
       run(makeUserFeed(database)(owner, query)).then(({ items }) =>
