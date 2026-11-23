@@ -208,7 +208,7 @@ test("account deletion removes personal kills at once and member kills from comp
       ).toBeGreaterThanOrEqual(3);
 
       yield* makeUserAccountDeletion(db, {
-        cleanupBattlelog: () => Effect.void,
+        requestBattlelogDeletion: () => Effect.void,
         deleteCacheKey: () => Effect.void,
         invalidateCacheScopes: () => Effect.void,
         deleteCachePattern: () => Effect.void,

@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import type { RedisScriptReply } from "#src/platform/redis-store";
 import { makeGuildStore } from "#src/guilds/guild-store";
 import { CACHE_TTL, getUserGuildsCacheKey } from "#src/guilds/cache-keys";
-import { httpClientFromResponses } from "./http-fixtures.js";
+import { RpcUnavailableError } from "@lootlog/rpc/errors";
 import { useDragonfly } from "./dragonfly-fixtures.js";
 import {
   uniquePrefix,
@@ -33,23 +33,16 @@ describe("realtime Dragonfly integration: guild cache", () => {
 
     let available = true;
 
-    const store = makeGuildStore(
-      configuration,
-      first.store,
-      httpClientFromResponses(() =>
-        Effect.succeed(
-          available
-            ? Response.json(lastGuilds)
-            : Response.json({}, { status: 503 }),
-        ),
-      ),
-    );
+    const store = makeGuildStore(first.store, {
+      getUserGuildPermissions: () =>
+        available
+          ? Effect.succeed(lastGuilds)
+          : Effect.fail(new RpcUnavailableError({ message: "unavailable" })),
+    });
 
-    const remote = makeGuildStore(
-      configuration,
-      second.store,
-      httpClientFromResponses(() => Effect.succeed(Response.json([]))),
-    );
+    const remote = makeGuildStore(second.store, {
+      getUserGuildPermissions: () => Effect.succeed([]),
+    });
 
     await expect(
       Effect.runPromise(store.getUserGuilds(options)),
@@ -92,11 +85,9 @@ describe("realtime Dragonfly integration: guild cache", () => {
       120,
     );
 
-    const guildStore = makeGuildStore(
-      makeConfiguration(),
-      redis.store,
-      httpClientFromResponses(() => Effect.succeed(Response.json(guilds))),
-    );
+    const guildStore = makeGuildStore(redis.store, {
+      getUserGuildPermissions: () => Effect.succeed(guilds),
+    });
 
     await expect(
       Effect.runPromise(guildStore.getUserGuilds(options)),
@@ -113,7 +104,7 @@ describe("realtime Dragonfly integration: guild cache", () => {
       await using first = await openStore(keyPrefix);
       await using second = await openStore(keyPrefix);
       const configuration = makeConfiguration();
-      const response = Promise.withResolvers<Response>();
+      const response = Promise.withResolvers<typeof guilds>();
 
       try {
         const options = { discordId: "discord-race", userId: "user-race" };
@@ -136,7 +127,6 @@ describe("realtime Dragonfly integration: guild cache", () => {
         const commits: RedisScriptReply[] = [];
 
         const firstStore = makeGuildStore(
-          configuration,
           {
             command: {
               ...first.store.command,
@@ -150,27 +140,26 @@ describe("realtime Dragonfly integration: guild cache", () => {
               },
             },
           },
-          httpClientFromResponses(() =>
-            Effect.promise(() => {
-              started.resolve();
+          {
+            getUserGuildPermissions: () =>
+              Effect.promise(() => {
+                started.resolve();
 
-              return response.promise;
-            }),
-          ),
+                return response.promise;
+              }),
+          },
         );
 
-        const secondStore = makeGuildStore(
-          configuration,
-          second.store,
-          httpClientFromResponses(() => Effect.succeed(Response.json([]))),
-        );
+        const secondStore = makeGuildStore(second.store, {
+          getUserGuildPermissions: () => Effect.succeed([]),
+        });
 
         const request = Effect.runPromise(firstStore.getUserGuilds(options));
 
         await started.promise;
         await Effect.runPromise(secondStore.invalidate(options));
         await Effect.runPromise(secondStore.getUserGuilds(options));
-        response.resolve(Response.json(guilds));
+        response.resolve(guilds);
 
         await expect(request).resolves.toEqual(
           cacheState === "populated" ? guilds : [],
@@ -181,7 +170,7 @@ describe("realtime Dragonfly integration: guild cache", () => {
           Effect.runPromise(firstStore.getUserGuilds(options)),
         ).resolves.toEqual([]);
       } finally {
-        response.resolve(Response.json([]));
+        response.resolve([]);
       }
     },
   );

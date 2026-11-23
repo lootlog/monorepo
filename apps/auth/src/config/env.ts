@@ -4,16 +4,26 @@ import {
   commaSeparatedConfig,
   redisUrlConfig,
 } from "@lootlog/instrumentation/service-config";
+import { AuthRpcGroup } from "@lootlog/rpc/auth";
+import {
+  type CallerTokens,
+  type RpcUpstream,
+  rpcCallerTokensConfig,
+  rpcUpstreamConfig,
+} from "@lootlog/rpc/callers";
+import { rpcPortConfig } from "@lootlog/rpc/server";
 import { Config, Context, Layer, Option, Redacted } from "effect";
 
 const optionalString = (name: string) => Config.option(Config.String(name));
 
 export interface AuthConfig extends BaseServiceConfiguration {
-  readonly idpTokenSecret?: Redacted.Redacted<string>;
+  readonly rpc: {
+    readonly port: number;
+    readonly callerTokens: CallerTokens;
+    readonly api: RpcUpstream;
+  };
   readonly adminApiSecret?: Redacted.Redacted<string>;
-  readonly apiUrl?: string;
   readonly apiKeysEnabled?: boolean;
-  readonly apiKeyStatusSecret?: Redacted.Redacted<string>;
   readonly trustedOrigins: ReadonlyArray<string>;
   readonly cookieDomain: string;
   readonly cookiePrefix: string;
@@ -36,21 +46,17 @@ export interface AuthConfig extends BaseServiceConfiguration {
 
 const authConfig: Config.Config<AuthConfig> = Config.all({
   base: baseServiceConfig("auth"),
-  idpTokenSecret: Config.option(Config.Redacted("AUTH_IDP_TOKEN_SECRET")).pipe(
-    Config.map(Option.getOrUndefined),
-  ),
+  rpc: Config.all({
+    port: rpcPortConfig,
+    callerTokens: rpcCallerTokensConfig("auth", AuthRpcGroup),
+    api: rpcUpstreamConfig("auth", "api"),
+  }),
   adminApiSecret: Config.option(Config.Redacted("ADMIN_API_SECRET")).pipe(
-    Config.map(Option.getOrUndefined),
-  ),
-  apiUrl: Config.option(Config.String("API_URL")).pipe(
     Config.map(Option.getOrUndefined),
   ),
   apiKeysEnabled: Config.Boolean("API_KEYS_ENABLED").pipe(
     Config.withDefault(false),
   ),
-  apiKeyStatusSecret: Config.option(
-    Config.Redacted("API_KEY_STATUS_SECRET"),
-  ).pipe(Config.map(Option.getOrUndefined)),
   trustedOrigins: commaSeparatedConfig("TRUSTED_ORIGINS"),
   cookieDomain: Config.String("COOKIE_DOMAIN"),
   cookiePrefix: Config.String("COOKIE_PREFIX"),

@@ -50,10 +50,5 @@ export const ApiKeyHandlers = HttpApiBuilder.group(
             service.remove(userId, params.id),
           ),
         ),
-      )
-      .handle("ApiKeyStatuses", ({ payload }) =>
-        apiKeys((service, headers) =>
-          service.statuses(headers, payload.keyIds),
-        ),
       ),
 );

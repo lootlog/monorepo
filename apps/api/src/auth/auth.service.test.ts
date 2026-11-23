@@ -1,8 +1,12 @@
-import type { JsonCodec } from "@lootlog/database/redis-cache-fill";
-import { expect, test } from "bun:test";
+import type { AuthIdpTokenResult } from "@lootlog/rpc/auth";
+import {
+  RpcBadRequestError,
+  RpcUnauthorizedError,
+  RpcUnavailableError,
+} from "@lootlog/rpc/errors";
 import { DISCORD_AUTH_SCOPES } from "@lootlog/schema/discord";
-import { Effect, Redacted } from "effect";
-import { httpClientFromResponses } from "../../test/http-fixtures.js";
+import { expect, test } from "bun:test";
+import { Effect } from "effect";
 import { getAuthTokenCacheKey } from "#src/shared/cache";
 import { makeAuthService } from "./auth.service.js";
 
@@ -18,17 +22,17 @@ const memoryRedis = () => {
         values.set(key, value);
         ttls.set(key, ttlSeconds);
       }),
-    getJson: <T>(key: string, codec: Pick<JsonCodec<T>, "parse">) =>
+    getJson: <T>(key: string, codec: { readonly parse: (raw: string) => T }) =>
       Effect.sync(() => {
-        const value = values.get(key);
+        const raw = values.get(key);
 
-        return value === undefined ? null : codec.parse(value);
+        return raw === undefined ? null : codec.parse(raw);
       }),
     setJson: <T>(
       key: string,
       value: T,
       ttlSeconds?: number,
-      codec?: Pick<JsonCodec<T>, "stringify">,
+      codec?: { readonly stringify: (input: T) => string },
     ) =>
       Effect.sync(() => {
         values.set(key, codec ? codec.stringify(value) : JSON.stringify(value));
@@ -45,64 +49,68 @@ const memoryRedis = () => {
 
 const authServiceWith = (
   redis: ReturnType<typeof memoryRedis>,
-  respond: () => Response,
+  respond: () => AuthIdpTokenResult,
 ) =>
   makeAuthService({
     redis,
-    httpClient: httpClientFromResponses(() => Effect.sync(respond)),
-    authServiceUrl: new URL("http://auth.test"),
-    idpTokenSecret: Redacted.make("idp-test-secret"),
+    authRpc: {
+      getIdpToken: () => Effect.sync(respond),
+    },
   });
 
 const issuedToken = (
   accessToken: string,
   expiresIn = 3_600,
   scopes: ReadonlyArray<string> = DISCORD_AUTH_SCOPES,
-) => Response.json({ accessToken, expiresIn, scopes });
+): AuthIdpTokenResult => ({ accessToken, expiresIn, scopes });
 
-test("Discord token retrieval authenticates the API service without forwarding user credentials", async () => {
-  let authorization: string | undefined;
+test("Discord token retrieval calls auth RPC with user and discord identity", async () => {
+  let received:
+    | { readonly userId: string; readonly discordId: string }
+    | undefined;
 
   const service = makeAuthService({
     redis: memoryRedis(),
-    httpClient: httpClientFromResponses((request) => {
-      authorization = request.headers.authorization;
-      expect(request.url).toBe("http://auth.test/auth/idp-token");
+    authRpc: {
+      getIdpToken: (input) => {
+        received = input;
 
-      return Effect.succeed(issuedToken("provider-token"));
-    }),
-    authServiceUrl: new URL("http://auth.test"),
-    idpTokenSecret: Redacted.make("idp-test-secret"),
+        return Effect.succeed(issuedToken("provider-token"));
+      },
+    },
   });
 
   await expect(
     Effect.runPromise(service.getIdpToken("user", "discord")),
   ).resolves.toMatchObject({ accessToken: "provider-token" });
-  expect(authorization).toBe("Bearer idp-test-secret");
+  expect(received).toEqual({ userId: "user", discordId: "discord" });
 });
 
-for (const [status, body, expected] of [
+for (const [rpcError, expected] of [
   [
-    401,
-    { message: "Unauthorized", statusCode: 401 },
+    new RpcUnauthorizedError({ message: "Unauthorized" }),
     "AuthServiceUnavailableError",
   ],
-  [401, { code: "AUTHENTICATION_REQUIRED" }, "AuthServiceUnavailableError"],
-  [401, { code: "TOKEN_EXPIRED" }, "TokenExpiredError"],
-  [400, { code: "TOKEN_NOT_FOUND" }, "TokenExpiredError"],
-  [400, { code: "ACCOUNT_NOT_FOUND" }, "AccountNotFoundError"],
+  [new RpcUnauthorizedError({ message: "TOKEN_EXPIRED" }), "TokenExpiredError"],
+  [new RpcBadRequestError({ message: "TOKEN_NOT_FOUND" }), "TokenExpiredError"],
+  [
+    new RpcBadRequestError({ message: "ACCOUNT_NOT_FOUND" }),
+    "AccountNotFoundError",
+  ],
+  [
+    new RpcUnavailableError({ message: "unavailable" }),
+    "AuthServiceUnavailableError",
+  ],
 ] as const) {
-  test(`classifies IDP ${status} ${JSON.stringify(body)} as ${expected}`, async () => {
+  test(`classifies IDP RPC ${rpcError._tag} (${rpcError.message}) as ${expected}`, async () => {
     const service = makeAuthService({
       redis: {
         ...memoryRedis(),
         setJson: () => Effect.die(new Error("Errors must not be cached")),
       },
-      httpClient: httpClientFromResponses(() =>
-        Effect.succeed(Response.json(body, { status })),
-      ),
-      authServiceUrl: new URL("http://auth.test"),
-      idpTokenSecret: Redacted.make("rejected-service-secret"),
+      authRpc: {
+        getIdpToken: () => Effect.fail(rpcError),
+      },
     });
 
     const error = await Effect.runPromise(

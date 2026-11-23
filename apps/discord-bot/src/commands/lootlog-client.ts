@@ -1,16 +1,34 @@
 import { boundedHttpGet } from "@lootlog/instrumentation/bounded-http-get";
+import {
+  ApiRpcGroup,
+  type RpcEventRankingEntry,
+  type RpcEventSummary,
+  type RpcEventTimer,
+  type RpcEventWrapped,
+  type RpcGuildKillStats,
+  type RpcGuildLootPage,
+  type RpcGuildTimer,
+  type RpcNpcKillers,
+  type RpcReservationPage,
+  type RpcReservationSpot,
+  type RpcTopKilledNpcs,
+} from "@lootlog/rpc/api";
+import {
+  CatalogRpcGroup,
+  type CatalogItemSearchResult,
+} from "@lootlog/rpc/catalog";
+import {
+  boundedRpcCall,
+  makeRpcClient,
+  type ServiceRpcClient,
+} from "@lootlog/rpc/client";
+import {
+  GatewayRpcGroup,
+  type GatewayPresenceSnapshot,
+} from "@lootlog/rpc/gateway";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { CATALOG_SERVICE_TOKEN_HEADER } from "@lootlog/protocol/http/catalog-access";
-import { Context, Effect, Layer, Redacted, Schema } from "effect";
-import { HttpClient, HttpClientRequest } from "effect/http";
-import {
-  AUTH_DISCORD_ID_HEADER,
-  AUTH_USER_ID_HEADER,
-} from "@lootlog/schema/api-key-access";
-import {
-  InternalMemberIdentityResponse,
-  internalMemberIdentityPath,
-} from "@lootlog/schema/internal-guilds";
+import { Context, Effect, Layer, Schema } from "effect";
+import { HttpClient } from "effect/http";
 import { BotConfig } from "#src/config/bot-config";
 
 export class CommandFailure extends TaggedErrorClass<
@@ -26,21 +44,90 @@ export class CommandFailure extends TaggedErrorClass<
   ]),
 }) {}
 
-type QueryValue = string | number | boolean | ReadonlyArray<string>;
+const FAILURE_REASON_BY_RPC_ERROR = new Map<string, CommandFailure["reason"]>([
+  ["RpcUnauthorizedError", "reauthenticate"],
+  ["RpcForbiddenError", "forbidden"],
+  ["RpcNotFoundError", "not-found"],
+]);
 
-type Query = Readonly<Record<string, QueryValue | undefined>>;
+const boundedCall = boundedRpcCall({ timeout: "2500 millis", retries: 1 });
 
-type Read = <A, I>(
-  path: string,
-  query: Query,
-  schema: Schema.Codec<A, I>,
-) => Effect.Effect<A, CommandFailure>;
+const runRpc = <A, E extends { readonly _tag: string }>(
+  call: () => Effect.Effect<A, E>,
+): Effect.Effect<A, CommandFailure> =>
+  boundedCall(call).pipe(
+    Effect.mapError(
+      (error) =>
+        new CommandFailure({
+          reason: FAILURE_REASON_BY_RPC_ERROR.get(error._tag) ?? "unavailable",
+        }),
+    ),
+  );
+
+type ApiClient = ServiceRpcClient<typeof ApiRpcGroup>;
+
+type ApiPayload<Name extends keyof ApiClient> = Parameters<ApiClient[Name]>[0];
+
+interface MemberApiClient {
+  readonly listGuildEvents: Effect.Effect<
+    ReadonlyArray<typeof RpcEventSummary.Type>,
+    CommandFailure
+  >;
+  readonly getEventRanking: (
+    eventId: string,
+  ) => Effect.Effect<
+    ReadonlyArray<typeof RpcEventRankingEntry.Type>,
+    CommandFailure
+  >;
+  readonly getEventTimers: (
+    eventId: string,
+    world: string,
+  ) => Effect.Effect<ReadonlyArray<typeof RpcEventTimer.Type>, CommandFailure>;
+  readonly getEventWrapped: (
+    eventId: string,
+  ) => Effect.Effect<typeof RpcEventWrapped.Type, CommandFailure>;
+  readonly listGuildTimers: (
+    world?: string,
+  ) => Effect.Effect<ReadonlyArray<typeof RpcGuildTimer.Type>, CommandFailure>;
+  readonly getGuildKillStats: (
+    params: Pick<ApiPayload<"getGuildKillStats">, "period" | "npcTypes">,
+  ) => Effect.Effect<typeof RpcGuildKillStats.Type, CommandFailure>;
+  readonly getGuildTopKilledNpcs: (
+    params: Pick<
+      ApiPayload<"getGuildTopKilledNpcs">,
+      "limit" | "search" | "period"
+    >,
+  ) => Effect.Effect<typeof RpcTopKilledNpcs.Type, CommandFailure>;
+  readonly getNpcKillers: (
+    params: Pick<ApiPayload<"getNpcKillers">, "npcId" | "limit" | "period">,
+  ) => Effect.Effect<typeof RpcNpcKillers.Type, CommandFailure>;
+  readonly listGuildLoots: (
+    params: Pick<
+      ApiPayload<"listGuildLoots">,
+      "limit" | "players" | "npcs" | "rarities" | "itemNames"
+    >,
+  ) => Effect.Effect<typeof RpcGuildLootPage.Type, CommandFailure>;
+  readonly listUserReservations: (
+    status?: ApiPayload<"listUserReservations">["status"],
+  ) => Effect.Effect<typeof RpcReservationPage.Type, CommandFailure>;
+  readonly listGuildReservationSpots: Effect.Effect<
+    ReadonlyArray<typeof RpcReservationSpot.Type>,
+    CommandFailure
+  >;
+}
+
+interface MemberGatewayClient {
+  readonly getOrganizationPresence: Effect.Effect<
+    GatewayPresenceSnapshot,
+    CommandFailure
+  >;
+}
 
 export interface MemberSession {
   readonly guildId: string;
   readonly memberId: number;
-  readonly api: Read;
-  readonly gateway: Read;
+  readonly api: MemberApiClient;
+  readonly gateway: MemberGatewayClient;
 }
 
 export interface LootlogClientValue {
@@ -48,7 +135,12 @@ export interface LootlogClientValue {
     guildId: string,
     discordId: string,
   ) => Effect.Effect<MemberSession, CommandFailure>;
-  readonly catalog: Read;
+  readonly catalog: {
+    readonly searchItems: (params: {
+      readonly search: string;
+      readonly limit: number;
+    }) => Effect.Effect<CatalogItemSearchResult, CommandFailure>;
+  };
   readonly publicFile: (
     path: string,
   ) => Effect.Effect<Uint8Array, CommandFailure>;
@@ -66,19 +158,6 @@ const failureForStatus = (status: number): CommandFailure | undefined => {
   return new CommandFailure({ reason: "unavailable" });
 };
 
-const buildUrl = (baseUrl: string, path: string, query: Query) => {
-  const url = new URL(path, baseUrl);
-
-  for (const [key, value] of Object.entries(query)) {
-    if (value === undefined) continue;
-
-    for (const item of Array.isArray(value) ? value : [value])
-      url.searchParams.append(key, String(item));
-  }
-
-  return url;
-};
-
 export class LootlogClient extends Context.Service<
   LootlogClient,
   LootlogClientValue
@@ -89,55 +168,27 @@ export class LootlogClient extends Context.Service<
       const config = yield* BotConfig;
       const httpClient = yield* HttpClient.HttpClient;
 
-      const get = (
-        client: HttpClient.HttpClient,
-        operationId: string,
-        url: URL,
-      ) =>
-        boundedHttpGet({
-          client,
-          url,
-          timeoutMilliseconds: 2500,
-          retries: 1,
-          operationId,
-          adapter: "discord-command",
-          response: "raw",
-          failure: (_reason, retryable) => ({ retryable }),
-          decode: (body, status) => ({ status, body: new Uint8Array(body) }),
-        }).pipe(
-          Effect.mapError(() => new CommandFailure({ reason: "unavailable" })),
-        );
+      const apiRpc = yield* makeRpcClient(ApiRpcGroup, {
+        ...config.rpc.api,
+        spanPrefix: "discord-bot.api-rpc",
+      });
 
-      const read =
-        (client: HttpClient.HttpClient, baseUrl: string): Read =>
-        (path, query, schema) =>
-          get(client, path, buildUrl(baseUrl, path, query)).pipe(
-            Effect.flatMap(({ status, body }) => {
-              const failure = failureForStatus(status);
+      const gatewayRpc = yield* makeRpcClient(GatewayRpcGroup, {
+        ...config.rpc.gateway,
+        spanPrefix: "discord-bot.gateway-rpc",
+      });
 
-              if (failure) return Effect.fail(failure);
-
-              return Schema.decodeEffect(Schema.fromJsonString(schema))(
-                new TextDecoder().decode(body),
-              ).pipe(
-                Effect.mapError(
-                  () => new CommandFailure({ reason: "unavailable" }),
-                ),
-              );
-            }),
-          );
+      const catalogRpc = yield* makeRpcClient(CatalogRpcGroup, {
+        ...config.rpc.catalog,
+        spanPrefix: "discord-bot.catalog-rpc",
+      });
 
       const member = Effect.fn("LootlogClient.member")(function* (
         guildId: string,
         discordId: string,
       ) {
-        const { userId, memberId } = yield* read(
-          httpClient,
-          config.apiServiceUrl,
-        )(
-          internalMemberIdentityPath({ guildId, discordId }),
-          {},
-          InternalMemberIdentityResponse,
+        const { userId, memberId } = yield* runRpc(() =>
+          apiRpc.getMemberIdentity({ guildId, discordId }),
         ).pipe(
           Effect.catchIf(
             (failure) => failure.reason === "not-found",
@@ -145,24 +196,75 @@ export class LootlogClient extends Context.Service<
           ),
         );
 
-        const asMember = HttpClient.mapRequest(
-          httpClient,
-          HttpClientRequest.setHeaders({
-            [AUTH_USER_ID_HEADER]: userId,
-            [AUTH_DISCORD_ID_HEADER]: discordId,
-          }),
-        );
+        const actor = { userId, discordId };
+        const guildActor = { userId, discordId, guildId };
 
         return {
           guildId,
           memberId,
-          api: read(asMember, config.apiServiceUrl),
-          gateway: read(asMember, config.gatewayServiceUrl),
+          api: {
+            listGuildEvents: runRpc(() => apiRpc.listGuildEvents(guildActor)),
+            getEventRanking: (eventId) =>
+              runRpc(() => apiRpc.getEventRanking({ ...guildActor, eventId })),
+            getEventTimers: (eventId, world) =>
+              runRpc(() =>
+                apiRpc.getEventTimers({ ...guildActor, eventId, world }),
+              ),
+            getEventWrapped: (eventId) =>
+              runRpc(() => apiRpc.getEventWrapped({ ...guildActor, eventId })),
+            listGuildTimers: (world) =>
+              runRpc(() =>
+                apiRpc.listGuildTimers(
+                  world !== undefined ? { ...guildActor, world } : guildActor,
+                ),
+              ),
+            getGuildKillStats: (params) =>
+              runRpc(() =>
+                apiRpc.getGuildKillStats({ ...guildActor, ...params }),
+              ),
+            getGuildTopKilledNpcs: (params) =>
+              runRpc(() =>
+                apiRpc.getGuildTopKilledNpcs({ ...guildActor, ...params }),
+              ),
+            getNpcKillers: (params) =>
+              runRpc(() => apiRpc.getNpcKillers({ ...guildActor, ...params })),
+            listGuildLoots: (params) =>
+              runRpc(() => apiRpc.listGuildLoots({ ...guildActor, ...params })),
+            listUserReservations: (status) =>
+              runRpc(() =>
+                apiRpc.listUserReservations(
+                  status !== undefined ? { ...actor, status } : actor,
+                ),
+              ),
+            listGuildReservationSpots: runRpc(() =>
+              apiRpc.listGuildReservationSpots(guildActor),
+            ),
+          },
+          gateway: {
+            getOrganizationPresence: runRpc(() =>
+              gatewayRpc.getOrganizationPresence({
+                userId,
+                discordId,
+                organizationId: guildId,
+              }),
+            ),
+          },
         } satisfies MemberSession;
       });
 
       const publicFile = (path: string) =>
-        get(httpClient, path, buildUrl(config.apiServiceUrl, path, {})).pipe(
+        boundedHttpGet({
+          client: httpClient,
+          url: new URL(path, config.apiServiceUrl),
+          timeoutMilliseconds: 2500,
+          retries: 1,
+          operationId: path,
+          adapter: "discord-command",
+          response: "raw",
+          failure: (_reason, retryable) => ({ retryable }),
+          decode: (body, status) => ({ status, body: new Uint8Array(body) }),
+        }).pipe(
+          Effect.mapError(() => new CommandFailure({ reason: "unavailable" })),
           Effect.flatMap(({ status, body }) => {
             const failure = failureForStatus(status);
 
@@ -172,16 +274,9 @@ export class LootlogClient extends Context.Service<
 
       return LootlogClient.of({
         member,
-        catalog: read(
-          HttpClient.mapRequest(
-            httpClient,
-            HttpClientRequest.setHeader(
-              CATALOG_SERVICE_TOKEN_HEADER,
-              Redacted.value(config.catalogServiceToken),
-            ),
-          ),
-          config.catalogServiceUrl,
-        ),
+        catalog: {
+          searchItems: (params) => runRpc(() => catalogRpc.searchItems(params)),
+        },
         publicFile,
       });
     }),

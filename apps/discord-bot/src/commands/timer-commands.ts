@@ -1,7 +1,8 @@
 import { escapeMarkdown } from "discord.js";
 import { npcIconUrl } from "@lootlog/domain/npc-icon";
 import { getTimerSortTimeLeft, getTimerTimeLeft } from "@lootlog/domain/timers";
-import { Clock, Effect, Schema } from "effect";
+import type { RpcGuildTimer } from "@lootlog/rpc/api";
+import { Clock, Effect } from "effect";
 import { BotConfig } from "#src/config/bot-config";
 import { guildCommand, visibilityOption } from "./command-builders.js";
 import { COMMAND_TEXT, npcTypeLabel } from "./command-messages.js";
@@ -29,35 +30,11 @@ const TIMER_NPC_TYPES = [
   "HERO_TRACKER",
 ] as const;
 
-const Timer = Schema.Struct({
-  timerKey: Schema.String,
-  world: Schema.String,
-  minSpawnTime: Schema.String,
-  maxSpawnTime: Schema.String,
-  wasReset: Schema.Boolean,
-  npc: Schema.Struct({
-    name: Schema.String,
-    lvl: Schema.Finite,
-    type: Schema.String,
-    location: Schema.String,
-    icon: Schema.NullOr(Schema.String),
-  }),
-  member: Schema.optionalKey(Schema.Struct({ name: Schema.String })),
-  deletedAt: Schema.optionalKey(Schema.NullOr(Schema.String)),
-  entranceClosesAt: Schema.optionalKey(Schema.NullOr(Schema.String)),
-});
-
-type Timer = typeof Timer.Type;
-
-const Timers = Schema.Array(Timer);
+type Timer = typeof RpcGuildTimer.Type;
 
 const readCurrentTimers = (session: MemberSession, world?: string) =>
   Effect.gen(function* () {
-    const timers = yield* session.api(
-      `/guilds/${encodeURIComponent(session.guildId)}/timers`,
-      { world },
-      Timers,
-    );
+    const timers = yield* session.api.listGuildTimers(world);
 
     const now = yield* Clock.currentTimeMillis;
 

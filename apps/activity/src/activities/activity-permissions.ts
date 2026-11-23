@@ -1,20 +1,14 @@
 import { OperationError } from "@lootlog/instrumentation/operation";
 import { reconnectingBunRedisLayer } from "@lootlog/database/bun-redis";
-import {
-  Capability,
-  UserGuildPermissionsDtoSchema,
-} from "@lootlog/schema/permissions";
-import { INTERNAL_USER_PERMISSIONS_PATH } from "@lootlog/schema/internal-guilds";
+import { ApiRpcGroup } from "@lootlog/rpc/api";
+import { boundedRpcCall, makeRpcClient } from "@lootlog/rpc/client";
+import { Capability } from "@lootlog/schema/permissions";
 import { Context, Effect, Layer, Redacted, Schema } from "effect";
 import { Redis } from "effect/persistence";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { ActivityConfig } from "#src/config/activity-config";
-import {
-  ApiHttpClient,
-  type ApiHttpClientFailure,
-} from "#src/http/api-http-client";
 
-const UserPermissions = Schema.Array(UserGuildPermissionsDtoSchema);
+const callApi = boundedRpcCall({ timeout: "3 seconds", retries: 2 });
 
 class PermissionsUnavailable extends TaggedErrorClass<
   PermissionsUnavailable,
@@ -26,24 +20,17 @@ class PermissionsUnavailable extends TaggedErrorClass<
     "guild-response",
     "permissions-response",
   ]),
-  status: Schema.optional(Schema.Finite),
   cause: Schema.optional(Schema.Defect()),
 }) {}
 
 export interface PermissionsValue {
   readonly resolveGuildId: (
     id: string,
-  ) => Effect.Effect<
-    string | null,
-    PermissionsUnavailable | ApiHttpClientFailure
-  >;
+  ) => Effect.Effect<string | null, PermissionsUnavailable>;
   readonly getUserCapabilities: (
     discordId: string,
     userId: string,
-  ) => Effect.Effect<
-    (guildId: string) => Capability[],
-    PermissionsUnavailable | ApiHttpClientFailure
-  >;
+  ) => Effect.Effect<(guildId: string) => Capability[], PermissionsUnavailable>;
 }
 
 export class Permissions extends Context.Service<
@@ -54,7 +41,11 @@ export class Permissions extends Context.Service<
     Permissions,
     Effect.gen(function* () {
       const config = yield* ActivityConfig;
-      const apiHttpClient = yield* ApiHttpClient;
+
+      const apiRpc = yield* makeRpcClient(ApiRpcGroup, {
+        ...config.apiRpc,
+        spanPrefix: "activity.api-rpc",
+      });
 
       const memory = new Map<string, { value: string }>();
 
@@ -112,14 +103,6 @@ export class Permissions extends Context.Service<
         });
       };
 
-      const decodeGuild = Schema.decodeUnknownEffect(
-        Schema.fromJsonString(Schema.Struct({ id: Schema.NonEmptyString })),
-      );
-
-      const decodePermissions = Schema.decodeUnknownEffect(
-        Schema.fromJsonString(UserPermissions),
-      );
-
       const resolveGuildId = Effect.fn("Permissions.resolveGuildId")(function* (
         id: string,
       ) {
@@ -137,31 +120,20 @@ export class Permissions extends Context.Service<
 
         if (cached) return cached;
 
-        const response = yield* apiHttpClient.get(
-          "Permissions.resolveGuildId",
-          `${config.apiServiceUrl}/internal/guilds/${encodeURIComponent(id)}`,
-        );
-
-        if (response.status === 404) return null;
-
-        if (response.status < 200 || response.status >= 300)
-          return yield* new PermissionsUnavailable({
-            operation: "guild-response",
-            status: response.status,
-          });
-
-        const guild = yield* decodeGuild(
-          new TextDecoder().decode(response.body),
+        const guild = yield* callApi(() =>
+          apiRpc.getGuildByIdOrVanityUrl({ idOrVanityUrl: id }),
         ).pipe(
+          Effect.catchTag("RpcNotFoundError", () => Effect.succeed(null)),
           Effect.mapError(
             (cause) =>
               new PermissionsUnavailable({
                 operation: "guild-response",
-                status: response.status,
                 cause,
               }),
           ),
         );
+
+        if (!guild) return null;
 
         yield* set(key, guild.id).pipe(
           Effect.mapError(
@@ -178,43 +150,17 @@ export class Permissions extends Context.Service<
 
       const getUserPermissions = Effect.fn("Permissions.getUserPermissions")(
         function* (discordId: string, userId: string) {
-          const url = new URL(
-            INTERNAL_USER_PERMISSIONS_PATH,
-            config.apiServiceUrl,
+          return yield* callApi(() =>
+            apiRpc.getUserGuildPermissions({ discordId, userId }),
+          ).pipe(
+            Effect.mapError(
+              (cause) =>
+                new PermissionsUnavailable({
+                  operation: "permissions-response",
+                  cause,
+                }),
+            ),
           );
-
-          url.searchParams.set("discordId", discordId);
-          url.searchParams.set("userId", userId);
-
-          const permissions = yield* apiHttpClient
-            .get("Permissions.getUserPermissions", url)
-            .pipe(
-              Effect.flatMap((response) => {
-                if (response.status < 200 || response.status >= 300) {
-                  return Effect.fail(
-                    new PermissionsUnavailable({
-                      operation: "permissions-response",
-                      status: response.status,
-                    }),
-                  );
-                }
-
-                return decodePermissions(
-                  new TextDecoder().decode(response.body),
-                ).pipe(
-                  Effect.mapError(
-                    (cause) =>
-                      new PermissionsUnavailable({
-                        operation: "permissions-response",
-                        status: response.status,
-                        cause,
-                      }),
-                  ),
-                );
-              }),
-            );
-
-          return permissions;
         },
       );
 

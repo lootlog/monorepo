@@ -4,7 +4,6 @@ import { healthGroup } from "@lootlog/instrumentation/service";
 import { HttpApi, OpenApi } from "effect/http-api";
 import { BattlesGroup } from "./contracts/battles/api.js";
 import { PublicBattlesGroup } from "./contracts/public-battles/api.js";
-import { InternalGroup } from "./contracts/internal/api.js";
 import { WeaponKillsGroup } from "./contracts/weapon-kills/api.js";
 
 export class BattlelogApi extends HttpApi.make("BattlelogApi")
@@ -17,7 +16,6 @@ export class BattlelogApi extends HttpApi.make("BattlelogApi")
     BattlesGroup,
     WeaponKillsGroup,
     PublicBattlesGroup,
-    InternalGroup,
   )
   .middleware(ApiKeyEndpointPolicy)
   .middleware(SchemaErrorResponse) {}

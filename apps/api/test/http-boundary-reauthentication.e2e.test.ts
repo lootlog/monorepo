@@ -1,3 +1,4 @@
+import { RpcUnauthorizedError } from "@lootlog/rpc/errors";
 import {
   afterAll,
   beforeAll,
@@ -8,7 +9,7 @@ import {
 } from "bun:test";
 import type { ApiDatabaseValue } from "../src/database/drizzle/database.js";
 import type { RedisService } from "#src/redis/redis.service";
-import { Schema } from "effect";
+import { Effect, Schema } from "effect";
 import { eq } from "drizzle-orm";
 import { ReauthenticationRequired } from "@lootlog/protocol/http/errors";
 import { memberTable } from "../src/database/drizzle/organization.schema.js";
@@ -52,7 +53,7 @@ describe("API HTTP boundary reauthentication", () => {
       reason: "their Discord token expired",
       arrange: () => {
         answerAuthService(() =>
-          Response.json({ code: "TOKEN_EXPIRED" }, { status: 401 }),
+          Effect.fail(new RpcUnauthorizedError({ message: "TOKEN_EXPIRED" })),
         );
       },
     },

@@ -17,13 +17,16 @@ export interface BaseServiceConfiguration {
   readonly serviceNamespace: string;
 }
 
+export const runtimeEnvironmentConfig = Config.schema(
+  RuntimeEnvironmentSchema,
+  "ENV",
+).pipe(Config.withDefault(RuntimeEnvironment.LOCAL));
+
 export const baseServiceConfig = (
   defaultServiceName: string,
 ): Config.Config<BaseServiceConfiguration> =>
   Config.all({
-    environment: Config.schema(RuntimeEnvironmentSchema, "ENV").pipe(
-      Config.withDefault(RuntimeEnvironment.LOCAL),
-    ),
+    environment: runtimeEnvironmentConfig,
     port: Config.Port("PORT"),
     serviceName: Config.String("SERVICE_NAME").pipe(
       Config.withDefault(defaultServiceName),

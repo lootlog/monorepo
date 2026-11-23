@@ -4,13 +4,11 @@ import {
   getUserGuildPermissionsCacheScope,
 } from "#src/shared/cache";
 import { ApiDatabase } from "#src/database/drizzle/database";
-import { makeDiscordBotClient } from "#src/discord-bot-client/discord-bot-client";
+import { makeDiscordBotRpcClient } from "#src/discord-bot-client/discord-bot-client";
 import { MEMBER_LAST_DISCORD_STATUS } from "#src/members/member-discord-status";
-import { outboundHttpRequest } from "#src/shared/http/outbound-http";
 import { RabbitMessaging, eventMessage } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
-import { Context, Effect, Layer, Option, Redacted, Schema } from "effect";
-import { HttpClient } from "effect/http";
+import { Context, Effect, Layer } from "effect";
 import {
   GuildSummaryCacheSchema,
   makeAccessibleGuilds,
@@ -20,10 +18,7 @@ import { makeGuildChannelDeletedDispatcher } from "#src/guilds/guild-channel-del
 import { makeGuildDiscordSyncData } from "#src/guilds/guild-discord-sync.data-layer";
 import { makeOutboxWorker } from "#src/shared/outbox-worker";
 import { makeManageableGuilds } from "#src/guilds/manageable-guilds.data-layer";
-import {
-  BattlelogCleanupFailed,
-  makeUserAccountDeletion,
-} from "#src/users/user-account-deletion.data-layer";
+import { makeUserAccountDeletion } from "#src/users/user-account-deletion.data-layer";
 import { makeUserPreferencesData } from "#src/users/user-preferences.data-layer";
 import { SettingsDocumentsRepository } from "#src/settings-documents/settings-documents.repository";
 import { makeSettingsDocuments } from "#src/settings-documents/settings-documents.service";
@@ -50,13 +45,9 @@ export const guildDiscordSyncLive = Layer.effect(
   Effect.gen(function* () {
     const database = yield* ApiDatabase;
     const rabbit = yield* RabbitMessaging;
-    const httpClient = yield* HttpClient.HttpClient;
     const config = yield* ApiRuntimeConfig;
 
-    const discordBot = makeDiscordBotClient(
-      httpClient,
-      config.discordBotServiceUrl,
-    );
+    const discordBot = yield* makeDiscordBotRpcClient(config.rpc.discordBot);
 
     const channelDeletions = yield* makeOutboxWorker(
       "Discord channel deletion",
@@ -106,10 +97,6 @@ export class AccountOrganizationOperations extends Context.Service<
   AccountOrganizationOperationsValue
 >()("@lootlog/api/http-api/AccountOrganizationOperations") {}
 
-const decodeCleanupAccepted = Schema.decodeUnknownOption(
-  Schema.fromJsonString(Schema.Struct({ status: Schema.Literal("ACCEPTED") })),
-);
-
 export const accountOrganizationOperationsLive = Layer.effect(
   AccountOrganizationOperations,
   Effect.gen(function* () {
@@ -117,42 +104,16 @@ export const accountOrganizationOperationsLive = Layer.effect(
     const discordSync = yield* GuildDiscordSync;
     const redis = yield* ApiRedis;
     const rabbit = yield* RabbitMessaging;
-    const httpClient = yield* HttpClient.HttpClient;
     const database = yield* ApiDatabase;
     const config = yield* ApiRuntimeConfig;
     const settingsRepository = yield* SettingsDocumentsRepository;
 
     const deleteAccount = makeUserAccountDeletion(database, {
-      cleanupBattlelog: (userId) =>
-        outboundHttpRequest(httpClient, {
-          adapter: "battlelog-account-cleanup",
-          body: JSON.stringify({ userId }),
-          headers: {
-            "content-type": "application/json",
-            authorization: config.battlelogCleanupSecret
-              ? `Bearer ${Redacted.value(config.battlelogCleanupSecret)}`
-              : "",
-          },
-          method: "POST",
-          responseLimitBytes: 1024 * 1024,
-          retryTimes: 0,
-          timeout: "5 seconds",
-          url: new URL(
-            "/internal/delete-user-data",
-            config.battlelogServiceUrl,
-          ).toString(),
-        }).pipe(
-          Effect.flatMap((response) =>
-            response.status >= 200 &&
-            response.status < 300 &&
-            Option.isSome(
-              decodeCleanupAccepted(new TextDecoder().decode(response.body)),
-            )
-              ? Effect.void
-              : Effect.fail(
-                  new BattlelogCleanupFailed({ status: response.status }),
-                ),
-          ),
+      requestBattlelogDeletion: (userId) =>
+        rabbit.publish(
+          eventMessage(RabbitRoutingKey.BATTLELOG_USER_DATA_DELETE, {
+            userId,
+          }),
         ),
       invalidateCacheScopes: redis.invalidateScopes,
       deleteCacheKey: redis.del,

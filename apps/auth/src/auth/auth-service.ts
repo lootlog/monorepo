@@ -1,9 +1,6 @@
 import { OperationError } from "@lootlog/instrumentation/operation";
 import { ApiKeyService } from "#src/auth/api-key-service";
-import {
-  hasServiceAuthorization,
-  readBearerToken,
-} from "@lootlog/protocol/http/service-auth";
+import { readBearerToken } from "@lootlog/protocol/http/service-auth";
 import {
   API_KEY_HEADER,
   type ApiKeyAccess,
@@ -33,7 +30,6 @@ import {
   Predicate,
   Result,
   Schema,
-  type Redacted,
 } from "effect";
 import { AppConfig } from "#src/config/env";
 import { AuthDatabase } from "#src/database/drizzle";
@@ -157,11 +153,9 @@ const readCookie = (cookieHeader: string, name: string) => {
 export const createAuthService = ({
   auth,
   appUrl,
-  idpTokenSecret,
   findDiscordAccountId,
   verifyApiKey,
 }: {
-  readonly idpTokenSecret?: Redacted.Redacted<string>;
   readonly verifyApiKey?: (
     key: string,
   ) => Effect.Effect<VerifiedIdentity, ApplicationError>;
@@ -446,11 +440,7 @@ export const createAuthService = ({
   );
 
   const getIdpTokenResponse = Effect.fn("AuthService.getIdpTokenResponse")(
-    function* (request: AccessTokenRequest, authorizationHeader?: string) {
-      if (!hasServiceAuthorization(authorizationHeader, idpTokenSecret)) {
-        return yield* unauthorized();
-      }
-
+    function* (request: AccessTokenRequest) {
       const result = yield* Effect.result(
         getDiscordAccessTokenOrThrow(request, {
           missing: new InvalidRequestError({ code: "TOKEN_NOT_FOUND" }),
@@ -525,7 +515,6 @@ export class AuthService extends Context.Service<
           auth,
           verifyApiKey: apiKeys.verify,
           appUrl: config.appUrl,
-          idpTokenSecret: config.idpTokenSecret,
           findDiscordAccountId: (request) =>
             database
               .select({ id: authAccounts.id })

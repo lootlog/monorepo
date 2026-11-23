@@ -6,7 +6,6 @@ import { GlobalChatHandlers } from "./global-chat/global-chat.handlers.js";
 import { GuildStatsCardHandlers } from "./guild-stats-card/guild-stats-card.handlers.js";
 import { GuildsHandlers } from "./guilds/guilds.handlers.js";
 import { HealthHandlers } from "./health/health.handlers.js";
-import { InternalGuildsHandlers } from "./internal/internal.handlers.js";
 import { KillsHandlers } from "./kills/kills.handlers.js";
 import { LootsHandlers } from "./loots/loots.handlers.js";
 import { LootlogConfigHandlers } from "./lootlog-config/lootlog-config.handlers.js";
@@ -32,7 +31,6 @@ export const LootlogApiHandlers = Layer.mergeAll(
   UsersHandlers,
   MembersHandlers,
   GuildsHandlers,
-  InternalGuildsHandlers,
   RolesHandlers,
   TimersHandlers,
   HeroSightingsHandlers,

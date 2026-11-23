@@ -6,7 +6,7 @@ import {
   AUTH_USER_ID_HEADER,
 } from "@lootlog/schema/api-key-access";
 import { readForwardAuthIdentity } from "@lootlog/schema/api-key-policy";
-import { Redacted, Context, Effect, Layer } from "effect";
+import { Context, Effect, Layer } from "effect";
 import {
   type GatewayConfiguration,
   GatewayConfig,
@@ -26,8 +26,7 @@ export const makeGatewayAuth = (
   config: Pick<
     GatewayConfiguration,
     "allowedWebOrigins" | "allowedExtensionOrigins"
-  > &
-    Partial<Pick<GatewayConfiguration, "authUrl" | "apiKeyStatusSecret">>,
+  >,
 ): GatewayAuth => ({
   isAllowedOrigin: (origin) => {
     if (!origin) return false;
@@ -63,13 +62,6 @@ export const makeGatewayAuth = (
 
       return { userId, discordId };
     }
-
-    if (
-      !config.authUrl ||
-      !config.apiKeyStatusSecret ||
-      !Redacted.value(config.apiKeyStatusSecret)
-    )
-      return null;
 
     if (
       access.expiresAt !== null &&

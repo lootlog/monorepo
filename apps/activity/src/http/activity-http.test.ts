@@ -12,9 +12,11 @@ import {
   type ActivityRepositoryValue,
 } from "#src/activities/activity-repository";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
+import { ApiRpcGroup } from "@lootlog/rpc/api";
+import { RpcUnavailableError } from "@lootlog/rpc/errors";
+import { makeRpcTestHttpClient, testRpcUpstream } from "@lootlog/rpc/testing";
 import { Redis } from "effect/persistence";
 import { ActivityConfig } from "#src/config/activity-config";
-import { ApiHttpClient, ApiHttpClientFailure } from "#src/http/api-http-client";
 import { OnlineRepository } from "#src/online/online-repository";
 import { Permissions } from "#src/activities/activity-permissions";
 import {
@@ -256,134 +258,127 @@ describe("Activity HttpApi contract", () => {
   });
 });
 
-for (const failure of ["status", "transport", "invalid-body"] as const) {
-  it(`returns 503 on ${failure} authorization failure and recovers without caching the failure`, async () => {
-    const cache = new Map<string, string>();
+it("returns 503 while permissions are unavailable and recovers without caching the failure", async () => {
+  const cache = new Map<string, string>();
 
-    const redis = Redis.Redis.of({
-      send: <A>(command: string, ...args: ReadonlyArray<string | number>) =>
-        Effect.sync(() => {
-          if (command !== "GET" && command !== "SET" && command !== "PING") {
-            throw new Error(`Unexpected Redis command: ${command}`);
-          }
+  const redis = Redis.Redis.of({
+    send: <A>(command: string, ...args: ReadonlyArray<string | number>) =>
+      Effect.sync(() => {
+        if (command !== "GET" && command !== "SET" && command !== "PING") {
+          throw new Error(`Unexpected Redis command: ${command}`);
+        }
 
-          if (command === "SET") cache.set(String(args[0]), String(args[1]));
+        if (command === "SET") cache.set(String(args[0]), String(args[1]));
 
-          const reply =
-            command === "GET" ? (cache.get(String(args[0])) ?? null) : "OK";
+        const reply =
+          command === "GET" ? (cache.get(String(args[0])) ?? null) : "OK";
 
-          // SAFETY: These cache scenarios request string | null for GET and ignore SET/PING replies; Redis's caller-selected A is erased at the fake transport boundary.
-          return reply as A;
-        }),
-      subscribe: () => Queue.unbounded<Redis.RedisMessage, Redis.RedisError>(),
-      reserve: Effect.die("unused"),
-      eval:
-        <
-          Config extends {
-            readonly params: ReadonlyArray<unknown>;
-            readonly result: unknown;
-          },
-        >() =>
-        (..._params: Config["params"]) =>
-          Effect.die("unused"),
-    });
-
-    let unavailable = true;
-    let permissionRequests = 0;
-
-    const config = ActivityConfig.of({
-      environment: RuntimeEnvironment.LOCAL,
-      port: 0,
-      serviceName: "activity-test",
-      serviceNamespace: "test",
-      databaseUrl: Redacted.make("postgresql://unused"),
-      rabbitmqUri: Redacted.make("amqp://unused"),
-      redisUrl: Redacted.make("redis://configured"),
-      apiServiceUrl: "http://api.test",
-      signatureSecret: Redacted.make("a".repeat(32)),
-    });
-
-    const permissions = Permissions.layer.pipe(
-      Layer.provide(Layer.succeed(ActivityConfig, config)),
-      Layer.provide(Layer.succeed(Redis.Redis, redis)),
-      Layer.provide(
-        Layer.succeed(
-          ApiHttpClient,
-          ApiHttpClient.of({
-            get: (_operation, url) => {
-              if (!String(url).includes("user-permissions"))
-                return Effect.succeed({
-                  status: 200,
-                  body: new TextEncoder().encode(JSON.stringify({ id: "g" })),
-                });
-              permissionRequests++;
-
-              if (unavailable && failure === "transport")
-                return Effect.fail(
-                  new ApiHttpClientFailure({
-                    operationId: "permissions",
-                    reason: "transport",
-                    retryable: true,
-                  }),
-                );
-
-              const body = unavailable
-                ? "invalid"
-                : JSON.stringify([
-                    { guild: { id: "g", ownerId: "discord" }, roles: [] },
-                  ]);
-
-              return Effect.succeed({
-                status: unavailable && failure === "status" ? 503 : 200,
-                body: new TextEncoder().encode(body),
-              });
-            },
-          }),
-        ),
-      ),
-    );
-
-    const boundary = HttpRouter.toWebHandler(
-      ActivityRoutes.pipe(
-        Layer.provideMerge(permissions),
-        Layer.provideMerge(Layer.succeed(ActivityRepository, repository)),
-        Layer.provideMerge(Layer.succeed(ActivityReadiness, readiness)),
-        Layer.provideMerge(unusedOnlineRepository),
-        Layer.provide(HttpServer.layerServices),
-      ),
-      { disableLogger: true },
-    );
-
-    const handler = boundary.handler;
-
-    try {
-      const response = await handler(
-        new Request("https://activity/guilds/g/activity-logs", { headers }),
-      );
-
-      expect(response.status).toBe(503);
-      expect(await response.json()).toEqual({
-        code: "SERVICE_UNAVAILABLE",
-        message: "Service unavailable",
-      });
-      expect(cache.has("permissions:user:discord")).toBe(false);
-      unavailable = false;
-
-      const recovered = await handler(
-        new Request("https://activity/guilds/g/activity-logs", { headers }),
-      );
-
-      expect(recovered.status).toBe(200);
-      expect(await recovered.json()).toMatchObject({
-        data: [{ guildId: "g" }],
-        hasMore: false,
-      });
-      expect(permissionRequests).toBe(2);
-    } finally {
-      await boundary.dispose();
-    }
+        // SAFETY: These cache scenarios request string | null for GET and ignore SET/PING replies; Redis's caller-selected A is erased at the fake transport boundary.
+        return reply as A;
+      }),
+    subscribe: () => Queue.unbounded<Redis.RedisMessage, Redis.RedisError>(),
+    reserve: Effect.die("unused"),
+    eval:
+      <
+        Config extends {
+          readonly params: ReadonlyArray<unknown>;
+          readonly result: unknown;
+        },
+      >() =>
+      (..._params: Config["params"]) =>
+        Effect.die("unused"),
   });
-}
+
+  let unavailable = true;
+
+  const config = ActivityConfig.of({
+    environment: RuntimeEnvironment.LOCAL,
+    port: 0,
+    serviceName: "activity-test",
+    serviceNamespace: "test",
+    databaseUrl: Redacted.make("postgresql://unused"),
+    rabbitmqUri: Redacted.make("amqp://unused"),
+    redisUrl: Redacted.make("redis://configured"),
+    apiRpc: testRpcUpstream,
+    signatureSecret: Redacted.make("a".repeat(32)),
+  });
+
+  const unused = () => Effect.die("unused");
+
+  const apiRpcHandlers = ApiRpcGroup.toLayer({
+    getGuildByIdOrVanityUrl: () =>
+      Effect.succeed({ id: "g", name: "Guild", ownerId: "discord" }),
+    getUserGuildPermissions: () => {
+      if (unavailable) {
+        return Effect.fail(new RpcUnavailableError({ message: "unavailable" }));
+      }
+
+      return Effect.succeed([
+        { guild: { id: "g", ownerId: "discord" }, roles: [] },
+      ]);
+    },
+    getMemberIdentity: unused,
+    getUserAccessibleGuilds: unused,
+    listGuildEvents: unused,
+    getEventRanking: unused,
+    getEventTimers: unused,
+    getEventWrapped: unused,
+    listGuildTimers: unused,
+    getGuildKillStats: unused,
+    getGuildTopKilledNpcs: unused,
+    getNpcKillers: unused,
+    listGuildLoots: unused,
+    listUserReservations: unused,
+    listGuildReservationSpots: unused,
+  });
+
+  const permissions = Permissions.layer.pipe(
+    Layer.provide(Layer.succeed(ActivityConfig, config)),
+    Layer.provide(Layer.succeed(Redis.Redis, redis)),
+    Layer.provide(
+      makeRpcTestHttpClient(ApiRpcGroup, apiRpcHandlers, ["activity"]),
+    ),
+  );
+
+  const boundary = HttpRouter.toWebHandler(
+    ActivityRoutes.pipe(
+      Layer.provideMerge(permissions),
+      Layer.provideMerge(Layer.succeed(ActivityRepository, repository)),
+      Layer.provideMerge(Layer.succeed(ActivityReadiness, readiness)),
+      Layer.provideMerge(unusedOnlineRepository),
+      Layer.provide(HttpServer.layerServices),
+    ),
+    { disableLogger: true },
+  );
+
+  const handler = boundary.handler;
+
+  try {
+    const response = await handler(
+      new Request("https://activity/guilds/g/activity-logs", { headers }),
+    );
+
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({
+      code: "SERVICE_UNAVAILABLE",
+      message: "Service unavailable",
+    });
+    expect(cache.has("permissions:user:discord")).toBe(false);
+    unavailable = false;
+
+    const recovered = await handler(
+      new Request("https://activity/guilds/g/activity-logs", { headers }),
+    );
+
+    expect(recovered.status).toBe(200);
+    expect(await recovered.json()).toMatchObject({
+      data: [{ guildId: "g" }],
+      hasMore: false,
+    });
+  } finally {
+    await boundary.dispose();
+  }
+});
 
 it("restricts API keys after canonical organization resolution and before writes", async () => {
   const boundary = makeBoundary([Capability.OWNER, Capability.ADMIN]);

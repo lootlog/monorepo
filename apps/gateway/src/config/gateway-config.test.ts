@@ -4,7 +4,11 @@ import { loadGatewayConfiguration } from "./gateway-config.js";
 
 const requiredEnvironment = {
   PORT: "4004",
-  API_URL: "http://api.internal",
+  API_RPC_URL: "http://api.internal:4100",
+  AUTH_RPC_URL: "http://auth.internal:4100",
+  RPC_TOKEN_GATEWAY_TO_API: "gateway-to-api",
+  RPC_TOKEN_GATEWAY_TO_AUTH: "gateway-to-auth",
+  RPC_TOKEN_DISCORD_BOT_TO_GATEWAY: "discord-bot-to-gateway",
   RABBITMQ_URI: "amqp://rabbit.internal",
   ACTIVITY_EVENT_SIGNATURE_SECRET: "test-secret",
   REDIS_HOST: "redis.internal",

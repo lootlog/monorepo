@@ -544,7 +544,7 @@ describe("character auras", () => {
     const deleteAccount = (userId: string) =>
       boundary.run(
         makeUserAccountDeletion(boundary.database, {
-          cleanupBattlelog: () => Effect.void,
+          requestBattlelogDeletion: () => Effect.void,
           deleteCacheKey: () => Effect.void,
           invalidateCacheScopes: () => Effect.void,
           deleteCachePattern: () => Effect.void,

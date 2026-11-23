@@ -2482,58 +2482,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
       summary: Get computed timeline for a public battle
-  /internal/delete-user-data:
-    post:
-      tags:
-        - internal
-      operationId: InternalController_deleteUserData
-      parameters:
-        - name: authorization
-          in: header
-          schema:
-            type: string
-          required: false
-      responses:
-        "201":
-          description: ""
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/BattleAcceptedResponseDto_Output"
-        "400":
-          description: ""
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/RequestValidationError"
-        "401":
-          description: ""
-          content:
-            application/json:
-              schema:
-                anyOf:
-                  - $ref: "#/components/schemas/HttpErrorResponse"
-                  - $ref: "#/components/schemas/HttpErrorResponse"
-        "403":
-          description: ""
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
-        "429":
-          description: ""
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
-      description: Internal API caller only. Requires the BATTLELOG_CLEANUP_SECRET bearer credential; user sessions and forwarded identity headers do not authorize this operation.
-      summary: Queue battle data deletion for a user
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/DeleteUserDataDto"
-        required: true
 components:
   schemas:
     RequestValidationError:
@@ -2585,22 +2533,6 @@ components:
           type: object
       required:
         - code
-    BattleAcceptedResponseDto_Output:
-      type: object
-      properties:
-        status:
-          type: string
-          enum:
-            - ACCEPTED
-      required:
-        - status
-    DeleteUserDataDto:
-      type: object
-      properties:
-        userId:
-          type: string
-      required:
-        - userId
     BattleTimelineResponseDto_Output:
       type: object
       properties:

@@ -1,3 +1,4 @@
+import { testRpcUpstream } from "@lootlog/rpc/testing";
 import { PgClient } from "@effect/sql-pg";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import {
@@ -23,8 +24,6 @@ import { AdminService } from "./admin-service.js";
 const ACTOR = "Operator (operator-1)";
 
 const SECRET = "integration-admin-secret";
-
-const IDP_SECRET = "integration-idp-secret";
 
 const AUTH_SECRET = "integration-only-secret-01234567890123456789";
 
@@ -81,7 +80,7 @@ describe("AdminService against PostgreSQL and Better Auth", () => {
       cookiePrefix: "test",
       adminAccountIds,
       adminApiSecret: Redacted.make(SECRET),
-      idpTokenSecret: Redacted.make(IDP_SECRET),
+      rpc: { port: 0, callerTokens: {}, api: testRpcUpstream },
       authSecret: Redacted.make(AUTH_SECRET),
       discordClientId: "test-discord-client",
       discordClientSecret: Redacted.make("test-discord-secret"),
@@ -353,24 +352,18 @@ describe("AdminService against PostgreSQL and Better Auth", () => {
     ]);
   });
 
-  it("lists a role's holders, admins among them, only to the internal service credential", async () => {
+  it("lists a role's holders, admins among them", async () => {
     const chatAdmin = await createUser("Chat admin", "global-chat-admin");
     const superAdmin = await createUser("Super admin", "wiki-moderator,admin");
     await createUser("Wiki only", "wiki-moderator");
 
-    const holders = (authorization: string | undefined) =>
-      admin((service) =>
-        service.listRoleHolders(authorization, "global-chat-admin"),
-      );
-
-    const { userIds } = await holders(`Bearer ${IDP_SECRET}`);
+    const { userIds } = await admin((service) =>
+      service.listRoleHolders("global-chat-admin"),
+    );
 
     expect(userIds).toContain(chatAdmin.id);
     expect(userIds).toContain(superAdmin.id);
     expect(userIds).toHaveLength(2);
-
-    await expect(holders(`Bearer ${SECRET}`)).rejects.toThrow();
-    await expect(holders(undefined)).rejects.toThrow();
   });
 
   it("treats wildcard characters in a search as text", async () => {

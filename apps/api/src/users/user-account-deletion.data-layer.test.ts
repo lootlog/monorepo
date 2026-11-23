@@ -97,7 +97,7 @@ it("removes the deleted User's personal notifications and pins but keeps other o
 
     await boundary.run(
       makeUserAccountDeletion(database, {
-        cleanupBattlelog: () => Effect.void,
+        requestBattlelogDeletion: () => Effect.void,
         deleteCacheKey: () => Effect.void,
         invalidateCacheScopes: () => Effect.void,
         deleteCachePattern: () => Effect.void,

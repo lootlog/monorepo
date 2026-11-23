@@ -1480,172 +1480,6 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
       description: Trigger a refresh of the guild Discord channel synchronization state
       summary: Refresh guild Discord sync
-  /internal/guilds/user-permissions:
-    get:
-      tags:
-        - internal
-      operationId: GuildsInternalController_getUserPermissions
-      parameters:
-        - name: discordId
-          in: query
-          schema:
-            type: string
-          required: true
-        - name: userId
-          in: query
-          schema:
-            type: string
-          required: true
-        - name: freshness
-          in: query
-          schema:
-            type: string
-            enum:
-              - required
-          required: false
-      security: []
-      responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/UserGuildPermissionsDto"
-        "400":
-          description: RequestValidationError
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/RequestValidationError"
-        "401":
-          description: HttpErrorResponse
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
-        "403":
-          description: HttpErrorResponse
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
-        "429":
-          description: HttpErrorResponse
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
-      description: Internal endpoint for gateway service to retrieve user guilds with permissions. Does not require authentication.
-      summary: "[Internal] Get user guilds with permissions"
-  /internal/guilds/{idOrVanityUrl}:
-    get:
-      tags:
-        - internal
-      operationId: GuildsInternalController_getGuildByIdOrVanityUrl
-      parameters:
-        - name: idOrVanityUrl
-          in: path
-          schema:
-            type: string
-          required: true
-      security: []
-      responses:
-        "200":
-          description: GuildResponseDto_Output
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/GuildResponseDto_Output"
-        "400":
-          description: RequestValidationError
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/RequestValidationError"
-        "401":
-          description: HttpErrorResponse
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
-        "403":
-          description: HttpErrorResponse
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
-        "404":
-          description: HttpErrorResponse
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
-        "429":
-          description: HttpErrorResponse
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
-      description: Internal endpoint for services that need to resolve a guild identifier to its canonical guild data.
-      summary: "[Internal] Get guild by ID or vanity URL"
-  /internal/guilds/{guildId}/members/{discordId}/identity:
-    get:
-      tags:
-        - internal
-      operationId: GuildsInternalController_getMemberIdentity
-      parameters:
-        - name: guildId
-          in: path
-          schema:
-            type: string
-          required: true
-        - name: discordId
-          in: path
-          schema:
-            type: string
-          required: true
-      security: []
-      responses:
-        "200":
-          description: InternalMemberIdentityDto
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/InternalMemberIdentityDto"
-        "400":
-          description: RequestValidationError
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/RequestValidationError"
-        "401":
-          description: HttpErrorResponse
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
-        "403":
-          description: HttpErrorResponse
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
-        "404":
-          description: HttpErrorResponse
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
-        "429":
-          description: HttpErrorResponse
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
-      description: Internal endpoint for the Discord bot to resolve the Lootlog User behind an active member's Discord identity in a guild.
-      summary: "[Internal] Resolve an active member's User"
   /guilds/{guildId}/roles:
     get:
       tags:
@@ -28757,149 +28591,6 @@ components:
         - lvlRangeFrom
         - lvlRangeTo
       additionalProperties: false
-    InternalMemberIdentityDto:
-      type: object
-      properties:
-        userId:
-          type: string
-        memberId:
-          type: number
-      required:
-        - userId
-        - memberId
-      additionalProperties: false
-    GuildResponseDto_Output:
-      type: object
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-        icon:
-          nullable: true
-          type: string
-        vanityUrl:
-          nullable: true
-          type: string
-        ownerId:
-          type: string
-        publicStatsCardEnabled:
-          type: boolean
-        banner:
-          nullable: true
-          type: string
-        reservationMaxDurationMinutes:
-          type: number
-        reservationMinDurationMinutes:
-          type: number
-        reservationTimeGranularityMinutes:
-          type: number
-        reservationMaxAdvanceDays:
-          type: number
-        reservationActiveLimitPerSpot:
-          type: number
-        lootDrawExcludedNpcTypes:
-          type: array
-          items:
-            type: string
-            enum:
-              - COMMON
-              - ELITE
-              - ELITE2
-              - ELITE3
-              - HERO
-              - EVENT_HERO
-              - COLOSSUS
-              - TITAN
-              - HERO_TRACKER
-              - NPC
-      required:
-        - id
-        - name
-        - ownerId
-        - publicStatsCardEnabled
-        - reservationMaxDurationMinutes
-        - reservationMinDurationMinutes
-        - reservationTimeGranularityMinutes
-        - reservationMaxAdvanceDays
-        - reservationActiveLimitPerSpot
-        - lootDrawExcludedNpcTypes
-      additionalProperties: false
-    UserGuildPermissionsDto:
-      type: object
-      properties:
-        guild:
-          type: object
-          properties:
-            id:
-              type: string
-            ownerId:
-              type: string
-          required:
-            - id
-            - ownerId
-          additionalProperties: false
-        roles:
-          type: array
-          items:
-            type: object
-            properties:
-              id:
-                type: string
-              lvlRangeFrom:
-                type: number
-              lvlRangeTo:
-                type: number
-              permissions:
-                type: array
-                items:
-                  type: string
-                  enum:
-                    - OWNER
-                    - ADMIN
-                    - LOOTLOG_MANAGE
-                    - LOOTLOG_ACCESS
-                    - LOOTLOG_LOOTS_READ
-                    - LOOTLOG_LOOTS_WRITE
-                    - LOOTLOG_LOOTS_ARCHIVE
-                    - LOOTLOG_LOOTS_TITANS_READ
-                    - LOOTLOG_LOOTS_HEROES_READ
-                    - LOOTLOG_TIMERS_READ
-                    - LOOTLOG_TIMERS_WRITE
-                    - LOOTLOG_TIMERS_RESET
-                    - LOOTLOG_TIMERS_DELETE
-                    - LOOTLOG_TIMERS_TITANS_READ
-                    - LOOTLOG_TIMERS_HEROES_READ
-                    - LOOTLOG_HERO_SIGHTINGS_READ
-                    - LOOTLOG_HERO_SIGHTINGS_WRITE
-                    - LOOTLOG_RESERVATIONS_READ
-                    - LOOTLOG_RESERVATIONS_WRITE
-                    - LOOTLOG_MEMBERS_READ
-                    - LOOTLOG_ONLINE_PLAYERS_READ
-                    - LOOTLOG_PRESENCE_LOCATION_READ
-                    - LOOTLOG_CHAT_READ
-                    - LOOTLOG_CHAT_WRITE
-                    - LOOTLOG_CHAT_TITANS_READ
-                    - LOOTLOG_CHAT_HEROES_READ
-                    - LOOTLOG_NOTIFICATIONS_READ
-                    - LOOTLOG_NOTIFICATIONS_SEND
-                    - LOOTLOG_NOTIFICATIONS_TITANS_READ
-                    - LOOTLOG_NOTIFICATIONS_HEROES_READ
-                    - LOOTLOG_EVENTS_MANAGE
-                    - LOOTLOG_EVENTS_READ
-                    - LOOTLOG_EVENTS_WRITE
-                    - LOOTLOG_DOCS_READ
-                    - LOOTLOG_DOCS_WRITE
-            required:
-              - id
-              - lvlRangeFrom
-              - lvlRangeTo
-              - permissions
-            additionalProperties: false
-      required:
-        - guild
-        - roles
-      additionalProperties: false
     DiscordGuildSyncStateResponseDto:
       type: object
       properties:
@@ -28970,6 +28661,63 @@ components:
         - lastError
         - createdAt
         - updatedAt
+      additionalProperties: false
+    GuildResponseDto_Output:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        icon:
+          nullable: true
+          type: string
+        vanityUrl:
+          nullable: true
+          type: string
+        ownerId:
+          type: string
+        publicStatsCardEnabled:
+          type: boolean
+        banner:
+          nullable: true
+          type: string
+        reservationMaxDurationMinutes:
+          type: number
+        reservationMinDurationMinutes:
+          type: number
+        reservationTimeGranularityMinutes:
+          type: number
+        reservationMaxAdvanceDays:
+          type: number
+        reservationActiveLimitPerSpot:
+          type: number
+        lootDrawExcludedNpcTypes:
+          type: array
+          items:
+            type: string
+            enum:
+              - COMMON
+              - ELITE
+              - ELITE2
+              - ELITE3
+              - HERO
+              - EVENT_HERO
+              - COLOSSUS
+              - TITAN
+              - HERO_TRACKER
+              - NPC
+      required:
+        - id
+        - name
+        - ownerId
+        - publicStatsCardEnabled
+        - reservationMaxDurationMinutes
+        - reservationMinDurationMinutes
+        - reservationTimeGranularityMinutes
+        - reservationMaxAdvanceDays
+        - reservationActiveLimitPerSpot
+        - lootDrawExcludedNpcTypes
       additionalProperties: false
     UpdateGuildConfigDto:
       type: object
@@ -30581,7 +30329,6 @@ tags:
   - name: users
   - name: members
   - name: guilds
-  - name: internal
   - name: roles
   - name: timers
   - name: hero-sightings

@@ -47,9 +47,19 @@ export default async function setup() {
     process.env.REDIS_PORT = String(redis.getMappedPort(6379));
     process.env.REDIS_USERNAME = "default";
     process.env.REDIS_PASSWORD = "test";
-    process.env.AUTH_SERVICE_URL = "http://auth.test";
-    process.env.BATTLELOG_SERVICE_URL = "http://battlelog.test";
-    process.env.DISCORD_BOT_SERVICE_URL = "http://discord-bot.test";
+    process.env.AUTH_RPC_URL = "http://auth.test";
+    process.env.DISCORD_BOT_RPC_URL = "http://discord-bot.test";
+
+    for (const edge of [
+      "API_TO_AUTH",
+      "API_TO_DISCORD_BOT",
+      "ACTIVITY_TO_API",
+      "AUTH_TO_API",
+      "DISCORD_BOT_TO_API",
+      "GATEWAY_TO_API",
+    ])
+      process.env[`RPC_TOKEN_${edge}`] = "test-rpc-token";
+
     process.env.RESERVATIONS_CARDS_URL = "http://cards.test";
     process.env.MAPS_API_URL = "http://maps.test";
 

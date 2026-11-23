@@ -44,10 +44,11 @@ import {
   getUserGuildPermissionsCacheScope,
   getUserLootlogConfigCacheScope,
 } from "#src/shared/cache";
+import { AuthRpcGroup } from "@lootlog/rpc/auth";
+import { makeRpcClient } from "@lootlog/rpc/client";
 import { RabbitMessaging, eventMessage } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Context, Effect, Layer } from "effect";
-import { HttpClient } from "effect/http";
 import {
   makeMembersDataLayer,
   type MemberCommandsPorts,
@@ -84,9 +85,13 @@ export const memberServicesLive = Layer.effect(
     const redis = yield* ApiRedis;
     const rabbit = yield* RabbitMessaging;
     const config = yield* ApiRuntimeConfig;
-    const httpClient = yield* HttpClient.HttpClient;
     const database = yield* ApiDatabase;
     const memberRefreshQueue = yield* MemberRefreshQueue;
+
+    const authRpc = yield* makeRpcClient(AuthRpcGroup, {
+      ...config.rpc.auth,
+      spanPrefix: "api.auth-rpc",
+    });
 
     const memberStore = makeMemberStore(database);
     const diagnostics = makeDiscordSyncDiagnostics(redis);
@@ -95,9 +100,7 @@ export const memberServicesLive = Layer.effect(
     const restClients = makeDiscordRestClients(
       makeAuthService({
         redis,
-        httpClient,
-        authServiceUrl: config.authServiceUrl,
-        idpTokenSecret: config.authIdpTokenSecret,
+        authRpc,
       }),
     );
 

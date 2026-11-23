@@ -1,22 +1,9 @@
 import { escapeMarkdown } from "discord.js";
-import { Array, Effect, Schema } from "effect";
+import { Array, Effect } from "effect";
 import { guildCommand, visibilityOption } from "./command-builders.js";
 import { COMMAND_TEXT } from "./command-messages.js";
 import { memberSession } from "./lootlog-client.js";
 import { lootlogEmbed, type SlashCommand } from "./slash-command.js";
-
-const PresenceSnapshot = Schema.Struct({
-  presences: Schema.Array(
-    Schema.Struct({
-      platform: Schema.String,
-      status: Schema.String,
-      isAfk: Schema.Boolean,
-      character: Schema.optionalKey(
-        Schema.Struct({ world: Schema.String, name: Schema.String }),
-      ),
-    }),
-  ),
-});
 
 export const onlineCommand: SlashCommand = {
   definition: guildCommand("online", COMMAND_TEXT.online.description)
@@ -26,11 +13,7 @@ export const onlineCommand: SlashCommand = {
     Effect.gen(function* () {
       const session = yield* memberSession(invocation);
 
-      const { presences } = yield* session.gateway(
-        `/organizations/${encodeURIComponent(session.guildId)}/presence`,
-        {},
-        PresenceSnapshot,
-      );
+      const { presences } = yield* session.gateway.getOrganizationPresence;
 
       const characters = new Map<
         string,

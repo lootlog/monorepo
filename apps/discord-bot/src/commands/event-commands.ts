@@ -1,5 +1,10 @@
+import type {
+  RpcEventRankingEntry,
+  RpcEventSummary,
+  RpcEventWrapped,
+} from "@lootlog/rpc/api";
 import { escapeMarkdown, type SlashCommandSubcommandBuilder } from "discord.js";
-import { Array, Clock, Effect, Match, Schema } from "effect";
+import { Array, Clock, Effect, Match } from "effect";
 import { BotConfig } from "#src/config/bot-config";
 import { guildCommand, visibilityOption } from "./command-builders.js";
 import { COMMAND_TEXT } from "./command-messages.js";
@@ -34,70 +39,7 @@ const EVENT_OPTION = "event";
 
 const EVENT_COLOR = npcTypeColor("EVENT_HERO");
 
-const Events = Schema.Array(
-  Schema.Struct({
-    id: Schema.String,
-    name: Schema.String,
-    world: Schema.String,
-    active: Schema.Boolean,
-    startsAt: Schema.NullOr(Schema.String),
-    endsAt: Schema.NullOr(Schema.String),
-    createdAt: Schema.String,
-    heroNpcs: Schema.Array(
-      Schema.Struct({
-        npcId: Schema.NullOr(Schema.Finite),
-        npcName: Schema.String,
-        npcLvl: Schema.NullOr(Schema.Finite),
-      }),
-    ),
-  }),
-);
-
-type LootlogEvent = (typeof Events.Type)[number];
-
-const EventRanking = Schema.Array(
-  Schema.Struct({
-    heroNpcName: Schema.String,
-    totalPoints: Schema.Finite,
-    totalKills: Schema.Finite,
-    member: Schema.Struct({ id: Schema.Finite, name: Schema.String }),
-  }),
-);
-
-const EventTimers = Schema.Array(
-  Schema.Struct({
-    npcId: Schema.Finite,
-    minSpawnTime: Schema.String,
-    maxSpawnTime: Schema.String,
-  }),
-);
-
-const Leader = Schema.Struct({
-  winner: Schema.NullOr(
-    Schema.Struct({
-      member: Schema.Struct({ name: Schema.String }),
-      primaryValue: Schema.Finite,
-    }),
-  ),
-});
-
-const EventWrapped = Schema.Struct({
-  overview: Schema.Struct({
-    totalKills: Schema.Finite,
-    participantCount: Schema.Finite,
-    totalPoints: Schema.Finite,
-    coveragePercentage: Schema.Finite,
-    totalLoots: Schema.Finite,
-  }),
-  leaders: Schema.Struct({
-    topHunter: Leader,
-    topScorer: Leader,
-    longestDuty: Leader,
-  }),
-});
-
-const eventsPath = (guildId: string) =>
-  `/guilds/${encodeURIComponent(guildId)}/events`;
+type LootlogEvent = typeof RpcEventSummary.Type;
 
 const startedAt = (event: LootlogEvent) =>
   new Date(event.startsAt ?? event.createdAt).getTime();
@@ -121,7 +63,7 @@ const numberFormat = new Intl.NumberFormat(PRODUCT_LOCALE, {
 
 const leaderLine = (
   label: string,
-  leader: typeof Leader.Type,
+  leader: (typeof RpcEventWrapped.Type)["leaders"]["topHunter"],
   format: (value: number) => string,
 ) =>
   leader.winner
@@ -129,11 +71,7 @@ const leaderLine = (
     : null;
 
 const readRanking = (session: MemberSession, event: LootlogEvent) =>
-  session.api(
-    `${eventsPath(session.guildId)}/${encodeURIComponent(event.id)}/ranking`,
-    {},
-    EventRanking,
-  );
+  session.api.getEventRanking(event.id);
 
 const rankingReply = (
   session: MemberSession,
@@ -216,11 +154,7 @@ const statusReply = (
   event: LootlogEvent,
 ): Effect.Effect<CommandReply, CommandFailure> =>
   Effect.gen(function* () {
-    const timers = yield* session.api(
-      `${eventsPath(session.guildId)}/${encodeURIComponent(event.id)}/timers`,
-      { world: event.world },
-      EventTimers,
-    );
+    const timers = yield* session.api.getEventTimers(event.id, event.world);
 
     const now = yield* Clock.currentTimeMillis;
 
@@ -267,7 +201,9 @@ const statusReply = (
     };
   });
 
-const memberTotals = (ranking: typeof EventRanking.Type) =>
+const memberTotals = (
+  ranking: ReadonlyArray<typeof RpcEventRankingEntry.Type>,
+) =>
   Object.entries(Array.groupBy(ranking, (entry) => String(entry.member.id)))
     .map(([memberId, entries]) => ({
       memberId: Number(memberId),
@@ -282,14 +218,7 @@ const summaryReply = (
 ): Effect.Effect<CommandReply, CommandFailure> =>
   Effect.gen(function* () {
     const [wrapped, ranking] = yield* Effect.all(
-      [
-        session.api(
-          `${eventsPath(session.guildId)}/${encodeURIComponent(event.id)}/wrapped`,
-          {},
-          EventWrapped,
-        ),
-        readRanking(session, event),
-      ],
+      [session.api.getEventWrapped(event.id), readRanking(session, event)],
       { concurrency: "unbounded" },
     );
 
@@ -369,8 +298,7 @@ const eventSubcommand =
       )
       .addBooleanOption(visibilityOption);
 
-const readEvents = (session: MemberSession) =>
-  session.api(eventsPath(session.guildId), {}, Events);
+const readEvents = (session: MemberSession) => session.api.listGuildEvents;
 
 export const eventCommand: SlashCommand = {
   definition: guildCommand("event", COMMAND_TEXT.events.description)

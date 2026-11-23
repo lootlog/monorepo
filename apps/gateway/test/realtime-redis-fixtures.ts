@@ -11,7 +11,7 @@ import { PresenceStore } from "#src/realtime/presence-store";
 import { AirTagService } from "#src/realtime/air-tag-service";
 import { RealtimeHub } from "#src/realtime/realtime-hub";
 import type { GatewaySocket, SessionData } from "#src/realtime/session";
-import { membership } from "./realtime-fixtures.js";
+import { membership, testRpcConfiguration } from "./realtime-fixtures.js";
 import { dragonflyUrl, openDragonflyStore } from "./dragonfly-fixtures.js";
 
 export const uniquePrefix = () => `realtime-integration:${crypto.randomUUID()}`;
@@ -22,7 +22,7 @@ export const makeConfiguration = (keyPrefix = uniquePrefix()) =>
     port: 0,
     serviceName: "gateway",
     serviceNamespace: "test",
-    apiUrl: "http://localhost",
+    rpc: testRpcConfiguration,
     margonemSigningKeyUrl: "http://localhost/key",
     rabbitmqUri: Redacted.make("unused"),
     activityEventSignatureSecret: Redacted.make("test"),

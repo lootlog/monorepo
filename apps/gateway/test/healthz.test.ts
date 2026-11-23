@@ -8,7 +8,6 @@ import {
   ManagedRuntime,
   Metric,
   Schema,
-  Redacted,
 } from "effect";
 import { observabilityLayer } from "@lootlog/instrumentation/observability";
 import { Capability } from "@lootlog/schema/permissions";
@@ -500,8 +499,6 @@ test("server API key upgrades allow absent Origin while preserving session and a
   const keyAuth = makeGatewayAuth({
     allowedWebOrigins: new Set(["https://lootlog.example"]),
     allowedExtensionOrigins: new Set(),
-    authUrl: "http://auth.internal",
-    apiKeyStatusSecret: Redacted.make("test"),
   });
 
   const fetch = gatewayFetch({ ...application, auth: keyAuth });

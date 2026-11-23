@@ -3,7 +3,7 @@ import {
   baseServiceConfig,
   redisUrlConfig,
 } from "@lootlog/instrumentation/service-config";
-import { Config, Context, Effect, Layer, Option, type Redacted } from "effect";
+import { Config, Context, Effect, Layer, type Redacted } from "effect";
 import type { R2Config } from "#src/config/r2.config";
 
 const DEFAULT_SERVICE_NAME = "battlelog-service";
@@ -16,7 +16,7 @@ export const battlelogDatabaseConfig = Config.all({
 });
 
 export interface BattlelogConfiguration extends BaseServiceConfiguration {
-  readonly cleanupSecret?: Redacted.Redacted<string> | undefined;
+  readonly rabbitmqUri: Redacted.Redacted<string>;
   readonly redisUrl: Redacted.Redacted<string>;
   readonly r2: R2Config;
 }
@@ -26,9 +26,7 @@ const loadConfiguration = Effect.gen(function* () {
 
   return {
     ...base,
-    cleanupSecret: yield* Config.option(
-      Config.Redacted("BATTLELOG_CLEANUP_SECRET"),
-    ).pipe(Config.map(Option.getOrUndefined)),
+    rabbitmqUri: yield* Config.Redacted("RABBITMQ_URI"),
     redisUrl: yield* redisUrlConfig,
     r2: {
       accessKeyId: yield* Config.Redacted("R2_ACCESS_KEY_ID"),

@@ -1,31 +1,36 @@
+import { AuthRpcGroup } from "@lootlog/rpc/auth";
+import { makeRpcClient, type ServiceRpcClient } from "@lootlog/rpc/client";
 import {
   API_KEY_LEASE_MS,
-  API_KEY_STATUS_PATH,
   type ApiKeyStatus,
-  type ApiKeyStatusRequest,
-  ApiKeyStatusResponse,
 } from "@lootlog/schema/api-key-access";
-import { Effect, Layer, Redacted, Schedule, Schema } from "effect";
+import { Effect, Layer, Schedule } from "effect";
 import { REALTIME_SERVER_CLOSE_CODES } from "@lootlog/protocol/realtime";
 import { chunk } from "es-toolkit";
-import { HttpClient, HttpClientRequest } from "effect/http";
-import {
-  GatewayConfig,
-  type GatewayConfiguration,
-} from "#src/config/gateway-config";
+import { GatewayConfig } from "#src/config/gateway-config";
 import { Commands } from "#src/realtime/command-handler";
 import { Hub } from "#src/realtime/realtime-hub";
 import { hasValidApiKeyLease, type GatewaySocket } from "#src/realtime/session";
 
+type AuthRpcClient = Pick<
+  ServiceRpcClient<typeof AuthRpcGroup>,
+  "getApiKeyStatuses"
+>;
+
 export class ApiKeyLeases {
   static readonly layer = Layer.effectDiscard(
     Effect.gen(function* () {
+      const config = yield* GatewayConfig;
       const hub = yield* Hub;
       const commands = yield* Commands;
 
+      const authRpc = yield* makeRpcClient(AuthRpcGroup, {
+        ...config.rpc.auth,
+        spanPrefix: "gateway.auth-rpc",
+      });
+
       yield* new ApiKeyLeases(
-        yield* GatewayConfig,
-        yield* HttpClient.HttpClient,
+        authRpc,
         () => hub.getLocalSockets(),
         (discordId, userId) => commands.rebalanceUser(discordId, userId),
       )
@@ -35,11 +40,7 @@ export class ApiKeyLeases {
   );
 
   constructor(
-    private readonly config: Pick<
-      GatewayConfiguration,
-      "authUrl" | "apiKeyStatusSecret"
-    >,
-    private readonly client: HttpClient.HttpClient,
+    private readonly authRpc: AuthRpcClient,
     private readonly sockets: () => ReadonlyArray<GatewaySocket>,
     private readonly refreshUser: (
       discordId: string,
@@ -69,7 +70,7 @@ export class ApiKeyLeases {
     const keyIds = [...groups.keys()];
 
     if (!keyIds.length) return Effect.void;
-    const { config, client, refreshUser, now } = this;
+    const { authRpc, refreshUser, now } = this;
     const pendingPermissions = new Set<GatewaySocket>();
     let refreshingPermissions = false;
 
@@ -93,44 +94,11 @@ export class ApiKeyLeases {
     };
 
     return Effect.gen(function* () {
-      if (
-        !config.authUrl ||
-        !config.apiKeyStatusSecret ||
-        !Redacted.value(config.apiKeyStatusSecret)
-      ) {
-        closeAll();
-
-        return;
-      }
-
       const checkedAt = now();
       const valid = new Map<string, Extract<ApiKeyStatus, { valid: true }>>();
 
       for (const batch of chunk(keyIds, 100)) {
-        const request = HttpClientRequest.post(
-          `${config.authUrl.replace(/\/$/, "")}${API_KEY_STATUS_PATH}`,
-          {
-            headers: {
-              Authorization: `Bearer ${Redacted.value(config.apiKeyStatusSecret)}`,
-            },
-          },
-        ).pipe(
-          HttpClientRequest.bodyJsonUnsafe({
-            keyIds: batch,
-          } satisfies typeof ApiKeyStatusRequest.Type),
-        );
-
-        const response = yield* client.execute(request);
-
-        if (response.status !== 200) {
-          closeAll();
-
-          return;
-        }
-
-        const statuses = yield* Schema.decodeUnknownEffect(
-          ApiKeyStatusResponse,
-        )(yield* response.json);
+        const statuses = yield* authRpc.getApiKeyStatuses({ keyIds: batch });
 
         for (const status of statuses.keys)
           if (status.valid) valid.set(status.keyId, status);

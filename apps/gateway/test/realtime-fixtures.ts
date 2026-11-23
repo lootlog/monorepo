@@ -14,12 +14,19 @@ import type { PingScriptStore } from "../src/realtime/ping-routing.js";
 import { RealtimeHub } from "../src/realtime/realtime-hub.js";
 import type { GatewaySocket, SessionData } from "../src/realtime/session.js";
 
+export const testRpcConfiguration = {
+  port: 0,
+  callerTokens: {},
+  api: { url: "http://localhost", token: Redacted.make("unused") },
+  auth: { url: "http://localhost", token: Redacted.make("unused") },
+} satisfies GatewayConfiguration["rpc"];
+
 export const benchmarkConfig = {
   environment: RuntimeEnvironment.DEV,
   port: 0,
   serviceName: "gateway",
   serviceNamespace: "benchmark",
-  apiUrl: "http://localhost",
+  rpc: testRpcConfiguration,
   margonemSigningKeyUrl: "http://localhost",
   rabbitmqUri: Redacted.make("unused"),
   activityEventSignatureSecret: Redacted.make("unused"),

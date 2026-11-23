@@ -2,15 +2,27 @@ import {
   baseServiceConfig,
   type BaseServiceConfiguration,
 } from "@lootlog/instrumentation/service-config";
+import {
+  type CallerTokens,
+  type RpcUpstream,
+  rpcCallerTokensConfig,
+  rpcUpstreamConfig,
+} from "@lootlog/rpc/callers";
+import { DiscordBotRpcGroup } from "@lootlog/rpc/discord-bot";
+import { rpcPortConfig } from "@lootlog/rpc/server";
 import { Config, Context, Effect, Layer, Redacted } from "effect";
 
 export interface BotConfigValue extends BaseServiceConfiguration {
+  readonly rpc: {
+    readonly port: number;
+    readonly callerTokens: CallerTokens;
+    readonly api: RpcUpstream;
+    readonly catalog: RpcUpstream;
+    readonly gateway: RpcUpstream;
+  };
   readonly discordBotToken: Redacted.Redacted<string>;
   readonly rabbitmqUri: Redacted.Redacted<string>;
   readonly apiServiceUrl: string;
-  readonly catalogServiceUrl: string;
-  readonly catalogServiceToken: Redacted.Redacted<string>;
-  readonly gatewayServiceUrl: string;
   readonly webAppUrl: string;
 }
 
@@ -29,23 +41,20 @@ export class BotConfig extends Context.Service<BotConfig, BotConfigValue>()(
       const { environment } = base;
 
       const value = yield* Config.all({
+        rpc: Config.all({
+          port: rpcPortConfig,
+          callerTokens: rpcCallerTokensConfig(
+            "discord-bot",
+            DiscordBotRpcGroup,
+          ),
+          api: rpcUpstreamConfig("discord-bot", "api"),
+          catalog: rpcUpstreamConfig("discord-bot", "catalog"),
+          gateway: rpcUpstreamConfig("discord-bot", "gateway"),
+        }),
         discordBotToken: Config.Redacted("DISCORD_BOT_TOKEN"),
         rabbitmqUri: Config.Redacted("RABBITMQ_URI"),
         apiServiceUrl: Config.String("API_SERVICE_URL").pipe(
           Config.withDefault("http://api:4000"),
-        ),
-        catalogServiceUrl: Config.String("CATALOG_SERVICE_URL").pipe(
-          Config.withDefault("http://catalog:4000"),
-        ),
-        catalogServiceToken: Config.Redacted("CATALOG_SERVICE_TOKEN").pipe(
-          environment === "local"
-            ? Config.withDefault(
-                Redacted.make("local-development-catalog-service-token"),
-              )
-            : (config) => config,
-        ),
-        gatewayServiceUrl: Config.String("GATEWAY_SERVICE_URL").pipe(
-          Config.withDefault("http://gateway:4000"),
         ),
         webAppUrl: Config.String("WEB_APP_URL").pipe(
           Config.withDefault(

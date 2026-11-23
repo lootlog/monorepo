@@ -1,8 +1,6 @@
-import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
-import { HttpClient, HttpClientResponse } from "effect/http";
+import type { RpcAccessibleGuild } from "@lootlog/rpc/api";
 import { Redis } from "effect/persistence";
 import { ApiKeyService } from "#src/auth/api-key-service";
-import { AppConfig } from "#src/config/env";
 import { afterAll, beforeAll, describe, expect, it, spyOn } from "bun:test";
 import { PgClient } from "@effect/sql-pg";
 import { makeAuthPostgresLayer, PostgresPool } from "./postgres.js";
@@ -18,11 +16,6 @@ import {
   type StartedTestContainer,
 } from "testcontainers";
 import {
-  AuthRedisStorage,
-  createAuthRedisConnection,
-} from "#src/auth/storage/auth-redis-storage";
-import { drizzle } from "drizzle-orm/node-postgres";
-import {
   Effect,
   Layer,
   Logger,
@@ -30,11 +23,11 @@ import {
   Redacted,
   Schema,
 } from "effect";
+import { createLootlogAuth } from "#src/auth/provider/better-auth";
 import {
-  createLootlogAuth,
-  toAuthProvider,
-  BetterAuthRuntime,
-} from "#src/auth/provider/better-auth";
+  makeApiKeysRuntimeFactory,
+  makeAuthAdapterOptions,
+} from "./database.integration.fixtures.js";
 import { AuthDatabase } from "./drizzle.js";
 import { authUsers, authApiKeys } from "./drizzle.schema.js";
 import { runAuthMigrations } from "./migrations.js";
@@ -79,42 +72,7 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
 
       const jwksQueries: string[] = [];
 
-      const options = {
-        database: drizzle({
-          client: pool,
-          logger: {
-            logQuery(query) {
-              if (query.includes('"jwks"')) jwksQueries.push(query);
-            },
-          },
-        }),
-        config: {
-          environment: RuntimeEnvironment.LOCAL,
-          port: 4000,
-          serviceName: "auth-adapter-test",
-          appUrl: "https://auth.example.test",
-          trustedOrigins: ["https://example.test"],
-          cookieDomain: ".example.test",
-          cookiePrefix: "test",
-          adminAccountIds: [],
-          authSecret: Redacted.make(
-            "integration-only-secret-01234567890123456789",
-          ),
-          discordClientId: "test-discord-client",
-          discordClientSecret: Redacted.make("test-discord-secret"),
-          postgresql: {
-            host: postgres.getHost(),
-            port: postgres.getPort(),
-            user: postgres.getUsername(),
-            password: Redacted.make(postgres.getPassword()),
-            database: postgres.getDatabase(),
-            sslCa: undefined,
-          },
-          redisUrl: Redacted.make("redis://unused:6379"),
-          serviceNamespace: "test",
-          commitSha: undefined,
-        },
-      };
+      const options = makeAuthAdapterOptions(postgres, pool, jwksQueries);
 
       const auth = createLootlogAuth(options);
       const { adapter, internalAdapter } = await auth.$context;
@@ -365,51 +323,17 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
         }),
       ).toMatchObject({ name: "Effect update" });
 
-      let grantOrganizations = [
+      let grantOrganizations: ReadonlyArray<RpcAccessibleGuild> = [
         { id: "123", hasLootlogAccess: true, isAccessDataStale: false },
       ];
 
-      const rateLimits = AuthRedisStorage.layer.pipe(
-        Layer.provideMerge(
-          createAuthRedisConnection(
-            Redacted.make(
-              `redis://${redis.getHost()}:${redis.getMappedPort(6379)}`,
-            ),
-          ),
-        ),
-      );
-
-      const makeKeysRuntime = (apiKeysEnabled: boolean) =>
-        ManagedRuntime.make(
-          ApiKeyService.layer.pipe(
-            Layer.provideMerge(rateLimits),
-            Layer.provide(
-              Layer.succeed(
-                HttpClient.HttpClient,
-                HttpClient.make((request) =>
-                  Effect.succeed(
-                    HttpClientResponse.fromWeb(
-                      request,
-                      Response.json(grantOrganizations),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Layer.provide(Layer.succeed(AuthDatabase, db)),
-            Layer.provide(
-              Layer.succeed(BetterAuthRuntime, toAuthProvider(auth)),
-            ),
-            Layer.provide(
-              Layer.succeed(AppConfig, {
-                ...options.config,
-                apiKeyStatusSecret: Redacted.make("test-status-secret"),
-                apiKeysEnabled,
-                apiUrl: "http://api.test",
-              }),
-            ),
-          ),
-        );
+      const makeKeysRuntime = makeApiKeysRuntimeFactory({
+        redis,
+        db,
+        auth,
+        config: options.config,
+        getGrantOrganizations: () => grantOrganizations,
+      });
 
       const keysRuntime = makeKeysRuntime(true);
 
@@ -562,16 +486,8 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
         await expect(
           keysRuntime.runPromise(keys.rename("another-user", key.id, "stolen")),
         ).rejects.toMatchObject({ kind: "not-found" });
-        await expect(
-          keysRuntime.runPromise(keys.statuses(new Headers(), [key.id])),
-        ).rejects.toMatchObject({ kind: "authentication-required" });
-
-        const statusHeaders = new Headers({
-          authorization: "Bearer test-status-secret",
-        });
-
         expect(
-          await keysRuntime.runPromise(keys.statuses(statusHeaders, [key.id])),
+          await keysRuntime.runPromise(keys.statuses([key.id])),
         ).toMatchObject({ keys: [{ valid: true }] });
         await runtime.runPromise(
           db
@@ -579,9 +495,9 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
             .set({ banned: true })
             .where(eq(authUsers.id, user.id)),
         );
-        expect(
-          await keysRuntime.runPromise(keys.statuses(statusHeaders, [key.id])),
-        ).toEqual({ keys: [{ keyId: key.id, valid: false }] });
+        expect(await keysRuntime.runPromise(keys.statuses([key.id]))).toEqual({
+          keys: [{ keyId: key.id, valid: false }],
+        });
         await runtime.runPromise(
           db
             .update(authUsers)
@@ -653,9 +569,7 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
             ),
           ).rejects.toMatchObject({ kind: "forbidden" });
           expect(
-            await disabledRuntime.runPromise(
-              disabled.statuses(statusHeaders, ["key"]),
-            ),
+            await disabledRuntime.runPromise(disabled.statuses(["key"])),
           ).toEqual({ keys: [{ keyId: "key", valid: false }] });
         } finally {
           await disabledRuntime.dispose();
@@ -675,9 +589,7 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
           db.delete(authUsers).where(eq(authUsers.id, removedOwner.id)),
         );
         expect(
-          await keysRuntime.runPromise(
-            keys.statuses(statusHeaders, [removedKey.id]),
-          ),
+          await keysRuntime.runPromise(keys.statuses([removedKey.id])),
         ).toEqual({ keys: [{ keyId: removedKey.id, valid: false }] });
       } finally {
         await keysRuntime.dispose();

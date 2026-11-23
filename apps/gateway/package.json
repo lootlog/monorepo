@@ -37,6 +37,7 @@
     "@lootlog/instrumentation": "workspace:*",
     "@lootlog/messaging": "workspace:*",
     "@lootlog/protocol": "workspace:*",
+    "@lootlog/rpc": "workspace:*",
     "@lootlog/schema": "workspace:*",
     "effect": "catalog:",
     "es-toolkit": "catalog:"

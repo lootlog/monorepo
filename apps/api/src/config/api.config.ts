@@ -3,11 +3,16 @@ import {
   baseServiceConfig,
   redisUrlConfig,
 } from "@lootlog/instrumentation/service-config";
+import { ApiRpcGroup } from "@lootlog/rpc/api";
+import {
+  type CallerTokens,
+  type RpcUpstream,
+  rpcCallerTokensConfig,
+  rpcUpstreamConfig,
+} from "@lootlog/rpc/callers";
+import { rpcPortConfig } from "@lootlog/rpc/server";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { Config, Option, type Redacted, Schema } from "effect";
-
-const optionalRedacted = (name: string) =>
-  Config.option(Config.Redacted(name)).pipe(Config.map(Option.getOrUndefined));
 
 const flag = (name: string, defaultValue: boolean) =>
   Config.Boolean(name).pipe(Config.withDefault(defaultValue));
@@ -17,14 +22,15 @@ export const rabbitmqUriConfig = Config.Redacted("RABBITMQ_URI");
 export const databaseUrlConfig = Config.Redacted("POSTGRESQL_CONNECTION_URI");
 
 export interface ApiConfiguration extends BaseServiceConfiguration {
+  readonly rpc: {
+    readonly port: number;
+    readonly callerTokens: CallerTokens;
+    readonly auth: RpcUpstream;
+    readonly discordBot: RpcUpstream;
+  };
   readonly isLocal: boolean;
-  readonly authIdpTokenSecret?: Redacted.Redacted<string>;
-  readonly battlelogCleanupSecret?: Redacted.Redacted<string>;
   readonly rabbitmqUri: Redacted.Redacted<string>;
   readonly redisUrl: Redacted.Redacted<string>;
-  readonly authServiceUrl: URL;
-  readonly battlelogServiceUrl: URL;
-  readonly discordBotServiceUrl: URL;
   readonly reservationsCardsUrl: URL;
   readonly mapsApiUrl: URL;
   readonly timerCleanup: {
@@ -41,19 +47,14 @@ export interface ApiConfiguration extends BaseServiceConfiguration {
 
 export const apiConfiguration: Config.Config<ApiConfiguration> = Config.all({
   base: baseServiceConfig("api"),
-  authIdpTokenSecret: optionalRedacted("AUTH_IDP_TOKEN_SECRET"),
-  battlelogCleanupSecret: optionalRedacted("BATTLELOG_CLEANUP_SECRET"),
+  rpc: Config.all({
+    port: rpcPortConfig,
+    callerTokens: rpcCallerTokensConfig("api", ApiRpcGroup),
+    auth: rpcUpstreamConfig("api", "auth"),
+    discordBot: rpcUpstreamConfig("api", "discord-bot"),
+  }),
   rabbitmqUri: rabbitmqUriConfig,
   redisUrl: redisUrlConfig,
-  authServiceUrl: Config.schema(Schema.URLFromString, "AUTH_SERVICE_URL"),
-  battlelogServiceUrl: Config.schema(
-    Schema.URLFromString,
-    "BATTLELOG_SERVICE_URL",
-  ).pipe(Config.withDefault(new URL("http://battlelog-service:4000"))),
-  discordBotServiceUrl: Config.schema(
-    Schema.URLFromString,
-    "DISCORD_BOT_SERVICE_URL",
-  ).pipe(Config.withDefault(new URL("http://discord-bot:4000"))),
   reservationsCardsUrl: Config.schema(
     Schema.URLFromString,
     "RESERVATIONS_CARDS_URL",

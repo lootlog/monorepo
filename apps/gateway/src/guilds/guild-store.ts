@@ -1,17 +1,15 @@
 import { withAdapterSpan } from "@lootlog/instrumentation/operation";
-import { boundedHttpGet } from "@lootlog/instrumentation/bounded-http-get";
+import { ApiRpcGroup } from "@lootlog/rpc/api";
+import {
+  boundedRpcCall,
+  makeRpcClient,
+  type ServiceRpcClient,
+} from "@lootlog/rpc/client";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { UserGuildPermissionsDtoSchema } from "@lootlog/schema/permissions";
-import {
-  INTERNAL_USER_PERMISSIONS_PATH,
-  type InternalUserPermissionsQuery,
-} from "@lootlog/schema/internal-guilds";
+import type { InternalUserPermissionsQuery } from "@lootlog/schema/internal-guilds";
 import { Clock, Effect, Option, Result, Schema, Context, Layer } from "effect";
-import type { HttpClient as HttpClientValue } from "effect/http/HttpClient";
-import {
-  type GatewayConfiguration,
-  GatewayConfig,
-} from "#src/config/gateway-config";
+import { GatewayConfig } from "#src/config/gateway-config";
 import type { GetUserGuildsOptions, UserGuildData } from "#src/guilds/guild";
 import { CACHE_TTL, getUserGuildsCacheKey } from "#src/guilds/cache-keys";
 import {
@@ -20,11 +18,6 @@ import {
   GatewayRedis,
 } from "#src/platform/redis-store";
 import { SingleFlight } from "#src/platform/single-flight";
-import { HttpClient } from "effect/http";
-
-const UserGuildsJson = Schema.fromJsonString(
-  Schema.Array(UserGuildPermissionsDtoSchema),
-);
 
 const CachedGuildDataJson = Schema.fromJsonString(
   Schema.Union([
@@ -93,10 +86,6 @@ const failure = (
     status: options?.status,
   });
 
-const decodeGuilds = (body: ArrayBuffer): UserGuildData[] => {
-  return [...Schema.decodeSync(UserGuildsJson)(new TextDecoder().decode(body))];
-};
-
 const cacheCommand = <A>(command: () => Promise<A>) =>
   Effect.tryPromise({
     try: command,
@@ -108,8 +97,9 @@ const cacheCommand = <A>(command: () => Promise<A>) =>
     }),
   );
 
+const fetchPermissions = boundedRpcCall({ timeout: "5 seconds", retries: 2 });
+
 export const makeGuildStore = (
-  config: Pick<GatewayConfiguration, "apiUrl">,
   redis: {
     command: Pick<RedisGatewayStore["command"], "get" | "set"> & {
       eval(
@@ -117,7 +107,7 @@ export const makeGuildStore = (
       ): Promise<RedisScriptReply>;
     };
   },
-  httpClient: HttpClientValue,
+  apiRpc: Pick<ServiceRpcClient<typeof ApiRpcGroup>, "getUserGuildPermissions">,
 ): GuildStore => {
   const fetchGuilds = Effect.fn("GuildStore_fetchUserGuilds")(function* (
     options: GetUserGuildsOptions,
@@ -129,23 +119,21 @@ export const makeGuildStore = (
       ...(readOptions?.freshness === "required" && { freshness: "required" }),
     };
 
-    const url = new URL(`${config.apiUrl}${INTERNAL_USER_PERMISSIONS_PATH}`);
-
-    for (const [name, value] of Object.entries(query))
-      url.searchParams.set(name, value);
-
-    return yield* boundedHttpGet({
-      client: httpClient,
-      url,
-      timeoutMilliseconds: 5000,
-      retries: 2,
-      operationId: "GuildStore_fetchUserGuilds",
-      adapter: "api-user-permissions",
-      response: "successful",
-      failure: (reason, retryable, status) =>
-        failure(reason, { retryable, status }),
-      decode: decodeGuilds,
-    });
+    return yield* fetchPermissions(() =>
+      apiRpc.getUserGuildPermissions(query),
+    ).pipe(
+      Effect.map((guilds) => [...guilds]),
+      Effect.catchTags({
+        TimeoutError: () =>
+          Effect.fail(failure("timeout", { retryable: true })),
+        RpcUnavailableError: () =>
+          Effect.fail(failure("status", { retryable: true, status: 503 })),
+        RpcCallerRejectedError: () =>
+          Effect.fail(failure("status", { retryable: false, status: 401 })),
+        RpcClientError: () =>
+          Effect.fail(failure("transport", { retryable: true })),
+      }),
+    );
   });
 
   const readCache = (key: string) =>
@@ -275,10 +263,14 @@ export class Guilds extends Context.Service<Guilds, GuildStore>()(
   static readonly layer = Layer.effect(
     Guilds,
     Effect.gen(function* () {
+      const config = yield* GatewayConfig;
+
       return makeGuildStore(
-        yield* GatewayConfig,
         yield* GatewayRedis,
-        yield* HttpClient.HttpClient,
+        yield* makeRpcClient(ApiRpcGroup, {
+          ...config.rpc.api,
+          spanPrefix: "gateway.api-rpc",
+        }),
       );
     }),
   );

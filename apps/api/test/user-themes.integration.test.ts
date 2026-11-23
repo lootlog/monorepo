@@ -218,7 +218,7 @@ describe("User themes against migrated PostgreSQL", () => {
     await runtime.runPromise(
       Effect.flatMap(ApiDatabase, (db) =>
         makeUserAccountDeletion(db, {
-          cleanupBattlelog: () => Effect.void,
+          requestBattlelogDeletion: () => Effect.void,
           deleteCacheKey: () => Effect.void,
           invalidateCacheScopes: () => Effect.void,
           deleteCachePattern: () => Effect.void,

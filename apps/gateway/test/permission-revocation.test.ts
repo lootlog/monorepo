@@ -1,13 +1,12 @@
 import { expect, test } from "bun:test";
-import { Effect, Schema } from "effect";
-import { HttpClient, HttpClientResponse } from "effect/http";
+import { Effect } from "effect";
+import { HttpClient } from "effect/http";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { decodeRealtimeFrame } from "@lootlog/protocol/realtime/codec";
 import {
   Capability,
   type UserGuildPermissionsDtoSchema,
 } from "@lootlog/schema/permissions";
-import { InternalUserPermissionsQuery } from "@lootlog/schema/internal-guilds";
 import { makeGuildStore } from "../src/guilds/guild-store.js";
 import { ActivityPublisher } from "../src/rabbit/activity-publisher.js";
 import { makeMargonemProofVerifier } from "../src/auth/margonem-proof.js";
@@ -61,22 +60,20 @@ const setup = async () => {
   let warm: Grant[] | undefined;
   let permissionRequests = 0;
 
-  const http = HttpClient.make((request) =>
-    Effect.sync(() => {
-      permissionRequests++;
+  const http = HttpClient.make(() => Effect.die("unused"));
 
-      const query = Schema.decodeUnknownSync(InternalUserPermissionsQuery)(
-        Object.fromEntries(new URL(request.url).searchParams),
-      );
+  const apiRpc = {
+    getUserGuildPermissions: (query: { readonly freshness?: "required" }) =>
+      Effect.sync(() => {
+        permissionRequests++;
 
-      if (query.freshness === "required")
-        return HttpClientResponse.fromWeb(request, Response.json(grants));
+        if (query.freshness === "required") return structuredClone(grants);
 
-      warm ??= structuredClone(grants);
+        warm ??= structuredClone(grants);
 
-      return HttpClientResponse.fromWeb(request, Response.json(warm));
-    }),
-  );
+        return structuredClone(warm);
+      }),
+  };
 
   const updateOrganization1 = (update: (grant: Grant) => Grant | undefined) => {
     grants = grants.flatMap((entry) => {
@@ -90,7 +87,7 @@ const setup = async () => {
   const redis = makeGuildStoreRedis(identity);
 
   const stores = Array.from({ length: 3 }, () =>
-    makeGuildStore(config, redis.store, http),
+    makeGuildStore(redis.store, apiRpc),
   );
 
   const bus = makeFederationBus();

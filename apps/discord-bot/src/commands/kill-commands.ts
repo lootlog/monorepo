@@ -1,6 +1,7 @@
+import type { RpcTopKilledNpcs } from "@lootlog/rpc/api";
 import { escapeMarkdown } from "discord.js";
 import { npcIconUrl } from "@lootlog/domain/npc-icon";
-import { Effect, Schema } from "effect";
+import { Effect } from "effect";
 import { BotConfig } from "#src/config/bot-config";
 import {
   guildCommand,
@@ -42,70 +43,17 @@ const RANKED_NPC_TYPES = [
   "EVENT_HERO",
 ] as const;
 
-const RankedMember = Schema.Struct({
-  name: Schema.String,
-  userId: Schema.String,
-});
-
-const GuildKillStats = Schema.Struct({
-  overview: Schema.Struct({ guildUniqueKills: Schema.Finite }),
-  memberRanking: Schema.Array(
-    Schema.Struct({
-      member: RankedMember,
-      totalParticipations: Schema.Finite,
-      participationsByType: Schema.Record(Schema.String, Schema.Finite),
-    }),
-  ),
-});
-
-const TopNpcs = Schema.Struct({
-  topNpcs: Schema.Array(
-    Schema.Struct({
-      npcId: Schema.Finite,
-      npcName: Schema.String,
-      npcType: Schema.String,
-      npcLvl: Schema.Finite,
-    }),
-  ),
-});
-
-const NpcKillers = Schema.Struct({
-  npc: Schema.NullOr(
-    Schema.Struct({
-      npcName: Schema.String,
-      npcType: Schema.String,
-      npcLvl: Schema.Finite,
-      npcIcon: Schema.NullOr(Schema.String),
-      uniqueGuildKills: Schema.Finite,
-      totalMemberParticipations: Schema.Finite,
-    }),
-  ),
-  killers: Schema.Array(
-    Schema.Struct({
-      member: RankedMember,
-      participationCount: Schema.Finite,
-    }),
-  ),
-});
-
-const killStatsPath = (guildId: string) =>
-  `/guilds/${encodeURIComponent(guildId)}/stats/kills`;
-
 export const searchKilledNpcs = (session: MemberSession, search: string) =>
-  session
-    .api(
-      `${killStatsPath(session.guildId)}/top-npcs`,
-      {
-        limit: MAX_AUTOCOMPLETE_CHOICES,
-        search: search.slice(0, SEARCH_TEXT_MAX_LENGTH),
-        period: "all",
-      },
-      TopNpcs,
-    )
+  session.api
+    .getGuildTopKilledNpcs({
+      limit: MAX_AUTOCOMPLETE_CHOICES,
+      search: search.slice(0, SEARCH_TEXT_MAX_LENGTH),
+      period: "all",
+    })
     .pipe(Effect.map(({ topNpcs }) => topNpcs));
 
 export const killedNpcChoiceName = (
-  npc: (typeof TopNpcs.Type)["topNpcs"][number],
+  npc: (typeof RpcTopKilledNpcs.Type)["topNpcs"][number],
 ) => `${npc.npcName} (${npc.npcLvl} lvl, ${npcTypeLabel(npc.npcType)})`;
 
 export const rankingCommand: SlashCommand = {
@@ -129,14 +77,17 @@ export const rankingCommand: SlashCommand = {
     Effect.gen(function* () {
       const { webAppUrl } = yield* BotConfig;
       const session = yield* memberSession(invocation);
-      const type = invocation.options.string("typ") ?? "ELITE2";
+      const requested = invocation.options.string("typ");
+
+      const type =
+        RANKED_NPC_TYPES.find((ranked) => ranked === requested) ?? "ELITE2";
+
       const period = readPeriod(invocation.options);
 
-      const stats = yield* session.api(
-        killStatsPath(session.guildId),
-        { npcTypes: [type], period },
-        GuildKillStats,
-      );
+      const stats = yield* session.api.getGuildKillStats({
+        npcTypes: [type],
+        period,
+      });
 
       const ranking = stats.memberRanking;
 
@@ -192,11 +143,7 @@ export const statisticsCommand: SlashCommand = {
       const target = invocation.options.user("gracz") ?? invocation.discordId;
       const period = readPeriod(invocation.options);
 
-      const stats = yield* session.api(
-        killStatsPath(session.guildId),
-        { period },
-        GuildKillStats,
-      );
+      const stats = yield* session.api.getGuildKillStats({ period });
 
       const position = stats.memberRanking.findIndex(
         (entry) => entry.member.userId === target,
@@ -284,11 +231,11 @@ export const npcCommand: SlashCommand = {
 
       if (!/^\d+$/.test(npcId)) return { content: COMMAND_TEXT.npc.notFound };
 
-      const { npc, killers } = yield* session.api(
-        `${killStatsPath(session.guildId)}/npcs/${npcId}/killers`,
-        { limit: NPC_KILLERS_LOOKUP, period },
-        NpcKillers,
-      );
+      const { npc, killers } = yield* session.api.getNpcKillers({
+        npcId: Number(npcId),
+        limit: NPC_KILLERS_LOOKUP,
+        period,
+      });
 
       if (!npc) return { content: COMMAND_TEXT.npc.notFound };
 

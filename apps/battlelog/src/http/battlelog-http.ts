@@ -1,5 +1,4 @@
 import { apiKeyEndpointPolicyLayer } from "@lootlog/protocol/http/api-key-http";
-import { hasServiceAuthorization } from "@lootlog/protocol/http/service-auth";
 import { BearerSecurityPassthrough } from "@lootlog/protocol/http/bearer-security";
 import { readForwardAuthIdentity } from "@lootlog/schema/api-key-policy";
 import { ContextLogger } from "@lootlog/instrumentation";
@@ -34,10 +33,6 @@ import {
   UpdateBattleSchema,
   type BattleUpdate,
 } from "#src/battles/catalog/update-battle";
-import {
-  DeleteUserDataSchema,
-  type DeleteUserData,
-} from "#src/battles/internal-operations";
 import {
   RecordWeaponKillsSchema,
   type RecordWeaponKillsInput,
@@ -321,35 +316,6 @@ const BattlelogHandlers = Layer.mergeAll(
           publicBattles.getPublicBattleTimeline(params.battleId),
         ),
       ),
-  ),
-  HttpApiBuilder.group(BattlelogApi, "internal", (handlers) =>
-    handlers.handleRaw("InternalControllerDeleteUserData", () =>
-      respond(
-        Effect.gen(function* () {
-          const request = yield* HttpServerRequest.HttpServerRequest;
-          const application = yield* BattlelogApplication;
-
-          if (
-            !hasServiceAuthorization(
-              request.headers.authorization,
-              application.cleanupSecret,
-            )
-          ) {
-            return yield* new OperationError({
-              operation: "InternalController_deleteUserData",
-              cause: new AuthenticationRequiredError(),
-            });
-          }
-
-          return yield* withJsonBody(
-            DeleteUserDataSchema,
-            "error",
-            (body: DeleteUserData) =>
-              application.operations.internal.deleteUserData(body),
-          );
-        }),
-      ),
-    ),
   ),
 ).pipe(
   Layer.provide(

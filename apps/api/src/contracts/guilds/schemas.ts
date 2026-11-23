@@ -14,10 +14,7 @@ import { RESERVATION_TIME_GRANULARITY_OPTIONS } from "@lootlog/domain/reservatio
 import { NpcTypeSchema } from "@lootlog/schema/npc-type";
 import { ErrorKey } from "#src/guilds/error-key";
 
-export type OrganizationPermissionsResponse =
-  typeof OrganizationPermissionsResponse.Type;
-
-export const OrganizationPermissionsResponse = Schema.Struct({
+const OrganizationPermissionsResponse = Schema.Struct({
   guild: Schema.Struct({ id: Schema.String, ownerId: Schema.String }),
   roles: Schema.Array(
     Schema.Struct({

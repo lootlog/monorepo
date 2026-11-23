@@ -62,8 +62,6 @@ export const ApiKeyStatus = Schema.Union([
 
 export type ApiKeyStatus = typeof ApiKeyStatus.Type;
 
-export const API_KEY_STATUS_PATH = "/auth/internal/api-keys/status";
-
 export const ApiKeyStatusRequest = Schema.Struct({
   keyIds: Schema.Array(Schema.NonEmptyString).check(Schema.isMaxLength(100)),
 });

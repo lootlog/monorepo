@@ -1,5 +1,5 @@
 import { RealtimeStoreError } from "./realtime-errors.js";
-import { httpClientFromResponses } from "../../test/http-fixtures.js";
+import { RpcUnavailableError } from "@lootlog/rpc/errors";
 import { makeGuildStoreRedis } from "../../test/guild-store-fixtures.js";
 import { describe, expect, test } from "bun:test";
 import { Effect, Exit, Metric } from "effect";
@@ -393,11 +393,11 @@ describe("CommandHandler session lifecycle", () => {
     "permission API failure preserves cached client state during join (already joined: %s)",
     async (joined) => {
       const store = makeGuildStore(
-        { apiUrl: "http://api.local" },
         makeGuildStoreRedis({ discordId: "discord-1", userId: "user-1" }).store,
-        httpClientFromResponses(() =>
-          Effect.succeed(new Response("invalid API response")),
-        ),
+        {
+          getUserGuildPermissions: () =>
+            Effect.fail(new RpcUnavailableError({ message: "unavailable" })),
+        },
       );
 
       const { handler, hub, activity, presence } = makeCommandHandler({

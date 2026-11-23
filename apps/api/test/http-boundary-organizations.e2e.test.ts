@@ -9,7 +9,7 @@ import {
 import type { ApiDatabaseValue } from "../src/database/drizzle/database.js";
 import type { RedisService } from "#src/redis/redis.service";
 import { Effect } from "effect";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { getCompleteUserGuildsCacheKey } from "#src/discord/discord-cache.util";
 import {
   guildTable,
@@ -24,7 +24,7 @@ import {
 
 const fixture = makeHttpBoundaryFixture();
 
-const { boundary, request, databaseRuntime } = fixture;
+const { request, databaseRuntime } = fixture;
 
 let database: ApiDatabaseValue;
 
@@ -179,51 +179,6 @@ describe("API HTTP boundary Organizations", () => {
       expect(guild?.vanityUrl).toBeNull();
     },
   );
-
-  it("resolves the Discord bot's member identity only for an active member of that Organization", async () => {
-    await databaseRuntime.runPromise(
-      database
-        .update(memberTable)
-        .set({ active: false })
-        .where(eq(memberTable.guildId, forbiddenGuildId)),
-    );
-
-    const identity = (guildId: string, discordId: string) =>
-      boundary.handler(
-        new Request(
-          `http://api.test/internal/guilds/${guildId}/members/${discordId}/identity`,
-        ),
-      );
-
-    const [member] = await databaseRuntime.runPromise(
-      database
-        .select({ id: memberTable.id })
-        .from(memberTable)
-        .where(
-          and(
-            eq(memberTable.guildId, authorizedGuildId),
-            eq(memberTable.userId, caller.discordId),
-          ),
-        ),
-    );
-
-    const active = await identity(authorizedGuildId, caller.discordId);
-
-    expect(active.status).toBe(200);
-    expect(await active.json()).toEqual({
-      userId: caller.userId,
-      memberId: member?.id,
-    });
-
-    for (const response of await Promise.all([
-      identity(forbiddenGuildId, caller.discordId),
-      identity(authorizedGuildId, "discord-unknown"),
-      identity("guild-unknown", caller.discordId),
-    ])) {
-      expect(response.status).toBe(404);
-      expect(await response.json()).toEqual({ code: "MEMBER_NOT_FOUND" });
-    }
-  });
 
   it.each([
     { suffix: "/members", method: "GET" },

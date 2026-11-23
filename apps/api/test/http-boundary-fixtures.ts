@@ -2,16 +2,28 @@ import {
   RabbitMessaging,
   type RabbitMessagingService,
 } from "@lootlog/messaging";
+import { ApiRpcGroup } from "@lootlog/rpc/api";
+import { AuthRpcGroup } from "@lootlog/rpc/auth";
+import { makeRpcClient, type ServiceRpcClient } from "@lootlog/rpc/client";
+import {
+  type RpcUnauthorizedError,
+  RpcUnavailableError,
+} from "@lootlog/rpc/errors";
+import { serviceRpcRoutes } from "@lootlog/rpc/server";
+import { TEST_RPC_TOKEN, testRpcUpstream } from "@lootlog/rpc/testing";
 import { DISCORD_AUTH_SCOPES } from "@lootlog/schema/discord";
 import { Capability } from "@lootlog/schema/permissions";
 import { BunRedis, BunHttpServer } from "@effect/platform-bun";
-import { Effect, Layer, ManagedRuntime } from "effect";
-import { FetchHttpClient, HttpRouter } from "effect/http";
+import { Effect, Layer, ManagedRuntime, type Redacted } from "effect";
+import { FetchHttpClient, HttpRouter, HttpServer } from "effect/http";
 import { Redis } from "effect/persistence";
 import { fingerprintAccessToken } from "#src/auth/auth.service";
 import { makeRedisService, type RedisService } from "#src/redis/redis.service";
 import { getRejectedAuthTokenKey } from "#src/shared/cache";
-import { LootlogApiRouter } from "../src/runtime/application/http-routes.js";
+import {
+  ApiRpcRouter,
+  LootlogApiRouter,
+} from "../src/runtime/application/http-routes.js";
 import { ApiRedis } from "../src/runtime/infrastructure/api-redis.js";
 import { ApiRuntimeConfig } from "../src/runtime/infrastructure/api-runtime-config.js";
 import { count, isNull, sql } from "drizzle-orm";
@@ -46,6 +58,15 @@ export const headers = {
   "x-auth-discord-id": caller.discordId,
 };
 
+type IdpTokenAnswer = Effect.Effect<
+  {
+    readonly accessToken: string;
+    readonly expiresIn: number;
+    readonly scopes: ReadonlyArray<string>;
+  },
+  RpcUnauthorizedError | RpcUnavailableError
+>;
+
 export const makeHttpBoundaryFixture = () => {
   const publishedMessages: Parameters<RabbitMessagingService["publish"]>[0][] =
     [];
@@ -60,14 +81,36 @@ export const makeHttpBoundaryFixture = () => {
     nack: () => Effect.void,
   };
 
-  let authServiceAnswer: (() => Response) | null = null;
+  let authServiceAnswer: (() => IdpTokenAnswer) | null = null;
+
+  const authRpcBoundary = HttpRouter.toWebHandler(
+    Layer.mergeAll(
+      serviceRpcRoutes({
+        group: AuthRpcGroup,
+        handlers: AuthRpcGroup.toLayer({
+          getIdpToken: () =>
+            authServiceAnswer
+              ? authServiceAnswer()
+              : Effect.fail(new RpcUnavailableError()),
+          listPlatformRoleHolders: () => Effect.succeed({ userIds: [] }),
+          getApiKeyStatuses: () => Effect.succeed({ keys: [] }),
+        }),
+        callerTokens: { api: TEST_RPC_TOKEN },
+        spanPrefix: "test.auth-rpc",
+      }),
+      HttpServer.layerServices,
+    ),
+    { disableLogger: true },
+  );
 
   const fetchBoundary: typeof globalThis.fetch = Object.assign(
-    (input: RequestInfo | URL, init?: RequestInit) =>
-      authServiceAnswer &&
-      new Request(input).url === "http://auth.test/auth/idp-token"
-        ? Promise.resolve(authServiceAnswer())
-        : globalThis.fetch(input, init),
+    (input: RequestInfo | URL, init?: RequestInit) => {
+      const request = new Request(input, init);
+
+      return new URL(request.url).host === "auth.test"
+        ? authRpcBoundary.handler(request)
+        : globalThis.fetch(request);
+    },
     { preconnect: globalThis.fetch.preconnect },
   );
 
@@ -85,7 +128,7 @@ export const makeHttpBoundaryFixture = () => {
     identity: { readonly userId: string; readonly discordId: string },
   ) => {
     authServiceAnswer = () =>
-      Response.json({
+      Effect.succeed({
         accessToken: "revoked-token",
         expiresIn: 3_600,
         scopes: DISCORD_AUTH_SCOPES,
@@ -111,7 +154,47 @@ export const makeHttpBoundaryFixture = () => {
     { disableLogger: true },
   );
 
-  const answerAuthService = (answer: () => Response) => {
+  const rpcBoundary = HttpRouter.toWebHandler(
+    ApiRpcRouter.pipe(
+      Layer.provide(RuntimeBoundaries),
+      Layer.provide(BunHttpServer.layerHttpServices),
+    ),
+    { disableLogger: true },
+  );
+
+  const requestRpcPort = (path: string) =>
+    rpcBoundary.handler(new Request(`http://api.test${path}`, { headers }));
+
+  const callRpc = <A, E>(
+    token: Redacted.Redacted<string>,
+    use: (client: ServiceRpcClient<typeof ApiRpcGroup>) => Effect.Effect<A, E>,
+  ) =>
+    Effect.runPromise(
+      makeRpcClient(ApiRpcGroup, {
+        ...testRpcUpstream,
+        token,
+        spanPrefix: "test.api-rpc",
+      }).pipe(
+        Effect.flatMap(use),
+        Effect.scoped,
+        Effect.provide(
+          FetchHttpClient.layer.pipe(
+            Layer.provide(
+              Layer.succeed(
+                FetchHttpClient.Fetch,
+                Object.assign(
+                  (input: RequestInfo | URL, init?: RequestInit) =>
+                    rpcBoundary.handler(new Request(input, init)),
+                  { preconnect: globalThis.fetch.preconnect },
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+  const answerAuthService = (answer: () => IdpTokenAnswer) => {
     authServiceAnswer = answer;
   };
 
@@ -232,11 +315,15 @@ export const makeHttpBoundaryFixture = () => {
     await redisRuntime.dispose();
     await databaseRuntime.dispose();
     await boundary.dispose();
+    await rpcBoundary.dispose();
+    await authRpcBoundary.dispose();
   };
 
   return {
     publishedMessages,
     answerAuthService,
+    callRpc,
+    requestRpcPort,
     issueRevokedDiscordToken,
     boundary,
     request,

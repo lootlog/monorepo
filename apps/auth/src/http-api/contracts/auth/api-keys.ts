@@ -1,11 +1,6 @@
 import { Schema } from "effect";
 import { HttpApi, HttpApiEndpoint, HttpApiGroup } from "effect/http-api";
 import {
-  API_KEY_STATUS_PATH,
-  ApiKeyStatusRequest,
-  ApiKeyStatusResponse,
-} from "@lootlog/schema/api-key-access";
-import {
   ApiKeySummary,
   CreateApiKey,
   RenameApiKey,
@@ -42,11 +37,6 @@ export class ApiKeysGroup extends HttpApiGroup.make("apiKeys")
       error: [...sessionError, NotFound],
       params: Schema.Struct({ id: Schema.NonEmptyString }),
       success: Schema.Struct({ success: Schema.Literal(true) }),
-    }),
-    HttpApiEndpoint.post("ApiKeyStatuses", API_KEY_STATUS_PATH, {
-      error: [Unauthorized, ServiceUnavailable],
-      payload: ApiKeyStatusRequest,
-      success: ApiKeyStatusResponse,
     }),
   )
   .annotate(HttpApi.PayloadParseOptions, { onExcessProperty: "error" }) {}

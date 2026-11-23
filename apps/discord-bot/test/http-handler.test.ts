@@ -1,7 +1,12 @@
+import { makeRpcClient } from "@lootlog/rpc/client";
+import { DiscordBotRpcGroup } from "@lootlog/rpc/discord-bot";
+import { makeRpcTestHttpClient, testRpcUpstream } from "@lootlog/rpc/testing";
 import { describe, expect, mock, test } from "bun:test";
 import { Client } from "discord.js";
-import { Effect } from "effect";
+import { Effect, Layer } from "effect";
 import {
+  BotRpcHandlers,
+  BotServices,
   makeBotHttpBoundary,
   type BotServicesValue,
 } from "../src/bot-application.js";
@@ -58,8 +63,8 @@ const services = (): BotServicesValue => ({
   },
 });
 
-describe("Discord bot HTTP contract", () => {
-  test("serves health", async () => {
+describe("Discord bot HTTP & RPC contracts", () => {
+  test("serves health over HTTP", async () => {
     const boundary = makeBotHttpBoundary(services());
 
     const response = await boundary.handler(
@@ -71,18 +76,28 @@ describe("Discord bot HTTP contract", () => {
     expect(await response.text()).toBe("OK");
   });
 
-  test("preserves internal guild channel refresh route", async () => {
-    const boundary = makeBotHttpBoundary(services());
-
-    const response = await boundary.handler(
-      new Request("http://localhost/internal/guilds/guild-1/channels/refresh", {
-        method: "POST",
-      }),
+  test("serves guild channel refresh over RPC", async () => {
+    const handlers = BotRpcHandlers.pipe(
+      Layer.provide(Layer.succeed(BotServices, services())),
     );
 
-    await boundary.dispose();
-    expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({
+    const result = await Effect.runPromise(
+      Effect.gen(function* () {
+        const client = yield* makeRpcClient(DiscordBotRpcGroup, {
+          ...testRpcUpstream,
+          spanPrefix: "test.rpc-client",
+        });
+
+        return yield* client.refreshGuildChannels({ guildId: "guild-1" });
+      }).pipe(
+        Effect.scoped,
+        Effect.provide(
+          makeRpcTestHttpClient(DiscordBotRpcGroup, handlers, ["api"]),
+        ),
+      ),
+    );
+
+    expect(result).toEqual({
       guildId: "guild-1",
       channels: [],
       syncState: syncState("guild-1"),

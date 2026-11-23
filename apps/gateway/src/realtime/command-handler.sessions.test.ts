@@ -1,4 +1,3 @@
-import { httpClientFromResponses } from "../../test/http-fixtures.js";
 import { makeGuildStoreRedis } from "../../test/guild-store-fixtures.js";
 import { describe, expect, test } from "bun:test";
 import { Capability } from "@lootlog/schema/permissions";
@@ -107,16 +106,16 @@ describe("CommandHandler session lifecycle", () => {
     let now = 0;
 
     const store = makeGuildStore(
-      { apiUrl: "http://api.local" },
       makeGuildStoreRedis({ discordId: "discord-1", userId: "user-1" }).store,
-      httpClientFromResponses(() =>
-        Effect.promise(async () => {
-          requests++;
-          await gate.promise;
+      {
+        getUserGuildPermissions: () =>
+          Effect.promise(async () => {
+            requests++;
+            await gate.promise;
 
-          return Response.json([guild()]);
-        }),
-      ),
+            return [guild()];
+          }),
+      },
     );
 
     const { send, hub } = makeCommandHandler({

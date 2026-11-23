@@ -1,6 +1,6 @@
 import { describe, expect, it, mock } from "bun:test";
 import { APIError } from "better-auth/api";
-import { Effect, Redacted } from "effect";
+import { Effect } from "effect";
 import { TestClock } from "effect/testing";
 import { exportJWK, generateKeyPair, SignJWT, type JSONWebKeySet } from "jose";
 import {
@@ -286,17 +286,13 @@ describe("AuthService", () => {
       auth,
       appUrl: "http://localhost:3000",
       findDiscordAccountId,
-      idpTokenSecret: Redacted.make("idp-test-secret"),
     });
 
     const response = await Effect.runPromise(
-      service.getIdpTokenResponse(
-        {
-          userId: "user-1",
-          discordId: "discord-1",
-        },
-        "Bearer idp-test-secret",
-      ),
+      service.getIdpTokenResponse({
+        userId: "user-1",
+        discordId: "discord-1",
+      }),
     );
 
     expect(response.accessToken).toBe("token-123");
@@ -317,7 +313,6 @@ describe("AuthService", () => {
       auth,
       appUrl: "http://localhost:3000",
       findDiscordAccountId,
-      idpTokenSecret: Redacted.make("idp-test-secret"),
     });
 
     getAccessToken.mockResolvedValue({
@@ -327,13 +322,10 @@ describe("AuthService", () => {
     });
     await expect(
       Effect.runPromise(
-        service.getIdpTokenResponse(
-          {
-            userId: "user-1",
-            discordId: "discord-1",
-          },
-          "Bearer idp-test-secret",
-        ),
+        service.getIdpTokenResponse({
+          userId: "user-1",
+          discordId: "discord-1",
+        }),
       ),
     ).rejects.toMatchObject({
       kind: "authentication-required",
@@ -343,13 +335,10 @@ describe("AuthService", () => {
     getAccessToken.mockResolvedValue({ accessToken: "" });
     await expect(
       Effect.runPromise(
-        service.getIdpTokenResponse(
-          {
-            userId: "user-1",
-            discordId: "discord-1",
-          },
-          "Bearer idp-test-secret",
-        ),
+        service.getIdpTokenResponse({
+          userId: "user-1",
+          discordId: "discord-1",
+        }),
       ),
     ).rejects.toMatchObject({
       kind: "invalid-request",
@@ -372,11 +361,7 @@ describe("AuthService", () => {
           auth,
           appUrl: "http://localhost:3000",
           findDiscordAccountId: () => Effect.succeed(accountId),
-          idpTokenSecret: Redacted.make("idp-test-secret"),
-        }).getIdpTokenResponse(
-          { userId: "user-1", discordId: "discord-1" },
-          "Bearer idp-test-secret",
-        ),
+        }).getIdpTokenResponse({ userId: "user-1", discordId: "discord-1" }),
       );
 
     await expect(idpToken("account-row-1")).rejects.toMatchObject({
