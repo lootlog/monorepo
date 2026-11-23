@@ -1,8 +1,8 @@
+import { queryKeys } from "@/lib/query-keys";
 import { Schema } from "effect";
 import type { QueryClient, Query } from "@tanstack/react-query";
 import {
   getGuildsControllerGetGuildPermissionsQueryKey,
-  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
   type UserCurrentGuildResponseDtoOutput,
 } from "@lootlog/client/main";
 import {
@@ -253,7 +253,7 @@ const reconcileOrganizations = (
   initial: boolean,
   pendingQueries: Set<Query>,
 ) => {
-  const guildsKey = getUsersControllerGetCurrentUserAccessibleGuildsQueryKey();
+  const guildsKey = queryKeys.guilds();
 
   const membershipChanged = changes?.some((change) =>
     change.areas.includes("organization"),
@@ -268,9 +268,8 @@ const reconcileOrganizations = (
       pendingQueries.add(activeQuery);
 
     if (!initial) void queryClient.cancelQueries({ queryKey: guildsKey });
-    queryClient.setQueryData<UserCurrentGuildResponseDtoOutput[]>(
-      guildsKey,
-      (guilds) => (guilds ? filterOrganizations(guilds, policy) : guilds),
+    queryClient.setQueryData(guildsKey, (guilds) =>
+      guilds ? filterOrganizations(guilds, policy) : guilds,
     );
 
     if (
@@ -279,9 +278,7 @@ const reconcileOrganizations = (
         activeQuery.state.fetchStatus !== "fetching" &&
         isOrganizationMetadataMissing(
           policy,
-          queryClient.getQueryData<UserCurrentGuildResponseDtoOutput[]>(
-            guildsKey,
-          ) ?? [],
+          queryClient.getQueryData(guildsKey) ?? [],
         )) ||
       (!initial &&
         changes?.some(

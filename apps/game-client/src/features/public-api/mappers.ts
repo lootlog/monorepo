@@ -1,5 +1,4 @@
 import { groupByToMap } from "@/lib/group-by-to-map";
-import type { Guild } from "@/api/guilds.api";
 import type { Npc } from "@/api/npcs.api";
 import type { Timer } from "@/api/timers.api";
 import type { User } from "@/api/users.api";
@@ -8,7 +7,7 @@ import type {
   PlayerPresence,
   PlayerPresenceResponse,
 } from "@/lib/online-players-presence";
-import type { GuildResponseDtoOutput } from "@lootlog/client/main";
+import type { UserCurrentGuildResponseDtoOutput } from "@lootlog/client/main";
 import type {
   PublicGuild,
   PublicMember,
@@ -121,7 +120,14 @@ const mapTimer = (timer: Timer): PublicTimer => {
 };
 
 export const mapGuilds = (
-  data: Array<Guild | GuildResponseDtoOutput> | undefined,
+  data:
+    | ReadonlyArray<
+        Pick<
+          UserCurrentGuildResponseDtoOutput,
+          "id" | "name" | "icon" | "vanityUrl"
+        >
+      >
+    | undefined,
 ): PublicGuild[] | undefined => {
   if (!data) return undefined;
 

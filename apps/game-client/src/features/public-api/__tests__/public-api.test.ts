@@ -6,28 +6,24 @@ import { queryKeys } from "@/lib/query-keys";
 import { NpcTypeEnum } from "@lootlog/schema/npc-type";
 import {
   getMembersControllerGetGuildMembersSummaryQueryKey,
-  type GuildResponseDtoOutput,
+  type UserCurrentGuildResponseDtoOutput,
 } from "@lootlog/client/main";
 
 import type { Timer } from "@/api/timers.api";
 import type { ApiEventMap } from "@lootlog/game-client-api";
 
 const makeGuild = (
-  overrides?: Partial<GuildResponseDtoOutput>,
-): GuildResponseDtoOutput => {
-  const guild: GuildResponseDtoOutput = {
+  overrides?: Partial<UserCurrentGuildResponseDtoOutput>,
+): UserCurrentGuildResponseDtoOutput => {
+  const guild: UserCurrentGuildResponseDtoOutput = {
     id: "guild-1",
     name: "Test Guild",
     icon: "icon.png",
     vanityUrl: "test-guild",
     ownerId: "owner-1",
     publicStatsCardEnabled: false,
-    reservationMaxDurationMinutes: 240,
-    reservationMinDurationMinutes: 15,
-    reservationTimeGranularityMinutes: 15,
-    reservationMaxAdvanceDays: 7,
-    reservationActiveLimitPerSpot: 1,
-    lootDrawExcludedNpcTypes: ["HERO", "EVENT_HERO", "TITAN"],
+    hasLootlogAccess: true,
+    isAccessDataStale: false,
   };
 
   return {
