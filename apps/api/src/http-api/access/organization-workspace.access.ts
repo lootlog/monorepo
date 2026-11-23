@@ -1,3 +1,4 @@
+import type { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import {
   type OrganizationWorkspaceIdentity,
   OrganizationWorkspaceOperationError,
@@ -49,13 +50,18 @@ export class OrganizationWorkspaceAuthorization extends Context.Service<
   {
     readonly identity: Effect.Effect<
       OrganizationWorkspaceIdentity,
-      OrganizationWorkspaceAccessDenied
+      OrganizationWorkspaceAccessDenied,
+      ForwardAuthIdentity
     >;
     readonly requireGuild: (options: {
       readonly guildId: string;
       readonly allOf?: ReadonlyArray<PermissionValue>;
       readonly anyOf?: ReadonlyArray<PermissionValue>;
-    }) => Effect.Effect<OrganizationWorkspaceGuildAccess, AccessFailure>;
+    }) => Effect.Effect<
+      OrganizationWorkspaceGuildAccess,
+      AccessFailure,
+      ForwardAuthIdentity
+    >;
   }
 >()("@lootlog/api/http-api/organization-workspace/authorization") {}
 

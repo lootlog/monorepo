@@ -1,3 +1,4 @@
+import type { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import {
   type ReauthenticationRequired,
   reauthenticationRequiredResponse,
@@ -36,7 +37,8 @@ export class PublicSystemAuthorization extends Context.Service<
       readonly anyOf: ReadonlyArray<PermissionValue>;
     }) => Effect.Effect<
       { readonly guildId: string },
-      PublicSystemAccessDenied | ReauthenticationRequired
+      PublicSystemAccessDenied | ReauthenticationRequired,
+      ForwardAuthIdentity
     >;
   }
 >()("@lootlog/api/http-api/public-system/authorization") {}

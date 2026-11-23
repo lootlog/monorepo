@@ -1,3 +1,4 @@
+import type { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { ChatOperationError, ChatData } from "#src/chat/chat-data";
 import {
   pathString,
@@ -58,7 +59,7 @@ export class ChatAuthorization extends Context.Service<
     readonly requireGuild: (options: {
       readonly guildId: string;
       readonly allOf: ReadonlyArray<PermissionValue>;
-    }) => Effect.Effect<ChatGuildAccess, AccessFailure>;
+    }) => Effect.Effect<ChatGuildAccess, AccessFailure, ForwardAuthIdentity>;
   }
 >()("@lootlog/api/http-api/chat/authorization") {}
 

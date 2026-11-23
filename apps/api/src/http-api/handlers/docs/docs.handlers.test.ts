@@ -1,3 +1,4 @@
+import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import {
   createGuildFixture,
   createMemberFixture,
@@ -83,7 +84,11 @@ const services = (
   authorization: DocsAuthorization["Service"],
   data: DocsData["Service"],
 ) =>
-  Layer.merge(
+  Layer.mergeAll(
+    Layer.succeed(ForwardAuthIdentity, {
+      userId: "user",
+      discordId: "discord",
+    }),
     Layer.succeed(DocsAuthorization, authorization),
     DocsData.layer(data),
   );

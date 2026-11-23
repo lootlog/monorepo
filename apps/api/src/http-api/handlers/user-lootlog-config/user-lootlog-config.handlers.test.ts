@@ -1,3 +1,4 @@
+import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { makeJsonCodec } from "@lootlog/database/redis-cache-fill";
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
@@ -37,7 +38,11 @@ const provideServices = (
     discordId: Effect.succeed("discord-a"),
   }),
 ) =>
-  Layer.merge(
+  Layer.mergeAll(
+    Layer.succeed(ForwardAuthIdentity, {
+      userId: "user",
+      discordId: "discord",
+    }),
     Layer.succeed(UserLootlogConfigData, data),
     Layer.succeed(UserLootlogConfigIdentity, identity),
   );

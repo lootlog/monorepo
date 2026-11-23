@@ -1,3 +1,4 @@
+import type { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import type { ReauthenticationRequired } from "@lootlog/protocol/http/errors";
 import type {
   guildTable,
@@ -56,7 +57,8 @@ export class EventsAuthorization extends Context.Service<
       requirement: EventAuthorizationRequirement,
     ) => Effect.Effect<
       AuthorizedEventCaller,
-      EventsAccessDenied | EventsNotFound | ReauthenticationRequired
+      EventsAccessDenied | EventsNotFound | ReauthenticationRequired,
+      ForwardAuthIdentity
     >;
   }
 >()("@lootlog/api/http-api/events/authorization") {}

@@ -1,3 +1,4 @@
+import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { AccessRequirement } from "@lootlog/domain/access-policy";
 import { createMemberFixture } from "../../../../test/organization-fixtures.js";
 import { describe, expect, it } from "bun:test";
@@ -116,6 +117,10 @@ const provideServices = (
   refreshJobs: MemberRefreshJobData["Service"] = makeRefreshJobData(),
 ) =>
   Layer.mergeAll(
+    Layer.succeed(ForwardAuthIdentity, {
+      userId: "user",
+      discordId: "discord",
+    }),
     Layer.succeed(MembersAuthorization, authorization),
     Layer.succeed(MembersData, data),
     Layer.succeed(MemberReadData, reads),

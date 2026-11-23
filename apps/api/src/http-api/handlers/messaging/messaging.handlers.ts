@@ -1,3 +1,4 @@
+import type { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import {
   type MessagingCaller,
   MessagingOperationError,
@@ -28,7 +29,13 @@ export class MessagingAccessDenied extends TaggedErrorClass<
 
 export class MessagingIdentity extends Context.Service<
   MessagingIdentity,
-  { readonly caller: Effect.Effect<MessagingCaller, MessagingAccessDenied> }
+  {
+    readonly caller: Effect.Effect<
+      MessagingCaller,
+      MessagingAccessDenied,
+      ForwardAuthIdentity
+    >;
+  }
 >()("@lootlog/api/http-api/messaging/identity") {}
 
 const caller = Effect.flatMap(MessagingIdentity, (identity) => identity.caller);

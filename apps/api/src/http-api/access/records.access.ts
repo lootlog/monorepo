@@ -1,3 +1,4 @@
+import type { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import {
   type ReauthenticationRequired,
   reauthenticationRequiredResponse,
@@ -115,14 +116,16 @@ export class RecordsAuthorization extends Context.Service<
   {
     readonly requireCaller: Effect.Effect<
       AuthenticatedCaller,
-      RecordsAccessDenied
+      RecordsAccessDenied,
+      ForwardAuthIdentity
     >;
     readonly requireGuild: (options: {
       readonly guildId: string;
       readonly capability: PermissionValue;
     }) => Effect.Effect<
       AuthorizedGuildCaller,
-      RecordsAccessDenied | RecordsNotFound | ReauthenticationRequired
+      RecordsAccessDenied | RecordsNotFound | ReauthenticationRequired,
+      ForwardAuthIdentity
     >;
   }
 >()("@lootlog/api/http-api/records/authorization") {}

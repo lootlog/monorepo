@@ -28,7 +28,7 @@ export type EventEndpointHandlers = {
   readonly [Identifier in EventEndpointIdentifier]?: HttpApiEndpoint.Handler<
     EventEndpoints[Identifier],
     HttpApiEndpoint.MiddlewareError<EventEndpoints[Identifier]>,
-    never
+    HttpApiEndpoint.MiddlewareProvides<EventEndpoints[Identifier]>
   >;
 };
 

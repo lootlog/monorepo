@@ -1,3 +1,4 @@
+import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { AccessRequirement } from "@lootlog/domain/access-policy";
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Predicate, Schema } from "effect";
@@ -39,7 +40,11 @@ const provideServices = (
   data: PublicSystemData["Service"],
   authorization = makeAuthorization(),
 ) =>
-  Layer.merge(
+  Layer.mergeAll(
+    Layer.succeed(ForwardAuthIdentity, {
+      userId: "user",
+      discordId: "discord",
+    }),
     Layer.succeed(PublicSystemData, data),
     Layer.succeed(PublicSystemAuthorization, authorization),
   );

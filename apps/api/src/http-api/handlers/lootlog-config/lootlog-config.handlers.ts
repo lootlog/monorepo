@@ -1,3 +1,4 @@
+import type { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import {
   type ReauthenticationRequired,
   reauthenticationRequiredResponse,
@@ -42,7 +43,8 @@ export class LootlogConfigAuthorization extends Context.Service<
       readonly anyOf: ReadonlyArray<PermissionValue>;
     }) => Effect.Effect<
       { readonly guildId: string },
-      LootlogConfigAccessDenied | ReauthenticationRequired
+      LootlogConfigAccessDenied | ReauthenticationRequired,
+      ForwardAuthIdentity
     >;
   }
 >()("@lootlog/api/http-api/lootlog-config/authorization") {}

@@ -1,3 +1,4 @@
+import type { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import {
   type MembersIdentity,
   MembersOperationError,
@@ -64,11 +65,15 @@ type AccessFailure =
 export class MembersAuthorization extends Context.Service<
   MembersAuthorization,
   {
-    readonly identity: Effect.Effect<MembersIdentity, MembersAccessDenied>;
+    readonly identity: Effect.Effect<
+      MembersIdentity,
+      MembersAccessDenied,
+      ForwardAuthIdentity
+    >;
     readonly requireGuild: (options: {
       readonly guildId: string;
       readonly anyOf: ReadonlyArray<PermissionValue>;
-    }) => Effect.Effect<MembersGuildAccess, AccessFailure>;
+    }) => Effect.Effect<MembersGuildAccess, AccessFailure, ForwardAuthIdentity>;
   }
 >()("@lootlog/api/http-api/members/authorization") {}
 

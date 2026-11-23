@@ -1,3 +1,4 @@
+import type { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import {
   type ReauthenticationRequired,
   reauthenticationRequiredResponse,
@@ -41,7 +42,8 @@ export class MapTemplatesAuthorization extends Context.Service<
       readonly capability: PermissionValue;
     }) => Effect.Effect<
       { readonly guildId: string },
-      MapTemplatesAccessDenied | ReauthenticationRequired
+      MapTemplatesAccessDenied | ReauthenticationRequired,
+      ForwardAuthIdentity
     >;
   }
 >()("@lootlog/api/http-api/map-templates/authorization") {}
