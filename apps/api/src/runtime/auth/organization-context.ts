@@ -10,13 +10,11 @@ import {
 } from "@lootlog/domain/access-policy";
 import type { Permission } from "@lootlog/schema/permissions";
 import type { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
-import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   guildTable,
   memberTable,
   roleTable,
 } from "#src/database/drizzle/organization.schema";
-import { findActiveGuild } from "#src/guilds/active-guild-lookup";
 import {
   readCachedGuild,
   writeGuildConfigurationCache,
@@ -35,7 +33,6 @@ import {
   PERMISSIONS_CACHE_TTL_SECONDS,
 } from "#src/shared/cache";
 import { MembersData } from "#src/members/members-data";
-import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 
 const CachedGuild = createSelectSchema(guildTable, {
   createdAt: IsoDateTime,
@@ -71,6 +68,10 @@ export type OrganizationContextRefresh = (options: {
   readonly priority: number;
   readonly reason: string;
 }) => Effect.Effect<void, unknown>;
+
+export type OrganizationGuildSource = (
+  idOrVanityUrl: string,
+) => Effect.Effect<typeof guildTable.$inferSelect | null, unknown>;
 
 const REFRESH_AHEAD_FRACTION = 2 / 3;
 
@@ -159,15 +160,17 @@ export class OrganizationContextLookup extends Context.Service<
     return Layer.succeed(OrganizationContextLookup, service);
   }
 
-  static layerDatabase(
-    cache: OrganizationContextCache,
-    queueRefresh: OrganizationContextRefresh,
-  ) {
+  static layer(options: {
+    readonly environment: RuntimeEnvironment;
+    readonly cache: OrganizationContextCache;
+    readonly queueRefresh: OrganizationContextRefresh;
+    readonly findGuild: OrganizationGuildSource;
+  }) {
+    const { environment, cache, queueRefresh, findGuild } = options;
+
     return Layer.effect(
       OrganizationContextLookup,
       Effect.gen(function* () {
-        const config = yield* ApiRuntimeConfig;
-        const database = yield* ApiDatabase;
         const members = yield* MembersData;
 
         const readGuild = (idOrVanityUrl: string) =>
@@ -180,9 +183,7 @@ export class OrganizationContextLookup extends Context.Service<
 
             if (cached) return cached;
 
-            const guild = yield* findActiveGuild(database, idOrVanityUrl).pipe(
-              Effect.orDie,
-            );
+            const guild = yield* findGuild(idOrVanityUrl).pipe(Effect.orDie);
 
             if (!guild) {
               return yield* new OrganizationNotFound({
@@ -199,7 +200,7 @@ export class OrganizationContextLookup extends Context.Service<
             return guild;
           });
 
-        const softTtl = getMemberCacheSoftTtl(config.environment);
+        const softTtl = getMemberCacheSoftTtl(environment);
 
         const refreshInBackground = (
           options: { readonly userId: string; readonly discordId: string },
@@ -260,11 +261,7 @@ export class OrganizationContextLookup extends Context.Service<
               const now = yield* Clock.currentTimeMillis;
 
               if (cached) {
-                const member = readFreshCachedMember(
-                  cached,
-                  config.environment,
-                  now,
-                );
+                const member = readFreshCachedMember(cached, environment, now);
 
                 if (member) {
                   yield* refreshInBackground(
