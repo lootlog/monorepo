@@ -136,15 +136,47 @@ export interface RedisService {
   ) => Effect.Effect<T, E>;
 }
 
+export interface RedisCommandTransport {
+  readonly send: (
+    command: string,
+    ...args: ReadonlyArray<string>
+  ) => Effect.Effect<unknown, Redis.RedisError>;
+  readonly eval: Redis.Redis["Service"]["eval"];
+}
+
+const ScanReply = Schema.Tuple([
+  Schema.String,
+  Schema.mutable(Schema.Array(Schema.String)),
+]);
+
+const StringListReply = Schema.mutable(Schema.Array(Schema.String));
+
+const NullableStringReply = Schema.NullOr(Schema.String);
+
+const IntegerReply = Schema.Int;
+
+const OkReply = Schema.Literal("OK");
+
 export const makeRedisService = (
-  redis: Redis.Redis["Service"],
+  redis: RedisCommandTransport,
   options: { readonly prefix?: string } = {},
 ): RedisService => {
   const prefix = options.prefix ?? "";
   const scripts = new RedisScriptCache();
 
-  const send: Redis.Redis["Service"]["send"] = (command, ...args) =>
-    redis.send(command, ...args);
+  const send = <S extends Schema.Decoder<unknown>>(
+    reply: S,
+    command: string,
+    ...args: ReadonlyArray<string>
+  ): Effect.Effect<S["Type"], Redis.RedisError> =>
+    redis.send(command, ...args).pipe(
+      Effect.flatMap(Schema.decodeUnknownEffect(reply)),
+      Effect.mapError((cause) =>
+        cause instanceof Redis.RedisError
+          ? cause
+          : new Redis.RedisError({ cause }),
+      ),
+    );
 
   const prefixKey = (key: string): string =>
     prefix ? `${prefix}:${key}` : key;
@@ -161,7 +193,8 @@ export const makeRedisService = (
       let cursor = "0";
 
       do {
-        const [nextCursor, matchedKeys] = yield* send<[string, string[]]>(
+        const [nextCursor, matchedKeys] = yield* send(
+          ScanReply,
           "SCAN",
           cursor,
           "MATCH",
@@ -175,15 +208,17 @@ export const makeRedisService = (
       } while (cursor !== "0");
     });
 
-  const get: RedisService["get"] = (key) => send("GET", prefixKey(key));
+  const get: RedisService["get"] = (key) =>
+    send(NullableStringReply, "GET", prefixKey(key));
 
   const set: RedisService["set"] = (key, value, ttlSeconds) =>
     (ttlSeconds
-      ? send("SET", prefixKey(key), value, "EX", String(ttlSeconds))
-      : send("SET", prefixKey(key), value)
+      ? redis.send("SET", prefixKey(key), value, "EX", String(ttlSeconds))
+      : redis.send("SET", prefixKey(key), value)
     ).pipe(Effect.asVoid);
 
-  const del: RedisService["del"] = (key) => send("DEL", prefixKey(key));
+  const del: RedisService["del"] = (key) =>
+    send(IntegerReply, "DEL", prefixKey(key));
 
   const evalScript = <T = unknown>(
     script: string,
@@ -200,10 +235,10 @@ export const makeRedisService = (
 
   const setNX: RedisService["setNX"] = (key, value, ttlSeconds) =>
     ttlSeconds
-      ? send("SET", prefixKey(key), value, "EX", String(ttlSeconds), "NX").pipe(
-          Effect.map((result) => result === "OK"),
-        )
-      : send<number>("SETNX", prefixKey(key), value).pipe(
+      ? redis
+          .send("SET", prefixKey(key), value, "EX", String(ttlSeconds), "NX")
+          .pipe(Effect.map((result) => result === "OK"))
+      : send(IntegerReply, "SETNX", prefixKey(key), value).pipe(
           Effect.map((result) => result === 1),
         );
 
@@ -259,7 +294,8 @@ export const makeRedisService = (
     eval: evalScript,
     setNX,
     setNxGet: (key, value, ttlSeconds) =>
-      send<string | null>(
+      send(
+        NullableStringReply,
         "SET",
         prefixKey(key),
         value,
@@ -270,9 +306,9 @@ export const makeRedisService = (
       ),
     deleteIfValue: (key, value) =>
       evalScript<number>(RELEASE_LOCK_SCRIPT, [key], [value]),
-    incr: (key) => send<number>("INCR", prefixKey(key)),
+    incr: (key) => send(IntegerReply, "INCR", prefixKey(key)),
     expire: (key, ttlSeconds) =>
-      send<number>("EXPIRE", prefixKey(key), String(ttlSeconds)),
+      send(IntegerReply, "EXPIRE", prefixKey(key), String(ttlSeconds)),
     getJson,
     setJson: (key, value, ttlSeconds, codec = DEFAULT_JSON_SERIALIZER) =>
       set(key, codec.stringify(value), ttlSeconds),
@@ -303,7 +339,7 @@ export const makeRedisService = (
 
         return forEachScanBatch(pattern, (matchedKeys) =>
           Effect.forEach(chunk(matchedKeys, batchSize), (batch) =>
-            send<number>("DEL", ...batch).pipe(
+            send(IntegerReply, "DEL", ...batch).pipe(
               Effect.map((deleted) => {
                 deletedCount += deleted;
               }),
@@ -311,13 +347,20 @@ export const makeRedisService = (
           ).pipe(Effect.asVoid),
         ).pipe(Effect.map(() => deletedCount));
       }),
-    rpush: (key, ...values) => send("RPUSH", prefixKey(key), ...values),
+    rpush: (key, ...values) =>
+      send(IntegerReply, "RPUSH", prefixKey(key), ...values),
     ltrim: (key, start, stop) =>
-      send("LTRIM", prefixKey(key), String(start), String(stop)),
+      send(OkReply, "LTRIM", prefixKey(key), String(start), String(stop)),
     lrange: (key, start, stop) =>
-      send("LRANGE", prefixKey(key), String(start), String(stop)),
+      send(
+        StringListReply,
+        "LRANGE",
+        prefixKey(key),
+        String(start),
+        String(stop),
+      ),
     lrem: (key, count, value) =>
-      send("LREM", prefixKey(key), String(count), value),
+      send(IntegerReply, "LREM", prefixKey(key), String(count), value),
     getOrSetJson,
   };
 };
