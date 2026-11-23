@@ -15,6 +15,8 @@ import type {
   CatalogReportStatus,
   CatalogReportSubjectType,
 } from "#src/http-api/contracts/reports/schemas";
+import type { ItemEntry } from "#src/items/items.service";
+import type { NpcEntry } from "#src/npcs/npcs.service";
 
 export const catalogItemTable = pgTable(
   "CatalogItem",
@@ -26,7 +28,7 @@ export const catalogItemTable = pgTable(
       .array()
       .notNull()
       .default(sql`'{}'`),
-    document: jsonb("document").$type<object>().notNull(),
+    document: jsonb("document").$type<ItemEntry>().notNull(),
     updatedAt: timestamp("updatedAt", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -45,7 +47,7 @@ export const catalogNpcTable = pgTable(
   {
     uid: text("uid").primaryKey(),
     monsterKey: text("monsterKey").notNull(),
-    document: jsonb("document").$type<object>().notNull(),
+    document: jsonb("document").$type<NpcEntry>().notNull(),
     updatedAt: timestamp("updatedAt", { withTimezone: true })
       .notNull()
       .defaultNow(),
