@@ -81,7 +81,13 @@ describe("API HTTP boundary Organizations", () => {
       method: "POST",
     });
 
-    expect(refreshed.status).toBe(500);
+    expect(refreshed.status).toBe(200);
+    expect(await refreshed.json()).toEqual([
+      expect.objectContaining({
+        id: authorizedGuildId,
+        isAccessDataStale: true,
+      }),
+    ]);
   });
 
   it("resolves canonical and current alias loot routes while rejecting a stale alias", async () => {
