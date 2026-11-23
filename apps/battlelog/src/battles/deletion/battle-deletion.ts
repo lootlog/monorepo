@@ -1,12 +1,11 @@
-import { and, asc, eq, inArray, lte, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
-import { Clock, Effect, Result } from "effect";
+import { Effect } from "effect";
 import { chunk } from "es-toolkit";
 import type { DrizzleDatabase } from "#src/database/database";
 import {
   battleLegacyIds,
   battles,
-  battleObjectDeletions,
   battleSubmissions,
   battleTimelines,
   battleWarriorFilters,
@@ -15,7 +14,6 @@ import {
   weaponKills,
 } from "#src/database/schema";
 import type { BattleAnalytics } from "#src/battles/analytics/battle-analytics.service";
-import type { BattleObjectStorage } from "#src/infrastructure/battle-object-storage";
 import { ResourceNotFoundError } from "@lootlog/protocol/http/errors";
 
 type DeletionTransaction = Parameters<
@@ -23,68 +21,9 @@ type DeletionTransaction = Parameters<
 >[0];
 
 export const makeBattleDeletion = (
-  database: Pick<
-    DrizzleDatabase,
-    "select" | "delete" | "update" | "transaction"
-  >,
-  objects: Pick<BattleObjectStorage, "deleteBattlesData">,
+  database: Pick<DrizzleDatabase, "select" | "delete" | "transaction">,
   analytics: Pick<BattleAnalytics, "invalidateAnalyticsCache">,
 ) => {
-  const drain = database
-    .transaction((transaction) =>
-      Effect.gen(function* () {
-        const now = new Date(yield* Clock.currentTimeMillis);
-
-        const pending = yield* transaction
-          .select()
-          .from(battleObjectDeletions)
-          .where(lte(battleObjectDeletions.retryAt, now))
-          .orderBy(asc(battleObjectDeletions.retryAt))
-          .limit(1_000)
-          .for("update", { skipLocked: true });
-
-        if (pending.length === 0) return;
-
-        const ids = pending.map((item) => item.battleId);
-
-        yield* Effect.forEach(
-          new Set(pending.map((item) => item.userId)),
-          (userId) => analytics.invalidateAnalyticsCache(userId),
-          { concurrency: 8, discard: true },
-        );
-
-        const deleted = yield* Effect.result(objects.deleteBattlesData(ids));
-
-        const retry = Result.isFailure(deleted) ? ids : deleted.success;
-
-        if (Result.isFailure(deleted)) {
-          yield* Effect.logWarning(
-            "Battle object deletion remains pending",
-            deleted.failure,
-          );
-        } else {
-          const failed = new Set(retry);
-          const completed = ids.filter((id) => !failed.has(id));
-
-          if (completed.length > 0) {
-            yield* transaction
-              .delete(battleObjectDeletions)
-              .where(inArray(battleObjectDeletions.battleId, completed));
-          }
-        }
-
-        if (retry.length > 0) {
-          yield* transaction
-            .update(battleObjectDeletions)
-            .set({
-              retryAt: new Date((yield* Clock.currentTimeMillis) + 60_000),
-            })
-            .where(inArray(battleObjectDeletions.battleId, retry));
-        }
-      }),
-    )
-    .pipe(Effect.withSpan("BattleDeletion.drain"));
-
   const removeBattles = (
     transaction: DeletionTransaction,
     owner: { userId: string; battleId?: string },
@@ -100,27 +39,20 @@ export const makeBattleDeletion = (
         sql`SELECT set_config('timescaledb.max_tuples_decompressed_per_dml_transaction', '0', true)`,
       );
 
-      const legacy = yield* transaction
-        .select({
-          battleId: battleLegacyIds.battleId,
-          legacyId: battleLegacyIds.legacyId,
-        })
-        .from(battleLegacyIds)
-        .innerJoin(battles, eq(battles.id, battleLegacyIds.battleId))
-        .where(owned(battles, battles.id));
-
       const removed = yield* transaction
         .delete(battles)
         .where(owned(battles, battles.id))
         .returning({ battleId: battles.id, userId: battles.userId });
 
       for (const batch of chunk(removed, 1_000)) {
-        yield* transaction.delete(battleWarriors).where(
-          inArray(
-            battleWarriors.battleId,
-            batch.map((row) => row.battleId),
-          ),
-        );
+        const battleIds = batch.map((row) => row.battleId);
+
+        yield* transaction
+          .delete(battleWarriors)
+          .where(inArray(battleWarriors.battleId, battleIds));
+        yield* transaction
+          .delete(battleLegacyIds)
+          .where(inArray(battleLegacyIds.battleId, battleIds));
       }
 
       yield* transaction
@@ -132,21 +64,6 @@ export const makeBattleDeletion = (
       yield* transaction
         .delete(battleSubmissions)
         .where(owned(battleSubmissions, battleSubmissions.battleId));
-
-      for (const batch of chunk(legacy, 1_000)) {
-        yield* transaction.delete(battleLegacyIds).where(
-          inArray(
-            battleLegacyIds.battleId,
-            batch.map((row) => row.battleId),
-          ),
-        );
-        yield* transaction.insert(battleObjectDeletions).values(
-          batch.map((row) => ({
-            battleId: row.legacyId,
-            userId: owner.userId,
-          })),
-        );
-      }
 
       return removed;
     });
@@ -209,5 +126,5 @@ export const makeBattleDeletion = (
     },
   );
 
-  return { deleteBattle, deleteUserBattles, drain };
+  return { deleteBattle, deleteUserBattles };
 };

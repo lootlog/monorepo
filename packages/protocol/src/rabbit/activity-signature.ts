@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { timingSafeEqual } from "node:crypto";
 import { stableJsonStringify } from "@lootlog/schema/stable-json";
 import { Option, Schema } from "effect";
 
@@ -43,7 +43,7 @@ export function verifyActivityEventSignature({
 }
 
 export function signActivityEvent(payload: unknown, secret: string): string {
-  return createHmac("sha256", secret)
+  return new Bun.CryptoHasher("sha256", secret)
     .update(stableJsonStringify(payload))
     .digest("hex");
 }

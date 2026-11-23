@@ -25,11 +25,9 @@
     "db:pull": "bunx drizzle-kit pull --config drizzle.config.ts",
     "db:migrate:deploy": "bun src/database/migrate.ts",
     "db:studio": "bunx drizzle-kit studio",
-    "maintenance:audit-actions": "bun --env-file=.env scripts/audit-r2-battle-actions.ts",
     "test:integration": "bun test .integration."
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1150.0",
     "@effect/platform-bun": "catalog:",
     "@effect/sql-pg": "catalog:",
     "@lootlog/battle-processor": "workspace:*",

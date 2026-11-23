@@ -1,5 +1,4 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
-import { randomUUID } from "node:crypto";
 import type { EventScoringRules } from "@lootlog/domain/scoring";
 import { eq, inArray } from "drizzle-orm";
 import { Effect, ManagedRuntime } from "effect";
@@ -28,7 +27,7 @@ import { makeEventPoints } from "../src/events/kills/event-points.service.js";
 
 const runtime = ManagedRuntime.make(ApiDatabaseLive);
 
-const guildId = `event-scoring-presence-${randomUUID()}`;
+const guildId = `event-scoring-presence-${crypto.randomUUID()}`;
 
 const at = (clock: string) => new Date(`2026-01-15T${clock}.000Z`);
 
@@ -141,16 +140,16 @@ const recalculate = (params: {
     Effect.gen(function* () {
       const db = yield* ApiDatabase;
       const now = new Date();
-      const eventId = randomUUID();
-      const mapId = randomUUID();
-      const killId = randomUUID();
+      const eventId = crypto.randomUUID();
+      const mapId = crypto.randomUUID();
+      const killId = crypto.randomUUID();
 
       const [solo, late] = yield* db
         .insert(memberTable)
         .values(
           ["solo", "late"].map((name) => ({
             guildId,
-            userId: `${name}-${randomUUID()}`,
+            userId: `${name}-${crypto.randomUUID()}`,
             name,
             updatedAt: now,
           })),
@@ -189,7 +188,7 @@ const recalculate = (params: {
       });
       yield* db.insert(eventMapAssignmentHistoryTable).values(
         params.assignments.map((assignment) => ({
-          id: randomUUID(),
+          id: crypto.randomUUID(),
           mapId,
           heroNpcId: eventId,
           memberId: memberIds[assignment.member],
@@ -199,7 +198,7 @@ const recalculate = (params: {
       );
       yield* db.insert(eventKillPointTable).values(
         params.pointMembers.map((member) => ({
-          id: randomUUID(),
+          id: crypto.randomUUID(),
           killId,
           memberId: memberIds[member],
           basePoints: 0,
@@ -213,7 +212,7 @@ const recalculate = (params: {
         })),
       );
 
-      const soloRankingId = randomUUID();
+      const soloRankingId = crypto.randomUUID();
 
       if (params.soloRanking)
         yield* db.insert(eventRankingTable).values({
@@ -231,7 +230,7 @@ const recalculate = (params: {
       if (params.soloRankingEdits?.length)
         yield* db.insert(eventPointsEditHistoryTable).values(
           params.soloRankingEdits.map((edit) => ({
-            id: randomUUID(),
+            id: crypto.randomUUID(),
             rankingId: soloRankingId,
             previousPoints: 0,
             newPoints: edit.points,

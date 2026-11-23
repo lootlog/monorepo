@@ -1,5 +1,4 @@
 import { afterAll, beforeAll, expect, it } from "bun:test";
-import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { Effect, ManagedRuntime } from "effect";
 import { ApiDatabase, ApiDatabaseLive } from "#src/database/drizzle/database";
@@ -19,7 +18,7 @@ afterAll(async () => {
 });
 
 it("counts every report of a tile once per submission and keeps the elite's spawn area", async () => {
-  const name = `Elita ${randomUUID()}`;
+  const name = `Elita ${crypto.randomUUID()}`;
 
   const elite = (x: number, y: number, templateId: number | null = 77) => ({
     name,

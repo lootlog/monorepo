@@ -1,7 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { Effect } from "effect";
 import { makeReadCacheFixture } from "./read-cache-fixtures.js";
-import { randomUUID } from "node:crypto";
 import { Redis } from "effect/persistence";
 import { makeRedisService, type RedisService } from "#src/redis/redis.service";
 
@@ -19,7 +18,7 @@ describe("Read cache Dragonfly single-flight fills", () => {
   afterAll(fixture.close);
 
   it("gives every report after the first the value the first one claimed", async () => {
-    const key = `boss-kill-${randomUUID()}`;
+    const key = `boss-kill-${crypto.randomUUID()}`;
 
     const claims = await Promise.all(
       ["a", "b", "c"].map((value) =>

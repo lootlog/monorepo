@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import {
   createAccessPolicySnapshot,
   diffAccessPolicies,
@@ -63,7 +62,7 @@ export const sessionAccessPolicy = (session: PermissionViewer) => {
 
   return {
     organizations,
-    version: createHash("sha256")
+    version: new Bun.CryptoHasher("sha256")
       .update(JSON.stringify(organizations))
       .digest("hex"),
   };

@@ -62,7 +62,7 @@ afterAll(async () => {
 
 beforeEach(async () => {
   await pool.query(
-    "TRUNCATE battles, battle_warriors, battle_warrior_filters, battle_timelines, battle_submissions, battle_legacy_ids, user_characters, battle_object_deletions, weapon_kills",
+    "TRUNCATE battles, battle_warriors, battle_warrior_filters, battle_timelines, battle_submissions, battle_legacy_ids, user_characters, weapon_kills",
   );
   await pool.query(`INSERT INTO battles (id, "createdAt", "userId", "accountId", "characterId", world, duration, type, winner, loser, "winningTeam", "losingTeam", public)
     SELECT id, battle_id_created_at(id), owner, 'account', 'character', 'world', 1, 'pvp', 'winner', 'loser', 1, 2, true
@@ -90,44 +90,18 @@ const run = <A, E>(effect: Effect.Effect<A, E, PgClient.PgClient>) =>
   );
 
 for (const mode of ["single", "user"] as const) {
-  it(`retains durable ${mode} deletion work across R2 failure and a restarted worker`, async () => {
-    const removed: string[] = [];
-    let fail = true;
-
-    const storage = {
-      deleteBattlesData: (ids: readonly string[]) =>
-        Effect.sync(() => {
-          const failed = ids.filter((id) => fail && id === LEGACY_ONE);
-          removed.push(...ids.filter((id) => !failed.includes(id)));
-
-          return failed;
-        }),
-    };
-
-    const analytics = { invalidateAnalyticsCache: () => Effect.void };
+  it(`removes a ${mode} deletion's rows from every battle table`, async () => {
     await run(
       Effect.gen(function* () {
-        const deletion = makeBattleDeletion(
-          yield* drizzleDatabaseEffect,
-          storage,
-          analytics,
-        );
+        const deletion = makeBattleDeletion(yield* drizzleDatabaseEffect, {
+          invalidateAnalyticsCache: () => Effect.void,
+        });
 
         if (mode === "single") yield* deletion.deleteBattle(BATTLE_IDS.one);
         else yield* deletion.deleteUserBattles("owner");
-        yield* deletion.drain;
       }),
     );
 
-    const expected = [LEGACY_ONE];
-
-    expect(
-      (
-        await pool.query(
-          'SELECT "battleId" FROM battle_object_deletions ORDER BY "battleId"',
-        )
-      ).rows,
-    ).toEqual([{ battleId: LEGACY_ONE }]);
     expect(await storedBattles()).toEqual(
       mode === "single" ? ["two", "other"] : ["other"],
     );
@@ -165,118 +139,5 @@ for (const mode of ["single", "user"] as const) {
           )
         ).rows.map((row) => battleName(row.battleId)),
       ).toEqual(mode === "single" ? ["two", "other"] : ["other"]);
-    expect(
-      (
-        await pool.query(
-          `SELECT id FROM battles WHERE id = '${BATTLE_IDS.one}' AND public = true`,
-        )
-      ).rows,
-    ).toEqual([]);
-    fail = false;
-    await pool.query('UPDATE battle_object_deletions SET "retryAt" = now()');
-    await run(
-      Effect.gen(function* () {
-        const restarted = makeBattleDeletion(
-          yield* drizzleDatabaseEffect,
-          storage,
-          analytics,
-        );
-
-        yield* restarted.drain;
-        yield* restarted.drain;
-      }),
-    );
-    expect(removed.sort()).toEqual(expected.sort());
-    expect(
-      (await pool.query("SELECT * FROM battle_object_deletions")).rows,
-    ).toEqual([]);
   });
 }
-
-it("rolls back database removal if durable cleanup cannot be recorded", async () => {
-  await pool.query(
-    `ALTER TABLE battle_object_deletions ADD CONSTRAINT reject_cleanup CHECK (false)`,
-  );
-
-  try {
-    await expect(
-      run(
-        Effect.gen(function* () {
-          const deletion = makeBattleDeletion(
-            yield* drizzleDatabaseEffect,
-            { deleteBattlesData: () => Effect.succeed([]) },
-            { invalidateAnalyticsCache: () => Effect.void },
-          );
-
-          yield* deletion.deleteUserBattles("owner");
-        }),
-      ),
-    ).rejects.toBeDefined();
-    expect(await storedBattles()).toEqual(["one", "two", "other"]);
-    expect((await pool.query("SELECT id FROM user_characters")).rows).toEqual([
-      { id: "character" },
-    ]);
-  } finally {
-    await pool.query(
-      "ALTER TABLE battle_object_deletions DROP CONSTRAINT reject_cleanup",
-    );
-  }
-});
-
-it("claims disjoint cleanup batches across workers and invalidates each owner once", async () => {
-  await pool.query(`INSERT INTO battle_object_deletions ("battleId", "userId")
-    SELECT 'pending-' || n, 'owner' FROM generate_series(1, 2000) n`);
-  const seen: string[][] = [];
-  let invalidations = 0;
-  const firstStarted = Promise.withResolvers<void>();
-  const releaseFirst = Promise.withResolvers<void>();
-
-  const storage = {
-    deleteBattlesData: (ids: readonly string[]) =>
-      Effect.promise(async () => {
-        seen.push([...ids]);
-
-        if (seen.length === 1) {
-          firstStarted.resolve();
-          await releaseFirst.promise;
-        }
-
-        return [];
-      }),
-  };
-
-  const analytics = {
-    invalidateAnalyticsCache: () =>
-      Effect.sync(() => {
-        invalidations += 1;
-      }),
-  };
-
-  const drain = () =>
-    run(
-      Effect.gen(function* () {
-        yield* makeBattleDeletion(
-          yield* drizzleDatabaseEffect,
-          storage,
-          analytics,
-        ).drain;
-      }),
-    );
-
-  const first = drain();
-  await firstStarted.promise;
-
-  try {
-    await drain();
-    expect(seen.map((batch) => batch.length)).toEqual([1000, 1000]);
-    expect(new Set(seen.flat()).size).toBe(2000);
-    expect(invalidations).toBe(2);
-  } finally {
-    releaseFirst.resolve();
-    await first;
-  }
-
-  expect(
-    (await pool.query("SELECT * FROM battle_object_deletions")).rows,
-  ).toEqual([]);
-});

@@ -381,32 +381,8 @@ export const createTestApplication = ({
     invalidateAnalyticsCache: mock(() => Effect.void),
   };
 
-  const objects = new Map<string, unknown>();
-
-  const readBattleData = mock(async (battleId: string) =>
-    JSON.stringify(objects.get(battleId)),
-  );
-
-  const objectStorage = {
-    readBattleData,
-    getBattleData: <TData>(
-      battleId: string,
-      decodeJson: (value: string) => TData,
-    ) =>
-      Effect.promise(() => readBattleData(battleId)).pipe(
-        Effect.map(decodeJson),
-      ),
-    deleteBattlesData: (battleIds: readonly string[]) =>
-      Effect.sync(() => {
-        for (const battleId of battleIds) objects.delete(battleId);
-
-        return [];
-      }),
-  };
-
   const battlesModule = makeBattles(
     drizzle,
-    objectStorage,
     redisService,
     { paginateBattles: () => Effect.die("Unexpected pagination") },
     analyticsService,
@@ -442,7 +418,7 @@ export const createTestApplication = ({
     battles: battlesService,
   };
 
-  return { app, database, objects, objectStorage, analyticsService };
+  return { app, database, analyticsService };
 };
 
 export const useBattleCreationDatabase = (

@@ -152,7 +152,6 @@ export const unusedBattles = {
   createBattle: unexpectedOperation,
   deleteBattle: unexpectedOperation,
   deleteUserBattles: unexpectedOperation,
-  drainObjectDeletions: unexpectedOperation(),
   getBattleFromDatabase: unexpectedOperation,
   getBattleRawData: unexpectedOperation,
   getBattleTimeline: unexpectedOperation,

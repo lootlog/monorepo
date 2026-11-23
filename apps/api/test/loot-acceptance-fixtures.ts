@@ -11,7 +11,6 @@ import {
 import { Capability } from "@lootlog/schema/permissions";
 import { makeLootQueryPersistence } from "#src/loots/query/loot-query.repository";
 import type { MapPlayersSnapshot } from "@lootlog/protocol/loot-summary";
-import { randomUUID } from "node:crypto";
 import { and, eq, inArray } from "drizzle-orm";
 import { Effect, ManagedRuntime, Schema } from "effect";
 import { ApiDatabase, ApiDatabaseLive } from "#src/database/drizzle/database";
@@ -68,7 +67,7 @@ export const makeLootAcceptanceFixture = () => {
   const close = () => runtime.dispose();
 
   const seed = async (elite2 = false) => {
-    const id = randomUUID();
+    const id = crypto.randomUUID();
     const now = new Date();
     await runtime.runPromise(
       Effect.gen(function* () {

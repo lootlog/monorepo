@@ -28,7 +28,6 @@ import {
   Option,
   Schema,
 } from "effect";
-import { createHash } from "node:crypto";
 import {
   ActivityDatabase,
   type ActivityDatabaseFailure,
@@ -168,7 +167,7 @@ export class ActivityRepository extends Context.Service<
           source: dto.source,
         };
 
-        const fingerprint = createHash("sha256")
+        const fingerprint = new Bun.CryptoHasher("sha256")
           .update(JSON.stringify(snapshotFields))
           .digest("hex");
 

@@ -12,28 +12,16 @@ import { BattleResponseSchemas } from "#src/battles/catalog/battle-response";
 import type { DrizzleDatabase } from "#src/database/database";
 import type { Battle } from "#src/database/schema";
 import { decodeBattleEvents } from "#src/battles/battle-timeline";
-import type { BattleObjectStorage } from "#src/infrastructure/battle-object-storage";
-import {
-  parseBattleMoves,
-  type BattleWarriorSnapshot,
-} from "@lootlog/battle-processor/battle-log";
-import {
-  BattleProcessor,
-  type BattleAnalysis,
-} from "@lootlog/battle-processor/battle-processor";
-import {
-  decodeRawBattleDataJson,
-  type BattleWithRelations,
-  type RawBattleData,
+import { parseBattleMoves } from "@lootlog/battle-processor/battle-log";
+import { BattleProcessor } from "@lootlog/battle-processor/battle-processor";
+import type {
+  BattleWithRelations,
+  RawBattleData,
 } from "#src/battles/battle-service";
 
 type BattleTimelineReadDatabase = {
   query: {
     battles: Pick<DrizzleDatabase["query"]["battles"], "findFirst">;
-    battleLegacyIds: Pick<
-      DrizzleDatabase["query"]["battleLegacyIds"],
-      "findFirst"
-    >;
     battleTimelines: Pick<
       DrizzleDatabase["query"]["battleTimelines"],
       "findFirst"
@@ -61,75 +49,8 @@ const rawBattleSourceColumns = {
   createdAt: true,
 } as const;
 
-const normalizeRawBattleData = (
-  rawBattleData: RawBattleData,
-): RawBattleData => {
-  if (!rawBattleData.rawData.sourceEvents?.length) {
-    return rawBattleData;
-  }
-
-  return {
-    ...rawBattleData,
-    rawData: {
-      ...rawBattleData.rawData,
-      events: parseBattleMoves(rawBattleData.rawData.sourceEvents),
-    },
-  };
-};
-
-const createTimelineMatchmakingSnapshot = (
-  battle: BattleWithRelations,
-): BattleAnalysis["matchmaking"] => {
-  if (!battle.matchmaking) {
-    return undefined;
-  }
-
-  return {
-    difficultyRank: battle.difficultyRank ?? 0,
-    result: battle.result ?? 0,
-    ratingDelta: battle.ratingDelta ?? 0,
-    opponentLvl: battle.opponentLvl ?? 0,
-    opponentOplvl: battle.opponentOplvl ?? 0,
-    opponentRating: battle.opponentRating ?? 0,
-    rating: battle.rating ?? 0,
-    status: battle.status ?? 0,
-    pointsGained: battle.pointsGained ?? undefined,
-    placementCur: battle.placementCur ?? undefined,
-    placementMax: battle.placementMax ?? undefined,
-    dailyStageId: battle.dailyStageId ?? undefined,
-    dailyPointsCur: battle.dailyPointsCur ?? undefined,
-    dailyPointsMax: battle.dailyPointsMax ?? undefined,
-    dailyPointsStep: battle.dailyPointsStep ?? undefined,
-    dailyRewardsLast: battle.dailyRewardsLast ?? undefined,
-    dailyRewardsCur: battle.dailyRewardsCur ?? undefined,
-    dailyRewardsMax: battle.dailyRewardsMax ?? undefined,
-  };
-};
-
-const createWarriorSnapshots = (
-  battle: BattleWithRelations,
-): Record<string, BattleWarriorSnapshot> => {
-  return battle.warriors.reduce<Record<string, BattleWarriorSnapshot>>(
-    (acc, warrior) => {
-      const originalId = Number.parseInt(warrior.originalId, 10);
-      acc[warrior.originalId] = {
-        originalId: Number.isNaN(originalId) ? 0 : originalId,
-        name: warrior.name,
-        lvl: warrior.lvl,
-        prof: warrior.prof,
-        icon: warrior.icon,
-        team: warrior.team,
-      };
-
-      return acc;
-    },
-    {},
-  );
-};
-
 export const makeBattleTimelineRead = (
   drizzle: BattleTimelineReadDatabase,
-  r2Service: Pick<BattleObjectStorage, "getBattleData">,
   redisService: Pick<RedisStore, "getJson" | "setJson">,
   catalog: Pick<
     BattleCatalog,
@@ -138,20 +59,8 @@ export const makeBattleTimelineRead = (
 ) => {
   const logger = new ContextLogger("Battles");
 
-  const getBattleObjectId = (battleId: string) => {
-    return drizzle.query.battleLegacyIds
-      .findFirst({
-        where: { battleId },
-        columns: { legacyId: true },
-      })
-      .pipe(
-        withAdapterSpan("Battles_getObjectId", "battlelog-infrastructure"),
-        Effect.map((legacy) => legacy?.legacyId ?? battleId),
-      );
-  };
-
-  const loadRawBattleData = (battle: RawBattleSource) => {
-    return drizzle.query.battleTimelines
+  const loadBattleEvents = (battle: RawBattleSource) =>
+    drizzle.query.battleTimelines
       .findFirst({
         where: { battleId: battle.id, userId: battle.userId },
         columns: { events: true },
@@ -160,68 +69,44 @@ export const makeBattleTimelineRead = (
         withAdapterSpan("Battles_getTimeline", "battlelog-infrastructure"),
         Effect.flatMap((timeline) =>
           timeline
-            ? Effect.succeed<RawBattleData>({
-                battleId: battle.id,
-                timestamp: battle.createdAt.toISOString(),
-                rawData: {
-                  accountId: battle.accountId,
-                  characterId: battle.characterId,
-                  world: battle.world,
-                  events: [],
-                  sourceEvents: decodeBattleEvents(timeline.events),
-                },
-              })
-            : getBattleObjectId(battle.id).pipe(
-                Effect.flatMap((objectId) =>
-                  r2Service
-                    .getBattleData(objectId, decodeRawBattleDataJson)
-                    .pipe(
-                      withAdapterSpan(
-                        "BattleObjectStorage_getBattleData",
-                        "battlelog-infrastructure",
-                      ),
-                    ),
+            ? Effect.succeed(decodeBattleEvents(timeline.events))
+            : Effect.fail(
+                new ResourceNotFoundError(
+                  `Timeline of battle ${battle.id} is no longer available`,
                 ),
               ),
         ),
       );
-  };
 
-  const buildTimelineResponse = (battle: BattleWithRelations) => {
-    return loadRawBattleData(battle).pipe(
-      Effect.map((rawBattleData) => {
-        const processor = new BattleProcessor();
-
-        let analysis: BattleAnalysis;
-
-        if (rawBattleData.rawData.sourceEvents?.length) {
-          analysis = processor.processBattle({
-            accountId: rawBattleData.rawData.accountId,
-            characterId: rawBattleData.rawData.characterId,
-            world: rawBattleData.rawData.world,
-            events: rawBattleData.rawData.sourceEvents,
-          });
-        } else {
-          analysis = processor.processParsedBattle({
-            accountId: rawBattleData.rawData.accountId,
-            characterId: rawBattleData.rawData.characterId,
-            world: rawBattleData.rawData.world,
-            events: rawBattleData.rawData.events,
-            warriors: createWarriorSnapshots(battle),
-            duration: battle.duration,
-            matchmaking: createTimelineMatchmakingSnapshot(battle),
-          });
-        }
-
-        return {
-          battleId: battle.id,
-          generatedAt: new Date().toISOString(),
-          timeline: analysis.battleTimeline,
-          warriors: battle.warriors,
-        };
-      }),
+  const loadRawBattleData = (battle: RawBattleSource) =>
+    loadBattleEvents(battle).pipe(
+      Effect.map((sourceEvents): RawBattleData => ({
+        battleId: battle.id,
+        timestamp: battle.createdAt.toISOString(),
+        rawData: {
+          accountId: battle.accountId,
+          characterId: battle.characterId,
+          world: battle.world,
+          events: parseBattleMoves(sourceEvents),
+          sourceEvents,
+        },
+      })),
     );
-  };
+
+  const buildTimelineResponse = (battle: BattleWithRelations) =>
+    loadBattleEvents(battle).pipe(
+      Effect.map((events) => ({
+        battleId: battle.id,
+        generatedAt: new Date().toISOString(),
+        timeline: new BattleProcessor().processBattle({
+          accountId: battle.accountId,
+          characterId: battle.characterId,
+          world: battle.world,
+          events,
+        }).battleTimeline,
+        warriors: battle.warriors,
+      })),
+    );
 
   const getCachedTimelineResponse = (battle: BattleWithRelations) => {
     return Effect.gen(function* () {
@@ -280,7 +165,7 @@ export const makeBattleTimelineRead = (
           `Battle with ID ${battleId} not found`,
         );
 
-      return normalizeRawBattleData(yield* loadRawBattleData(battle));
+      return yield* loadRawBattleData(battle);
     }).pipe(
       Effect.tapError((error) =>
         Effect.sync(() => {
@@ -311,7 +196,7 @@ export const makeBattleTimelineRead = (
           `Public battle with ID ${battleId} not found`,
         );
 
-      return normalizeRawBattleData(yield* loadRawBattleData(battle));
+      return yield* loadRawBattleData(battle);
     });
   };
 

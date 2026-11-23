@@ -8,7 +8,6 @@ import {
   selectAccessibleGuilds,
   selectActiveGuildMembers,
 } from "#src/members/member-access-query";
-import { randomUUID } from "node:crypto";
 import { Clock, Effect, Option } from "effect";
 import { normalizeNpcIcon } from "@lootlog/domain/npc-icon";
 import { getNpcType, isDropSourceBossType } from "@lootlog/domain/npc-type";
@@ -79,7 +78,7 @@ export const makeKillCreation = (
   }
 
   const claim = Effect.fnUntraced(function* (key: string, operation: string) {
-    const token = randomUUID();
+    const token = crypto.randomUUID();
 
     const acquired = yield* protect(
       operation,

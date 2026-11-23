@@ -15,7 +15,6 @@ import type { ItemRarityEnum as ItemRarity } from "@lootlog/schema/item-rarity";
 import type { Capability } from "@lootlog/schema/permissions";
 import { organizationLootRecordTable } from "#src/database/drizzle/loot.schema";
 import type { roleTable } from "#src/database/drizzle/organization.schema";
-import { createHash } from "node:crypto";
 import { sum } from "es-toolkit";
 import { Effect, Schema } from "effect";
 import { createLootAccessFingerprint } from "@lootlog/domain/loot-visibility";
@@ -144,7 +143,7 @@ export class LootStatsService {
     npcTypes?: ReadonlyArray<NpcType>,
     excludeColossus?: boolean,
   ): string {
-    const accessFingerprint = createHash("sha256")
+    const accessFingerprint = new Bun.CryptoHasher("sha256")
       .update(
         createLootAccessFingerprint({
           organizationId: guildId,

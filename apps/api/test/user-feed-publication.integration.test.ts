@@ -1,7 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import { makeUserFeedFixture } from "./user-feed-fixtures.js";
-import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import { UserFeedItem } from "@lootlog/protocol/feed";
@@ -71,7 +70,7 @@ describe("personal Organization activity feed publication", () => {
   });
   it("does not retry failed publication and keeps history until cleanup", async () => {
     const { guild, owner } = await seed();
-    const id = randomUUID();
+    const id = crypto.randomUUID();
     await run(kill(guild.id, { id }));
     const messages: PublishOptions[] = [];
 
@@ -97,7 +96,7 @@ describe("personal Organization activity feed publication", () => {
     );
     expect(messages).toHaveLength(1);
     expect((await run(makeUserFeed(database)(owner))).items).toHaveLength(1);
-    const old = randomUUID();
+    const old = crypto.randomUUID();
     await run(
       kill(guild.id, {
         id: old,

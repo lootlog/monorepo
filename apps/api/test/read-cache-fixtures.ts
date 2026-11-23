@@ -1,5 +1,4 @@
 import { makeJsonCodec } from "@lootlog/database/redis-cache-fill";
-import { randomUUID } from "node:crypto";
 import { BunRedis } from "@effect/platform-bun";
 import { Effect, ManagedRuntime, Schema } from "effect";
 import { Redis } from "effect/persistence";
@@ -23,7 +22,7 @@ export const makeReadCacheFixture = () => {
     Schema.NullOr(Schema.Struct({ value: Schema.Finite })),
   );
 
-  const organization = randomUUID();
+  const organization = crypto.randomUUID();
   const prefix = `cache-test-${organization}`;
 
   const fromPromise = <A>(factory: () => Promise<A>) =>

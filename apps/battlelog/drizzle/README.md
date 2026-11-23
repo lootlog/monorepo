@@ -64,10 +64,10 @@ one step:
   `BattleDeletion` removes a battle's rows from every table together instead
   of relying on cascading foreign keys into the hypertable.
 - **Timelines.** New battles store the submitted events in `battle_timelines`
-  in the same transaction as the battle. Battles saved before keep their R2
-  object; `battle_legacy_ids` maps their old ID (Prisma CUID, cuid2 or UUIDv4)
-  to the new one, so old links resolve and R2 reads and deletions use the old
-  key. Drop it together with the R2 bucket.
+  in the same transaction as the battle. Battles saved before kept their events
+  in R2, which is gone; their rows and statistics remain, but their timeline
+  and raw views answer 404. `battle_legacy_ids` maps their old ID (Prisma CUID,
+  cuid2 or UUIDv4) to the new one, so old public links still resolve.
 - **No JIT.** Plans over the hypertables cost more than `jit_above_cost`, and
   compiling them adds about 85 ms to every analytics read.
   `20261008203752_battlelog_disable_jit` sets `jit = off` on the database, so
@@ -96,28 +96,13 @@ Restore with the same TimescaleDB version as the dump.
 
 ## Object cleanup
 
-Apply `20260904192453_pending_object_deletions` before deploying the Battlelog
-cleanup worker. Removing a battle and recording its object deletion intent
-commit in one database transaction. The record and public link disappear
-immediately; object storage cleanup can complete later.
-
-The worker polls every five seconds, processes at most 100 records with four
-concurrent deletions, and retries failures after one minute. It invalidates
-analytics and removes the R2 object before deleting the intent. Repeated
-deletion of an already absent object is safe.
-
-Inspect pending cleanup without loading battle payloads:
-
-```sql
-SELECT "battleId", "userId", "createdAt", "retryAt"
-FROM "battle_object_deletions"
-ORDER BY "retryAt";
-```
-
-After restoring Redis/R2 connectivity, retain these rows for the worker to
-drain. Do not drop the table during rollback; older versions do not process
-it, so retain a compatible worker until the backlog is empty. The migration
-cannot recover object identifiers lost by deletions before it was installed.
+`20260904192453_pending_object_deletions` added `battle_object_deletions`, a
+durable outbox from which a worker removed deleted legacy battles from R2.
+`20261123162348_drop_battle_object_deletions` drops it together with the R2
+storage. Until the rollout replaces them, older Battlelog versions log a failed
+cleanup retry every five seconds and cannot delete a legacy battle, whose
+deletion records an outbox row; everything else keeps working. Pending rows are
+discarded with the bucket.
 
 ## User-scoped battle submissions
 

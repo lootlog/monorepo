@@ -6,7 +6,6 @@ import {
   expect,
   it,
 } from "bun:test";
-import { setTimeout as sleep } from "node:timers/promises";
 import { BunRedis } from "@effect/platform-bun";
 import { Effect, ManagedRuntime } from "effect";
 import { Redis } from "effect/persistence";
@@ -117,7 +116,7 @@ describe("Notification rate limiter Dragonfly integration", () => {
     await Promise.all(Array.from({ length: 5 }, () => firstLimiter("user-1")));
     const key = buildNotificationRateLimitKey("user-1");
     await send("PEXPIRE", key, "1");
-    await sleep(10);
+    await Bun.sleep(10);
 
     await expect(firstLimiter("user-1")).resolves.toEqual({
       accepted: true,

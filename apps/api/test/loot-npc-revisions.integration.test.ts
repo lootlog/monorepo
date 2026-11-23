@@ -1,6 +1,5 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "bun:test";
 import type { CreateLootRequest } from "#src/contracts/loots/schemas";
-import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -42,7 +41,7 @@ describe("durable loot NPC revisions", () => {
 
   it("retains level revisions and reuses identical NPC observations without rewriting earlier loots", async () => {
     const { id, request } = await seed();
-    const npcName = `Versioned hero ${randomUUID()}`;
+    const npcName = `Versioned hero ${crypto.randomUUID()}`;
     const lootIds: number[] = [];
 
     for (const lvl of [183, 210, 210]) {
@@ -53,7 +52,7 @@ describe("durable loot NPC revisions", () => {
             ...request.submission,
             loots: request.submission.loots.map((item) => ({
               ...item,
-              hid: randomUUID(),
+              hid: crypto.randomUUID(),
             })),
             npcs: request.submission.npcs.map((npc) => ({
               ...npc,
@@ -171,7 +170,7 @@ describe("durable loot NPC revisions", () => {
             ...request.submission,
             loots: request.submission.loots.map((item) => ({
               ...item,
-              hid: randomUUID(),
+              hid: crypto.randomUUID(),
             })),
             npcs: request.submission.npcs.map((npc) => ({
               ...npc,
@@ -193,7 +192,7 @@ describe("durable loot NPC revisions", () => {
 
   it("reuses the NPC revision when a sender reports the icon's CDN URL", async () => {
     const { request } = await seed();
-    const npcName = `CDN icon hero ${randomUUID()}`;
+    const npcName = `CDN icon hero ${crypto.randomUUID()}`;
     const snapshotIds: number[] = [];
 
     for (const icon of [
@@ -207,7 +206,7 @@ describe("durable loot NPC revisions", () => {
             ...request.submission,
             loots: request.submission.loots.map((item) => ({
               ...item,
-              hid: randomUUID(),
+              hid: crypto.randomUUID(),
             })),
             npcs: request.submission.npcs.map((npc) => ({
               ...npc,
@@ -229,12 +228,12 @@ describe("durable loot NPC revisions", () => {
 
   it("stores a game version on every loot and NPC revision, one revision per edition", async () => {
     const { request } = await seed();
-    const name = `Game version hero ${randomUUID()}`;
+    const name = `Game version hero ${crypto.randomUUID()}`;
 
     const accept = async (
       gameVersion: CreateLootRequest["gameVersion"],
       {
-        hids = request.submission.loots.map(() => randomUUID()),
+        hids = request.submission.loots.map(() => crypto.randomUUID()),
         world = request.submission.world,
       }: { hids?: string[]; world?: string } = {},
     ) => {
@@ -244,7 +243,7 @@ describe("durable loot NPC revisions", () => {
         world,
         loots: request.submission.loots.map((item, index) => ({
           ...item,
-          hid: hids[index] ?? randomUUID(),
+          hid: hids[index] ?? crypto.randomUUID(),
         })),
         npcs: request.submission.npcs.map((npc) => ({
           ...npc,
@@ -305,7 +304,7 @@ describe("durable loot NPC revisions", () => {
     expect(english.stored?.snapshotId).not.toBe(polish.stored?.snapshotId);
 
     expect(
-      (await accept("pl", { world: `other-${randomUUID()}` })).stored
+      (await accept("pl", { world: `other-${crypto.randomUUID()}` })).stored
         ?.snapshotId,
     ).toBe(polish.stored?.snapshotId);
 
@@ -395,7 +394,7 @@ describe("durable loot NPC revisions", () => {
               world: `concurrent-npc-${id}`,
               loots: request.submission.loots.map((item) => ({
                 ...item,
-                hid: randomUUID(),
+                hid: crypto.randomUUID(),
               })),
             },
           }),

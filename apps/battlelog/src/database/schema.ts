@@ -119,21 +119,6 @@ export const battleLegacyIds = pgTable("battle_legacy_ids", {
   battleId: uuid("battleId").notNull().unique("battle_legacy_ids_battleId_key"),
 });
 
-export const battleObjectDeletions = pgTable(
-  "battle_object_deletions",
-  {
-    battleId: text("battleId").primaryKey(),
-    userId: text("userId").notNull(),
-    createdAt: timestamp("createdAt", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
-    retryAt: timestamp("retryAt", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
-  },
-  (table) => [index("battle_object_deletions_retryAt_idx").on(table.retryAt)],
-);
-
 export const userCharacters = pgTable(
   "user_characters",
   {

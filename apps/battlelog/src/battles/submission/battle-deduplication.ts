@@ -1,5 +1,4 @@
 import { makeJsonCodec } from "@lootlog/database/redis-cache-fill";
-import { randomUUID } from "node:crypto";
 import { DependencyUnavailableError } from "@lootlog/protocol/http/errors";
 import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import type { RedisStore } from "#src/infrastructure/redis-store";
@@ -163,7 +162,7 @@ export const makeBattleDeduplication = (
 
         yield* throwIfBattleDeduplicationTimedOut(activeDeadline);
 
-        const lockToken = randomUUID();
+        const lockToken = crypto.randomUUID();
 
         const lockAcquired = yield* requireBattleDeduplicationRedis(
           redisService.setNX(

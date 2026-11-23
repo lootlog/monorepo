@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import { Effect, Predicate } from "effect";
 import {
   FALLBACK_NPC_NAME,
@@ -100,7 +99,7 @@ export const makeNotificationTestContent = (
       npcId: fallbackNpcId,
       npcName: fallbackNpcId > 0 ? null : FALLBACK_NPC_NAME,
       world: rule.world ?? FALLBACK_WORLD_NAME,
-      timerKey: `test-${randomUUID()}`,
+      timerKey: `test-${crypto.randomUUID()}`,
       minSpawnTime,
       maxSpawnTime,
       scheduledFor,

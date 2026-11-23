@@ -221,7 +221,7 @@ describe("environment value generation", () => {
       envVariable("DB_NAME", "lootlog"),
       envVariable("CUSTOM_VALUE", "your_value"),
       envVariable("DISCORD_CLIENT_SECRET", "external-secret"),
-      envVariable("R2_SECRET_ACCESS_KEY", "external-key"),
+      envVariable("DISCORD_BOT_TOKEN", "external-token"),
       envVariable("REDIS_PASSWORD", "placeholder"),
       envVariable("LOCAL_PASSWORD", "placeholder"),
       envVariable("LOCAL_SECRET", "placeholder"),

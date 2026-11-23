@@ -1,4 +1,3 @@
-import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { isDeepStrictEqual } from "node:util";
 import { isObject, isString } from "./deployment-input.ts";
@@ -15,9 +14,7 @@ const readWorkspaceManifests = async () => {
   for await (const path of new Bun.Glob("{apps,packages}/*/package.json").scan(
     repositoryRoot,
   )) {
-    manifests.push(
-      JSON.parse(await readFile(`${repositoryRoot}/${path}`, "utf8")),
-    );
+    manifests.push(await Bun.file(`${repositoryRoot}/${path}`).json());
   }
 
   return manifests;
@@ -121,7 +118,7 @@ function validateCloudflareTarget(target) {
 }
 
 export async function loadDeploymentTargets() {
-  const targets = JSON.parse(await readFile(catalogPath, "utf8"));
+  const targets = await Bun.file(catalogPath).json();
   const ids = new Set();
   const packages = new Set();
 

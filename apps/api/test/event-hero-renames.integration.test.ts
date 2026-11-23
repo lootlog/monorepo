@@ -1,5 +1,4 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
-import { randomUUID } from "node:crypto";
 import { eq, sql } from "drizzle-orm";
 import { Effect, Result } from "effect";
 import { ApiDatabase } from "../src/database/drizzle/database.js";
@@ -24,7 +23,7 @@ test("concurrent hero renames onto one name give it to exactly one hero", async 
   await runtime.runPromise(
     Effect.gen(function* () {
       const db = yield* ApiDatabase;
-      const eventId = randomUUID();
+      const eventId = crypto.randomUUID();
       const now = new Date();
 
       const mutations = makeEventCatalogMutations(db, {
@@ -96,7 +95,7 @@ test("renaming a hero deleted while the rename waits for its row is a 404", asyn
   await runtime.runPromise(
     Effect.gen(function* () {
       const db = yield* ApiDatabase;
-      const eventId = randomUUID();
+      const eventId = crypto.randomUUID();
       const heroId = `${eventId}-a`;
 
       const mutations = makeEventCatalogMutations(db, {

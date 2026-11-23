@@ -45,7 +45,7 @@ const loadFixtures = async (): Promise<Map<string, EventFixture>> => {
 
     for (const file of jsonFiles) {
       const filePath = path.join(fixturesDir, file);
-      const content = await fs.readFile(filePath, "utf-8");
+      const content = await Bun.file(filePath).text();
       const fixture = parseEventFixture(content);
       const name = file.replace(".json", "");
       fixtures.set(name, fixture);

@@ -2,6 +2,7 @@ import { BattleLog } from "@/components/battle/battle-log";
 import { BattleMetadata } from "@/components/battle/battle-metadata";
 import { BattleTeamsOverview } from "@/components/battle/battle-teams-overview";
 import { DetailBar } from "@/components/common/detail-bar";
+import { EmptyState } from "@/components/common/empty-state";
 import { MARGONEM_CDN_CHARACTERS_URL } from "@lootlog/domain/margonem-cdn";
 import { BattleDetailChart } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-detail-chart";
 import { BattleDetailStatsPanel } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-detail-stats-panel";
@@ -10,6 +11,7 @@ import type { Battle } from "@/lib/api/battlelog-types";
 import { getBattleLabel } from "@/lib/battle/battle-route-label";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { cn } from "cn";
+import { History } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -49,6 +51,7 @@ export function BattleDetailView({
   battle,
   battleId,
   isTimelinePending,
+  isTimelineUnavailable,
   rawBattle,
   sideContent,
   timeline,
@@ -80,6 +83,7 @@ export function BattleDetailView({
     battle,
     battleId,
     isTimelinePending,
+    isTimelineUnavailable,
     rawBattle,
     sideContent,
     timeline,
@@ -153,6 +157,16 @@ export function BattleDetailView({
                 />
               ) : null}
               {visiblePanel === "recent" ? sideContent : null}
+              {visiblePanel === "log" && isTimelineUnavailable ? (
+                <EmptyState
+                  icon={History}
+                  title={t("battlePanel.single.log.unavailable")}
+                  description={t(
+                    "battlePanel.single.log.unavailableDescription",
+                  )}
+                  compact
+                />
+              ) : null}
               {visiblePanel === "log" && rawBattle && battle ? (
                 <div ref={battleLogWrapperRef} className="min-w-0">
                   <BattleLog

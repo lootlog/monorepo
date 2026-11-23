@@ -1,5 +1,4 @@
 import { requireIsolatedTestDatabase } from "./isolated-test-database.js";
-import { randomUUID } from "node:crypto";
 import { Client } from "pg";
 import { refreshOrganizationLootRecordFactsSql } from "./loot-fixtures.js";
 import { ManagedRuntime, Schema } from "effect";
@@ -29,9 +28,9 @@ export const makeUserFeedFixture = () => {
   const run = runtime.runPromise.bind(runtime);
 
   const seed = async () => {
-    const guildId = randomUUID(),
-      owner = randomUUID(),
-      reader = randomUUID();
+    const guildId = crypto.randomUUID(),
+      owner = crypto.randomUUID(),
+      reader = crypto.randomUUID();
 
     const [guild] = await run(
       database
@@ -62,7 +61,7 @@ export const makeUserFeedFixture = () => {
       database
         .insert(roleTable)
         .values({
-          id: randomUUID(),
+          id: crypto.randomUUID(),
           guildId,
           name: "Reader",
           permissions: [
@@ -89,7 +88,7 @@ export const makeUserFeedFixture = () => {
     overrides: Partial<typeof guildKillActivityTable.$inferInsert> = {},
   ) =>
     database.insert(guildKillActivityTable).values({
-      id: randomUUID(),
+      id: crypto.randomUUID(),
       guildId,
       world: "tempest",
       npcId: 1,
@@ -116,7 +115,7 @@ export const makeUserFeedFixture = () => {
         linked AS (INSERT INTO "LootNpc" ("lootId","npcSnapshotId","runtimeNpcId") SELECT loot.id, npc.id, $6::integer FROM loot, npc)
         INSERT INTO "OrganizationLootRecord" ("lootId","guildId","createdAt","updatedAt","lootWorld","lootCreatedAt","lootRarityMask","npcTypeMask","npcVisibility") SELECT id,$4,$5,now(),world,"createdAt",0,0,'{[-1,0)}' FROM loot RETURNING "lootId" AS id`,
           [
-            randomUUID(),
+            crypto.randomUUID(),
             npc.npcId,
             npc.type,
             guildId,

@@ -1,5 +1,4 @@
 import { RedisScriptCache } from "@lootlog/database/redis-script";
-import { randomUUID } from "node:crypto";
 import {
   type CacheFillOptions,
   type CacheFillStore,
@@ -271,7 +270,10 @@ export const makeRedisService = (
     return evalScript<string[]>(
       READ_CACHE_GENERATIONS_SCRIPT,
       scopes.map((scope) => `cache-generation:v1:${scope}`),
-      [...scopes.map(() => randomUUID()), READ_CACHE_GENERATION_TTL_SECONDS],
+      [
+        ...scopes.map(() => crypto.randomUUID()),
+        READ_CACHE_GENERATION_TTL_SECONDS,
+      ],
     ).pipe(
       Effect.matchEffect({
         onFailure: (error) =>
@@ -318,7 +320,7 @@ export const makeRedisService = (
         (scope) =>
           set(
             `cache-generation:v1:${scope}`,
-            randomUUID(),
+            crypto.randomUUID(),
             READ_CACHE_GENERATION_TTL_SECONDS,
           ),
         { concurrency: "unbounded", discard: true },

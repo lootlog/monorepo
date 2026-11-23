@@ -1,7 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import { makeUserFeedFixture } from "./user-feed-fixtures.js";
-import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { Schema } from "effect";
 import { guildTable } from "#src/database/drizzle/organization.schema";
@@ -39,7 +38,7 @@ describe("personal Organization activity feed loots", () => {
       (
         await client.query(
           `INSERT INTO "Loot" ("uniqueId",world,"gameVersion",source,location,"updatedAt") VALUES ($1,'tempest','pl','FIGHT','map',now()) RETURNING id`,
-          [randomUUID()],
+          [crypto.randomUUID()],
         )
       ).rows,
     )[0];
@@ -58,7 +57,7 @@ describe("personal Organization activity feed loots", () => {
       (
         await client.query(
           `INSERT INTO "NpcSnapshot" ("npcId",name,type,lvl,prof,"gameVersion") VALUES (1,$1,'ELITE2',100,'WARRIOR','pl') RETURNING id`,
-          [randomUUID()],
+          [crypto.randomUUID()],
         )
       ).rows,
     )[0];
@@ -70,11 +69,11 @@ describe("personal Organization activity feed loots", () => {
     );
     await client.query(
       `WITH inserted AS (INSERT INTO "ItemSnapshot" ("itemId","statsHash",name,icon,"statRaw","statsSnapshot","itemType",lvl,"gameVersion") SELECT n,$2||n,'item','item.png','lvl=100;sa=10','{}'::jsonb,'Sword',100,'pl' FROM generate_series(1,5)n RETURNING id) INSERT INTO "LootItem" ("lootId","itemSnapshotId",hid,"instanceStat") SELECT $1,id,id::text,'amount=3' FROM inserted`,
-      [loot.id, randomUUID()],
+      [loot.id, crypto.randomUUID()],
     );
     await client.query(
       `WITH inserted AS (INSERT INTO "PlayerSnapshot" (world,"accountId","characterId","snapshotHash",name,prof,icon) VALUES ('tempest',1,2,$2,'Participant','WARRIOR','player.png') RETURNING id) INSERT INTO "LootPlayer" ("lootId","playerSnapshotId",lvl,hpp) SELECT $1,id,120,75 FROM inserted`,
-      [loot.id, randomUUID()],
+      [loot.id, crypto.randomUUID()],
     );
     await client.query(
       `${refreshOrganizationLootRecordFactsSql} WHERE "guildId" = $1`,
@@ -232,7 +231,7 @@ describe("personal Organization activity feed loots", () => {
           npc AS (INSERT INTO "NpcSnapshot" ("npcId",name,type,lvl,wt,prof,"gameVersion") VALUES (21,$1 || 'boss','ELITE2',50,25,'WARRIOR','pl'), (22,$1 || 'escort','ELITE',70,15,'WARRIOR','pl') RETURNING id),
           linked AS (INSERT INTO "LootNpc" ("lootId","npcSnapshotId") SELECT loot.id, npc.id FROM loot, npc)
           INSERT INTO "OrganizationLootRecord" ("lootId","guildId","createdAt","updatedAt","lootWorld","lootCreatedAt","lootRarityMask","npcTypeMask","npcVisibility") SELECT id,$2,$3,now(),world,"createdAt",0,0,'{[-1,0)}' FROM loot RETURNING "lootId" AS id`,
-          [randomUUID(), guild.id, new Date(recent.getTime() + 5000)],
+          [crypto.randomUUID(), guild.id, new Date(recent.getTime() + 5000)],
         )
       ).rows,
     );

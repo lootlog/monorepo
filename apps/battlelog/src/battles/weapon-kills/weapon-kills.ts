@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import { findFinishingBlows } from "@lootlog/battle-processor/finishing-blows";
 import { and, count, eq } from "drizzle-orm";
 import { Effect, Schema } from "effect";
@@ -25,7 +24,7 @@ const createKillFingerprint = (
   { characterId, events, world }: RecordWeaponKillsInput,
   moveIndex: number,
 ) =>
-  createHash("sha256")
+  new Bun.CryptoHasher("sha256")
     .update(
       JSON.stringify({
         characterId,

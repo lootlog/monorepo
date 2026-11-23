@@ -4,7 +4,6 @@ import {
   redisUrlConfig,
 } from "@lootlog/instrumentation/service-config";
 import { Config, Context, Effect, Layer, type Redacted } from "effect";
-import type { R2Config } from "#src/config/r2.config";
 
 const DEFAULT_SERVICE_NAME = "battlelog-service";
 
@@ -18,7 +17,6 @@ export const battlelogDatabaseConfig = Config.all({
 export interface BattlelogConfiguration extends BaseServiceConfiguration {
   readonly rabbitmqUri: Redacted.Redacted<string>;
   readonly redisUrl: Redacted.Redacted<string>;
-  readonly r2: R2Config;
 }
 
 const loadConfiguration = Effect.gen(function* () {
@@ -28,15 +26,6 @@ const loadConfiguration = Effect.gen(function* () {
     ...base,
     rabbitmqUri: yield* Config.Redacted("RABBITMQ_URI"),
     redisUrl: yield* redisUrlConfig,
-    r2: {
-      accessKeyId: yield* Config.Redacted("R2_ACCESS_KEY_ID"),
-      secretAccessKey: yield* Config.Redacted("R2_SECRET_ACCESS_KEY"),
-      endpoint: yield* Config.String("R2_ENDPOINT"),
-      region: yield* Config.String("R2_REGION").pipe(
-        Config.withDefault("auto"),
-      ),
-      bucketName: yield* Config.String("R2_BUCKET_NAME"),
-    },
   } satisfies BattlelogConfiguration;
 });
 

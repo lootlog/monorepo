@@ -1,7 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import { makeUserFeedFixture } from "./user-feed-fixtures.js";
-import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import {
   guildTable,
@@ -48,7 +47,9 @@ describe("personal Organization activity feed", () => {
       readerFeed.items[0]?.id,
     );
     expect((await run(makeUserFeed(database)(owner))).items).toHaveLength(2);
-    expect((await run(makeUserFeed(database)(randomUUID()))).items).toEqual([]);
+    expect(
+      (await run(makeUserFeed(database)(crypto.randomUUID()))).items,
+    ).toEqual([]);
     await run(
       database
         .update(memberTable)
@@ -106,7 +107,7 @@ describe("personal Organization activity feed", () => {
     const { guild, owner } = await seed();
     await client.query(
       `INSERT INTO "GuildKillActivity" (id,"guildId",world,"npcId","npcName","npcType","npcLvl","occurredAt") SELECT $1||n,$2,'tempest',CASE WHEN n<=100 THEN 99 ELSE n-100 END,'NPC','ELITE2',100,$3 FROM generate_series(1,125)n`,
-      [randomUUID(), guild.id, recent],
+      [crypto.randomUUID(), guild.id, recent],
     );
     const feed = await run(makeUserFeed(database)(owner));
     expect(feed.items).toHaveLength(20);
@@ -131,14 +132,14 @@ describe("personal Organization activity feed", () => {
     const other = await seed();
     await client.query(
       `INSERT INTO "GuildKillActivity" (id,"guildId",world,"npcId","npcName","npcType","npcLvl","occurredAt") SELECT $1||n,CASE WHEN n<=90000 THEN $2 ELSE $3 END,'tempest',n%200,'NPC',CASE WHEN n%2=0 THEN 'ELITE2'::"NpcType" ELSE 'HERO'::"NpcType" END,100,now()-(n%86400)*interval '1 second' FROM generate_series(1,270000)n`,
-      [randomUUID(), guild.id, other.guild.id],
+      [crypto.randomUUID(), guild.id, other.guild.id],
     );
     await client.query(
       `WITH npcs AS (INSERT INTO "NpcSnapshot" ("npcId",name,type,lvl,"gameVersion") SELECT n,'NPC '||n||$2,CASE WHEN n%2=0 THEN 'ELITE2'::"NpcType" ELSE 'HERO'::"NpcType" END,100,'pl' FROM generate_series(0,199)n RETURNING id,"npcId"),
       loots AS (INSERT INTO "Loot" ("uniqueId",world,"gameVersion",source,location,"updatedAt") SELECT $2||n,'tempest','pl','FIGHT','map',now() FROM generate_series(1,30000)n RETURNING id,world,"createdAt"),
       linked AS (INSERT INTO "LootNpc" ("lootId","npcSnapshotId") SELECT loots.id, npcs.id FROM loots JOIN npcs ON npcs."npcId"=loots.id%200)
       INSERT INTO "OrganizationLootRecord" ("lootId","guildId","createdAt","updatedAt","lootWorld","lootCreatedAt","lootRarityMask","npcTypeMask","npcVisibility") SELECT id,$1,now()-(id%86400)*interval '1 second',now(),world,"createdAt",0,0,'{[-1,0)}' FROM loots`,
-      [guild.id, randomUUID()],
+      [guild.id, crypto.randomUUID()],
     );
     await client.query(
       `${refreshOrganizationLootRecordFactsSql} WHERE "guildId" = $1`,

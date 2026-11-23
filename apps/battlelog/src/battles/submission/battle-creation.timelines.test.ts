@@ -9,12 +9,10 @@ import {
   battleSubmissions,
   battleTimelines,
 } from "#src/database/schema";
-import { decodeBattleEvents } from "#src/battles/battle-timeline";
 import {
   requestJson,
   postBattle,
   getBattle,
-  warriors,
   moves,
   battleEvent,
   battleContext,
@@ -79,7 +77,7 @@ describe("battle creation storage and timelines", () => {
     );
   });
 
-  it("serves the timeline of a battle saved before timelines moved to Postgres from R2 under its legacy ID", async () => {
+  it("resolves a legacy battle link and reports its missing timeline as unavailable", async () => {
     const testApplication = createTestApplication();
     app = testApplication.app;
 
@@ -88,60 +86,32 @@ describe("battle creation storage and timelines", () => {
       events: [battleEvent],
     });
 
-    const [timeline] = await databaseRuntime.runPromise(
-      sharedDatabase.delete(battleTimelines).returning(),
-    );
-
-    if (!timeline) throw new Error("Missing stored timeline");
+    await databaseRuntime.runPromise(sharedDatabase.delete(battleTimelines));
     await databaseRuntime.runPromise(
       sharedDatabase.insert(battleLegacyIds).values({
         legacyId: "cmglj0y2u0224qd0ioniw0lxa",
         battleId: body.battleId,
       }),
     );
-    testApplication.objects.set("cmglj0y2u0224qd0ioniw0lxa", {
-      battleId: "cmglj0y2u0224qd0ioniw0lxa",
-      timestamp: new Date(0).toISOString(),
-      rawData: {
-        ...battleContext,
-        events: [],
-        sourceEvents: [
-          ...decodeBattleEvents(timeline.events),
-          {
-            ev: 1_785_091_976.7,
-            f: {
-              w: Object.fromEntries(
-                Object.keys(warriors).map((id) => [id, { hpp: 90 }]),
-              ),
-            },
-          },
-        ],
-      },
-    });
 
-    const result = await requestJson(
+    const battle = await requestJson(
       app.handler,
       "GET",
-      "/battles/cmglj0y2u0224qd0ioniw0lxa/timeline",
-      BattleResponseSchemas.timeline,
+      "/battles/cmglj0y2u0224qd0ioniw0lxa",
+      BattleResponseSchemas.battle,
       200,
     );
 
-    expect(result.body.battleId).toBe(body.battleId);
-    expect(result.body.timeline).toHaveLength(moves.length);
+    expect(battle.body.id).toBe(body.battleId);
 
-    const raw = await requestJson(
-      app.handler,
-      "GET",
-      "/battles/cmglj0y2u0224qd0ioniw0lxa/raw",
-      BattleResponseSchemas.raw,
-      200,
-    );
-
-    expect(raw.body.rawData.sourceEvents).toHaveLength(2);
-    expect(testApplication.objectStorage.readBattleData).toHaveBeenCalledWith(
-      "cmglj0y2u0224qd0ioniw0lxa",
-    );
+    for (const view of ["timeline", "raw"])
+      await requestJson(
+        app.handler,
+        "GET",
+        `/battles/cmglj0y2u0224qd0ioniw0lxa/${view}`,
+        Schema.Unknown,
+        404,
+      );
   });
 
   it("projects public battle metadata to the declared response fields", async () => {

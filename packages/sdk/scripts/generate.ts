@@ -1,4 +1,3 @@
-import { spawnSync } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { parse } from "yaml";
@@ -27,13 +26,12 @@ for (const service of PUBLIC_API_SERVICES) {
   );
 }
 
-const result = spawnSync(
-  process.execPath,
-  ["x", "orval", "--config", "orval.config.ts"],
-  { cwd: root, stdio: "inherit" },
+const result = Bun.spawnSync(
+  [process.execPath, "x", "orval", "--config", "orval.config.ts"],
+  { cwd: root, stdio: ["inherit", "inherit", "inherit"] },
 );
 
-if (result.status !== 0) throw new Error("Public SDK generation failed");
+if (!result.success) throw new Error("Public SDK generation failed");
 
 for (const service of PUBLIC_API_SERVICES) {
   const generatedPath = `${root}/src/generated/${service}.ts`;
@@ -47,18 +45,17 @@ for (const service of PUBLIC_API_SERVICES) {
   fixRequestOptionsType(generatedPath);
 }
 
-const formatting = spawnSync(
-  process.execPath,
+const formatting = Bun.spawnSync(
   [
+    process.execPath,
     "x",
     "oxfmt",
     ...PUBLIC_API_SERVICES.map((service) => `${root}/openapi/${service}.json`),
   ],
-  { cwd: root, stdio: "inherit" },
+  { cwd: root, stdio: ["inherit", "inherit", "inherit"] },
 );
 
-if (formatting.status !== 0)
-  throw new Error("Public OpenAPI formatting failed");
+if (!formatting.success) throw new Error("Public OpenAPI formatting failed");
 
 if (check) {
   assertNoGeneratedDrift(

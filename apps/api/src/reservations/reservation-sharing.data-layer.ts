@@ -2,7 +2,7 @@ import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { ignorePublicationFailure } from "#src/shared/best-effort-publication";
 import { AccessRequirement } from "@lootlog/domain/access-policy";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
-import { createHash, randomBytes } from "node:crypto";
+import { randomBytes } from "node:crypto";
 
 import { and, desc, eq, gt, inArray, isNull, or } from "drizzle-orm";
 import { Clock, Effect, Layer } from "effect";
@@ -35,7 +35,7 @@ export interface ReservationSharingEvents {
 }
 
 const hashToken = (token: string) =>
-  createHash("sha256").update(token).digest("hex");
+  new Bun.CryptoHasher("sha256").update(token).digest("hex");
 
 const orderGuildPair = (first: string, second: string) =>
   first < second ? ([first, second] as const) : ([second, first] as const);

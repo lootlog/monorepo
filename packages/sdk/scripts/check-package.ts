@@ -1,7 +1,6 @@
 import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
-import { spawnSync } from "node:child_process";
 
 const sdk = resolve(import.meta.dirname, "..");
 
@@ -18,9 +17,12 @@ const packDestination = args[1] ? resolve(args[1]) : undefined;
 const consumer = mkdtempSync(resolve(tmpdir(), "lootlog-sdk-consumer-"));
 
 function run(command: string, args: string[], cwd: string) {
-  const result = spawnSync(command, args, { cwd, stdio: "inherit" });
+  const result = Bun.spawnSync([command, ...args], {
+    cwd,
+    stdio: ["inherit", "inherit", "inherit"],
+  });
 
-  if (result.status !== 0)
+  if (!result.success)
     throw new Error(`Packed consumer check failed: ${command}`);
 }
 
