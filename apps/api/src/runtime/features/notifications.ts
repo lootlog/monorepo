@@ -59,6 +59,7 @@ interface NotificationsServicesValue {
   readonly dispatch: ReturnType<typeof makeNotificationJobDispatch>;
   readonly delivery: ReturnType<typeof makeNotificationDeliveryResult>;
   readonly rebuild: NotificationJobRebuild;
+  readonly recurrence: ReturnType<typeof makeNotificationJobRecurrence>;
   readonly recovery: NotificationJobRecovery;
 }
 
@@ -196,6 +197,7 @@ export const notificationsServicesLive = Layer.effect(
       dispatch,
       delivery,
       rebuild,
+      recurrence,
       recovery,
       layer: notificationDataLayer({
         guildTargets: targets,

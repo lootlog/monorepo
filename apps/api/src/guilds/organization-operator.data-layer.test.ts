@@ -129,7 +129,7 @@ const setup = async () => {
       Effect.sync(() => {
         cleared.push(key);
       }),
-    rebuildNotificationRule: (ruleId) =>
+    restoreNotificationRule: (ruleId) =>
       Effect.sync(() => {
         rebuiltRules.push(ruleId);
       }),

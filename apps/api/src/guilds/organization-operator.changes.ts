@@ -44,7 +44,7 @@ export interface OrganizationOperatorPorts {
     pattern: string,
   ) => Effect.Effect<unknown, unknown>;
   readonly clearCacheKey: (key: string) => Effect.Effect<unknown, unknown>;
-  readonly rebuildNotificationRule: (
+  readonly restoreNotificationRule: (
     ruleId: number,
   ) => Effect.Effect<void, unknown>;
 }
@@ -226,7 +226,7 @@ export const organizationChangeCommands = (
 
     yield* Effect.forEach(
       rules,
-      ({ id }) => ports.rebuildNotificationRule(id),
+      ({ id }) => ports.restoreNotificationRule(id),
       { concurrency: NOTIFICATION_REBUILD_CONCURRENCY, discard: true },
     );
   });

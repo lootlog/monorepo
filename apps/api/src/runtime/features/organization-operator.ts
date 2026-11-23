@@ -18,7 +18,7 @@ export const organizationOperatorData = Layer.effect(
     const redis = yield* ApiRedis;
     const discordSync = yield* GuildDiscordSync;
     const { memberDelivery } = yield* MemberServices;
-    const { rebuild } = yield* NotificationsServices;
+    const { rebuild, recurrence } = yield* NotificationsServices;
 
     return makeOrganizationOperatorData(database, {
       refreshDiscordSync: (guildId) =>
@@ -30,7 +30,10 @@ export const organizationOperatorData = Layer.effect(
         redis.invalidateScopes(getUserGuildPermissionsCacheScope(discordId)),
       clearCachePattern: (pattern) => redis.deleteByPattern(pattern),
       clearCacheKey: (key) => redis.del(key),
-      rebuildNotificationRule: rebuild.rebuildRule,
+      restoreNotificationRule: (ruleId) =>
+        rebuild
+          .rebuildRule(ruleId)
+          .pipe(Effect.andThen(() => recurrence(ruleId))),
     });
   }),
 );
