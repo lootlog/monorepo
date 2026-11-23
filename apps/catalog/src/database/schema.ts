@@ -9,6 +9,12 @@ import {
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
+import type { GameVersion } from "@lootlog/schema/game-version";
+import type {
+  CatalogReportReason,
+  CatalogReportStatus,
+  CatalogReportSubjectType,
+} from "#src/http-api/contracts/reports/schemas";
 
 export const catalogItemTable = pgTable(
   "CatalogItem",
@@ -51,13 +57,18 @@ export const catalogReportTable = pgTable(
   "CatalogReport",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    subjectType: text("subjectType").notNull(),
-    gameVersion: text("gameVersion").notNull(),
+    subjectType: text("subjectType")
+      .$type<CatalogReportSubjectType>()
+      .notNull(),
+    gameVersion: text("gameVersion").$type<GameVersion>().notNull(),
     subjectId: integer("subjectId").notNull(),
-    reason: text("reason").notNull(),
+    reason: text("reason").$type<CatalogReportReason>().notNull(),
     comment: text("comment"),
     reporterUserId: text("reporterUserId").notNull(),
-    status: text("status").notNull().default("OPEN"),
+    status: text("status")
+      .$type<CatalogReportStatus>()
+      .notNull()
+      .default("OPEN"),
     reviewedByUserId: text("reviewedByUserId"),
     reviewedAt: timestamp("reviewedAt", { withTimezone: true }),
     createdAt: timestamp("createdAt", { withTimezone: true })

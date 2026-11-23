@@ -36,8 +36,6 @@ import {
 import type {
   CatalogOwnReportQuery,
   CatalogReportDto_Output,
-  CatalogReportReason,
-  CatalogReportStatus,
   CatalogReportSubjectType,
   CatalogReportsQuery,
   CatalogReportsResponseDto_Output,
@@ -76,16 +74,14 @@ const matchesSubject = (subject: Subject) =>
 
 const isOpen = sql`${catalogReportTable.status} = 'OPEN'`;
 
-// SAFETY: the reports module is the table's only writer and stores only
-// values its request schemas decoded.
 const toReport = (row: ReportRow): CatalogReportDto_Output => ({
   id: row.id,
-  subjectType: row.subjectType as CatalogReportSubjectType,
-  gameVersion: row.gameVersion as Subject["gameVersion"],
+  subjectType: row.subjectType,
+  gameVersion: row.gameVersion,
   subjectId: row.subjectId,
-  reason: row.reason as CatalogReportReason,
+  reason: row.reason,
   comment: row.comment,
-  status: row.status as CatalogReportStatus,
+  status: row.status,
   createdAt: row.createdAt.toISOString(),
   reviewedAt: row.reviewedAt?.toISOString() ?? null,
 });
@@ -308,7 +304,7 @@ export const makeReportsModule = (database: CatalogDatabaseValue) => {
         .from(catalogReportTable)
         .where(ofStatus);
 
-      const page = yield* database
+      const subjects = yield* database
         .select({
           subjectType: catalogReportTable.subjectType,
           gameVersion: catalogReportTable.gameVersion,
@@ -329,9 +325,6 @@ export const makeReportsModule = (database: CatalogDatabaseValue) => {
         )
         .limit(query.limit ?? 20)
         .offset(query.offset ?? 0);
-
-      // SAFETY: the reports module stores only decoded subject types and editions.
-      const subjects = page as ReadonlyArray<Subject>;
 
       if (subjects.length === 0) return { subjects: [], total };
 
