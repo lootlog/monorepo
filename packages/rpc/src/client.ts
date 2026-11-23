@@ -23,7 +23,7 @@ export type ServiceRpcClient<Group> =
     : never;
 
 const rpcEndpointUrl = (baseUrl: string): string =>
-  `${baseUrl.replace(/\/+$/u, "")}${RPC_PATH}`;
+  new URL(RPC_PATH, baseUrl).href;
 
 export const makeRpcClient = <Rpcs extends Rpc.Any>(
   group: RpcGroup.RpcGroup<Rpcs>,
