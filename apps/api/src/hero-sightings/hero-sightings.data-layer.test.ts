@@ -24,9 +24,9 @@ import {
   closeKilledHeroSighting,
   makeCreateHeroSighting,
   makeHeroSightingClaims,
-  makeHeroSightingReads,
   makeManualHeroSightings,
 } from "./hero-sightings.data-layer.js";
+import { makeHeroSightingReads } from "./hero-sighting-reads.data-layer.js";
 import type { HeroSightingsGuildAccess } from "./hero-sightings-data.js";
 
 const identity = { userId: "user", discordId: "discord" };
@@ -334,9 +334,8 @@ it("does not return a sighting to a writer whose roles cannot see the hero", asy
         guildId: "a",
         name: "Low writers",
         permissions: [
-          Capability.LOOTLOG_TIMERS_READ,
-          Capability.LOOTLOG_TIMERS_WRITE,
-          Capability.LOOTLOG_TIMERS_HEROES_READ,
+          Capability.LOOTLOG_HERO_SIGHTINGS_READ,
+          Capability.LOOTLOG_HERO_SIGHTINGS_WRITE,
         ],
         lvlRangeFrom: 0,
         lvlRangeTo: 200,
@@ -366,7 +365,7 @@ it("does not return a sighting to a writer whose roles cannot see the hero", asy
   }
 });
 
-it("shows sightings only to roles that see the hero, and only in their Organization", async () => {
+it("shows sightings only to roles with the sighting capability for the hero, and only in their Organization", async () => {
   const { boundary, create, database, reads, claims } = await setup();
 
   try {
@@ -381,18 +380,30 @@ it("shows sightings only to roles that see the hero, and only in their Organizat
           id: "heroes-low",
           guildId: "a",
           name: "Low heroes",
+          permissions: [Capability.LOOTLOG_HERO_SIGHTINGS_READ],
+          lvlRangeFrom: 0,
+          lvlRangeTo: 200,
+          updatedAt: new Date(),
+        },
+        {
+          id: "hero-timers",
+          guildId: "a",
+          name: "Hero timers",
           permissions: [
             Capability.LOOTLOG_TIMERS_READ,
             Capability.LOOTLOG_TIMERS_HEROES_READ,
           ],
           lvlRangeFrom: 0,
-          lvlRangeTo: 200,
+          lvlRangeTo: 500,
           updatedAt: new Date(),
         },
       ]),
     );
     await boundary.run(
-      database.insert(memberToRoleTable).values({ A: 3, B: "heroes-low" }),
+      database.insert(memberToRoleTable).values([
+        { A: 3, B: "heroes-low" },
+        { A: 3, B: "hero-timers" },
+      ]),
     );
 
     const reader = {
@@ -499,9 +510,8 @@ it("refuses a manual sighting of a hero outside the Member's level range, and an
         guildId: "a",
         name: "Low writers",
         permissions: [
-          Capability.LOOTLOG_TIMERS_READ,
-          Capability.LOOTLOG_TIMERS_WRITE,
-          Capability.LOOTLOG_TIMERS_HEROES_READ,
+          Capability.LOOTLOG_HERO_SIGHTINGS_READ,
+          Capability.LOOTLOG_HERO_SIGHTINGS_WRITE,
         ],
         lvlRangeFrom: 0,
         lvlRangeTo: 200,

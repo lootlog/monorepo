@@ -51,10 +51,6 @@ export const NPC_FEATURE_PERMISSIONS = {
   },
 } as const;
 
-export const HERO_SIGHTING_READ_FEATURE: NpcFeature = "timers";
-
-export const HERO_SIGHTING_WRITE_PERMISSION = Capability.LOOTLOG_TIMERS_WRITE;
-
 const TIMER_PERMISSION = NPC_FEATURE_PERMISSIONS.timers;
 
 const isNpcType = Schema.is(NpcTypeSchema);
@@ -129,7 +125,8 @@ export const canReadHeroSighting = (
   roles: readonly RolePermissionData[],
   heroLvl: number,
 ): boolean =>
-  canReadNpcFeatureSource(roles, HERO_SIGHTING_READ_FEATURE, {
-    tier: "heroes",
-    npcLevel: heroLvl,
-  });
+  hasRolePermissionInLevelRange(
+    roles,
+    Capability.LOOTLOG_HERO_SIGHTINGS_READ,
+    heroLvl,
+  );

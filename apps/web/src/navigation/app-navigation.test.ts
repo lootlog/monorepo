@@ -421,7 +421,7 @@ describe("resolveAppNavigation", () => {
         policy(
           Capability.LOOTLOG_LOOTS_READ,
           Capability.LOOTLOG_TIMERS_READ,
-          Capability.LOOTLOG_TIMERS_HEROES_READ,
+          Capability.LOOTLOG_HERO_SIGHTINGS_READ,
           Capability.LOOTLOG_RESERVATIONS_READ,
           Capability.LOOTLOG_DOCS_READ,
         ),

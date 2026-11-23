@@ -327,6 +327,7 @@ const heroSightingPolicy = (organizations: string[]) =>
             Capability.LOOTLOG_PRESENCE_LOCATION_READ,
             Capability.LOOTLOG_TIMERS_READ,
             Capability.LOOTLOG_TIMERS_HEROES_READ,
+            Capability.LOOTLOG_HERO_SIGHTINGS_READ,
           ],
           lvlRangeFrom: 1,
           lvlRangeTo: 300,

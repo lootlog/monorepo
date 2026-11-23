@@ -14,6 +14,8 @@
   "LOOTLOG_TIMERS_DELETE": "Usuwanie timerów",
   "LOOTLOG_TIMERS_TITANS_READ": "Timery tytanów",
   "LOOTLOG_TIMERS_HEROES_READ": "Timery herosów",
+  "LOOTLOG_HERO_SIGHTINGS_READ": "Przeglądanie wykrytych herosów",
+  "LOOTLOG_HERO_SIGHTINGS_WRITE": "Zgłaszanie wykrytych herosów",
   "LOOTLOG_RESERVATIONS_READ": "Przeglądanie rezerwacji",
   "LOOTLOG_RESERVATIONS_WRITE": "Tworzenie rezerwacji",
   "LOOTLOG_DOCS_READ": "Przeglądanie dokumentów",
@@ -48,6 +50,8 @@
     "LOOTLOG_TIMERS_DELETE": "Pozwala na usuwanie timerów",
     "LOOTLOG_TIMERS_TITANS_READ": "Dostęp do timerów tytanów",
     "LOOTLOG_TIMERS_HEROES_READ": "Dostęp do timerów herosów, herosów eventowych i tropicieli herosów",
+    "LOOTLOG_HERO_SIGHTINGS_READ": "Pozwala przeglądać, gdzie wykryto herosów z zakresu poziomów roli i kto ich obstawia",
+    "LOOTLOG_HERO_SIGHTINGS_WRITE": "Pozwala zapisywać wykrycia herosów, dodawać je ręcznie i obstawiać herosów",
     "LOOTLOG_RESERVATIONS_READ": "Pozwala na przeglądanie rezerwacji",
     "LOOTLOG_RESERVATIONS_WRITE": "Pozwala na tworzenie i edycję rezerwacji",
     "LOOTLOG_DOCS_READ": "Pozwala na przeglądanie dokumentów Lootloga",
@@ -84,6 +88,10 @@
     "timers": {
       "name": "Timery",
       "description": "Uprawnienia związane z timerami bossów"
+    },
+    "heroSightings": {
+      "name": "Wykryci herosi",
+      "description": "Uprawnienia związane z wykrywaniem herosów"
     },
     "reservations": {
       "name": "Rezerwacje",

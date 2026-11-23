@@ -26,18 +26,21 @@ export const publishesPresenceTo = (
   viewer.platform !== "game" ||
   (viewer.presence?.organizationIds.includes(organizationId) ?? false);
 
-const TOPIC_PERMISSION = new Map<Topic, Capability>([
-  ["organization.activity", Capability.LOOTLOG_ACCESS],
-  ["organization.chat", Capability.LOOTLOG_CHAT_READ],
-  ["organization.loots", Capability.LOOTLOG_LOOTS_READ],
-  ["organization.members", Capability.ADMIN],
-  ["organization.notifications", Capability.LOOTLOG_NOTIFICATIONS_READ],
-  ["organization.presence", Capability.LOOTLOG_ONLINE_PLAYERS_READ],
-  ["organization.reservations", Capability.LOOTLOG_RESERVATIONS_READ],
-  ["organization.timers", Capability.LOOTLOG_TIMERS_READ],
-  ["event.coordination", Capability.LOOTLOG_EVENTS_READ],
-  ["map.air-tags", Capability.LOOTLOG_ONLINE_PLAYERS_READ],
-  ["map.pings", Capability.LOOTLOG_ONLINE_PLAYERS_READ],
+const TOPIC_PERMISSIONS = new Map<Topic, readonly Capability[]>([
+  ["organization.activity", [Capability.LOOTLOG_ACCESS]],
+  ["organization.chat", [Capability.LOOTLOG_CHAT_READ]],
+  ["organization.loots", [Capability.LOOTLOG_LOOTS_READ]],
+  ["organization.members", [Capability.ADMIN]],
+  ["organization.notifications", [Capability.LOOTLOG_NOTIFICATIONS_READ]],
+  ["organization.presence", [Capability.LOOTLOG_ONLINE_PLAYERS_READ]],
+  ["organization.reservations", [Capability.LOOTLOG_RESERVATIONS_READ]],
+  [
+    "organization.timers",
+    [Capability.LOOTLOG_TIMERS_READ, Capability.LOOTLOG_HERO_SIGHTINGS_READ],
+  ],
+  ["event.coordination", [Capability.LOOTLOG_EVENTS_READ]],
+  ["map.air-tags", [Capability.LOOTLOG_ONLINE_PLAYERS_READ]],
+  ["map.pings", [Capability.LOOTLOG_ONLINE_PLAYERS_READ]],
 ]);
 
 interface PermissionIndex {
@@ -120,12 +123,14 @@ export const canSubscribe = (session: SessionData, scope: Scope): boolean => {
     !session.apiKeyAccess.organizationIds.includes(organizationId)
   )
     return false;
-  const permission = TOPIC_PERMISSION.get(scope.topic);
 
-  if (!permission)
-    return hasPermission(session, organizationId, Capability.LOOTLOG_ACCESS);
+  const permissions = TOPIC_PERMISSIONS.get(scope.topic) ?? [
+    Capability.LOOTLOG_ACCESS,
+  ];
 
-  return hasPermission(session, organizationId, permission);
+  return permissions.some((permission) =>
+    hasPermission(session, organizationId, permission),
+  );
 };
 
 export const canReadPreciseLocation = (
@@ -145,7 +150,7 @@ export const defaultScopes = (session: SessionData): Scope[] => {
   const scopes: Scope[] = [];
 
   for (const organizationId of organizationIds(session)) {
-    for (const topic of TOPIC_PERMISSION.keys()) {
+    for (const topic of TOPIC_PERMISSIONS.keys()) {
       if (topic === "map.air-tags") continue;
       const scope = { topic, organizationId } satisfies Scope;
 
