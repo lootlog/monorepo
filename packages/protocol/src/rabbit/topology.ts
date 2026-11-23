@@ -83,6 +83,7 @@ export const RabbitRoutingKey = {
   SEARCH_PLAYERS_REPLAY: "search.players.replay",
   USERS_PARTY_READY_ROOM_UPDATED: "users.party-ready-room.updated",
   USERS_KILL_STATS_CHANGED: "users.kill-stats.changed",
+  BATTLELOG_USER_DATA_DELETE: "battlelog.user-data.delete",
 } as const;
 
 export type RabbitEventRoutingKey =

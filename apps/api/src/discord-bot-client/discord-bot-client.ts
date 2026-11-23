@@ -2,13 +2,12 @@ import {
   DiscordGuildChannel,
   DiscordGuildSyncState,
 } from "@lootlog/schema/discord";
+import { DiscordBotRpcGroup } from "@lootlog/rpc/discord-bot";
+import { makeRpcClient } from "@lootlog/rpc/client";
+import type { RpcUnavailableError } from "@lootlog/rpc/errors";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Effect, Schema } from "effect";
-import type { HttpClient as HttpClientValue } from "effect/http/HttpClient";
-import {
-  outboundHttpRequest,
-  type OutboundHttpFailure,
-} from "#src/shared/http/outbound-http";
+import type { RpcClientError } from "effect/rpc";
 
 const DiscordGuildChannelsResponse = Schema.Struct({
   channels: Schema.Array(DiscordGuildChannel),
@@ -21,68 +20,59 @@ class DiscordBotClientFailure extends TaggedErrorClass<
   DiscordBotClientFailure,
   { readonly brand: unique symbol }
 >()("DiscordBotClientFailure", {
-  reason: Schema.Literals(["invalid-response", "status"]),
+  reason: Schema.Literals(["status", "timeout", "transport"]),
   message: Schema.String,
-  status: Schema.optional(Schema.Finite),
 }) {}
-
-type DiscordBotFailure = OutboundHttpFailure | DiscordBotClientFailure;
 
 export interface DiscordBotClient {
   readonly refreshGuildChannels: (
     guildId: string,
-  ) => Effect.Effect<GuildChannels, DiscordBotFailure>;
+  ) => Effect.Effect<GuildChannels, DiscordBotClientFailure>;
+}
+
+interface DiscordBotRpcClient {
+  readonly refreshGuildChannels: (input: {
+    readonly guildId: string;
+  }) => Effect.Effect<
+    GuildChannels,
+    RpcUnavailableError | RpcClientError.RpcClientError
+  >;
 }
 
 export const makeDiscordBotClient = (
-  httpClient: HttpClientValue,
-  discordBotServiceUrl: URL,
-): DiscordBotClient => {
-  const request = <A>(
-    decodeJson: (value: string) => A,
-    url: string,
-    timeout: number,
-  ) =>
-    outboundHttpRequest(httpClient, {
-      adapter: "discord-bot",
-      body: "{}",
-      headers: { "content-type": "application/json" },
-      method: "POST",
-      responseLimitBytes: 1024 * 1024,
-      retryTimes: 0,
-      timeout: `${timeout} millis`,
-      url,
-    }).pipe(
-      Effect.flatMap((response) =>
-        response.status >= 200 && response.status < 300
-          ? Effect.try({
-              try: () => decodeJson(new TextDecoder().decode(response.body)),
-              catch: () =>
-                new DiscordBotClientFailure({
-                  reason: "invalid-response",
-                  message: "Discord Bot returned invalid JSON",
-                }),
-            })
-          : Effect.fail(
-              new DiscordBotClientFailure({
-                reason: "status",
-                message: `Discord Bot request failed: ${response.status}`,
-                status: response.status,
-              }),
-            ),
-      ),
-    );
+  rpc: DiscordBotRpcClient,
+): DiscordBotClient => ({
+  refreshGuildChannels: (guildId) =>
+    rpc.refreshGuildChannels({ guildId }).pipe(
+      Effect.timeout("10 seconds"),
+      Effect.catchTags({
+        TimeoutError: () =>
+          Effect.fail(
+            new DiscordBotClientFailure({
+              reason: "timeout",
+              message: "Discord Bot request timed out",
+            }),
+          ),
+        RpcUnavailableError: (error) =>
+          Effect.fail(
+            new DiscordBotClientFailure({
+              reason: "status",
+              message: error.message ?? "Discord Bot synchronization failed",
+            }),
+          ),
+        RpcClientError: () =>
+          Effect.fail(
+            new DiscordBotClientFailure({
+              reason: "transport",
+              message: "Discord Bot RPC request failed",
+            }),
+          ),
+      }),
+    ),
+});
 
-  const serviceUrl = discordBotServiceUrl.toString().replace(/\/$/, "");
-
-  return {
-    refreshGuildChannels: (guildId) =>
-      request(
-        Schema.decodeUnknownSync(
-          Schema.fromJsonString(DiscordGuildChannelsResponse),
-        ),
-        `${serviceUrl}/internal/guilds/${guildId}/channels/refresh`,
-        10_000,
-      ),
-  };
-};
+export const makeDiscordBotRpcClient = (discordBotRpcUrl: URL) =>
+  makeRpcClient(DiscordBotRpcGroup, {
+    url: discordBotRpcUrl,
+    spanPrefix: "api.discord-bot-rpc",
+  }).pipe(Effect.map(makeDiscordBotClient));

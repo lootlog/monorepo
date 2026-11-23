@@ -12,6 +12,9 @@ import {
   consumerRoute,
   RabbitRoutingKey,
 } from "@lootlog/protocol/rabbit/topology";
+import { DiscordBotRpcGroup } from "@lootlog/rpc/discord-bot";
+import { RpcUnavailableError } from "@lootlog/rpc/errors";
+import { serviceRpcServer } from "@lootlog/rpc/server";
 import { Client, IntentsBitField } from "discord.js";
 import { Context, Effect, FiberSet, Layer, Redacted } from "effect";
 import {
@@ -48,9 +51,10 @@ export interface BotServicesValue {
   readonly sync: DiscordSync;
 }
 
-class BotServices extends Context.Service<BotServices, BotServicesValue>()(
-  "@lootlog/discord-bot/BotServices",
-) {
+export class BotServices extends Context.Service<
+  BotServices,
+  BotServicesValue
+>()("@lootlog/discord-bot/BotServices") {
   static readonly layer = Layer.effect(
     BotServices,
     Effect.gen(function* () {
@@ -90,35 +94,11 @@ class BotServices extends Context.Service<BotServices, BotServicesValue>()(
   );
 }
 
-const operation = <A>(operationId: string, run: Effect.Effect<A, unknown>) =>
-  run.pipe(
-    Effect.mapError(() => ({
-      message: "Discord synchronization failed" as const,
-    })),
-    withAdapterSpan(operationId, "discord"),
-  );
-
 const BotHttpHandlers = HttpApiBuilder.group(
   DiscordBotApi,
   "health",
   (handlers) =>
     handlers.handle("DiscordBotHealth", () => Effect.succeed("OK" as const)),
-).pipe(
-  Layer.merge(
-    HttpApiBuilder.group(DiscordBotApi, "internal", (handlers) =>
-      handlers.handle(
-        "DiscordBotRefreshGuildChannels",
-        Effect.fn("DiscordBotRefreshGuildChannels")(function* ({ params }) {
-          const services = yield* BotServices;
-
-          return yield* operation(
-            "DiscordBotRefreshGuildChannels",
-            services.sync.refreshGuildChannels(params.guildId),
-          );
-        }),
-      ),
-    ),
-  ),
 );
 
 const BotHttpRoutes = HttpApiBuilder.layer(DiscordBotApi).pipe(
@@ -139,6 +119,36 @@ export const makeBotHttpBoundary = (services: BotServicesValue) => {
     handler: boundary.handler,
   };
 };
+
+export const BotRpcHandlers = DiscordBotRpcGroup.toLayer(
+  Effect.gen(function* () {
+    const services = yield* BotServices;
+
+    return DiscordBotRpcGroup.of({
+      refreshGuildChannels: ({ guildId }) =>
+        services.sync.refreshGuildChannels(guildId).pipe(
+          Effect.mapError(
+            () =>
+              new RpcUnavailableError({
+                message: "Discord synchronization failed",
+              }),
+          ),
+          withAdapterSpan("DiscordBotRefreshGuildChannels", "discord"),
+        ),
+    });
+  }),
+);
+
+const BotRpcServer = Layer.unwrap(
+  Effect.map(BotConfig, ({ rpcPort }) =>
+    serviceRpcServer({
+      group: DiscordBotRpcGroup,
+      handlers: BotRpcHandlers,
+      port: rpcPort,
+      spanPrefix: "discord-bot.rpc",
+    }),
+  ),
+);
 
 const BotConsumer = Layer.effectDiscard(
   Effect.gen(function* () {
@@ -180,7 +190,11 @@ const RabbitLive = Layer.unwrap(
   }),
 ).pipe(Layer.provide(BotConfig.layer));
 
-export const BotApplication = Layer.merge(BotHttpServer, BotConsumer).pipe(
+export const BotApplication = Layer.mergeAll(
+  BotHttpServer,
+  BotRpcServer,
+  BotConsumer,
+).pipe(
   Layer.provide(BotServices.layer),
   Layer.provide(LootlogClient.layer),
   Layer.provide(FetchHttpClient.layer),

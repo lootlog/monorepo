@@ -29,7 +29,6 @@ import { makeRedisStore } from "#src/infrastructure/redis-store";
 import { makeWeaponKills } from "#src/battles/weapon-kills/weapon-kills";
 
 export interface BattlelogApplicationService {
-  readonly cleanupSecret?: Redacted.Redacted<string> | undefined;
   readonly port: number;
   readonly operations: BattlelogOperations;
 }
@@ -119,7 +118,6 @@ export class BattlelogApplication extends Context.Service<
       return BattlelogApplication.of({
         operations,
         port: config.port,
-        cleanupSecret: config.cleanupSecret,
       });
     }),
   ).pipe(

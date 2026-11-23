@@ -1,7 +1,13 @@
 import { makeJsonCodec } from "@lootlog/database/redis-cache-fill";
-import { Effect, Redacted, Schema } from "effect";
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import type { HttpClient as HttpClientValue } from "effect/http/HttpClient";
+import type { AuthIdpTokenResult } from "@lootlog/rpc/auth";
+import type {
+  RpcBadRequestError,
+  RpcUnauthorizedError,
+  RpcUnavailableError,
+} from "@lootlog/rpc/errors";
+import { DISCORD_AUTH_SCOPES } from "@lootlog/schema/discord";
+import { Effect, Schema } from "effect";
+import type { RpcClientError } from "effect/rpc";
 import {
   AccountNotFoundError,
   AuthBadRequestError,
@@ -11,9 +17,7 @@ import {
   TokenExpiredError,
   type AuthServiceError,
 } from "#src/auth/auth-errors";
-import { DISCORD_AUTH_SCOPES } from "@lootlog/schema/discord";
 import type { RedisService } from "#src/redis/redis.service";
-import { outboundHttpRequest } from "#src/shared/http/outbound-http";
 import {
   getAuthTokenCacheKey,
   getRejectedAuthTokenKey,
@@ -29,24 +33,6 @@ const IdpTokenSuccess = Schema.Struct({
   expiresIn: Schema.Finite,
   scopes: Schema.mutable(Schema.Array(Schema.String)),
 });
-
-const IdpTokenFailure = Schema.Union([
-  Schema.Struct({ code: Schema.String }),
-  Schema.Struct({ error: Schema.String }),
-]);
-
-const IdpTokenResponse = Schema.Union([IdpTokenSuccess, IdpTokenFailure]);
-
-const failureReason = (data: typeof IdpTokenResponse.Type | undefined) =>
-  data === undefined || "accessToken" in data
-    ? undefined
-    : "code" in data
-      ? data.code
-      : data.error;
-
-const decodeIdpTokenResponse = Schema.decodeUnknownSync(
-  Schema.fromJsonString(IdpTokenResponse),
-);
 
 const cachedIdpTokenCodec = makeJsonCodec(IdpTokenSuccess);
 
@@ -64,30 +50,31 @@ export interface AuthService {
   ) => Effect.Effect<void>;
 }
 
+export interface AuthIdpRpcClient {
+  readonly getIdpToken: (input: {
+    readonly userId: string;
+    readonly discordId: string;
+  }) => Effect.Effect<
+    AuthIdpTokenResult,
+    | RpcBadRequestError
+    | RpcUnauthorizedError
+    | RpcUnavailableError
+    | RpcClientError.RpcClientError
+  >;
+}
+
 export const fingerprintAccessToken = (accessToken: string) =>
   new Bun.CryptoHasher("sha256").update(accessToken).digest("hex");
 
 const hasRequiredScopes = (token: IdpToken) =>
   DISCORD_AUTH_SCOPES.every((scope) => token.scopes.includes(scope));
 
-class AuthHttpResponseError extends TaggedErrorClass<
-  AuthHttpResponseError,
-  { readonly brand: unique symbol }
->()("AuthHttpResponseError", {
-  status: Schema.Finite,
-  data: Schema.UndefinedOr(IdpTokenResponse),
-}) {
-  override get message() {
-    return `Request failed with status code ${this.status}`;
-  }
-}
-
 const isTokenErrorCode = (reason: string | undefined) =>
   reason === "TOKEN_NOT_FOUND" || reason === "TOKEN_EXPIRED";
 
 const connectionFailure = (userId: string, message: string) =>
   Effect.logError({
-    message: `HTTP request failed for user ${userId}: ${message}`,
+    message: `RPC request failed for user ${userId}: ${message}`,
   }).pipe(
     Effect.andThen(
       Effect.fail(
@@ -98,106 +85,61 @@ const connectionFailure = (userId: string, message: string) =>
     ),
   );
 
-const mapResponseError = (
-  userId: string,
-  error: AuthHttpResponseError,
-): Effect.Effect<never, AuthServiceError> =>
-  Effect.gen(function* () {
-    const { status } = error;
-    const reason = failureReason(error.data);
-
-    if (status === 400 && reason === "ACCOUNT_NOT_FOUND") {
-      yield* Effect.logDebug({
-        message: `Account not found for user ${userId}`,
-      });
-
-      return yield* new AccountNotFoundError();
-    }
-
-    if (isTokenErrorCode(reason)) {
-      yield* Effect.logDebug({ message: `Token error for user ${userId}` });
-
-      return yield* new TokenExpiredError();
-    }
-
-    if (status === 401) {
-      return yield* new AuthServiceUnavailableError({
-        message: "Auth service rejected the internal service credential",
-      });
-    }
-
-    if (status >= 400 && status < 500) {
-      yield* Effect.logError({
-        message: `Auth service returned client error for user ${userId}: ${error.message}`,
-      });
-
-      return yield* new AuthBadRequestError({ message: error.message });
-    }
-
-    return yield* connectionFailure(userId, error.message);
-  });
-
 export const makeAuthService = (options: {
   readonly redis: Pick<
     RedisService,
     "get" | "set" | "getJson" | "setJson" | "del"
   >;
-  readonly httpClient: HttpClientValue;
-  readonly authServiceUrl: URL;
-  readonly idpTokenSecret?: Redacted.Redacted<string>;
+  readonly authRpc: AuthIdpRpcClient;
 }): AuthService => {
-  const { redis, httpClient, idpTokenSecret } = options;
-  const authServiceUrl = options.authServiceUrl.toString().replace(/\/$/, "");
+  const { redis, authRpc } = options;
 
-  const fetchIdpToken = (userId: string, discordId: string) =>
-    Effect.gen(function* () {
-      const response = yield* outboundHttpRequest(httpClient, {
-        adapter: "auth-idp-token",
-        body: JSON.stringify({ userId, discordId }),
-        headers: {
-          "content-type": "application/json",
-          authorization: idpTokenSecret
-            ? `Bearer ${Redacted.value(idpTokenSecret)}`
-            : "",
-        },
-        method: "POST",
-        responseLimitBytes: 1024 * 1024,
-        retryTimes: 0,
-        timeout: `${DEFAULT_REQUEST_TIMEOUT} millis`,
-        url: `${authServiceUrl}/auth/idp-token`,
-      });
-
-      const responseBody = new TextDecoder().decode(response.body);
-
-      const data = responseBody
-        ? yield* Effect.try(() => decodeIdpTokenResponse(responseBody)).pipe(
-            Effect.orElseSucceed(() => undefined),
-          )
-        : undefined;
-
-      if (response.status < 200 || response.status >= 300) {
-        return yield* new AuthHttpResponseError({
-          status: response.status,
-          data,
-        });
-      }
-
-      if (!data) {
-        yield* Effect.logError({
-          message: `Empty response from auth service for user ${userId}`,
-        });
-
-        return yield* new AuthServiceUnavailableError({
-          message: "Empty response from auth service",
-        });
-      }
-
-      return data;
-    }).pipe(
+  const fetchIdpToken = (
+    userId: string,
+    discordId: string,
+  ): Effect.Effect<IdpToken, AuthServiceError> =>
+    authRpc.getIdpToken({ userId, discordId }).pipe(
+      Effect.timeout(`${DEFAULT_REQUEST_TIMEOUT} millis`),
+      Effect.map((result): IdpToken => ({
+        accessToken: result.accessToken,
+        expiresIn: result.expiresIn,
+        scopes: [...result.scopes],
+      })),
       Effect.catchTags({
-        AuthHttpResponseError: (error) => mapResponseError(userId, error),
-        OutboundHttpFailure: (error) =>
-          connectionFailure(userId, error.message),
+        RpcBadRequestError: (error) => {
+          if (error.message === "ACCOUNT_NOT_FOUND") {
+            return Effect.fail(new AccountNotFoundError());
+          }
+
+          if (isTokenErrorCode(error.message)) {
+            return Effect.fail(new TokenExpiredError());
+          }
+
+          return Effect.fail(
+            new AuthBadRequestError({
+              message: error.message ?? "Bad request",
+            }),
+          );
+        },
+        RpcUnauthorizedError: (error) => {
+          if (isTokenErrorCode(error.message)) {
+            return Effect.fail(new TokenExpiredError());
+          }
+
+          return Effect.fail(
+            new AuthServiceUnavailableError({
+              message: error.message ?? "Auth service rejected request",
+            }),
+          );
+        },
+        TimeoutError: () => connectionFailure(userId, "Request timed out"),
+        RpcUnavailableError: (error) =>
+          connectionFailure(
+            userId,
+            error.message ?? "Auth service unavailable",
+          ),
+        RpcClientError: (error) =>
+          connectionFailure(userId, error.message || "Auth RPC error"),
       }),
     );
 
@@ -227,30 +169,6 @@ export const makeAuthService = (options: {
       }
 
       const response = yield* fetchIdpToken(userId, discordId);
-
-      if (!("accessToken" in response)) {
-        const reason = failureReason(response);
-
-        if (reason === "ACCOUNT_NOT_FOUND") {
-          return yield* new AccountNotFoundError();
-        }
-
-        if (isTokenErrorCode(reason)) {
-          yield* Effect.logDebug({
-            message: `Token error for user ${userId}: ${reason}`,
-          });
-
-          return yield* new TokenExpiredError();
-        }
-
-        yield* Effect.logError({
-          message: `Unknown error from auth service for user ${userId}: ${reason}`,
-        });
-
-        return yield* new AuthServiceUnavailableError({
-          message: `Auth service error: ${reason}`,
-        });
-      }
 
       if (!hasRequiredScopes(response)) {
         return yield* new InvalidScopesError({

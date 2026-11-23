@@ -1,4 +1,4 @@
-import { httpClientFromResponses } from "../../test/http-fixtures.js";
+import { RpcUnavailableError } from "@lootlog/rpc/errors";
 import { makeGuildStoreRedis } from "../../test/guild-store-fixtures.js";
 import { describe, expect, mock, test } from "bun:test";
 import { Effect, Fiber } from "effect";
@@ -6,7 +6,7 @@ import { TestClock } from "effect/testing";
 import { getUserGuildsCacheKey } from "./cache-keys.js";
 import { makeGuildStore } from "./guild-store.js";
 
-const config = { apiUrl: "http://api.local" };
+const config = { apiRpcUrl: "http://api.local" };
 
 const options = { discordId: "discord-1", userId: "user-1" };
 
@@ -17,85 +17,79 @@ const guilds = [
   },
 ];
 
-const httpResponse = (
-  status: number,
-  value: typeof guilds | Record<string, never>,
-) => Response.json(value, { status });
-
 describe("Gateway guild store", () => {
-  test("serves a fresh Redis projection without outbound HTTP", async () => {
+  test("serves a fresh Redis projection without outbound RPC", async () => {
     const redis = makeGuildStoreRedis(
       options,
       JSON.stringify({ guilds, cachedAt: Date.now() }),
     );
 
-    const get = mock(() => Effect.die("HTTP must not run"));
+    const getUserGuildPermissions = mock(() => Effect.die("RPC must not run"));
 
-    const store = makeGuildStore(
-      config,
-      redis.store,
-      httpClientFromResponses(get),
-    );
+    const store = makeGuildStore(config, redis.store, {
+      getUserGuildPermissions,
+    });
 
     await expect(
       Effect.runPromise(store.getUserGuilds(options)),
     ).resolves.toEqual(guilds);
-    expect(get).not.toHaveBeenCalled();
+    expect(getUserGuildPermissions).not.toHaveBeenCalled();
   });
 
-  test("retries retryable GET failures and fills the established cache", async () => {
+  test("retries retryable RPC failures and fills the established cache", async () => {
     const redis = makeGuildStoreRedis(options);
     let attempt = 0;
 
-    const get = mock(() => {
+    const getUserGuildPermissions = mock(() => {
       attempt += 1;
 
       return attempt === 1
-        ? Effect.fail(new Error("transport"))
-        : Effect.succeed(httpResponse(200, guilds));
+        ? Effect.fail(new RpcUnavailableError({ message: "unavailable" }))
+        : Effect.succeed(guilds);
     });
 
-    const store = makeGuildStore(
-      config,
-      redis.store,
-      httpClientFromResponses(get),
-    );
+    const store = makeGuildStore(config, redis.store, {
+      getUserGuildPermissions,
+    });
 
     await expect(
       Effect.runPromise(store.getUserGuilds(options)),
     ).resolves.toEqual(guilds);
-    expect(get).toHaveBeenCalledTimes(2);
+    expect(getUserGuildPermissions).toHaveBeenCalledTimes(2);
     expect(redis.commits).toHaveLength(1);
     await expect(
       Effect.runPromise(store.getUserGuilds(options)),
     ).resolves.toEqual(guilds);
-    expect(get).toHaveBeenCalledTimes(2);
+    expect(getUserGuildPermissions).toHaveBeenCalledTimes(2);
   });
 
   test.each([
-    { status: 503, cachedAt: null, calls: 3, retryable: true },
-    { status: 503, cachedAt: Date.now() - 901_000, calls: 3, retryable: true },
-    { status: 404, cachedAt: null, calls: 1, retryable: false },
+    { cachedAt: null, calls: 3 },
+    { cachedAt: Date.now() - 901_000, calls: 3 },
   ])(
-    "reports API status $status instead of an empty membership with cache timestamp $cachedAt",
-    async ({ status, cachedAt, calls, retryable }) => {
+    "reports API unavailability instead of an empty membership with cache timestamp $cachedAt",
+    async ({ cachedAt, calls }) => {
       const redis = makeGuildStoreRedis(
         options,
         cachedAt === null ? null : JSON.stringify({ guilds, cachedAt }),
       );
 
-      const get = mock(() => Effect.succeed(httpResponse(status, {})));
-
-      const store = makeGuildStore(
-        config,
-        redis.store,
-        httpClientFromResponses(get),
+      const getUserGuildPermissions = mock(() =>
+        Effect.fail(new RpcUnavailableError({ message: "unavailable" })),
       );
+
+      const store = makeGuildStore(config, redis.store, {
+        getUserGuildPermissions,
+      });
 
       await expect(
         Effect.runPromise(store.getUserGuilds(options).pipe(Effect.flip)),
-      ).resolves.toMatchObject({ reason: "status", status, retryable });
-      expect(get).toHaveBeenCalledTimes(calls);
+      ).resolves.toMatchObject({
+        reason: "status",
+        status: 503,
+        retryable: true,
+      });
+      expect(getUserGuildPermissions).toHaveBeenCalledTimes(calls);
       expect(redis.commits).toEqual([]);
     },
   );
@@ -104,11 +98,10 @@ describe("Gateway guild store", () => {
     const stale = JSON.stringify({ guilds, cachedAt: Date.now() - 700_000 });
     const redis = makeGuildStoreRedis(options, stale);
 
-    const store = makeGuildStore(
-      config,
-      redis.store,
-      httpClientFromResponses(() => Effect.succeed(httpResponse(503, {}))),
-    );
+    const store = makeGuildStore(config, redis.store, {
+      getUserGuildPermissions: () =>
+        Effect.fail(new RpcUnavailableError({ message: "unavailable" })),
+    });
 
     await expect(
       Effect.runPromise(store.getUserGuilds(options)),
@@ -125,15 +118,15 @@ describe("Gateway guild store", () => {
 
     let available = false;
 
-    const get = mock(() =>
-      Effect.succeed(available ? httpResponse(200, []) : httpResponse(503, {})),
+    const getUserGuildPermissions = mock(() =>
+      available
+        ? Effect.succeed([])
+        : Effect.fail(new RpcUnavailableError({ message: "unavailable" })),
     );
 
-    const store = makeGuildStore(
-      config,
-      redis.store,
-      httpClientFromResponses(get),
-    );
+    const store = makeGuildStore(config, redis.store, {
+      getUserGuildPermissions,
+    });
 
     await expect(
       Effect.runPromise(
@@ -153,26 +146,26 @@ describe("Gateway guild store", () => {
     await expect(
       Effect.runPromise(store.getUserGuilds(options)),
     ).resolves.toEqual([]);
-    expect(get).toHaveBeenCalledTimes(4);
+    expect(getUserGuildPermissions).toHaveBeenCalledTimes(4);
   });
 
   test("a failed in-flight request cannot fall back to permissions invalidated by another instance", async () => {
     const redis = makeGuildStoreRedis(options);
 
     const started = Promise.withResolvers<void>();
-    const response = Promise.withResolvers<Response>();
+    const response = Promise.withResolvers<void>();
 
-    const store = makeGuildStore(
-      config,
-      redis.store,
-      httpClientFromResponses(() =>
-        Effect.promise(() => {
+    const store = makeGuildStore(config, redis.store, {
+      getUserGuildPermissions: () =>
+        Effect.promise(async () => {
           started.resolve();
-
-          return response.promise;
-        }),
-      ),
-    );
+          await response.promise;
+        }).pipe(
+          Effect.andThen(
+            Effect.fail(new RpcUnavailableError({ message: "unavailable" })),
+          ),
+        ),
+    });
 
     const pending = Effect.runPromise(
       store.getUserGuilds(options).pipe(Effect.flip),
@@ -184,11 +177,11 @@ describe("Gateway guild store", () => {
       JSON.stringify({ guilds, cachedAt: Date.now() }),
     );
     await Effect.runPromise(store.invalidate(options));
-    response.resolve(httpResponse(404, {}));
+    response.resolve();
 
     await expect(pending).resolves.toMatchObject({
       reason: "status",
-      status: 404,
+      status: 503,
     });
   });
 
@@ -204,13 +197,9 @@ describe("Gateway guild store", () => {
         redis.evaluate.mockImplementation(unavailable);
       else redis.set.mockImplementation(unavailable);
 
-      const store = makeGuildStore(
-        config,
-        redis.store,
-        httpClientFromResponses(() =>
-          Effect.succeed(httpResponse(200, guilds)),
-        ),
-      );
+      const store = makeGuildStore(config, redis.store, {
+        getUserGuildPermissions: () => Effect.succeed(guilds),
+      });
 
       const effect =
         operation === "invalidate"
@@ -239,11 +228,9 @@ describe("Gateway guild store", () => {
         redis.evaluate.mockImplementation(() => new Promise(() => {}));
       else redis.set.mockImplementation(() => new Promise(() => {}));
 
-      const store = makeGuildStore(
-        config,
-        redis.store,
-        httpClientFromResponses(() => Effect.succeed(httpResponse(200, []))),
-      );
+      const store = makeGuildStore(config, redis.store, {
+        getUserGuildPermissions: () => Effect.succeed([]),
+      });
 
       const effect =
         operation === "invalidate"
@@ -253,6 +240,9 @@ describe("Gateway guild store", () => {
       const result = await Effect.runPromise(
         Effect.gen(function* () {
           const pending = yield* effect.pipe(Effect.flip, Effect.forkChild);
+          yield* Effect.promise(
+            () => new Promise((resolve) => setTimeout(resolve, 0)),
+          );
           yield* TestClock.adjust("11 seconds");
 
           return yield* Fiber.join(pending);
@@ -266,14 +256,15 @@ describe("Gateway guild store", () => {
 
   test("concurrent joins of one user share a single permissions request", async () => {
     const redis = makeGuildStoreRedis(options);
-    const response = Promise.withResolvers<Response>();
-    const get = mock(() => Effect.promise(() => response.promise));
+    const response = Promise.withResolvers<typeof guilds>();
 
-    const store = makeGuildStore(
-      config,
-      redis.store,
-      httpClientFromResponses(get),
+    const getUserGuildPermissions = mock(() =>
+      Effect.promise(() => response.promise),
     );
+
+    const store = makeGuildStore(config, redis.store, {
+      getUserGuildPermissions,
+    });
 
     const joins = Promise.all(
       Array.from({ length: 5 }, () =>
@@ -281,42 +272,42 @@ describe("Gateway guild store", () => {
       ),
     );
 
-    while (get.mock.calls.length === 0)
+    while (getUserGuildPermissions.mock.calls.length === 0)
       await new Promise((resolve) => setTimeout(resolve, 1));
-    response.resolve(httpResponse(200, guilds));
+
+    response.resolve(guilds);
 
     await expect(joins).resolves.toEqual(Array(5).fill(guilds));
-    expect(get).toHaveBeenCalledTimes(1);
+    expect(getUserGuildPermissions).toHaveBeenCalledTimes(1);
     expect(redis.commits).toHaveLength(1);
   });
 
   test("a join that observed an invalidation does not wait for an older request", async () => {
     const redis = makeGuildStoreRedis(options);
-    const obsolete = Promise.withResolvers<Response>();
+    const obsolete = Promise.withResolvers<typeof guilds>();
     let calls = 0;
 
-    const store = makeGuildStore(
-      config,
-      redis.store,
-      httpClientFromResponses(() => {
+    const store = makeGuildStore(config, redis.store, {
+      getUserGuildPermissions: () => {
         calls += 1;
 
         return calls === 1
           ? Effect.promise(() => obsolete.promise)
-          : Effect.succeed(httpResponse(200, []));
-      }),
-    );
+          : Effect.succeed([]);
+      },
+    });
 
     const first = Effect.runPromise(store.getUserGuilds(options));
 
     while (calls === 0) await new Promise((resolve) => setTimeout(resolve, 1));
+
     await Effect.runPromise(store.invalidate(options));
 
     await expect(
       Effect.runPromise(store.getUserGuilds(options)),
     ).resolves.toEqual([]);
 
-    obsolete.resolve(httpResponse(200, guilds));
+    obsolete.resolve(guilds);
     await expect(first).resolves.toEqual([]);
     expect(calls).toBe(2);
   });
@@ -327,20 +318,21 @@ describe("Gateway guild store", () => {
       JSON.stringify({ guilds, cachedAt: Date.now() - 700_000 }),
     );
 
-    const response = Promise.withResolvers<Response>();
-    const get = mock(() => Effect.promise(() => response.promise));
+    const response = Promise.withResolvers<typeof guilds>();
 
-    const store = makeGuildStore(
-      config,
-      redis.store,
-      httpClientFromResponses(get),
+    const getUserGuildPermissions = mock(() =>
+      Effect.promise(() => response.promise),
     );
+
+    const store = makeGuildStore(config, redis.store, {
+      getUserGuildPermissions,
+    });
 
     await expect(
       Effect.runPromise(store.getUserGuilds(options)),
     ).resolves.toEqual(guilds);
 
-    response.resolve(httpResponse(200, []));
+    response.resolve([]);
 
     while (redis.commits.length === 0)
       await new Promise((resolve) => setTimeout(resolve, 1));
@@ -348,6 +340,6 @@ describe("Gateway guild store", () => {
     await expect(
       Effect.runPromise(store.getUserGuilds(options)),
     ).resolves.toEqual([]);
-    expect(get).toHaveBeenCalledTimes(1);
+    expect(getUserGuildPermissions).toHaveBeenCalledTimes(1);
   });
 });

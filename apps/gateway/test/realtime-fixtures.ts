@@ -1,8 +1,12 @@
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import type { ClientCommand } from "@lootlog/protocol/realtime";
 import { Permission } from "@lootlog/schema/permissions";
-import { Effect, Redacted } from "effect";
+import { Effect, Redacted, Tracer } from "effect";
 import type { GatewayConfiguration } from "../src/config/gateway-config.js";
+import {
+  GuildStoreFailure,
+  type GuildStore,
+} from "../src/guilds/guild-store.js";
 import {
   decodeFederatedRealtimeMessage,
   encodeFederatedRealtimeMessage,
@@ -17,9 +21,10 @@ import type { GatewaySocket, SessionData } from "../src/realtime/session.js";
 export const benchmarkConfig = {
   environment: RuntimeEnvironment.DEV,
   port: 0,
+  rpcPort: 0,
   serviceName: "gateway",
   serviceNamespace: "benchmark",
-  apiUrl: "http://localhost",
+  apiRpcUrl: "http://localhost",
   margonemSigningKeyUrl: "http://localhost",
   rabbitmqUri: Redacted.make("unused"),
   activityEventSignatureSecret: Redacted.make("unused"),
@@ -261,3 +266,54 @@ export const acceptingRateLimit = (
     },
   },
 });
+
+export const newSocket = (overrides: Partial<SessionData> = {}) =>
+  makeTestSocket(makeSession({ joined: false, ...overrides }));
+
+export const onlinePresence = (
+  organizationIds: ReadonlyArray<string>,
+  platform: SessionData["platform"] = "web-app",
+): NonNullable<SessionData["presence"]> => ({
+  userId: "user-1",
+  sessionId: "connection-1",
+  organizationIds: [...organizationIds],
+  platform,
+  status: "online",
+  confidence: "reported",
+  isAfk: false,
+  lastSeen: 1,
+});
+
+export const join = commandFrame({ type: "session.join", data: {} }, "join");
+
+export const captureSpans = () => {
+  const spans: Tracer.Span[] = [];
+
+  const tracer = Tracer.make({
+    span: (options) => {
+      const span = new Tracer.NativeSpan(options);
+      spans.push(span);
+
+      return span;
+    },
+  });
+
+  return { spans, tracer };
+};
+
+export const unavailablePermissions = (retryable = true) => {
+  let lookups = 0;
+
+  const store: GuildStore = {
+    invalidate: () => Effect.void,
+    getUserGuilds: () => {
+      lookups += 1;
+
+      return Effect.fail(
+        new GuildStoreFailure({ reason: "transport", retryable }),
+      );
+    },
+  };
+
+  return { store, lookups: () => lookups };
+};

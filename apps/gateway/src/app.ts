@@ -59,6 +59,7 @@ import {
   Hub,
   type RealtimeHub,
 } from "#src/realtime/realtime-hub";
+import { GatewayRpcServer } from "#src/rpc/gateway-rpc-server";
 import type { GatewaySocket, SessionData } from "#src/realtime/session";
 
 export interface GatewayApplicationService {
@@ -107,6 +108,7 @@ const ReplicaTasksLive = Layer.mergeAll(
   GatewayRuntimeMetrics.layer,
   ApiKeyLeases.layer,
   RabbitBridge.layer,
+  GatewayRpcServer,
 ).pipe(Layer.provideMerge(RealtimeLive));
 
 class GatewayApplication extends Context.Service<

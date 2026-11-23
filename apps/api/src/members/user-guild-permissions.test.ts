@@ -17,7 +17,6 @@ import {
 import type { ForwardAuthIdentityValue } from "@lootlog/schema/api-key-policy";
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { InternalGuildsData } from "#src/guilds/internal-guilds-data";
-import { getInternalUserPermissions } from "#src/http-api/handlers/internal/internal.handlers";
 import {
   makeUserGuildPermissionsPersistence,
   makeUserGuildPermissionsProjection,
@@ -111,10 +110,8 @@ const createFixture = async () => {
 
   const internalRead = (freshness?: "required") =>
     boundary.run(
-      getInternalUserPermissions(
-        identity.discordId,
-        identity.userId,
-        freshness,
+      Effect.flatMap(InternalGuildsData, (data) =>
+        data.getUserPermissions(identity.discordId, identity.userId, freshness),
       ).pipe(
         Effect.provide(InternalGuildsData.layerDatabase(cacheBoundary.cache)),
       ),

@@ -329,7 +329,14 @@ export const UserOnlineEventV1 = Schema.Union([
 
 export type UserOnlineEventV1 = typeof UserOnlineEventV1.Type;
 
+export const BattlelogUserDataDelete = Schema.Struct({
+  userId: Schema.NonEmptyString,
+});
+
+export type BattlelogUserDataDelete = typeof BattlelogUserDataDelete.Type;
+
 const canonicalRabbitEventSchemas = {
+  [RabbitRoutingKey.BATTLELOG_USER_DATA_DELETE]: BattlelogUserDataDelete,
   [RabbitRoutingKey.GAME_CHARACTER_OFFLINE]: GameCharacterOffline,
   [RabbitRoutingKey.MARGONEM_ACCOUNT_VERIFIED_V1]: MargonemAccountVerifiedV1,
   [RabbitRoutingKey.GUILDS_KILLS_ACCEPTED_V1]: GuildKillsAcceptedV1,

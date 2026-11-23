@@ -12,9 +12,11 @@ import {
   type ActivityRepositoryValue,
 } from "#src/activities/activity-repository";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
+import { ApiRpcGroup } from "@lootlog/rpc/api";
+import { RpcUnavailableError } from "@lootlog/rpc/errors";
+import { makeRpcTestHttpClient } from "@lootlog/rpc/testing";
 import { Redis } from "effect/persistence";
 import { ActivityConfig } from "#src/config/activity-config";
-import { ApiHttpClient, ApiHttpClientFailure } from "#src/http/api-http-client";
 import { OnlineRepository } from "#src/online/online-repository";
 import { Permissions } from "#src/activities/activity-permissions";
 import {
@@ -299,48 +301,47 @@ for (const failure of ["status", "transport", "invalid-body"] as const) {
       databaseUrl: Redacted.make("postgresql://unused"),
       rabbitmqUri: Redacted.make("amqp://unused"),
       redisUrl: Redacted.make("redis://configured"),
-      apiServiceUrl: "http://api.test",
+      apiRpcUrl: "http://api.test",
       signatureSecret: Redacted.make("a".repeat(32)),
+    });
+
+    const unused = () => Effect.die("unused");
+
+    const apiRpcHandlers = ApiRpcGroup.toLayer({
+      getGuildByIdOrVanityUrl: () =>
+        Effect.succeed({ id: "g", name: "Guild", ownerId: "discord" }),
+      getUserGuildPermissions: () => {
+        permissionRequests++;
+
+        if (unavailable) {
+          return Effect.fail(
+            new RpcUnavailableError({ message: `failure:${failure}` }),
+          );
+        }
+
+        return Effect.succeed([
+          { guild: { id: "g", ownerId: "discord" }, roles: [] },
+        ]);
+      },
+      getMemberIdentity: unused,
+      getUserAccessibleGuilds: unused,
+      listGuildEvents: unused,
+      getEventRanking: unused,
+      getEventTimers: unused,
+      getEventWrapped: unused,
+      listGuildTimers: unused,
+      getGuildKillStats: unused,
+      getGuildTopKilledNpcs: unused,
+      getNpcKillers: unused,
+      listGuildLoots: unused,
+      listUserReservations: unused,
+      listGuildReservationSpots: unused,
     });
 
     const permissions = Permissions.layer.pipe(
       Layer.provide(Layer.succeed(ActivityConfig, config)),
       Layer.provide(Layer.succeed(Redis.Redis, redis)),
-      Layer.provide(
-        Layer.succeed(
-          ApiHttpClient,
-          ApiHttpClient.of({
-            get: (_operation, url) => {
-              if (!String(url).includes("user-permissions"))
-                return Effect.succeed({
-                  status: 200,
-                  body: new TextEncoder().encode(JSON.stringify({ id: "g" })),
-                });
-              permissionRequests++;
-
-              if (unavailable && failure === "transport")
-                return Effect.fail(
-                  new ApiHttpClientFailure({
-                    operationId: "permissions",
-                    reason: "transport",
-                    retryable: true,
-                  }),
-                );
-
-              const body = unavailable
-                ? "invalid"
-                : JSON.stringify([
-                    { guild: { id: "g", ownerId: "discord" }, roles: [] },
-                  ]);
-
-              return Effect.succeed({
-                status: unavailable && failure === "status" ? 503 : 200,
-                body: new TextEncoder().encode(body),
-              });
-            },
-          }),
-        ),
-      ),
+      Layer.provide(makeRpcTestHttpClient(ApiRpcGroup, apiRpcHandlers)),
     );
 
     const boundary = HttpRouter.toWebHandler(

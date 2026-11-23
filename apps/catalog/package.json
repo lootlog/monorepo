@@ -31,6 +31,7 @@
     "@lootlog/meilisearch": "workspace:*",
     "@lootlog/messaging": "workspace:*",
     "@lootlog/protocol": "workspace:*",
+    "@lootlog/rpc": "workspace:*",
     "@lootlog/schema": "workspace:*",
     "drizzle-orm": "catalog:",
     "effect": "catalog:",

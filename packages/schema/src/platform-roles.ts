@@ -12,9 +12,6 @@ export type PlatformRole = typeof PlatformRole.Type;
 
 export const AUTH_ROLES_HEADER = "x-auth-roles";
 
-export const PLATFORM_ROLE_HOLDERS_PATH =
-  "/auth/internal/platform-role-holders";
-
 export const PlatformRoleHolders = Schema.Struct({
   userIds: Schema.Array(Schema.String),
 });

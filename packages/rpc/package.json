@@ -1,0 +1,35 @@
+{
+  "name": "@lootlog/rpc",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    "./server": "./src/server.ts",
+    "./client": "./src/client.ts",
+    "./testing": "./src/testing.ts",
+    "./errors": "./src/errors.ts",
+    "./api": "./src/api.ts",
+    "./auth": "./src/auth.ts",
+    "./gateway": "./src/gateway.ts",
+    "./catalog": "./src/catalog.ts",
+    "./discord-bot": "./src/discord-bot.ts"
+  },
+  "scripts": {
+    "lint": "oxlint src test && effect-tsgo diagnostics --project tsconfig.json --severity error,warning --strict",
+    "typecheck": "bun check",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@effect/platform-bun": "catalog:",
+    "@lootlog/instrumentation": "workspace:*",
+    "@lootlog/schema": "workspace:*",
+    "effect": "catalog:"
+  },
+  "devDependencies": {
+    "@effect/tsgo": "0.67.3",
+    "@lootlog/typescript-config": "workspace:*",
+    "@types/bun": "catalog:",
+    "typescript": "catalog:"
+  }
+}

@@ -1,7 +1,18 @@
+import { ApiRpcGroup } from "@lootlog/rpc/api";
+import { CatalogRpcGroup } from "@lootlog/rpc/catalog";
+import {
+  RpcForbiddenError,
+  RpcNotFoundError,
+  RpcUnauthorizedError,
+  RpcUnavailableError,
+} from "@lootlog/rpc/errors";
+import { GatewayRpcGroup } from "@lootlog/rpc/gateway";
+import { serviceRpcRoutes } from "@lootlog/rpc/server";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
-import { beforeEach, describe, expect, it } from "bun:test";
+import { afterAll, beforeEach, describe, expect, it } from "bun:test";
 import { Effect, Layer, Redacted } from "effect";
-import { FetchHttpClient } from "effect/http";
+import type { RpcGroup } from "effect/rpc";
+import { FetchHttpClient, HttpRouter, HttpServer } from "effect/http";
 import { BotConfig } from "#src/config/bot-config";
 import { COMMAND_TEXT, FAILURE_MESSAGES } from "./command-messages.js";
 import { LootlogClient } from "./lootlog-client.js";
@@ -12,21 +23,156 @@ const guildId = "guild-1";
 
 const discordId = "discord-1";
 
-type Answer = (url: URL) => Response;
+const unused = () => Effect.die("unused");
 
-let answers: Array<{ readonly path: string; readonly answer: Answer }> = [];
+let rpcCalls: Array<{ readonly method: string; readonly payload: unknown }> =
+  [];
 
-let requests: Array<{ readonly url: URL; readonly headers: Headers }> = [];
+type PureHandlers<T> = {
+  [K in keyof T]: T[K] extends (payload: infer P, options: infer O) => infer Ret
+    ? (
+        payload: P,
+        options: O,
+      ) => Extract<Ret, Effect.Effect<unknown, unknown, never>> extends never
+        ? Ret extends Effect.Effect<infer A, infer E, infer _R>
+          ? Effect.Effect<A, E>
+          : never
+        : Extract<Ret, Effect.Effect<unknown, unknown, never>>
+    : T[K];
+};
+
+type ApiHandlers = PureHandlers<
+  RpcGroup.HandlersFrom<RpcGroup.Rpcs<typeof ApiRpcGroup>>
+>;
+
+type GatewayHandlers = PureHandlers<
+  RpcGroup.HandlersFrom<RpcGroup.Rpcs<typeof GatewayRpcGroup>>
+>;
+
+let rpcOverrides: Partial<ApiHandlers & GatewayHandlers> = {};
+
+const record =
+  <P, O, R>(
+    method: string,
+    fallback: (payload: P, options: O) => R,
+    override: () => ((payload: P, options: O) => R) | undefined,
+  ) =>
+  (payload: P, options: O) => {
+    rpcCalls.push({ method, payload });
+    const handler = override();
+
+    return handler ? handler(payload, options) : fallback(payload, options);
+  };
+
+const apiWeb = HttpRouter.toWebHandler(
+  Layer.mergeAll(
+    serviceRpcRoutes({
+      group: ApiRpcGroup,
+      handlers: ApiRpcGroup.toLayer({
+        getUserGuildPermissions: unused,
+        getGuildByIdOrVanityUrl: unused,
+        getUserAccessibleGuilds: unused,
+        getEventTimers: unused,
+        getGuildTopKilledNpcs: unused,
+        listUserReservations: unused,
+        listGuildReservationSpots: unused,
+        getMemberIdentity: record(
+          "api.getMemberIdentity",
+          () => Effect.fail(new RpcNotFoundError()),
+          () => rpcOverrides.getMemberIdentity,
+        ),
+        getGuildKillStats: record(
+          "api.getGuildKillStats",
+          () => Effect.fail(new RpcNotFoundError()),
+          () => rpcOverrides.getGuildKillStats,
+        ),
+        getNpcKillers: record(
+          "api.getNpcKillers",
+          () => Effect.fail(new RpcNotFoundError()),
+          () => rpcOverrides.getNpcKillers,
+        ),
+        listGuildEvents: record(
+          "api.listGuildEvents",
+          () => Effect.fail(new RpcNotFoundError()),
+          () => rpcOverrides.listGuildEvents,
+        ),
+        getEventRanking: record(
+          "api.getEventRanking",
+          () => Effect.fail(new RpcNotFoundError()),
+          () => rpcOverrides.getEventRanking,
+        ),
+        getEventWrapped: record(
+          "api.getEventWrapped",
+          () => Effect.fail(new RpcNotFoundError()),
+          () => rpcOverrides.getEventWrapped,
+        ),
+        listGuildTimers: record(
+          "api.listGuildTimers",
+          () => Effect.fail(new RpcNotFoundError()),
+          () => rpcOverrides.listGuildTimers,
+        ),
+        listGuildLoots: record(
+          "api.listGuildLoots",
+          () => Effect.fail(new RpcNotFoundError()),
+          () => rpcOverrides.listGuildLoots,
+        ),
+      }),
+    }),
+    HttpServer.layerServices,
+  ),
+  { disableLogger: true },
+);
+
+const gatewayWeb = HttpRouter.toWebHandler(
+  Layer.mergeAll(
+    serviceRpcRoutes({
+      group: GatewayRpcGroup,
+      handlers: GatewayRpcGroup.toLayer({
+        getOrganizationPresence: record(
+          "gateway.getOrganizationPresence",
+          () => Effect.fail(new RpcUnavailableError()),
+          () => rpcOverrides.getOrganizationPresence,
+        ),
+      }),
+    }),
+    HttpServer.layerServices,
+  ),
+  { disableLogger: true },
+);
+
+const catalogWeb = HttpRouter.toWebHandler(
+  Layer.mergeAll(
+    serviceRpcRoutes({
+      group: CatalogRpcGroup,
+      handlers: CatalogRpcGroup.toLayer({
+        searchItems: () => Effect.succeed({ hits: [] }),
+      }),
+    }),
+    HttpServer.layerServices,
+  ),
+  { disableLogger: true },
+);
+
+afterAll(async () => {
+  await Promise.all([
+    apiWeb.dispose(),
+    gatewayWeb.dispose(),
+    catalogWeb.dispose(),
+  ]);
+});
 
 const fetchBoundary: typeof globalThis.fetch = Object.assign(
   async (input: RequestInfo | URL, init?: RequestInit) => {
     const request = new Request(input, init);
     const url = new URL(request.url);
-    requests.push({ url, headers: request.headers });
 
-    const match = answers.find(({ path }) => url.pathname === path);
+    if (url.host === "api.test") return apiWeb.handler(request);
 
-    return match ? match.answer(url) : new Response(null, { status: 404 });
+    if (url.host === "gateway.test") return gatewayWeb.handler(request);
+
+    if (url.host === "catalog.test") return catalogWeb.handler(request);
+
+    return new Response(null, { status: 404 });
   },
   { preconnect: globalThis.fetch.preconnect },
 );
@@ -38,14 +184,15 @@ const services = LootlogClient.layer.pipe(
       BotConfig.of({
         environment: RuntimeEnvironment.DEV,
         port: 0,
+        rpcPort: 0,
         serviceName: "discord-bot",
         serviceNamespace: "test",
         discordBotToken: Redacted.make("token"),
         rabbitmqUri: Redacted.make("amqp://test"),
         apiServiceUrl: "http://api.test",
-        catalogServiceUrl: "http://catalog.test",
-        catalogServiceToken: Redacted.make("catalog-token"),
-        gatewayServiceUrl: "http://gateway.test",
+        apiRpcUrl: "http://api.test",
+        catalogRpcUrl: "http://catalog.test",
+        gatewayRpcUrl: "http://gateway.test",
         webAppUrl: "https://lootlog.test",
       }),
     ),
@@ -83,61 +230,54 @@ const invoke = (
   );
 };
 
-const identityPath = `/internal/guilds/${guildId}/members/${discordId}/identity`;
-
-const linkedMember = {
-  path: identityPath,
-  answer: () => Response.json({ userId: "user-1", memberId: 1 }),
-};
+const linkedMember = () => Effect.succeed({ userId: "user-1", memberId: 1 });
 
 const description = (reply: CommandReply) =>
   reply.embeds?.[0]?.toJSON().description ?? "";
 
 beforeEach(() => {
-  answers = [];
-  requests = [];
+  rpcCalls = [];
+  rpcOverrides = {};
 });
 
 describe("slash commands", () => {
   it("reads the invoking Member's own Organization with that Member's identity", async () => {
-    answers = [
-      linkedMember,
-      {
-        path: `/guilds/${guildId}/stats/kills`,
-        answer: () =>
-          Response.json({
-            overview: { guildUniqueKills: 3 },
-            memberRanking: [
-              {
-                member: { name: "Aria", userId: "discord-2" },
-                totalParticipations: 2,
-                participationsByType: { ELITE2: 2 },
-              },
-              {
-                member: { name: "Borys", userId: "discord-3" },
-                totalParticipations: 1,
-                participationsByType: { ELITE2: 1 },
-              },
-            ],
-          }),
-      },
-    ];
+    rpcOverrides = {
+      getMemberIdentity: linkedMember,
+      getGuildKillStats: () =>
+        Effect.succeed({
+          overview: { guildUniqueKills: 3 },
+          memberRanking: [
+            {
+              member: { name: "Aria", userId: "discord-2" },
+              totalParticipations: 2,
+              participationsByType: { ELITE2: 2 },
+            },
+            {
+              member: { name: "Borys", userId: "discord-3" },
+              totalParticipations: 1,
+              participationsByType: { ELITE2: 1 },
+            },
+          ],
+        }),
+    };
 
     const reply = await invoke("ranking", {
       strings: { typ: "ELITE2", okres: "7d" },
     });
 
-    const statsRequest = requests.find(
-      ({ url }) => url.pathname === `/guilds/${guildId}/stats/kills`,
+    const statsCall = rpcCalls.find(
+      ({ method }) => method === "api.getGuildKillStats",
     );
 
-    expect(requests[0]?.url.pathname).toBe(identityPath);
-    expect(statsRequest?.headers.get("x-auth-user-id")).toBe("user-1");
-    expect(statsRequest?.headers.get("x-auth-discord-id")).toBe(discordId);
-    expect(statsRequest?.url.searchParams.getAll("npcTypes")).toEqual([
-      "ELITE2",
-    ]);
-    expect(statsRequest?.url.searchParams.get("period")).toBe("7d");
+    expect(rpcCalls[0]?.method).toBe("api.getMemberIdentity");
+    expect(statsCall?.payload).toEqual({
+      userId: "user-1",
+      discordId,
+      guildId,
+      npcTypes: ["ELITE2"],
+      period: "7d",
+    });
     expect(description(reply).indexOf("Aria")).toBeLessThan(
       description(reply).indexOf("Borys"),
     );
@@ -153,14 +293,11 @@ describe("slash commands", () => {
       participationsByType: {},
     }));
 
-    answers = [
-      linkedMember,
-      {
-        path: `/guilds/${guildId}/stats/kills`,
-        answer: () =>
-          Response.json({ overview: { guildUniqueKills: 20 }, memberRanking }),
-      },
-    ];
+    rpcOverrides = {
+      getMemberIdentity: linkedMember,
+      getGuildKillStats: () =>
+        Effect.succeed({ overview: { guildUniqueKills: 20 }, memberRanking }),
+    };
 
     const lines = description(
       await invoke("ranking", { strings: { typ: "ELITE2" } }),
@@ -184,24 +321,21 @@ describe("slash commands", () => {
       }));
 
     const npcReply = async (count: number) => {
-      answers = [
-        linkedMember,
-        {
-          path: `/guilds/${guildId}/stats/kills/npcs/7/killers`,
-          answer: () =>
-            Response.json({
-              npc: {
-                npcName: "Heros",
-                npcType: "HERO",
-                npcLvl: 100,
-                npcIcon: null,
-                uniqueGuildKills: count,
-                totalMemberParticipations: count,
-              },
-              killers: killers(count),
-            }),
-        },
-      ];
+      rpcOverrides = {
+        getMemberIdentity: linkedMember,
+        getNpcKillers: () =>
+          Effect.succeed({
+            npc: {
+              npcName: "Heros",
+              npcType: "HERO",
+              npcLvl: 100,
+              npcIcon: null,
+              uniqueGuildKills: count,
+              totalMemberParticipations: count,
+            },
+            killers: killers(count),
+          }),
+      };
 
       const reply = await invoke("npc", { strings: { nazwa: "7" } });
 
@@ -222,63 +356,49 @@ describe("slash commands", () => {
       member: { id, name: `Member ${id}` },
     });
 
-    answers = [
-      linkedMember,
-      {
-        path: `/guilds/${guildId}/events`,
-        answer: () =>
-          Response.json([
-            {
-              id: "event-1",
-              name: "Event",
-              world: "Aldous",
-              active: true,
-              startsAt: null,
-              endsAt: null,
-              createdAt: new Date().toISOString(),
-              heroNpcs: [],
-            },
-          ]),
-      },
-      {
-        path: `/guilds/${guildId}/events/event-1/ranking`,
-        answer: () =>
-          Response.json([
-            entry("A", 2, 10),
-            entry("A", 1, 6),
-            entry("B", 1, 6),
-            entry("B", 3, 8),
-          ]),
-      },
-      {
-        path: `/guilds/${guildId}/events/event-1/wrapped`,
-        answer: () =>
-          Response.json({
-            overview: {
-              totalKills: 4,
-              participantCount: 3,
-              totalPoints: 30,
-              coveragePercentage: 50,
-              totalLoots: 0,
-            },
-            leaders: {
-              topHunter: {
-                winner: {
-                  member: {
-                    id: 2,
-                    name: "Member 2",
-                    avatar: null,
-                    userId: "u",
-                  },
-                  primaryValue: 2,
-                },
+    rpcOverrides = {
+      getMemberIdentity: linkedMember,
+      listGuildEvents: () =>
+        Effect.succeed([
+          {
+            id: "event-1",
+            name: "Event",
+            world: "Aldous",
+            active: true,
+            startsAt: null,
+            endsAt: null,
+            createdAt: new Date().toISOString(),
+            heroNpcs: [],
+          },
+        ]),
+      getEventRanking: () =>
+        Effect.succeed([
+          entry("A", 2, 10),
+          entry("A", 1, 6),
+          entry("B", 1, 6),
+          entry("B", 3, 8),
+        ]),
+      getEventWrapped: () =>
+        Effect.succeed({
+          overview: {
+            totalKills: 4,
+            participantCount: 3,
+            totalPoints: 30,
+            coveragePercentage: 50,
+            totalLoots: 0,
+          },
+          leaders: {
+            topHunter: {
+              winner: {
+                member: { name: "Member 2" },
+                primaryValue: 2,
               },
-              topScorer: { winner: null },
-              longestDuty: { winner: null },
             },
-          }),
-      },
-    ];
+            topScorer: { winner: null },
+            longestDuty: { winner: null },
+          },
+        }),
+    };
 
     const reply = await invoke("event", { subcommand: "podsumowanie" });
 
@@ -295,23 +415,20 @@ describe("slash commands", () => {
   });
 
   it("pings the chosen Member only when their statistics are shown publicly", async () => {
-    answers = [
-      linkedMember,
-      {
-        path: `/guilds/${guildId}/stats/kills`,
-        answer: () =>
-          Response.json({
-            overview: { guildUniqueKills: 1 },
-            memberRanking: [
-              {
-                member: { name: "Aria", userId: "discord-2" },
-                totalParticipations: 1,
-                participationsByType: { HERO: 1 },
-              },
-            ],
-          }),
-      },
-    ];
+    rpcOverrides = {
+      getMemberIdentity: linkedMember,
+      getGuildKillStats: () =>
+        Effect.succeed({
+          overview: { guildUniqueKills: 1 },
+          memberRanking: [
+            {
+              member: { name: "Aria", userId: "discord-2" },
+              totalParticipations: 1,
+              participationsByType: { HERO: 1 },
+            },
+          ],
+        }),
+    };
 
     const statistics = (publiczne: boolean) =>
       invoke("statystyki", {
@@ -327,23 +444,25 @@ describe("slash commands", () => {
     const reply = await invoke("ranking", { strings: { typ: "HERO" } });
 
     expect(reply.content).toBe(FAILURE_MESSAGES["not-linked"]);
-    expect(requests.map(({ url }) => url.pathname)).toEqual([identityPath]);
+    expect(rpcCalls.map(({ method }) => method)).toEqual([
+      "api.getMemberIdentity",
+    ]);
   });
 
   it.each([
-    { status: 401, message: FAILURE_MESSAGES.reauthenticate },
-    { status: 403, message: FAILURE_MESSAGES.forbidden },
-    { status: 503, message: FAILURE_MESSAGES.unavailable },
+    {
+      error: new RpcUnauthorizedError(),
+      message: FAILURE_MESSAGES.reauthenticate,
+    },
+    { error: new RpcForbiddenError(), message: FAILURE_MESSAGES.forbidden },
+    { error: new RpcUnavailableError(), message: FAILURE_MESSAGES.unavailable },
   ])(
-    "answers an API status $status with what the player can do about it",
-    async ({ status, message }) => {
-      answers = [
-        linkedMember,
-        {
-          path: `/guilds/${guildId}/timers`,
-          answer: () => new Response(null, { status }),
-        },
-      ];
+    "answers an RPC failure with what the player can do about it",
+    async ({ error, message }) => {
+      rpcOverrides = {
+        getMemberIdentity: linkedMember,
+        listGuildTimers: () => Effect.fail(error),
+      };
 
       expect((await invoke("timery")).content).toBe(message);
     },
@@ -362,19 +481,16 @@ describe("slash commands", () => {
       npc: { name, lvl: 100, type: "ELITE2", location: "Mapa", icon: null },
     });
 
-    answers = [
-      linkedMember,
-      {
-        path: `/guilds/${guildId}/timers`,
-        answer: () =>
-          Response.json([
-            timer("Later", 30, 40),
-            timer("Expired", -20, -5),
-            { ...timer("Deleted", 5, 10), deletedAt: at(-1) },
-            timer("Open", -5, 5),
-          ]),
-      },
-    ];
+    rpcOverrides = {
+      getMemberIdentity: linkedMember,
+      listGuildTimers: () =>
+        Effect.succeed([
+          timer("Later", 30, 40),
+          timer("Expired", -20, -5),
+          { ...timer("Deleted", 5, 10), deletedAt: at(-1) },
+          timer("Open", -5, 5),
+        ]),
+    };
 
     const lines = description(await invoke("timery")).split("\n");
 
@@ -384,27 +500,21 @@ describe("slash commands", () => {
   });
 
   it("lists the newest loots from the API's loots page", async () => {
-    answers = [
-      linkedMember,
-      {
-        path: `/guilds/${guildId}/loots`,
-        answer: () =>
-          Response.json({
-            items: [
-              {
-                createdAt: new Date().toISOString(),
-                world: "aldous",
-                items: [{ name: "Hełm Grozy", rarity: "HEROIC" }],
-                players: [{ name: "Gracz" }],
-                npcs: [
-                  { id: 7, name: "Kotołak", type: "HERO", wt: 80, lvl: 50 },
-                ],
-              },
-            ],
-            nextCursor: "next",
-          }),
-      },
-    ];
+    rpcOverrides = {
+      getMemberIdentity: linkedMember,
+      listGuildLoots: () =>
+        Effect.succeed({
+          items: [
+            {
+              createdAt: new Date().toISOString(),
+              world: "aldous",
+              items: [{ name: "Hełm Grozy", rarity: "HEROIC" }],
+              players: [{ name: "Gracz" }],
+              npcs: [{ id: 7, name: "Kotołak", type: "HERO", wt: 80, lvl: 50 }],
+            },
+          ],
+        }),
+    };
 
     const lines = description(await invoke("lupy")).split("\n");
 
@@ -414,13 +524,10 @@ describe("slash commands", () => {
   });
 
   it("tells the player an NPC has no visible kills instead of reporting an outage", async () => {
-    answers = [
-      linkedMember,
-      {
-        path: `/guilds/${guildId}/stats/kills/npcs/999/killers`,
-        answer: () => Response.json({ npc: null, killers: [] }),
-      },
-    ];
+    rpcOverrides = {
+      getMemberIdentity: linkedMember,
+      getNpcKillers: () => Effect.succeed({ npc: null, killers: [] }),
+    };
 
     const reply = await invoke("npc", { strings: { nazwa: "999" } });
 
@@ -433,46 +540,40 @@ describe("slash commands", () => {
       (_, index) => `Heros ${index}`,
     );
 
-    answers = [
-      linkedMember,
-      {
-        path: `/guilds/${guildId}/events`,
-        answer: () =>
-          Response.json([
-            {
-              id: "event-1",
-              name: "Event",
-              world: "Aldous",
-              active: true,
-              startsAt: null,
-              endsAt: null,
-              createdAt: new Date().toISOString(),
-              heroNpcs: heroNames.map((npcName) => ({
-                npcId: null,
-                npcName,
-                npcLvl: null,
-              })),
-            },
-          ]),
-      },
-      {
-        path: `/guilds/${guildId}/events/event-1/ranking`,
-        answer: () =>
-          Response.json(
-            heroNames.flatMap((heroNpcName) =>
-              Array.from({ length: 10 }, (_, index) => ({
-                heroNpcName,
-                totalPoints: 100 - index,
-                totalKills: 10,
-                member: {
-                  id: 100 + index,
-                  name: `Członek z długim nickiem ${index}`,
-                },
-              })),
-            ),
+    rpcOverrides = {
+      getMemberIdentity: linkedMember,
+      listGuildEvents: () =>
+        Effect.succeed([
+          {
+            id: "event-1",
+            name: "Event",
+            world: "Aldous",
+            active: true,
+            startsAt: null,
+            endsAt: null,
+            createdAt: new Date().toISOString(),
+            heroNpcs: heroNames.map((npcName) => ({
+              npcId: null,
+              npcName,
+              npcLvl: null,
+            })),
+          },
+        ]),
+      getEventRanking: () =>
+        Effect.succeed(
+          heroNames.flatMap((heroNpcName) =>
+            Array.from({ length: 10 }, (_, index) => ({
+              heroNpcName,
+              totalPoints: 100 - index,
+              totalKills: 10,
+              member: {
+                id: 100 + index,
+                name: `Członek z długim nickiem ${index}`,
+              },
+            })),
           ),
-      },
-    ];
+        ),
+    };
 
     const reply = await invoke("event", { subcommand: "ranking" });
     const embed = reply.embeds?.[0]?.toJSON();
@@ -491,36 +592,27 @@ describe("slash commands", () => {
 
   it("counts characters in the game once and leaves out Web sessions", async () => {
     const presence = (
-      sessionId: string,
       platform: string,
       character?: { name: string; world: string },
       isAfk = false,
-    ) => ({
-      sessionId,
-      platform,
-      status: "online",
-      isAfk,
-      ...(character && { character: { ...character, lvl: 100, prof: "w" } }),
-    });
+    ) =>
+      character
+        ? { platform, status: "online", isAfk, character }
+        : { platform, status: "online", isAfk };
 
-    answers = [
-      linkedMember,
-      {
-        path: `/organizations/${guildId}/presence`,
-        answer: () =>
-          Response.json({
-            organizationId: guildId,
-            revision: 1,
-            presences: [
-              presence("1", "game", { name: "Aria", world: "Aldous" }),
-              presence("2", "game", { name: "Aria", world: "Aldous" }),
-              presence("3", "web-app"),
-              presence("4", "game", { name: "Borys", world: "Luvia" }, true),
-              presence("5", "game", { name: "Cyra", world: "Luvia" }),
-            ],
-          }),
-      },
-    ];
+    rpcOverrides = {
+      getMemberIdentity: linkedMember,
+      getOrganizationPresence: () =>
+        Effect.succeed({
+          presences: [
+            presence("game", { name: "Aria", world: "Aldous" }),
+            presence("game", { name: "Aria", world: "Aldous" }),
+            presence("web-app"),
+            presence("game", { name: "Borys", world: "Luvia" }, true),
+            presence("game", { name: "Cyra", world: "Luvia" }),
+          ],
+        }),
+    };
 
     const reply = await invoke("online");
 
@@ -532,9 +624,13 @@ describe("slash commands", () => {
       COMMAND_TEXT.online.world("Aldous", 1, 0),
     ]);
     expect(
-      requests
-        .find(({ url }) => url.host === "gateway.test")
-        ?.headers.get("x-auth-user-id"),
-    ).toBe("user-1");
+      rpcCalls.find(
+        ({ method }) => method === "gateway.getOrganizationPresence",
+      )?.payload,
+    ).toEqual({
+      userId: "user-1",
+      discordId,
+      organizationId: guildId,
+    });
   });
 });

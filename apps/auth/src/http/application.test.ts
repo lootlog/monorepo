@@ -1,4 +1,5 @@
-import { AdminService, authorizeAdminRequest } from "#src/admin/admin-service";
+import { authorizeAdminRequest } from "#src/admin/admin-auth";
+import { AdminService } from "#src/admin/admin-service";
 import { ApiKeyService } from "#src/auth/api-key-service";
 import { afterAll, describe, expect, it, mock } from "bun:test";
 import { betterAuth } from "better-auth";
@@ -10,8 +11,6 @@ import { BetterAuthRuntime } from "#src/auth/provider/better-auth";
 import { resolveBetterAuthBaseURL } from "#src/auth/provider/better-auth-url";
 import { normalizeBetterAuthRequest } from "./application.js";
 import { AuthRoutes } from "./server.js";
-import { OpenApi } from "effect/http-api";
-import { AuthApi } from "#src/http-api/auth-api";
 
 const SESSION_TOKEN_COOKIE = "local.session_token";
 
@@ -83,8 +82,6 @@ const makeRuntime = (
   const service = createAuthService({
     auth,
     appUrl: "http://localhost:3000",
-    idpTokenSecret:
-      idpTokenSecret === null ? undefined : Redacted.make(idpTokenSecret),
     findDiscordAccountId: () => Effect.succeed("account-row-1"),
   });
 
@@ -158,65 +155,6 @@ const runtime = makeRuntime();
 afterAll(() => runtime.dispose());
 
 describe("Auth HttpApi contract", () => {
-  const unauthorizedHeaders: Record<string, string>[] = [
-    {},
-    { authorization: "Bearer wrong-secret" },
-    { cookie: "session=valid" },
-    { "x-auth-user-id": "user-1", "x-auth-discord-id": "discord-1" },
-  ];
-
-  it.each(unauthorizedHeaders)(
-    "rejects non-service callers before retrieving provider credentials: %j",
-    async (headers) => {
-      const caller = makeRuntime();
-
-      try {
-        const response = await caller.run(
-          new Request("http://localhost/auth/idp-token", {
-            method: "POST",
-            headers: { "content-type": "application/json", ...headers },
-            body: JSON.stringify({
-              userId: "victim",
-              discordId: "victim-discord",
-            }),
-          }),
-        );
-
-        expect(response.status).toBe(401);
-        expect(caller.getAccessToken).not.toHaveBeenCalled();
-      } finally {
-        await caller.dispose();
-      }
-    },
-  );
-
-  it.each([null, ""])(
-    "fails closed when the IDP service secret is missing or empty: %s",
-    async (secret) => {
-      const caller = makeRuntime(true, secret);
-
-      try {
-        const response = await caller.run(
-          new Request("http://localhost/auth/idp-token", {
-            method: "POST",
-            headers: {
-              "content-type": "application/json",
-              authorization: "Bearer ",
-            },
-            body: JSON.stringify({
-              userId: "victim",
-              discordId: "victim-discord",
-            }),
-          }),
-        );
-
-        expect(response.status).toBe(401);
-        expect(caller.getAccessToken).not.toHaveBeenCalled();
-      } finally {
-        await caller.dispose();
-      }
-    },
-  );
   it("builds the public Better Auth base URL from the service root", () => {
     expect(resolveBetterAuthBaseURL("https://auth.lootlog.pl")).toBe(
       "https://auth.lootlog.pl/idp",
@@ -582,54 +520,6 @@ describe("Auth HttpApi contract", () => {
     expect(request.url).toBe("http://localhost/api/auth/idp/get-session");
     expect(response.status).toBe(200);
     expect(await response.json()).toBeNull();
-  });
-
-  it("strictly validates and trims idp-token payloads", async () => {
-    const accepted = await runtime.run(
-      new Request("http://localhost/auth/idp-token", {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          authorization: "Bearer idp-test-secret",
-        },
-        body: JSON.stringify({ userId: " user-1 ", discordId: " discord-1 " }),
-      }),
-    );
-
-    expect(accepted.status).toBe(200);
-    expect(accepted.headers.get("cache-control")).toBe("no-store");
-    expect(await accepted.json()).toMatchObject({
-      accessToken: "provider-token",
-      scopes: ["identify"],
-    });
-
-    const rejected = await runtime.run(
-      new Request("http://localhost/auth/idp-token", {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          authorization: "Bearer idp-test-secret",
-        },
-        body: JSON.stringify({
-          userId: "user-1",
-          discordId: "discord-1",
-          role: "admin",
-        }),
-      }),
-    );
-
-    expect(rejected.status).toBe(400);
-    expect(await rejected.json()).toMatchObject({ code: "VALIDATION_ERROR" });
-
-    const responses =
-      OpenApi.fromApi(AuthApi).paths["/auth/idp-token"]?.post?.responses;
-
-    expect(
-      responses?.[rejected.status]?.content?.["application/json"]?.schema,
-    ).toBeDefined();
-    expect(
-      responses?.[401]?.content?.["application/json"]?.schema,
-    ).toBeDefined();
   });
 
   it("asks the Web app to sign in again when the Discord token cannot be refreshed", async () => {

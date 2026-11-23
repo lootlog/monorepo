@@ -147,7 +147,7 @@ describe("Activity RabbitMQ topology", () => {
         serviceNamespace: "test",
         databaseUrl: Redacted.make("postgresql://unused"),
         rabbitmqUri: Redacted.make("amqp://unused"),
-        apiServiceUrl: "http://api.test",
+        apiRpcUrl: "http://api.test",
         signatureSecret: Redacted.make("a".repeat(32)),
       });
 

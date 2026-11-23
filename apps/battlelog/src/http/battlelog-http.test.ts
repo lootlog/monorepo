@@ -7,7 +7,7 @@ import {
 } from "../../test/battle-fixtures.js";
 import { makeBattlelogOperations } from "../battles/battlelog-operations.js";
 import { afterAll, describe, expect, it } from "bun:test";
-import { Effect, Redacted } from "effect";
+import { Effect } from "effect";
 import { OperationError } from "@lootlog/instrumentation/operation";
 import { ResourceNotFoundError } from "@lootlog/protocol/http/errors";
 import { makeBattlelogTestBoundary } from "../../test/battlelog-test-boundary.js";
@@ -20,7 +20,6 @@ const boundary = makeBattlelogTestBoundary(
     unusedDeleteQueue,
     unusedWeaponKills,
   ),
-  Redacted.make("cleanup-test-secret"),
 );
 
 const handler = boundary.handler;
@@ -90,7 +89,6 @@ describe("Battlelog HTTP boundary", () => {
 for (const [method, path] of [
   ["POST", "/battles"],
   ["PATCH", "/battles/battle-id"],
-  ["POST", "/internal/delete-user-data"],
 ] as const) {
   it(`returns 400 for malformed JSON in ${method} ${path}`, async () => {
     const response = await handler(
@@ -155,108 +153,4 @@ it("rejects personal-data and write grants before executing battle operations", 
       )
     ).status,
   ).toBe(403);
-  keyHeaders["x-auth-api-key-access"] = JSON.stringify({
-    ...access,
-    personalData: true,
-    mode: "read-write",
-  });
-  expect(
-    (
-      await handler(
-        new Request("http://battlelog.test/internal/delete-user-data", {
-          method: "POST",
-          headers: keyHeaders,
-          body: "{}",
-        }),
-      )
-    ).status,
-  ).toBe(403);
-});
-
-it("only queues account cleanup for an authenticated service caller", async () => {
-  const queued: unknown[] = [];
-
-  const cleanup = makeBattlelogTestBoundary(
-    makeBattlelogOperations(
-      unusedBattles,
-      unusedBattleAnalytics,
-      unusedBattleMetadata,
-      {
-        add: async (...args) => {
-          queued.push(args);
-        },
-      },
-      unusedWeaponKills,
-    ),
-    Redacted.make("cleanup-test-secret"),
-  );
-
-  try {
-    const unauthorizedHeaders: Record<string, string>[] = [
-      {},
-      { authorization: "Bearer wrong-secret" },
-      { "x-auth-user-id": "victim", "x-auth-discord-id": "discord" },
-      { cookie: "session=valid" },
-    ];
-
-    for (const headers of unauthorizedHeaders) {
-      const response = await cleanup.handler(
-        new Request("http://battlelog.test/internal/delete-user-data", {
-          method: "POST",
-          headers: { "content-type": "application/json", ...headers },
-          body: JSON.stringify({ userId: "victim" }),
-        }),
-      );
-
-      expect(response.status).toBe(401);
-    }
-
-    expect(queued).toEqual([]);
-
-    const response = await cleanup.handler(
-      new Request("http://battlelog.test/internal/delete-user-data", {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          authorization: "Bearer cleanup-test-secret",
-        },
-        body: JSON.stringify({ userId: "victim" }),
-      }),
-    );
-
-    expect(response.status).toBe(201);
-    expect(queued).toHaveLength(1);
-    expect(queued[0]).toEqual(expect.arrayContaining([{ userId: "victim" }]));
-  } finally {
-    await cleanup.dispose();
-  }
-});
-
-it("fails closed when no cleanup credential is configured", async () => {
-  const unconfigured = makeBattlelogTestBoundary(
-    makeBattlelogOperations(
-      unusedBattles,
-      unusedBattleAnalytics,
-      unusedBattleMetadata,
-      unusedDeleteQueue,
-      unusedWeaponKills,
-    ),
-  );
-
-  try {
-    const response = await unconfigured.handler(
-      new Request("http://battlelog.test/internal/delete-user-data", {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          authorization: "Bearer ",
-        },
-        body: JSON.stringify({ userId: "victim" }),
-      }),
-    );
-
-    expect(response.status).toBe(401);
-  } finally {
-    await unconfigured.dispose();
-  }
 });

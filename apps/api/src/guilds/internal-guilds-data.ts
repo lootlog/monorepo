@@ -18,22 +18,6 @@ import type { guildTable } from "#src/database/drizzle/organization.schema";
 import { findActiveGuildMember } from "#src/members/member-access-query";
 import type { UserOrganizationPermissionsResponse } from "#src/contracts/guilds/schemas";
 
-export class InternalMemberNotFound extends TaggedErrorClass<
-  InternalMemberNotFound,
-  { readonly brand: unique symbol }
->()("InternalMemberNotFound", {
-  status: Schema.Literal(404),
-  code: Schema.Literal("MEMBER_NOT_FOUND"),
-}) {}
-
-export class InternalGuildNotFound extends TaggedErrorClass<
-  InternalGuildNotFound,
-  { readonly brand: unique symbol }
->()("InternalGuildNotFound", {
-  status: Schema.Literal(404),
-  code: Schema.Literal("GUILD_NOT_FOUND"),
-}) {}
-
 export class InternalGuildsOperationError extends TaggedErrorClass<
   InternalGuildsOperationError,
   { readonly brand: unique symbol }
@@ -49,7 +33,7 @@ export interface MemberIdentity {
   readonly memberId: number;
 }
 
-export interface InternalGuildsPersistence extends UserGuildPermissionsPersistence {
+interface InternalGuildsPersistence extends UserGuildPermissionsPersistence {
   readonly findActiveGuild: (
     idOrVanityUrl: string,
   ) => Effect.Effect<GuildRecord | null, unknown>;
@@ -59,7 +43,7 @@ export interface InternalGuildsPersistence extends UserGuildPermissionsPersisten
   ) => Effect.Effect<MemberIdentity | null, unknown>;
 }
 
-export const makeInternalGuildsData = (
+const makeInternalGuildsData = (
   persistence: InternalGuildsPersistence,
   cache: InternalGuildsCache,
 ) => {

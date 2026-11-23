@@ -3,11 +3,9 @@ import {
   baseServiceConfig,
   redisUrlConfig,
 } from "@lootlog/instrumentation/service-config";
+import { DEFAULT_RPC_PORT } from "@lootlog/rpc/server";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { Config, Option, type Redacted, Schema } from "effect";
-
-const optionalRedacted = (name: string) =>
-  Config.option(Config.Redacted(name)).pipe(Config.map(Option.getOrUndefined));
 
 const flag = (name: string, defaultValue: boolean) =>
   Config.Boolean(name).pipe(Config.withDefault(defaultValue));
@@ -17,14 +15,12 @@ export const rabbitmqUriConfig = Config.Redacted("RABBITMQ_URI");
 export const databaseUrlConfig = Config.Redacted("POSTGRESQL_CONNECTION_URI");
 
 export interface ApiConfiguration extends BaseServiceConfiguration {
+  readonly rpcPort: number;
   readonly isLocal: boolean;
-  readonly authIdpTokenSecret?: Redacted.Redacted<string>;
-  readonly battlelogCleanupSecret?: Redacted.Redacted<string>;
   readonly rabbitmqUri: Redacted.Redacted<string>;
   readonly redisUrl: Redacted.Redacted<string>;
-  readonly authServiceUrl: URL;
-  readonly battlelogServiceUrl: URL;
-  readonly discordBotServiceUrl: URL;
+  readonly authRpcUrl: URL;
+  readonly discordBotRpcUrl: URL;
   readonly reservationsCardsUrl: URL;
   readonly mapsApiUrl: URL;
   readonly timerCleanup: {
@@ -41,19 +37,14 @@ export interface ApiConfiguration extends BaseServiceConfiguration {
 
 export const apiConfiguration: Config.Config<ApiConfiguration> = Config.all({
   base: baseServiceConfig("api"),
-  authIdpTokenSecret: optionalRedacted("AUTH_IDP_TOKEN_SECRET"),
-  battlelogCleanupSecret: optionalRedacted("BATTLELOG_CLEANUP_SECRET"),
+  rpcPort: Config.Int("RPC_PORT").pipe(Config.withDefault(DEFAULT_RPC_PORT)),
   rabbitmqUri: rabbitmqUriConfig,
   redisUrl: redisUrlConfig,
-  authServiceUrl: Config.schema(Schema.URLFromString, "AUTH_SERVICE_URL"),
-  battlelogServiceUrl: Config.schema(
+  authRpcUrl: Config.schema(Schema.URLFromString, "AUTH_RPC_URL"),
+  discordBotRpcUrl: Config.schema(
     Schema.URLFromString,
-    "BATTLELOG_SERVICE_URL",
-  ).pipe(Config.withDefault(new URL("http://battlelog-service:4000"))),
-  discordBotServiceUrl: Config.schema(
-    Schema.URLFromString,
-    "DISCORD_BOT_SERVICE_URL",
-  ).pipe(Config.withDefault(new URL("http://discord-bot:4000"))),
+    "DISCORD_BOT_RPC_URL",
+  ).pipe(Config.withDefault(new URL("http://discord-bot:4001"))),
   reservationsCardsUrl: Config.schema(
     Schema.URLFromString,
     "RESERVATIONS_CARDS_URL",

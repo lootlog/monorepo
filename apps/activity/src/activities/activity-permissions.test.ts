@@ -1,11 +1,14 @@
-import { describe, expect, it, mock } from "bun:test";
+import { describe, expect, it } from "bun:test";
+import { ApiRpcGroup } from "@lootlog/rpc/api";
+import { makeRpcTestHttpClient } from "@lootlog/rpc/testing";
 import { Permission } from "@lootlog/schema/permissions";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { Effect, Layer, Queue, Redacted } from "effect";
 import { Redis } from "effect/persistence";
 import { ActivityConfig } from "#src/config/activity-config";
-import { ApiHttpClient } from "#src/http/api-http-client";
 import { Permissions } from "./activity-permissions.js";
+
+const unused = () => Effect.die("unused");
 
 describe("Activity permissions", () => {
   it("drops an admin's access as soon as the API stops granting it", async () => {
@@ -25,12 +28,23 @@ describe("Activity permissions", () => {
 
     const responses = [adminGrant, []];
 
-    const get = mock(() =>
-      Effect.succeed({
-        status: 200,
-        body: new TextEncoder().encode(JSON.stringify(responses.shift())),
-      }),
-    );
+    const apiRpcHandlers = ApiRpcGroup.toLayer({
+      getUserGuildPermissions: () => Effect.succeed(responses.shift() ?? []),
+      getGuildByIdOrVanityUrl: unused,
+      getMemberIdentity: unused,
+      getUserAccessibleGuilds: unused,
+      listGuildEvents: unused,
+      getEventRanking: unused,
+      getEventTimers: unused,
+      getEventWrapped: unused,
+      listGuildTimers: unused,
+      getGuildKillStats: unused,
+      getGuildTopKilledNpcs: unused,
+      getNpcKillers: unused,
+      listGuildLoots: unused,
+      listUserReservations: unused,
+      listGuildReservationSpots: unused,
+    });
 
     const store = new Map<string, string>();
 
@@ -67,7 +81,7 @@ describe("Activity permissions", () => {
       databaseUrl: Redacted.make("postgresql://unused"),
       rabbitmqUri: Redacted.make("amqp://unused"),
       redisUrl: Redacted.make("redis://configured"),
-      apiServiceUrl: "http://api.test",
+      apiRpcUrl: "http://api.test",
       signatureSecret: Redacted.make("a".repeat(32)),
     });
 
@@ -82,7 +96,7 @@ describe("Activity permissions", () => {
         Effect.provide(
           Layer.provide(
             Permissions.layer,
-            Layer.succeed(ApiHttpClient, ApiHttpClient.of({ get })),
+            makeRpcTestHttpClient(ApiRpcGroup, apiRpcHandlers),
           ),
         ),
         Effect.provideService(ActivityConfig, config),

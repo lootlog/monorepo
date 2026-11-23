@@ -10,7 +10,6 @@ import { ActivityRepository } from "#src/activities/activity-repository";
 import { ActivityConfig } from "#src/config/activity-config";
 import { ActivityDatabase, PgClientLive } from "#src/database/database";
 import { ActivityReadiness, ActivityHttpServer } from "#src/http/activity-http";
-import { ApiHttpClient } from "#src/http/api-http-client";
 import { Permissions } from "#src/activities/activity-permissions";
 
 const RabbitLive = Layer.unwrap(
@@ -33,7 +32,6 @@ const RepositoryLive = ActivityRepository.layer.pipe(
 const ReadinessLive = ActivityReadiness.layer.pipe(Layer.provide(PgClientLive));
 
 const PermissionsLive = Permissions.live.pipe(
-  Layer.provide(ApiHttpClient.layer),
   Layer.provide(ActivityConfig.layer),
 );
 

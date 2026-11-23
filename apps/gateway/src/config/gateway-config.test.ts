@@ -4,7 +4,7 @@ import { loadGatewayConfiguration } from "./gateway-config.js";
 
 const requiredEnvironment = {
   PORT: "4004",
-  API_URL: "http://api.internal",
+  API_RPC_URL: "http://api.internal:4001",
   RABBITMQ_URI: "amqp://rabbit.internal",
   ACTIVITY_EVENT_SIGNATURE_SECRET: "test-secret",
   REDIS_HOST: "redis.internal",

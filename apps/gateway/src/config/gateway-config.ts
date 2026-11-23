@@ -3,6 +3,7 @@ import {
   type BaseServiceConfiguration,
   redisUrlConfig,
 } from "@lootlog/instrumentation/service-config";
+import { DEFAULT_RPC_PORT } from "@lootlog/rpc/server";
 import { Config, Context, Effect, Layer, Redacted, Schema } from "effect";
 
 import {
@@ -11,9 +12,9 @@ import {
 } from "@lootlog/schema/browser-extension";
 
 export interface GatewayConfiguration extends BaseServiceConfiguration {
-  readonly apiUrl: string;
-  readonly authUrl?: string;
-  readonly apiKeyStatusSecret?: Redacted.Redacted<string>;
+  readonly rpcPort: number;
+  readonly apiRpcUrl: string;
+  readonly authRpcUrl?: string;
   readonly margonemSigningKeyUrl: string;
   readonly rabbitmqUri: Redacted.Redacted<string>;
   readonly activityEventSignatureSecret: Redacted.Redacted<string>;
@@ -40,11 +41,13 @@ export const loadGatewayConfiguration = Effect.gen(function* () {
 
   return {
     ...base,
-    authUrl: yield* Config.String("AUTH_URL").pipe(Config.withDefault("")),
-    apiKeyStatusSecret: yield* Config.Redacted("API_KEY_STATUS_SECRET").pipe(
-      Config.withDefault(Redacted.make("")),
+    rpcPort: yield* Config.Int("RPC_PORT").pipe(
+      Config.withDefault(DEFAULT_RPC_PORT),
     ),
-    apiUrl: (yield* Config.URL("API_URL")).toString().replace(/\/$/, ""),
+    authRpcUrl: yield* Config.String("AUTH_RPC_URL").pipe(
+      Config.withDefault(""),
+    ),
+    apiRpcUrl: (yield* Config.URL("API_RPC_URL")).toString().replace(/\/$/, ""),
     margonemSigningKeyUrl: (yield* Config.URL("MARGONEM_SIGNING_KEY_URL").pipe(
       Config.withDefault(
         new URL("https://staticinfo.margonem.pl/.well-known/signing-key.pem"),

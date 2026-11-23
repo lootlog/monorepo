@@ -11,7 +11,7 @@ export interface ActivityConfigValue extends BaseServiceConfiguration {
   readonly databaseUrl: Redacted.Redacted<string>;
   readonly rabbitmqUri: Redacted.Redacted<string>;
   readonly redisUrl?: Redacted.Redacted<string>;
-  readonly apiServiceUrl: string;
+  readonly apiRpcUrl: string;
   readonly signatureSecret: Redacted.Redacted<string>;
 }
 
@@ -56,7 +56,7 @@ export class ActivityConfig extends Context.Service<
             : yield* new InvalidServiceConfiguration({
                 message: `REDIS_HOST is required when ENV=${environment}`,
               }),
-        apiServiceUrl: yield* Config.String("API_SERVICE_URL"),
+        apiRpcUrl: yield* Config.String("API_RPC_URL"),
         signatureSecret,
       });
     }),

@@ -21,6 +21,7 @@ const SERVICE_TOKEN = "catalog-service-token-for-http-tests";
 const config = CatalogConfig.of({
   environment: RuntimeEnvironment.LOCAL,
   port: 0,
+  rpcPort: 0,
   serviceName: "catalog",
   serviceNamespace: "test",
   databaseUrl: Redacted.make("postgresql://unused"),

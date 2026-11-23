@@ -1,12 +1,9 @@
 import {
   type ApplicationError,
-  AuthenticationRequiredError,
   DependencyUnavailableError,
   InvalidRequestError,
-  PermissionDeniedError,
   ResourceNotFoundError,
 } from "@lootlog/protocol/http/errors";
-import { hasServiceAuthorization } from "@lootlog/protocol/http/service-auth";
 import {
   PLATFORM_ROLES,
   parsePlatformRoles,
@@ -21,15 +18,22 @@ import {
   gt,
   ilike,
   inArray,
-  isNull,
   notInArray,
   or,
   sql,
 } from "drizzle-orm";
-import { Context, Effect, Layer, type Redacted } from "effect";
+import { Context, Effect, Layer } from "effect";
 import { BetterAuthRuntime } from "#src/auth/provider/better-auth";
 import { AppConfig } from "#src/config/env";
 import { AuthDatabase } from "#src/database/drizzle";
+import {
+  authorizeAdminRequest,
+  escapeLike,
+  holdsRole,
+  inForce,
+  toUser,
+  type AdminOperator,
+} from "./admin-auth.js";
 import type { AdminAuditAction, AdminAuditDetails } from "./audit.js";
 import {
   adminAuditLog,
@@ -44,93 +48,12 @@ import type {
   BanAdminUser,
 } from "#src/http-api/contracts/admin/schemas";
 
-type UserRow = typeof authUsers.$inferSelect;
-
 const USER_AUDIT_LIMIT = 25;
 
 const unavailable = () =>
   new DependencyUnavailableError("Admin service unavailable");
 
 const userNotFound = () => new ResourceNotFoundError("User not found");
-
-const escapeLike = (text: string) => text.replace(/[\\%_]/gu, "\\$&");
-
-const inForce = (now: Date) =>
-  and(
-    eq(authUsers.banned, true),
-    or(isNull(authUsers.banExpires), gt(authUsers.banExpires, now)),
-  );
-
-const holdsRole = (role: PlatformRole) =>
-  sql<boolean>`${role} = any(string_to_array(${authUsers.role}, ','))`;
-
-const toUser = (
-  row: UserRow,
-  activeSessions: number,
-  now: Date,
-): AdminUser => ({
-  id: row.id,
-  name: row.name,
-  email: row.email,
-  image: row.image,
-  discordId: row.discordId,
-  createdAt: row.createdAt.toISOString(),
-  roles: parsePlatformRoles(row.role),
-  ban:
-    row.banned === true &&
-    (row.banExpires === null || row.banExpires.getTime() > now.getTime())
-      ? {
-          reason: row.banReason,
-          expiresAt: row.banExpires?.toISOString() ?? null,
-        }
-      : null,
-  activeSessions,
-});
-
-export type AdminOperator = {
-  readonly userId: string;
-  readonly name: string;
-};
-
-export const authorizeAdminRequest = Effect.fn("authorizeAdminRequest")(
-  function* (
-    headers: Headers,
-    access: {
-      readonly secret: Redacted.Redacted<string> | undefined;
-      readonly adminUserIds: ReadonlyArray<string>;
-      readonly getFreshSession: (
-        headers: Headers,
-      ) => Effect.Effect<AdminOperator | null, ApplicationError>;
-    },
-  ) {
-    if (
-      !hasServiceAuthorization(
-        headers.get("authorization") ?? undefined,
-        access.secret,
-      )
-    )
-      return yield* new AuthenticationRequiredError();
-
-    const operator = yield* access.getFreshSession(headers);
-
-    if (!operator)
-      return yield* new AuthenticationRequiredError({
-        code: "ADMIN_SESSION_REQUIRED",
-        message: "Sign in to Lootlog first",
-      });
-
-    if (!access.adminUserIds.includes(operator.userId))
-      return yield* new PermissionDeniedError({
-        code: "ADMIN_ACCESS_REQUIRED",
-        message: "Not an admin account",
-      });
-
-    return operator;
-  },
-);
-
-export const auditActor = (operator: AdminOperator) =>
-  `${operator.name} (${operator.userId})`;
 
 export class AdminService extends Context.Service<
   AdminService,
@@ -205,7 +128,6 @@ export class AdminService extends Context.Service<
       keyId: string,
     ) => Effect.Effect<void, ApplicationError>;
     readonly listRoleHolders: (
-      authorization: string | undefined,
       role: PlatformRole,
     ) => Effect.Effect<{ userIds: ReadonlyArray<string> }, ApplicationError>;
     readonly listAudit: (page: {
@@ -693,10 +615,7 @@ export class AdminService extends Context.Service<
         ),
 
         listRoleHolders: Effect.fn("AdminService.listRoleHolders")(
-          function* (authorization, role) {
-            if (!hasServiceAuthorization(authorization, config.idpTokenSecret))
-              return yield* new AuthenticationRequiredError();
-
+          function* (role) {
             const rows = yield* query(
               database
                 .select({ id: authUsers.id })

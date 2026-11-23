@@ -17,6 +17,7 @@ import { CatalogConfig } from "#src/config/catalog-config";
 import { CatalogDatabase, PgClientLive } from "#src/database/database";
 import { CatalogHttpServer } from "#src/http-api/catalog-http";
 import { CatalogOperations } from "#src/http-api/catalog-operations";
+import { CatalogRpcServer } from "#src/rpc/catalog-rpc-server";
 import { CatalogReports } from "#src/reports/reports.service";
 import {
   CatalogItemObservation,
@@ -125,8 +126,9 @@ const RabbitLive = Layer.unwrap(
   }),
 );
 
-export const CatalogApplication = Layer.merge(
+export const CatalogApplication = Layer.mergeAll(
   CatalogHttpServer,
+  CatalogRpcServer,
   CatalogConsumers,
 ).pipe(
   Layer.provide(CatalogOperations.layer),

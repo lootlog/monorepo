@@ -1,14 +1,10 @@
 import { expect, test } from "bun:test";
-import { Effect, Fiber, Redacted } from "effect";
+import { RpcUnavailableError } from "@lootlog/rpc/errors";
+import type { ApiKeyStatus } from "@lootlog/schema/api-key-access";
+import { Effect, Fiber } from "effect";
 import { TestClock } from "effect/testing";
-import { httpClientFromResponses } from "../../test/http-fixtures.js";
 import { ApiKeyLeases } from "./api-key-leases.js";
 import type { GatewaySocket, SessionData } from "#src/realtime/session";
-
-const config = {
-  authUrl: "https://auth.internal",
-  apiKeyStatusSecret: Redacted.make("test"),
-};
 
 function socket(keyId: string, userId = "u", discordId = "d") {
   const closes: number[] = [];
@@ -46,15 +42,15 @@ function socket(keyId: string, userId = "u", discordId = "d") {
 }
 
 function validStatuses(targets: ReadonlyArray<{ socket: GatewaySocket }>) {
-  return Response.json({
-    keys: targets.map(({ socket: { data } }) => ({
-      keyId: data.apiKeyAccess?.keyId,
-      valid: true,
+  return {
+    keys: targets.map(({ socket: { data } }): ApiKeyStatus => ({
+      keyId: data.apiKeyAccess!.keyId,
+      valid: true as const,
       userId: data.userId,
       discordId: data.discordId,
-      access: data.apiKeyAccess,
+      access: data.apiKeyAccess!,
     })),
-  });
+  };
 }
 
 function renewWithClock(leases: ApiKeyLeases) {
@@ -74,15 +70,16 @@ test("renewal batches duplicate keys and refreshes a shared user once before ext
   let calls = 0,
     refreshes = 0;
 
-  const client = httpClientFromResponses(() => {
-    calls += 1;
+  const authRpc = {
+    getApiKeyStatuses: () => {
+      calls += 1;
 
-    return Effect.succeed(validStatuses([first]));
-  });
+      return Effect.succeed(validStatuses([first]));
+    },
+  };
 
   const leases = new ApiKeyLeases(
-    config,
-    client,
+    authRpc,
     () => [first.socket, second.socket],
     () =>
       Effect.sync(() => {
@@ -100,15 +97,14 @@ test("renewal batches duplicate keys and refreshes a shared user once before ext
 });
 
 test("revocation, unavailable auth and already expired authorization fail closed", async () => {
-  for (const response of [
-    Response.json({ keys: [{ keyId: "k", valid: false }] }),
-    new Response(null, { status: 503 }),
+  for (const effect of [
+    Effect.succeed({ keys: [{ keyId: "k", valid: false as const }] }),
+    Effect.fail(new RpcUnavailableError({ message: "auth unavailable" })),
   ]) {
     const target = socket("k");
 
     const leases = new ApiKeyLeases(
-      config,
-      httpClientFromResponses(() => Effect.succeed(response)),
+      { getApiKeyStatuses: () => effect },
       () => [target.socket],
       () => Effect.void,
       () => 30_000,
@@ -122,10 +118,9 @@ test("revocation, unavailable auth and already expired authorization fail closed
   const target = socket("k");
 
   const leases = new ApiKeyLeases(
-    config,
-    httpClientFromResponses(() =>
-      Effect.die("Expired key must not be renewed"),
-    ),
+    {
+      getApiKeyStatuses: () => Effect.die("Expired key must not be renewed"),
+    },
     () => [target.socket],
     () => Effect.void,
     () => 60_000,
@@ -145,8 +140,7 @@ test("slow independent user refreshes share the renewal deadline concurrently", 
   let completed = 0;
 
   const leases = new ApiKeyLeases(
-    config,
-    httpClientFromResponses(() => Effect.succeed(validStatuses(targets))),
+    { getApiKeyStatuses: () => Effect.succeed(validStatuses(targets)) },
     () => targets.map((target) => target.socket),
     () =>
       Effect.gen(function* () {
@@ -175,8 +169,7 @@ test("a permission refresh that outlives the lease never extends authority", asy
   let now = 30_000;
 
   const leases = new ApiKeyLeases(
-    config,
-    httpClientFromResponses(() => Effect.succeed(validStatuses([target]))),
+    { getApiKeyStatuses: () => Effect.succeed(validStatuses([target])) },
     () => [target.socket],
     () =>
       Effect.sync(() => {
@@ -198,8 +191,7 @@ test.each(["failure", "defect", "timeout"] as const)(
     const targets = [...unavailable, healthy];
 
     const leases = new ApiKeyLeases(
-      config,
-      httpClientFromResponses(() => Effect.succeed(validStatuses(targets))),
+      { getApiKeyStatuses: () => Effect.succeed(validStatuses(targets)) },
       () => targets.map((target) => target.socket),
       (_discordId, userId) => {
         if (userId === "healthy-user") return Effect.void;

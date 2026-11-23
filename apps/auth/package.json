@@ -31,6 +31,7 @@
     "@lootlog/database": "workspace:*",
     "@lootlog/instrumentation": "workspace:*",
     "@lootlog/protocol": "workspace:*",
+    "@lootlog/rpc": "workspace:*",
     "@lootlog/schema": "workspace:*",
     "better-auth": "1.7.16",
     "drizzle-orm": "catalog:",

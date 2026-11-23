@@ -12,6 +12,7 @@ import { BetterAuthRuntime } from "#src/auth/provider/better-auth";
 import { AppConfig } from "#src/config/env";
 import { AuthDatabaseLive } from "#src/database/drizzle";
 import { AuthHttpServer } from "#src/http/server";
+import { AuthRpcServer } from "#src/rpc/auth-rpc-server";
 
 const InfrastructureLive = Layer.merge(
   AuthDatabaseLive,
@@ -51,5 +52,7 @@ const AuthServicesLive = Layer.merge(
 
 runService({
   config: AppConfig.pipe(Effect.provide(AppConfig.layer)),
-  application: AuthHttpServer.pipe(Layer.provide(AuthServicesLive)),
+  application: Layer.merge(AuthHttpServer, AuthRpcServer).pipe(
+    Layer.provide(AuthServicesLive),
+  ),
 });

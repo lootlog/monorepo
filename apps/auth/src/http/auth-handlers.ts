@@ -10,10 +10,9 @@ import {
   applicationErrorHttpResponse,
   reauthenticationRequiredResponse,
 } from "@lootlog/protocol/http/errors";
-import { AdminService } from "#src/admin/admin-service";
 import { AuthService } from "#src/auth/auth-service";
 import { AuthApi } from "#src/http-api/auth-api";
-import { noStore, requestHeaders, respond } from "./responses.js";
+import { requestHeaders, respond } from "./responses.js";
 import {
   API_KEY_ACCESS_HEADER,
   AUTH_DISCORD_ID_HEADER,
@@ -82,26 +81,6 @@ export const AuthHandlers = Layer.merge(
             ReauthenticationRequired: reauthenticationRequiredResponse,
           }),
         ),
-      )
-      .handle("AuthControllerListPlatformRoleHolders", ({ query, headers }) =>
-        Effect.gen(function* () {
-          const admin = yield* AdminService;
-          yield* noStore;
-
-          return yield* respond(
-            admin.listRoleHolders(headers.authorization, query.role),
-          );
-        }),
-      )
-      .handle("AuthControllerGetIdpToken", ({ payload, headers }) =>
-        Effect.gen(function* () {
-          const auth = yield* AuthService;
-          yield* noStore;
-
-          return yield* respond(
-            auth.getIdpTokenResponse(payload, headers.authorization),
-          );
-        }),
       ),
   ),
 );

@@ -1,5 +1,6 @@
+import type { RpcReservationSpot } from "@lootlog/rpc/api";
 import { escapeMarkdown } from "discord.js";
-import { Effect, Schema } from "effect";
+import { Effect } from "effect";
 import { BotConfig } from "#src/config/bot-config";
 import { guildCommand, visibilityOption } from "./command-builders.js";
 import { COMMAND_TEXT } from "./command-messages.js";
@@ -15,29 +16,7 @@ const SHOWN_RESERVATIONS = 15;
 
 const SHOWN_SPOTS = 20;
 
-const Reservation = Schema.Struct({
-  spotName: Schema.String,
-  startsAt: Schema.String,
-  endsAt: Schema.String,
-  author: Schema.Struct({ displayName: Schema.String }),
-  sourceOrganization: Schema.Struct({
-    name: Schema.String,
-    isCurrent: Schema.Boolean,
-  }),
-});
-
-const MyReservations = Schema.Struct({ items: Schema.Array(Reservation) });
-
-const ReservationSpots = Schema.Array(
-  Schema.Struct({
-    name: Schema.String,
-    level: Schema.Finite,
-    currentReservation: Schema.NullOr(Reservation),
-    nextReservation: Schema.NullOr(Reservation),
-  }),
-);
-
-type Spot = (typeof ReservationSpots.Type)[number];
+type Spot = typeof RpcReservationSpot.Type;
 
 const spotState = (spot: Spot) => {
   const current = spot.currentReservation;
@@ -81,11 +60,7 @@ export const reservationsCommand: SlashCommand = {
       );
 
       if (invocation.options.subcommand === "moje") {
-        const { items } = yield* session.api(
-          "/users/@me/reservations",
-          { status: "upcoming" },
-          MyReservations,
-        );
+        const { items } = yield* session.api.listUserReservations("upcoming");
 
         const lines = items
           .slice(0, SHOWN_RESERVATIONS)
@@ -106,11 +81,7 @@ export const reservationsCommand: SlashCommand = {
         };
       }
 
-      const spots = yield* session.api(
-        `/guilds/${encodeURIComponent(session.guildId)}/reservation-spots`,
-        {},
-        ReservationSpots,
-      );
+      const spots = yield* session.api.listGuildReservationSpots;
 
       const lines = spots
         .slice(0, SHOWN_SPOTS)

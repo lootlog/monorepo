@@ -1,30 +1,20 @@
 import { withAdapterSpan } from "@lootlog/instrumentation/operation";
-import { boundedHttpGet } from "@lootlog/instrumentation/bounded-http-get";
+import { ApiRpcGroup } from "@lootlog/rpc/api";
+import { makeRpcClient } from "@lootlog/rpc/client";
+import type { RpcUnavailableError } from "@lootlog/rpc/errors";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { UserGuildPermissionsDtoSchema } from "@lootlog/schema/permissions";
-import {
-  INTERNAL_USER_PERMISSIONS_PATH,
-  type InternalUserPermissionsQuery,
-} from "@lootlog/schema/internal-guilds";
+import type { InternalUserPermissionsQuery } from "@lootlog/schema/internal-guilds";
 import { Clock, Effect, Option, Result, Schema, Context, Layer } from "effect";
-import type { HttpClient as HttpClientValue } from "effect/http/HttpClient";
+import type { RpcClientError } from "effect/rpc";
 import {
   type GatewayConfiguration,
   GatewayConfig,
 } from "#src/config/gateway-config";
 import type { GetUserGuildsOptions, UserGuildData } from "#src/guilds/guild";
 import { CACHE_TTL, getUserGuildsCacheKey } from "#src/guilds/cache-keys";
-import {
-  type RedisGatewayStore,
-  type RedisScriptReply,
-  GatewayRedis,
-} from "#src/platform/redis-store";
+import { type RedisScriptReply, GatewayRedis } from "#src/platform/redis-store";
 import { SingleFlight } from "#src/platform/single-flight";
-import { HttpClient } from "effect/http";
-
-const UserGuildsJson = Schema.fromJsonString(
-  Schema.Array(UserGuildPermissionsDtoSchema),
-);
 
 const CachedGuildDataJson = Schema.fromJsonString(
   Schema.Union([
@@ -93,31 +83,44 @@ const failure = (
     status: options?.status,
   });
 
-const decodeGuilds = (body: ArrayBuffer): UserGuildData[] => {
-  return [...Schema.decodeSync(UserGuildsJson)(new TextDecoder().decode(body))];
-};
-
 const cacheCommand = <A>(command: () => Promise<A>) =>
   Effect.tryPromise({
     try: command,
     catch: () => failure("cache", { retryable: true }),
   }).pipe(
-    Effect.timeoutOrElse({
-      duration: "10 seconds",
-      orElse: () => Effect.fail(failure("cache", { retryable: true })),
-    }),
+    Effect.timeout("10 seconds"),
+    Effect.interruptible,
+    Effect.mapError(() => failure("cache", { retryable: true })),
   );
 
+interface ApiRpcClient {
+  readonly getUserGuildPermissions: (
+    input: InternalUserPermissionsQuery,
+  ) => Effect.Effect<
+    ReadonlyArray<UserGuildData>,
+    RpcUnavailableError | RpcClientError.RpcClientError
+  >;
+}
+
 export const makeGuildStore = (
-  config: Pick<GatewayConfiguration, "apiUrl">,
+  _config: Pick<GatewayConfiguration, "apiRpcUrl">,
   redis: {
-    command: Pick<RedisGatewayStore["command"], "get" | "set"> & {
-      eval(
-        ...args: Parameters<RedisGatewayStore["command"]["eval"]>
-      ): Promise<RedisScriptReply>;
+    readonly command: {
+      readonly get: (key: string) => Promise<string | null>;
+      readonly set: (
+        key: string,
+        value: string,
+        mode: "EX",
+        seconds: number,
+      ) => Promise<string | null>;
+      readonly eval: (
+        script: string,
+        numKeys: number,
+        ...args: (string | number)[]
+      ) => Promise<RedisScriptReply>;
     };
   },
-  httpClient: HttpClientValue,
+  apiRpc: ApiRpcClient,
 ): GuildStore => {
   const fetchGuilds = Effect.fn("GuildStore_fetchUserGuilds")(function* (
     options: GetUserGuildsOptions,
@@ -129,23 +132,21 @@ export const makeGuildStore = (
       ...(readOptions?.freshness === "required" && { freshness: "required" }),
     };
 
-    const url = new URL(`${config.apiUrl}${INTERNAL_USER_PERMISSIONS_PATH}`);
-
-    for (const [name, value] of Object.entries(query))
-      url.searchParams.set(name, value);
-
-    return yield* boundedHttpGet({
-      client: httpClient,
-      url,
-      timeoutMilliseconds: 5000,
-      retries: 2,
-      operationId: "GuildStore_fetchUserGuilds",
-      adapter: "api-user-permissions",
-      response: "successful",
-      failure: (reason, retryable, status) =>
-        failure(reason, { retryable, status }),
-      decode: decodeGuilds,
-    });
+    return yield* Effect.suspend(() =>
+      apiRpc.getUserGuildPermissions(query),
+    ).pipe(
+      Effect.timeout("5 seconds"),
+      Effect.retry({ times: 2 }),
+      Effect.map((guilds) => [...guilds]),
+      Effect.catchTags({
+        TimeoutError: () =>
+          Effect.fail(failure("timeout", { retryable: true })),
+        RpcUnavailableError: () =>
+          Effect.fail(failure("status", { retryable: true, status: 503 })),
+        RpcClientError: () =>
+          Effect.fail(failure("transport", { retryable: true })),
+      }),
+    );
   });
 
   const readCache = (key: string) =>
@@ -193,60 +194,71 @@ export const makeGuildStore = (
     GuildStoreFailure
   >();
 
-  const sharedFetch = (
-    options: GetUserGuildsOptions,
-    cacheKey: string,
-    revision: string,
-  ) =>
-    pendingFetches.run(
-      `${cacheKey}\n${revision}`,
-      fetchAndCommit(options, cacheKey, revision),
-    );
+  const isValidCache = (
+    entry: typeof CachedGuildDataJson.Type | null,
+  ): entry is Extract<typeof CachedGuildDataJson.Type, { guilds: unknown }> =>
+    entry !== null && !("invalidated" in entry);
 
-  const loadUserGuilds = Effect.fn("GuildStore_getUserGuilds")(function* (
+  const loadUserGuilds = Effect.fn("GuildStore_loadUserGuilds")(function* (
     options: GetUserGuildsOptions,
     readOptions?: { readonly freshness: "required" },
   ) {
     const cacheKey = getUserGuildsCacheKey(options.discordId, options.userId);
-    const { entry: cached, revision } = yield* readCache(cacheKey);
-
-    if (readOptions?.freshness === "required")
-      return yield* fetchAndCommit(options, cacheKey, revision, readOptions);
-
+    const cached = yield* readCache(cacheKey);
     const now = yield* Clock.currentTimeMillis;
+    const allowCached = readOptions?.freshness !== "required";
 
-    if (cached && "guilds" in cached) {
-      const age = now - cached.cachedAt;
+    const cacheAge = isValidCache(cached.entry)
+      ? now - cached.entry.cachedAt
+      : Number.POSITIVE_INFINITY;
 
-      if (age <= CACHE_TTL.USER_GUILDS * 1_000) return [...cached.guilds];
-
-      if (age <= CACHE_TTL.MAX_STALE_CACHE_AGE * 1_000) {
-        yield* sharedFetch(options, cacheKey, revision).pipe(
-          Effect.catch((error) =>
-            Effect.logWarning("Background permission refresh failed", error),
-          ),
-          Effect.forkDetach,
-        );
-
-        return [...cached.guilds];
-      }
+    if (
+      allowCached &&
+      isValidCache(cached.entry) &&
+      cacheAge < CACHE_TTL.USER_GUILDS * 1000
+    ) {
+      return [...cached.entry.guilds];
     }
 
-    const result = yield* sharedFetch(options, cacheKey, revision).pipe(
-      Effect.result,
+    const fetchKey = allowCached
+      ? `${cacheKey}:${cached.revision}`
+      : `${cacheKey}:fresh:${cached.revision}`;
+
+    if (
+      allowCached &&
+      isValidCache(cached.entry) &&
+      cacheAge < CACHE_TTL.MAX_STALE_CACHE_AGE * 1000
+    ) {
+      yield* pendingFetches
+        .run(
+          fetchKey,
+          fetchAndCommit(options, cacheKey, cached.revision, readOptions),
+        )
+        .pipe(Effect.ignore, Effect.forkDetach);
+
+      return [...cached.entry.guilds];
+    }
+
+    const result = yield* Effect.result(
+      pendingFetches.run(
+        fetchKey,
+        fetchAndCommit(options, cacheKey, cached.revision, readOptions),
+      ),
     );
 
     if (Result.isSuccess(result)) return result.success;
 
-    const { entry: fallback } = yield* readCache(cacheKey);
-    const fallbackAt = yield* Clock.currentTimeMillis;
+    if (result.failure.reason === "invalidated" && allowCached) {
+      const latest = yield* readCache(cacheKey);
 
-    if (
-      fallback &&
-      "guilds" in fallback &&
-      fallbackAt - fallback.cachedAt <= CACHE_TTL.MAX_STALE_CACHE_AGE * 1_000
-    ) {
-      return [...fallback.guilds];
+      if (isValidCache(latest.entry)) return [...latest.entry.guilds];
+
+      return yield* fetchAndCommit(
+        options,
+        cacheKey,
+        latest.revision,
+        readOptions,
+      );
     }
 
     return yield* result.failure;
@@ -275,11 +287,15 @@ export class Guilds extends Context.Service<Guilds, GuildStore>()(
   static readonly layer = Layer.effect(
     Guilds,
     Effect.gen(function* () {
-      return makeGuildStore(
-        yield* GatewayConfig,
-        yield* GatewayRedis,
-        yield* HttpClient.HttpClient,
-      );
+      const config = yield* GatewayConfig;
+      const redis = yield* GatewayRedis;
+
+      const apiRpc = yield* makeRpcClient(ApiRpcGroup, {
+        url: config.apiRpcUrl,
+        spanPrefix: "gateway.api-rpc",
+      });
+
+      return makeGuildStore(config, redis, apiRpc);
     }),
   );
 }

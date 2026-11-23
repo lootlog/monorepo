@@ -4,11 +4,8 @@ import {
 } from "@lootlog/protocol/http/errors";
 import { Effect } from "effect";
 import { HttpApiBuilder } from "effect/http-api";
-import {
-  type AdminOperator,
-  AdminService,
-  auditActor,
-} from "#src/admin/admin-service";
+import { type AdminOperator, auditActor } from "#src/admin/admin-auth";
+import { AdminService } from "#src/admin/admin-service";
 import { AuthApi } from "#src/http-api/auth-api";
 import { noStore, requestHeaders, respond } from "./responses.js";
 

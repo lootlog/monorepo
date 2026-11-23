@@ -35,6 +35,7 @@
     "@lootlog/battle-processor": "workspace:*",
     "@lootlog/database": "workspace:*",
     "@lootlog/instrumentation": "workspace:*",
+    "@lootlog/messaging": "workspace:*",
     "@lootlog/protocol": "workspace:*",
     "@lootlog/schema": "workspace:*",
     "bullmq": "^6.3.14",

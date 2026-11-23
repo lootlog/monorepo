@@ -8,6 +8,11 @@ import {
   type RabbitRoutingKeyName,
 } from "@lootlog/protocol/rabbit/topology";
 import {
+  failureRoute,
+  readRetryCount,
+  type FailureRoute,
+} from "./failure-routing.js";
+import {
   decodeRabbitEventJson,
   type CanonicalRabbitEvent,
   type CanonicalRabbitEventRoutingKey,
@@ -264,63 +269,6 @@ const toDelivery = (message: ConsumeMessage): RabbitDelivery => ({
   raw: message,
 });
 
-const isRetryCount = Schema.is(
-  Schema.Int.check(Schema.isGreaterThanOrEqualTo(0)),
-);
-
-const readRetryCount = (message: ConsumeMessage): number => {
-  const value = message.properties.headers?.["x-lootlog-retry-count"];
-
-  return isRetryCount(value) ? value : 0;
-};
-
-interface ForwardedFailure<Disposition extends "retry" | "dead-letter"> {
-  readonly disposition: Disposition;
-  readonly exchange: RabbitExchangeName;
-  readonly routingKey: RabbitRoutingKeyName;
-}
-
-type FailureRoute =
-  | { readonly disposition: "reject" }
-  | { readonly disposition: "requeue" }
-  | ForwardedFailure<"retry">
-  | ForwardedFailure<"dead-letter">;
-
-const failureRoute = (
-  policy: FailurePolicy,
-  unprocessable: boolean,
-  currentRetryCount: number,
-): FailureRoute => {
-  switch (policy.strategy) {
-    case "nack":
-      return { disposition: "reject" };
-    case "requeue":
-      return unprocessable
-        ? { disposition: "reject" }
-        : { disposition: "requeue" };
-    case "retry":
-      if (!unprocessable && currentRetryCount < policy.maxRetries) {
-        return {
-          disposition: "retry",
-          exchange: RabbitExchange.RETRY,
-          routingKey: policy.retryRoutingKey,
-        };
-      }
-
-      return {
-        disposition: "dead-letter",
-        exchange: RabbitExchange.DEAD_LETTER,
-        routingKey: policy.deadLetterRoutingKey,
-      };
-    case "dead-letter":
-      return {
-        disposition: "dead-letter",
-        exchange: RabbitExchange.DEAD_LETTER,
-        routingKey: policy.deadLetterRoutingKey,
-      };
-  }
-};
-
 const makeService = (
   channel: RabbitChannel,
   consumerCancelled: (queue: string) => void,
@@ -329,16 +277,24 @@ const makeService = (
     (options: PublishOptions) =>
       Effect.callback<void, MessagingError>((resume) => {
         try {
+          const publishOptions: Options.Publish = {
+            contentType: options.contentType ?? "application/json",
+            persistent: options.persistent ?? true,
+          };
+
+          if (options.headers !== undefined) {
+            publishOptions.headers = options.headers;
+          }
+
+          if (options.messageId !== undefined) {
+            publishOptions.messageId = options.messageId;
+          }
+
           channel.publish(
             options.exchange ?? RabbitExchange.DEFAULT,
             options.routingKey,
             Buffer.from(options.content),
-            {
-              contentType: options.contentType ?? "application/json",
-              headers: options.headers,
-              messageId: options.messageId,
-              persistent: options.persistent ?? true,
-            },
+            publishOptions,
             (cause: unknown) =>
               resume(
                 cause ? Effect.fail(error("publish", cause)) : Effect.void,
@@ -521,7 +477,9 @@ const makeService = (
                 ),
               );
             },
-            { consumerTag: options.consumerTag, noAck: false },
+            options.consumerTag !== undefined
+              ? { consumerTag: options.consumerTag, noAck: false }
+              : { noAck: false },
           ),
         catch: (cause) => error("consume", cause),
       }),
@@ -553,10 +511,19 @@ const installTopology = (
         queues.map(async (queue) => {
           const queueOptions: Options.AssertQueue = {
             durable: queue.durable,
-            messageTtl: queue.messageTtl,
-            deadLetterExchange: queue.deadLetterExchange,
-            deadLetterRoutingKey: queue.deadLetterRoutingKey,
           };
+
+          if (queue.messageTtl !== undefined) {
+            queueOptions.messageTtl = queue.messageTtl;
+          }
+
+          if (queue.deadLetterExchange !== undefined) {
+            queueOptions.deadLetterExchange = queue.deadLetterExchange;
+          }
+
+          if (queue.deadLetterRoutingKey !== undefined) {
+            queueOptions.deadLetterRoutingKey = queue.deadLetterRoutingKey;
+          }
 
           if (queue.singleActiveConsumer) {
             queueOptions.arguments = { "x-single-active-consumer": true };
@@ -581,11 +548,12 @@ export class RabbitMessaging extends Context.Service<
       RabbitMessaging,
       Effect.gen(function* () {
         const connection = yield* acquireBrokerResource(() =>
-          amqp.connect(config.uri, {
-            clientProperties: config.connectionName
-              ? { connection_name: config.connectionName }
+          amqp.connect(
+            config.uri,
+            config.connectionName
+              ? { clientProperties: { connection_name: config.connectionName } }
               : undefined,
-          }),
+          ),
         );
 
         const channel = yield* acquireBrokerResource(() =>

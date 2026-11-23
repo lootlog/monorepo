@@ -9,7 +9,7 @@ import {
 } from "bun:test";
 import { BunRedis } from "@effect/platform-bun";
 import { DiscordAPIError, REST, type ResponseLike } from "@discordjs/rest";
-import { Effect, ManagedRuntime, Redacted } from "effect";
+import { Effect, ManagedRuntime } from "effect";
 import { Redis } from "effect/persistence";
 import { DISCORD_AUTH_SCOPES } from "@lootlog/schema/discord";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
@@ -19,7 +19,6 @@ import { makeDiscordRateLimiter } from "#src/discord/discord-rate-limiter.servic
 import { makeDiscordRestClients } from "#src/discord/discord-rest-client.factory";
 import { makeDiscordSyncDiagnostics } from "#src/discord/discord-sync-diagnostics.service";
 import { makeRedisService, type RedisService } from "#src/redis/redis.service";
-import { httpClientFromResponses } from "./http-fixtures.js";
 
 const memberResponse = (roles: ReadonlyArray<string>): ResponseLike => {
   const response = Response.json({ user: { id: "discord-1" }, roles });
@@ -84,17 +83,14 @@ describe("Discord guild member reads against Dragonfly", () => {
 
     const authService = makeAuthService({
       redis,
-      httpClient: httpClientFromResponses(() =>
-        Effect.sync(() =>
-          Response.json({
+      authRpc: {
+        getIdpToken: () =>
+          Effect.sync(() => ({
             accessToken: auth.accessToken,
             expiresIn: 3_600,
             scopes: DISCORD_AUTH_SCOPES,
-          }),
-        ),
-      ),
-      authServiceUrl: new URL("http://auth.test"),
-      idpTokenSecret: Redacted.make("idp-test-secret"),
+          })),
+      },
     });
 
     const members = makeDiscordGuildMemberClient({

@@ -25,6 +25,7 @@
     "@lootlog/instrumentation": "workspace:*",
     "@lootlog/messaging": "workspace:*",
     "@lootlog/protocol": "workspace:*",
+    "@lootlog/rpc": "workspace:*",
     "@lootlog/schema": "workspace:*",
     "discord.js": "^14.27.0",
     "effect": "catalog:"

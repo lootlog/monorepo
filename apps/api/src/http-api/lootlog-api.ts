@@ -4,7 +4,6 @@ import { ApiKeyEndpointPolicy } from "@lootlog/protocol/http/api-key-http";
 import { UsersGroup } from "#src/contracts/users/api";
 import { MembersGroup } from "#src/contracts/members/api";
 import { GuildsGroup } from "#src/contracts/guilds/api";
-import { InternalGroup } from "#src/contracts/internal/api";
 import { RolesGroup } from "#src/contracts/roles/api";
 import { TimersGroup } from "#src/contracts/timers/api";
 import { HeroSightingsGroup } from "#src/contracts/hero-sightings/api";
@@ -39,7 +38,6 @@ export class LootlogApi extends HttpApi.make("LootlogApi")
     UsersGroup,
     MembersGroup,
     GuildsGroup,
-    InternalGroup,
     RolesGroup,
     TimersGroup,
     HeroSightingsGroup,

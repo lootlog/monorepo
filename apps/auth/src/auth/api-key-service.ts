@@ -1,13 +1,11 @@
-import { HttpClient, HttpClientResponse } from "effect/http";
+import { ApiRpcGroup } from "@lootlog/rpc/api";
+import { makeRpcClient } from "@lootlog/rpc/client";
 import { defaultKeyHasher } from "@better-auth/api-key";
-import { hasServiceAuthorization } from "@lootlog/protocol/http/service-auth";
 import { and, eq, inArray } from "drizzle-orm";
 import { Context, Effect, Layer, Option, Schema } from "effect";
 import {
   API_KEY_ERRORS,
   API_KEY_HEADER,
-  AUTH_DISCORD_ID_HEADER,
-  AUTH_USER_ID_HEADER,
   type ApiKeyAccess,
   ApiKeyGrant,
   type ApiKeyStatus,
@@ -146,7 +144,6 @@ export class ApiKeyService extends Context.Service<
       ApplicationError
     >;
     readonly statuses: (
-      headers: Headers,
       keyIds: ReadonlyArray<string>,
     ) => Effect.Effect<{ keys: ReadonlyArray<ApiKeyStatus> }, ApplicationError>;
   }
@@ -158,7 +155,13 @@ export class ApiKeyService extends Context.Service<
       const auth = yield* BetterAuthRuntime;
       const rateLimits = yield* AuthRedisStorage;
       const config = yield* AppConfig;
-      const client = HttpClient.filterStatusOk(yield* HttpClient.HttpClient);
+
+      const apiRpc = config.apiRpcUrl
+        ? yield* makeRpcClient(ApiRpcGroup, {
+            url: config.apiRpcUrl,
+            spanPrefix: "auth.api-rpc",
+          })
+        : undefined;
 
       const query = <A, E>(effect: Effect.Effect<A, E>) =>
         effect.pipe(
@@ -281,7 +284,7 @@ export class ApiKeyService extends Context.Service<
             );
 
           if (input.organizationIds.length > 0) {
-            if (!config.apiUrl)
+            if (!apiRpc)
               return yield* new DependencyUnavailableError(
                 API_KEY_ERRORS.organizationServiceUnavailable,
               );
@@ -301,25 +304,12 @@ export class ApiKeyService extends Context.Service<
                 API_KEY_ERRORS.sessionRequired,
               );
 
-            const organizations = yield* client
-              .get(`${config.apiUrl.replace(/\/$/, "")}/users/@me/guilds`, {
-                headers: {
-                  [AUTH_USER_ID_HEADER]: user.id,
-                  [AUTH_DISCORD_ID_HEADER]: user.discordId,
-                },
+            const organizations = yield* apiRpc
+              .getUserAccessibleGuilds({
+                userId: user.id,
+                discordId: user.discordId,
               })
               .pipe(
-                Effect.flatMap(
-                  HttpClientResponse.schemaBodyJson(
-                    Schema.Array(
-                      Schema.Struct({
-                        id: Schema.String,
-                        hasLootlogAccess: Schema.Boolean,
-                        isAccessDataStale: Schema.Boolean,
-                      }),
-                    ),
-                  ),
-                ),
                 Effect.timeout("5 seconds"),
                 Effect.mapError(
                   () =>
@@ -481,15 +471,7 @@ export class ApiKeyService extends Context.Service<
             apiKeyAccess: status.access,
           };
         }),
-        statuses: Effect.fn("ApiKeyService.statuses")(function* (headers, ids) {
-          if (
-            !hasServiceAuthorization(
-              headers.get("authorization") ?? undefined,
-              config.apiKeyStatusSecret,
-            )
-          )
-            return yield* new AuthenticationRequiredError("Unauthorized");
-
+        statuses: Effect.fn("ApiKeyService.statuses")(function* (ids) {
           if (config.apiKeysEnabled !== true)
             return {
               keys: ids.map((keyId) => ({ keyId, valid: false as const })),

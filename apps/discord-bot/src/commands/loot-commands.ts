@@ -1,5 +1,6 @@
+import type { RpcGuildLoot } from "@lootlog/rpc/api";
 import { AttachmentBuilder, escapeMarkdown } from "discord.js";
-import { Effect, Schema } from "effect";
+import { Effect } from "effect";
 import { compareNpcsStrongestFirst } from "@lootlog/domain/npc-type";
 import { BotConfig } from "#src/config/bot-config";
 import { guildCommand, visibilityOption } from "./command-builders.js";
@@ -29,40 +30,7 @@ const SHOWN_PLAYERS_PER_LOOT = 5;
 
 const RARITIES = ["LEGENDARY", "HEROIC", "UPGRADED", "UNIQUE"] as const;
 
-const Loot = Schema.Struct({
-  createdAt: Schema.String,
-  world: Schema.String,
-  items: Schema.Array(
-    Schema.Struct({
-      name: Schema.String,
-      rarity: Schema.NullOr(Schema.String),
-    }),
-  ),
-  players: Schema.Array(Schema.Struct({ name: Schema.String })),
-  npcs: Schema.Array(
-    Schema.Struct({
-      id: Schema.Finite,
-      name: Schema.String,
-      type: Schema.NullOr(Schema.String),
-      wt: Schema.NullOr(Schema.Finite),
-      lvl: Schema.NullOr(Schema.Finite),
-    }),
-  ),
-});
-
-type Loot = typeof Loot.Type;
-
-const LootPage = Schema.Struct({ items: Schema.Array(Loot) });
-
-const SearchItems = Schema.Struct({
-  hits: Schema.Array(
-    Schema.Struct({
-      name: Schema.String,
-      lvl: Schema.Finite,
-      rarity: Schema.NullOr(Schema.String),
-    }),
-  ),
-});
+type Loot = typeof RpcGuildLoot.Type;
 
 const itemLabel = (item: Loot["items"][number]) => {
   const name = escapeMarkdown(item.name);
@@ -121,22 +89,16 @@ const lootsReply = (
     readonly itemNames?: ReadonlyArray<string>;
   },
 ): Effect.Effect<CommandReply, CommandFailure> =>
-  session
-    .api(
-      `/guilds/${encodeURIComponent(session.guildId)}/loots`,
-      { limit: SHOWN_LOOTS, ...filters },
-      LootPage,
-    )
-    .pipe(
-      Effect.map(({ items: loots }) => ({
-        embeds: [
-          lootlogEmbed(title).setDescription(
-            loots.length === 0 ? emptyText : loots.map(lootLine).join("\n"),
-          ),
-        ],
-        components: openInLootlog(webAppUrl, session.guildId),
-      })),
-    );
+  session.api.listGuildLoots({ limit: SHOWN_LOOTS, ...filters }).pipe(
+    Effect.map(({ items: loots }) => ({
+      embeds: [
+        lootlogEmbed(title).setDescription(
+          loots.length === 0 ? emptyText : loots.map(lootLine).join("\n"),
+        ),
+      ],
+      components: openInLootlog(webAppUrl, session.guildId),
+    })),
+  );
 
 const present = (value: string | null) =>
   value === null || value.trim() === "" ? undefined : [value.trim()];
@@ -206,11 +168,10 @@ export const itemCommand: SlashCommand = {
     Effect.gen(function* () {
       const client = yield* LootlogClient;
 
-      const { hits } = yield* client.catalog(
-        "/catalog/items",
-        { search: invocation.focused.value, limit: MAX_AUTOCOMPLETE_CHOICES },
-        SearchItems,
-      );
+      const { hits } = yield* client.catalog.searchItems({
+        search: invocation.focused.value,
+        limit: MAX_AUTOCOMPLETE_CHOICES,
+      });
 
       return hits.map((item) => {
         const rarity = item.rarity ? rarityLabel(item.rarity) : undefined;

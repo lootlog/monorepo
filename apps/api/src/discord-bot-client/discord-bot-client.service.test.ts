@@ -1,10 +1,10 @@
+import { RpcUnavailableError } from "@lootlog/rpc/errors";
 import { describe, expect, it, vi } from "bun:test";
 import { Effect } from "effect";
-import { httpClientFromResponses } from "../../test/http-fixtures.js";
 import { makeDiscordBotClient } from "./discord-bot-client.js";
 
 describe("DiscordBotClientService", () => {
-  it("preserves the internal channel refresh request", async () => {
+  it("refreshes guild channels via RPC", async () => {
     const payload = {
       channels: [],
       syncState: {
@@ -23,37 +23,31 @@ describe("DiscordBotClientService", () => {
       },
     };
 
-    const post = vi.fn(() => Effect.succeed(Response.json(payload)));
+    const refreshGuildChannels = vi.fn(() => Effect.succeed(payload));
 
     await expect(
       Effect.runPromise(
-        makeDiscordBotClient(
-          httpClientFromResponses(post),
-          new URL("http://discord-bot"),
-        ).refreshGuildChannels("guild-a"),
+        makeDiscordBotClient({ refreshGuildChannels }).refreshGuildChannels(
+          "guild-a",
+        ),
       ),
     ).resolves.toEqual(payload);
-    expect(post).toHaveBeenCalledWith(
-      expect.objectContaining({
-        url: "http://discord-bot/internal/guilds/guild-a/channels/refresh",
-        method: "POST",
-        body: expect.anything(),
-      }),
-    );
+    expect(refreshGuildChannels).toHaveBeenCalledWith({ guildId: "guild-a" });
   });
 
-  it("fails closed on a non-success response", async () => {
-    const get = vi.fn(() =>
-      Effect.succeed(new Response(null, { status: 503 })),
+  it("fails closed on an unavailable RPC response", async () => {
+    const refreshGuildChannels = vi.fn(() =>
+      Effect.fail(
+        new RpcUnavailableError({ message: "Discord synchronization failed" }),
+      ),
     );
 
     await expect(
       Effect.runPromise(
-        makeDiscordBotClient(
-          httpClientFromResponses(get),
-          new URL("http://discord-bot"),
-        ).refreshGuildChannels("guild-a"),
+        makeDiscordBotClient({ refreshGuildChannels }).refreshGuildChannels(
+          "guild-a",
+        ),
       ),
-    ).rejects.toThrow("Discord Bot request failed: 503");
+    ).rejects.toThrow("Discord synchronization failed");
   });
 });
