@@ -4,6 +4,7 @@ import {
   ApiServedRpcGroup,
 } from "@lootlog/rpc/api";
 import {
+  RpcBadRequestError,
   RpcForbiddenError,
   RpcNotFoundError,
   RpcUnauthorizedError,
@@ -29,6 +30,10 @@ import {
   type CharacterAurasOperationError,
 } from "#src/character-auras/character-auras-data";
 import { InternalGuildsData } from "#src/guilds/internal-guilds-data";
+import {
+  OrganizationOperatorData,
+  type OrganizationOperatorFailure,
+} from "#src/guilds/organization-operator.data-layer";
 import { LootlogApi } from "#src/http-api/lootlog-api";
 import {
   getGuildByIdOrVanityUrl,
@@ -90,6 +95,49 @@ const auraGrantsUnavailable = <A>(
     ),
   );
 
+const operatorUnavailable = (error: OrganizationOperatorFailure) =>
+  Effect.logError("Organization operator call failed", error).pipe(
+    Effect.andThen(Effect.fail(new RpcUnavailableError())),
+  );
+
+const operatorRead = <A>(
+  effect: Effect.Effect<A, OrganizationOperatorFailure>,
+) => Effect.catch(effect, operatorUnavailable);
+
+const operatorTarget = <A>(
+  effect: Effect.Effect<A, OrganizationOperatorFailure>,
+) =>
+  Effect.catch(
+    effect,
+    (error): Effect.Effect<never, RpcNotFoundError | RpcUnavailableError> =>
+      error._tag === "OrganizationNotFound"
+        ? Effect.fail(new RpcNotFoundError())
+        : operatorUnavailable(error),
+  );
+
+const operatorRefresh = <A>(
+  effect: Effect.Effect<A, OrganizationOperatorFailure>,
+) =>
+  Effect.catch(
+    effect,
+    (
+      error,
+    ): Effect.Effect<
+      never,
+      RpcBadRequestError | RpcNotFoundError | RpcUnavailableError
+    > => {
+      if (error._tag === "OrganizationSyncCooldown")
+        return Effect.fail(
+          new RpcBadRequestError({ message: "Discord sync refresh cooldown" }),
+        );
+
+      if (error._tag === "OrganizationNotFound")
+        return Effect.fail(new RpcNotFoundError());
+
+      return operatorUnavailable(error);
+    },
+  );
+
 const makeApiRpcHandlers = <E, R>(routes: Layer.Layer<never, E, R>) =>
   Layer.unwrap(
     Effect.gen(function* () {
@@ -99,6 +147,7 @@ const makeApiRpcHandlers = <E, R>(routes: Layer.Layer<never, E, R>) =>
       );
 
       const auras = yield* CharacterAurasData;
+      const organizations = yield* OrganizationOperatorData;
 
       const context = (yield* Effect.context<
         Exclude<
@@ -126,13 +175,13 @@ const makeApiRpcHandlers = <E, R>(routes: Layer.Layer<never, E, R>) =>
         (boundary) => Effect.promise(() => boundary.dispose()),
       );
 
-      const asMember = memberCalls(
-        Object.assign(
-          (input: string | URL | Request, init?: RequestInit) =>
-            web.handler(new Request(input, init)),
-          { preconnect: () => {} },
-        ),
+      const inProcessFetch = Object.assign(
+        (input: string | URL | Request, init?: RequestInit) =>
+          web.handler(new Request(input, init)),
+        { preconnect: () => {} },
       );
+
+      const asMember = memberCalls(inProcessFetch);
 
       const inProcess = yield* HttpClient.HttpClient.pipe(
         Effect.provide(FetchHttpClient.layer),
@@ -254,6 +303,43 @@ const makeApiRpcHandlers = <E, R>(routes: Layer.Layer<never, E, R>) =>
             actor,
             api.reservations.listReservationSpots({ params: { guildId } }),
           ),
+        getGuildStatsCard: ({ guildId }) =>
+          Effect.tryPromise({
+            try: async () => {
+              const response = await inProcessFetch(
+                `http://api.internal/public/guilds/${encodeURIComponent(guildId)}/stats-card.png`,
+              );
+
+              return {
+                status: response.status,
+                body: new Uint8Array(await response.arrayBuffer()),
+              };
+            },
+            catch: () =>
+              new RpcUnavailableError({
+                message: "In-process API call failed",
+              }),
+          }).pipe(
+            Effect.flatMap(
+              ({
+                status,
+                body,
+              }): Effect.Effect<
+                Uint8Array,
+                RpcNotFoundError | RpcUnavailableError
+              > => {
+                if (status === 200) return Effect.succeed(body);
+
+                if (status === 404) return Effect.fail(new RpcNotFoundError());
+
+                return Effect.fail(
+                  new RpcUnavailableError({
+                    message: `API answered ${status}`,
+                  }),
+                );
+              },
+            ),
+          ),
       });
 
       const operatorHandlers = ApiOperatorRpcGroup.toLayer({
@@ -269,6 +355,27 @@ const makeApiRpcHandlers = <E, R>(routes: Layer.Layer<never, E, R>) =>
           ),
         revokeCharacterAuras: ({ userId }) =>
           auraGrantsUnavailable(auras.revokeAuras(userId)),
+        getOrganizationsOverview: () => operatorRead(organizations.getOverview),
+        searchOrganizations: (search) =>
+          operatorRead(organizations.searchOrganizations(search)),
+        getOrganization: ({ guildId }) =>
+          operatorTarget(organizations.getOrganization(guildId)),
+        listOrganizationMembers: (query) =>
+          operatorTarget(organizations.listMembers(query)),
+        listUserOrganizations: ({ discordId }) =>
+          operatorRead(organizations.listUserOrganizations(discordId)),
+        listOrganizationAudit: ({ limit, offset }) =>
+          operatorRead(organizations.listAudit(limit, offset)),
+        setOrganizationLimits: ({ limits, ...operator }) =>
+          operatorTarget(organizations.setLimits(operator, limits)),
+        clearOrganizationVanityUrl: (operator) =>
+          operatorTarget(organizations.clearVanityUrl(operator)),
+        refreshOrganizationDiscordSync: (operator) =>
+          operatorRefresh(organizations.refreshDiscordSync(operator)),
+        suspendOrganization: ({ reason, ...operator }) =>
+          operatorTarget(organizations.suspend(operator, reason)),
+        resumeOrganization: (operator) =>
+          operatorTarget(organizations.resume(operator)),
       });
 
       return Layer.merge(memberHandlers, operatorHandlers);

@@ -8,6 +8,7 @@ import { BanForm } from "@/components/ban-form";
 import { RolesForm } from "@/components/roles-form";
 import { Section } from "@/components/section";
 import { SessionsList } from "@/components/sessions-list";
+import { UserOrganizations } from "@/components/user-organizations";
 import { UserSummary } from "@/components/user-summary";
 import { noticeText, text } from "@/lib/messages";
 import { getUser } from "@/server/queries";
@@ -47,7 +48,9 @@ export const Route = createFileRoute("/users/$userId")({
 });
 
 function UserPage() {
-  const { user, sessions, apiKeys, audit, auras } = Route.useLoaderData();
+  const { user, sessions, apiKeys, audit, auras, organizations } =
+    Route.useLoaderData();
+
   const { notice, error } = Route.useSearch();
   const { operator } = Route.useRouteContext();
 
@@ -100,6 +103,17 @@ function UserPage() {
         ) : (
           <Alert variant="destructive">
             <AlertDescription>{text.aurasUnavailable}</AlertDescription>
+          </Alert>
+        )}
+      </Section>
+      <Section id="organizations" title={text.userOrganizationsHeading}>
+        {organizations.status === "ok" ? (
+          <UserOrganizations organizations={organizations.value} />
+        ) : (
+          <Alert variant="destructive">
+            <AlertDescription>
+              {text.userOrganizationsUnavailable}
+            </AlertDescription>
           </Alert>
         )}
       </Section>

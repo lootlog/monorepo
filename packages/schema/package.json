@@ -7,6 +7,7 @@
   "exports": {
     "./account-preferences": "./src/account-preferences.ts",
     "./admin": "./src/admin.ts",
+    "./admin-organizations": "./src/admin-organizations.ts",
     "./browser-extension": "./src/browser-extension.ts",
     "./air-tag": "./src/air-tag.ts",
     "./battle-ping": "./src/battle-ping.ts",

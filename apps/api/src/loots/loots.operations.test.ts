@@ -8,31 +8,17 @@ import { OperationError } from "@lootlog/instrumentation/operation";
 import type { LootQueryOperations } from "#src/loots/query/loot-query.operations";
 import type { LootQueryResult } from "#src/loots/query/loot-query-result";
 import { ResourceNotFoundError } from "@lootlog/protocol/http/errors";
+import { createGuildFixture } from "../../test/organization-fixtures.js";
 
 type Guild = Parameters<LootQueryOperations["fetchLootById"]>[0];
 
 type Role = Parameters<LootQueryOperations["fetchLootById"]>[2][number];
 
-const guild: Guild = {
+const guild: Guild = createGuildFixture({
   id: "organization-one",
   name: "One",
   ownerId: "owner",
-  icon: null,
-  banner: null,
-  vanityUrl: null,
-  notificationRuleLimit: 20,
-  publicStatsCardEnabled: false,
-  reservationMaxDurationMinutes: 180,
-  reservationMinDurationMinutes: 30,
-  reservationTimeGranularityMinutes: 15,
-  reservationMaxAdvanceDays: 7,
-  reservationActiveLimitPerSpot: 3,
-  lootDrawExcludedNpcTypes: ["HERO", "EVENT_HERO", "TITAN"],
-  documentLimit: 50,
-  active: true,
-  createdAt: new Date(0),
-  updatedAt: new Date(0),
-};
+});
 
 const role: Role = {
   id: "role",

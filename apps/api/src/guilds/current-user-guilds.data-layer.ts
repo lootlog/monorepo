@@ -26,6 +26,7 @@ import {
   type AuthenticatedIdentity,
   AccountOrganizationOperationError,
 } from "./account-organization-data.js";
+import { isOperationalGuild } from "#src/guilds/organization-operational";
 
 type MemberRemovalError = Effect.Error<
   ReturnType<
@@ -145,7 +146,7 @@ export const makeCurrentUserGuilds = (
       .select()
       .from(guildTable)
       .where(inArray(guildTable.id, discordGuildIds))
-      .pipe(Effect.map((rows) => rows.filter(({ active }) => active)));
+      .pipe(Effect.map((rows) => rows.filter(isOperationalGuild)));
 
     let members = yield* readMembers(
       identity.discordId,

@@ -40,4 +40,34 @@ describe("notification job recurrence", () => {
 
     expect(advanced).toBeFalse();
   });
+
+  it("moves a rule whose cycle was skipped to its next future occurrence", async () => {
+    const advanced: Array<{ readonly from: Date; readonly to: Date }> = [];
+
+    const scheduleNext = makeNotificationJobRecurrence(
+      {
+        findRule: () => Effect.succeed(recurringRule),
+        cycleStatuses: () =>
+          Effect.succeed([{ status: NotificationJobStatus.CANCELED }]),
+        advance: (_ruleId, from, to) =>
+          Effect.sync(() => {
+            advanced.push({ from, to });
+
+            return true;
+          }),
+      },
+      () => Effect.succeed(true),
+      { scheduledMessage: () => ({}) },
+      {
+        create: () => Effect.succeed(null),
+        enqueue: () => Effect.void,
+      },
+    );
+
+    await Effect.runPromise(scheduleNext(7));
+
+    expect(advanced).toHaveLength(1);
+    expect(advanced[0]?.from).toEqual(new Date("2026-09-02T12:00:00.000Z"));
+    expect(advanced[0]?.to.getTime()).toBeGreaterThan(Date.now());
+  });
 });

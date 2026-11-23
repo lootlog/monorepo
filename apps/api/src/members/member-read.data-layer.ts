@@ -40,6 +40,7 @@ import {
   MemberSummariesResponse,
   MemberLootlogConfigSummaryResponse,
 } from "#src/contracts/members/schemas";
+import { operationalGuild } from "#src/guilds/organization-operational";
 
 export type MemberReadCache = Pick<RedisService, "getOrSetJson">;
 
@@ -155,12 +156,7 @@ export const makeMemberReadDataLayer = (cache: MemberReadCache) =>
                 const owners = yield* database
                   .select({ ownerId: guildTable.ownerId })
                   .from(guildTable)
-                  .where(
-                    and(
-                      eq(guildTable.id, guildId),
-                      eq(guildTable.active, true),
-                    ),
-                  )
+                  .where(and(eq(guildTable.id, guildId), operationalGuild))
                   .limit(1);
 
                 const ownerId = owners[0]?.ownerId;

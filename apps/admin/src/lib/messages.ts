@@ -1,6 +1,13 @@
 import type { AdminAuditAction } from "@lootlog/schema/admin";
+import type {
+  AdminOrganizationSort,
+  AdminOrganizationStatus,
+  OrganizationOperatorAction,
+} from "@lootlog/schema/admin-organizations";
+import type { DiscordGuildSyncStatus } from "@lootlog/schema/discord";
 import type { PersonalCharacterAuraId } from "@lootlog/schema/character-aura";
 import type { PlatformRole } from "@lootlog/schema/platform-roles";
+import type { OrganizationAction } from "@/lib/organization-action";
 import type { BanDuration, UserAction } from "@/lib/user-action";
 
 export const roleText: Record<
@@ -67,10 +74,73 @@ export const auditActionText: Record<AdminAuditAction, string> = {
   "api-key.revoke": "Usunięcie klucza API",
 };
 
+export const organizationStatusText: Record<AdminOrganizationStatus, string> = {
+  active: "Aktywny",
+  suspended: "Zawieszony",
+  inactive: "Bot poza serwerem",
+};
+
+export const syncStatusText: Record<DiscordGuildSyncStatus, string> = {
+  SYNCED: "Zsynchronizowany",
+  SYNCING: "Synchronizuje się",
+  FAILED: "Błąd",
+  STALE: "Nieaktualny",
+  NOT_FOUND: "Serwer niedostępny",
+};
+
+export const organizationSortText: Record<AdminOrganizationSort, string> = {
+  created: "Najnowsze",
+  members: "Najwięcej członków",
+  activity: "Ostatni loot",
+};
+
+export const memberTypeText: Record<
+  "OWNER" | "ADMIN" | "USER" | "BOT",
+  string
+> = {
+  OWNER: "Właściciel",
+  ADMIN: "Administrator",
+  USER: "Członek",
+  BOT: "Bot",
+};
+
+export const organizationNoticeText: Record<
+  OrganizationAction["action"],
+  string
+> = {
+  limits: "Zapisano limity.",
+  "clear-vanity-url":
+    "Usunięto własny adres. Lootlog jest dostępny pod ID serwera.",
+  "refresh-discord-sync": "Odświeżono stan serwera Discord.",
+  suspend:
+    "Lootlog został zawieszony. Członkowie tracą dostęp w ciągu kilku sekund.",
+  resume: "Przywrócono Lootlog.",
+};
+
+export const organizationAuditActionText: Record<
+  OrganizationOperatorAction,
+  string
+> = {
+  "limits.set": "Zmiana limitów",
+  "vanity-url.clear": "Usunięcie własnego adresu",
+  "discord-sync.refresh": "Odświeżenie Discorda",
+  suspend: "Zawieszenie",
+  resume: "Przywrócenie",
+};
+
+const polishPlural = new Intl.PluralRules("pl");
+
+const permissionForms: Partial<Record<Intl.LDMLPluralRule, string>> = {
+  one: "uprawnienie",
+  few: "uprawnienia",
+  many: "uprawnień",
+};
+
 export const text = {
   title: "Lootlog Admin",
   navUsers: "Użytkownicy",
   navAudit: "Dziennik",
+  navOrganizations: "Lootlogi",
   operator: "Operator",
   signInTitle: "Zaloguj się do Lootloga",
   signInDescription:
@@ -218,8 +288,144 @@ export const text = {
     "Integracja korzystająca z tego klucza przestanie działać. Klucza nie da się przywrócić.",
   actionFailed: "Nie udało się wykonać działania. Spróbuj ponownie.",
   notFoundTitle: "Nie znaleziono",
-  notFoundDescription: "Taka strona albo taki użytkownik nie istnieje.",
+  notFoundDescription:
+    "Taka strona, taki użytkownik albo taki Lootlog nie istnieje.",
+  organizationsOverviewTotal: "Lootlogi",
+  organizationsOverviewActive: "Aktywne",
+  organizationsOverviewActiveLastWeek: "Z lootem w 7 dni",
+  organizationsOverviewSuspended: "Zawieszone",
+  organizationsOverviewSyncFailing: "Błąd Discorda",
+
+  organizationsFilterSearchPlaceholder:
+    "Nazwa, własny adres, ID serwera lub Discord ID właściciela",
+  organizationsFilterStatus: "Status",
+  organizationsFilterAnyStatus: "Wszystkie",
+  organizationsFilterSync: "Discord",
+  organizationsFilterAnySync: "Dowolny",
+  organizationsFilterPermissions: "Uprawnienia bota",
+  organizationsFilterAnyPermissions: "Dowolne",
+  organizationsFilterMissingPermissions: "Brakuje uprawnień",
+  organizationsFilterAllPermissions: "Komplet uprawnień",
+  organizationsFilterSort: "Sortuj",
+
+  organizationsEmpty: "Żaden Lootlog nie pasuje do tych filtrów.",
+  organizationsCount: (shown: number, total: number) => `${shown} z ${total}`,
+  columnOrganization: "Lootlog",
+  columnOwner: "Właściciel",
+  columnMembers: "Członkowie",
+  columnLastLoot: "Ostatni loot",
+  columnDiscord: "Discord",
+  columnCreated: "Utworzony",
+  noLoot: "Brak",
+  unknownOwner: "Nieznany",
+  missingPermissionsBadge: "Brak uprawnień",
+
+  backToOrganizations: "Wszystkie Lootlogi",
+  organizationId: "ID serwera",
+  vanityUrl: "Własny adres",
+  noVanityUrl: "Brak",
+  owner: "Właściciel",
+  created: "Utworzony",
+  openInLootlog: "Otwórz w Lootlogu",
+
+  usageMembers: "Aktywni członkowie",
+  usageInactiveMembers: "Nieaktywni członkowie",
+  usageLootsLastMonth: "Loot w 30 dni",
+  usageDocuments: (limit: number) => `Dokumenty (limit ${limit})`,
+  usageNotificationRules: (limit: number) =>
+    `Reguły powiadomień (limit ${limit})`,
+
+  suspensionHeading: "Zawieszenie",
+  suspensionDescription:
+    "Zawieszony Lootlog znika członkom z aplikacji, dodatku i bota. Dane zostają, a zbieranie lootu i powiadomienia stoją do przywrócenia.",
+  suspendedSince: (date: string) => `Zawieszony od ${date}`,
+  suspendedBy: (name: string) => `Zawiesił: ${name}`,
+  suspensionReason: "Powód",
+  suspendReasonLabel: "Powód zawieszenia",
+  suspendReasonHint:
+    "Zobaczysz go tutaj i w dzienniku. Członkowie go nie widzą.",
+  suspendSubmit: "Zawieś Lootlog",
+  suspendConfirmTitle: (name: string) => `Zawiesić Lootlog ${name}?`,
+  suspendConfirmDescription:
+    "Członkowie stracą dostęp w ciągu kilku sekund, a otwarte sesje dodatku odłączą się od tego Lootloga. Możesz go przywrócić w każdej chwili.",
+  resumeSubmit: "Przywróć Lootlog",
+  resumeConfirmTitle: (name: string) => `Przywrócić Lootlog ${name}?`,
+  resumeConfirmDescription:
+    "Członkowie odzyskają dostęp według ról na Discordzie.",
+  inactiveNotice:
+    "Bot nie jest na tym serwerze, więc Lootlog jest nieaktywny niezależnie od zawieszenia.",
+
+  limitsHeading: "Limity",
+  limitsDescription:
+    "Zmniejszenie limitu nie usuwa istniejących dokumentów ani reguł; blokuje tylko tworzenie nowych.",
+  limitDocuments: "Dokumenty",
+  limitNotificationRules: "Reguły powiadomień",
+  limitsSave: "Zapisz limity",
+
+  vanityHeading: "Własny adres",
+  vanityDescription:
+    "Usuń adres zajęty z naruszeniem zasad. Właściciel może potem ustawić nowy.",
+  vanityClear: "Usuń własny adres",
+  vanityClearConfirmTitle: (vanity: string) => `Usunąć adres „${vanity}”?`,
+  vanityClearConfirmDescription:
+    "Linki z tym adresem przestaną działać. Lootlog zostanie pod ID serwera.",
+
+  discordHeading: "Discord",
+  discordDescription:
+    "Stan uprawnień bota i kanałów z ostatniej synchronizacji.",
+  discordNever: "Jeszcze nie zsynchronizowano.",
+  discordStatus: "Status",
+  discordChannels: "Kanały",
+  discordChannelsValue: (selectable: number, total: number) =>
+    `${selectable} z ${total} do wyboru`,
+  discordLastSuccess: "Ostatnia udana",
+  discordLastAttempt: "Ostatnia próba",
+  discordLastError: "Ostatni błąd",
+  discordMissing: "Brakujące uprawnienia",
+  discordAllPermissions: "Komplet",
+  discordRefresh: "Odśwież z Discorda",
+  discordCooldown:
+    "Discord był odświeżany przed chwilą. Spróbuj ponownie za kilka minut.",
+
+  notificationsHeading: "Powiadomienia",
+  notificationsPending: "Oczekujące",
+  notificationsFailed: "Nieudane",
+  notificationsBlocked: "Zablokowane",
+  notificationsLastError: "Ostatni błąd",
+
+  rolesListHeading: "Role Lootloga",
+  rolesListDescription:
+    "Role pochodzą z Discorda; uprawnienia ustawia administrator Lootloga w aplikacji.",
+  rolesEmpty: "Ten Lootlog nie ma ról.",
+  roleName: "Rola",
+  rolePermissions: "Uprawnienia",
+  roleLevels: "Poziomy",
+  roleMembers: "Członkowie",
+  noPermissions: "Brak",
+  permissionsCount: (count: number) =>
+    `${count} ${permissionForms[polishPlural.select(count)] ?? "uprawnień"}`,
+
+  membersHeading: "Członkowie",
+  membersSearchPlaceholder: "Nazwa, Discord ID lub ID użytkownika",
+  membersEmpty: "Brak członków.",
+  memberName: "Członek",
+  memberType: "Typ",
+  memberStatus: "Status",
+  memberJoined: "Dołączył",
+  memberActive: "Aktywny",
+  memberInactive: "Nieaktywny",
+
+  organizationAuditHeading: "Historia działań",
+  auditScopeUsers: "Użytkownicy",
+  auditScopeOrganizations: "Lootlogi",
+  auditOrganization: "Lootlog",
+
+  userOrganizationsHeading: "Lootlogi",
+  userOrganizationsEmpty: "Użytkownik nie należy do żadnego Lootloga.",
+  userOrganizationsUnavailable:
+    "Nie udało się wczytać Lootlogów. Pozostałe dane użytkownika są aktualne.",
+
   errorTitle: "Coś poszło nie tak",
   errorDescription:
-    "Usługa auth nie odpowiedziała poprawnie. Odśwież stronę za chwilę.",
+    "Usługa auth albo API nie odpowiedziała poprawnie. Odśwież stronę za chwilę.",
 } as const;

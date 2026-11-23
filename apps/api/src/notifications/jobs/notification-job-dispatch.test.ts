@@ -182,6 +182,7 @@ describe("notification job dispatch", () => {
         claim: store.claimJob,
         failClaim: store.failClaim,
         block: store.blockJob,
+        cancel: store.cancelJob,
       };
 
       const firstAttempt = { retrying: false };
@@ -191,6 +192,7 @@ describe("notification job dispatch", () => {
         dispatchStore,
         {
           hasRequiredGuildPermissions: () => Effect.succeed(true),
+          isOrganizationOperational: () => Effect.succeed(true),
           canReadLootSource: (jobId, discordId) =>
             canDispatchLootNotification(database, jobId, discordId),
         },
@@ -295,6 +297,7 @@ describe("notification job dispatch", () => {
           dispatchStore,
           {
             hasRequiredGuildPermissions: () => Effect.succeed(true),
+            isOrganizationOperational: () => Effect.succeed(true),
             canReadLootSource: (jobId, discordId) =>
               Effect.gen(function* () {
                 started.resolve();
@@ -344,6 +347,7 @@ describe("notification job dispatch", () => {
           Effect.sync(() => {
             updates.push(values);
           }),
+        cancel: () => Effect.succeed(false),
         block: (_jobId, reason) =>
           Effect.sync(() => {
             updates.push({
@@ -362,6 +366,7 @@ describe("notification job dispatch", () => {
       },
       {
         hasRequiredGuildPermissions: () => Effect.succeed(true),
+        isOrganizationOperational: () => Effect.succeed(true),
         canReadLootSource: () => Effect.succeed(true),
       },
       {
@@ -388,6 +393,57 @@ describe("notification job dispatch", () => {
     expect(published).toBeFalse();
   });
 
+  it("skips an Organization job while the Organization is suspended and lets its schedule move on", async () => {
+    const canceled: string[] = [];
+    const finalized: number[] = [];
+    let published = false;
+
+    const dispatch = makeNotificationJobDispatch(
+      {
+        find: () =>
+          Effect.succeed({
+            ...job(true),
+            ownerType: "GUILD",
+            ownerId: "guild-1",
+          }),
+        update: () => Effect.void,
+        cancel: (_jobId, reason) =>
+          Effect.sync(() => {
+            canceled.push(reason);
+
+            return true;
+          }),
+        block: () => Effect.die("a suspended Organization job is not blocked"),
+        claim: () => Effect.die("a suspended Organization job is not claimed"),
+        failClaim: () => Effect.die("skipped jobs cannot fail a claim"),
+      },
+      {
+        hasRequiredGuildPermissions: () => Effect.succeed(true),
+        isOrganizationOperational: (guildId) =>
+          Effect.succeed(guildId !== "guild-1"),
+        canReadLootSource: () => Effect.succeed(true),
+      },
+      {
+        publish: () =>
+          Effect.sync(() => {
+            published = true;
+          }),
+      },
+      (skipped) =>
+        Effect.sync(() => {
+          finalized.push(skipped.ruleId);
+        }),
+      () => undefined,
+      { filesFor: () => Effect.succeed([]) },
+    );
+
+    await Effect.runPromise(dispatch("job-1", { retrying: false }));
+
+    expect(canceled).toEqual(["Organization is inactive or suspended"]);
+    expect(finalized).toEqual([job(true).ruleId]);
+    expect(published).toBeFalse();
+  });
+
   it("keeps a delivered job final when a queued retry finds its target disabled", async () => {
     const dispatch = makeNotificationJobDispatch(
       {
@@ -395,10 +451,12 @@ describe("notification job dispatch", () => {
         update: () => Effect.die("delivery must remain final"),
         claim: () => Effect.die("delivered jobs cannot be claimed again"),
         failClaim: () => Effect.die("delivered jobs cannot fail"),
+        cancel: () => Effect.die("delivered jobs cannot be canceled"),
         block: () => Effect.die("delivered jobs cannot be blocked"),
       },
       {
         hasRequiredGuildPermissions: () => Effect.succeed(true),
+        isOrganizationOperational: () => Effect.succeed(true),
         canReadLootSource: () => Effect.die("delivered jobs are not rechecked"),
       },
       {

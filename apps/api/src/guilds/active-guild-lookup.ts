@@ -2,6 +2,7 @@ import { eq, or } from "drizzle-orm";
 import { Effect } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import { guildTable } from "#src/database/drizzle/organization.schema";
+import { isOperationalGuild } from "#src/guilds/organization-operational";
 import { isOrganizationIdLike } from "@lootlog/domain/organization-vanity-url";
 
 export const pickGuildByIdOrVanityUrl = <
@@ -35,6 +36,6 @@ export const findActiveGuild = (
       Effect.map((guilds) => {
         const guild = pickGuildByIdOrVanityUrl(guilds, idOrVanityUrl);
 
-        return guild?.active ? guild : null;
+        return guild && isOperationalGuild(guild) ? guild : null;
       }),
     );

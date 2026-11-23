@@ -16,6 +16,7 @@ import {
   roleTable,
 } from "#src/database/drizzle/organization.schema";
 import type { ReadyRoomAggregate } from "./ready-room.types.js";
+import { operationalGuild } from "#src/guilds/organization-operational";
 
 export const readyRoomSourceVisibility = Effect.fn("readyRoomSourceVisibility")(
   function* (
@@ -32,9 +33,7 @@ export const readyRoomSourceVisibility = Effect.fn("readyRoomSourceVisibility")(
       .leftJoin(memberTable, activeGuildMemberJoin(discordId))
       .leftJoin(memberToRoleTable, eq(memberToRoleTable.A, memberTable.id))
       .leftJoin(roleTable, eq(memberToRoleTable.B, roleTable.id))
-      .where(
-        and(inArray(guildTable.id, [...guildIds]), eq(guildTable.active, true)),
-      );
+      .where(and(inArray(guildTable.id, [...guildIds]), operationalGuild));
 
     return (room: ReadyRoomAggregate): string[] =>
       room.guildIds.filter((guildId) => {

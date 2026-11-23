@@ -22,7 +22,6 @@ export interface BotConfigValue extends BaseServiceConfiguration {
   };
   readonly discordBotToken: Redacted.Redacted<string>;
   readonly rabbitmqUri: Redacted.Redacted<string>;
-  readonly apiServiceUrl: string;
   readonly webAppUrl: string;
 }
 
@@ -53,9 +52,6 @@ export class BotConfig extends Context.Service<BotConfig, BotConfigValue>()(
         }),
         discordBotToken: Config.Redacted("DISCORD_BOT_TOKEN"),
         rabbitmqUri: Config.Redacted("RABBITMQ_URI"),
-        apiServiceUrl: Config.String("API_SERVICE_URL").pipe(
-          Config.withDefault("http://api:4000"),
-        ),
         webAppUrl: Config.String("WEB_APP_URL").pipe(
           Config.withDefault(
             WEB_APP_URL_BY_ENVIRONMENT.get(environment) ?? "http://localhost",

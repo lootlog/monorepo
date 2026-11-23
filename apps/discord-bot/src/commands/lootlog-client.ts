@@ -1,4 +1,3 @@
-import { boundedHttpGet } from "@lootlog/instrumentation/bounded-http-get";
 import {
   ApiRpcGroup,
   type RpcEventRankingEntry,
@@ -28,7 +27,6 @@ import {
 } from "@lootlog/rpc/gateway";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Layer, Schema } from "effect";
-import { HttpClient } from "effect/http";
 import { BotConfig } from "#src/config/bot-config";
 
 export class CommandFailure extends TaggedErrorClass<
@@ -141,22 +139,10 @@ export interface LootlogClientValue {
       readonly limit: number;
     }) => Effect.Effect<CatalogItemSearchResult, CommandFailure>;
   };
-  readonly publicFile: (
-    path: string,
+  readonly getGuildStatsCard: (
+    guildId: string,
   ) => Effect.Effect<Uint8Array, CommandFailure>;
 }
-
-const failureForStatus = (status: number): CommandFailure | undefined => {
-  if (status >= 200 && status < 300) return undefined;
-
-  if (status === 401) return new CommandFailure({ reason: "reauthenticate" });
-
-  if (status === 403) return new CommandFailure({ reason: "forbidden" });
-
-  if (status === 404) return new CommandFailure({ reason: "not-found" });
-
-  return new CommandFailure({ reason: "unavailable" });
-};
 
 export class LootlogClient extends Context.Service<
   LootlogClient,
@@ -166,7 +152,6 @@ export class LootlogClient extends Context.Service<
     LootlogClient,
     Effect.gen(function* () {
       const config = yield* BotConfig;
-      const httpClient = yield* HttpClient.HttpClient;
 
       const apiRpc = yield* makeRpcClient(ApiRpcGroup, {
         ...config.rpc.api,
@@ -252,32 +237,13 @@ export class LootlogClient extends Context.Service<
         } satisfies MemberSession;
       });
 
-      const publicFile = (path: string) =>
-        boundedHttpGet({
-          client: httpClient,
-          url: new URL(path, config.apiServiceUrl),
-          timeoutMilliseconds: 2500,
-          retries: 1,
-          operationId: path,
-          adapter: "discord-command",
-          response: "raw",
-          failure: (_reason, retryable) => ({ retryable }),
-          decode: (body, status) => ({ status, body: new Uint8Array(body) }),
-        }).pipe(
-          Effect.mapError(() => new CommandFailure({ reason: "unavailable" })),
-          Effect.flatMap(({ status, body }) => {
-            const failure = failureForStatus(status);
-
-            return failure ? Effect.fail(failure) : Effect.succeed(body);
-          }),
-        );
-
       return LootlogClient.of({
         member,
         catalog: {
           searchItems: (params) => runRpc(() => catalogRpc.searchItems(params)),
         },
-        publicFile,
+        getGuildStatsCard: (guildId) =>
+          runRpc(() => apiRpc.getGuildStatsCard({ guildId })),
       });
     }),
   );

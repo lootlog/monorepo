@@ -77,6 +77,9 @@ function RootComponent() {
                   >
                     {text.navUsers}
                   </Link>
+                  <Link to="/organizations" className={navLink}>
+                    {text.navOrganizations}
+                  </Link>
                   <Link to="/audit" className={navLink}>
                     {text.navAudit}
                   </Link>

@@ -204,9 +204,11 @@ describe("notification dispatch with BullMQ and PostgreSQL", () => {
           return store.failClaim(...args);
         },
         block: store.blockJob,
+        cancel: store.cancelJob,
       },
       {
         hasRequiredGuildPermissions: () => Effect.succeed(true),
+        isOrganizationOperational: () => Effect.succeed(true),
         canReadLootSource: (jobId, discordId) =>
           canDispatchLootNotification(database, jobId, discordId),
       },

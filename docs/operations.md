@@ -73,23 +73,28 @@ and set to the same value on both ends. Outside `ENV=local` a service refuses
 to start without the tokens of its edges; locally they default to a fixed
 development value.
 
-| Caller      | Callee      | Procedures                                           |
-| ----------- | ----------- | ---------------------------------------------------- |
-| gateway     | api         | `getUserGuildPermissions`                            |
-| activity    | api         | `getUserGuildPermissions`, `getGuildByIdOrVanityUrl` |
-| auth        | api         | `getUserAccessibleGuilds`                            |
-| discord-bot | api         | `getMemberIdentity` and the member reads             |
-| api         | auth        | `getIdpToken`, `listPlatformRoleHolders`             |
-| gateway     | auth        | `getApiKeyStatuses`                                  |
-| discord-bot | gateway     | `getOrganizationPresence`                            |
-| discord-bot | catalog     | `searchItems`                                        |
-| api         | discord-bot | `refreshGuildChannels`                               |
-| admin       | auth        | the operator procedures (`AuthOperatorRpcGroup`)     |
-| admin       | api         | the aura grant procedures (`ApiOperatorRpcGroup`)    |
+| Caller      | Callee      | Procedures                                                         |
+| ----------- | ----------- | ------------------------------------------------------------------ |
+| gateway     | api         | `getUserGuildPermissions`                                          |
+| activity    | api         | `getUserGuildPermissions`, `getGuildByIdOrVanityUrl`               |
+| auth        | api         | `getUserAccessibleGuilds`                                          |
+| discord-bot | api         | `getMemberIdentity`, the member reads, and `getGuildStatsCard`     |
+| api         | auth        | `getIdpToken`, `listPlatformRoleHolders`                           |
+| gateway     | auth        | `getApiKeyStatuses`                                                |
+| discord-bot | gateway     | `getOrganizationPresence`                                          |
+| discord-bot | catalog     | `searchItems`                                                      |
+| api         | discord-bot | `refreshGuildChannels`                                             |
+| admin       | auth        | the operator procedures (`AuthOperatorRpcGroup`)                   |
+| admin       | api         | the aura grant and Organization procedures (`ApiOperatorRpcGroup`) |
 
 A new edge needs the caller listed on the procedure in `packages/rpc`, the
 token in both deployments, and the caller added to the callee's
 `NetworkPolicy`.
+
+The wiki is the one synchronous caller outside this table. It runs as a
+Cloudflare Worker, outside the cluster network, and reads the catalog's public
+HTTP API with the `x-lootlog-service-token` header (`CATALOG_SERVICE_TOKEN`).
+Moving it to RPC would mean exposing the catalog's RPC port to the internet.
 
 Account deletion asks Battlelog to remove a User's battles through RabbitMQ
 (`battlelog.user-data.delete`). The API and Battlelog both declare the queue,
@@ -116,6 +121,30 @@ every holder of an aura grant and passes their ids to the auth service's
 to `admin_audit_log`. The panel refuses to start without `AUTH_RPC_URL` and
 `API_RPC_URL`, and the NetworkPolicy of both services must admit its pods on
 the RPC port.
+
+The **Lootlogi** page (`/organizations`) lists Organizations with search,
+status, Discord sync, and permission filters, and opens each one at
+`/organizations/<guildId>`: owner, usage against limits, Discord sync state,
+notification backlog, roles, and members. It reads only metadata and counts,
+never loot, documents, or comments. An operator can change the document and
+notification rule limits, remove a vanity URL, refresh the Discord sync, and
+suspend or resume the Organization. These calls go to the API's Organization
+procedures over internal RPC, again after the auth service authorizes the
+operator. The API writes each change and its `OrganizationOperatorAudit` entry
+in one transaction; the audit page shows those entries under its Lootlogi tab.
+
+A suspended Organization stays in the database but is treated like one the
+bot has left: member access, the Discord bot's slash commands, Organization
+notifications, and the public stats card all refuse it. Suspension and
+resumption queue a member sync delivery for every active Member, so the
+gateway rebalances open sessions and the API drops cached permissions within
+seconds. Organization notifications that come due while suspended are blocked
+rather than sent late; resuming rebuilds every Organization notification rule,
+so its future scheduled messages and timer reminders return. The Discord Guild
+owner without a Member row keeps cached gateway
+access until that cache expires, as after the bot leaves. Suspension does not
+touch Discord: when the bot rejoins the server, the Organization stays
+suspended until an operator resumes it.
 
 The panel is reachable only through the Cloudflare tunnel that also serves
 Grafana, on its own public hostname guarded by its own Cloudflare Access

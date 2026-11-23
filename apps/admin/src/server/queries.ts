@@ -7,10 +7,12 @@ import type { AdminAuditEntry, AdminUsersSearch } from "@lootlog/schema/admin";
 import { PlatformRole } from "@lootlog/schema/platform-roles";
 import { notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { Predicate, Schema, type Types } from "effect";
+import { Schema, type Types } from "effect";
+import { formatAuditDetails } from "@/lib/audit-details";
 import { UserActionRequest } from "@/lib/user-action";
 import { getAuraGrants, listAuraHolderIds } from "./character-auras.js";
 import { adminConfig } from "./config.js";
+import { listUserOrganizations } from "./user-organizations.js";
 import { asOperator } from "./rpc.js";
 import { runUserAction } from "./user-actions.js";
 
@@ -25,12 +27,7 @@ const toAuditRow = ({ details, ...entry }: AdminAuditEntry): AuditRow => {
   return {
     ...entry,
     incomplete: completed === false,
-    details: Object.entries(described)
-      .map(
-        ([key, value]) =>
-          `${key}: ${Predicate.isString(value) ? value : JSON.stringify(value)}`,
-      )
-      .join(" · "),
+    details: formatAuditDetails(described),
   };
 };
 
@@ -119,7 +116,19 @@ export const getUser = createServerFn({ method: "GET" })
         ),
       ]);
 
-      return { ...details, audit: details.audit.map(toAuditRow), auras };
+      const organizations = await listUserOrganizations(
+        details.user.discordId,
+      ).then(
+        (value) => ({ status: "ok" as const, value }),
+        () => ({ status: "unavailable" as const }),
+      );
+
+      return {
+        ...details,
+        audit: details.audit.map(toAuditRow),
+        auras,
+        organizations,
+      };
     } catch (error) {
       if (error instanceof RpcNotFoundError) throw notFound();
 

@@ -48,6 +48,7 @@ import {
   AccountOrganizationOperations,
   GuildDiscordSync,
 } from "#src/runtime/features/organizations";
+import { isOrganizationOperational } from "#src/guilds/organization-operational";
 
 interface NotificationsServicesValue {
   readonly layer: ReturnType<typeof notificationDataLayer>;
@@ -58,6 +59,7 @@ interface NotificationsServicesValue {
   readonly dispatch: ReturnType<typeof makeNotificationJobDispatch>;
   readonly delivery: ReturnType<typeof makeNotificationDeliveryResult>;
   readonly rebuild: NotificationJobRebuild;
+  readonly recurrence: ReturnType<typeof makeNotificationJobRecurrence>;
   readonly recovery: NotificationJobRecovery;
 }
 
@@ -133,9 +135,12 @@ export const notificationsServicesLive = Layer.effect(
         claim: jobsStore.claimJob,
         failClaim: jobsStore.failClaim,
         block: jobsStore.blockJob,
+        cancel: jobsStore.cancelJob,
       },
       {
         hasRequiredGuildPermissions: guildSync.hasRequiredGuildPermissions,
+        isOrganizationOperational: (guildId) =>
+          isOrganizationOperational(database, guildId),
         canReadLootSource: (jobId, discordId) =>
           canDispatchLootNotification(database, jobId, discordId),
       },
@@ -159,9 +164,11 @@ export const notificationsServicesLive = Layer.effect(
       {
         findOverdue: jobsStore.findOverdue,
         closeMissed: jobsStore.closeMissed,
+        findStalledRecurringRules: jobsStore.findStalledRecurringRules,
       },
       notificationScheduler.enqueue,
       finalize,
+      recurrence,
     );
 
     const targets = makeNotificationGuildTargets(
@@ -192,6 +199,7 @@ export const notificationsServicesLive = Layer.effect(
       dispatch,
       delivery,
       rebuild,
+      recurrence,
       recovery,
       layer: notificationDataLayer({
         guildTargets: targets,

@@ -25,6 +25,7 @@ import {
   memberToRoleTable,
   roleTable,
 } from "#src/database/drizzle/organization.schema";
+import { operationalGuild } from "#src/guilds/organization-operational";
 
 export const isActiveMember = (
   member: Pick<typeof memberTable.$inferSelect, "active" | "globalUserId">,
@@ -109,7 +110,7 @@ export const accessibleGuildsQuery = (
       .where(
         and(
           keyScope,
-          eq(guildTable.active, true),
+          operationalGuild,
           or(
             eq(guildTable.ownerId, discordId),
             sql`${guildTable.id} = any(array(${roleGrantedGuildIds}))`,

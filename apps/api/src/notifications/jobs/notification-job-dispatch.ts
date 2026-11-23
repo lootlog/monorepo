@@ -34,6 +34,9 @@ export interface NotificationDispatchStore {
   readonly failClaim: (
     ...args: Parameters<NotificationJobStore["failClaim"]>
   ) => Effect.Effect<boolean, unknown, never>;
+  readonly cancel: (
+    ...args: Parameters<NotificationJobStore["cancelJob"]>
+  ) => ReturnType<NotificationJobStore["cancelJob"]>;
   readonly block: (
     ...args: Parameters<NotificationJobStore["blockJob"]>
   ) => Effect.Effect<void, OperationError>;
@@ -49,6 +52,9 @@ export interface NotificationDispatchPermissions {
     discordId: string,
   ) => Effect.Effect<boolean, unknown, never>;
   readonly hasRequiredGuildPermissions: (
+    guildId: string,
+  ) => Effect.Effect<boolean, unknown, never>;
+  readonly isOrganizationOperational: (
     guildId: string,
   ) => Effect.Effect<boolean, unknown, never>;
 }
@@ -149,6 +155,18 @@ export const makeNotificationJobDispatch = (
     }
 
     if (job.ownerType === NotificationOwnerType.GUILD) {
+      if (!(yield* permissions.isOrganizationOperational(job.ownerId))) {
+        const canceled = yield* store.cancel(
+          job.id,
+          "Organization is inactive or suspended",
+          attempt.retrying,
+        );
+
+        if (canceled) yield* finalize(job);
+
+        return;
+      }
+
       const permitted = yield* permissions.hasRequiredGuildPermissions(
         job.ownerId,
       );

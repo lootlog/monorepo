@@ -44,6 +44,7 @@ describe("Activity permissions", () => {
       listGuildLoots: unused,
       listUserReservations: unused,
       listGuildReservationSpots: unused,
+      getGuildStatsCard: unused,
     });
 
     const store = new Map<string, string>();
