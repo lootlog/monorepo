@@ -6,11 +6,13 @@ import {
   expect,
   it,
 } from "bun:test";
+import { RpcCallerRejectedError } from "@lootlog/rpc/errors";
 import { TEST_RPC_TOKEN } from "@lootlog/rpc/testing";
 import { and, eq } from "drizzle-orm";
 import { Effect, Redacted } from "effect";
 import type { ApiDatabaseValue } from "../src/database/drizzle/database.js";
 import { memberTable } from "../src/database/drizzle/organization.schema.js";
+import { userCharacterAuraGrantTable } from "../src/database/drizzle/user.schema.js";
 import {
   authorizedGuildId,
   caller,
@@ -18,6 +20,8 @@ import {
   makeHttpBoundaryFixture,
   world,
 } from "./http-boundary-fixtures.js";
+
+const ADMIN_RPC_TOKEN = Redacted.make("test-admin-rpc-token");
 
 const fixture = makeHttpBoundaryFixture();
 
@@ -93,18 +97,25 @@ describe("API RPC boundary", () => {
     expect(["RpcForbiddenError", "RpcNotFoundError"]).toContain(stranger._tag);
   });
 
-  it("lets the panel grant and revoke auras, which decides whether the User may choose one", async () => {
+  it("lets only the panel's edge grant and revoke auras, which decides whether the User may choose one", async () => {
     const ownAura = async () =>
       (await request("/users/@me/character-aura")).json();
 
+    const grant = {
+      userId: caller.userId,
+      operatorUserId: "operator-1",
+    };
+
+    const refused = await callOperatorRpc(TEST_RPC_TOKEN, (client) =>
+      client.grantCharacterAuras(grant).pipe(Effect.flip),
+    );
+
+    expect(refused).toBeInstanceOf(RpcCallerRejectedError);
     expect(await ownAura()).toMatchObject({ canChange: false });
 
-    const grants = await callOperatorRpc((client) =>
+    const grants = await callOperatorRpc(ADMIN_RPC_TOKEN, (client) =>
       Effect.andThen(
-        client.grantCharacterAuras({
-          userId: caller.userId,
-          operatorUserId: "operator-1",
-        }),
+        client.grantCharacterAuras(grant),
         client.getCharacterAuraGrants({ userId: caller.userId }),
       ),
     );
@@ -115,8 +126,16 @@ describe("API RPC boundary", () => {
       personalAuraIds: [],
     });
     expect(await ownAura()).toMatchObject({ canChange: true });
+    expect(
+      await databaseRuntime.runPromise(
+        database
+          .select({ granter: userCharacterAuraGrantTable.grantedByUserId })
+          .from(userCharacterAuraGrantTable)
+          .where(eq(userCharacterAuraGrantTable.userId, caller.userId)),
+      ),
+    ).toEqual([{ granter: "operator-1" }]);
 
-    const holders = await callOperatorRpc((client) =>
+    const holders = await callOperatorRpc(ADMIN_RPC_TOKEN, (client) =>
       Effect.andThen(
         client.revokeCharacterAuras({ userId: caller.userId }),
         client.listCharacterAuraGrantHolders(),

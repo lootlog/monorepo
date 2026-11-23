@@ -127,5 +127,5 @@ the API keeps reading them.
 - Revocation is bounded but not instant: a session can outlive sign-out by the decision cache plus the cookie cache window.
 - Every new operation is session-only until listed in `PUBLIC_API_OPERATIONS`.
 - The admin panel and the auth service both enforce access, so a change to one must not assume the other covers it.
-- The admin panel's aura management fails while the public API edge is down, and the operator needs the `admin` role, not only a place in `ADMIN_ACCOUNT_IDS`.
+- The admin panel's aura management fails while the internal RPC of the auth service or the API is down; a place in `ADMIN_ACCOUNT_IDS` is all the operator needs.
 - Legacy identity shapes are persisted, so their parsing stays until a data migration removes them.

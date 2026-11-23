@@ -195,6 +195,7 @@ export const makeHttpBoundaryFixture = () => {
     );
 
   const callOperatorRpc = <A, E>(
+    token: Redacted.Redacted<string>,
     use: (
       client: ServiceRpcClient<typeof ApiOperatorRpcGroup>,
     ) => Effect.Effect<A, E>,
@@ -202,6 +203,7 @@ export const makeHttpBoundaryFixture = () => {
     Effect.runPromise(
       makeRpcClient(ApiOperatorRpcGroup, {
         ...testRpcUpstream,
+        token,
         spanPrefix: "test.api-rpc",
       }).pipe(
         Effect.flatMap(use),

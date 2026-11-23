@@ -25,7 +25,7 @@ describe("readAdminConfig", () => {
     expect(() => readAdminConfig({ ...base, ...overrides }, true)).toThrow();
   });
 
-  it("refuses to start a production build without the token of an RPC edge, whatever ENV says", () => {
+  it("treats a production build without ENV as prod, so a missing RPC edge token stops it", () => {
     const { RPC_TOKEN_ADMIN_TO_API: _token, ...withoutToken } = base;
 
     expect(() =>
