@@ -1,6 +1,7 @@
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 import { ConfirmDialog } from "@lootlog/ui/components/confirm-dialog";
+import { toast } from "@lootlog/ui/lib/toast";
 import { useState } from "react";
 import { KeyRenameDialog } from "@/components/key-rename-dialog";
 import { apiKeysDeleteApiKey } from "@lootlog/client/auth";
@@ -21,8 +22,10 @@ export function KeyRow({
   onChange,
   organizations,
   observedAt,
+  arrived,
 }: {
   apiKey: ApiKey;
+  arrived: boolean;
   organizations: readonly { readonly id: string; readonly name: string }[];
   observedAt: number;
   onChange: () => Promise<void>;
@@ -36,6 +39,7 @@ export function KeyRow({
 
     try {
       await apiKeysDeleteApiKey({ id: apiKey.id });
+      toast.success(t.keyDeleted(apiKey.name));
       await onChange();
     } catch (error) {
       setError(getKeyErrorMessage(error));
@@ -57,7 +61,7 @@ export function KeyRow({
   return (
     <li
       aria-busy={pending}
-      className="grid gap-4 border-b border-border px-5 py-4 last:border-b-0 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_13rem_auto] md:items-center md:gap-6"
+      className={`grid gap-4 border-b border-border px-5 py-4 transition-opacity duration-300 last:border-b-0 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_13rem_auto] md:items-center md:gap-6 ${pending ? "opacity-40" : ""} ${arrived ? "animate-arrival motion-reduce:animate-none" : ""}`}
     >
       <div className="flex min-w-0 flex-col gap-1.5">
         <div className="flex min-w-0 items-center gap-2">

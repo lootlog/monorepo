@@ -1,6 +1,5 @@
 import { Alert, AlertDescription } from "@lootlog/ui/components/alert";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { Option, Schema } from "effect";
 import { ApiKeysList } from "@/components/api-keys-list";
 import { AuraGrants } from "@/components/aura-grants";
 import { AuditTable } from "@/components/audit-table";
@@ -10,40 +9,12 @@ import { Section } from "@/components/section";
 import { SessionsList } from "@/components/sessions-list";
 import { UserOrganizations } from "@/components/user-organizations";
 import { UserSummary } from "@/components/user-summary";
-import { noticeText, text } from "@/lib/messages";
+import { text } from "@/lib/messages";
 import { getUser } from "@/server/queries";
-import type { UserAction } from "@/lib/user-action";
-
-type UserPageSearch = {
-  notice?: UserAction["action"] | undefined;
-  error?: "failed" | undefined;
-};
-
-const readNotice = Schema.decodeUnknownOption(
-  Schema.Literals([
-    "roles",
-    "ban",
-    "unban",
-    "revoke-sessions",
-    "revoke-session",
-    "revoke-api-key",
-    "grant-auras",
-    "grant-personal-aura",
-    "revoke-auras",
-  ]) satisfies Schema.Codec<UserAction["action"]>,
-);
-
-const readError = Schema.decodeUnknownOption(Schema.Literals(["failed"]));
 
 export const Route = createFileRoute("/users/$userId")({
-  validateSearch: (search: {
-    notice?: unknown;
-    error?: unknown;
-  }): UserPageSearch => ({
-    notice: Option.getOrUndefined(readNotice(search.notice)),
-    error: Option.getOrUndefined(readError(search.error)),
-  }),
   loader: ({ params }) => getUser({ data: params.userId }),
+  remountDeps: ({ params }) => params.userId,
   component: UserPage,
 });
 
@@ -51,7 +22,6 @@ function UserPage() {
   const { user, sessions, apiKeys, audit, auras, organizations } =
     Route.useLoaderData();
 
-  const { notice, error } = Route.useSearch();
   const { operator } = Route.useRouteContext();
 
   return (
@@ -62,16 +32,6 @@ function UserPage() {
       >
         ← {text.backToUsers}
       </Link>
-      {notice ? (
-        <Alert variant="ready" role="status">
-          <AlertDescription>{noticeText[notice]}</AlertDescription>
-        </Alert>
-      ) : null}
-      {error ? (
-        <Alert variant="destructive">
-          <AlertDescription>{text.actionFailed}</AlertDescription>
-        </Alert>
-      ) : null}
       <UserSummary user={user} />
       <div className="grid gap-6 lg:grid-cols-2">
         <Section

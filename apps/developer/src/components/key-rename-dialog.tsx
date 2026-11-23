@@ -11,6 +11,7 @@ import {
 } from "@lootlog/ui/components/dialog";
 import { Field, FieldLabel } from "@lootlog/ui/components/field";
 import { Input } from "@lootlog/ui/components/input";
+import { toast } from "@lootlog/ui/lib/toast";
 import { useState } from "react";
 import { apiKeysRenameApiKey } from "@lootlog/client/auth";
 import { getKeyErrorMessage, type ApiKey } from "@/lib/key-client";
@@ -37,6 +38,7 @@ export function KeyRenameDialog({
 
     try {
       await apiKeysRenameApiKey({ id: apiKey.id }, { name });
+      toast.success(t.keyRenamed);
       await onChange();
       setOpen(false);
     } catch (error) {

@@ -1,7 +1,6 @@
 import type { AdminSession, AdminUser } from "@lootlog/schema/admin";
 import { Button } from "@lootlog/ui/components/button";
 import { ConfirmDialog } from "@lootlog/ui/components/confirm-dialog";
-import { useState } from "react";
 import { formatDateTime } from "@/lib/format";
 import { text } from "@/lib/messages";
 import { useUserAction } from "@/lib/use-user-action";
@@ -13,30 +12,29 @@ export function SessionsList({
   user: AdminUser;
   sessions: ReadonlyArray<AdminSession>;
 }) {
-  const { run } = useUserAction(user.id);
-  const [revoking, setRevoking] = useState<string>();
+  const { run, pending } = useUserAction(user.id);
 
   if (sessions.length === 0)
     return (
       <p className="text-sm text-muted-foreground">{text.sessionsEmpty}</p>
     );
 
-  const revoke = async (sessionId: string) => {
-    setRevoking(sessionId);
-    await run({ action: "revoke-session", sessionId });
-    setRevoking(undefined);
-  };
+  const isRevoking = (sessionId: string) =>
+    pending?.action === "revoke-sessions" ||
+    (pending?.action === "revoke-session" && pending.sessionId === sessionId);
 
   return (
     <div className="flex flex-col gap-4">
       <ul className="flex flex-col divide-y divide-border">
         {sessions.map((session) => {
           const device = session.userAgent ?? text.unknownDevice;
+          const revoking = isRevoking(session.id);
 
           return (
             <li
               key={session.id}
-              className="flex flex-col gap-3 py-3 first:pt-0 md:flex-row md:items-center md:justify-between"
+              aria-busy={revoking}
+              className={`flex flex-col gap-3 py-3 transition-opacity duration-300 first:pt-0 md:flex-row md:items-center md:justify-between ${revoking ? "opacity-40" : ""}`}
             >
               <div className="grid min-w-0 gap-1">
                 <p className="break-words text-sm font-medium">{device}</p>
@@ -60,8 +58,14 @@ export function SessionsList({
                 size="sm"
                 className="shrink-0 self-start md:self-auto"
                 aria-label={text.sessionRevokeLabel(device)}
-                loading={revoking === session.id}
-                onClick={() => void revoke(session.id)}
+                loading={
+                  pending?.action === "revoke-session" &&
+                  pending.sessionId === session.id
+                }
+                disabled={pending !== undefined}
+                onClick={() =>
+                  void run({ action: "revoke-session", sessionId: session.id })
+                }
               >
                 {text.sessionRevoke}
               </Button>
@@ -75,6 +79,9 @@ export function SessionsList({
           description={text.revokeAllConfirmDescription}
           confirmButtonLabel={text.sessionsRevokeAll}
           cancelButtonLabel={text.cancel}
+          confirmText={text.confirmWord}
+          confirmLabel={text.confirmWordLabel(text.confirmWord)}
+          disabled={pending !== undefined}
           onConfirm={() => run({ action: "revoke-sessions" })}
           trigger={
             <Button variant="destructive">{text.sessionsRevokeAll}</Button>
