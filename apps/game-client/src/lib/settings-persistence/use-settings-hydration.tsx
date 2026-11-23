@@ -1,3 +1,4 @@
+import { recordKeys } from "@/utils/record-keys";
 import { useEffect, useRef } from "react";
 import { isObjectRecord } from "@lootlog/schema/records";
 import { useAccessibleGuilds } from "@/hooks/api/use-accessible-guilds";
@@ -139,8 +140,7 @@ const setTimersStateIfChanged = (next: Partial<TimersProjection>) => {
   const store = useTimersStore.getState();
   const changed: Partial<TimersProjection> = {};
 
-  // SAFETY: `next` is built from TimersProjection keys only.
-  for (const key of Object.keys(next) as (keyof TimersProjection)[]) {
+  for (const key of recordKeys(next)) {
     if (!areSettingsValuesEqual(store[key], next[key])) {
       Object.assign(changed, { [key]: next[key] });
     }
