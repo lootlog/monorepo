@@ -5,7 +5,6 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import { cn } from "cn";
 import type { Permission } from "@lootlog/schema/permissions";
-import type { MouseEventHandler } from "react";
 import { useTranslation } from "react-i18next";
 import type { PermissionCategory } from "../roles/constants/permission-categories";
 
@@ -13,14 +12,12 @@ type PermissionCategoryTooltipProps = {
   category: PermissionCategory;
   activePermissions: Permission[];
   side: "top" | "bottom";
-  onClick?: MouseEventHandler<HTMLDivElement>;
 };
 
 export const PermissionCategoryTooltip = ({
   category,
   activePermissions,
   side,
-  onClick,
 }: PermissionCategoryTooltipProps) => {
   const { t } = useTranslation();
   const IconComponent = category.icon;
@@ -29,13 +26,11 @@ export const PermissionCategoryTooltip = ({
     <Tooltip>
       <TooltipTrigger
         render={
-          // oxlint-disable-next-line react-doctor/click-events-have-key-events, react-doctor/no-static-element-interactions
           <div
             className={cn(
               "inline-flex size-5 items-center justify-center rounded-md transition-colors",
               category.bgColor,
             )}
-            onClick={onClick}
           >
             <IconComponent className={cn("size-3.5", category.color)} />
           </div>
