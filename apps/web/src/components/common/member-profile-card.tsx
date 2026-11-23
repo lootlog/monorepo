@@ -1,3 +1,4 @@
+import { Capability } from "@lootlog/schema/permissions";
 import { MemberAvatar } from "@/components/common/member-avatar";
 import { MemberProfileLink } from "@/components/common/member-profile-link";
 import { MemberProfileRoles } from "@/components/common/member-profile-roles";
@@ -7,7 +8,6 @@ import {
   openDiscordProfile,
 } from "@/lib/discord-profile";
 import type { MemberReferenceResponseDtoOutput as GuildMemberReference } from "@lootlog/client/main";
-import { Capability } from "@lootlog/domain/access-policy";
 import { discordRoleCssColor } from "@lootlog/domain/member-display-role";
 import { Button } from "@lootlog/ui/components/button";
 import { buttonVariants } from "@lootlog/ui/lib/button-variants";

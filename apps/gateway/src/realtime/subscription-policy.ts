@@ -1,4 +1,4 @@
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import type {
   SubscriptionScope,
   RealtimeLogicalTopic,
@@ -14,9 +14,9 @@ export type PermissionViewer = Pick<SessionData, "discordId" | "guilds"> &
     Pick<SessionData, "platform" | "presence" | "heroSightingCapabilities">
   >;
 
-export const PRESENCE_PERMISSIONS: ReadonlySet<Permission> = new Set([
-  Permission.LOOTLOG_ONLINE_PLAYERS_READ,
-  Permission.LOOTLOG_PRESENCE_LOCATION_READ,
+export const PRESENCE_PERMISSIONS: ReadonlySet<Capability> = new Set([
+  Capability.LOOTLOG_ONLINE_PLAYERS_READ,
+  Capability.LOOTLOG_PRESENCE_LOCATION_READ,
 ]);
 
 export const publishesPresenceTo = (
@@ -26,23 +26,23 @@ export const publishesPresenceTo = (
   viewer.platform !== "game" ||
   (viewer.presence?.organizationIds.includes(organizationId) ?? false);
 
-const TOPIC_PERMISSION = new Map<Topic, Permission>([
-  ["organization.activity", Permission.LOOTLOG_ACCESS],
-  ["organization.chat", Permission.LOOTLOG_CHAT_READ],
-  ["organization.loots", Permission.LOOTLOG_LOOTS_READ],
-  ["organization.members", Permission.ADMIN],
-  ["organization.notifications", Permission.LOOTLOG_NOTIFICATIONS_READ],
-  ["organization.presence", Permission.LOOTLOG_ONLINE_PLAYERS_READ],
-  ["organization.reservations", Permission.LOOTLOG_RESERVATIONS_READ],
-  ["organization.timers", Permission.LOOTLOG_TIMERS_READ],
-  ["event.coordination", Permission.LOOTLOG_EVENTS_READ],
-  ["map.air-tags", Permission.LOOTLOG_ONLINE_PLAYERS_READ],
-  ["map.pings", Permission.LOOTLOG_ONLINE_PLAYERS_READ],
+const TOPIC_PERMISSION = new Map<Topic, Capability>([
+  ["organization.activity", Capability.LOOTLOG_ACCESS],
+  ["organization.chat", Capability.LOOTLOG_CHAT_READ],
+  ["organization.loots", Capability.LOOTLOG_LOOTS_READ],
+  ["organization.members", Capability.ADMIN],
+  ["organization.notifications", Capability.LOOTLOG_NOTIFICATIONS_READ],
+  ["organization.presence", Capability.LOOTLOG_ONLINE_PLAYERS_READ],
+  ["organization.reservations", Capability.LOOTLOG_RESERVATIONS_READ],
+  ["organization.timers", Capability.LOOTLOG_TIMERS_READ],
+  ["event.coordination", Capability.LOOTLOG_EVENTS_READ],
+  ["map.air-tags", Capability.LOOTLOG_ONLINE_PLAYERS_READ],
+  ["map.pings", Capability.LOOTLOG_ONLINE_PLAYERS_READ],
 ]);
 
 interface PermissionIndex {
   readonly discordId: string;
-  readonly organizations: ReadonlyMap<string, ReadonlySet<Permission> | true>;
+  readonly organizations: ReadonlyMap<string, ReadonlySet<Capability> | true>;
 }
 
 const permissionIndexes = new WeakMap<
@@ -54,7 +54,7 @@ const indexPermissions = (session: PermissionViewer): PermissionIndex => {
   const cached = permissionIndexes.get(session.guilds);
 
   if (cached?.discordId === session.discordId) return cached;
-  const organizations = new Map<string, ReadonlySet<Permission> | true>();
+  const organizations = new Map<string, ReadonlySet<Capability> | true>();
 
   for (const { guild, roles } of session.guilds) {
     if (organizations.has(guild.id)) continue;
@@ -62,7 +62,7 @@ const indexPermissions = (session: PermissionViewer): PermissionIndex => {
 
     organizations.set(
       guild.id,
-      guild.ownerId === session.discordId || permissions.has(Permission.ADMIN)
+      guild.ownerId === session.discordId || permissions.has(Capability.ADMIN)
         ? true
         : permissions,
     );
@@ -77,7 +77,7 @@ const indexPermissions = (session: PermissionViewer): PermissionIndex => {
 export const hasPermission = (
   session: PermissionViewer,
   organizationId: string,
-  permission: Permission,
+  permission: Capability,
 ): boolean => {
   const granted = indexPermissions(session).organizations.get(organizationId);
 
@@ -123,7 +123,7 @@ export const canSubscribe = (session: SessionData, scope: Scope): boolean => {
   const permission = TOPIC_PERMISSION.get(scope.topic);
 
   if (!permission)
-    return hasPermission(session, organizationId, Permission.LOOTLOG_ACCESS);
+    return hasPermission(session, organizationId, Capability.LOOTLOG_ACCESS);
 
   return hasPermission(session, organizationId, permission);
 };
@@ -135,7 +135,7 @@ export const canReadPreciseLocation = (
   hasPermission(
     session,
     organizationId,
-    Permission.LOOTLOG_PRESENCE_LOCATION_READ,
+    Capability.LOOTLOG_PRESENCE_LOCATION_READ,
   );
 
 export const organizationIds = (session: SessionData): string[] =>

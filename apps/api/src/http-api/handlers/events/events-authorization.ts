@@ -10,8 +10,8 @@ import {
   type AccessPolicy,
 } from "@lootlog/domain/access-policy";
 import {
-  Permission,
-  type Permission as PermissionValue,
+  Capability,
+  type Capability as PermissionValue,
 } from "@lootlog/schema/permissions";
 import { Context, Schema, type Effect } from "effect";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
@@ -64,17 +64,17 @@ export class EventsAuthorization extends Context.Service<
 >()("@lootlog/api/http-api/events/authorization") {}
 
 const read = {
-  capabilities: [Permission.LOOTLOG_EVENTS_READ],
+  capabilities: [Capability.LOOTLOG_EVENTS_READ],
   mode: "all",
 } as const;
 
 const write = {
-  capabilities: [Permission.LOOTLOG_EVENTS_WRITE],
+  capabilities: [Capability.LOOTLOG_EVENTS_WRITE],
   mode: "all",
 } as const;
 
 const manage = {
-  capabilities: [Permission.LOOTLOG_EVENTS_MANAGE],
+  capabilities: [Capability.LOOTLOG_EVENTS_MANAGE],
   mode: "all",
 } as const;
 
@@ -84,7 +84,7 @@ const administer = {
 } as const;
 
 const timers = {
-  capabilities: [Permission.LOOTLOG_TIMERS_READ],
+  capabilities: [Capability.LOOTLOG_TIMERS_READ],
   mode: "all",
 } as const;
 

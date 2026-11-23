@@ -7,7 +7,7 @@ import { and, eq, inArray } from "drizzle-orm";
 import { Clock, Effect } from "effect";
 import type { RESTAPIPartialCurrentUserGuild } from "discord-api-types/v10";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import type { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -180,7 +180,7 @@ export const makeCurrentUserGuilds = (
             capabilities: member.roles.flatMap(
               ({ permissions }) => permissions,
             ),
-          }).allows(Permission.LOOTLOG_ACCESS),
+          }).allows(Capability.LOOTLOG_ACCESS),
         );
 
         const discordGuild = discordById.get(guild.id);
@@ -254,7 +254,7 @@ export const makeCurrentUserGuilds = (
               capabilities: member.roles.flatMap(
                 ({ permissions }) => permissions,
               ),
-            }).allows(Permission.LOOTLOG_ACCESS)),
+            }).allows(Capability.LOOTLOG_ACCESS)),
         ),
         isAccessDataStale: Boolean(
           discordGuilds.stale ||

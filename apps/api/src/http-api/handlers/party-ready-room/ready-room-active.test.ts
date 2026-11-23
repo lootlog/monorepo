@@ -1,268 +1,35 @@
-import { SchemaErrorResponseLive } from "@lootlog/protocol/http/schema-error-response";
-import { expect, it, spyOn } from "bun:test";
+import { expect, it } from "bun:test";
 import { eq } from "drizzle-orm";
-import { BunHttpServer } from "@effect/platform-bun";
-import { Effect, Layer, Schema } from "effect";
-import { HttpRouter } from "effect/http";
-import { HttpApi, HttpApiBuilder } from "effect/http-api";
-import { apiKeyEndpointPolicyLayer } from "@lootlog/protocol/http/api-key-http";
-import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   guildTable,
   memberTable,
   roleTable,
   memberToRoleTable,
 } from "#src/database/drizzle/organization.schema";
-import {
-  PARTY_OBSERVATION_HEARTBEAT_MS,
-  type PartyGatheringUpdateEnvelope,
-  PartyReadyRoomAggregateSchema,
-} from "@lootlog/schema/party-ready-room";
-import { Permission } from "@lootlog/schema/permissions";
-import {
-  COMMIT_READY_ROOM_SCRIPT,
-  CREATE_READY_ROOM_SCRIPT,
-  EXIT_READY_ROOM_PARTICIPANT_SCRIPT,
-  JOIN_READY_ROOM_SCRIPT,
-  TERMINATE_READY_ROOM_SCRIPT,
-} from "#src/messaging/ready-room/ready-room-redis-scripts";
-import type { ForwardAuthIdentityValue } from "@lootlog/schema/api-key-policy";
-import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
-import type { ReadyRoomAggregate } from "#src/messaging/ready-room/ready-room.types";
-import { createDatabaseBoundary } from "../../../../test/database-fixtures.js";
+import { PARTY_OBSERVATION_HEARTBEAT_MS } from "@lootlog/schema/party-ready-room";
+import { Capability } from "@lootlog/schema/permissions";
 import {
   createGuildFixture,
   createMemberFixture,
 } from "../../../../test/organization-fixtures.js";
-import { PartyReadyRoomGroup } from "#src/contracts/party-ready-room/api";
-import { BearerSecurityMiddleware } from "#src/contracts/api-shared";
-import {
-  PartyReadyRoomHandlers,
-  ReadyRoomAuthorization,
-} from "./party-ready-room.handlers.js";
-import { makeReadyRoomDataLayer } from "#src/messaging/ready-room/ready-room.data-layer";
-import type { ReadyRoomRedis } from "#src/messaging/ready-room/ready-room.repository";
+import { createReadyRoomActiveHarness } from "./ready-room-active.fixtures.js";
 
 it("keeps authorized gathering rosters current across discovery, observations, applications and cancellation", async () => {
-  const databaseBoundary = await createDatabaseBoundary();
-
-  let caller: ForwardAuthIdentityValue = {
-    userId: "user",
-    discordId: "owner",
-  };
-
-  let now = Date.parse("2026-09-09T10:00:00Z");
-  const clock = () => now;
-
-  const base: ReadyRoomAggregate = {
-    schemaVersion: 3,
-    notificationId: "minimal",
-    organizerDiscordId: "owner",
-    organizerCharacter: {
-      accountId: "1",
-      characterId: "2",
-      nick: "Author",
-      lvl: 100,
-      prof: "w",
-      icon: "icon",
-    },
-    guildIds: ["visible", "hidden"],
-    world: "experimental",
-    status: "ACTIVE",
-    revision: 1,
-    createdAt: new Date(clock()).toISOString(),
-    updatedAt: new Date(clock()).toISOString(),
-    expiresAt: new Date(clock() + 10 * 60_000).toISOString(),
-    participants: {},
-  };
-
-  const rooms: ReadyRoomAggregate[] = [
+  const {
+    state,
+    databaseBoundary,
     base,
-    {
-      ...base,
-      notificationId: "npc",
-      description: "",
-      minLvl: 1,
-      maxLvl: 500,
-      npc: { name: "NPC", location: "Map", lvl: 100, type: "HERO" },
-      participants: {
-        organizer: {
-          participantId: "organizer",
-          discordId: "owner",
-          character: base.organizerCharacter,
-          partyPresence: "IN_PARTY",
-          createdAt: base.createdAt,
-          updatedAt: base.updatedAt,
-        },
-        alternate: {
-          participantId: "alternate",
-          discordId: "owner",
-          character: { ...base.organizerCharacter, characterId: "3" },
-          partyPresence: "OUTSIDE",
-          createdAt: base.createdAt,
-          updatedAt: base.updatedAt,
-        },
-        other: {
-          participantId: "other",
-          discordId: "other",
-          character: {
-            ...base.organizerCharacter,
-            accountId: "4",
-            characterId: "5",
-          },
-          partyPresence: "OUTSIDE",
-          createdAt: base.createdAt,
-          updatedAt: base.updatedAt,
-        },
-      },
-    },
-    {
-      ...base,
-      notificationId: "coordinates",
-      npc: {
-        name: "NPC",
-        location: "Map",
-        lvl: 100,
-        type: "HERO",
-        icon: "npc.gif",
-        prof: "w",
-        x: 0,
-        y: 12,
-      },
-    },
-    { ...base, notificationId: "hidden", guildIds: ["hidden"] },
-    {
-      ...base,
-      notificationId: "own-filtered",
-      npc: { name: "Training NPC", location: "Map", lvl: 0, type: "TITAN" },
-    },
-  ];
-
-  let closeDatabaseOnCommit = false;
-  let emptyIndex = false;
-  let delayNextCommit = false;
-  const olderCommitStarted = Promise.withResolvers<void>();
-  const releaseOlderCommit = Promise.withResolvers<void>();
-  const gatheringEvents: unknown[] = [];
-  const cancellationEvents: unknown[] = [];
-  const stateEvents: PartyGatheringUpdateEnvelope[] = [];
-
-  const redis: ReadyRoomRedis = {
-    getJson: (key, schema) => {
-      const room = rooms.find((room) =>
-        key.endsWith(`:${room.notificationId}`),
-      );
-
-      return room
-        ? Schema.decodeEffect(schema)(room).pipe(Effect.orDie)
-        : Effect.succeed(null);
-    },
-    eval: (script, _keys, args) => {
-      if (script === CREATE_READY_ROOM_SCRIPT) {
-        rooms.push(
-          Schema.decodeSync(
-            Schema.fromJsonString(PartyReadyRoomAggregateSchema),
-          )(String(args[1])),
-        );
-
-        return Effect.succeed(["CREATED"]);
-      }
-
-      if (
-        script === TERMINATE_READY_ROOM_SCRIPT ||
-        script === COMMIT_READY_ROOM_SCRIPT ||
-        script === JOIN_READY_ROOM_SCRIPT ||
-        script === EXIT_READY_ROOM_PARTICIPANT_SCRIPT
-      ) {
-        const next = Schema.decodeSync(
-          Schema.fromJsonString(PartyReadyRoomAggregateSchema),
-        )(String(args[1]));
-
-        const expected = Schema.decodeSync(
-          Schema.fromJsonString(PartyReadyRoomAggregateSchema),
-        )(String(args[0]));
-
-        return Effect.gen(function* () {
-          if (script === COMMIT_READY_ROOM_SCRIPT && delayNextCommit) {
-            delayNextCommit = false;
-            olderCommitStarted.resolve();
-            yield* Effect.promise(() => releaseOlderCommit.promise);
-          }
-
-          const index = rooms.findIndex(
-            (room) => room.notificationId === next.notificationId,
-          );
-
-          if (rooms[index]?.revision !== expected.revision) return ["CONFLICT"];
-
-          rooms[index] = next;
-
-          if (closeDatabaseOnCommit)
-            yield* Effect.promise(() => databaseBoundary.dispose());
-
-          return ["COMMITTED"];
-        });
-      }
-
-      return Effect.succeed(
-        emptyIndex ? [] : rooms.map((room) => room.notificationId),
-      );
-    },
-  };
-
-  const services = Layer.mergeAll(
-    makeReadyRoomDataLayer(
-      redis,
-      {
-        publish: () => Effect.void,
-        publishGatheringUpdate: (event) =>
-          Effect.sync(() => {
-            stateEvents.push(event);
-          }),
-        publishCancellation: (payload) =>
-          Effect.sync(() => {
-            cancellationEvents.push(payload);
-          }),
-        publishGathering: (payload) =>
-          Effect.sync(() => {
-            gatheringEvents.push(payload);
-          }),
-        endPartyGatheringMessages: () => Effect.void,
-      },
-      clock,
-    ),
-    Layer.succeed(ReadyRoomAuthorization, {
-      identity: Effect.sync(() => caller),
-    }),
-  ).pipe(Layer.provide(Layer.succeed(ApiDatabase, databaseBoundary.database)));
-
-  const boundary = HttpRouter.toWebHandler(
-    HttpApiBuilder.layer(
-      HttpApi.make("LootlogApi").add(PartyReadyRoomGroup),
-    ).pipe(
-      Layer.provide(PartyReadyRoomHandlers),
-      Layer.provide(
-        Layer.succeed(BearerSecurityMiddleware, {
-          bearer: (effect) =>
-            Effect.provideService(effect, ForwardAuthIdentity, caller),
-        }),
-      ),
-      HttpRouter.provideRequest(services),
-      Layer.provide(BunHttpServer.layerHttpServices),
-      Layer.provide(apiKeyEndpointPolicyLayer("main")),
-      Layer.provide(SchemaErrorResponseLive),
-    ),
-    { disableLogger: true },
-  );
-
-  const unsafe = databaseBoundary.database.$client.unsafe.bind(
-    databaseBoundary.database.$client,
-  );
-
-  const querySpy = spyOn(
-    databaseBoundary.database.$client,
-    "unsafe",
-  ).mockImplementation((...args) => unsafe(...args));
+    rooms,
+    olderCommitStarted,
+    releaseOlderCommit,
+    gatheringEvents,
+    cancellationEvents,
+    stateEvents,
+    boundary,
+    querySpy,
+    get,
+    send,
+  } = await createReadyRoomActiveHarness();
 
   try {
     await databaseBoundary.run(
@@ -289,7 +56,7 @@ it("keeps authorized gathering rosters current across discovery, observations, a
         guildId: "visible",
         name: "Sender",
         updatedAt: new Date(),
-        permissions: [Permission.LOOTLOG_NOTIFICATIONS_SEND],
+        permissions: [Capability.LOOTLOG_NOTIFICATIONS_SEND],
         lvlRangeFrom: 200,
         lvlRangeTo: 500,
       }),
@@ -300,7 +67,7 @@ it("keeps authorized gathering rosters current across discovery, observations, a
         .values({ A: 1, B: "sender" }),
     );
 
-    emptyIndex = true;
+    state.emptyIndex = true;
 
     for (const [path, queries] of [
       ["/messaging/party-gathering/active?world=experimental", 1],
@@ -308,25 +75,18 @@ it("keeps authorized gathering rosters current across discovery, observations, a
     ] as const) {
       querySpy.mockClear();
 
-      const empty = await boundary.handler(
-        new Request(`http://api.test${path}`, {
-          headers: { authorization: "Bearer test" },
-        }),
-      );
+      const empty = await get(path);
 
       expect(empty.status).toBe(200);
       expect(await empty.json()).toEqual([]);
       expect(querySpy).toHaveBeenCalledTimes(queries);
     }
 
-    emptyIndex = false;
+    state.emptyIndex = false;
     querySpy.mockClear();
 
-    const response = await boundary.handler(
-      new Request(
-        "http://api.test/messaging/party-gathering/active?world=experimental",
-        { headers: { authorization: "Bearer test" } },
-      ),
+    const response = await get(
+      "/messaging/party-gathering/active?world=experimental",
     );
 
     expect(response.status).toBe(200);
@@ -390,8 +150,8 @@ it("keeps authorized gathering rosters current across discovery, observations, a
       },
     ]);
 
-    caller = {
-      ...caller,
+    state.caller = {
+      ...state.caller,
       apiKey: {
         keyId: "visible-only",
         organizationIds: ["visible"],
@@ -402,33 +162,21 @@ it("keeps authorized gathering rosters current across discovery, observations, a
     };
     querySpy.mockClear();
 
-    const scopedList = await boundary.handler(
-      new Request("http://api.test/messaging/party-gathering", {
-        headers: { authorization: "Bearer test" },
-      }),
-    );
+    const scopedList = await get("/messaging/party-gathering");
 
     expect(scopedList.status).toBe(200);
     expect(await scopedList.json()).toEqual([]);
     expect(querySpy).toHaveBeenCalledTimes(2);
-    caller = { userId: "user", discordId: "owner" };
+    state.caller = { userId: "user", discordId: "owner" };
 
-    const emptyObservation = await boundary.handler(
-      new Request(
-        "http://api.test/messaging/party-gathering/minimal/party-observation",
-        {
-          method: "POST",
-          headers: {
-            authorization: "Bearer test",
-            "content-type": "application/json",
-          },
-          body: JSON.stringify({
-            organizerAccountId: "1",
-            organizerCharacterId: "2",
-            memberCharacterIds: [],
-          }),
-        },
-      ),
+    const emptyObservation = await send(
+      "POST",
+      "/messaging/party-gathering/minimal/party-observation",
+      {
+        organizerAccountId: "1",
+        organizerCharacterId: "2",
+        memberCharacterIds: [],
+      },
     );
 
     expect(emptyObservation.status).toBe(201);
@@ -436,32 +184,24 @@ it("keeps authorized gathering rosters current across discovery, observations, a
       expect.objectContaining({ partyMemberCount: 0, revision: 2 }),
     );
 
-    const observation = await boundary.handler(
-      new Request(
-        "http://api.test/messaging/party-gathering/npc/party-observation",
-        {
-          method: "POST",
-          headers: {
-            authorization: "Bearer test",
-            "content-type": "application/json",
+    const observation = await send(
+      "POST",
+      "/messaging/party-gathering/npc/party-observation",
+      {
+        organizerAccountId: "1",
+        organizerCharacterId: "2",
+        memberCharacterIds: ["2", "3", "unregistered-party-member", "3"],
+        members: [
+          {
+            characterId: "unregistered-party-member",
+            nick: "Guest",
+            icon: "guest.gif",
+            prof: "m",
+            accountId: "private-account",
           },
-          body: JSON.stringify({
-            organizerAccountId: "1",
-            organizerCharacterId: "2",
-            memberCharacterIds: ["2", "3", "unregistered-party-member", "3"],
-            members: [
-              {
-                characterId: "unregistered-party-member",
-                nick: "Guest",
-                icon: "guest.gif",
-                prof: "m",
-                accountId: "private-account",
-              },
-              { characterId: "not-in-party", nick: "Not observed" },
-            ],
-          }),
-        },
-      ),
+          { characterId: "not-in-party", nick: "Not observed" },
+        ],
+      },
     );
 
     expect(observation.status).toBe(201);
@@ -491,22 +231,14 @@ it("keeps authorized gathering rosters current across discovery, observations, a
       [["2", "3", "outsider-a", "outsider-b"], 4, 5],
       [["2", "3", "outsider-a", "outsider-c"], 4, 6],
     ] as const) {
-      const response = await boundary.handler(
-        new Request(
-          "http://api.test/messaging/party-gathering/npc/party-observation",
-          {
-            method: "POST",
-            headers: {
-              authorization: "Bearer test",
-              "content-type": "application/json",
-            },
-            body: JSON.stringify({
-              organizerAccountId: "1",
-              organizerCharacterId: "2",
-              memberCharacterIds: members,
-            }),
-          },
-        ),
+      const response = await send(
+        "POST",
+        "/messaging/party-gathering/npc/party-observation",
+        {
+          organizerAccountId: "1",
+          organizerCharacterId: "2",
+          memberCharacterIds: members,
+        },
       );
 
       expect(response.status).toBe(201);
@@ -564,31 +296,23 @@ it("keeps authorized gathering rosters current across discovery, observations, a
       latestObservation.guildId,
     ]);
 
-    now += PARTY_OBSERVATION_HEARTBEAT_MS;
+    state.now += PARTY_OBSERVATION_HEARTBEAT_MS;
 
-    const heartbeat = await boundary.handler(
-      new Request(
-        "http://api.test/messaging/party-gathering/npc/party-observation",
-        {
-          method: "POST",
-          headers: {
-            authorization: "Bearer test",
-            "content-type": "application/json",
-          },
-          body: JSON.stringify({
-            organizerAccountId: "1",
-            organizerCharacterId: "2",
-            memberCharacterIds: ["2", "3", "outsider-a", "outsider-c"],
-          }),
-        },
-      ),
+    const heartbeat = await send(
+      "POST",
+      "/messaging/party-gathering/npc/party-observation",
+      {
+        organizerAccountId: "1",
+        organizerCharacterId: "2",
+        memberCharacterIds: ["2", "3", "outsider-a", "outsider-c"],
+      },
     );
 
     const renewed = {
       revision: 7,
       partyState: {
         status: "OBSERVED",
-        observedAt: new Date(now).toISOString(),
+        observedAt: new Date(state.now).toISOString(),
       },
     };
 
@@ -600,26 +324,14 @@ it("keeps authorized gathering rosters current across discovery, observations, a
     });
 
     const observeAtRevision = (memberCharacterIds: string[]) =>
-      boundary.handler(
-        new Request(
-          "http://api.test/messaging/party-gathering/npc/party-observation",
-          {
-            method: "POST",
-            headers: {
-              authorization: "Bearer test",
-              "content-type": "application/json",
-            },
-            body: JSON.stringify({
-              organizerAccountId: "1",
-              organizerCharacterId: "2",
-              memberCharacterIds,
-              expectedRevision: 7,
-            }),
-          },
-        ),
-      );
+      send("POST", "/messaging/party-gathering/npc/party-observation", {
+        organizerAccountId: "1",
+        organizerCharacterId: "2",
+        memberCharacterIds,
+        expectedRevision: 7,
+      });
 
-    delayNextCommit = true;
+    state.delayNextCommit = true;
     const olderObservation = observeAtRevision(["2", "5"]);
     await olderCommitStarted.promise;
 
@@ -646,11 +358,7 @@ it("keeps authorized gathering rosters current across discovery, observations, a
       code: "REVISION_CONFLICT",
     });
 
-    const recoveredRoom = await boundary.handler(
-      new Request("http://api.test/messaging/party-gathering/npc", {
-        headers: { authorization: "Bearer test" },
-      }),
-    );
+    const recoveredRoom = await get("/messaging/party-gathering/npc");
 
     expect(await recoveredRoom.json()).toMatchObject({
       revision: 8,
@@ -661,29 +369,18 @@ it("keeps authorized gathering rosters current across discovery, observations, a
       },
     });
 
-    const invitationTargets = await boundary.handler(
-      new Request(
-        "http://api.test/messaging/party-gathering/npc/invitations/targets",
-        {
-          method: "POST",
-          headers: {
-            authorization: "Bearer test",
-            "content-type": "application/json",
-          },
-          body: JSON.stringify({ participantIds: ["alternate", "other"] }),
-        },
-      ),
+    const invitationTargets = await send(
+      "POST",
+      "/messaging/party-gathering/npc/invitations/targets",
+      { participantIds: ["alternate", "other"] },
     );
 
     expect(await invitationTargets.json()).toEqual({
       targets: [{ participantId: "other", characterId: "5" }],
     });
 
-    const afterObservation = await boundary.handler(
-      new Request(
-        "http://api.test/messaging/party-gathering/active?world=experimental",
-        { headers: { authorization: "Bearer test" } },
-      ),
+    const afterObservation = await get(
+      "/messaging/party-gathering/active?world=experimental",
     );
 
     expect(await afterObservation.json()).toEqual(
@@ -697,18 +394,10 @@ it("keeps authorized gathering rosters current across discovery, observations, a
       ]),
     );
 
-    const withdrawal = await boundary.handler(
-      new Request(
-        "http://api.test/messaging/party-gathering/npc/applications/me",
-        {
-          method: "DELETE",
-          headers: {
-            authorization: "Bearer test",
-            "content-type": "application/json",
-          },
-          body: JSON.stringify({ participantId: "alternate" }),
-        },
-      ),
+    const withdrawal = await send(
+      "DELETE",
+      "/messaging/party-gathering/npc/applications/me",
+      { participantId: "alternate" },
     );
 
     expect(withdrawal.status).toBe(200);
@@ -732,19 +421,10 @@ it("keeps authorized gathering rosters current across discovery, observations, a
     });
 
     const applyAs = (character: typeof base.organizerCharacter) =>
-      boundary.handler(
-        new Request(
-          "http://api.test/messaging/party-gathering/npc/applications",
-          {
-            method: "POST",
-            headers: {
-              authorization: "Bearer test",
-              "content-type": "application/json",
-            },
-            body: JSON.stringify({ world: base.world, character }),
-          },
-        ),
-      );
+      send("POST", "/messaging/party-gathering/npc/applications", {
+        world: base.world,
+        character,
+      });
 
     const sameAccount = await applyAs({
       ...base.organizerCharacter,
@@ -781,21 +461,13 @@ it("keeps authorized gathering rosters current across discovery, observations, a
 
     expect(registered).toBeDefined();
 
-    const removal = await boundary.handler(
-      new Request(
-        "http://api.test/messaging/party-gathering/npc/participants",
-        {
-          method: "DELETE",
-          headers: {
-            authorization: "Bearer test",
-            "content-type": "application/json",
-          },
-          body: JSON.stringify({
-            expectedRevision: application.revision,
-            participantId: registered,
-          }),
-        },
-      ),
+    const removal = await send(
+      "DELETE",
+      "/messaging/party-gathering/npc/participants",
+      {
+        expectedRevision: application.revision,
+        participantId: registered,
+      },
     );
 
     expect(removal.status).toBe(200);
@@ -810,11 +482,8 @@ it("keeps authorized gathering rosters current across discovery, observations, a
       },
     });
 
-    const afterWithdrawal = await boundary.handler(
-      new Request(
-        "http://api.test/messaging/party-gathering/active?world=experimental",
-        { headers: { authorization: "Bearer test" } },
-      ),
+    const afterWithdrawal = await get(
+      "/messaging/party-gathering/active?world=experimental",
     );
 
     expect(await afterWithdrawal.json()).toEqual(
@@ -830,11 +499,7 @@ it("keeps authorized gathering rosters current across discovery, observations, a
 
     querySpy.mockClear();
 
-    const list = await boundary.handler(
-      new Request("http://api.test/messaging/party-gathering", {
-        headers: { authorization: "Bearer test" },
-      }),
-    );
+    const list = await get("/messaging/party-gathering");
 
     expect(list.status).toBe(200);
     expect(querySpy).toHaveBeenCalledTimes(2);
@@ -848,11 +513,7 @@ it("keeps authorized gathering rosters current across discovery, observations, a
       ]),
     );
 
-    const detail = await boundary.handler(
-      new Request("http://api.test/messaging/party-gathering/own-filtered", {
-        headers: { authorization: "Bearer test" },
-      }),
-    );
+    const detail = await get("/messaging/party-gathering/own-filtered");
 
     expect(detail.status).toBe(200);
     expect(await detail.json()).toMatchObject({
@@ -862,18 +523,10 @@ it("keeps authorized gathering rosters current across discovery, observations, a
       guildIds: ["visible"],
     });
 
-    const cancel = await boundary.handler(
-      new Request(
-        "http://api.test/messaging/party-gathering/own-filtered/cancel",
-        {
-          method: "POST",
-          headers: {
-            authorization: "Bearer test",
-            "content-type": "application/json",
-          },
-          body: JSON.stringify({ expectedRevision: 1 }),
-        },
-      ),
+    const cancel = await send(
+      "POST",
+      "/messaging/party-gathering/own-filtered/cancel",
+      { expectedRevision: 1 },
     );
 
     expect(cancel.status).toBe(201);
@@ -910,7 +563,7 @@ it("keeps authorized gathering rosters current across discovery, observations, a
         guildId: "hidden",
         name: "Sender",
         updatedAt: new Date(),
-        permissions: [Permission.LOOTLOG_NOTIFICATIONS_SEND],
+        permissions: [Capability.LOOTLOG_NOTIFICATIONS_SEND],
       }),
     );
     await databaseBoundary.run(
@@ -922,20 +575,11 @@ it("keeps authorized gathering rosters current across discovery, observations, a
     const createGathering = (
       target: { guildId: string } | { guildIds: string[] },
     ) =>
-      boundary.handler(
-        new Request("http://api.test/messaging/party-gathering", {
-          method: "POST",
-          headers: {
-            authorization: "Bearer test",
-            "content-type": "application/json",
-          },
-          body: JSON.stringify({
-            ...target,
-            world: base.world,
-            character: base.organizerCharacter,
-          }),
-        }),
-      );
+      send("POST", "/messaging/party-gathering", {
+        ...target,
+        world: base.world,
+        character: base.organizerCharacter,
+      });
 
     const roomCount = rooms.length;
 
@@ -969,7 +613,7 @@ it("keeps authorized gathering rosters current across discovery, observations, a
       {
         notificationId: createdRoom.notificationId,
         guildId: "visible",
-        discordId: caller.discordId,
+        discordId: state.caller.discordId,
         character: base.organizerCharacter,
         world: base.world,
         createdAt: createdRoom.createdAt,
@@ -983,15 +627,12 @@ it("keeps authorized gathering rosters current across discovery, observations, a
     await databaseBoundary.run(
       databaseBoundary.database
         .update(roleTable)
-        .set({ permissions: [Permission.LOOTLOG_CHAT_READ] })
+        .set({ permissions: [Capability.LOOTLOG_CHAT_READ] })
         .where(eq(roleTable.id, "sender")),
     );
 
-    const readableGatherings = await boundary.handler(
-      new Request(
-        "http://api.test/messaging/party-gathering/active?world=experimental",
-        { headers: { authorization: "Bearer test" } },
-      ),
+    const readableGatherings = await get(
+      "/messaging/party-gathering/active?world=experimental",
     );
 
     expect(readableGatherings.status).toBe(200);
@@ -1006,27 +647,19 @@ it("keeps authorized gathering rosters current across discovery, observations, a
     await databaseBoundary.run(
       databaseBoundary.database
         .update(roleTable)
-        .set({ permissions: [Permission.LOOTLOG_NOTIFICATIONS_SEND] })
+        .set({ permissions: [Capability.LOOTLOG_NOTIFICATIONS_SEND] })
         .where(eq(roleTable.id, "sender")),
     );
-    closeDatabaseOnCommit = true;
+    state.closeDatabaseOnCommit = true;
 
-    const committedObservation = await boundary.handler(
-      new Request(
-        "http://api.test/messaging/party-gathering/minimal/party-observation",
-        {
-          method: "POST",
-          headers: {
-            authorization: "Bearer test",
-            "content-type": "application/json",
-          },
-          body: JSON.stringify({
-            organizerAccountId: "1",
-            organizerCharacterId: "2",
-            memberCharacterIds: ["2"],
-          }),
-        },
-      ),
+    const committedObservation = await send(
+      "POST",
+      "/messaging/party-gathering/minimal/party-observation",
+      {
+        organizerAccountId: "1",
+        organizerCharacterId: "2",
+        memberCharacterIds: ["2"],
+      },
     );
 
     expect(committedObservation.status).toBe(201);

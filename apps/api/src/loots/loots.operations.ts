@@ -9,7 +9,7 @@ import {
   getEffectiveCapabilities,
   type AccessPolicy,
 } from "@lootlog/domain/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { stableJsonStringify } from "@lootlog/schema/stable-json";
 import { Clock, Effect, Schema } from "effect";
 import type {
@@ -187,7 +187,7 @@ const filtersFingerprint = (filters: Omit<LootListParams, "cursor">) =>
 
 const cacheKey = (
   guild: Guild,
-  permissions: Permission[],
+  permissions: Capability[],
   roles: Role[],
   params: Omit<LootListParams, "cursor">,
 ) => {

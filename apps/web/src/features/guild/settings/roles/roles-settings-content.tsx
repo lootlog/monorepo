@@ -2,7 +2,7 @@ import { ListToolbar } from "@/components/common/list-toolbar";
 import { ListTileSkeleton } from "@/components/common/list-tile-skeleton";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useRolesControllerGetGuildRoles } from "@lootlog/client/main";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { SearchX, Shield } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import { Link } from "@tanstack/react-router";
@@ -32,10 +32,10 @@ export const RolesSettingsContent = () => {
   const filteredRoles = (roles ?? [])
     .filter((role) => role.name.toLowerCase().includes(normalizedSearchValue))
     .sort((firstRole, secondRole) => {
-      const firstRoleIsAdmin = firstRole.permissions.includes(Permission.ADMIN);
+      const firstRoleIsAdmin = firstRole.permissions.includes(Capability.ADMIN);
 
       const secondRoleIsAdmin = secondRole.permissions.includes(
-        Permission.ADMIN,
+        Capability.ADMIN,
       );
 
       if (firstRoleIsAdmin && !secondRoleIsAdmin) return -1;

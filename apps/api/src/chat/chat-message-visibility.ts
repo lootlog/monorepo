@@ -2,14 +2,14 @@ import {
   AccessRequirement,
   createAccessPolicy,
 } from "@lootlog/domain/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { MessageType } from "#src/chat/chat-message";
 import { canReadChatNpcSource } from "#src/chat/chat-npc-visibility";
 import type { ChatStoredMessage } from "#src/chat/chat-stored-message";
 import type { ChatMessageViewer } from "#src/chat/chat-message-viewer";
 
 type Role = {
-  permissions: Permission[];
+  permissions: Capability[];
   lvlRangeFrom: number | null;
   lvlRangeTo: number | null;
 };

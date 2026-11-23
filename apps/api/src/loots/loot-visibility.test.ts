@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import {
   lootTable,
   lootNpcTable,
@@ -20,7 +20,7 @@ type Role = typeof roleTable.$inferSelect;
 
 function role(
   id: string,
-  permissions: Permission[],
+  permissions: Capability[],
   lvlRangeFrom = 1,
   lvlRangeTo = 500,
 ): Role {
@@ -117,7 +117,7 @@ describe("loot visibility", () => {
         ),
       );
 
-      const visible = async (permissions: Permission[], roles: Role[]) =>
+      const visible = async (permissions: Capability[], roles: Role[]) =>
         (
           await run(
             database
@@ -134,26 +134,26 @@ describe("loot visibility", () => {
           )
         ).map(({ id }) => id);
 
-      expect(await visible([], [role("admin", [Permission.ADMIN])])).toEqual(
+      expect(await visible([], [role("admin", [Capability.ADMIN])])).toEqual(
         [],
       );
-      expect(await visible([Permission.OWNER], [])).toEqual([1, 2, 3, 4]);
+      expect(await visible([Capability.OWNER], [])).toEqual([1, 2, 3, 4]);
       expect(
-        await visible([], [role("reader", [Permission.LOOTLOG_LOOTS_READ])]),
+        await visible([], [role("reader", [Capability.LOOTLOG_LOOTS_READ])]),
       ).toEqual([4]);
       expect(
         await visible(
           [],
           [
-            role("low", [Permission.LOOTLOG_LOOTS_READ], 1, 50),
-            role("high", [Permission.LOOTLOG_LOOTS_READ], 100, 150),
+            role("low", [Capability.LOOTLOG_LOOTS_READ], 1, 50),
+            role("high", [Capability.LOOTLOG_LOOTS_READ], 100, 150),
           ],
         ),
       ).toEqual([4]);
       expect(
         await visible(
           [],
-          [role("low", [Permission.LOOTLOG_LOOTS_READ], 1, 50)],
+          [role("low", [Capability.LOOTLOG_LOOTS_READ], 1, 50)],
         ),
       ).toEqual([]);
       expect(
@@ -163,8 +163,8 @@ describe("loot visibility", () => {
             role(
               "hero",
               [
-                Permission.LOOTLOG_LOOTS_READ,
-                Permission.LOOTLOG_LOOTS_HEROES_READ,
+                Capability.LOOTLOG_LOOTS_READ,
+                Capability.LOOTLOG_LOOTS_HEROES_READ,
               ],
               50.9,
               250,
@@ -179,8 +179,8 @@ describe("loot visibility", () => {
             role(
               "hero",
               [
-                Permission.LOOTLOG_LOOTS_READ,
-                Permission.LOOTLOG_LOOTS_HEROES_READ,
+                Capability.LOOTLOG_LOOTS_READ,
+                Capability.LOOTLOG_LOOTS_HEROES_READ,
               ],
               Number.NaN,
               Number.POSITIVE_INFINITY,
@@ -192,12 +192,12 @@ describe("loot visibility", () => {
         await visible(
           [],
           [
-            role("narrow-no-heroes", [Permission.LOOTLOG_LOOTS_READ], 1, 300),
+            role("narrow-no-heroes", [Capability.LOOTLOG_LOOTS_READ], 1, 300),
             role(
               "lower-half-heroes",
               [
-                Permission.LOOTLOG_LOOTS_READ,
-                Permission.LOOTLOG_LOOTS_HEROES_READ,
+                Capability.LOOTLOG_LOOTS_READ,
+                Capability.LOOTLOG_LOOTS_HEROES_READ,
               ],
               1,
               49,
@@ -205,8 +205,8 @@ describe("loot visibility", () => {
             role(
               "upper-half-heroes",
               [
-                Permission.LOOTLOG_LOOTS_READ,
-                Permission.LOOTLOG_LOOTS_HEROES_READ,
+                Capability.LOOTLOG_LOOTS_READ,
+                Capability.LOOTLOG_LOOTS_HEROES_READ,
               ],
               50,
               100,
@@ -214,8 +214,8 @@ describe("loot visibility", () => {
             role(
               "dominated-heroes",
               [
-                Permission.LOOTLOG_LOOTS_READ,
-                Permission.LOOTLOG_LOOTS_HEROES_READ,
+                Capability.LOOTLOG_LOOTS_READ,
+                Capability.LOOTLOG_LOOTS_HEROES_READ,
               ],
               20,
               60,

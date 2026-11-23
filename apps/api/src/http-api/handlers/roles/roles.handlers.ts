@@ -6,7 +6,7 @@ import {
 } from "#src/shared/http/handler-response";
 import { Effect } from "effect";
 import { AccessRequirement } from "@lootlog/domain/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import {
   RolesResponse,
   RoleResponse,
@@ -47,7 +47,7 @@ export const updateGuildRole = Effect.fn("RolesControllerUpdateGuildRole")(
 const getGuildRoles = Effect.fn("RolesControllerGetGuildRoles")(function* (
   guildId: string,
 ) {
-  const access = yield* requireGuild(guildId, [Permission.LOOTLOG_ACCESS]);
+  const access = yield* requireGuild(guildId, [Capability.LOOTLOG_ACCESS]);
 
   const value = yield* rolesData((service) => service.getRoles(access.guildId));
 

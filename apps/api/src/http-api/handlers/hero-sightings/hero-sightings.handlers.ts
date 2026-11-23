@@ -19,7 +19,7 @@ import {
   NPC_FEATURE_PERMISSIONS,
   HERO_SIGHTING_READ_FEATURE,
 } from "@lootlog/domain/npc-permissions";
-import type { Permission as PermissionValue } from "@lootlog/schema/permissions";
+import type { Capability as PermissionValue } from "@lootlog/schema/permissions";
 import { applicationErrorResponse } from "../../application-error-response.js";
 import { LootlogApi } from "../../lootlog-api.js";
 

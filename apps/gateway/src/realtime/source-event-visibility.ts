@@ -5,7 +5,7 @@ import {
   canViewLoot,
   type LootVisibilityNpc,
 } from "@lootlog/domain/loot-visibility";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import type { ServerEvent } from "@lootlog/protocol/realtime";
 import {
   prepareNpcSourceEvent,
@@ -34,14 +34,14 @@ const canReadLootSource = (
 
   const permissions =
     guild.guild.ownerId === session.discordId
-      ? [Permission.OWNER]
+      ? [Capability.OWNER]
       : guild.roles.flatMap((role) => role.permissions);
 
   if (
     allowAdministrator &&
     permissions.some(
       (permission) =>
-        permission === Permission.ADMIN || permission === Permission.OWNER,
+        permission === Capability.ADMIN || permission === Capability.OWNER,
     )
   )
     return true;

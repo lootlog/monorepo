@@ -7,7 +7,7 @@ import { and, eq, inArray } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import type { RedisError } from "effect/persistence/Redis";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import type { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { memberTable } from "#src/database/drizzle/organization.schema";
@@ -174,7 +174,7 @@ export const makeAccessibleGuilds = (
               capabilities: member.roles.flatMap(
                 ({ permissions }) => permissions,
               ),
-            }).allows(Permission.LOOTLOG_ACCESS)),
+            }).allows(Capability.LOOTLOG_ACCESS)),
         );
 
         return {

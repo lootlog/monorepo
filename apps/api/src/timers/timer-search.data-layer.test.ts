@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
 import {
   createGuildFixture,
@@ -19,7 +19,7 @@ import type { TimersGuildAccess } from "./timers-data.js";
 const guild = createGuildFixture({ id: "organization" });
 
 const role = (
-  permissions: Permission[],
+  permissions: Capability[],
   lvlRangeFrom = 0,
   lvlRangeTo = 500,
 ): Role => ({
@@ -148,7 +148,7 @@ describe("timer NPC search", () => {
   });
 
   it("hides timers outside the caller's NPC type capability and level range without consuming the limit", async () => {
-    const baseReader = [role([Permission.LOOTLOG_TIMERS_READ], 0, 100)];
+    const baseReader = [role([Capability.LOOTLOG_TIMERS_READ], 0, 100)];
 
     const results = await search(baseReader, {
       world: "world-a",
@@ -164,8 +164,8 @@ describe("timer NPC search", () => {
       [
         role(
           [
-            Permission.LOOTLOG_TIMERS_READ,
-            Permission.LOOTLOG_TIMERS_HEROES_READ,
+            Capability.LOOTLOG_TIMERS_READ,
+            Capability.LOOTLOG_TIMERS_HEROES_READ,
           ],
           0,
           100,
@@ -196,7 +196,7 @@ describe("timer NPC search", () => {
     );
 
     const results = await search(
-      [role([Permission.LOOTLOG_TIMERS_READ], 0, 100)],
+      [role([Capability.LOOTLOG_TIMERS_READ], 0, 100)],
       { world: "world-c", search: "ogr", limit: 1 },
     );
 
@@ -207,8 +207,8 @@ describe("timer NPC search", () => {
     const results = await search(
       [
         role([
-          Permission.LOOTLOG_TIMERS_READ,
-          Permission.LOOTLOG_TIMERS_HEROES_READ,
+          Capability.LOOTLOG_TIMERS_READ,
+          Capability.LOOTLOG_TIMERS_HEROES_READ,
         ]),
       ],
       { world: "world-a", search: "kic", limit: 1 },
@@ -226,7 +226,7 @@ describe("timer NPC search", () => {
   });
 
   it("searches every Organization world by identity without manual, deleted or foreign timers", async () => {
-    const admin = [role([Permission.ADMIN])];
+    const admin = [role([Capability.ADMIN])];
 
     const byTemplate = await search(admin, { templateIds: [901] });
 

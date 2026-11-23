@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test";
 import { Effect, Exit } from "effect";
 import { MaxOpsBeforeYield } from "effect/Scheduler";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { makeLootsOperations } from "#src/loots/loots.operations";
 import { OperationError } from "@lootlog/instrumentation/operation";
 import type { LootQueryOperations } from "#src/loots/query/loot-query.operations";
@@ -40,7 +40,7 @@ const role: Role = {
   name: "Readers",
   color: null,
   position: null,
-  permissions: [Permission.LOOTLOG_LOOTS_READ],
+  permissions: [Capability.LOOTLOG_LOOTS_READ],
   lvlRangeFrom: 0,
   lvlRangeTo: 500,
   createdAt: new Date(0),
@@ -48,7 +48,7 @@ const role: Role = {
 };
 
 const policy = createAccessPolicy({
-  capabilities: [Permission.LOOTLOG_LOOTS_READ],
+  capabilities: [Capability.LOOTLOG_LOOTS_READ],
 });
 
 const loot: LootQueryResult = {

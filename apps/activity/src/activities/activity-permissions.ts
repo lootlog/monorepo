@@ -1,7 +1,7 @@
 import { OperationError } from "@lootlog/instrumentation/operation";
 import { reconnectingBunRedisLayer } from "@lootlog/database/bun-redis";
 import {
-  Permission,
+  Capability,
   UserGuildPermissionsDtoSchema,
 } from "@lootlog/schema/permissions";
 import { INTERNAL_USER_PERMISSIONS_PATH } from "@lootlog/schema/internal-guilds";
@@ -41,7 +41,7 @@ export interface PermissionsValue {
     discordId: string,
     userId: string,
   ) => Effect.Effect<
-    (guildId: string) => Permission[],
+    (guildId: string) => Capability[],
     PermissionsUnavailable | ApiHttpClientFailure
   >;
 }
@@ -220,13 +220,13 @@ export class Permissions extends Context.Service<
 
       const getUserCapabilities = (discordId: string, userId: string) =>
         getUserPermissions(discordId, userId).pipe(
-          Effect.map((grants) => (guildId: string): Permission[] => {
+          Effect.map((grants) => (guildId: string): Capability[] => {
             const guild = grants.find((entry) => entry.guild.id === guildId);
 
             if (!guild) return [];
 
             if (guild.guild.ownerId === discordId)
-              return Object.values(Permission);
+              return Object.values(Capability);
 
             return [
               ...new Set(guild.roles.flatMap((role) => role.permissions)),

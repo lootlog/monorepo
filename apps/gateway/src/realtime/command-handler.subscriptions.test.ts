@@ -3,7 +3,7 @@ import {
   createAccessPolicySnapshot,
 } from "@lootlog/protocol/realtime/access-policy";
 import { describe, expect, test } from "bun:test";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { Effect, Predicate } from "effect";
 import { canReadSourceEvent } from "./source-event-visibility.js";
 import type { ClientCommand, ServerEvent } from "@lootlog/protocol/realtime";
@@ -166,17 +166,17 @@ test("client NPC policy decisions match gateway source filtering across roles an
   for (const viewer of ["member", "owner"]) {
     for (const permissions of [
       [],
-      [Permission.ADMIN],
+      [Capability.ADMIN],
       [
-        Permission.LOOTLOG_TIMERS_READ,
-        Permission.LOOTLOG_CHAT_READ,
-        Permission.LOOTLOG_NOTIFICATIONS_READ,
+        Capability.LOOTLOG_TIMERS_READ,
+        Capability.LOOTLOG_CHAT_READ,
+        Capability.LOOTLOG_NOTIFICATIONS_READ,
       ],
       [
-        Permission.LOOTLOG_TIMERS_READ,
-        Permission.LOOTLOG_TIMERS_TITANS_READ,
-        Permission.LOOTLOG_CHAT_READ,
-        Permission.LOOTLOG_CHAT_HEROES_READ,
+        Capability.LOOTLOG_TIMERS_READ,
+        Capability.LOOTLOG_TIMERS_TITANS_READ,
+        Capability.LOOTLOG_CHAT_READ,
+        Capability.LOOTLOG_CHAT_HEROES_READ,
       ],
     ]) {
       const session = makeSession({

@@ -1,3 +1,4 @@
+import { Capability } from "@lootlog/schema/permissions";
 import {
   and,
   desc,
@@ -8,7 +9,6 @@ import {
   or,
   sql,
 } from "drizzle-orm";
-import { Capability } from "@lootlog/domain/access-policy";
 import { Clock, Effect } from "effect";
 import { uniqBy } from "es-toolkit";
 import { activeTimerEventCondition, canViewTimer } from "./timer-selection.js";

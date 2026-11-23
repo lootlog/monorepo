@@ -1,4 +1,4 @@
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import type { TFunction } from "i18next";
 import { Schema, SchemaTransformation } from "effect";
 
@@ -22,7 +22,7 @@ export const createRolesFormSchema = (t: TFunction) => {
       lvlRangeFrom: level,
       lvlRangeTo: level,
       permissions: Schema.Record(
-        Schema.Enum(Permission),
+        Schema.Enum(Capability),
         Schema.optionalKey(Schema.Boolean),
       ),
     }).check(

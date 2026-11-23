@@ -9,7 +9,7 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
 import { applicationErrorResponse } from "#src/http-api/application-error-response";
 
-import type { Permission as PermissionValue } from "@lootlog/schema/permissions";
+import type { Capability as PermissionValue } from "@lootlog/schema/permissions";
 
 import {
   ApplicationError,

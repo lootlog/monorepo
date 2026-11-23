@@ -8,7 +8,7 @@ import {
   makeAdminSession,
   makeGamePresence,
 } from "../../test/realtime-fixtures.js";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { describe, expect, test } from "bun:test";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Effect } from "effect";
@@ -149,7 +149,7 @@ describe("RealtimeHub federation", () => {
       [false, true].map((visible) => {
         const session = makeAdminSession(`${index}-${visible}`, {
           guilds: [
-            membership(scope.organizationId, [Permission.LOOTLOG_EVENTS_READ], {
+            membership(scope.organizationId, [Capability.LOOTLOG_EVENTS_READ], {
               roleId: "role",
               lvlRangeFrom: 1,
               lvlRangeTo: visible ? 500 : 100,

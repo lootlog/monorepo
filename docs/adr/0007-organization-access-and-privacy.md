@@ -32,29 +32,11 @@ player lists, link previews) and must carry no identifiers.
 - **`canReadChatNpcSource`** (`apps/api/src/chat/chat-npc-visibility.ts`): An NPC that cannot be classified into a routing tier is denied, matching the realtime socket's `canReadFeatureEvent`. The same rule hides a gathering NPC with an unclassifiable free-form `type` in `apps/api/src/messaging/ready-room/ready-room-visibility.ts`.
 - **`isDiscordAdministrator`** (`apps/api/src/discord/is-discord-administrator.ts`): A malformed Discord permissions bitfield fails closed and grants no administrator access.
 
-### Member access resolution in the API
+### API access resolution and source visibility
 
-- **`isActiveMember`** (`apps/api/src/members/member-access-query.ts`): Role access goes only to an active Member linked to a User; the Organization context and cross-Organization queries share this rule.
-- **`selectAccessibleGuilds`** (`apps/api/src/members/member-access-query.ts`): Cross-Organization reads for `/me`, the Game client, and write fan-out trust `Guild.ownerId` and stored Members and roles and never wait for Discord, so they are eventually consistent. Organization endpoints instead refresh the caller's Member past the soft TTL and require that row even for the owner.
-- **`selectGuildIdsGrantingPermissions`** (`apps/api/src/members/member-access-query.ts`): The owner and active-member rules apply only over Organizations already resolved for the requester, so an API key's scope stays applied.
-- **`UserGuildPermissions`** (`apps/api/src/members/user-guild-permissions.ts`): The owner keeps access without a Member row, matching the access query, and gets a synthetic `owner` role holding every capability over the default level range because clients derive access from roles.
-- **`callerFailure`** (`apps/api/src/members/member-commands.data-layer.ts`): Only the caller's own Discord authorization failure becomes `ReauthenticationRequired`, so another User's Discord token problem never asks the caller to sign in again.
-- **`guildAccess`** (`apps/api/src/runtime/auth/organization-authorization-layers.ts`): Organization access resolves identically for every handler port, but not-found and forbidden map into each port's own tagged errors because `Effect.catchTags` and HTTP status mapping dispatch on them; `ReauthenticationRequired` passes through since the bearer middleware declares it everywhere.
-- **`getInternalMemberIdentity`** (`apps/api/src/http-api/handlers/internal/internal.handlers.ts`): The Discord bot acts for a User only when that User is an active Member with a known Lootlog User; every other case returns the same 404, so the bot cannot tell a missing guild from a missing Member.
-- **`GlobalChatAdminDirectory`** and **`LootlogAdminDirectory`** (`apps/api/src/runtime/features/platform-role-directories.ts`): Global chat admins are exactly the holders of the auth-service-owned `global-chat-admin` platform role, and aura admins the holders of `admin`, re-read every minute; no configured User list adds one, and without the service credential there are none.
-- **`getUserPermissions`** (`apps/activity/src/activities/activity-permissions.ts`): The activity service fetches a User's grants from the API on every request and keeps no copy, because the API owns the grants cache and invalidates it when a Member leaves or roles change.
-
-### Organization context and identity caches
-
-- **`REFRESH_AHEAD_FRACTION`** (`apps/api/src/runtime/auth/organization-context.ts`): The context cache serves a Member until the soft TTL, queues a background refresh past two thirds of it, keeps serving the stored Member during the stale-access grace, and makes a request wait for Discord only for an unconfirmed Member or one past the grace.
-- **`STALE_REFRESH_RETRY_SECONDS`** (`apps/api/src/runtime/auth/organization-context.ts`): Past the soft TTL a failed background refresh is queued again after 60 seconds.
-- **`refreshAheadKey`** (`apps/api/src/runtime/auth/organization-context.ts`): The refresh-ahead marker lives until the context stops being fresh plus one retry interval, so each User and Organization has at most one queued refresh; a failed enqueue deletes its marker so the retry is not blocked until the soft TTL.
-- **`CachedMemberEntry`** (`apps/api/src/runtime/auth/organization-context.ts`): Only the Member and roles are cached, because they cost a Discord sync; the guild row and derived capabilities are read on every lookup so configuration changes apply without eviction. A Member whose last Discord status is UNAUTHORIZED is never served from storage, because only a Discord sync can tell the caller to sign in again.
-- **`Guild_vanityUrl_not_id_like_check`** (`apps/api/src/database/drizzle/organization.schema.ts`): A vanity URL may not be empty or all digits, so it can never be mistaken for a Discord snowflake Organization id in routes.
-- **`GUILD_CACHE_KEY_PREFIX`** (`apps/api/src/guilds/guild-configuration-cache.ts`): The lookup cache uses the `guild-lookup:v2` prefix because v1 shared one namespace for ids and vanity URLs, so a vanity URL equal to another Organization's id overwrote its entry; the new prefix leaves every v1 entry unread.
-- **`getGuildCacheKey`** (`apps/api/src/guilds/guild-configuration-cache.ts`): Ids and vanity URLs live in separate namespaces and an id-like value maps only to the id namespace.
-- **`writeGuildConfigurationCache`** (`apps/api/src/guilds/guild-configuration-cache.ts`): An Organization is cached only under the key it was looked up by, so one Organization can never write another's entry; a configuration change in `apps/api/src/guilds/guild-configuration-data.ts` therefore evicts the id entry and both the old and new vanity URL entries.
-- **`readCachedGuild`** (`apps/api/src/guilds/guild-configuration-cache.ts`): An entry that fails to decode, or sits under an id key while describing another Organization, is evicted and reloaded instead of served.
+- [Member access resolution in the API](0007-organization-access-and-privacy/api-access.md#member-access-resolution-in-the-api)
+- [Organization context and identity caches](0007-organization-access-and-privacy/api-access.md#organization-context-and-identity-caches)
+- [Source visibility in API reads and writes](0007-organization-access-and-privacy/api-access.md#source-visibility-in-api-reads-and-writes)
 
 ### Access projection and delivery
 
@@ -62,24 +44,6 @@ player lists, link previews) and must carry no identifiers.
 - **`queueOwnerRebalance`** (`apps/api/src/guilds/guild-lifecycle.operations.ts`): Owner access comes from the Organization row, so an ownership change queues the owners' Member deliveries and gateway rebalance itself, in the same transaction. Because Discord replays guild creation for known guilds, this happens only on activation or an ownership transfer.
 - **`deleteRole`** (`apps/api/src/guilds/guild-lifecycle.operations.ts`): Role deletion queues the role's holders before deleting it, because assignments cascade with the role; roles without permissions are skipped since projections omit them. Guild deletion likewise queues the active Members inside the transaction, because a redelivered deletion no longer sees them as active.
 - **`updateRole`** (`apps/api/src/guilds/roles-data.ts`): Saving a role republishes its holders even when permissions are unchanged, because a previous attempt may have committed the policy before invalidation or delivery failed.
-
-### Source visibility in API reads and writes
-
-- **`apiKeyOrganizationFilter`** (`apps/api/src/runtime/auth/organization-scope.ts`): Source queries are constrained to the API key's Organizations before pagination, aggregation, or write fan-out, so a key never sees or affects other Organizations' rows, even in counts.
-- **`apiKeyAccessibleGuilds`** (`apps/api/src/runtime/auth/organization-scope.ts`): The result is the Organizations granted to both the API key and its User, and `undefined` for a session, which keeps the calling endpoint's scope.
-- **`requestApiKeyAccess`** (`apps/api/src/runtime/auth/forward-auth-identity.ts`): Outside a request there is no API-key scope, because background jobs have no request identity and keep their own domain scope.
-- **`activeRecordsOfOrganization`** (`apps/api/src/loots/query/loot-query.repository.ts`): The loot page selection is scoped only by the Organization's own active `OrganizationLootRecord` rows, with no join to `Loot`, so another Organization's record cannot enter the result.
-- **`readVisibleSummaries`** (`apps/api/src/loots/query/loot-query.repository.ts`): Shared loot data is read by id without an access check; callers resolve source visibility before passing ids.
-- **`deniedOrHidden`** (`apps/api/src/loots/allocation/loot-allocation.operations.ts`): A loot the actor cannot read is reported as missing, not forbidden, on every loot path, so its existence is not revealed. Draw entrants in `apps/api/src/loots/loots.operations.ts` are built from the loot as the caller may see it.
-- **`readCharacterNames`** (`apps/api/src/loots/query/user-loot-stats.ts`): A character's name comes only from the latest snapshot among loots the User may see, so a name observed only in hidden loots is never revealed.
-- **`acceptWithLock`** (`apps/api/src/loots/submission/loot-submission-acceptance.service.ts`): A character that catches for no writable Organization is rejected even if the client should have skipped it, because a stale client cannot be trusted to filter. `selectCharacterCatchingGuildIds` in `apps/api/src/members/character-catching-guilds.ts` likewise returns the character's configured Organizations, which callers must intersect with the writable ones.
-- **`writableByOwner`** (`apps/api/src/lootlog-config/user-lootlog-config-data.ts`): A stored Lootlog configuration outlives Discord membership, so it is shown only for Organizations where the owner can still submit loot.
-- **`visibilityFilter`** (`apps/api/src/kills/kill-query-support.ts`): Kill statistics reveal the same NPCs as loots, so only the OWNER recovery capability bypasses role NPC coverage, as in `canViewLoot`; a caller with no roles sees no NPC types.
-- **`makeManualHeroSightings`** (`apps/api/src/hero-sightings/hero-sightings.data-layer.ts`): A manual sighting of a known hero keeps the recorded name and level, so a typed level cannot move the hero into another role's range. The create response follows read visibility, not write permission.
-- **Timer search** (`apps/api/src/timers/timer-search.data-layer.ts`): Visibility applies per batch and reading continues until the limit is filled, so hidden timers never take a visible result's place.
-- **`writableReservationGuildIds`** (`apps/api/src/reservations/reservation-mutations.data-layer.ts`): Changing one's own reservations needs the same read and write capabilities as the Organization reservation endpoints, and the reservation lookup type requires at least one SQL condition so it can never match every row.
-- **Reservation presentation** (`apps/api/src/reservations/reservation-presentation.ts`): The author's `userId` is exposed only when the source Organization is the viewer's own, since only viewers inside it may open the author's profile.
-- **`readPublishedFeedEntry`** (`apps/api/src/users/user-feed.ts`): A feed group is read once for publication and the gateway applies each recipient's source visibility before delivery.
 
 ### Notifications and gatherings across Organizations
 

@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
 import type { ServerEvent } from "@lootlog/protocol/realtime";
 import type { AirTagMapThreatEvent } from "@lootlog/schema/air-tag";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { createOnlinePlayersTest } from "@/test/online-players-fixtures";
 import { MapThreatSource } from "./map-threat-source";
 import type { PlayerPresence } from "./online-players-presence";
@@ -16,8 +16,8 @@ const policy = (location = true) =>
         roles: [
           {
             permissions: [
-              Permission.LOOTLOG_ONLINE_PLAYERS_READ,
-              ...(location ? [Permission.LOOTLOG_PRESENCE_LOCATION_READ] : []),
+              Capability.LOOTLOG_ONLINE_PLAYERS_READ,
+              ...(location ? [Capability.LOOTLOG_PRESENCE_LOCATION_READ] : []),
             ],
             lvlRangeFrom: 1,
             lvlRangeTo: 300,

@@ -6,7 +6,7 @@ import {
   memberCapabilities,
   resolveCapabilities,
 } from "@lootlog/domain/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
   type guildTable,
@@ -101,7 +101,7 @@ export const makeUserGuildPermissionsProjection = (
 
       if (
         !createAccessPolicy({ capabilities: permissions }).allows(
-          Permission.LOOTLOG_ACCESS,
+          Capability.LOOTLOG_ACCESS,
         )
       )
         return [];

@@ -11,7 +11,7 @@ import {
   type AccessPolicySnapshot,
   type AccessPolicyChange,
 } from "@lootlog/protocol/realtime/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { HERO_SIGHTING_READ_FEATURE } from "@lootlog/domain/npc-permissions";
 
 const isQueryPath = Schema.is(Schema.String);
@@ -84,7 +84,7 @@ const filterOrganizations = (
     if (!organization) return [];
 
     const hasLootlogAccess = organization.permissions.includes(
-      Permission.LOOTLOG_ACCESS,
+      Capability.LOOTLOG_ACCESS,
     );
 
     return guild.hasLootlogAccess === hasLootlogAccess &&
@@ -164,7 +164,7 @@ const reconcileTimers = (
     const canReadScope = policy.organizations.some(
       (organization) =>
         (scope === null || scope === organization.organizationId) &&
-        organization.permissions.includes(Permission.LOOTLOG_TIMERS_READ),
+        organization.permissions.includes(Capability.LOOTLOG_TIMERS_READ),
     );
 
     if (!canReadScope) pendingQueries.delete(query);

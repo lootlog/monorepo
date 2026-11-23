@@ -7,7 +7,7 @@ import { queryKeys } from "@/lib/query-keys";
 import { useTimers } from "./use-timers";
 import { createGameAccessCache } from "@/lib/game-access-cache";
 import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { createTimerFixture } from "@/test/timer-fixtures";
 
 it("does not refetch fresh timer data on focus or remount", async () => {
@@ -64,9 +64,9 @@ it("completes one initial request while applying the latest policy before exposi
               roles: [
                 {
                   permissions: [
-                    Permission.LOOTLOG_ACCESS,
-                    Permission.LOOTLOG_TIMERS_READ,
-                    Permission.LOOTLOG_TIMERS_HEROES_READ,
+                    Capability.LOOTLOG_ACCESS,
+                    Capability.LOOTLOG_TIMERS_READ,
+                    Capability.LOOTLOG_TIMERS_HEROES_READ,
                   ],
                   lvlRangeFrom: 0,
                   lvlRangeTo: 500,

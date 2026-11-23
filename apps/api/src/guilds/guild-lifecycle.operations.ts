@@ -3,7 +3,7 @@ import {
   createAccessPolicy,
   AccessRequirement,
 } from "@lootlog/domain/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { and, eq, inArray } from "drizzle-orm";
 import { Clock, Effect } from "effect";
 import type { RedisError } from "effect/persistence/Redis";
@@ -47,13 +47,13 @@ export interface GuildLifecyclePorts {
 
 type Transaction = Parameters<typeof queueMemberDeliveries>[0];
 
-const adminPermissions = (admin: boolean): Permission[] =>
+const adminPermissions = (admin: boolean): Capability[] =>
   admin
-    ? Object.values(Permission).filter(
+    ? Object.values(Capability).filter(
         (permission) =>
-          permission !== Permission.OWNER &&
-          permission !== Permission.LOOTLOG_HERO_SIGHTINGS_READ &&
-          permission !== Permission.LOOTLOG_HERO_SIGHTINGS_WRITE,
+          permission !== Capability.OWNER &&
+          permission !== Capability.LOOTLOG_HERO_SIGHTINGS_READ &&
+          permission !== Capability.LOOTLOG_HERO_SIGHTINGS_WRITE,
       )
     : [];
 

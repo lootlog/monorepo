@@ -4,7 +4,7 @@ import {
   RabbitMessaging,
   type RabbitMessagingService,
 } from "@lootlog/messaging";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { Effect, Layer, ManagedRuntime, Schema } from "effect";
 import { and, eq } from "drizzle-orm";
 import { FetchHttpClient, HttpRouter } from "effect/http";
@@ -136,7 +136,7 @@ it("serves history and restores deleted or reset timers through HTTP without rep
         id: guildId,
         guildId,
         name: "Timer maintainer",
-        permissions: [Permission.ADMIN],
+        permissions: [Capability.ADMIN],
         updatedAt: now,
       });
       yield* database.insert(roleTable).values({
@@ -144,8 +144,8 @@ it("serves history and restores deleted or reset timers through HTTP without rep
         guildId,
         name: "Timer reader",
         permissions: [
-          Permission.LOOTLOG_TIMERS_READ,
-          Permission.LOOTLOG_TIMERS_HEROES_READ,
+          Capability.LOOTLOG_TIMERS_READ,
+          Capability.LOOTLOG_TIMERS_HEROES_READ,
         ],
         lvlRangeFrom: 1,
         lvlRangeTo: 500,

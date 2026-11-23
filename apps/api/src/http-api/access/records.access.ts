@@ -17,7 +17,7 @@ import type {
 import { statusCodeResponse } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
-import type { Permission as PermissionValue } from "@lootlog/schema/permissions";
+import type { Capability as PermissionValue } from "@lootlog/schema/permissions";
 import { Context, Effect, Layer, Schema } from "effect";
 import { applicationErrorResponse } from "../application-error-response.js";
 

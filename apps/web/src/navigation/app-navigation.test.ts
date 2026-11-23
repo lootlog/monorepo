@@ -1,8 +1,5 @@
-import {
-  Capability,
-  createAccessPolicy,
-  type Capability as CapabilityName,
-} from "@lootlog/domain/access-policy";
+import { Capability } from "@lootlog/schema/permissions";
+import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { QueryClient } from "@tanstack/react-query";
 import { createMemoryHistory, createRouter } from "@tanstack/react-router";
 import { describe, expect, it } from "vitest";
@@ -58,7 +55,7 @@ const organization: PageState["loaderData"] = {
   "/_authenticated/$guildId": { guild: { name: "Nocna Straż" } },
 };
 
-const policy = (...capabilities: CapabilityName[]) =>
+const policy = (...capabilities: Capability[]) =>
   createAccessPolicy({ capabilities });
 
 function createDuelBattle(id: string): Battle {

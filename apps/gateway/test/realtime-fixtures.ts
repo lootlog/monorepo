@@ -1,6 +1,6 @@
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import type { ClientCommand } from "@lootlog/protocol/realtime";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { Effect, Redacted } from "effect";
 import type { GatewayConfiguration } from "../src/config/gateway-config.js";
 import {
@@ -69,7 +69,7 @@ export const makeGamePingSocket = (): GatewaySocket => ({
             id: "role-1",
             lvlRangeFrom: 0,
             lvlRangeTo: 500,
-            permissions: [Permission.LOOTLOG_ONLINE_PLAYERS_READ],
+            permissions: [Capability.LOOTLOG_ONLINE_PLAYERS_READ],
           },
         ],
       },
@@ -104,7 +104,7 @@ type Membership = SessionData["guilds"][number];
 
 export const membership = (
   organizationId: string,
-  permissions: ReadonlyArray<Permission>,
+  permissions: ReadonlyArray<Capability>,
   {
     ownerId = "owner",
     roleId = "role-1",
@@ -304,7 +304,7 @@ export const makeAdminSession = (
     userId: `user-${connectionId}`,
     connectionId,
     guilds: ["organization-1", "organization-2"].map((id) =>
-      membership(id, [Permission.ADMIN], {
+      membership(id, [Capability.ADMIN], {
         ownerId: discordId,
         roleId: "admin",
       }),

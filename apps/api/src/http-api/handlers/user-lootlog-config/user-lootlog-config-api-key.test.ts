@@ -1,7 +1,7 @@
 import { expect, test, mock } from "bun:test";
 import { Effect } from "effect";
 import { createDatabaseBoundary } from "../../../../test/database-fixtures.js";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import {
   createGuildFixture,
   createMemberFixture,
@@ -122,7 +122,7 @@ test("players stop showing Organizations whose Discord server they left", async 
           id: `role-${guildId}`,
           guildId,
           name: "Member",
-          permissions: [Permission.LOOTLOG_LOOTS_WRITE],
+          permissions: [Capability.LOOTLOG_LOOTS_WRITE],
           updatedAt: new Date(0),
         })),
       ),

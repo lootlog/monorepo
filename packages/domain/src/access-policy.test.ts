@@ -1,6 +1,6 @@
+import { Capability } from "@lootlog/schema/permissions";
 import { describe, expect, it } from "bun:test";
 import {
-  Capability,
   capabilitiesGrantingAny,
   createAccessPolicy,
   getEffectiveCapabilities,

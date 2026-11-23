@@ -2,7 +2,7 @@ import { buildTimerKey } from "#src/timers/timer-key";
 import { expect, it } from "bun:test";
 import { Effect } from "effect";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
 import {
   createGuildFixture,
@@ -120,14 +120,14 @@ it("filters hero timers by NPC level before exposing their public projection", a
             name: "Role",
             color: null,
             position: null,
-            permissions: [Permission.LOOTLOG_EVENTS_READ],
+            permissions: [Capability.LOOTLOG_EVENTS_READ],
             lvlRangeFrom: 1,
             lvlRangeTo: 100,
             createdAt: now,
             updatedAt: now,
           },
         ],
-        createAccessPolicy({ capabilities: [Permission.LOOTLOG_EVENTS_READ] }),
+        createAccessPolicy({ capabilities: [Capability.LOOTLOG_EVENTS_READ] }),
       ),
     );
 

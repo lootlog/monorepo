@@ -4,13 +4,13 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { cn } from "cn";
-import type { Permission } from "@lootlog/schema/permissions";
+import type { Capability } from "@lootlog/schema/permissions";
 import { useTranslation } from "react-i18next";
 import type { PermissionCategory } from "../roles/constants/permission-categories";
 
 type PermissionCategoryTooltipProps = {
   category: PermissionCategory;
-  activePermissions: Permission[];
+  activePermissions: Capability[];
   side: "top" | "bottom";
 };
 

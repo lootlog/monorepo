@@ -1,8 +1,8 @@
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 
 export const REQUIRED_RESET_PERMISSIONS = [
-  Permission.LOOTLOG_MANAGE,
-  Permission.OWNER,
-  Permission.ADMIN,
-  Permission.LOOTLOG_TIMERS_RESET,
+  Capability.LOOTLOG_MANAGE,
+  Capability.OWNER,
+  Capability.ADMIN,
+  Capability.LOOTLOG_TIMERS_RESET,
 ];

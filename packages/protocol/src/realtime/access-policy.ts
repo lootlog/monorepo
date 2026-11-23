@@ -1,6 +1,6 @@
 import { getNpcTypeRoutingTier } from "@lootlog/schema/npc-routing";
 import { NpcTypeSchema } from "@lootlog/schema/npc-type";
-import { Permission, PermissionSchema } from "@lootlog/schema/permissions";
+import { Capability, CapabilitySchema } from "@lootlog/schema/permissions";
 import { Schema } from "effect";
 
 const LevelRange = Schema.Struct({ from: Schema.Int, to: Schema.Int });
@@ -23,10 +23,10 @@ type AccessPolicyArea = typeof AccessPolicyArea.Type;
 export const OrganizationAccessPolicy = Schema.Struct({
   organizationId: Schema.NonEmptyString,
   owner: Schema.Boolean,
-  permissions: Schema.Array(PermissionSchema),
+  permissions: Schema.Array(CapabilitySchema),
   grants: Schema.Array(
     Schema.Struct({
-      permission: PermissionSchema,
+      permission: CapabilitySchema,
       ranges: Schema.Array(LevelRange),
     }),
   ),
@@ -57,7 +57,7 @@ type Range = typeof LevelRange.Type;
 type GuildPolicy = {
   readonly guild: { readonly id: string; readonly ownerId: string };
   readonly roles: readonly {
-    readonly permissions: readonly Permission[];
+    readonly permissions: readonly Capability[];
     readonly lvlRangeFrom: number;
     readonly lvlRangeTo: number;
   }[];
@@ -65,32 +65,32 @@ type GuildPolicy = {
 
 const NPC_PERMISSIONS = {
   timers: [
-    Permission.LOOTLOG_TIMERS_READ,
-    Permission.LOOTLOG_TIMERS_HEROES_READ,
-    Permission.LOOTLOG_TIMERS_TITANS_READ,
+    Capability.LOOTLOG_TIMERS_READ,
+    Capability.LOOTLOG_TIMERS_HEROES_READ,
+    Capability.LOOTLOG_TIMERS_TITANS_READ,
   ],
   chat: [
-    Permission.LOOTLOG_CHAT_READ,
-    Permission.LOOTLOG_CHAT_HEROES_READ,
-    Permission.LOOTLOG_CHAT_TITANS_READ,
+    Capability.LOOTLOG_CHAT_READ,
+    Capability.LOOTLOG_CHAT_HEROES_READ,
+    Capability.LOOTLOG_CHAT_TITANS_READ,
   ],
   notifications: [
-    Permission.LOOTLOG_NOTIFICATIONS_READ,
-    Permission.LOOTLOG_NOTIFICATIONS_HEROES_READ,
-    Permission.LOOTLOG_NOTIFICATIONS_TITANS_READ,
+    Capability.LOOTLOG_NOTIFICATIONS_READ,
+    Capability.LOOTLOG_NOTIFICATIONS_HEROES_READ,
+    Capability.LOOTLOG_NOTIFICATIONS_TITANS_READ,
   ],
   loots: [
-    Permission.LOOTLOG_LOOTS_READ,
-    Permission.LOOTLOG_LOOTS_HEROES_READ,
-    Permission.LOOTLOG_LOOTS_TITANS_READ,
+    Capability.LOOTLOG_LOOTS_READ,
+    Capability.LOOTLOG_LOOTS_HEROES_READ,
+    Capability.LOOTLOG_LOOTS_TITANS_READ,
   ],
 } as const;
 
 const RANGE_PERMISSIONS = Object.values(NPC_PERMISSIONS).flat();
 
-const LOOT_RANGE_PERMISSIONS = new Set<Permission>(NPC_PERMISSIONS.loots);
+const LOOT_RANGE_PERMISSIONS = new Set<Capability>(NPC_PERMISSIONS.loots);
 
-const ALL_PERMISSIONS = Object.values(Permission).sort();
+const ALL_PERMISSIONS = Object.values(Capability).sort();
 
 const isNpcType = Schema.is(NpcTypeSchema);
 
@@ -116,11 +116,11 @@ export const createAccessPolicySnapshot = (
     .map(({ guild, roles }): OrganizationAccessPolicy => {
       const owner = guild.ownerId === discordId;
       const explicit = new Set(roles.flatMap((role) => role.permissions));
-      const administrator = owner || explicit.has(Permission.ADMIN);
+      const administrator = owner || explicit.has(Capability.ADMIN);
 
       const permissions = administrator
         ? ALL_PERMISSIONS.filter(
-            (permission) => owner || permission !== Permission.OWNER,
+            (permission) => owner || permission !== Capability.OWNER,
           )
         : [...explicit].sort();
 
@@ -136,7 +136,7 @@ export const createAccessPolicySnapshot = (
                   (role) =>
                     role.permissions.includes(permission) &&
                     (!LOOT_RANGE_PERMISSIONS.has(permission) ||
-                      role.permissions.includes(Permission.LOOTLOG_LOOTS_READ)),
+                      role.permissions.includes(Capability.LOOTLOG_LOOTS_READ)),
                 )
                 .map((role) => ({
                   from: role.lvlRangeFrom,
@@ -156,7 +156,7 @@ export const createAccessPolicySnapshot = (
   return { version: JSON.stringify(organizations), organizations };
 };
 
-const permissionArea = (permission: Permission): AccessPolicyArea => {
+const permissionArea = (permission: Capability): AccessPolicyArea => {
   if (
     permission.startsWith("LOOTLOG_TIMERS_") ||
     permission.startsWith("LOOTLOG_HERO_SIGHTINGS_")
@@ -174,8 +174,8 @@ const permissionArea = (permission: Permission): AccessPolicyArea => {
   if (permission.startsWith("LOOTLOG_EVENTS_")) return "events";
 
   if (
-    permission === Permission.LOOTLOG_ONLINE_PLAYERS_READ ||
-    permission === Permission.LOOTLOG_PRESENCE_LOCATION_READ
+    permission === Capability.LOOTLOG_ONLINE_PLAYERS_READ ||
+    permission === Capability.LOOTLOG_PRESENCE_LOCATION_READ
   )
     return "presence";
 
@@ -263,7 +263,7 @@ export const canReadPolicyNpc = (
   if (npc && (!Number.isFinite(npc.lvl) || npc.lvl < 0 || !isNpcType(npc.type)))
     return false;
 
-  if (organization.owner || organization.permissions.includes(Permission.ADMIN))
+  if (organization.owner || organization.permissions.includes(Capability.ADMIN))
     return true;
   const [base, heroes, titans] = NPC_PERMISSIONS[area];
 

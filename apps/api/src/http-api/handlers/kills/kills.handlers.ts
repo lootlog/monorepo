@@ -2,7 +2,7 @@ import type {
   UserKillAnalyticsQuery,
   UserKillActivityQuery,
 } from "#src/contracts/kills/analytics-schemas";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { Effect } from "effect";
 import type {
   CreateKillRequest,
@@ -37,7 +37,7 @@ const getGuildKillStats = Effect.fn("kills.getGuildKillStats")(function* (
   guildId: string | undefined,
   query: GuildKillStatsQuery,
 ) {
-  const caller = yield* requireGuild(guildId, Permission.LOOTLOG_ACCESS);
+  const caller = yield* requireGuild(guildId, Capability.LOOTLOG_ACCESS);
 
   return yield* data((service) => service.getGuildKillStats(caller, query));
 });
@@ -62,14 +62,14 @@ const getGuildTopNpcs = Effect.fn("kills.getGuildTopNpcs")(function* (
   guildId: string | undefined,
   query: GuildTopNpcsQuery,
 ) {
-  const caller = yield* requireGuild(guildId, Permission.LOOTLOG_ACCESS);
+  const caller = yield* requireGuild(guildId, Capability.LOOTLOG_ACCESS);
 
   return yield* data((service) => service.getGuildTopNpcs(caller, query));
 });
 
 const getGuildTopKillersByType = Effect.fn("kills.getGuildTopKillersByType")(
   function* (guildId: string | undefined, query: GuildTopKillersQuery) {
-    const caller = yield* requireGuild(guildId, Permission.LOOTLOG_ACCESS);
+    const caller = yield* requireGuild(guildId, Capability.LOOTLOG_ACCESS);
 
     return yield* data((service) =>
       service.getGuildTopKillersByType(caller, query),
@@ -82,7 +82,7 @@ const getNpcKillers = Effect.fn("kills.getNpcKillers")(function* (
   npcId: string,
   query: NpcKillersQuery,
 ) {
-  const caller = yield* requireGuild(guildId, Permission.LOOTLOG_ACCESS);
+  const caller = yield* requireGuild(guildId, Capability.LOOTLOG_ACCESS);
   const parsedNpcId = yield* parseIdentifier(npcId, "INVALID_NPC_ID");
 
   const result = yield* data((service) =>
@@ -102,7 +102,7 @@ export const getMemberKills = Effect.fn("kills.getMemberKills")(function* (
   memberId: string,
   query: MemberKillsQuery,
 ) {
-  const caller = yield* requireGuild(guildId, Permission.LOOTLOG_ACCESS);
+  const caller = yield* requireGuild(guildId, Capability.LOOTLOG_ACCESS);
   const parsedMemberId = yield* parseIdentifier(memberId, "INVALID_MEMBER_ID");
 
   const result = yield* data((service) =>

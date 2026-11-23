@@ -8,7 +8,7 @@ import {
   memberCapabilities,
   resolveCapabilities,
 } from "@lootlog/domain/access-policy";
-import type { Permission } from "@lootlog/schema/permissions";
+import type { Capability } from "@lootlog/schema/permissions";
 import type { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import {
   guildTable,
@@ -47,7 +47,7 @@ const decodeCachedGuild = Schema.decodeUnknownSync(
 export type OrganizationContext = {
   readonly guildId: string;
   readonly ownerId: string;
-  readonly permissions: ReadonlyArray<Permission>;
+  readonly permissions: ReadonlyArray<Capability>;
   readonly guild: typeof guildTable.$inferSelect;
   readonly member: MemberWithRoles;
   readonly roles: ReadonlyArray<Role>;

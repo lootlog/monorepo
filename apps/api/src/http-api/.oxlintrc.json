@@ -1,0 +1,232 @@
+{
+  "extends": ["../../.oxlintrc.json"],
+  "overrides": [
+    {
+      "files": ["domain-json.schema.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["decodeDomainJson"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["handlers/party-ready-room/party-ready-room.handlers.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["decode"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["access/public-system.access.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["decode"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["handlers/timers/timers.handlers.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["decode", "parsedLimit"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["handlers/internal/internal.handlers.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["decode"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["handlers/members/members.handlers.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["decode"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["handlers/lootlog-config/lootlog-config.handlers.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["decode"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["authorize"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["access/account-organization.access.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["decode"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["handlers/chat/chat.handlers.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["decode"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["handlers/user-lootlog-config/user-lootlog-config.handlers.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["decode"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["access/organization-workspace.access.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["decode"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["access/records.data-layer.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["decode"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["handlers/docs/docs.handlers.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["decode", "execute"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["access/records.access.ts"],
+      "rules": {
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["requireGuild"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["handlers/preferences/preferences.operations.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["decode", "settingsDocumentsResponse"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["handlers/notifications/notifications.handlers.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["integerParameter"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "boundaryFunctions": ["authorized", "integerParameter"],
+            "allowInTypeGuards": true
+          }
+        ]
+      }
+    },
+    {
+      "files": ["handlers/events/events-endpoint.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["stringParameter"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "boundaryFunctions": ["authorized", "stringParameter"],
+            "allowInTypeGuards": true
+          }
+        ]
+      }
+    },
+    {
+      "files": ["application-error-response.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["applicationErrorResponse"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "boundaryFunctions": ["applicationErrorResponse"],
+            "allowInTypeGuards": true
+          }
+        ]
+      }
+    }
+  ]
+}

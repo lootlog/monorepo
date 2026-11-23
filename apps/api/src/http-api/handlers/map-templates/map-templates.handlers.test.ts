@@ -1,7 +1,7 @@
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import {
   MapTemplateResponseSchema,
   type CreateMapTemplate,
@@ -89,7 +89,7 @@ describe("Map Templates HttpApi handlers", () => {
     );
 
     expect(authorizationCalls).toEqual([
-      { guildId: "guild-a", capability: Permission.LOOTLOG_MANAGE },
+      { guildId: "guild-a", capability: Capability.LOOTLOG_MANAGE },
     ]);
     expect(createCalls).toEqual([{ guildId: "guild-a", payload }]);
     expect(response).toEqual(storedTemplate);

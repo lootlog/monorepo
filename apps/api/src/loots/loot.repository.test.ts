@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "bun:test";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { Effect } from "effect";
 import {
   guildTable,
@@ -126,7 +126,7 @@ const setup = async () => {
 
   const likerIds = async (guild: typeof first, lootId: number) =>
     (
-      await run(query.fetchLootById(guild, [Permission.OWNER], [], lootId))
+      await run(query.fetchLootById(guild, [Capability.OWNER], [], lootId))
     )?.likes.map(({ id }) => id);
 
   return { run, persistence, first, second, setLike, likerIds };

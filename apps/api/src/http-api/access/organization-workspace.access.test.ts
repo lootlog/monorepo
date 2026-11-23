@@ -1,7 +1,7 @@
 import { AccessRequirement } from "@lootlog/domain/access-policy";
 import { describe, expect, it } from "bun:test";
 import { Effect, Schema } from "effect";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import {
   PermissionDeniedError,
   ResourceNotFoundError,
@@ -77,8 +77,8 @@ describe("Reservations and Roles HttpApi handlers", () => {
       {
         guildId: "guild-alias",
         allOf: [
-          Permission.LOOTLOG_RESERVATIONS_READ,
-          Permission.LOOTLOG_RESERVATIONS_WRITE,
+          Capability.LOOTLOG_RESERVATIONS_READ,
+          Capability.LOOTLOG_RESERVATIONS_WRITE,
         ],
       },
     ]);
@@ -185,7 +185,7 @@ describe("Reservations and Roles HttpApi handlers", () => {
 
     const response = await Effect.runPromise(
       updateGuildRole("guild-alias", role.id, {
-        permissions: [Permission.ADMIN],
+        permissions: [Capability.ADMIN],
         lvlRangeFrom: 1,
         lvlRangeTo: 300,
       }).pipe(Effect.provide(layer)),

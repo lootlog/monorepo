@@ -16,8 +16,8 @@ import { Context, Effect, Schema } from "effect";
 import { HttpApiBuilder } from "effect/http-api";
 
 import {
-  Permission,
-  type Permission as PermissionValue,
+  Capability,
+  type Capability as PermissionValue,
 } from "@lootlog/schema/permissions";
 
 import {
@@ -63,7 +63,7 @@ const authorize = (guildId: string, capability: PermissionValue) =>
 const getMapTemplates = Effect.fn("getMapTemplates")(function* (
   guildId: string,
 ) {
-  const access = yield* authorize(guildId, Permission.LOOTLOG_ACCESS);
+  const access = yield* authorize(guildId, Capability.LOOTLOG_ACCESS);
 
   const templates = yield* Effect.flatMap(MapTemplatesData, (data) =>
     data.findMany(access.guildId),
@@ -76,7 +76,7 @@ export const createMapTemplate = Effect.fn("createMapTemplate")(function* (
   guildId: string,
   payload: CreateMapTemplate,
 ) {
-  const access = yield* authorize(guildId, Permission.LOOTLOG_MANAGE);
+  const access = yield* authorize(guildId, Capability.LOOTLOG_MANAGE);
 
   const template = yield* Effect.flatMap(MapTemplatesData, (data) =>
     data.create(access.guildId, payload),
@@ -90,7 +90,7 @@ export const updateMapTemplate = Effect.fn("updateMapTemplate")(function* (
   templateId: string,
   payload: CreateMapTemplate,
 ) {
-  const access = yield* authorize(guildId, Permission.LOOTLOG_MANAGE);
+  const access = yield* authorize(guildId, Capability.LOOTLOG_MANAGE);
 
   const template = yield* Effect.flatMap(MapTemplatesData, (data) =>
     data.update(access.guildId, templateId, payload),
@@ -110,7 +110,7 @@ const deleteMapTemplate = Effect.fn("deleteMapTemplate")(function* (
   guildId: string,
   templateId: string,
 ) {
-  const access = yield* authorize(guildId, Permission.LOOTLOG_MANAGE);
+  const access = yield* authorize(guildId, Capability.LOOTLOG_MANAGE);
 
   const deleted = yield* Effect.flatMap(MapTemplatesData, (data) =>
     data.delete(access.guildId, templateId),

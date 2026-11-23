@@ -1,7 +1,7 @@
 import { buildLootVisibilityCacheRoles } from "#src/loots/loot-visibility-cache";
-import { Capability, type AccessPolicy } from "@lootlog/domain/access-policy";
+import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { stableJsonCacheKey } from "@lootlog/schema/stable-json";
 import { Effect, Schema } from "effect";
 import type { roleTable } from "#src/database/drizzle/organization.schema";
@@ -57,7 +57,7 @@ export const buildNpcLevelFilter = (
 
 export const readableRoles = (roles: ReadonlyArray<KillQueryRole>) =>
   roles.filter((role) =>
-    role.permissions.includes(Permission.LOOTLOG_LOOTS_READ),
+    role.permissions.includes(Capability.LOOTLOG_LOOTS_READ),
   );
 
 export const visibilityFilter = (
@@ -73,10 +73,10 @@ export const visibilityFilter = (
       AND: [
         { npcLvl: { gte: Number(role.lvlRangeFrom ?? 0) } },
         { npcLvl: { lte: Number(role.lvlRangeTo ?? 500) } },
-        ...(!role.permissions.includes(Permission.LOOTLOG_LOOTS_TITANS_READ)
+        ...(!role.permissions.includes(Capability.LOOTLOG_LOOTS_TITANS_READ)
           ? [{ npcType: { not: NpcType.TITAN } } as const]
           : []),
-        ...(!role.permissions.includes(Permission.LOOTLOG_LOOTS_HEROES_READ)
+        ...(!role.permissions.includes(Capability.LOOTLOG_LOOTS_HEROES_READ)
           ? [
               {
                 npcType: { notIn: [NpcType.HERO, NpcType.EVENT_HERO] },

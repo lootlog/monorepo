@@ -1,6 +1,6 @@
 import { describe, expect, it, mock } from "bun:test";
 import { Effect, Layer, Queue } from "effect";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { getGuildCacheKey } from "#src/guilds/guild-configuration-cache";
 import { MembersData } from "#src/members/members-data";
@@ -91,7 +91,7 @@ describe("organization context lookup", () => {
         name: "Member",
         color: null,
         position: 1,
-        permissions: [Permission.LOOTLOG_ACCESS],
+        permissions: [Capability.LOOTLOG_ACCESS],
         lvlRangeFrom: 0,
         lvlRangeTo: 500,
         createdAt: guild.createdAt,
@@ -102,7 +102,7 @@ describe("organization context lookup", () => {
     const cachedContext = {
       guildId,
       ownerId: guild.ownerId,
-      permissions: [Permission.LOOTLOG_ACCESS],
+      permissions: [Capability.LOOTLOG_ACCESS],
       guild,
       member: {
         id: 1,
@@ -267,7 +267,7 @@ describe("organization context lookup", () => {
     expect(await lookupWith(null)).toBeNull();
     expect(await lookupWith({ ...member, active: false })).toBeNull();
     expect(await lookupWith({ ...member, globalUserId: null })).toBeNull();
-    expect((await lookupWith(member))?.permissions).toContain(Permission.OWNER);
+    expect((await lookupWith(member))?.permissions).toContain(Capability.OWNER);
   });
 
   it("serves a stored member past the soft TTL while Discord refreshes it in the background, and waits for Discord only when it must", async () => {
@@ -300,7 +300,7 @@ describe("organization context lookup", () => {
           name: "Member",
           color: null,
           position: 1,
-          permissions: [Permission.LOOTLOG_ACCESS],
+          permissions: [Capability.LOOTLOG_ACCESS],
           lvlRangeFrom: 0,
           lvlRangeTo: 500,
           createdAt: new Date(guild.createdAt),
@@ -338,7 +338,7 @@ describe("organization context lookup", () => {
       }).pipe(Effect.runPromise);
 
     expect(await lookupWith(stored)).toEqual({
-      permissions: [[Permission.LOOTLOG_ACCESS], [Permission.LOOTLOG_ACCESS]],
+      permissions: [[Capability.LOOTLOG_ACCESS], [Capability.LOOTLOG_ACCESS]],
       queued: ["organization-context-stale"],
       cached: false,
       waitedForDiscord: 0,

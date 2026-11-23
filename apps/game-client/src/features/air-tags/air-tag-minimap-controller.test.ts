@@ -1,6 +1,6 @@
 import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
 import type { AirTagTarget } from "@lootlog/schema/air-tag";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { getSocket } from "@/lib/socket";
 import { useGlobalStore } from "@/store/global.store";
 import { createOnlinePlayersTest } from "@/test/online-players-fixtures";
@@ -185,7 +185,7 @@ describe("AirTagMinimapController", () => {
           guild: { id, ownerId: "owner" },
           roles: [
             {
-              permissions: [Permission.LOOTLOG_ONLINE_PLAYERS_READ],
+              permissions: [Capability.LOOTLOG_ONLINE_PLAYERS_READ],
               lvlRangeFrom: 1,
               lvlRangeTo: 300,
             },

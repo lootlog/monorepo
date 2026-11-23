@@ -7,7 +7,7 @@ import {
   startPair,
   makeAdminSession,
 } from "../../test/realtime-fixtures.js";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import type {
   PartyGatheringSummary,
   PartyGatheringUpdateEnvelope,
@@ -26,14 +26,14 @@ test("gathering rosters reach authorized observers across gateways without expos
   const sharedGuild = "organization-2";
 
   const readPermissions = [
-    Permission.LOOTLOG_CHAT_READ,
-    Permission.LOOTLOG_CHAT_HEROES_READ,
+    Capability.LOOTLOG_CHAT_READ,
+    Capability.LOOTLOG_CHAT_HEROES_READ,
   ];
 
   const scenarios: Array<{
     name: string;
     allowed: boolean;
-    permissions?: Permission[];
+    permissions?: Capability[];
     minimumLevel?: number;
     organizations?: string[];
     organizer?: boolean;
@@ -52,15 +52,15 @@ test("gathering rosters reach authorized observers across gateways without expos
       allowed: true,
       organizer: true,
       permissions: [
-        Permission.LOOTLOG_CHAT_READ,
-        Permission.LOOTLOG_NOTIFICATIONS_SEND,
+        Capability.LOOTLOG_CHAT_READ,
+        Capability.LOOTLOG_NOTIFICATIONS_SEND,
       ],
     },
     {
       name: "sender-only-organizer",
       allowed: true,
       organizer: true,
-      permissions: [Permission.LOOTLOG_NOTIFICATIONS_SEND],
+      permissions: [Capability.LOOTLOG_NOTIFICATIONS_SEND],
     },
     {
       name: "revoked-organizer",
@@ -73,14 +73,14 @@ test("gathering rosters reach authorized observers across gateways without expos
       allowed: false,
       organizer: true,
       apiKey: true,
-      permissions: [Permission.LOOTLOG_NOTIFICATIONS_SEND],
+      permissions: [Capability.LOOTLOG_NOTIFICATIONS_SEND],
     },
     { name: "owner", allowed: true, owner: true, permissions: [] },
-    { name: "administrator", allowed: true, permissions: [Permission.ADMIN] },
+    { name: "administrator", allowed: true, permissions: [Capability.ADMIN] },
     {
       name: "hidden-tier",
       allowed: false,
-      permissions: [Permission.LOOTLOG_CHAT_READ],
+      permissions: [Capability.LOOTLOG_CHAT_READ],
     },
     { name: "hidden-level", allowed: false, minimumLevel: 200 },
     {
@@ -398,24 +398,24 @@ test("gathering rosters reach authorized observers across gateways without expos
 
 const npcTopicPermissions = {
   "organization.timers": {
-    read: Permission.LOOTLOG_TIMERS_READ,
-    heroes: Permission.LOOTLOG_TIMERS_HEROES_READ,
-    titans: Permission.LOOTLOG_TIMERS_TITANS_READ,
+    read: Capability.LOOTLOG_TIMERS_READ,
+    heroes: Capability.LOOTLOG_TIMERS_HEROES_READ,
+    titans: Capability.LOOTLOG_TIMERS_TITANS_READ,
   },
   "organization.chat": {
-    read: Permission.LOOTLOG_CHAT_READ,
-    heroes: Permission.LOOTLOG_CHAT_HEROES_READ,
-    titans: Permission.LOOTLOG_CHAT_TITANS_READ,
+    read: Capability.LOOTLOG_CHAT_READ,
+    heroes: Capability.LOOTLOG_CHAT_HEROES_READ,
+    titans: Capability.LOOTLOG_CHAT_TITANS_READ,
   },
   "organization.notifications": {
-    read: Permission.LOOTLOG_NOTIFICATIONS_READ,
-    heroes: Permission.LOOTLOG_NOTIFICATIONS_HEROES_READ,
-    titans: Permission.LOOTLOG_NOTIFICATIONS_TITANS_READ,
+    read: Capability.LOOTLOG_NOTIFICATIONS_READ,
+    heroes: Capability.LOOTLOG_NOTIFICATIONS_HEROES_READ,
+    titans: Capability.LOOTLOG_NOTIFICATIONS_TITANS_READ,
   },
   "organization.loots": {
-    read: Permission.LOOTLOG_LOOTS_READ,
-    heroes: Permission.LOOTLOG_LOOTS_HEROES_READ,
-    titans: Permission.LOOTLOG_LOOTS_TITANS_READ,
+    read: Capability.LOOTLOG_LOOTS_READ,
+    heroes: Capability.LOOTLOG_LOOTS_HEROES_READ,
+    titans: Capability.LOOTLOG_LOOTS_TITANS_READ,
   },
 } as const;
 

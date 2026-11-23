@@ -6,7 +6,7 @@ import {
   startPair,
   makeAdminSession,
 } from "../../test/realtime-fixtures.js";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { describe, expect, test } from "bun:test";
 import { decodeRealtimeFrame } from "@lootlog/protocol/realtime/codec";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
@@ -313,7 +313,7 @@ describe("RealtimeHub federation", () => {
       organizationId: "organization-1",
     } as const;
 
-    const role = (permissions: Permission[], from = 0, to = 500) => ({
+    const role = (permissions: Capability[], from = 0, to = 500) => ({
       id: crypto.randomUUID(),
       permissions,
       lvlRangeFrom: from,
@@ -321,22 +321,22 @@ describe("RealtimeHub federation", () => {
     });
 
     const read = [
-      Permission.LOOTLOG_LOOTS_READ,
-      Permission.LOOTLOG_LOOTS_HEROES_READ,
+      Capability.LOOTLOG_LOOTS_READ,
+      Capability.LOOTLOG_LOOTS_HEROES_READ,
     ];
 
     const variants = [
       { name: "visible", roles: [role(read)] },
       { name: "low-level", roles: [role(read, 0, 99)] },
-      { name: "hidden-type", roles: [role([Permission.LOOTLOG_LOOTS_READ])] },
+      { name: "hidden-type", roles: [role([Capability.LOOTLOG_LOOTS_READ])] },
       {
         name: "split-role",
         roles: [
-          role([Permission.LOOTLOG_LOOTS_READ], 0, 99),
-          role([Permission.LOOTLOG_LOOTS_HEROES_READ], 100, 200),
+          role([Capability.LOOTLOG_LOOTS_READ], 0, 99),
+          role([Capability.LOOTLOG_LOOTS_HEROES_READ], 100, 200),
         ],
       },
-      { name: "admin", roles: [role([Permission.ADMIN])] },
+      { name: "admin", roles: [role([Capability.ADMIN])] },
       { name: "owner", roles: [] },
       { name: "game", roles: [role(read)] },
       { name: "other-guild", roles: [role(read)] },

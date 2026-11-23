@@ -1,6 +1,6 @@
 import { RealtimeStoreError } from "./realtime-errors.js";
 import { describe, expect, test } from "bun:test";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { Effect, Exit, Fiber } from "effect";
 import { TestClock } from "effect/testing";
 import { GuildStoreFailure, type GuildStore } from "#src/guilds/guild-store";
@@ -32,7 +32,7 @@ describe("CommandHandler session lifecycle", () => {
     );
 
     const retainedGuild = guild(
-      [Permission.LOOTLOG_CHAT_READ],
+      [Capability.LOOTLOG_CHAT_READ],
       "organization-2",
     );
 
@@ -40,7 +40,7 @@ describe("CommandHandler session lifecycle", () => {
       const target = makeTestSocket(
         makeSession({
           connectionId,
-          guilds: [guild([Permission.LOOTLOG_CHAT_READ]), retainedGuild],
+          guilds: [guild([Capability.LOOTLOG_CHAT_READ]), retainedGuild],
         }),
       );
 
@@ -138,7 +138,7 @@ describe("CommandHandler session lifecycle", () => {
       hub.sockets.push(target.socket);
     }
 
-    guilds.guilds = [guild([Permission.LOOTLOG_CHAT_READ])];
+    guilds.guilds = [guild([Capability.LOOTLOG_CHAT_READ])];
     const sendEvent = hub.sendEvent.bind(hub);
     hub.sendEvent = (socket, event) => {
       if (socket === targets[0]?.socket) throw new Error("Transport closed");

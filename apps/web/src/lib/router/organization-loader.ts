@@ -1,5 +1,5 @@
+import { Capability } from "@lootlog/schema/permissions";
 import {
-  Capability,
   createAccessPolicy,
   type AccessPolicy,
 } from "@lootlog/domain/access-policy";

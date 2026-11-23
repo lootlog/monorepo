@@ -1,6 +1,6 @@
+import { Capability } from "@lootlog/schema/permissions";
 import {
   AccessRequirement,
-  Capability,
   type AccessPolicy,
 } from "@lootlog/domain/access-policy";
 import { HERO_SIGHTING_WRITE_PERMISSION } from "@lootlog/domain/npc-permissions";

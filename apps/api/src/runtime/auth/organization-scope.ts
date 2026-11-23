@@ -1,7 +1,7 @@
 import { inArray } from "drizzle-orm";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import { Effect } from "effect";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import {
@@ -22,7 +22,7 @@ export const apiKeyCacheSuffix = Effect.map(requestApiKeyAccess, (access) =>
 
 export const apiKeyCallerGuilds = (
   database: typeof ApiDatabase.Service,
-  permissions: ReadonlyArray<Permission> = [Permission.LOOTLOG_ACCESS],
+  permissions: ReadonlyArray<Capability> = [Capability.LOOTLOG_ACCESS],
 ) =>
   Effect.gen(function* () {
     const caller = yield* requestApiKeyCaller;
@@ -43,7 +43,7 @@ export const apiKeyCallerGuilds = (
 
 export const apiKeyAccessibleGuilds = (
   database: typeof ApiDatabase.Service,
-  permissions?: ReadonlyArray<Permission>,
+  permissions?: ReadonlyArray<Capability>,
 ) =>
   Effect.map(
     apiKeyCallerGuilds(database, permissions),

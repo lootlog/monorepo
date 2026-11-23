@@ -1,3 +1,4 @@
+import { Capability } from "@lootlog/schema/permissions";
 import { authFetch } from "./startup-navigation.fetch.fixtures";
 import type { RouterContext } from "@/App";
 import type { SessionData } from "@/hooks/auth/use-session";
@@ -9,7 +10,6 @@ import type {
   NullableMemberResponseDto,
 } from "@lootlog/client/main";
 import { configureApiClients } from "@lootlog/client/transport";
-import { Capability } from "@lootlog/domain/access-policy";
 import { onlineManager, QueryClient } from "@tanstack/react-query";
 import {
   createMemoryHistory,

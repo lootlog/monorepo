@@ -20,6 +20,15 @@
           }
         ]
       }
+    },
+    {
+      // Shared test fixtures keep the Promise contracts and asserted indices of the tests that import them.
+      "files": ["test/*-fixtures.ts"],
+      "rules": {
+        "anti-slop-effect/no-service-constructor-imports": "off",
+        "require-await": "off",
+        "@typescript-eslint/no-non-null-assertion": "off"
+      }
     }
   ]
 }

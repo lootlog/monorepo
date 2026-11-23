@@ -1,7 +1,7 @@
 import { Database, type SQLQueryBindings } from "bun:sqlite";
 import { describe, expect, it } from "bun:test";
-import { createAccessPolicy, Capability } from "@lootlog/domain/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { createAccessPolicy } from "@lootlog/domain/access-policy";
+import { Capability } from "@lootlog/schema/permissions";
 import { Schema } from "effect";
 import { PgDialect } from "drizzle-orm/pg-core";
 import { guildKillTotalTable } from "#src/database/drizzle/kill-statistics.schema";
@@ -87,29 +87,29 @@ const visibleNpcIds = (
 
 describe("kill query visibility at the SQL boundary", () => {
   it("returns no NPCs when organization access grants no loot read role", () => {
-    expect(visibleNpcIds([role([Permission.LOOTLOG_ACCESS])])).toEqual([]);
+    expect(visibleNpcIds([role([Capability.LOOTLOG_ACCESS])])).toEqual([]);
     expect(visibleNpcIds([])).toEqual([]);
   });
 
   it("keeps empty broad roles from extending inclusive readable ranges", () => {
     expect(
-      visibleNpcIds([role([Permission.LOOTLOG_LOOTS_READ]), role([], 0, 500)]),
+      visibleNpcIds([role([Capability.LOOTLOG_LOOTS_READ]), role([], 0, 500)]),
     ).toEqual([2, 3]);
   });
 
   it("requires the special NPC permission on the role covering its level", () => {
     expect(
       visibleNpcIds([
-        role([Permission.LOOTLOG_LOOTS_READ]),
+        role([Capability.LOOTLOG_LOOTS_READ]),
         role([
-          Permission.LOOTLOG_LOOTS_HEROES_READ,
-          Permission.LOOTLOG_LOOTS_TITANS_READ,
+          Capability.LOOTLOG_LOOTS_HEROES_READ,
+          Capability.LOOTLOG_LOOTS_TITANS_READ,
         ]),
         role(
           [
-            Permission.LOOTLOG_LOOTS_READ,
-            Permission.LOOTLOG_LOOTS_HEROES_READ,
-            Permission.LOOTLOG_LOOTS_TITANS_READ,
+            Capability.LOOTLOG_LOOTS_READ,
+            Capability.LOOTLOG_LOOTS_HEROES_READ,
+            Capability.LOOTLOG_LOOTS_TITANS_READ,
           ],
           300,
           500,
@@ -122,9 +122,9 @@ describe("kill query visibility at the SQL boundary", () => {
     expect(
       visibleNpcIds([
         role([
-          Permission.LOOTLOG_LOOTS_READ,
-          Permission.LOOTLOG_LOOTS_HEROES_READ,
-          Permission.LOOTLOG_LOOTS_TITANS_READ,
+          Capability.LOOTLOG_LOOTS_READ,
+          Capability.LOOTLOG_LOOTS_HEROES_READ,
+          Capability.LOOTLOG_LOOTS_TITANS_READ,
         ]),
       ]),
     ).toEqual([2, 3, 5, 6, 7]);
@@ -139,7 +139,7 @@ describe("kill query visibility at the SQL boundary", () => {
   it("limits administrators to the NPCs their roles let them see in loots", () => {
     expect(
       visibleNpcIds(
-        [role([Permission.LOOTLOG_LOOTS_READ])],
+        [role([Capability.LOOTLOG_LOOTS_READ])],
         [Capability.ADMIN],
       ),
     ).toEqual([2, 3]);

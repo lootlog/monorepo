@@ -2,7 +2,7 @@ import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { describe, expect, it } from "bun:test";
 import { Effect, Exit, Layer, Schema } from "effect";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import type { Guild, Role } from "#src/timers/timers.types";
 import {
   TimersResponse,
@@ -59,7 +59,7 @@ const restrictedRole = {
   name: "Timer readers",
   color: null,
   position: 1,
-  permissions: [Permission.LOOTLOG_TIMERS_READ],
+  permissions: [Capability.LOOTLOG_TIMERS_READ],
   lvlRangeFrom: 1,
   lvlRangeTo: 100,
   createdAt: now,
@@ -68,10 +68,10 @@ const restrictedRole = {
 
 const accessPolicy = createAccessPolicy({
   capabilities: [
-    Permission.LOOTLOG_TIMERS_READ,
-    Permission.LOOTLOG_TIMERS_WRITE,
-    Permission.LOOTLOG_TIMERS_RESET,
-    Permission.LOOTLOG_MANAGE,
+    Capability.LOOTLOG_TIMERS_READ,
+    Capability.LOOTLOG_TIMERS_WRITE,
+    Capability.LOOTLOG_TIMERS_RESET,
+    Capability.LOOTLOG_MANAGE,
   ],
 });
 
@@ -483,10 +483,10 @@ describe("Timers HttpApi handlers", () => {
     );
 
     expect(authorizationCalls).toEqual([
-      { guildId: guild.id, capability: Permission.LOOTLOG_TIMERS_RESET },
-      { guildId: guild.id, capability: Permission.LOOTLOG_MANAGE },
-      { guildId: guild.id, capability: Permission.LOOTLOG_TIMERS_WRITE },
-      { guildId: guild.id, capability: Permission.LOOTLOG_TIMERS_WRITE },
+      { guildId: guild.id, capability: Capability.LOOTLOG_TIMERS_RESET },
+      { guildId: guild.id, capability: Capability.LOOTLOG_MANAGE },
+      { guildId: guild.id, capability: Capability.LOOTLOG_TIMERS_WRITE },
+      { guildId: guild.id, capability: Capability.LOOTLOG_TIMERS_WRITE },
     ]);
     expect(mutationCalls).toEqual([
       ["reset", "discord-a", guild.id, storedTimer.timerKey, resetPayload],

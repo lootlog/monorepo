@@ -13,7 +13,7 @@ import { applicationErrorResponse } from "../application-error-response.js";
 import { EffectDrizzleQueryError } from "drizzle-orm/effect-core/errors";
 import { SqlError } from "effect/sql/SqlError";
 
-import type { Permission as PermissionValue } from "@lootlog/schema/permissions";
+import type { Capability as PermissionValue } from "@lootlog/schema/permissions";
 
 import {
   ResourceConflictError,

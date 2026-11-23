@@ -8,7 +8,7 @@ import {
   type NpcPresenceReportAck,
   type NpcPresenceSnapshot,
 } from "@lootlog/schema/npc-presence";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import type { ServerEvent } from "@lootlog/protocol/realtime";
 import { Schema, Context, Effect, Exit, Layer, Semaphore } from "effect";
 import {
@@ -432,7 +432,7 @@ export class NpcPresenceService {
       hasPermission(
         socket.data,
         organizationId,
-        Permission.LOOTLOG_TIMERS_WRITE,
+        Capability.LOOTLOG_TIMERS_WRITE,
       ),
     );
   }

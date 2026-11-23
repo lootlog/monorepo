@@ -25,7 +25,7 @@ import {
   loadUserLootScopes,
 } from "#src/loots/query/user-loot-scopes";
 import { apiKeyOrganizationFilter } from "#src/runtime/auth/organization-scope";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { Effect } from "effect";
 import { LootShareSourceEnum as LootShareSource } from "@lootlog/schema/loot";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -128,7 +128,7 @@ export const makeLootAllocationPersistence = (
 
         if (
           !createAccessPolicy({ capabilities: permissions }).allows(
-            Permission.LOOTLOG_LOOTS_WRITE,
+            Capability.LOOTLOG_LOOTS_WRITE,
           )
         )
           return [];

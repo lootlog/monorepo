@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { memberCapabilities } from "@lootlog/domain/access-policy";
 import {
   notificationMatchingPolicy as service,
@@ -43,7 +43,7 @@ describe("NotificationMatchingService", () => {
         [
           {
             id: "admin",
-            permissions: [Permission.ADMIN],
+            permissions: [Capability.ADMIN],
             lvlRangeFrom: 1,
             lvlRangeTo: 10,
           },
@@ -59,7 +59,7 @@ describe("NotificationMatchingService", () => {
         [
           {
             id: "titan-only",
-            permissions: [Permission.LOOTLOG_LOOTS_TITANS_READ],
+            permissions: [Capability.LOOTLOG_LOOTS_TITANS_READ],
             lvlRangeFrom: 1,
             lvlRangeTo: 500,
           },
@@ -76,8 +76,8 @@ describe("NotificationMatchingService", () => {
           {
             id: "complete-titan",
             permissions: [
-              Permission.LOOTLOG_LOOTS_READ,
-              Permission.LOOTLOG_LOOTS_TITANS_READ,
+              Capability.LOOTLOG_LOOTS_READ,
+              Capability.LOOTLOG_LOOTS_TITANS_READ,
             ],
             lvlRangeFrom: 250,
             lvlRangeTo: 350,
@@ -95,8 +95,8 @@ describe("NotificationMatchingService", () => {
           {
             id: "complete-titan",
             permissions: [
-              Permission.LOOTLOG_LOOTS_READ,
-              Permission.LOOTLOG_LOOTS_TITANS_READ,
+              Capability.LOOTLOG_LOOTS_READ,
+              Capability.LOOTLOG_LOOTS_TITANS_READ,
             ],
             lvlRangeFrom: 250,
             lvlRangeTo: 350,
@@ -113,7 +113,7 @@ describe("NotificationMatchingService", () => {
         [
           {
             id: "base",
-            permissions: [Permission.LOOTLOG_LOOTS_READ],
+            permissions: [Capability.LOOTLOG_LOOTS_READ],
             lvlRangeFrom: 80,
             lvlRangeTo: 180,
           },

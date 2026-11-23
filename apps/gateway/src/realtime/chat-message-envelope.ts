@@ -1,5 +1,5 @@
 import { canDeleteChatMessage } from "@lootlog/domain/chat-message-permissions";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import type { ServerEvent } from "@lootlog/protocol/realtime";
 import { Option, Schema } from "effect";
 import type { UserGuildData } from "#src/guilds/guild";
@@ -17,7 +17,7 @@ export const prepareChatMessagePermissions = (event: ChatEvent) => {
     const permissions = guild?.roles.flatMap((role) => role.permissions) ?? [];
 
     if (guild?.guild.ownerId === session.discordId)
-      permissions.push(Permission.OWNER);
+      permissions.push(Capability.OWNER);
 
     return {
       canDelete: canDeleteChatMessage(

@@ -2,7 +2,7 @@ import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
 import { decodeDomainJson } from "../../domain-json.schema.js";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { PermissionDeniedError } from "@lootlog/protocol/http/errors";
 import { ChatMessageResponse } from "#src/contracts/chat/schemas";
 import { ChatData, ChatOperationError } from "#src/chat/chat-data";
@@ -20,7 +20,7 @@ const identity = { userId: "user-a", discordId: "discord-a" };
 const access = {
   ...identity,
   guildId: "guild-canonical",
-  permissions: [Permission.LOOTLOG_CHAT_READ, Permission.LOOTLOG_CHAT_WRITE],
+  permissions: [Capability.LOOTLOG_CHAT_READ, Capability.LOOTLOG_CHAT_WRITE],
   roles: [],
 };
 
@@ -201,7 +201,7 @@ describe("Chat HttpApi handlers", () => {
     expect(authorizationCalls).toEqual([
       {
         guildId: "guild-alias",
-        allOf: [Permission.LOOTLOG_CHAT_READ, Permission.LOOTLOG_CHAT_WRITE],
+        allOf: [Capability.LOOTLOG_CHAT_READ, Capability.LOOTLOG_CHAT_WRITE],
       },
     ]);
     expect(mutationCalls).toEqual([

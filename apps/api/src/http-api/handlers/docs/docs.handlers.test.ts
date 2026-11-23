@@ -8,7 +8,7 @@ import {
   createAccessPolicy,
   AccessRequirement,
 } from "@lootlog/domain/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { Effect, Layer } from "effect";
 import type { DocsService } from "#src/docs/docs.service";
 import {
@@ -33,9 +33,9 @@ const caller: AuthorizedDocsCaller = {
   member: createMemberFixture({ userId: "user-1", guildId: "guild-a" }),
   accessPolicy: createAccessPolicy({
     capabilities: [
-      Permission.LOOTLOG_DOCS_READ,
-      Permission.LOOTLOG_DOCS_WRITE,
-      Permission.ADMIN,
+      Capability.LOOTLOG_DOCS_READ,
+      Capability.LOOTLOG_DOCS_WRITE,
+      Capability.ADMIN,
     ],
   }),
   roles: [],
@@ -153,7 +153,7 @@ describe("Docs HttpApi handlers", () => {
     expect(authorizationCalls).toEqual([
       {
         guildId: "guild-a",
-        capabilities: [Permission.LOOTLOG_DOCS_WRITE],
+        capabilities: [Capability.LOOTLOG_DOCS_WRITE],
         mode: "all",
       },
     ]);

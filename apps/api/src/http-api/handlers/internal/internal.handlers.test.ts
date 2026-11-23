@@ -6,7 +6,7 @@ import {
 import { describe, expect, it } from "bun:test";
 import { Effect, Exit, Schema } from "effect";
 import { decodeDomainJson } from "../../domain-json.schema.js";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { OrganizationSummary } from "#src/contracts/shared";
 import { InternalUserPermissionsResponse } from "#src/contracts/internal/schemas";
 import {
@@ -139,7 +139,7 @@ describe("internal guild HttpApi handlers", () => {
                 updatedAt: new Date(0),
                 lvlRangeFrom: 1,
                 lvlRangeTo: 300,
-                permissions: [Permission.LOOTLOG_ACCESS],
+                permissions: [Capability.LOOTLOG_ACCESS],
               },
             ],
           },

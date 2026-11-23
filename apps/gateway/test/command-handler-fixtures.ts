@@ -1,4 +1,4 @@
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { Effect, Tracer } from "effect";
 import type { MargonemProofVerifier } from "../src/auth/margonem-proof.js";
 import type { UserGuildData } from "../src/guilds/guild.js";
@@ -52,7 +52,7 @@ const quietSessionFeatures = {
 } satisfies SessionFeatures;
 
 export const guild = (
-  permissions: Permission[] = [Permission.LOOTLOG_ONLINE_PLAYERS_READ],
+  permissions: Capability[] = [Capability.LOOTLOG_ONLINE_PLAYERS_READ],
   organizationId = "organization-1",
 ): UserGuildData => membership(organizationId, permissions);
 

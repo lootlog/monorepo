@@ -3,7 +3,7 @@ import type {
   PresenceWithLocation,
   ServerEvent,
 } from "@lootlog/protocol/realtime";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { bootstrapPublicApi } from "../index";
 import type { ApiEventMap } from "@lootlog/game-client-api";
@@ -18,7 +18,7 @@ import {
 
 const scope = { guildId: "guild-1", world: "alpha" };
 
-const policy = (permissions: Permission[]) =>
+const policy = (permissions: Capability[]) =>
   createAccessPolicySnapshot(
     [
       {
@@ -30,8 +30,8 @@ const policy = (permissions: Permission[]) =>
   );
 
 const fullPermissions = [
-  Permission.LOOTLOG_ONLINE_PLAYERS_READ,
-  Permission.LOOTLOG_PRESENCE_LOCATION_READ,
+  Capability.LOOTLOG_ONLINE_PLAYERS_READ,
+  Capability.LOOTLOG_PRESENCE_LOCATION_READ,
 ];
 
 const permissionEvent = (
@@ -344,7 +344,7 @@ describe("Public API presence over the realtime transport", () => {
     const { received } = await prime();
     await harness.receive(
       permissionEvent(
-        policy([...fullPermissions, Permission.LOOTLOG_TIMERS_READ]),
+        policy([...fullPermissions, Capability.LOOTLOG_TIMERS_READ]),
       ),
     );
     expect(received).not.toHaveBeenCalled();
@@ -366,7 +366,7 @@ describe("Public API presence over the realtime transport", () => {
     const { received, unsubscribe } = await prime();
     unsubscribe();
     await harness.receive(
-      permissionEvent(policy([Permission.LOOTLOG_ONLINE_PLAYERS_READ])),
+      permissionEvent(policy([Capability.LOOTLOG_ONLINE_PLAYERS_READ])),
     );
 
     const unsubscribeBasic = getApi().subscribe(

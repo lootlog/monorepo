@@ -1,5 +1,5 @@
 import { Effect, Layer } from "effect";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import {
   OrganizationWorkspaceData,
   MyReservationsData,
@@ -17,10 +17,10 @@ export const guildAccess = {
   guildId: "guild-a",
   ownerId: identity.discordId,
   permissions: [
-    Permission.LOOTLOG_ACCESS,
-    Permission.LOOTLOG_RESERVATIONS_READ,
-    Permission.LOOTLOG_RESERVATIONS_WRITE,
-    Permission.ADMIN,
+    Capability.LOOTLOG_ACCESS,
+    Capability.LOOTLOG_RESERVATIONS_READ,
+    Capability.LOOTLOG_RESERVATIONS_WRITE,
+    Capability.ADMIN,
   ],
 };
 
@@ -57,7 +57,7 @@ export const role = {
   name: "Admins",
   color: null,
   position: 1,
-  permissions: [Permission.ADMIN],
+  permissions: [Capability.ADMIN],
   lvlRangeFrom: 1,
   lvlRangeTo: 300,
   createdAt: new Date("2026-09-02T10:00:00.000Z"),

@@ -10,7 +10,7 @@ import {
 } from "@lootlog/protocol/http/errors";
 import { createHash } from "node:crypto";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import type {
   CreateLootRequest,
   CreateLootResponse,
@@ -114,7 +114,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
             options.uniqueId,
           ),
           guilds: this.repository.findGuildsForPermissions(options.discordId, [
-            Permission.LOOTLOG_LOOTS_WRITE,
+            Capability.LOOTLOG_LOOTS_WRITE,
           ]),
           characterConfig: this.repository.findCharacterConfig(
             options.discordId,

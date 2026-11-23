@@ -8,7 +8,7 @@ import {
   LootlogConfigData,
 } from "#src/lootlog-config/lootlog-config-data";
 import { AccessRequirement } from "@lootlog/domain/access-policy";
-import type { Permission as PermissionValue } from "@lootlog/schema/permissions";
+import type { Capability as PermissionValue } from "@lootlog/schema/permissions";
 import {
   optionalPathString,
   statusCodeResponse,

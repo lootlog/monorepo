@@ -1,7 +1,7 @@
 import { httpClientFromResponses } from "../../test/http-fixtures.js";
 import { makeGuildStoreRedis } from "../../test/guild-store-fixtures.js";
 import { describe, expect, test } from "bun:test";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { Effect, Predicate } from "effect";
 import { CommandAdmission } from "./command-admission.js";
 import { decodeServerEvent } from "@lootlog/protocol/realtime";
@@ -329,7 +329,7 @@ describe("CommandHandler session lifecycle", () => {
     const { handler, guilds, hub, presence } = makeCommandHandler();
 
     const target = makeTestSocket(
-      makeSession({ guilds: [guild([Permission.LOOTLOG_TIMERS_READ])] }),
+      makeSession({ guilds: [guild([Capability.LOOTLOG_TIMERS_READ])] }),
     );
 
     target.socket.data.subscriptions.set("custom", {
@@ -345,13 +345,13 @@ describe("CommandHandler session lifecycle", () => {
             id: "replacement-1",
             lvlRangeFrom: 0,
             lvlRangeTo: 300,
-            permissions: [Permission.LOOTLOG_TIMERS_READ],
+            permissions: [Capability.LOOTLOG_TIMERS_READ],
           },
           {
             id: "replacement-2",
             lvlRangeFrom: 200,
             lvlRangeTo: 500,
-            permissions: [Permission.LOOTLOG_TIMERS_READ],
+            permissions: [Capability.LOOTLOG_TIMERS_READ],
           },
         ],
       },
@@ -393,7 +393,7 @@ describe("CommandHandler session lifecycle", () => {
       ]),
     );
     hub.sockets.push(target.socket);
-    guilds.guilds = [guild([Permission.LOOTLOG_CHAT_READ]), two];
+    guilds.guilds = [guild([Capability.LOOTLOG_CHAT_READ]), two];
     await Effect.runPromise(handler.rebalanceUser("discord-1", "user-1"));
     expect(target.socket.data.airTagScopes).toEqual([retained]);
     expect(
@@ -430,7 +430,7 @@ describe("CommandHandler session lifecycle", () => {
       data: { connectionId: "connection-1" },
     });
     expect(activity.calls.map(({ type }) => type)).toEqual(["CONNECT_EVENT"]);
-    guilds.guilds = [guild([Permission.LOOTLOG_CHAT_READ])];
+    guilds.guilds = [guild([Capability.LOOTLOG_CHAT_READ])];
     await Effect.runPromise(handler.handle(target.socket, join));
     expect(readPolicy(2).version).not.toBe(previous.version);
   });

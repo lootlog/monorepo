@@ -1,5 +1,5 @@
 import { describe, expect, it, mock } from "bun:test";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { Effect, Layer, Queue, Redacted } from "effect";
 import { Redis } from "effect/persistence";
@@ -17,7 +17,7 @@ describe("Activity permissions", () => {
             id: "admin",
             lvlRangeFrom: 0,
             lvlRangeTo: 999,
-            permissions: [Permission.ADMIN],
+            permissions: [Capability.ADMIN],
           },
         ],
       },
@@ -90,7 +90,7 @@ describe("Activity permissions", () => {
       ),
     );
 
-    expect(before).toEqual([Permission.ADMIN]);
+    expect(before).toEqual([Capability.ADMIN]);
     expect(after).toEqual([]);
   });
 });

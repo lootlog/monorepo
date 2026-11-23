@@ -1,5 +1,5 @@
 import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { afterEach, expect, it, vi } from "vitest";
 import {
   RealtimeRequestError,
@@ -232,7 +232,7 @@ it("marks disconnects stale and replays in-flight deltas after a successful rejo
 it("removes cached locations immediately when a known policy loses location access, even if refetch fails", async () => {
   const gateway = createTestGateway();
 
-  const policy = (permissions: Permission[]) =>
+  const policy = (permissions: Capability[]) =>
     createAccessPolicySnapshot(
       [
         {
@@ -251,8 +251,8 @@ it("removes cached locations immediately when a known policy loses location acce
       organizationIds: [],
       subscriptionScopes: [],
       accessPolicy: policy([
-        Permission.LOOTLOG_ONLINE_PLAYERS_READ,
-        Permission.LOOTLOG_PRESENCE_LOCATION_READ,
+        Capability.LOOTLOG_ONLINE_PLAYERS_READ,
+        Capability.LOOTLOG_PRESENCE_LOCATION_READ,
       ]),
     },
   });
@@ -290,7 +290,7 @@ it("removes cached locations immediately when a known policy loses location acce
       changes: [],
       organizationIds: [],
       subscriptionScopes: [],
-      accessPolicy: policy([Permission.LOOTLOG_ONLINE_PLAYERS_READ]),
+      accessPolicy: policy([Capability.LOOTLOG_ONLINE_PLAYERS_READ]),
     },
   });
   expect(store.getSnapshot().game).toBeUndefined();

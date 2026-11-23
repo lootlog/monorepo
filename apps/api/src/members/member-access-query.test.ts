@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { Effect } from "effect";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
 import {
   createGuildFixture,
@@ -48,21 +48,21 @@ test("role grants match the Organization access policy for OWNER and ADMIN roles
           id: "admin",
           guildId: "admin-guild",
           name: "Admin",
-          permissions: [Permission.ADMIN],
+          permissions: [Capability.ADMIN],
           updatedAt: new Date(0),
         },
         {
           id: "owner",
           guildId: "owner-role-guild",
           name: "Owner",
-          permissions: [Permission.OWNER],
+          permissions: [Capability.OWNER],
           updatedAt: new Date(0),
         },
         {
           id: "access",
           guildId: "access-guild",
           name: "Access",
-          permissions: [Permission.LOOTLOG_ACCESS],
+          permissions: [Capability.LOOTLOG_ACCESS],
           updatedAt: new Date(0),
         },
       ]),
@@ -75,30 +75,30 @@ test("role grants match the Organization access policy for OWNER and ADMIN roles
       ]),
     );
 
-    const accessible = (permissions: Permission[]) =>
+    const accessible = (permissions: Capability[]) =>
       boundary
         .run(
           selectAccessibleGuilds(boundary.database, "discord-1", permissions),
         )
         .then((rows) => rows.map(({ guild }) => guild.id).toSorted());
 
-    expect(await accessible([Permission.LOOTLOG_TIMERS_WRITE])).toEqual([
+    expect(await accessible([Capability.LOOTLOG_TIMERS_WRITE])).toEqual([
       "admin-guild",
       "owner-role-guild",
     ]);
-    expect(await accessible([Permission.LOOTLOG_ACCESS])).toEqual([
+    expect(await accessible([Capability.LOOTLOG_ACCESS])).toEqual([
       "access-guild",
       "admin-guild",
       "owner-role-guild",
     ]);
-    expect(await accessible([Permission.OWNER])).toEqual(["owner-role-guild"]);
+    expect(await accessible([Capability.OWNER])).toEqual(["owner-role-guild"]);
 
     const granted = await boundary.run(
       selectGuildIdsGrantingPermissions(
         boundary.database,
         ["discord-1"],
         guilds,
-        [Permission.LOOTLOG_LOOTS_WRITE],
+        [Capability.LOOTLOG_LOOTS_WRITE],
       ),
     );
 
@@ -124,7 +124,7 @@ test("cross-Organization reads grant the Discord guild owner before a member row
 
     const accessible = await boundary.run(
       selectAccessibleGuilds(boundary.database, "owner", [
-        Permission.LOOTLOG_LOOTS_WRITE,
+        Capability.LOOTLOG_LOOTS_WRITE,
       ]),
     );
 
@@ -132,7 +132,7 @@ test("cross-Organization reads grant the Discord guild owner before a member row
 
     const granted = await boundary.run(
       selectGuildIdsGrantingPermissions(boundary.database, ["owner"], guilds, [
-        Permission.LOOTLOG_LOOTS_WRITE,
+        Capability.LOOTLOG_LOOTS_WRITE,
       ]),
     );
 
@@ -171,8 +171,8 @@ test("an API key reaches only the Organizations granted to both the key and its 
           name: "Role",
           permissions:
             guild.id === "keyed-reader"
-              ? [Permission.LOOTLOG_LOOTS_READ]
-              : [Permission.LOOTLOG_LOOTS_WRITE],
+              ? [Capability.LOOTLOG_LOOTS_READ]
+              : [Capability.LOOTLOG_LOOTS_WRITE],
           updatedAt: new Date(0),
         })),
       ),
@@ -183,7 +183,7 @@ test("an API key reaches only the Organizations granted to both the key and its 
         .values(guilds.map((guild, index) => ({ A: index + 1, B: guild.id }))),
     );
 
-    const keyScoped = (permissions: Permission[]) =>
+    const keyScoped = (permissions: Capability[]) =>
       boundary.run(
         apiKeyAccessibleGuilds(boundary.database, permissions).pipe(
           Effect.provideService(ForwardAuthIdentity, {
@@ -201,13 +201,13 @@ test("an API key reaches only the Organizations granted to both the key and its 
       );
 
     expect(
-      (await keyScoped([Permission.LOOTLOG_LOOTS_WRITE]))?.map(({ id }) => id),
+      (await keyScoped([Capability.LOOTLOG_LOOTS_WRITE]))?.map(({ id }) => id),
     ).toEqual(["keyed-writer"]);
     expect(
       (
         await keyScoped([
-          Permission.LOOTLOG_LOOTS_WRITE,
-          Permission.LOOTLOG_LOOTS_READ,
+          Capability.LOOTLOG_LOOTS_WRITE,
+          Capability.LOOTLOG_LOOTS_READ,
         ])
       )
         ?.map(({ id }) => id)
@@ -216,7 +216,7 @@ test("an API key reaches only the Organizations granted to both the key and its 
     expect(
       await boundary.run(
         apiKeyAccessibleGuilds(boundary.database, [
-          Permission.LOOTLOG_LOOTS_WRITE,
+          Capability.LOOTLOG_LOOTS_WRITE,
         ]),
       ),
     ).toBeUndefined();

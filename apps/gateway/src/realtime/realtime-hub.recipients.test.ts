@@ -7,7 +7,7 @@ import {
   startPair,
   makeAdminSession,
 } from "../../test/realtime-fixtures.js";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { expect, spyOn, test } from "bun:test";
 import { decodeRealtimeFrame } from "@lootlog/protocol/realtime/codec";
 
@@ -23,24 +23,24 @@ test("chat capabilities and shared frames stay recipient-specific locally and re
     {
       id: "author",
       permissions: [
-        Permission.LOOTLOG_CHAT_READ,
-        Permission.LOOTLOG_CHAT_WRITE,
+        Capability.LOOTLOG_CHAT_READ,
+        Capability.LOOTLOG_CHAT_WRITE,
       ],
       canDelete: true,
     },
     {
       id: "reader",
-      permissions: [Permission.LOOTLOG_CHAT_READ],
+      permissions: [Capability.LOOTLOG_CHAT_READ],
       canDelete: false,
     },
     {
       id: "reader-2",
-      permissions: [Permission.LOOTLOG_CHAT_READ],
+      permissions: [Capability.LOOTLOG_CHAT_READ],
       canDelete: false,
     },
     {
       id: "admin",
-      permissions: [Permission.ADMIN],
+      permissions: [Capability.ADMIN],
       canDelete: true,
     },
     { id: "owner", permissions: [], canDelete: true },
@@ -112,10 +112,10 @@ test("keeps basic and precise presence private for local and remote recipients",
       scope.organizationId,
       precise
         ? [
-            Permission.LOOTLOG_ONLINE_PLAYERS_READ,
-            Permission.LOOTLOG_PRESENCE_LOCATION_READ,
+            Capability.LOOTLOG_ONLINE_PLAYERS_READ,
+            Capability.LOOTLOG_PRESENCE_LOCATION_READ,
           ]
-        : [Permission.LOOTLOG_ONLINE_PLAYERS_READ],
+        : [Capability.LOOTLOG_ONLINE_PLAYERS_READ],
       { roleId: "role" },
     );
 
@@ -279,8 +279,8 @@ test("resolves timer routing once while preserving recipient authorization acros
             membership(
               scope.organizationId,
               [
-                Permission.LOOTLOG_TIMERS_READ,
-                Permission.LOOTLOG_TIMERS_HEROES_READ,
+                Capability.LOOTLOG_TIMERS_READ,
+                Capability.LOOTLOG_TIMERS_HEROES_READ,
               ],
               { roleId: "role", lvlRangeTo: index % 2 === 0 ? 500 : 50 },
             ),

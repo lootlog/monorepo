@@ -8,7 +8,7 @@ import {
 } from "#src/members/member-access-query";
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { TIMER_TYPES } from "@lootlog/domain/npc-identity";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
 import {
   createGuildFixture,
@@ -28,7 +28,7 @@ import {
   makeGuildHeroTimerList,
 } from "./timer-list.data-layer.js";
 
-it.each([Permission.ADMIN, Permission.LOOTLOG_TIMERS_READ])(
+it.each([Capability.ADMIN, Capability.LOOTLOG_TIMERS_READ])(
   "applies all-organization timer visibility for %s",
   async (permission) => {
     const boundary = await createDatabaseBoundary();
@@ -89,7 +89,7 @@ it.each([Permission.ADMIN, Permission.LOOTLOG_TIMERS_READ])(
       );
 
       expect(timers.map((entry) => entry.npcId)).toEqual(
-        permission === Permission.ADMIN ? [105] : [],
+        permission === Capability.ADMIN ? [105] : [],
       );
       expect(timers.every((entry) => entry.guildId === "organization")).toBe(
         true,
@@ -272,7 +272,7 @@ it("keeps owner access, API-key scope, worlds and selected expired timers fresh 
             .$with("scoped_guilds")
             .as(
               yield* accessibleGuildsQuery(database, identity.discordId, [
-                Permission.LOOTLOG_TIMERS_READ,
+                Capability.LOOTLOG_TIMERS_READ,
               ]),
             );
 
@@ -395,7 +395,7 @@ it("applies role and membership revocation on the next timer read without retain
           id: "base",
           guildId: "1",
           name: "Base",
-          permissions: [Permission.LOOTLOG_TIMERS_READ],
+          permissions: [Capability.LOOTLOG_TIMERS_READ],
           lvlRangeFrom: 1,
           lvlRangeTo: 100,
           updatedAt: now,
@@ -404,7 +404,7 @@ it("applies role and membership revocation on the next timer read without retain
           id: "heroes",
           guildId: "1",
           name: "Heroes",
-          permissions: [Permission.LOOTLOG_TIMERS_HEROES_READ],
+          permissions: [Capability.LOOTLOG_TIMERS_HEROES_READ],
           lvlRangeFrom: 150,
           lvlRangeTo: 300,
           updatedAt: now,
@@ -505,8 +505,8 @@ it("lists the latest hero timers of one world, ended ones included, within the r
           lvlRangeFrom: 1,
           lvlRangeTo: 300,
           permissions: [
-            Permission.LOOTLOG_TIMERS_READ,
-            Permission.LOOTLOG_TIMERS_HEROES_READ,
+            Capability.LOOTLOG_TIMERS_READ,
+            Capability.LOOTLOG_TIMERS_HEROES_READ,
           ],
           updatedAt: now,
         })

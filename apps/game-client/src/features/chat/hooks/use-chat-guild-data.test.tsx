@@ -12,7 +12,7 @@ import {
 import { configureApiClients } from "@lootlog/client/transport";
 import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
 import { CHAT_MESSAGE_LIMIT } from "@lootlog/schema/chat";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { applyChatAccessPolicy } from "../chat-access-policy";
 
 import { useChatGuildData } from "./use-chat-guild-data";
@@ -161,7 +161,7 @@ describe("useChatGuildData", () => {
               guild: { id: "guild-1", ownerId: "owner" },
               roles: [
                 {
-                  permissions: [Permission.LOOTLOG_CHAT_READ],
+                  permissions: [Capability.LOOTLOG_CHAT_READ],
                   lvlRangeFrom: 0,
                   lvlRangeTo: 500,
                 },

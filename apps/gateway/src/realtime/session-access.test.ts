@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { membership } from "../../test/realtime-fixtures.js";
 import { sessionAccessPolicy } from "./session-access.js";
 
@@ -8,8 +8,8 @@ test.each([
   [
     true,
     [
-      Permission.LOOTLOG_HERO_SIGHTINGS_READ,
-      Permission.LOOTLOG_HERO_SIGHTINGS_WRITE,
+      Capability.LOOTLOG_HERO_SIGHTINGS_READ,
+      Capability.LOOTLOG_HERO_SIGHTINGS_WRITE,
     ],
   ],
 ])(
@@ -20,9 +20,9 @@ test.each([
       heroSightingCapabilities,
       guilds: [
         membership("organization-1", [
-          Permission.LOOTLOG_TIMERS_READ,
-          Permission.LOOTLOG_HERO_SIGHTINGS_READ,
-          Permission.LOOTLOG_HERO_SIGHTINGS_WRITE,
+          Capability.LOOTLOG_TIMERS_READ,
+          Capability.LOOTLOG_HERO_SIGHTINGS_READ,
+          Capability.LOOTLOG_HERO_SIGHTINGS_WRITE,
         ]),
       ],
     }).organizations;
@@ -32,6 +32,6 @@ test.each([
         permission.startsWith("LOOTLOG_HERO_SIGHTINGS_"),
       ),
     ).toEqual(expected);
-    expect(organization?.permissions).toContain(Permission.LOOTLOG_TIMERS_READ);
+    expect(organization?.permissions).toContain(Capability.LOOTLOG_TIMERS_READ);
   },
 );

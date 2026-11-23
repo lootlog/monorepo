@@ -1,7 +1,7 @@
 import { Profiler } from "react";
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { createOnlinePlayersTest } from "@/test/online-players-fixtures";
 import { getSocket } from "@/lib/socket";
 import { useGlobalStore } from "@/store/global.store";
@@ -204,7 +204,7 @@ it("hides an online member of the Organization whom another clan's member report
           guild: { id: "guild-1", ownerId: "owner" },
           roles: [
             {
-              permissions: [Permission.LOOTLOG_ONLINE_PLAYERS_READ],
+              permissions: [Capability.LOOTLOG_ONLINE_PLAYERS_READ],
               lvlRangeFrom: 1,
               lvlRangeTo: 300,
             },

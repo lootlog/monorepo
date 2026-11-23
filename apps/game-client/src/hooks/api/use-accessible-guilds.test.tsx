@@ -3,7 +3,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { expect, it } from "vitest";
 import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { createGameAccessCache } from "@/lib/game-access-cache";
 import { createTimerHttpFixture } from "@/test/timer-http-fixtures";
 import { createTimerGuildFixture } from "@/test/timer-fixtures";
@@ -16,7 +16,7 @@ const policy = (ids: string[]) =>
       guild: { id, ownerId: "owner" },
       roles: [
         {
-          permissions: [Permission.LOOTLOG_ACCESS],
+          permissions: [Capability.LOOTLOG_ACCESS],
           lvlRangeFrom: 0,
           lvlRangeTo: 500,
         },

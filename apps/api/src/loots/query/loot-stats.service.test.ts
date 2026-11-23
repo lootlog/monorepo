@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test";
 import { sql } from "drizzle-orm";
 import { Effect } from "effect";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import type { roleTable } from "#src/database/drizzle/organization.schema";
 import { LootStatsService } from "./loot-stats.service.js";
 import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
@@ -23,7 +23,7 @@ const database = {
 
 type Role = typeof roleTable.$inferSelect;
 
-function role(id: string, permissions: Permission[]): Role {
+function role(id: string, permissions: Capability[]): Role {
   return {
     id,
     name: id,
@@ -52,7 +52,7 @@ describe("LootStatsService access-scoped caching", () => {
       setJson: () => Effect.void,
     });
 
-    const read = (permissions: Permission[]) =>
+    const read = (permissions: Capability[]) =>
       Effect.runPromiseExit(
         service.getLootStatsEffect(
           "guild-1",
@@ -62,10 +62,10 @@ describe("LootStatsService access-scoped caching", () => {
         ),
       );
 
-    await read([Permission.LOOTLOG_LOOTS_READ]);
+    await read([Capability.LOOTLOG_LOOTS_READ]);
     await read([
-      Permission.LOOTLOG_LOOTS_READ,
-      Permission.LOOTLOG_LOOTS_TITANS_READ,
+      Capability.LOOTLOG_LOOTS_READ,
+      Capability.LOOTLOG_LOOTS_TITANS_READ,
     ]);
 
     expect(keys).toHaveLength(2);
@@ -107,8 +107,8 @@ describe("LootStatsService access-scoped caching", () => {
       Effect.runPromise(
         service.getLootStatsEffect(
           "guild-1",
-          createAccessPolicy({ capabilities: [Permission.LOOTLOG_LOOTS_READ] }),
-          [role("role", [Permission.LOOTLOG_LOOTS_READ])],
+          createAccessPolicy({ capabilities: [Capability.LOOTLOG_LOOTS_READ] }),
+          [role("role", [Capability.LOOTLOG_LOOTS_READ])],
         ),
       ),
     ).resolves.toEqual({ ...expected, computedAt: "2026-01-01T10:00:00.000Z" });
@@ -148,8 +148,8 @@ describe("LootStatsService aggregates", () => {
       );
 
       const permissions = [
-        Permission.LOOTLOG_LOOTS_READ,
-        Permission.LOOTLOG_LOOTS_HEROES_READ,
+        Capability.LOOTLOG_LOOTS_READ,
+        Capability.LOOTLOG_LOOTS_HEROES_READ,
       ];
 
       const service = new LootStatsService(boundary.database, {

@@ -3,7 +3,7 @@ import { AccountOrganizationOperationError } from "#src/guilds/account-organizat
 import { AccessRequirement } from "@lootlog/domain/access-policy";
 import { DiscordGuildSyncStateResponse as DiscordGuildSyncStateCodec } from "#src/shared/schema/discord-guild-sync";
 import { encodeUnknownResponse } from "#src/shared/schema/encode-response";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import {
   DiscordGuildSyncStateResponse as DiscordGuildSyncStateSchema,
   OrganizationCapabilitiesResponse,
@@ -43,7 +43,7 @@ const manageableCurrentGuildList = Effect.fn("manageableCurrentGuildList")(
 
 const guildRead = Effect.fn("guildRead")(function* (guildId: string) {
   const authorized = yield* authorizeGuild(guildId, [
-    Permission.LOOTLOG_ACCESS,
+    Capability.LOOTLOG_ACCESS,
   ]);
 
   const value = yield* guildConfigurationData((service) =>
@@ -72,7 +72,7 @@ const guildWorlds = Effect.fn("GuildsControllerGetWorldsByGuildId")(function* (
   guildId: string,
 ) {
   const authorized = yield* authorizeGuild(guildId, [
-    Permission.LOOTLOG_ACCESS,
+    Capability.LOOTLOG_ACCESS,
   ]);
 
   const value = yield* guildConfigurationData((service) =>
@@ -86,7 +86,7 @@ export const guildPermissions = Effect.fn("guildPermissions")(function* (
   guildId: string,
 ) {
   const authorized = yield* authorizeGuild(guildId, [
-    Permission.LOOTLOG_ACCESS,
+    Capability.LOOTLOG_ACCESS,
   ]);
 
   return yield* decode(

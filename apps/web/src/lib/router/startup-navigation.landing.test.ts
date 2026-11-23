@@ -1,3 +1,4 @@
+import { Capability } from "@lootlog/schema/permissions";
 // @vitest-environment happy-dom
 import "./startup-navigation.fetch.fixtures";
 import { sessionQueryOptions } from "@/hooks/auth/use-session-query";
@@ -10,7 +11,6 @@ import {
   getGuildsControllerGetGuildByIdQueryKey,
   getListPinnedEventsQueryKey,
 } from "@lootlog/client/main";
-import { Capability } from "@lootlog/domain/access-policy";
 import { onlineManager } from "@tanstack/react-query";
 import { expect, it, vi } from "vitest";
 import { createNavigation, memberFor } from "./startup-navigation.fixtures";
