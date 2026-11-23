@@ -7,7 +7,7 @@ import {
 } from "effect/http-api";
 import { BearerSecurityMiddleware } from "#src/contracts/api-shared";
 import {
-  CharacterAuraGameAccountParams,
+  CharacterAuraGrantUserParams,
   CharacterAuraGrantHoldersResponse,
   CharacterAuraGrantsResponse,
   CharacterAurasResponse,
@@ -74,14 +74,11 @@ export class CharacterAurasGroup extends HttpApiGroup.make(
     ),
   HttpApiEndpoint.get(
     "CharacterAurasControllerGetGrants",
-    "/character-auras/grants/game-accounts/:gameAccountId",
+    "/character-auras/grants/users/:userId",
     {
-      params: CharacterAuraGameAccountParams,
+      params: CharacterAuraGrantUserParams,
       success: CharacterAuraGrantsResponse,
-      error: [
-        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
-        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
-      ],
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(403)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -89,18 +86,15 @@ export class CharacterAurasGroup extends HttpApiGroup.make(
     .annotate(OpenApi.Summary, "Get character aura grants")
     .annotate(
       OpenApi.Description,
-      "Show which auras the user who last proved to play the Margonem account may choose: whether they are a Lootlog admin, hold the grant of auras in general, and which personal auras they were granted. Lootlog admins (the `admin` platform role) only; 404 when no user proved to play the account",
+      "Show which auras the user may choose: whether they are a Lootlog admin, hold the grant of auras in general, and which personal auras they were granted. Lootlog admins (the `admin` platform role) only",
     ),
   HttpApiEndpoint.put(
     "CharacterAurasControllerGrantAuras",
-    "/character-auras/grants/game-accounts/:gameAccountId",
+    "/character-auras/grants/users/:userId",
     {
-      params: CharacterAuraGameAccountParams,
+      params: CharacterAuraGrantUserParams,
       success: HttpApiSchema.Empty(204),
-      error: [
-        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
-        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
-      ],
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(403)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -108,18 +102,15 @@ export class CharacterAurasGroup extends HttpApiGroup.make(
     .annotate(OpenApi.Summary, "Grant character auras")
     .annotate(
       OpenApi.Description,
-      "Let the user who last proved to play the Margonem account choose any aura; granting again changes nothing. Lootlog admins (the `admin` platform role) only; 404 when no user proved to play the account",
+      "Let the user choose any aura on the characters of the Margonem accounts they proved to play; granting again changes nothing. Lootlog admins (the `admin` platform role) only",
     ),
   HttpApiEndpoint.put(
     "CharacterAurasControllerGrantPersonalAura",
-    "/character-auras/grants/game-accounts/:gameAccountId/personal-auras/:auraId",
+    "/character-auras/grants/users/:userId/personal-auras/:auraId",
     {
       params: PersonalCharacterAuraGrantParams,
       success: HttpApiSchema.Empty(204),
-      error: [
-        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
-        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
-      ],
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(403)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -127,18 +118,15 @@ export class CharacterAurasGroup extends HttpApiGroup.make(
     .annotate(OpenApi.Summary, "Grant a personal character aura")
     .annotate(
       OpenApi.Description,
-      "Let the user who last proved to play the Margonem account choose one personal aura, which a grant of auras in general does not cover; granting again changes nothing, and revoking the user's auras withdraws it. Lootlog admins (the `admin` platform role) only; 404 when no user proved to play the account",
+      "Let the user choose one personal aura, which a grant of auras in general does not cover; granting again changes nothing, and revoking the user's auras withdraws it. Lootlog admins (the `admin` platform role) only",
     ),
   HttpApiEndpoint.delete(
     "CharacterAurasControllerRevokeAuras",
-    "/character-auras/grants/game-accounts/:gameAccountId",
+    "/character-auras/grants/users/:userId",
     {
-      params: CharacterAuraGameAccountParams,
+      params: CharacterAuraGrantUserParams,
       success: HttpApiSchema.Empty(204),
-      error: [
-        HttpErrorResponse.pipe(HttpApiSchema.status(403)),
-        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
-      ],
+      error: HttpErrorResponse.pipe(HttpApiSchema.status(403)),
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -146,6 +134,6 @@ export class CharacterAurasGroup extends HttpApiGroup.make(
     .annotate(OpenApi.Summary, "Revoke character auras")
     .annotate(
       OpenApi.Description,
-      "Withdraw the aura grant and every personal aura grant of the user who last proved to play the Margonem account and remove the auras they wear; Lootlog admins keep theirs. Lootlog admins (the `admin` platform role) only; 404 when no user proved to play the account",
+      "Withdraw the aura grant and every personal aura grant of the user and remove the auras they wear; Lootlog admins keep theirs. Lootlog admins (the `admin` platform role) only",
     ),
 ) {}

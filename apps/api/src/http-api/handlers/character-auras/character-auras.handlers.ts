@@ -42,7 +42,6 @@ const toHttpResponse = <A, R>(
 ) =>
   Effect.catchTags(effect, {
     CharacterAuraAccessDenied: statusCodeResponse,
-    CharacterAuraGrantTargetNotFound: statusCodeResponse,
     CharacterAurasOperationError: (error) => Effect.die(error.cause),
   });
 
@@ -78,30 +77,24 @@ export const CharacterAurasHandlers = HttpApiBuilder.group(
       )
       .handle("CharacterAurasControllerGetGrants", ({ params }) =>
         toHttpResponse(
-          withUser((data, userId) =>
-            data.getGrants(userId, params.gameAccountId),
-          ),
+          withUser((data, userId) => data.getGrants(userId, params.userId)),
         ),
       )
       .handle("CharacterAurasControllerGrantAuras", ({ params }) =>
         toHttpResponse(
-          withUser((data, userId) =>
-            data.grantAuras(userId, params.gameAccountId),
-          ),
+          withUser((data, userId) => data.grantAuras(userId, params.userId)),
         ),
       )
       .handle("CharacterAurasControllerGrantPersonalAura", ({ params }) =>
         toHttpResponse(
           withUser((data, userId) =>
-            data.grantPersonalAura(userId, params.gameAccountId, params.auraId),
+            data.grantPersonalAura(userId, params.userId, params.auraId),
           ),
         ),
       )
       .handle("CharacterAurasControllerRevokeAuras", ({ params }) =>
         toHttpResponse(
-          withUser((data, userId) =>
-            data.revokeAuras(userId, params.gameAccountId),
-          ),
+          withUser((data, userId) => data.revokeAuras(userId, params.userId)),
         ),
       ),
 );

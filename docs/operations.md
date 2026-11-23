@@ -65,10 +65,10 @@ inspection and rollback constraints.
 holds no data: every read and write goes through the auth service's admin API
 (`/admin/*`), which records each change in `admin_audit_log`.
 
-The panel is also the only place to grant and revoke character auras for the
-User who plays a Margonem account, found from a pasted profile link
-(`https://www.margonem.pl/profile/view,<account id>`). Those calls go to the
-main API's `/character-auras/grants/*` endpoints at `LOOTLOG_API_URL`, the
+The panel is also the only place to grant and revoke character auras, from a
+User's page. A grant belongs to that User, who wears the aura on characters
+of the Margonem accounts they proved to play. Those calls go to the main
+API's `/character-auras/grants/users/:userId` endpoints at `LOOTLOG_API_URL`, the
 API as the edge serves it, with the operator's Lootlog session and without
 the Access cookie. The edge's forward-auth resolves the session, and the API
 allows them only to holders of the `admin` platform role, so the operator

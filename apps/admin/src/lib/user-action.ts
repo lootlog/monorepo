@@ -1,3 +1,4 @@
+import { PersonalCharacterAuraIdSchema } from "@lootlog/schema/character-aura";
 import { PlatformRole } from "@lootlog/schema/platform-roles";
 import { Schema } from "effect";
 
@@ -33,6 +34,12 @@ export const UserAction = Schema.Union([
     action: Schema.Literal("revoke-api-key"),
     keyId: Schema.NonEmptyString,
   }),
+  Schema.Struct({ action: Schema.Literal("grant-auras") }),
+  Schema.Struct({
+    action: Schema.Literal("grant-personal-aura"),
+    auraId: PersonalCharacterAuraIdSchema,
+  }),
+  Schema.Struct({ action: Schema.Literal("revoke-auras") }),
 ]);
 
 export type UserAction = typeof UserAction.Type;

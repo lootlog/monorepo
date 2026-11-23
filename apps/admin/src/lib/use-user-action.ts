@@ -6,14 +6,14 @@ import { performUserAction } from "@/server/queries";
 export function useUserAction(userId: string) {
   const router = useRouter();
   const navigate = useNavigate({ from: "/users/$userId" });
-  const [pending, setPending] = useState<UserAction["action"]>();
+  const [pending, setPending] = useState<UserAction>();
   const inFlight = useRef(false);
 
   const run = async (action: UserAction) => {
     if (inFlight.current) return;
 
     inFlight.current = true;
-    setPending(action.action);
+    setPending(action);
 
     try {
       await performUserAction({ data: { userId, action } });

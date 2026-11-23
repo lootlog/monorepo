@@ -93,7 +93,6 @@ export const CharacterAuraGrantsResponseDtoPersonalAuraIdsItem = {
 } as const;
 
 export interface CharacterAuraGrantsResponseDto {
-  userId: string;
   admin: boolean;
   granted: boolean;
   personalAuraIds: CharacterAuraGrantsResponseDtoPersonalAuraIdsItem[];
@@ -13077,16 +13076,16 @@ export type UserThemesControllerGetSharedThemePathParameters = {
  shareToken: string,
  }
 export type CharacterAurasControllerGetGrantsPathParameters = {
- gameAccountId: string,
+ userId: string,
  }
 export type CharacterAurasControllerGrantAurasPathParameters = {
- gameAccountId: string,
+ userId: string,
  }
 export type CharacterAurasControllerRevokeAurasPathParameters = {
- gameAccountId: string,
+ userId: string,
  }
 export type CharacterAurasControllerGrantPersonalAuraPathParameters = {
- gameAccountId: string,
+ userId: string,
     auraId: 'skyborne' | 'joker' | 'nightowl' | 'sunder' | 'fortyfour' | 'thirteenth' | 'ninepins' | 'threefaces' | 'twineyes' | 'tulipwind',
  }
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -39021,21 +39020,21 @@ export const useGetCharacterAurasControllerListGrantHoldersQueryData = () => {
 
 
 
-export const getCharacterAurasControllerGetGrantsUrl = ({ gameAccountId }: CharacterAurasControllerGetGrantsPathParameters,) => {
+export const getCharacterAurasControllerGetGrantsUrl = ({ userId }: CharacterAurasControllerGetGrantsPathParameters,) => {
 
 
 
 
-  return `/character-auras/grants/game-accounts/${gameAccountId}`
+  return `/character-auras/grants/users/${userId}`
 }
 
 /**
- * Show which auras the user who last proved to play the Margonem account may choose: whether they are a Lootlog admin, hold the grant of auras in general, and which personal auras they were granted. Lootlog admins (the `admin` platform role) only; 404 when no user proved to play the account
+ * Show which auras the user may choose: whether they are a Lootlog admin, hold the grant of auras in general, and which personal auras they were granted. Lootlog admins (the `admin` platform role) only
  * @summary Get character aura grants
  */
-export const characterAurasControllerGetGrants = async ({ gameAccountId }: CharacterAurasControllerGetGrantsPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<CharacterAuraGrantsResponseDto> => {
+export const characterAurasControllerGetGrants = async ({ userId }: CharacterAurasControllerGetGrantsPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<CharacterAuraGrantsResponseDto> => {
 
-  return mainFetch<CharacterAuraGrantsResponseDto>(getCharacterAurasControllerGetGrantsUrl({ gameAccountId }),
+  return mainFetch<CharacterAuraGrantsResponseDto>(getCharacterAurasControllerGetGrantsUrl({ userId }),
   {
     ...options,
     method: 'GET'
@@ -39048,29 +39047,29 @@ export const characterAurasControllerGetGrants = async ({ gameAccountId }: Chara
 
 
 
-export const getCharacterAurasControllerGetGrantsQueryKey = ({ gameAccountId }: CharacterAurasControllerGetGrantsPathParameters,) => {
+export const getCharacterAurasControllerGetGrantsQueryKey = ({ userId }: CharacterAurasControllerGetGrantsPathParameters,) => {
     return [
-    `/character-auras/grants/game-accounts/${gameAccountId}`
+    `/character-auras/grants/users/${userId}`
     ] as const;
     }
 
 
-export const getCharacterAurasControllerGetGrantsQueryOptions = <TData = Awaited<ReturnType<typeof characterAurasControllerGetGrants>>, TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>>({ gameAccountId }: CharacterAurasControllerGetGrantsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof characterAurasControllerGetGrants>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+export const getCharacterAurasControllerGetGrantsQueryOptions = <TData = Awaited<ReturnType<typeof characterAurasControllerGetGrants>>, TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>>({ userId }: CharacterAurasControllerGetGrantsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof characterAurasControllerGetGrants>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getCharacterAurasControllerGetGrantsQueryKey({ gameAccountId });
+  const queryKey =  queryOptions?.queryKey ?? getCharacterAurasControllerGetGrantsQueryKey({ userId });
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof characterAurasControllerGetGrants>>> = ({ signal }) => characterAurasControllerGetGrants({ gameAccountId }, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof characterAurasControllerGetGrants>>> = ({ signal }) => characterAurasControllerGetGrants({ userId }, { signal, ...requestOptions });
 
 
 
 
 
-   return  { queryKey, queryFn, enabled: gameAccountId !== null && gameAccountId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof characterAurasControllerGetGrants>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, enabled: userId !== null && userId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof characterAurasControllerGetGrants>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type CharacterAurasControllerGetGrantsQueryResult = NonNullable<Awaited<ReturnType<typeof characterAurasControllerGetGrants>>>
@@ -39106,11 +39105,11 @@ export function useCharacterAurasControllerGetGrants<TData = Awaited<ReturnType<
  */
 
 export function useCharacterAurasControllerGetGrants<TData = Awaited<ReturnType<typeof characterAurasControllerGetGrants>>, TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>>(
- { gameAccountId }: CharacterAurasControllerGetGrantsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof characterAurasControllerGetGrants>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ { userId }: CharacterAurasControllerGetGrantsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof characterAurasControllerGetGrants>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getCharacterAurasControllerGetGrantsQueryOptions({ gameAccountId },options)
+  const queryOptions = getCharacterAurasControllerGetGrantsQueryOptions({ userId },options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -39121,11 +39120,11 @@ export function useCharacterAurasControllerGetGrants<TData = Awaited<ReturnType<
  * @summary Get character aura grants
  */
 export const prefetchCharacterAurasControllerGetGrantsQuery = async <TData = Awaited<ReturnType<typeof characterAurasControllerGetGrants>>, TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>>(
- queryClient: QueryClient, { gameAccountId }: CharacterAurasControllerGetGrantsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof characterAurasControllerGetGrants>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ queryClient: QueryClient, { userId }: CharacterAurasControllerGetGrantsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof characterAurasControllerGetGrants>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
   ): Promise<QueryClient> => {
 
-  const queryOptions = getCharacterAurasControllerGetGrantsQueryOptions({ gameAccountId },options)
+  const queryOptions = getCharacterAurasControllerGetGrantsQueryOptions({ userId },options)
 
   await queryClient.query(queryOptions).catch(() => {});
 
@@ -39136,10 +39135,10 @@ export const prefetchCharacterAurasControllerGetGrantsQuery = async <TData = Awa
  * @summary Invalidates the {@link useCharacterAurasControllerGetGrants} query
  */
 export const invalidateCharacterAurasControllerGetGrants = async (
- queryClient: QueryClient, { gameAccountId }: CharacterAurasControllerGetGrantsPathParameters, options?: InvalidateOptions
+ queryClient: QueryClient, { userId }: CharacterAurasControllerGetGrantsPathParameters, options?: InvalidateOptions
   ): Promise<QueryClient> => {
 
-  await queryClient.invalidateQueries({ queryKey: getCharacterAurasControllerGetGrantsQueryKey({ gameAccountId }) }, options);
+  await queryClient.invalidateQueries({ queryKey: getCharacterAurasControllerGetGrantsQueryKey({ userId }) }, options);
 
   return queryClient;
 }
@@ -39149,8 +39148,8 @@ export const invalidateCharacterAurasControllerGetGrants = async (
  */
 export const useSetCharacterAurasControllerGetGrantsQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ gameAccountId }: CharacterAurasControllerGetGrantsPathParameters,updater: Awaited<ReturnType<typeof characterAurasControllerGetGrants>> | undefined | ((old: Awaited<ReturnType<typeof characterAurasControllerGetGrants>> | undefined) => Awaited<ReturnType<typeof characterAurasControllerGetGrants>> | undefined), $exactMatch: boolean = true) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof characterAurasControllerGetGrants>>>({ exact: $exactMatch, queryKey: getCharacterAurasControllerGetGrantsQueryKey({ gameAccountId }) }, updater);
+  return ({ userId }: CharacterAurasControllerGetGrantsPathParameters,updater: Awaited<ReturnType<typeof characterAurasControllerGetGrants>> | undefined | ((old: Awaited<ReturnType<typeof characterAurasControllerGetGrants>> | undefined) => Awaited<ReturnType<typeof characterAurasControllerGetGrants>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof characterAurasControllerGetGrants>>>({ exact: $exactMatch, queryKey: getCharacterAurasControllerGetGrantsQueryKey({ userId }) }, updater);
   };
 }
 
@@ -39159,27 +39158,27 @@ export const useSetCharacterAurasControllerGetGrantsQueryData = () => {
  */
 export const useGetCharacterAurasControllerGetGrantsQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ gameAccountId }: CharacterAurasControllerGetGrantsPathParameters,) =>
-    queryClient.getQueryData<Awaited<ReturnType<typeof characterAurasControllerGetGrants>>>(getCharacterAurasControllerGetGrantsQueryKey({ gameAccountId }));
+  return ({ userId }: CharacterAurasControllerGetGrantsPathParameters,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof characterAurasControllerGetGrants>>>(getCharacterAurasControllerGetGrantsQueryKey({ userId }));
 }
 
 
 
-export const getCharacterAurasControllerGrantAurasUrl = ({ gameAccountId }: CharacterAurasControllerGrantAurasPathParameters,) => {
+export const getCharacterAurasControllerGrantAurasUrl = ({ userId }: CharacterAurasControllerGrantAurasPathParameters,) => {
 
 
 
 
-  return `/character-auras/grants/game-accounts/${gameAccountId}`
+  return `/character-auras/grants/users/${userId}`
 }
 
 /**
- * Let the user who last proved to play the Margonem account choose any aura; granting again changes nothing. Lootlog admins (the `admin` platform role) only; 404 when no user proved to play the account
+ * Let the user choose any aura on the characters of the Margonem accounts they proved to play; granting again changes nothing. Lootlog admins (the `admin` platform role) only
  * @summary Grant character auras
  */
-export const characterAurasControllerGrantAuras = async ({ gameAccountId }: CharacterAurasControllerGrantAurasPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<void> => {
+export const characterAurasControllerGrantAuras = async ({ userId }: CharacterAurasControllerGrantAurasPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<void> => {
 
-  return mainFetch<void>(getCharacterAurasControllerGrantAurasUrl({ gameAccountId }),
+  return mainFetch<void>(getCharacterAurasControllerGrantAurasUrl({ userId }),
   {
     ...options,
     method: 'PUT'
@@ -39240,21 +39239,21 @@ export const useCharacterAurasControllerGrantAuras = <TError = ErrorType<Request
       return useMutation(getCharacterAurasControllerGrantAurasMutationOptions(options), queryClient);
     }
 
-export const getCharacterAurasControllerRevokeAurasUrl = ({ gameAccountId }: CharacterAurasControllerRevokeAurasPathParameters,) => {
+export const getCharacterAurasControllerRevokeAurasUrl = ({ userId }: CharacterAurasControllerRevokeAurasPathParameters,) => {
 
 
 
 
-  return `/character-auras/grants/game-accounts/${gameAccountId}`
+  return `/character-auras/grants/users/${userId}`
 }
 
 /**
- * Withdraw the aura grant and every personal aura grant of the user who last proved to play the Margonem account and remove the auras they wear; Lootlog admins keep theirs. Lootlog admins (the `admin` platform role) only; 404 when no user proved to play the account
+ * Withdraw the aura grant and every personal aura grant of the user and remove the auras they wear; Lootlog admins keep theirs. Lootlog admins (the `admin` platform role) only
  * @summary Revoke character auras
  */
-export const characterAurasControllerRevokeAuras = async ({ gameAccountId }: CharacterAurasControllerRevokeAurasPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<void> => {
+export const characterAurasControllerRevokeAuras = async ({ userId }: CharacterAurasControllerRevokeAurasPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<void> => {
 
-  return mainFetch<void>(getCharacterAurasControllerRevokeAurasUrl({ gameAccountId }),
+  return mainFetch<void>(getCharacterAurasControllerRevokeAurasUrl({ userId }),
   {
     ...options,
     method: 'DELETE'
@@ -39315,21 +39314,21 @@ export const useCharacterAurasControllerRevokeAuras = <TError = ErrorType<Reques
       return useMutation(getCharacterAurasControllerRevokeAurasMutationOptions(options), queryClient);
     }
 
-export const getCharacterAurasControllerGrantPersonalAuraUrl = ({ gameAccountId, auraId }: CharacterAurasControllerGrantPersonalAuraPathParameters,) => {
+export const getCharacterAurasControllerGrantPersonalAuraUrl = ({ userId, auraId }: CharacterAurasControllerGrantPersonalAuraPathParameters,) => {
 
 
 
 
-  return `/character-auras/grants/game-accounts/${gameAccountId}/personal-auras/${auraId}`
+  return `/character-auras/grants/users/${userId}/personal-auras/${auraId}`
 }
 
 /**
- * Let the user who last proved to play the Margonem account choose one personal aura, which a grant of auras in general does not cover; granting again changes nothing, and revoking the user's auras withdraws it. Lootlog admins (the `admin` platform role) only; 404 when no user proved to play the account
+ * Let the user choose one personal aura, which a grant of auras in general does not cover; granting again changes nothing, and revoking the user's auras withdraws it. Lootlog admins (the `admin` platform role) only
  * @summary Grant a personal character aura
  */
-export const characterAurasControllerGrantPersonalAura = async ({ gameAccountId, auraId }: CharacterAurasControllerGrantPersonalAuraPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<void> => {
+export const characterAurasControllerGrantPersonalAura = async ({ userId, auraId }: CharacterAurasControllerGrantPersonalAuraPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<void> => {
 
-  return mainFetch<void>(getCharacterAurasControllerGrantPersonalAuraUrl({ gameAccountId, auraId }),
+  return mainFetch<void>(getCharacterAurasControllerGrantPersonalAuraUrl({ userId, auraId }),
   {
     ...options,
     method: 'PUT'

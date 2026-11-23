@@ -167,8 +167,8 @@ describe("character auras", () => {
     await admin.verify("admin", "202");
     await admin.run((data) =>
       Effect.all([
-        data.grantAuras("admin", "101"),
-        data.grantAuras("admin", "202"),
+        data.grantAuras("admin", "player"),
+        data.grantAuras("admin", "admin"),
       ]),
     );
 
@@ -247,7 +247,7 @@ describe("character auras", () => {
     expect(await run((data) => data.getAuras)).toEqual({ auras: [] });
   });
 
-  it("lets an admin grant auras to the User who plays an account, and revoking removes the auras they chose", async () => {
+  it("lets an admin grant auras to a User, and revoking removes the auras they chose", async () => {
     const { run, verify } = await setup(["admin"]);
 
     await verify("player", "101");
@@ -256,24 +256,23 @@ describe("character auras", () => {
 
     const refused = await run((data) =>
       Effect.all([
-        Effect.flip(data.grantAuras("player", "101")),
-        Effect.flip(data.grantAuras("admin", "999")),
-        Effect.flip(data.getGrants("player", "101")),
-        Effect.flip(data.getGrants("admin", "999")),
+        Effect.flip(data.grantAuras("player", "player")),
+        Effect.flip(data.grantPersonalAura("player", "player", "joker")),
+        Effect.flip(data.revokeAuras("player", "admin")),
+        Effect.flip(data.getGrants("player", "player")),
       ]),
     );
 
     expect(refused.map((error) => error._tag)).toEqual([
       "CharacterAuraAccessDenied",
-      "CharacterAuraGrantTargetNotFound",
       "CharacterAuraAccessDenied",
-      "CharacterAuraGrantTargetNotFound",
+      "CharacterAuraAccessDenied",
+      "CharacterAuraAccessDenied",
     ]);
 
-    const grantsOf101 = () => run((data) => data.getGrants("admin", "101"));
+    const playerGrants = () => run((data) => data.getGrants("admin", "player"));
 
-    expect(await grantsOf101()).toEqual({
-      userId: "player",
+    expect(await playerGrants()).toEqual({
       admin: false,
       granted: false,
       personalAuraIds: [],
@@ -281,13 +280,12 @@ describe("character auras", () => {
 
     await run((data) =>
       Effect.all([
-        data.grantAuras("admin", "101"),
-        data.grantPersonalAura("admin", "101", "joker"),
+        data.grantAuras("admin", "player"),
+        data.grantPersonalAura("admin", "player", "joker"),
       ]),
     );
 
-    expect(await grantsOf101()).toEqual({
-      userId: "player",
+    expect(await playerGrants()).toEqual({
       admin: false,
       granted: true,
       personalAuraIds: ["joker"],
@@ -317,16 +315,15 @@ describe("character auras", () => {
 
     await run((data) =>
       Effect.all([
-        data.revokeAuras("admin", "101"),
-        data.revokeAuras("admin", "202"),
+        data.revokeAuras("admin", "player"),
+        data.revokeAuras("admin", "admin"),
       ]),
     );
 
     expect(await run((data) => data.getAuras)).toEqual({
       auras: [shown("202", "void")],
     });
-    expect(await grantsOf101()).toEqual({
-      userId: "player",
+    expect(await playerGrants()).toEqual({
       admin: false,
       granted: false,
       personalAuraIds: [],
@@ -342,7 +339,7 @@ describe("character auras", () => {
     });
 
     const regranted = await run((data) =>
-      Effect.flatMap(data.grantAuras("admin", "101"), () =>
+      Effect.flatMap(data.grantAuras("admin", "player"), () =>
         data.getOwnAura("player"),
       ),
     );
@@ -362,8 +359,8 @@ describe("character auras", () => {
     await verify("holder", "202");
     await run((data) =>
       Effect.all([
-        data.grantAuras("admin", "101"),
-        data.grantPersonalAura("admin", "202", "skyborne"),
+        data.grantAuras("admin", "granted"),
+        data.grantPersonalAura("admin", "holder", "skyborne"),
       ]),
     );
 
@@ -374,7 +371,7 @@ describe("character auras", () => {
         ),
         Effect.flip(data.updateOwnAura("holder", character("202"), "joker")),
         Effect.flip(data.updateOwnAura("holder", character("202"), "frost")),
-        Effect.flip(data.grantPersonalAura("holder", "101", "skyborne")),
+        Effect.flip(data.grantPersonalAura("holder", "granted", "skyborne")),
       ]),
     );
 
@@ -399,7 +396,7 @@ describe("character auras", () => {
       auras: [shown("202", "skyborne")],
     });
 
-    await run((data) => data.revokeAuras("admin", "202"));
+    await run((data) => data.revokeAuras("admin", "holder"));
 
     expect(await run((data) => data.getAuras)).toEqual({ auras: [] });
     expect(
@@ -451,11 +448,11 @@ describe("character auras", () => {
 
               yield* data.updateOwnAura("admin", character("202"), "void");
               seen.push(yield* see);
-              yield* data.grantAuras("admin", "101");
+              yield* data.grantAuras("admin", "player");
               seen.push(yield* see);
               yield* data.updateOwnAura("player", character("101"), "frost");
               seen.push(yield* see);
-              yield* data.revokeAuras("admin", "101");
+              yield* data.revokeAuras("admin", "player");
               seen.push(yield* see);
               yield* data.updateOwnAura("admin", character("202"), null);
               seen.push(yield* see);
@@ -490,11 +487,11 @@ describe("character auras", () => {
     await run((data) =>
       Effect.gen(function* () {
         yield* data.updateOwnAura("admin", character("101"), "frost");
-        yield* data.grantAuras("admin", "303");
+        yield* data.grantAuras("admin", "player");
         yield* data.updateOwnAura("player", character("303"), "tide");
         yield* data.updateOwnAura("player", character("303", 2), "venom");
-        yield* data.revokeAuras("admin", "303");
-        yield* data.revokeAuras("admin", "101");
+        yield* data.revokeAuras("admin", "player");
+        yield* data.revokeAuras("admin", "admin");
         yield* data.updateOwnAura("admin", character("101", 2), null);
         yield* data.updateOwnAura("admin", character("101"), null);
       }),
@@ -542,7 +539,7 @@ describe("character auras", () => {
         yield* data.updateOwnAura("other", character("202"), "tide");
       }),
     );
-    await run((data) => data.grantAuras("admin", "303"));
+    await run((data) => data.grantAuras("admin", "granted"));
 
     const deleteAccount = (userId: string) =>
       boundary.run(

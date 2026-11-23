@@ -13,10 +13,9 @@ import { PlatformRole } from "@lootlog/schema/platform-roles";
 import { notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { Predicate, Schema } from "effect";
-import type { AuraRefusal } from "@/lib/aura-action";
 import { UserActionRequest } from "@/lib/user-action";
 import { asPanel } from "./auth-api.js";
-import { listAuraHolderIds } from "./character-auras.js";
+import { getAuraGrants, listAuraHolderIds } from "./character-auras.js";
 import { adminConfig } from "./config.js";
 import { runUserAction } from "./user-actions.js";
 
@@ -54,7 +53,7 @@ const UsersInput = Schema.Struct({
   page: Page,
 });
 
-type UsersPage = AdminUsersResponse & { readonly auraRefusal?: AuraRefusal };
+type UsersPage = AdminUsersResponse & { readonly aurasForbidden?: true };
 
 export type OperatorAccess =
   | { readonly status: "admin"; readonly userId: string; readonly name: string }
@@ -104,7 +103,7 @@ export const listUsers = createServerFn({ method: "GET" })
       const holders = await listAuraHolderIds();
 
       if (holders.status !== "ok")
-        return { users: [], total: 0, auraRefusal: holders.status };
+        return { users: [], total: 0, aurasForbidden: true };
 
       if (data.aura) query.userIds = [...holders.value];
       else query.excludedUserIds = [...holders.value];
@@ -117,9 +116,12 @@ export const getUser = createServerFn({ method: "GET" })
   .validator(Schema.decodeUnknownSync(Schema.NonEmptyString))
   .handler(async ({ data: id }) => {
     try {
-      const details = await adminControllerGetUser({ id }, asPanel());
+      const [details, auras] = await Promise.all([
+        adminControllerGetUser({ id }, asPanel()),
+        getAuraGrants(id),
+      ]);
 
-      return { ...details, audit: details.audit.map(toAuditRow) };
+      return { ...details, audit: details.audit.map(toAuditRow), auras };
     } catch (error) {
       if (error instanceof ApiError && error.status === 404) throw notFound();
 

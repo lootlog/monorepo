@@ -57,7 +57,7 @@ export function RolesForm({
         ))}
       </fieldset>
       <div>
-        <Button type="submit" loading={pending === "roles"}>
+        <Button type="submit" loading={pending?.action === "roles"}>
           {text.rolesSave}
         </Button>
       </div>

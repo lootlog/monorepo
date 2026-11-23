@@ -30,17 +30,16 @@ export const UpdateOwnCharacterAuraRequest = Schema.Struct({
 export type UpdateOwnCharacterAuraRequest =
   typeof UpdateOwnCharacterAuraRequest.Type;
 
-export const CharacterAuraGameAccountParams = Schema.Struct({
-  gameAccountId: MargonemId,
+export const CharacterAuraGrantUserParams = Schema.Struct({
+  userId: Schema.NonEmptyString,
 });
 
 export const PersonalCharacterAuraGrantParams = Schema.Struct({
-  gameAccountId: MargonemId,
+  userId: Schema.NonEmptyString,
   auraId: PersonalCharacterAuraIdSchema,
 });
 
 export const CharacterAuraGrantsResponse = Schema.Struct({
-  userId: Schema.String,
   admin: Schema.Boolean,
   granted: Schema.Boolean,
   personalAuraIds: Schema.Array(PersonalCharacterAuraIdSchema),
