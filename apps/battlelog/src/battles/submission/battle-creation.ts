@@ -487,9 +487,11 @@ export const makeBattleCreation = (
       );
     }).pipe(
       Effect.tapError((error) =>
-        Effect.sync(() =>
-          logger.error(`Failed to create battle for user ${userId}:`, error),
-        ),
+        Effect.sync(() => {
+          if (error instanceof ApplicationError) return;
+
+          logger.error(`Failed to create battle for user ${userId}:`, error);
+        }),
       ),
     );
   };

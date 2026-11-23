@@ -6,10 +6,7 @@ import { Layer } from "effect";
 import { HttpRouter, HttpServer } from "effect/http";
 import { BattlelogApplication } from "../src/battlelog-application.js";
 import type { BattlelogOperations } from "../src/battles/battlelog-operations.js";
-import {
-  BattlelogRoutes,
-  battlelogHttpMiddleware,
-} from "../src/http/battlelog-http.js";
+import { BattlelogRoutes } from "../src/http/battlelog-http.js";
 
 export const makeBattlelogTestBoundary = (
   testOperations: BattlelogOperations,
@@ -28,11 +25,7 @@ export const makeBattlelogTestBoundary = (
       ),
       Layer.provide(HttpServer.layerServices),
     ),
-    {
-      disableLogger: true,
-      middleware: (effect) =>
-        httpServerMetrics(battlelogHttpMiddleware(effect)),
-    },
+    { middleware: httpServerMetrics },
   );
 
   return {
