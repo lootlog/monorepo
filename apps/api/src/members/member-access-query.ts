@@ -7,7 +7,7 @@ import {
   createAccessPolicy,
   memberCapabilities,
 } from "@lootlog/domain/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import {
   type SQL,
   and,
@@ -78,14 +78,14 @@ export const findActiveGuildMember = (
 export const selectAccessibleGuilds = (
   database: typeof ApiDatabase.Service,
   discordId: string,
-  permissions: ReadonlyArray<Permission> = [Permission.LOOTLOG_ACCESS],
+  permissions: ReadonlyArray<Capability> = [Capability.LOOTLOG_ACCESS],
 ) =>
   accessibleGuildsQuery(database, discordId, permissions).pipe(Effect.flatten);
 
 export const accessibleGuildsQuery = (
   database: typeof ApiDatabase.Service,
   discordId: string,
-  permissions: ReadonlyArray<Permission>,
+  permissions: ReadonlyArray<Capability>,
 ) =>
   Effect.map(apiKeyOrganizationFilter(guildTable.id), (keyScope) => {
     const roleGrantedGuildIds = database
@@ -122,7 +122,7 @@ export const selectGuildIdsGrantingPermissions = (
   database: typeof ApiDatabase.Service,
   discordIds: ReadonlyArray<string>,
   guilds: ReadonlyArray<{ id: string; ownerId: string }>,
-  permissions: ReadonlyArray<Permission>,
+  permissions: ReadonlyArray<Capability>,
 ) =>
   Effect.gen(function* () {
     const granted = new Map<string, Set<string>>();
@@ -177,7 +177,7 @@ type GuildRole = Pick<
 export const selectAccessibleGuildRoles = Effect.fnUntraced(function* (
   database: typeof ApiDatabase.Service,
   discordId: string,
-  permissions: ReadonlyArray<Permission>,
+  permissions: ReadonlyArray<Capability>,
 ) {
   const accessible = database
     .$with("accessible_guilds")

@@ -1,3 +1,4 @@
+import type { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import {
   type ReauthenticationRequired,
   reauthenticationRequiredResponse,
@@ -18,7 +19,7 @@ import {
   NPC_FEATURE_PERMISSIONS,
   HERO_SIGHTING_READ_FEATURE,
 } from "@lootlog/domain/npc-permissions";
-import type { Permission as PermissionValue } from "@lootlog/schema/permissions";
+import type { Capability as PermissionValue } from "@lootlog/schema/permissions";
 import { applicationErrorResponse } from "../../application-error-response.js";
 import { LootlogApi } from "../../lootlog-api.js";
 
@@ -40,7 +41,8 @@ export class HeroSightingsAuthorization extends Context.Service<
   {
     readonly identity: Effect.Effect<
       HeroSightingsIdentity,
-      HeroSightingsAccessDenied
+      HeroSightingsAccessDenied,
+      ForwardAuthIdentity
     >;
     readonly requireGuild: (options: {
       readonly guildId: string;
@@ -49,7 +51,8 @@ export class HeroSightingsAuthorization extends Context.Service<
       HeroSightingsGuildAccess,
       | HeroSightingsAccessDenied
       | HeroSightingsNotFound
-      | ReauthenticationRequired
+      | ReauthenticationRequired,
+      ForwardAuthIdentity
     >;
   }
 >()("@lootlog/api/http-api/hero-sightings/authorization") {}

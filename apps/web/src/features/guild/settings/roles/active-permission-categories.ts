@@ -1,15 +1,15 @@
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { PERMISSION_CATEGORIES } from "./constants/permission-categories";
 
 export const getActivePermissionCategories = (
-  permissions: readonly Permission[],
+  permissions: readonly Capability[],
 ) => {
   const activePermissions = new Set(permissions);
-  const hasAdminPermission = activePermissions.has(Permission.ADMIN);
+  const hasAdminPermission = activePermissions.has(Capability.ADMIN);
 
   return PERMISSION_CATEGORIES.flatMap((category) => {
     const visible = hasAdminPermission
-      ? category.permissions.includes(Permission.ADMIN)
+      ? category.permissions.includes(Capability.ADMIN)
       : category.permissions.some((permission) =>
           activePermissions.has(permission),
         );

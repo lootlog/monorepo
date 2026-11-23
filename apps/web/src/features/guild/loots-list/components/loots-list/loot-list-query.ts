@@ -1,5 +1,4 @@
 import {
-  getLootsControllerFetchLootsByGuildIdQueryKey,
   lootsControllerFetchLootsByGuildId,
   LootsControllerFetchLootsByGuildIdNpcTypesItem,
   LootsControllerFetchLootsByGuildIdRaritiesItem,
@@ -11,6 +10,7 @@ import {
   FIRST_PAGE_CURSOR,
   LOOTS_PAGE_LIMIT,
   LOOTS_QUERY_GC_TIME_MS,
+  lootListQueryKey,
 } from "./loot-list-cache";
 
 const LOOTS_QUERY_STALE_TIME_MS = 30_000;
@@ -68,10 +68,7 @@ export const lootListInfiniteQueryOptions = (
   params: LootsControllerFetchLootsByGuildIdParams,
 ) =>
   infiniteQueryOptions({
-    queryKey: getLootsControllerFetchLootsByGuildIdQueryKey(
-      { guildId },
-      params,
-    ),
+    queryKey: lootListQueryKey(guildId, params),
     queryFn: ({ pageParam, signal }) =>
       lootsControllerFetchLootsByGuildId(
         { guildId },

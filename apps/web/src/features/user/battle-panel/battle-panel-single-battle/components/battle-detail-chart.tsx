@@ -21,6 +21,7 @@ export function BattleDetailChart({
 
   return (
     <BattleHpTimelineChart
+      battleId={timeline.battleId}
       timeline={timeline.timeline}
       warriors={timeline.warriors}
       characterId={characterId}

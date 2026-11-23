@@ -16,7 +16,7 @@ import {
   createAccessPolicySnapshot,
   type AccessPolicySnapshot,
 } from "@lootlog/protocol/realtime/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import {
   InfiniteQueryObserver,
   type InfiniteData,
@@ -38,7 +38,7 @@ import { GatewayProvider } from "./gateway-provider";
 
 type Listener = Parameters<RealtimeWebSocket["addEventListener"]>[1];
 
-const eventPolicy = (permissions: Permission[]) =>
+const eventPolicy = (permissions: Capability[]) =>
   createAccessPolicySnapshot(
     [
       {
@@ -376,7 +376,7 @@ it.each(["permissions", "restricted reconnect"] as const)(
         },
       }),
     );
-    Wire.accessPolicy = eventPolicy([Permission.LOOTLOG_EVENTS_READ]);
+    Wire.accessPolicy = eventPolicy([Capability.LOOTLOG_EVENTS_READ]);
 
     const client = await setup();
     act(() => wireAt(0).open());
@@ -508,7 +508,7 @@ it.each(["permissions", "restricted reconnect"] as const)(
 it.each(["unchanged", "expanded"] as const)(
   "preserves loaded event pages when reconnect confirms %s access and refresh fails",
   async (change) => {
-    Wire.accessPolicy = eventPolicy([Permission.LOOTLOG_EVENTS_READ]);
+    Wire.accessPolicy = eventPolicy([Capability.LOOTLOG_EVENTS_READ]);
 
     const client = await setup();
     act(() => wireAt(0).open());
@@ -545,8 +545,8 @@ it.each(["unchanged", "expanded"] as const)(
 
     if (change === "expanded")
       Wire.accessPolicy = eventPolicy([
-        Permission.LOOTLOG_EVENTS_READ,
-        Permission.LOOTLOG_EVENTS_WRITE,
+        Capability.LOOTLOG_EVENTS_READ,
+        Capability.LOOTLOG_EVENTS_WRITE,
       ]);
 
     act(() => {

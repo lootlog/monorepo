@@ -1,4 +1,4 @@
-import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
+import { decodeRabbitEvent } from "@lootlog/protocol/rabbit/events";
 import { eventMessage, type RabbitMessaging } from "@lootlog/messaging";
 import { readPublishedFeedEntry } from "#src/users/user-feed";
 import { and, eq, inArray, isNull } from "drizzle-orm";
@@ -136,14 +136,14 @@ export const makeLootPublicationDispatcher = (
               } satisfies GuildLootCreatedMessageV2;
             }
 
+            const event = yield* Effect.try(() =>
+              decodeRabbitEvent(payload.routingKey, data),
+            );
+
             const publication = rabbit.publish(
-              eventMessage(
-                payload.routingKey,
-                // SAFETY: `createdPublications` typed the data by this routing
-                // key before it was stored, and consumers validate it again.
-                data as CanonicalRabbitEvent<typeof payload.routingKey>,
-                { messageId: `loot-publication:${row.id}` },
-              ),
+              eventMessage(payload.routingKey, event, {
+                messageId: `loot-publication:${row.id}`,
+              }),
             );
 
             if (payload.routingKey === RabbitRoutingKey.GUILDS_LOOTS_CREATE) {

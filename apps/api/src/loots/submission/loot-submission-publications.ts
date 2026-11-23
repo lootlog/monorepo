@@ -22,7 +22,11 @@ import {
   type LootPublication,
 } from "./loot-publication-outbox.js";
 import type { AcceptedNpcSnapshot } from "#src/loots/submission/loot-submission-acceptance.repository";
-import { mapItems, mapPlayers } from "./loot-submission-normalization.js";
+import {
+  type AcceptedPlayer,
+  mapItems,
+  mapPlayers,
+} from "./loot-submission-normalization.js";
 import type { AcceptanceOutcome } from "./loot-submission-outcome.js";
 
 function findDropSource(
@@ -82,6 +86,7 @@ export function newLootPublications(options: {
   observedAt: Date;
   outcome: AcceptanceOutcome;
   submission: CreateLootRequest;
+  players: ReadonlyArray<AcceptedPlayer>;
 }): LootPublication[] {
   const organizationIds = getUniqueOrganizationIds(
     options.outcome.submissionData,
@@ -114,7 +119,7 @@ export function newLootPublications(options: {
 
   rabbit(
     RabbitRoutingKey.SEARCH_PLAYERS_INDEX,
-    mapPlayers(options.submission.players).map((player) => ({
+    mapPlayers(options.players).map((player) => ({
       ...player,
       prof: player.prof ?? "",
       world: options.submission.world,

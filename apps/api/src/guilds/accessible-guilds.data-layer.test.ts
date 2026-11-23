@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { Effect } from "effect";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
 import {
@@ -35,7 +35,7 @@ test("repeated guild reads queue one background refresh per stale guild", async 
           id: `role-${guildId}`,
           guildId,
           name: "Member",
-          permissions: [Permission.LOOTLOG_ACCESS],
+          permissions: [Capability.LOOTLOG_ACCESS],
           updatedAt: new Date(0),
         })),
       ),

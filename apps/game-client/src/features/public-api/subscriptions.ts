@@ -1,7 +1,5 @@
 import { Option, Schema } from "effect";
 import type { Query, QueryClient } from "@tanstack/react-query";
-import type { Timer } from "@/api/timers.api";
-import type { GuildResponseDtoOutput } from "@lootlog/client/main";
 import { useGlobalStore } from "@/store/global.store";
 import type { Emitter } from "./emitter";
 import { groupTimersByGuild, mapGuilds, mapTimers } from "./mappers";
@@ -41,11 +39,14 @@ export function setupSubscriptions(
 
   const diffWorldTimers = (query: Query, emit: boolean) => {
     const world = getQueryWorld(query);
-    // SAFETY: callers pass only timer query matches; useTimers populates them
-    // through fetchTimers and useTimersCache writes the same Timer[].
-    const mapped = mapTimers(query.state.data as Timer[] | undefined);
 
-    if (!mapped || !world) {
+    if (!world) {
+      return;
+    }
+
+    const mapped = mapTimers(queryClient.getQueryData(queryKeys.timers(world)));
+
+    if (!mapped) {
       return;
     }
 
@@ -80,9 +81,7 @@ export function setupSubscriptions(
 
   const initializeQuerySnapshot = (eventName: ApiEventName) => {
     if (eventName === "guilds:changed") {
-      const guilds = queryClient.getQueryData<GuildResponseDtoOutput[]>(
-        queryKeys.guilds(),
-      );
+      const guilds = queryClient.getQueryData(queryKeys.guilds());
 
       lastGuildsJson = JSON.stringify(mapGuilds(guilds));
 
@@ -130,13 +129,7 @@ export function setupSubscriptions(
       activeEvents.has("guilds:changed") &&
       key[0] === queryKeys.guilds()[0]
     ) {
-      // SAFETY: the matching generated guild query stores GuildResponseDtoOutput[];
-      // game-access-cache only filters/updates those existing guild records.
-      const data = event.query.state.data as
-        | GuildResponseDtoOutput[]
-        | undefined;
-
-      const mapped = mapGuilds(data);
+      const mapped = mapGuilds(queryClient.getQueryData(queryKeys.guilds()));
       const json = JSON.stringify(mapped);
 
       if (json !== lastGuildsJson) {

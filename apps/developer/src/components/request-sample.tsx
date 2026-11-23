@@ -42,9 +42,8 @@ const barClassName =
   "flex h-10 items-center justify-between border-border px-4 text-xs font-medium text-muted-foreground";
 
 const renderSegments = (segments: Segment[]) =>
-  segments.map(([text, className], index) => (
-    // oxlint-disable-next-line react/no-array-index-key
-    <span key={index} className={className}>
+  segments.map(([text, className]) => (
+    <span key={text} className={className}>
       {text}
     </span>
   ));

@@ -3,7 +3,7 @@ import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
 import { expect, test } from "bun:test";
 import { Effect } from "effect";
 import { eq } from "drizzle-orm";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
 import {
   createGuildFixture,
@@ -84,8 +84,8 @@ test("the submitting Organization's NPC visibility decides the allocation, not o
           name: "Reader",
           updatedAt: now,
           permissions: [
-            Permission.LOOTLOG_LOOTS_WRITE,
-            Permission.LOOTLOG_LOOTS_READ,
+            Capability.LOOTLOG_LOOTS_WRITE,
+            Capability.LOOTLOG_LOOTS_READ,
           ],
           lvlRangeFrom: 0,
           lvlRangeTo: id === 1 ? 190 : 250,

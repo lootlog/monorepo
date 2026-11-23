@@ -1,34 +1,15 @@
 import type { StaleKillQueryCache } from "#src/kills/kill-query-support";
 import { afterAll, beforeAll, expect, test } from "bun:test";
-import { randomUUID } from "node:crypto";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
-import { Permission } from "@lootlog/schema/permissions";
-import { eq, inArray, sql } from "drizzle-orm";
-import { Effect, ManagedRuntime, Result } from "effect";
+import { Capability } from "@lootlog/schema/permissions";
+import { Effect } from "effect";
+import { ApiDatabase } from "../src/database/drizzle/database.js";
 import {
-  ApiDatabase,
-  ApiDatabaseLive,
-} from "../src/database/drizzle/database.js";
-import {
-  eventHeroKillTable,
-  eventHeroNpcTable,
-  eventRankingTable,
-  eventTable,
-} from "../src/database/drizzle/event.schema.js";
-import {
-  guildTable,
-  memberTable,
-} from "../src/database/drizzle/organization.schema.js";
-import {
-  memberKillBucketTable,
-  memberKillTotalTable,
   guildKillBucketTable,
   guildKillDayTable,
   guildKillTotalTable,
 } from "../src/database/drizzle/kill-statistics.schema.js";
-import { makeEventCatalogMutations } from "../src/events/catalog/event-catalog-mutations.js";
-import { makeEventPointsStore } from "../src/events/kills/event-points.repository.js";
 import { makeKillStatsPersistence } from "../src/kills/kill-stats.repository.js";
 import { makeGuildKillQueries } from "../src/kills/guild-kill-queries.js";
 import {
@@ -36,22 +17,12 @@ import {
   toStatsDate,
   toStatsHour,
 } from "../src/kills/kill-stats-period.js";
-import {
-  ResourceConflictError,
-  ResourceNotFoundError,
-} from "@lootlog/protocol/http/errors";
+import { makeKillRankingFixture } from "./kill-rankings-fixtures.js";
 
-const runtime = ManagedRuntime.make(ApiDatabaseLive);
+const { runtime, guildId, timelineGuildId, memberIds, seed, cleanup } =
+  makeKillRankingFixture();
 
-const guildId = `kill-ranking-${randomUUID()}`;
-
-const otherGuildId = `kill-ranking-${randomUUID()}`;
-
-const timelineGuildId = `kill-ranking-${randomUUID()}`;
-
-const memberIds = { first: 0, second: 0 };
-
-const policy = createAccessPolicy({ capabilities: [Permission.OWNER] });
+const policy = createAccessPolicy({ capabilities: [Capability.OWNER] });
 
 const cache: StaleKillQueryCache = {
   getOrSetStale: (_key, _schema, load) =>
@@ -65,164 +36,22 @@ const queries = Effect.map(ApiDatabase, (db) =>
   makeGuildKillQueries(makeKillStatsPersistence(db), cache),
 );
 
-beforeAll(async () => {
-  await runtime.runPromise(
-    Effect.gen(function* () {
-      const db = yield* ApiDatabase;
-      yield* db.insert(guildTable).values(
-        [guildId, otherGuildId, timelineGuildId].map((id) => ({
-          id,
-          name: "Ranking integration",
-          ownerId: "owner",
-          updatedAt: new Date(),
-        })),
-      );
-
-      const members = yield* db
-        .insert(memberTable)
-        .values(
-          ["first", "second"].map((name) => ({
-            guildId,
-            userId: name,
-            name,
-            updatedAt: new Date(),
-          })),
-        )
-        .returning();
-
-      const [first, second] = members;
-
-      if (!first || !second) throw new Error("Missing fixture members");
-
-      memberIds.first = first.id;
-      memberIds.second = second.id;
-
-      const base = {
-        guildId,
-        npcId: 1,
-        npcName: "Low",
-        npcType: NpcType.ELITE2,
-        npcLvl: 100,
-        npcProf: "w",
-        npcIcon: "low.gif",
-        periodStart: new Date(),
-        lastKilledAt: new Date(),
-      };
-
-      const stats = [
-        {
-          ...base,
-          memberId: first.id,
-          discordUserId: first.userId,
-          world: "a",
-          kills: 7,
-        },
-        {
-          ...base,
-          memberId: first.id,
-          discordUserId: first.userId,
-          world: "b",
-          kills: 5,
-        },
-        {
-          ...base,
-          memberId: second.id,
-          discordUserId: second.userId,
-          world: "a",
-          kills: 3,
-          npcLvl: 200,
-          npcName: "High",
-          npcIcon: "high.gif",
-        },
-        {
-          ...base,
-          memberId: second.id,
-          discordUserId: second.userId,
-          world: "a",
-          npcId: 2,
-          npcType: NpcType.HERO,
-          kills: 50,
-        },
-      ];
-
-      const { periodStart: _periodStart, ...described } = base;
-
-      yield* db
-        .insert(memberKillTotalTable)
-        .values(stats.map(({ periodStart: _start, ...row }) => row));
-      yield* db.insert(memberKillBucketTable).values(stats);
-      yield* db.insert(memberKillBucketTable).values({
-        ...described,
-        memberId: first.id,
-        discordUserId: first.userId,
-        world: "old",
-        kills: 900,
-        periodStart: new Date("2000-01-01"),
-      });
-
-      const summaries = [
-        { ...base, world: "a", kills: 7 },
-        {
-          ...base,
-          world: "b",
-          kills: 5,
-          npcLvl: 200,
-          npcName: "High",
-          npcIcon: "high.gif",
-        },
-        {
-          ...base,
-          world: "a",
-          npcId: 2,
-          npcType: NpcType.HERO,
-          kills: 50,
-        },
-        {
-          ...base,
-          guildId: otherGuildId,
-          world: "a",
-          kills: 999,
-        },
-      ];
-
-      yield* db
-        .insert(guildKillTotalTable)
-        .values(summaries.map(({ periodStart: _start, ...row }) => row));
-      yield* db.insert(guildKillBucketTable).values(summaries);
-    }),
-  );
+const limitedLootsRole = (roleGuildId: string) => ({
+  id: "limited",
+  guildId: roleGuildId,
+  name: "Limited",
+  color: null,
+  position: null,
+  permissions: [Capability.LOOTLOG_LOOTS_READ],
+  lvlRangeFrom: 0,
+  lvlRangeTo: 150,
+  createdAt: new Date(),
+  updatedAt: new Date(),
 });
 
-afterAll(async () => {
-  await runtime.runPromise(
-    Effect.gen(function* () {
-      const db = yield* ApiDatabase;
+beforeAll(seed);
 
-      for (const table of [
-        eventTable,
-        memberKillBucketTable,
-        memberKillTotalTable,
-        guildKillBucketTable,
-        guildKillDayTable,
-        guildKillTotalTable,
-        memberTable,
-      ]) {
-        yield* db
-          .delete(table)
-          .where(
-            inArray(table.guildId, [guildId, otherGuildId, timelineGuildId]),
-          );
-      }
-
-      yield* db
-        .delete(guildTable)
-        .where(
-          inArray(guildTable.id, [guildId, otherGuildId, timelineGuildId]),
-        );
-    }),
-  );
-  await runtime.dispose();
-});
+afterAll(cleanup);
 
 for (const period of ["all", "24h"] as const) {
   test(`SQL rankings preserve cross-world sums, per-type limits and metadata outside the top member (${period})`, async () => {
@@ -363,23 +192,10 @@ test("role visibility restricts totals and metadata before every SQL ranking", a
       const service = yield* queries;
 
       const restricted = createAccessPolicy({
-        capabilities: [Permission.LOOTLOG_LOOTS_READ],
+        capabilities: [Capability.LOOTLOG_LOOTS_READ],
       });
 
-      const roles = [
-        {
-          id: "limited",
-          guildId,
-          name: "Limited",
-          color: null,
-          position: null,
-          permissions: [Permission.LOOTLOG_LOOTS_READ],
-          lvlRangeFrom: 0,
-          lvlRangeTo: 150,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-      ];
+      const roles = [limitedLootsRole(guildId)];
 
       const top = yield* service.getGuildTopNpcs(guildId, restricted, roles, {
         limit: 5,
@@ -567,21 +383,8 @@ test("the kill timeline and weekly hours follow Warsaw days, fill quiet days, co
 
       const restricted = yield* service.getGuildKillStats(
         timelineGuildId,
-        createAccessPolicy({ capabilities: [Permission.LOOTLOG_LOOTS_READ] }),
-        [
-          {
-            id: "limited",
-            guildId: timelineGuildId,
-            name: "Limited",
-            color: null,
-            position: null,
-            permissions: [Permission.LOOTLOG_LOOTS_READ],
-            lvlRangeFrom: 0,
-            lvlRangeTo: 150,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
-        ],
+        createAccessPolicy({ capabilities: [Capability.LOOTLOG_LOOTS_READ] }),
+        [limitedLootsRole(timelineGuildId)],
         { period: "all" },
       );
 
@@ -595,304 +398,6 @@ test("the kill timeline and weekly hours follow Warsaw days, fill quiet days, co
           (cell) => cell.weekday === 4 && cell.hour === 0,
         ),
       ).toBeUndefined();
-    }),
-  );
-});
-
-test("event rankings accumulate concurrent kills and count a retried kill once", async () => {
-  await runtime.runPromise(
-    Effect.gen(function* () {
-      const db = yield* ApiDatabase;
-      const store = makeEventPointsStore(db);
-      const eventId = randomUUID();
-      const heroNpcName = "Kotołak";
-
-      const [firstKill, secondKill, retriedKill] = [
-        randomUUID(),
-        randomUUID(),
-        randomUUID(),
-      ];
-
-      const now = new Date();
-
-      const others = yield* db
-        .insert(memberTable)
-        .values(
-          Array.from({ length: 18 }, (_, index) => ({
-            guildId,
-            userId: `crew-${index}`,
-            name: `crew-${index}`,
-            updatedAt: now,
-          })),
-        )
-        .returning({ id: memberTable.id });
-
-      const crew = [
-        memberIds.first,
-        memberIds.second,
-        ...others.map(({ id }) => id),
-      ];
-
-      yield* db.insert(eventTable).values({
-        id: eventId,
-        guildId,
-        name: "Ranking event",
-        world: "a",
-        updatedAt: now,
-      });
-      yield* db
-        .insert(eventHeroNpcTable)
-        .values({ id: eventId, eventId, npcName: heroNpcName });
-      yield* db.insert(eventHeroKillTable).values(
-        [firstKill, secondKill, retriedKill].map((id) => ({
-          id,
-          heroNpcId: eventId,
-          minSpawnTimeAtKill: now,
-          maxSpawnTimeAtKill: now,
-        })),
-      );
-      yield* db.insert(eventRankingTable).values({
-        id: randomUUID(),
-        eventId,
-        memberId: memberIds.first,
-        heroNpcName,
-        totalPoints: 15,
-        manualAdjustmentPoints: 5,
-        totalKills: 1,
-        totalTimeSeconds: 60,
-        avgAfkPercentage: 10,
-        pointsModified: true,
-        updatedAt: now,
-      });
-
-      const entry = (
-        memberId: number,
-        points: number,
-        afkPercentage: number,
-        pointsModified = false,
-      ) => ({
-        memberId,
-        points,
-        trackingSeconds: 30,
-        afkPercentage,
-        pointsModified,
-      });
-
-      const applied = yield* Effect.all(
-        [
-          store.addKillToRankings(
-            eventId,
-            firstKill,
-            crew.map((memberId) => entry(memberId, 1, 40)),
-          ),
-          store.addKillToRankings(
-            eventId,
-            secondKill,
-            crew
-              .map((memberId) =>
-                entry(memberId, 2, 20, memberId === memberIds.second),
-              )
-              .reverse(),
-          ),
-        ],
-        { concurrency: "unbounded" },
-      );
-
-      expect(applied).toEqual([true, true]);
-
-      const failedAttempt = yield* Effect.exit(
-        store.addKillToRankings(eventId, retriedKill, [
-          entry(2_147_483_647, 100, 100),
-          entry(memberIds.second, 100, 100),
-        ]),
-      );
-
-      expect(failedAttempt._tag).toBe("Failure");
-      expect(
-        yield* store.addKillToRankings(eventId, retriedKill, [
-          entry(memberIds.second, 1, 0),
-        ]),
-      ).toBe(true);
-
-      const rankings = yield* db
-        .select({
-          memberId: eventRankingTable.memberId,
-          totalPoints: eventRankingTable.totalPoints,
-          manualAdjustmentPoints: eventRankingTable.manualAdjustmentPoints,
-          totalKills: eventRankingTable.totalKills,
-          totalTimeSeconds: eventRankingTable.totalTimeSeconds,
-          avgAfkPercentage: eventRankingTable.avgAfkPercentage,
-          pointsModified: eventRankingTable.pointsModified,
-        })
-        .from(eventRankingTable)
-        .where(eq(eventRankingTable.eventId, eventId));
-
-      expect(
-        rankings.toSorted((left, right) => left.memberId - right.memberId),
-      ).toEqual(
-        crew
-          .toSorted((left, right) => left - right)
-          .map((memberId) => {
-            if (memberId === memberIds.first)
-              return {
-                memberId,
-                totalPoints: 18,
-                manualAdjustmentPoints: 5,
-                totalKills: 3,
-                totalTimeSeconds: 120,
-                avgAfkPercentage: 23.33,
-                pointsModified: true,
-              };
-
-            if (memberId === memberIds.second)
-              return {
-                memberId,
-                totalPoints: 4,
-                manualAdjustmentPoints: 0,
-                totalKills: 3,
-                totalTimeSeconds: 90,
-                avgAfkPercentage: 20,
-                pointsModified: true,
-              };
-
-            return {
-              memberId,
-              totalPoints: 3,
-              manualAdjustmentPoints: 0,
-              totalKills: 2,
-              totalTimeSeconds: 60,
-              avgAfkPercentage: 30,
-              pointsModified: false,
-            };
-          }),
-      );
-    }),
-  );
-});
-
-test("concurrent hero renames onto one name give it to exactly one hero", async () => {
-  await runtime.runPromise(
-    Effect.gen(function* () {
-      const db = yield* ApiDatabase;
-      const eventId = randomUUID();
-      const now = new Date();
-
-      const mutations = makeEventCatalogMutations(db, {
-        invalidateScopes: () => Effect.void,
-        deleteByPattern: () => Effect.succeed(0),
-      });
-
-      yield* db.insert(eventTable).values({
-        id: eventId,
-        guildId,
-        name: "Hero names",
-        world: "a",
-        updatedAt: now,
-      });
-      yield* db.insert(eventHeroNpcTable).values(
-        ["a", "b"].map((key) => ({
-          id: `${eventId}-${key}`,
-          eventId,
-          npcName: `Heros ${key}`,
-        })),
-      );
-
-      const guild = { id: guildId };
-      const npcName = "Wspólna nazwa";
-
-      const holdHeroes = db.transaction((transaction) =>
-        Effect.gen(function* () {
-          yield* transaction
-            .select({ id: eventHeroNpcTable.id })
-            .from(eventHeroNpcTable)
-            .where(eq(eventHeroNpcTable.eventId, eventId))
-            .for("update");
-          yield* transaction.execute(sql`select pg_sleep(0.5)`);
-        }),
-      );
-
-      const rename = (heroId: string) =>
-        Effect.result(
-          Effect.andThen(
-            Effect.sleep("100 millis"),
-            mutations.updateHero(guild, eventId, heroId, { npcName }),
-          ),
-        );
-
-      const [, ...results] = yield* Effect.all(
-        [holdHeroes, rename(`${eventId}-a`), rename(`${eventId}-b`)],
-        { concurrency: "unbounded" },
-      );
-
-      const failures = results.flatMap((result) =>
-        Result.isFailure(result) ? [result.failure] : [],
-      );
-
-      expect(failures).toHaveLength(1);
-      expect(
-        failures.every((failure) => failure instanceof ResourceConflictError),
-      ).toBe(true);
-      expect(
-        yield* db
-          .select({ id: eventHeroNpcTable.id })
-          .from(eventHeroNpcTable)
-          .where(eq(eventHeroNpcTable.npcName, npcName)),
-      ).toHaveLength(1);
-    }),
-  );
-});
-
-test("renaming a hero deleted while the rename waits for its row is a 404", async () => {
-  await runtime.runPromise(
-    Effect.gen(function* () {
-      const db = yield* ApiDatabase;
-      const eventId = randomUUID();
-      const heroId = `${eventId}-a`;
-
-      const mutations = makeEventCatalogMutations(db, {
-        invalidateScopes: () => Effect.void,
-        deleteByPattern: () => Effect.succeed(0),
-      });
-
-      yield* db.insert(eventTable).values({
-        id: eventId,
-        guildId,
-        name: "Deleted hero rename",
-        world: "a",
-        updatedAt: new Date(),
-      });
-      yield* db
-        .insert(eventHeroNpcTable)
-        .values({ id: heroId, eventId, npcName: "Heros" });
-
-      const deleteHero = db.transaction((transaction) =>
-        Effect.gen(function* () {
-          yield* transaction
-            .delete(eventHeroNpcTable)
-            .where(eq(eventHeroNpcTable.id, heroId));
-          yield* transaction.execute(sql`select pg_sleep(0.5)`);
-        }),
-      );
-
-      const [, renamed] = yield* Effect.all(
-        [
-          deleteHero,
-          Effect.result(
-            Effect.andThen(
-              Effect.sleep("100 millis"),
-              mutations.updateHero({ id: guildId }, eventId, heroId, {
-                npcName: "Nowa nazwa",
-              }),
-            ),
-          ),
-        ],
-        { concurrency: "unbounded" },
-      );
-
-      expect(
-        Result.isFailure(renamed) &&
-          renamed.failure instanceof ResourceNotFoundError,
-      ).toBe(true);
     }),
   );
 });

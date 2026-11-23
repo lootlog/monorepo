@@ -12,7 +12,10 @@ import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import type { KillHistoryMemberEntry } from "@lootlog/client/main";
-import { EventHistoryResults } from "../shared/event-history-results";
+import {
+  EventHistoryResults,
+  type EventHistoryQuery,
+} from "../shared/event-history-results";
 import { MemberKillBreakdownRow } from "./member-kill-breakdown-row";
 import { MemberKillRowsSkeleton } from "./member-kill-rows-skeleton";
 import { MemberKillTiles } from "./member-kill-tiles";
@@ -25,13 +28,7 @@ type MemberKillsListProps = {
   scrollElement: HTMLDivElement | null;
   resetKey: string;
   allKills: KillHistoryMemberEntry[];
-  isLoading: boolean;
-  hasError: boolean;
-  hasNextPage?: boolean;
-  isFetchingNextPage: boolean;
-  fetchNextPage: () => void;
-  onRetry: () => void;
-  isRetrying?: boolean;
+  query: EventHistoryQuery;
   onShowAllHeroes?: () => void;
 };
 
@@ -65,20 +62,13 @@ const CELL_CLASS_NAMES = new Map([
   ["actions", "w-11 py-0 text-right"],
 ]);
 
-// oxlint-disable-next-line react-doctor/no-many-boolean-props
 export const MemberKillsList = ({
   guildId,
   eventId,
   scrollElement,
   resetKey,
   allKills,
-  isLoading,
-  hasError,
-  hasNextPage,
-  isFetchingNextPage,
-  fetchNextPage,
-  onRetry,
-  isRetrying,
+  query,
   onShowAllHeroes,
 }: MemberKillsListProps) => {
   const { t } = useTranslation();
@@ -120,13 +110,7 @@ export const MemberKillsList = ({
       scrollElement={scrollElement}
       resetKey={resetKey}
       isEmpty={allKills.length === 0}
-      isLoading={isLoading}
-      hasError={hasError}
-      hasNextPage={hasNextPage}
-      isFetchingNextPage={isFetchingNextPage}
-      fetchNextPage={fetchNextPage}
-      onRetry={onRetry}
-      isRetrying={isRetrying}
+      query={query}
       onShowAllHeroes={onShowAllHeroes}
       skeleton={<MemberKillRowsSkeleton />}
     >

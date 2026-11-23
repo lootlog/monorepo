@@ -1,3 +1,5 @@
+import { mapValues } from "es-toolkit";
+import { recordKeys } from "@/utils/record-keys";
 import { Option, Schema } from "effect";
 import { isObjectRecord } from "@lootlog/schema/records";
 import {
@@ -146,8 +148,7 @@ const WINDOW_DEFAULTS = {
 
 export type WindowId = keyof typeof WINDOW_DEFAULTS;
 
-// SAFETY: the keys of WINDOW_DEFAULTS are exactly WindowId.
-const WINDOW_IDS = Object.keys(WINDOW_DEFAULTS) as WindowId[];
+const WINDOW_IDS = recordKeys(WINDOW_DEFAULTS);
 
 const RUNTIME_WINDOW_IDS = new Set<WindowId>(["extension-login", "app-error"]);
 
@@ -158,20 +159,14 @@ const TRANSIENT_FIELDS = new Set<string>([
 ]);
 
 const createDefaultWindows = (): WindowEntries => {
-  // SAFETY: built with one entry for every WindowId.
-  const windows = Object.fromEntries(
-    WINDOW_IDS.map((id) => [
-      id,
-      {
-        open: WINDOW_DEFAULTS[id].open,
-        position: DEFAULT_POSITION,
-        hasDefinedPosition: false,
-        size: WINDOW_DEFAULTS[id].size,
-        opacity: DEFAULT_OPACITY,
-        locked: false,
-      } satisfies WindowData,
-    ]),
-  ) as Record<WindowId, WindowData>;
+  const windows = mapValues(WINDOW_DEFAULTS, ({ open, size }): WindowData => ({
+    open,
+    position: DEFAULT_POSITION,
+    hasDefinedPosition: false,
+    size,
+    opacity: DEFAULT_OPACITY,
+    locked: false,
+  }));
 
   return { ...windows, settings: { ...windows.settings, state: {} } };
 };

@@ -4,7 +4,7 @@ import {
   type RealtimeConnectionState,
 } from "@lootlog/client/realtime";
 import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
-import type { Permission } from "@lootlog/schema/permissions";
+import type { Capability } from "@lootlog/schema/permissions";
 import { vi } from "vitest";
 import type { PropsWithChildren } from "react";
 import { GatewayClient } from "@/lib/gateway-client";
@@ -12,7 +12,7 @@ import { GatewayContext } from "@/contexts/gateway-context";
 
 export const createTestAccessPolicy = (
   organizationIds: readonly string[],
-  permissions: Permission[] = [],
+  permissions: Capability[] = [],
 ) =>
   createAccessPolicySnapshot(
     organizationIds.map((id) => ({

@@ -63,6 +63,8 @@ export const permissionEnum = pgEnum("Permission", [
   "LOOTLOG_DOCS_WRITE",
   "LOOTLOG_LOOTS_ARCHIVE",
   "LOOTLOG_PRESENCE_LOCATION_READ",
+  "LOOTLOG_HERO_SIGHTINGS_READ",
+  "LOOTLOG_HERO_SIGHTINGS_WRITE",
 ]);
 
 export const memberTypeEnum = pgEnum("MemberType", [

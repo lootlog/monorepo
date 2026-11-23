@@ -1,58 +1,51 @@
 import { ActivityLogCreated } from "@lootlog/protocol/rabbit/events";
-import { Function, Schema } from "effect";
-import {
-  ActivitySource,
-  ActivityType,
-  type ActivitySource as ActivitySourceValue,
-  type ActivityType as ActivityTypeValue,
+import { Schema } from "effect";
+import type {
+  ActivitySource as ActivitySourceValue,
+  ActivityType as ActivityTypeValue,
 } from "#src/database/schema";
+import type { ActivityCursorPosition } from "./activity-cursor.js";
 
-export type CreateActivity = ActivityLogCreated;
-
-const decodeBase = Schema.decodeUnknownSync(ActivityLogCreated);
-
-const storedActorFields = [
-  "accountId",
-  "characterId",
-  "name",
-  "icon",
-  "lvl",
-  "prof",
-] as const;
-
-const requiredGameFields = [
-  ...storedActorFields,
-  "clanName",
-  "clanId",
-] as const;
-
-export const decodeCreateActivity = Function.compose(decodeBase, (value) => {
-  if (
-    (value.type === ActivityType.CONNECT_EVENT ||
-      value.type === ActivityType.DISCONNECT_EVENT) &&
-    !Schema.is(Schema.NonEmptyString)(value.details?.sessionId)
-  )
-    throw new Error("details.sessionId is required for session activity");
-
-  if (
-    value.source === ActivitySource.GAME &&
-    (!value.actorSnapshot ||
-      requiredGameFields.some(
-        (field) => value.actorSnapshot?.[field] === undefined,
-      ))
-  )
-    throw new Error("actorSnapshot is missing required fields for GAME source");
-
-  if (
-    value.actorSnapshot &&
-    storedActorFields.some(
-      (field) => value.actorSnapshot?.[field] === undefined,
-    )
-  )
-    throw new Error("actorSnapshot is missing a field the activity log stores");
-
-  return value;
+const StoredActorSnapshot = Schema.Struct({
+  accountId: Schema.Finite,
+  characterId: Schema.Finite,
+  name: Schema.String,
+  clanName: Schema.optional(Schema.String),
+  clanId: Schema.optional(Schema.Finite),
+  icon: Schema.String,
+  lvl: Schema.Finite,
+  prof: Schema.String,
 });
+
+const GameActorSnapshot = Schema.Struct({
+  ...StoredActorSnapshot.fields,
+  clanName: Schema.String,
+  clanId: Schema.Finite,
+});
+
+const SessionDetails = Schema.StructWithRest(
+  Schema.Struct({ sessionId: Schema.NonEmptyString }),
+  [Schema.Record(Schema.String, Schema.Unknown)],
+);
+
+const CreateActivity = Schema.Union([
+  Schema.Struct({
+    ...ActivityLogCreated.fields,
+    source: Schema.Literal("GAME"),
+    details: SessionDetails,
+    actorSnapshot: GameActorSnapshot,
+  }),
+  Schema.Struct({
+    ...ActivityLogCreated.fields,
+    source: Schema.Literal("WEB_APP"),
+    details: SessionDetails,
+    actorSnapshot: Schema.optional(StoredActorSnapshot),
+  }),
+]);
+
+export type CreateActivity = typeof CreateActivity.Type;
+
+export const decodeCreateActivity = Schema.decodeUnknownSync(CreateActivity);
 
 export interface QueryActivities {
   readonly userId?: string;
@@ -64,6 +57,6 @@ export interface QueryActivities {
   readonly world?: string;
   readonly startDate?: string;
   readonly endDate?: string;
-  readonly cursor?: string;
+  readonly cursor?: ActivityCursorPosition;
   readonly limit: number;
 }

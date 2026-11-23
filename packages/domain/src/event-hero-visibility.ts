@@ -1,5 +1,5 @@
-import { Capability, createAccessPolicy } from "./access-policy.js";
-import type { Permission } from "@lootlog/schema/permissions";
+import { createAccessPolicy } from "./access-policy.js";
+import { Capability } from "@lootlog/schema/permissions";
 
 interface EventHeroWithLevel {
   npcLvl: number | null;
@@ -13,7 +13,7 @@ type EventHeroVisibilityRole = {
 export function canViewEventHero(
   hero: EventHeroWithLevel,
   roles: readonly EventHeroVisibilityRole[],
-  permissions: readonly Permission[],
+  permissions: readonly Capability[],
 ): boolean {
   if (
     createAccessPolicy({ capabilities: permissions }).allows(Capability.ADMIN)
@@ -37,7 +37,7 @@ export function canViewEventHero(
 export function filterHeroesByLevel<T extends EventHeroWithLevel>(
   heroes: T[],
   roles: readonly EventHeroVisibilityRole[],
-  permissions: readonly Permission[],
+  permissions: readonly Capability[],
 ): T[] {
   return heroes.filter((hero) => canViewEventHero(hero, roles, permissions));
 }

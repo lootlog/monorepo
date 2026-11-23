@@ -2,7 +2,8 @@ import { ChevronDown } from "lucide-react";
 import { useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "cn";
-import { NpcType } from "@/api/npcs.api";
+import type { NpcType } from "@/api/npcs.api";
+import { TIMER_NPC_TYPES } from "../constants/timer-npc-types";
 import { ChecklistMenu } from "@/components/checklist-menu";
 import {
   Popover,
@@ -10,15 +11,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { toolbarStripLightDividerClassName } from "@/components/ui/toolbar-strip";
-
-const NPC_TYPE_FILTER_OPTIONS = [
-  NpcType.ELITE2,
-  NpcType.ELITE3,
-  NpcType.HERO,
-  NpcType.EVENT_HERO,
-  NpcType.TITAN,
-  NpcType.HERO_TRACKER,
-];
 
 type TimersNpcTypeFilterProps = {
   selectedNpcTypes: NpcType[];
@@ -56,7 +48,7 @@ export const TimersNpcTypeFilter: FC<TimersNpcTypeFilterProps> = ({
         >
           <span>{t("filters.npcTypes")}</span>
           <span className="ll:font-semibold ll:text-white ll:tabular-nums">
-            {selected.size}/{NPC_TYPE_FILTER_OPTIONS.length}
+            {selected.size}/{TIMER_NPC_TYPES.length}
           </span>
           <ChevronDown aria-hidden="true" className="ll:size-3 ll:opacity-70" />
         </button>
@@ -67,7 +59,7 @@ export const TimersNpcTypeFilter: FC<TimersNpcTypeFilterProps> = ({
       >
         <ChecklistMenu
           aria-label={t("filters.npcTypesLabel")}
-          items={NPC_TYPE_FILTER_OPTIONS.map((type) => ({
+          items={TIMER_NPC_TYPES.map((type) => ({
             value: type,
             label: t(`npcType:${type}`),
           }))}

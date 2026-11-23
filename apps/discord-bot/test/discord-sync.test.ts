@@ -5,11 +5,11 @@ import {
   DiscordAPIError,
   Client,
   Options,
+  OverwriteType,
   type APIGuild,
   type APITextChannel,
   type APIChannel,
   type APIRole,
-  type GuildBasedChannel,
 } from "discord.js";
 import { Effect, Fiber } from "effect";
 import { decodeRabbitEventJson } from "@lootlog/protocol/rabbit/events";
@@ -91,6 +91,7 @@ async function fixture(cacheMembers = true) {
     | "position"
     | "parent_id"
     | "permission_overwrites"
+    | "topic"
   > &
     Pick<APIChannel, "type"> = {
     id: channelId,
@@ -207,6 +208,13 @@ async function fixture(cacheMembers = true) {
     return value;
   };
 
+  const refetchChannel = () => {
+    sdkGuild.channels.cache.delete(channelId);
+    client.channels.cache.delete(channelId);
+
+    return fetchChannel();
+  };
+
   return {
     client,
     guild,
@@ -217,6 +225,7 @@ async function fixture(cacheMembers = true) {
     events,
     fetchGuild,
     fetchChannel,
+    refetchChannel,
     removeChannels: () => {
       channels = [];
     },
@@ -238,22 +247,6 @@ async function fixture(cacheMembers = true) {
 }
 
 const channelsRoute = `/guilds/${guildId}/channels`;
-
-type GatewayChannelPatch = Partial<Omit<APITextChannel, "type">> &
-  Pick<APIChannel, "type">;
-
-const gatewayUpdate = (
-  channel: GuildBasedChannel,
-  data: GatewayChannelPatch,
-) => {
-  // SAFETY: `_update` is discord.js's internal Base method used by the
-  // ChannelUpdate action; it exists on every cached structure.
-  const patchable = channel as GuildBasedChannel & {
-    _update: (data: GatewayChannelPatch) => GuildBasedChannel;
-  };
-
-  return patchable._update(data);
-};
 
 const missingAccessError = () =>
   new DiscordAPIError(
@@ -406,9 +399,7 @@ describe("Discord SDK to RabbitMQ contracts", () => {
     f.channel.type = ChannelType.GuildAnnouncement;
     f.channel.parent_id = roleId;
     f.channel.name = "announcements";
-    f.sdkGuild.channels.cache.delete(channelId);
-    f.client.channels.cache.delete(channelId);
-    const updated = await f.fetchChannel();
+    const updated = await f.refetchChannel();
     await Effect.runPromise(f.sync.handleChannelUpdate(original, updated));
     expect(f.events.at(-1)?.payload).toEqual(
       expect.objectContaining({
@@ -507,9 +498,7 @@ describe("Discord SDK to RabbitMQ contracts", () => {
     const f = await fixture();
     const original = await f.fetchChannel();
     f.channel.type = ChannelType.GuildVoice;
-    f.sdkGuild.channels.cache.delete(channelId);
-    f.client.channels.cache.delete(channelId);
-    const updated = await f.fetchChannel();
+    const updated = await f.refetchChannel();
     await Effect.runPromise(f.sync.handleChannelUpdate(original, updated));
     expect(f.events.at(-1)).toEqual({
       routingKey: RabbitRoutingKey.DISCORD_GUILD_CHANNEL_DELETED,
@@ -541,17 +530,13 @@ describe("Discord SDK to RabbitMQ contracts", () => {
   test("ignores channel updates that do not change the synced projection", async () => {
     const f = await fixture();
     const original = await f.fetchChannel();
-    f.sdkGuild.channels.cache.delete(channelId);
-    f.client.channels.cache.delete(channelId);
-    const sameProjection = await f.fetchChannel();
+    const sameProjection = await f.refetchChannel();
     await Effect.runPromise(
       f.sync.handleChannelUpdate(original, sameProjection),
     );
     expect(f.events).toEqual([]);
     f.channel.name = "renamed";
-    f.sdkGuild.channels.cache.delete(channelId);
-    f.client.channels.cache.delete(channelId);
-    const renamed = await f.fetchChannel();
+    const renamed = await f.refetchChannel();
     await Effect.runPromise(f.sync.handleChannelUpdate(original, renamed));
     expect(f.events.at(-1)?.payload).toEqual(
       expect.objectContaining({
@@ -560,30 +545,30 @@ describe("Discord SDK to RabbitMQ contracts", () => {
     );
   });
 
-  test("publishes a permission overwrite change delivered through the gateway update path", async () => {
+  test("publishes a permission overwrite change but not a later change outside the projection", async () => {
     const f = await fixture();
-    const channel = await f.fetchChannel();
+    const original = await f.fetchChannel();
 
-    const withOverwrite = {
-      ...f.channel,
-      permission_overwrites: [{ id: botId, type: 1, allow: "3072", deny: "0" }],
-    };
+    f.channel.permission_overwrites = [
+      { id: botId, type: OverwriteType.Member, allow: "3072", deny: "0" },
+    ];
+    const withOverwrite = await f.refetchChannel();
 
-    const old = gatewayUpdate(channel, withOverwrite);
-
-    await Effect.runPromise(f.sync.handleChannelUpdate(old, channel));
+    await Effect.runPromise(
+      f.sync.handleChannelUpdate(original, withOverwrite),
+    );
     expect(f.events.at(-1)?.payload).toEqual(
       expect.objectContaining({
         channel: expect.objectContaining({ canView: true, canSend: true }),
       }),
     );
 
-    const unchanged = gatewayUpdate(channel, {
-      ...withOverwrite,
-      topic: "new topic",
-    });
+    f.channel.topic = "new topic";
+    const retopicked = await f.refetchChannel();
 
-    await Effect.runPromise(f.sync.handleChannelUpdate(unchanged, channel));
+    await Effect.runPromise(
+      f.sync.handleChannelUpdate(withOverwrite, retopicked),
+    );
     expect(f.events).toHaveLength(1);
   });
 

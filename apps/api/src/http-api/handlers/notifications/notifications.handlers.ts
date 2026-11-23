@@ -1,3 +1,4 @@
+import type { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { withAdapterSpan } from "@lootlog/instrumentation/operation";
 import { operationIdentifiers } from "../../operation-identifiers.js";
 import {
@@ -8,7 +9,7 @@ import {
   AccessRequirement,
   type AccessPolicy,
 } from "@lootlog/domain/access-policy";
-import type { Permission as PermissionValue } from "@lootlog/schema/permissions";
+import type { Capability as PermissionValue } from "@lootlog/schema/permissions";
 import { Context, Effect, Schema } from "effect";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 
@@ -96,7 +97,8 @@ export class NotificationsAuthorization extends Context.Service<
   {
     readonly requireCaller: Effect.Effect<
       NotificationCaller,
-      NotificationsAccessDenied
+      NotificationsAccessDenied,
+      ForwardAuthIdentity
     >;
     readonly requireGuild: (options: {
       readonly guildId: string;
@@ -106,7 +108,8 @@ export class NotificationsAuthorization extends Context.Service<
       NotificationGuildCaller,
       | NotificationsAccessDenied
       | NotificationsNotFound
-      | ReauthenticationRequired
+      | ReauthenticationRequired,
+      ForwardAuthIdentity
     >;
   }
 >()("@lootlog/api/http-api/notifications/authorization") {}

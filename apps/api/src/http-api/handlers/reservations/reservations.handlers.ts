@@ -11,7 +11,7 @@ import {
   ReservationWindowBoundary,
 } from "./reservation-response.schema.js";
 import { Effect } from "effect";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import type { ReservationViewerContext } from "#src/reservations/reservation-viewer";
 import type {
   CreateReservationRequest,
@@ -59,7 +59,7 @@ const toViewer = (
 export const listReservationSpots = Effect.fn("listReservationSpots")(
   function* (guildId: string) {
     const access = yield* requireGuild(guildId, [
-      Permission.LOOTLOG_RESERVATIONS_READ,
+      Capability.LOOTLOG_RESERVATIONS_READ,
     ]);
 
     const value = yield* readData((service) =>
@@ -76,7 +76,7 @@ const listSpotReservations = Effect.fn("listSpotReservations")(function* (
   query: ReservationWindowQuery,
 ) {
   const access = yield* requireGuild(guildId, [
-    Permission.LOOTLOG_RESERVATIONS_READ,
+    Capability.LOOTLOG_RESERVATIONS_READ,
   ]);
 
   const value = yield* readData((service) =>
@@ -92,8 +92,8 @@ export const createReservation = Effect.fn("createReservation")(function* (
   payload: CreateReservationRequest,
 ) {
   const access = yield* requireGuild(guildId, [
-    Permission.LOOTLOG_RESERVATIONS_READ,
-    Permission.LOOTLOG_RESERVATIONS_WRITE,
+    Capability.LOOTLOG_RESERVATIONS_READ,
+    Capability.LOOTLOG_RESERVATIONS_WRITE,
   ]);
 
   const value = yield* data((service) =>
@@ -106,8 +106,8 @@ export const createReservation = Effect.fn("createReservation")(function* (
 const deleteVisibleReservation = Effect.fn("deleteVisibleReservation")(
   function* (guildId: string, reservationId: number) {
     const access = yield* requireGuild(guildId, [
-      Permission.LOOTLOG_RESERVATIONS_READ,
-      Permission.LOOTLOG_RESERVATIONS_WRITE,
+      Capability.LOOTLOG_RESERVATIONS_READ,
+      Capability.LOOTLOG_RESERVATIONS_WRITE,
     ]);
 
     yield* data((service) =>
@@ -122,7 +122,7 @@ const setReservationSpotPin = Effect.fn("setReservationSpotPin")(function* (
   pinned: boolean,
 ) {
   const access = yield* requireGuild(guildId, [
-    Permission.LOOTLOG_RESERVATIONS_READ,
+    Capability.LOOTLOG_RESERVATIONS_READ,
   ]);
 
   yield* readData((service) =>

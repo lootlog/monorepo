@@ -5,21 +5,18 @@ import type { CreateLootRequest } from "#src/contracts/loots/schemas";
 import type { LootShare } from "#src/loots/loot-response.schema";
 import type { LootSubmissionAcceptancePersistence } from "#src/loots/submission/loot-submission-acceptance.repository";
 
-import { normalizeCharacterAndAccount } from "./loot-submission-normalization.js";
+import type { AcceptedPlayer } from "./loot-submission-normalization.js";
 
 function mapItemOwnerAllocation(
   loots: CreateLootRequest["loots"],
-  players: CreateLootRequest["players"],
+  players: ReadonlyArray<AcceptedPlayer>,
 ): LootShare | null {
   if (loots.length === 0 || loots.length !== players.length) return null;
   const shareByCharacter = new Map<number, string>();
   const shareIds = new Set<string>();
 
   for (const player of players) {
-    const { accountId, characterId } = normalizeCharacterAndAccount(
-      player.id,
-      player.accountId,
-    );
+    const { accountId, characterId } = player.identity;
 
     const shareId = `${characterId}${accountId}`;
 
@@ -49,6 +46,7 @@ export function inferInitialAllocation(
     "hasAmbiguousNpcVariant"
   >,
   submission: CreateLootRequest,
+  players: ReadonlyArray<AcceptedPlayer>,
   primaryNpc: CreateLootRequest["npcs"][number],
   primaryNpcType: NpcType,
 ) {
@@ -68,10 +66,7 @@ export function inferInitialAllocation(
         };
       }
 
-      const share = mapItemOwnerAllocation(
-        submission.loots,
-        submission.players,
-      );
+      const share = mapItemOwnerAllocation(submission.loots, players);
 
       return share
         ? { share, source: LootShareSource.ITEM_OWNER }

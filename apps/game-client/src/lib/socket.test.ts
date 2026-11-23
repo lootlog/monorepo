@@ -228,7 +228,7 @@ describe("access policy synchronization", () => {
     const { createAccessPolicySnapshot } =
       await import("@lootlog/protocol/realtime/access-policy");
 
-    const { Permission } = await import("@lootlog/schema/permissions");
+    const { Capability } = await import("@lootlog/schema/permissions");
 
     let policy = createAccessPolicySnapshot(
       [
@@ -236,7 +236,7 @@ describe("access policy synchronization", () => {
           guild: { id: "organization-1", ownerId: "owner" },
           roles: [
             {
-              permissions: [Permission.LOOTLOG_TIMERS_READ],
+              permissions: [Capability.LOOTLOG_TIMERS_READ],
               lvlRangeFrom: 1,
               lvlRangeTo: 300,
             },

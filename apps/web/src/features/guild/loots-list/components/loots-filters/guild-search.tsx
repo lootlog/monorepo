@@ -1,6 +1,6 @@
+import { Capability } from "@lootlog/schema/permissions";
 import { useContext, useEffect } from "react";
 import { useMatches } from "@tanstack/react-router";
-import { Capability } from "@lootlog/domain/access-policy";
 import { GuildSearchContext } from "@/contexts/guild-search-context";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { resolveAppNavigation } from "@/navigation/app-navigation";

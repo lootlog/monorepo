@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test";
 import { PgClient } from "@effect/sql-pg";
 import { Reactivity } from "effect/reactivity";
 import { SqlClient, SqlError } from "effect/sql";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { Effect, Layer, Redacted, Queue } from "effect";
 import { HttpRouter, HttpServer } from "effect/http";
 import {
@@ -81,7 +81,7 @@ const unusedOnlineRepository = Layer.succeed(OnlineRepository, {
 });
 
 const makeBoundary = (
-  capabilities: Permission[],
+  capabilities: Capability[],
   readinessLayer = Layer.succeed(ActivityReadiness, readiness),
 ) => {
   const routes = ActivityRoutes.pipe(
@@ -116,7 +116,7 @@ const headers = {
 
 describe("Activity HttpApi contract", () => {
   it("requires the deployed forward-auth headers", async () => {
-    const boundary = makeBoundary([Permission.ADMIN]);
+    const boundary = makeBoundary([Capability.ADMIN]);
 
     const response = await boundary.handler(
       new Request("https://activity/guilds/g/activity-logs", {
@@ -130,7 +130,7 @@ describe("Activity HttpApi contract", () => {
   });
 
   it("answers a missing activity with the declared 404 body", async () => {
-    const boundary = makeBoundary([Permission.ADMIN]);
+    const boundary = makeBoundary([Capability.ADMIN]);
 
     const response = await boundary.handler(
       new Request("https://activity/guilds/g/activity-logs/missing", {
@@ -156,7 +156,7 @@ describe("Activity HttpApi contract", () => {
   ])(
     "rejects a cursor no page issued as a request error: %s",
     async (cursor) => {
-      const boundary = makeBoundary([Permission.ADMIN]);
+      const boundary = makeBoundary([Capability.ADMIN]);
 
       const response = await boundary.handler(
         new Request(
@@ -171,7 +171,7 @@ describe("Activity HttpApi contract", () => {
   );
 
   it("resolves vanity organizations before querying", async () => {
-    const boundary = makeBoundary([Permission.ADMIN]);
+    const boundary = makeBoundary([Capability.ADMIN]);
 
     const response = await boundary.handler(
       new Request("https://activity/guilds/vanity/activity-logs", { headers }),
@@ -197,7 +197,7 @@ describe("Activity HttpApi contract", () => {
   });
 
   it("filters by user inside the resolved organization only", async () => {
-    const admin = makeBoundary([Permission.ADMIN]);
+    const admin = makeBoundary([Capability.ADMIN]);
     const member = makeBoundary([]);
     const url = "https://activity/guilds/vanity/activity-logs?userId=other";
 
@@ -214,8 +214,8 @@ describe("Activity HttpApi contract", () => {
   });
 
   it("requires OWNER for deletion", async () => {
-    const admin = makeBoundary([Permission.ADMIN]);
-    const owner = makeBoundary([Permission.OWNER]);
+    const admin = makeBoundary([Capability.ADMIN]);
+    const owner = makeBoundary([Capability.OWNER]);
 
     const forbidden = await admin.handler(
       new Request("https://activity/guilds/g/activity-logs/a", {
@@ -242,7 +242,7 @@ describe("Activity HttpApi contract", () => {
   });
 
   it("keeps suggestion response envelopes", async () => {
-    const boundary = makeBoundary([Permission.ADMIN]);
+    const boundary = makeBoundary([Capability.ADMIN]);
 
     const response = await boundary.handler(
       new Request(
@@ -386,7 +386,7 @@ for (const failure of ["status", "transport", "invalid-body"] as const) {
 }
 
 it("restricts API keys after canonical organization resolution and before writes", async () => {
-  const boundary = makeBoundary([Permission.OWNER, Permission.ADMIN]);
+  const boundary = makeBoundary([Capability.OWNER, Capability.ADMIN]);
 
   const access = {
     keyId: "key",

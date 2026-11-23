@@ -13,23 +13,10 @@ import type { SearchPlayer } from "@lootlog/protocol/rabbit/events";
 
 export const PLAYERS_INDEX = "players";
 
-const playerNameKey = (player: Pick<SearchPlayer, "world" | "name">) =>
-  JSON.stringify([player.world, player.name]);
-
 const uniquePlayers = (players: ReadonlyArray<SearchPlayer>) => {
-  const knownNames = new Set(
-    players.flatMap((player) =>
-      player.accountId > 0 ? [playerNameKey(player)] : [],
-    ),
-  );
-
   const unique = new Map<string, SearchPlayer>();
 
   for (const player of players) {
-    if (player.accountId === 0 && knownNames.has(playerNameKey(player))) {
-      continue;
-    }
-
     const key = JSON.stringify([
       player.world,
       player.characterId > 0 ? player.characterId : [player.id, player.name],

@@ -65,7 +65,7 @@ describe("organization composer state", () => {
     state.setReplyDraft(reply("a"));
     state.setDraft("b", "Second draft");
     state.setReplyDraft(reply("b"));
-    state.toggleIntegratedMode();
+    state.toggleFiltersVisible();
     state.clearReplyDraft("a");
     expect(useChatStore.getState().draftsByGuild).toEqual({
       a: "First draft",

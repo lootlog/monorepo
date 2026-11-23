@@ -1,4 +1,3 @@
-import { promiseOperation } from "@lootlog/instrumentation/operation";
 import { makeEventKillHistory } from "#src/events/history/event-kill-history";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { makeEventTimerStore } from "#src/events/respawn/event-timer.repository";
@@ -14,7 +13,6 @@ import {
 } from "@lootlog/messaging";
 import { Context, Effect, Layer } from "effect";
 import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
-import { RespawnWindowQueue } from "#src/runtime/queues/respawn-window";
 import { makeEventAccess } from "#src/events/event-access";
 import { makeEventCatalogMutations } from "#src/events/catalog/event-catalog-mutations";
 import { makeEventCreation } from "#src/events/catalog/event-creation";
@@ -99,7 +97,6 @@ export const eventsServicesLive = Layer.effect(
     const database = yield* ApiDatabase;
     const timers = yield* EventTimers;
     const { loots } = yield* RecordsServices;
-    const respawnQueue = yield* RespawnWindowQueue;
 
     const amqp = makeEventPublisher(rabbit);
     const readCache = makeEventReadCache(redis);
@@ -129,7 +126,6 @@ export const eventsServicesLive = Layer.effect(
       points,
       tracking,
       summary,
-      respawnQueue,
     );
 
     const respawn = makeEventRespawn(
@@ -172,22 +168,7 @@ export const eventsServicesLive = Layer.effect(
         ...makeEventsCatalog(wrapped),
         ...catalogRead,
         createEvent: makeEventCreation(database, redis),
-        deleteEvent: makeEventDeletion(database, redis, {
-          pending: () =>
-            respawnQueue.getJobs(["waiting"]).then((jobs) =>
-              jobs.map((job) => ({
-                eventId: job.data.eventId,
-                remove: () => job.remove(),
-              })),
-            ),
-          delayed: () =>
-            respawnQueue.getJobs(["delayed"]).then((jobs) =>
-              jobs.map((job) => ({
-                eventId: job.data.eventId,
-                remove: () => job.remove(),
-              })),
-            ),
-        }),
+        deleteEvent: makeEventDeletion(database, redis),
         recalculatePoints: makeEventPointRecalculation(database, redis, {
           recalculate: (eventId, basePointsPerKill) =>
             points.recalculateEventPoints(eventId, basePointsPerKill),
@@ -203,20 +184,6 @@ export const eventsServicesLive = Layer.effect(
           database,
           redis,
           timers,
-          {
-            delayed: promiseOperation("events.respawn.queue.getJobs", () =>
-              respawnQueue.getJobs(["delayed"]),
-            ).pipe(
-              Effect.map((jobs) =>
-                jobs.map((job) => ({
-                  heroId: job.data.heroId,
-                  remove: promiseOperation("events.respawn.queue.remove", () =>
-                    job.remove(),
-                  ).pipe(Effect.asVoid),
-                })),
-              ),
-            ),
-          },
           {
             publish: (routingKey, payload) =>
               rabbit

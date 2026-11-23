@@ -21,7 +21,10 @@ import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import type { KillHistoryEntry } from "@lootlog/client/main";
 import { createEventKillsTableColumns } from "./event-kills-table-columns";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
-import { EventHistoryResults } from "../shared/event-history-results";
+import {
+  EventHistoryResults,
+  type EventHistoryQuery,
+} from "../shared/event-history-results";
 import { EventKillRowsSkeleton } from "./event-kill-rows-skeleton";
 import { EventKillTiles } from "./event-kill-tiles";
 import { KillCellLink } from "./kill-cell-link";
@@ -32,17 +35,11 @@ const RIGHT_ALIGNED_COLUMN_IDS = new Set(["respawnTime", "participants"]);
 type EventKillsTableBaseProps = {
   eventId: string;
   guildId: string;
-  hasError: boolean;
-  isLoading: boolean;
-  onRetry: () => void;
-  isRetrying?: boolean;
   kills: KillHistoryEntry[];
 };
 
 type EventKillsTableHistoryProps = EventKillsTableBaseProps & {
-  fetchNextPage: () => void;
-  hasNextPage?: boolean;
-  isFetchingNextPage: boolean;
+  query: EventHistoryQuery;
   resetKey: string;
   scrollElement: HTMLDivElement | null;
   onShowAllHeroes?: () => void;
@@ -50,6 +47,10 @@ type EventKillsTableHistoryProps = EventKillsTableBaseProps & {
 };
 
 type EventKillsTablePreviewProps = EventKillsTableBaseProps & {
+  hasError: boolean;
+  isLoading: boolean;
+  onRetry: () => void;
+  isRetrying?: boolean;
   variant: "preview";
 };
 
@@ -97,8 +98,7 @@ export const EventKillsTable = (props: EventKillsTableProps) => {
   const { t } = useTranslation();
   const usesTable = useMediaQuery(RESULTS_TABLE_MEDIA_QUERY);
 
-  const { eventId, guildId, hasError, isLoading, kills, onRetry, isRetrying } =
-    props;
+  const { eventId, guildId, kills } = props;
 
   const isPreview = props.variant === "preview";
 
@@ -157,14 +157,14 @@ export const EventKillsTable = (props: EventKillsTableProps) => {
           </KillCellLink>
         )}
       />
-      {isPreview && hasError && (
+      {props.variant === "preview" && props.hasError && (
         <TableBody>
           <TableRow className="hover:bg-transparent">
             <TableCell colSpan={columns.length}>
               <QueryErrorNotice
                 message={t("events.error")}
-                onRetry={onRetry}
-                isRetrying={isRetrying}
+                onRetry={props.onRetry}
+                isRetrying={props.isRetrying}
               />
             </TableCell>
           </TableRow>
@@ -179,13 +179,7 @@ export const EventKillsTable = (props: EventKillsTableProps) => {
         scrollElement={props.scrollElement}
         resetKey={props.resetKey}
         isEmpty={kills.length === 0}
-        isLoading={isLoading}
-        hasError={hasError}
-        hasNextPage={props.hasNextPage}
-        isFetchingNextPage={props.isFetchingNextPage}
-        fetchNextPage={props.fetchNextPage}
-        onRetry={onRetry}
-        isRetrying={isRetrying}
+        query={props.query}
         onShowAllHeroes={props.onShowAllHeroes}
         skeleton={<EventKillRowsSkeleton />}
       >
@@ -197,6 +191,8 @@ export const EventKillsTable = (props: EventKillsTableProps) => {
       </EventHistoryResults>
     );
   }
+
+  const { hasError, isLoading, onRetry, isRetrying } = props;
 
   const renderPreviewContent = () => {
     if (isLoading) {

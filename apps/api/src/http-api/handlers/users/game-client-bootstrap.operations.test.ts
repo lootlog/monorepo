@@ -1,6 +1,7 @@
+import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer } from "effect";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import {
   AccountOrganizationData,
   AccountOrganizationOperationError,
@@ -67,6 +68,10 @@ const run = ({
   Effect.runPromise(
     getGameClientBootstrap({ gameAccountId: "202", characterId: "7" }).pipe(
       Effect.provide([
+        Layer.succeed(ForwardAuthIdentity, {
+          userId: "user",
+          discordId: "discord",
+        }),
         Layer.succeed(
           AccountOrganizationAuthorization,
           AccountOrganizationAuthorization.of({
@@ -74,7 +79,7 @@ const run = ({
             requireGuild: ({ guildId }) =>
               Effect.succeed({
                 guildId,
-                permissions: [Permission.LOOTLOG_ACCESS],
+                permissions: [Capability.LOOTLOG_ACCESS],
               }),
           }),
         ),
@@ -176,7 +181,7 @@ describe("getGameClientBootstrap", () => {
     const response = await run();
 
     expect(response.guildPermissions).toEqual({
-      "guild-a": [Permission.LOOTLOG_ACCESS],
+      "guild-a": [Capability.LOOTLOG_ACCESS],
     });
   });
 

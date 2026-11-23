@@ -12,7 +12,7 @@ import {
   useListEvents,
   type EventListItemResponseDto,
 } from "@lootlog/client/main";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 
 import type { Event } from "@/lib/api/event-types";
 
@@ -97,8 +97,8 @@ export const useEventList = () => {
   );
 
   const canDeleteEvent =
-    accessPolicy?.allows(Permission.ADMIN) ||
-    accessPolicy?.allows(Permission.OWNER);
+    accessPolicy?.allows(Capability.ADMIN) ||
+    accessPolicy?.allows(Capability.OWNER);
 
   const normalizedSearch = searchValue.trim().toLocaleLowerCase();
 

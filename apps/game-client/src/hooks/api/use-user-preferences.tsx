@@ -23,9 +23,8 @@ export const useUserPreferences = (enabled = true) => {
     query: {
       queryKey,
       queryFn: async ({ signal }) =>
-        (await readGameClientBootstrap<UserPreferencesResponseDtoOutput>(
-          queryKey,
-        )) ?? usersControllerGetUserPreferences({ signal }),
+        (await readGameClientBootstrap("userPreferences", queryKey)) ??
+        usersControllerGetUserPreferences({ signal }),
       enabled,
       staleTime: 60_000,
       refetchOnMount: false,

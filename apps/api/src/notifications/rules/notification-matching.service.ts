@@ -13,7 +13,7 @@ import {
   NotificationFiltersSchema,
   type NotificationFilters,
 } from "@lootlog/schema/notifications";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
   guildTable,
@@ -31,10 +31,10 @@ type LootCreatedEvent = {
 
 export type NotificationMemberRoleInfo = {
   readonly guildId: string;
-  readonly permissions: ReadonlyArray<Permission>;
+  readonly permissions: ReadonlyArray<Capability>;
   readonly roles: Array<{
     readonly id: string;
-    readonly permissions: Permission[];
+    readonly permissions: Capability[];
     readonly lvlRangeFrom: number | null;
     readonly lvlRangeTo: number | null;
   }>;

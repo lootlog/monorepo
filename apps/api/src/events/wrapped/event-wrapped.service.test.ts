@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { Effect } from "effect";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
 import {
   eventHeroKillTable,
@@ -73,8 +73,8 @@ describe("event wrapped summary", () => {
             guildId: guild.id,
             name: "Mid heroes",
             permissions: [
-              Permission.LOOTLOG_LOOTS_READ,
-              Permission.LOOTLOG_LOOTS_HEROES_READ,
+              Capability.LOOTLOG_LOOTS_READ,
+              Capability.LOOTLOG_LOOTS_HEROES_READ,
             ],
             lvlRangeFrom: 0,
             lvlRangeTo: 150,
@@ -332,7 +332,7 @@ describe("event wrapped summary", () => {
       );
 
       const owner = await run(
-        wrapped.getWrapped(guild, "event", [Permission.OWNER], []),
+        wrapped.getWrapped(guild, "event", [Capability.OWNER], []),
       );
 
       expect(owner.loot).toEqual({
@@ -367,7 +367,7 @@ describe("event wrapped summary", () => {
         wrapped.getWrapped(
           guild,
           "event",
-          [Permission.LOOTLOG_LOOTS_READ],
+          [Capability.LOOTLOG_LOOTS_READ],
           [midLevelHeroes],
         ),
       );

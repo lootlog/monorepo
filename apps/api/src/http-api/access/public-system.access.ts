@@ -1,3 +1,4 @@
+import type { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import {
   type ReauthenticationRequired,
   reauthenticationRequiredResponse,
@@ -5,7 +6,7 @@ import {
 import { statusCodeResponse } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Layer, Schema } from "effect";
-import type { Permission as PermissionValue } from "@lootlog/schema/permissions";
+import type { Capability as PermissionValue } from "@lootlog/schema/permissions";
 import type { PublicGuildStatsCard } from "#src/public-guild-stats-card/public-guild-stats-card.service";
 
 import type { RefreshStatsCardResponse } from "#src/contracts/guild-stats-card/schemas";
@@ -36,7 +37,8 @@ export class PublicSystemAuthorization extends Context.Service<
       readonly anyOf: ReadonlyArray<PermissionValue>;
     }) => Effect.Effect<
       { readonly guildId: string },
-      PublicSystemAccessDenied | ReauthenticationRequired
+      PublicSystemAccessDenied | ReauthenticationRequired,
+      ForwardAuthIdentity
     >;
   }
 >()("@lootlog/api/http-api/public-system/authorization") {}

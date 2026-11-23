@@ -1,14 +1,12 @@
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  getTimersControllerGetTimersQueryKey,
-  type TimerResponseDto,
-} from "@lootlog/client/main";
+import { getTimersControllerGetTimersQueryKey } from "@lootlog/client/main";
 import {
   removeTimerFromCollection,
   upsertTimerInCollection,
   type TimerIdentity,
 } from "@lootlog/domain/timers";
+import type { TimerUpdated } from "@lootlog/protocol/realtime/organization-events";
 import { DateTimeString } from "@lootlog/schema/http-scalars";
 import { Option, Schema } from "effect";
 import type {
@@ -81,7 +79,7 @@ export const useTimersSocket = ({ socket, guilds }: Options) => {
       void queryClient.invalidateQueries(allTimers);
     };
 
-    const update = (payload: TimerIdentity, timer?: TimerResponseDto) => {
+    const update = (payload: TimerIdentity, timer?: TimerUpdated) => {
       const decodedIdentity = decodeTimerIdentity(payload);
 
       if (Option.isNone(decodedIdentity)) return;
@@ -89,7 +87,7 @@ export const useTimersSocket = ({ socket, guilds }: Options) => {
       const identity = decodedIdentity.value;
       const paths = organizationPaths(identity.guildId);
 
-      for (const [queryKey] of queryClient.getQueriesData<TimerResponseDto[]>({
+      for (const [queryKey] of queryClient.getQueriesData<TimerUpdated[]>({
         predicate: (query) => {
           const parameters = decodeTimerParameters(query.queryKey[1]);
 
@@ -116,7 +114,7 @@ export const useTimersSocket = ({ socket, guilds }: Options) => {
 
         if (needsSnapshot) void queryClient.cancelQueries(query);
 
-        queryClient.setQueryData<TimerResponseDto[]>(
+        queryClient.setQueryData<TimerUpdated[]>(
           queryKey,
           (old) =>
             timer
@@ -140,7 +138,7 @@ export const useTimersSocket = ({ socket, guilds }: Options) => {
 
       void queryClient.cancelQueries(filters);
       queryClient.removeQueries({ ...filters, type: "inactive" });
-      queryClient.setQueriesData<TimerResponseDto[]>(filters, []);
+      queryClient.setQueriesData<TimerUpdated[]>(filters, []);
       void queryClient.invalidateQueries(filters);
     };
 
@@ -203,7 +201,7 @@ export const useTimersSocket = ({ socket, guilds }: Options) => {
       if (payload.recover) reconcile();
     };
 
-    const onCreate = (payload: TimerResponseDto) => update(payload, payload);
+    const onCreate = (payload: TimerUpdated) => update(payload, payload);
     const onDelete = (payload: TimerIdentity) => update(payload);
 
     socket.on("timer.created", onCreate);

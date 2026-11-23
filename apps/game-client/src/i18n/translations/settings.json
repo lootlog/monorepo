@@ -380,138 +380,6 @@
     "noNpcResults": "Żaden wyciszony potwór nie pasuje do wyszukiwania.",
     "removeLabel": "Usuń wyciszenie: {{name}}"
   },
-  "detector": {
-    "description": "Każdy wiersz to jeden typ potwora. Włącz „Wykrywaj”, a potem dobierz pozostałe opcje. Najedź na nagłówek kolumny, aby zobaczyć wyjaśnienie.",
-    "toggles": {
-      "detect": "Wykrywaj",
-      "autoSend": "Autowysyłka",
-      "notifyWindow": "Okno",
-      "highlight": "Podświetlenie",
-      "notifySound": "Dźwięk",
-      "detectDescription": "Główny włącznik. Gdy jest wyłączony, wykrywacz pomija potwory tego typu.",
-      "autoSendDescription": "Wysyła wykrycie do Lootlogów od razu, bez pytania. Lootlogi ustawisz w sekcji „Gdzie wysyłać powiadomienia” poniżej.",
-      "notifyWindowDescription": "Pokazuje okno z wykrytym potworem.",
-      "highlightDescription": "Wyróżnia wykrytego potwora kolorem tego typu.",
-      "notifySoundDescription": "Odtwarza dźwięk przy wykryciu. Dźwięki zmienisz w zakładce Dźwięki."
-    },
-    "routing": {
-      "sectionTitle": "Gdzie wysyłać powiadomienia",
-      "sectionDescription": "Wykryty potwór trafia do Lootlogów z każdej reguły, do której pasuje jego poziom i świat. Bez pasującej reguły powiadomienie nie zostanie wysłane.",
-      "addRuleButton": "Dodaj regułę",
-      "emptyState": "Wykrywacz nie wysyła jeszcze powiadomień do żadnego Lootloga. Dodaj regułę i wybierz, dokąd mają trafiać.",
-      "ruleLabel": "Reguła {{index}}",
-      "ruleNameLabel": "Nazwa reguły",
-      "ruleNamePlaceholder": "Reguła {{index}} – nadaj jej nazwę",
-      "minLevelLabel": "Poziom od",
-      "maxLevelLabel": "Poziom do",
-      "levelRangeLabel": "Poziom potwora",
-      "worldLabel": "Świat",
-      "worldPlaceholder": "Każdy świat",
-      "useCurrentWorldLabel": "Wstaw aktualny świat",
-      "guildSelectionLabel": "Lootlogi",
-      "selectedCount": "{{selected}} z {{total}}",
-      "guildPickerLabel": "Lootlogi: {{name}}",
-      "deleteRuleLabel": "Usuń regułę {{name}}",
-      "noGuildsBadge": "Nic nie wysyła – zaznacz Lootlog"
-    },
-    "characterTitle": "Ta postać",
-    "characterAutoSend": {
-      "label": "Autowysyłka na tej postaci",
-      "description": "Gdy wyłączysz, ta postać nie wysyła wykrytych potworów do Lootlogów, niezależnie od kolumny „Autowysyłka” poniżej. Działa tylko na postaci, którą teraz grasz. Możesz to też przełączać skrótem z zakładki Skróty klawiszowe."
-    },
-    "typesTitle": "Które potwory wykrywać",
-    "categoryHeader": "Typ",
-    "cellLabel": "{{category}}: {{setting}}"
-  },
-  "timers": {
-    "title": "Ustawienia timerów",
-    "description": "Skonfiguruj ustawienia dotyczące wyświetlania i działania timerów.",
-    "subTabs": {
-      "general": "Ogólne",
-      "catching": "Zakres zbierania",
-      "appearance": "Wygląd",
-      "colors": "Kolory"
-    },
-    "general": {
-      "behaviorTitle": "Zachowanie",
-      "groupingLabel": "Grupuj timery",
-      "groupingDescription": "Łączy timery z różnych Lootlogów w jedną listę.",
-      "underBagLabel": "Timery pod torbami",
-      "underBagDescription": "Wyświetla timery pod torbami zamiast w osobnym okienku.",
-      "compactViewLabel": "Widok kompaktowy",
-      "compactViewDescription": "Ukrywa nagłówek i stopkę timerów, pokazując tylko zawartość.",
-      "countdownTitle": "Tryb odliczania",
-      "countdownLabel": "Odliczaj do",
-      "countdownDescription": "Wybierz, czy licznik ma odliczać do minimalnego czy maksymalnego czasu.",
-      "countdownMax": "Max",
-      "countdownMin": "Min",
-      "fadeTitle": "Wygaszanie",
-      "removeTimerAfterLabel": "Czas usunięcia timera po wyzerowaniu",
-      "removeTimerAfterDescription": "Po ilu sekundach od wyzerowania timer znika z listy."
-    },
-    "appearance": {
-      "visibilityTitle": "Widoczność",
-      "showLevelLabel": "Wyświetlaj poziom potwora",
-      "showTypeLabel": "Wyświetlaj typ potwora",
-      "legacyAppearanceLabel": "Poprzedni wygląd",
-      "legacyAppearanceDescription": "Przywraca poprzedni wygląd kafelków timerów w oknie i pod torbą.",
-      "layoutTitle": "Układ",
-      "singleTimerDisplayModeLabel": "Tryb wyświetlania pojedynczego timera",
-      "singleTimerDisplayModeDescription": "Kolumny wyświetlają czas pod nazwą timera. Wiersze wyświetlają czas obok nazwy timera.",
-      "singleTimerDisplayModeColumn": "Kolumny",
-      "singleTimerDisplayModeRow": "Wiersze",
-      "scaleTitle": "Skala",
-      "fontSizeLabel": "Wielkość czcionki",
-      "minWidthLabel": "Minimalna szerokość pojedynczego timera",
-      "showLevelDescription": "Poziom potwora obok nazwy timera.",
-      "showTypeDescription": "Skrót typu potwora przed nazwą timera.",
-      "fontSizeDescription": "Wielkość tekstu w kafelkach timerów.",
-      "minWidthDescription": "Najmniejsza szerokość kafelka; większa wartość oznacza mniej kolumn."
-    },
-    "colors": {
-      "listTitle": "Lista kolorów",
-      "standardColorsTitle": "Standardowe",
-      "standardColorsDescription": "Paleta kolorów dostępna dla każdego timera. Możesz zmienić nazwę, ramkę i tło każdego z nich.",
-      "customColorsTitle": "Własne",
-      "customColorsDescription": "Dodatkowe kolory, które tworzysz sam.",
-      "customColorsEmpty": "Nie dodano jeszcze własnych kolorów.",
-      "resetAll": "Przywróć wszystkie",
-      "resetAllDescription": "Wraca do domyślnych nazw i kolorów wszystkich standardowych kolorów.",
-      "standardColor": "Kolor standardowy",
-      "customColor": "Kolor własny",
-      "nameLabel": "Nazwa",
-      "resetColorTitle": "Przywróć domyślny",
-      "hideColorTitle": "Ukryj kolor",
-      "deleteColorTitle": "Usuń kolor",
-      "addTitle": "Dodaj kolor",
-      "namePlaceholder": "Nazwa",
-      "borderLabel": "Ramka",
-      "backgroundLabel": "Tło",
-      "borderAria": "Kolor ramki",
-      "borderHexAria": "Kolor ramki HEX",
-      "backgroundAria": "Kolor tła",
-      "backgroundHexAria": "Kolor tła HEX",
-      "editColorAria": "Edytuj kolor",
-      "modified": "Zmieniony",
-      "transparencyLabel": "Przezroczystość",
-      "transparencyAria": "Przezroczystość tła",
-      "previewLabel": "Podgląd",
-      "addButton": "Dodaj",
-      "hiddenCount": "Ukryte ({{count}})",
-      "restoreColorTitle": "Przywróć kolor"
-    },
-    "lists": {
-      "title": "Twoje listy",
-      "description": "Własne listy timerów do szybkiego filtrowania. Jeden timer może być na kilku listach.",
-      "emptyState": "Nie masz jeszcze list. Utwórz listę tutaj albo dodaj timer do nowej listy prawym przyciskiem myszy w oknie timerów.",
-      "addTitle": "Utwórz listę",
-      "renameTitle": "Zmień nazwę listy",
-      "renameButton": "Zapisz",
-      "deleteTitle": "Usuń listę",
-      "removeTimerTitle": "Usuń z listy",
-      "emptyList": "Lista jest pusta. Timer dodasz prawym przyciskiem myszy w oknie timerów."
-    }
-  },
   "catching": {
     "description": "Skonfiguruj, dla których Lootlogów gra każda postać: tam trafiają jej łupy, timery i obecność.",
     "characterTitle": "Postać",
@@ -529,14 +397,6 @@
       "activeCount": "{{selectedCount}} z {{totalCount}}"
     }
   },
-  "hiddenTimers": {
-    "description": "Przywracaj ukryte timery i zarządzaj listą ukrytych wpisów.",
-    "scopeTitle": "Zakres listy",
-    "ungroupedDescription": "Wybierz Lootlog, dla którego chcesz zobaczyć ukryte timery.",
-    "listTitle": "Ukryte timery",
-    "emptyState": "Nie masz ukrytych timerów. Timer ukryjesz prawym przyciskiem myszy w oknie timerów.",
-    "guildLabel": "Lootlog"
-  },
   "sounds": {
     "description": "Skonfiguruj dźwięki dla różnych funkcji.",
     "loading": "Ładowanie ustawień…",
@@ -545,6 +405,23 @@
     "masterDescription": "Skaluje wszystkie dźwięki Lootloga na tym urządzeniu. Głośność każdej kategorii ustawisz poniżej.",
     "masterVolume": "Głośność",
     "categoryVolume": "Głośność",
+    "fieldEnabledLabel": "Dźwięk dla typu {{field}}",
+    "timerTriggers": {
+      "timerWindowSoonSound": {
+        "label": "Przed otwarciem okna",
+        "description": "Gra {{minutes}} min przed minimalnym czasem respawnu."
+      },
+      "timerWindowOpenSound": {
+        "label": "Otwarcie okna respawnu",
+        "description": "Gra, gdy timer osiąga minimalny czas respawnu."
+      },
+      "timerWindowEndSound": {
+        "label": "Koniec okna respawnu",
+        "description": "Gra, gdy mija maksymalny czas respawnu."
+      },
+      "minutesLabel": "Wyprzedzenie",
+      "minutesDescription": "Ile minut przed otwarciem okna gra dźwięk."
+    },
     "categories": {
       "notifications": {
         "label": "Powiadomienia",
@@ -554,78 +431,14 @@
         "label": "Wykrywacz",
         "description": "Dźwięk wykrywacza dla każdego typu. Puste pole gra dźwięk domyślny."
       },
+      "timers": {
+        "label": "Timery",
+        "description": "Wybierz momenty, w których gra dźwięk, oraz typy, których timery go odtwarzają. Pojedynczy timer włączysz prawym przyciskiem myszy w oknie timerów. Puste pole gra dźwięk domyślny."
+      },
       "pings": {
         "label": "Pingi",
         "description": "Dźwięk pingów na mapie i w walce, także próśb skierowanych do Ciebie."
       }
-    }
-  },
-  "logs": {
-    "description": "Zapisane akcje użytkownika z rozwijanymi żądaniami API: wysłanymi danymi, odpowiedzią i statusem.",
-    "consoleDebugTitle": "Diagnostyka konsoli",
-    "lootDebugLoggingLabel": "Loguj tworzenie łupów",
-    "lootDebugLoggingDescription": "Zapisuje w konsoli przeglądarki pełny przebieg tworzenia łupów z walk i dialogów. Logi zawierają pełne dane żądań, w tym nazwy oraz identyfikatory kont, postaci i NPC.",
-    "searchPlaceholder": "Szukaj w logach",
-    "actionTypeAria": "Typ akcji",
-    "actionTypePlaceholder": "Typ akcji",
-    "statusAria": "Status akcji",
-    "statusPlaceholder": "Status akcji",
-    "listTitle": "Lista akcji",
-    "emptyState": "Żadna akcja nie pasuje do filtrów.",
-    "noActions": "Nie ma jeszcze zapisanych akcji.",
-    "exportSuccess": "Logi wyeksportowane do pliku",
-    "exportFailed": "Nie udało się wyeksportować logów",
-    "copyFailed": "Nie udało się skopiować logu",
-    "copyActionSuccess": "Akcja skopiowana do schowka",
-    "copyRequestSuccess": "Żądanie skopiowane do schowka",
-    "actionPayload": "Dane akcji",
-    "actionDetails": "Szczegóły akcji",
-    "toggleActionDetails": "Przełącz szczegóły akcji",
-    "noRequests": "Brak zapisanych żądań dla tej akcji.",
-    "payload": "Wysłane dane",
-    "response": "Odpowiedź",
-    "statuses": {
-      "all": "Wszystkie statusy",
-      "success": "Sukces",
-      "partial": "Częściowy sukces",
-      "error": "Błąd",
-      "skipped": "Pominięto"
-    },
-    "actionTypes": {
-      "create_kill": "Dodanie zabicia",
-      "create_battle": "Dodanie walki",
-      "record_weapon_kills": "Zapisanie graczy zabitych bronią",
-      "create_loot": "Dodanie łupu",
-      "update_loot": "Aktualizacja łupu",
-      "create_timer": "Dodanie timera",
-      "create_manual_timer": "Ręczne dodanie timera",
-      "delete_timer": "Usunięcie timera",
-      "reset_timer": "Zresetowanie timera",
-      "send_chat_message": "Wysłanie wiadomości",
-      "create_notification": "Utworzenie powiadomienia",
-      "volunteer": "Zgłoszenie do zbiórki",
-      "create_party_gathering": "Utworzenie zbiórki",
-      "cancel_party_gathering": "Anulowanie zbiórki",
-      "update_timer_settings": "Aktualizacja ustawień timerów",
-      "update_guild_timer_settings": "Aktualizacja ustawień timerów Lootloga",
-      "migrate_timer_settings": "Migracja ustawień timerów",
-      "update_sound_settings": "Aktualizacja ustawień dźwięków",
-      "update_user_preferences": "Aktualizacja preferencji użytkownika",
-      "update_user_game_account_preferences": "Aktualizacja preferencji konta gry",
-      "update_lootlog_characters_config": "Aktualizacja konfiguracji postaci"
-    },
-    "allActions": "Wszystkie akcje",
-    "toggleRequestDetails": "Przełącz szczegóły żądania",
-    "columns": {
-      "time": "Czas",
-      "action": "Akcja",
-      "status": "Status"
-    },
-    "requestColumns": {
-      "method": "Metoda",
-      "url": "URL",
-      "status": "Status",
-      "time": "Czas"
     }
   },
   "chatFilters": {

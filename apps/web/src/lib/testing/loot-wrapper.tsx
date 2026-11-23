@@ -1,3 +1,4 @@
+import type { Capability } from "@lootlog/schema/permissions";
 import { TEST_THEME_CONTEXT } from "@/lib/testing/theme-context";
 import { sessionQueryOptions } from "@/hooks/auth/use-session-query";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -13,7 +14,6 @@ import {
   getNotificationsUserControllerGetWatchedItemsQueryKey,
   type GuildResponseDtoOutput,
 } from "@lootlog/client/main";
-import type { Capability } from "@lootlog/domain/access-policy";
 import { createOrganizationTestWrapper } from "./router";
 
 export async function createLootTestWrapper({

@@ -1,6 +1,6 @@
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import type { ClientCommand } from "@lootlog/protocol/realtime";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { Effect, Redacted } from "effect";
 import type { GatewayConfiguration } from "../src/config/gateway-config.js";
 import {
@@ -35,6 +35,7 @@ const unexpectedFederationIO = () =>
 
 export const unusedFederationStore = {
   publish: unexpectedFederationIO,
+  publishOnce: unexpectedFederationIO,
   subscribe: unexpectedFederationIO,
 } satisfies ConstructorParameters<typeof RealtimeHub>[1];
 
@@ -68,7 +69,7 @@ export const makeGamePingSocket = (): GatewaySocket => ({
             id: "role-1",
             lvlRangeFrom: 0,
             lvlRangeTo: 500,
-            permissions: [Permission.LOOTLOG_ONLINE_PLAYERS_READ],
+            permissions: [Capability.LOOTLOG_ONLINE_PLAYERS_READ],
           },
         ],
       },
@@ -103,7 +104,7 @@ type Membership = SessionData["guilds"][number];
 
 export const membership = (
   organizationId: string,
-  permissions: ReadonlyArray<Permission>,
+  permissions: ReadonlyArray<Capability>,
   {
     ownerId = "owner",
     roleId = "role-1",
@@ -157,6 +158,9 @@ export const makeTestSocket = (data: SessionData, bufferedAmount = 0) => {
   return { socket, sent, closes };
 };
 
+export const newSocket = (overrides: Partial<SessionData> = {}) =>
+  makeTestSocket(makeSession({ joined: false, ...overrides }));
+
 export const withApiKey = (
   session: SessionData,
   organizationIds: ReadonlyArray<string>,
@@ -195,6 +199,7 @@ export const commandFrame = (
 
 export const makeFederationBus = ({ deliveries = 2 } = {}) => {
   const listeners: Array<(message: FederatedRealtimeMessage) => void> = [];
+  const publications = new Set<string>();
 
   const store = {
     subscribe: (
@@ -225,6 +230,16 @@ export const makeFederationBus = ({ deliveries = 2 } = {}) => {
           listener(delivered);
 
       return Promise.resolve();
+    },
+    publishOnce: async (
+      message: FederatedRealtimeMessage,
+      frames?: FederatedFrameTexts,
+    ) => {
+      if (publications.has(message.id)) return false;
+      await store.publish(message, frames);
+      publications.add(message.id);
+
+      return true;
     },
   } satisfies ConstructorParameters<typeof RealtimeHub>[1];
 
@@ -260,4 +275,72 @@ export const acceptingRateLimit = (
       return Promise.resolve([1, createdAt, 0]);
     },
   },
+});
+
+export const hubConfig = {
+  maxBackpressureBytes: 1_024,
+};
+
+export const makeHub = () =>
+  new RealtimeHub(hubConfig, makeFederationBus().store);
+
+export const startPair = async () => {
+  const { hubs, bus } = await startHubs();
+  const [local, remote] = hubs;
+
+  if (!local || !remote) throw new Error("Missing federated hubs");
+
+  return [local, remote, bus] as const;
+};
+
+export const makeAdminSession = (
+  connectionId: string,
+  overrides: Partial<SessionData> = {},
+): SessionData => {
+  const discordId = `discord-${connectionId}`;
+
+  return makeSession({
+    discordId,
+    userId: `user-${connectionId}`,
+    connectionId,
+    guilds: ["organization-1", "organization-2"].map((id) =>
+      membership(id, [Capability.ADMIN], {
+        ownerId: discordId,
+        roleId: "admin",
+      }),
+    ),
+    ...overrides,
+  });
+};
+
+export const makeGamePresence = (
+  session: SessionData,
+  world = "tempest",
+  mapId = 1,
+  {
+    characterId = "123",
+    organizationIds = session.guilds.map(({ guild }) => guild.id),
+  }: {
+    readonly characterId?: string;
+    readonly organizationIds?: string[];
+  } = {},
+): NonNullable<SessionData["presence"]> => ({
+  userId: session.userId,
+  sessionId: session.connectionId,
+  organizationIds,
+  platform: "game",
+  status: "online",
+  confidence: "reported",
+  isAfk: false,
+  lastSeen: 1,
+  character: {
+    world,
+    name: "Player",
+    lvl: 200,
+    characterId,
+    accountId: "456",
+    prof: "w",
+    icon: "icon",
+  },
+  location: { mapId, map: `Map ${mapId}` },
 });

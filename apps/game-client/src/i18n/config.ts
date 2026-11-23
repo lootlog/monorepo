@@ -17,8 +17,18 @@ import onlinePlayers from "./translations/online-players.json";
 import partyFinder from "./translations/party-finder.json";
 import pings from "./translations/pings.json";
 import quickAccess from "./translations/quick-access.json";
-import settings from "./translations/settings.json";
+import settingsBase from "./translations/settings.json";
+import settingsDetector from "./translations/settings-detector.json";
+import settingsLogs from "./translations/settings-logs.json";
+import settingsTimers from "./translations/settings-timers.json";
 import timers from "./translations/timers.json";
+
+const settings = {
+  ...settingsBase,
+  ...settingsDetector,
+  ...settingsLogs,
+  ...settingsTimers,
+};
 
 i18n.use(initReactI18next).init({
   resources: {

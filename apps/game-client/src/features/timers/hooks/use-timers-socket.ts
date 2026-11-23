@@ -1,6 +1,6 @@
 import { useEffect, useEffectEvent, useRef } from "react";
 import { normalizeTimerResponse } from "@/api/timers.api";
-import type { TimerResponseDto } from "@lootlog/client/main";
+import type { TimerUpdated } from "@lootlog/protocol/realtime/organization-events";
 import type { TimerIdentity } from "@lootlog/domain/timers";
 import { useSocket } from "@/contexts/socket-context";
 import { useTimersCache } from "@/features/timers/hooks/use-timers-cache";
@@ -14,7 +14,7 @@ export const useTimersSocket = () => {
   const queryClient = useQueryClient();
   const needsCatchUp = useRef(false);
 
-  const handleTimerCreate = useEffectEvent((data: TimerResponseDto) => {
+  const handleTimerCreate = useEffectEvent((data: TimerUpdated) => {
     upsertTimer(normalizeTimerResponse(data));
   });
 
@@ -49,7 +49,7 @@ export const useTimersSocket = () => {
       return;
     }
 
-    const onTimerCreate = (data: TimerResponseDto) => {
+    const onTimerCreate = (data: TimerUpdated) => {
       handleTimerCreate(data);
     };
 

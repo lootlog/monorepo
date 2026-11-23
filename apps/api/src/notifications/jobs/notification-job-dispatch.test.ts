@@ -6,7 +6,7 @@ import {
 import { describe, expect, it } from "bun:test";
 import { Effect } from "effect";
 import { eq } from "drizzle-orm";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
 import {
   createGuildFixture,
@@ -82,8 +82,8 @@ describe("notification job dispatch", () => {
           lvlRangeFrom: 0,
           lvlRangeTo: 190,
           permissions: [
-            Permission.LOOTLOG_ACCESS,
-            Permission.LOOTLOG_LOOTS_READ,
+            Capability.LOOTLOG_ACCESS,
+            Capability.LOOTLOG_LOOTS_READ,
           ],
         }),
       );

@@ -1,6 +1,6 @@
 import { afterEach, expect, it } from "bun:test";
 import { Effect } from "effect";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
 import {
   createGuildFixture,
@@ -45,9 +45,9 @@ it("filters Organization, NPC tier, and level boundaries before exposing a gathe
       name: "role",
       updatedAt: new Date(),
       permissions: [
-        Permission.LOOTLOG_CHAT_READ,
-        Permission.LOOTLOG_CHAT_HEROES_READ,
-        Permission.LOOTLOG_NOTIFICATIONS_SEND,
+        Capability.LOOTLOG_CHAT_READ,
+        Capability.LOOTLOG_CHAT_HEROES_READ,
+        Capability.LOOTLOG_NOTIFICATIONS_SEND,
       ],
       lvlRangeFrom: 100,
       lvlRangeTo: 200,

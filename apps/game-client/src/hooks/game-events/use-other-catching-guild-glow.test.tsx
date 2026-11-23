@@ -1,4 +1,3 @@
-import { isObjectRecord } from "@lootlog/schema/records";
 import { seedRuntimeOthers } from "@/test/runtime-other-fixtures";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -82,6 +81,11 @@ function setOnlineOwners(others: Record<string, Other>): void {
   });
 }
 
+type Drawable =
+  | { d: { id: string }; getColor: () => string }
+  | { getColor: () => string; getTypeObject: () => string }
+  | { draw: (context: CanvasRenderingContext2D) => void };
+
 function createEngine(heroId: number | null | undefined) {
   return {
     hero: {
@@ -111,33 +115,22 @@ function createEngine(heroId: number | null | undefined) {
       getShift: () => [0, 0],
     },
     others: {
-      getDrawableList: vi.fn<() => unknown[]>(() => []),
+      getDrawableList: vi.fn<() => Drawable[]>(() => []),
     },
   };
 }
 
 let engine: ReturnType<typeof createEngine>;
 
-type DrawnGlow = { d: { id: string }; getColor: () => string };
-
 function drawnGlows(): Map<string, string> {
-  const drawables: unknown[] = engine.others.getDrawableList();
-
   return new Map(
-    drawables.flatMap((drawable) =>
-      isObjectRecord(drawable) && "getColor" in drawable && "d" in drawable
-        ? // SAFETY: the stubbed game list holds no drawable with both `d`
-          // and `getColor`, so these are the manager's character glows.
-          [glowEntry(drawable as DrawnGlow)]
-        : [],
-    ),
+    engine.others
+      .getDrawableList()
+      .flatMap((drawable) =>
+        "d" in drawable ? [[drawable.d.id, drawable.getColor()]] : [],
+      ),
   );
 }
-
-const glowEntry = (glow: DrawnGlow): [string, string] => [
-  glow.d.id,
-  glow.getColor(),
-];
 
 function setRuntime(heroId: number | null | undefined = 101) {
   engine = createEngine(heroId);

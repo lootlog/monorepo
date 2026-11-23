@@ -41,6 +41,7 @@ export const createAirTagTest = () => {
         epochId: "epoch",
         epochStartedAt: 100,
         revision: 1,
+        serverTime: Date.now(),
         targets: [
           {
             targetId: guildId,

@@ -1,3 +1,4 @@
+import type { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import {
   type ReauthenticationRequired,
   reauthenticationRequiredResponse,
@@ -25,7 +26,7 @@ import {
 
 export class UserThemesIdentity extends Context.Service<
   UserThemesIdentity,
-  { readonly userId: Effect.Effect<string> }
+  { readonly userId: Effect.Effect<string, never, ForwardAuthIdentity> }
 >()("@lootlog/api/http-api/user-themes/identity") {}
 
 const decodeTheme = (theme: StoredUserTheme) =>

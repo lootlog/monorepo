@@ -25,9 +25,7 @@ export const useLootlogCharactersConfig = ({ enabled = true } = {}) => {
       query: {
         queryKey,
         queryFn: async ({ signal }) =>
-          (await readGameClientBootstrap<UserLootlogConfigAccountResponseDtoOutput>(
-            queryKey,
-          )) ??
+          (await readGameClientBootstrap("lootlogConfig", queryKey)) ??
           userLootlogConfigControllerGetUserLootlogConfigByAccountId(
             { accountId },
             { signal },

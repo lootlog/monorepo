@@ -1,4 +1,5 @@
-import { Capability, createAccessPolicy } from "@lootlog/domain/access-policy";
+import { Capability } from "@lootlog/schema/permissions";
+import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { describe, expect, it } from "vitest";
 import { canManageGuild } from "./guild-permissions";
 

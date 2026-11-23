@@ -4,7 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { RealtimeClient } from "@lootlog/client/realtime";
 import { configureApiClients } from "@lootlog/client/transport";
 import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { SETTINGS_DOMAINS } from "@lootlog/schema/settings-documents";
 import { createNativeRuntime } from "@/test/native-runtime";
 import { RealtimeWire } from "@/test/realtime-wire";
@@ -175,7 +175,7 @@ it("starts an initialized character with one bootstrap request, without repeatin
         guild: { id: "guild-1", ownerId: "discord-1" },
         roles: [
           {
-            permissions: Object.values(Permission),
+            permissions: Object.values(Capability),
             lvlRangeFrom: 0,
             lvlRangeTo: 500,
           },

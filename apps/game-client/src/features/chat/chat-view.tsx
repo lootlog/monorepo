@@ -57,7 +57,6 @@ import type { ChatScrollPosition } from "./components/chat-transcript";
 
 interface ChatViewProps {
   isOpen: boolean;
-  embedded: boolean;
   selectedGuildId: string;
   setSelectedGuildId: (guildId: string) => void;
   readState: ChatReadState;
@@ -139,7 +138,6 @@ const resolveChatGuildTargets = (
 
 export const ChatView = ({
   isOpen,
-  embedded,
   selectedGuildId,
   setSelectedGuildId,
   readState,
@@ -162,7 +160,6 @@ export const ChatView = ({
 
   const filtersVisible = useChatStore((state) => state.filtersVisible);
   const chatFilter = useChatStore((state) => state.chatFilter);
-  const gameInterface = useGameStore((state) => state.game?.interface);
 
   const currentCharacterNick = useGameStore(
     (state) => state.game?.hero.name ?? "",
@@ -358,17 +355,6 @@ export const ChatView = ({
     });
   };
 
-  const actions = (
-    <ChatWindowActions
-      integrated={embedded}
-      canIntegrate={gameInterface === "ni"}
-      toggleIntegrated={() => {
-        useWindowsStore.getState().setOpen("chat", true);
-        useChatStore.getState().toggleIntegratedMode();
-      }}
-    />
-  );
-
   const content = (
     <ChatGatheringBar isVisible={isOpen}>
       {(gatheringBar, hiddenGatherings, ownGathering) => (
@@ -377,7 +363,6 @@ export const ChatView = ({
             selectedGuildId={selectedGuildId}
             onGuildChange={setSelectedGuildId}
             unreadGuildIds={unreadGuildIds}
-            actions={embedded ? actions : null}
           />
           {filtersVisible && (
             <ChatFilterSwitcher
@@ -458,8 +443,6 @@ export const ChatView = ({
     </ChatGatheringBar>
   );
 
-  if (embedded) return content;
-
   return (
     <DraggableWindow
       isOpen={isOpen}
@@ -468,7 +451,7 @@ export const ChatView = ({
       title={t("window.title")}
       onClose={() => useWindowsStore.getState().setOpen("chat", false)}
       minHeight={180}
-      actions={actions}
+      actions=<ChatWindowActions />
     >
       {content}
     </DraggableWindow>

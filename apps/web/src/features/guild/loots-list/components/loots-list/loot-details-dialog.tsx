@@ -21,7 +21,7 @@ import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import { LootDetailsActions } from "@/features/guild/loots-list/components/loots-list/loot-details-actions";
 import { AlertCircle, Calendar, MapPin, Package, Users, X } from "lucide-react";
 import { useSelectedLoot } from "@/hooks/use-selected-loot";
-import { useLootFromCache } from "@/hooks/use-loot-from-cache";
+import { useLootFromCache } from "./use-loot-from-cache";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { useNavigate } from "@tanstack/react-router";

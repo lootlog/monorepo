@@ -3,7 +3,7 @@ import {
   createAccessPolicySnapshot,
   diffAccessPolicies,
 } from "@lootlog/protocol/realtime/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 
 import { createAirTagTest } from "./air-tag-test";
 import { useGameStore } from "@/store/game.store";
@@ -45,7 +45,7 @@ it("keeps authorized air targets while coalescing grants and excludes revoked ta
         guild: { id, ownerId: "owner" },
         roles: [
           {
-            permissions: [Permission.LOOTLOG_ONLINE_PLAYERS_READ],
+            permissions: [Capability.LOOTLOG_ONLINE_PLAYERS_READ],
             lvlRangeFrom: 1,
             lvlRangeTo: 300,
           },

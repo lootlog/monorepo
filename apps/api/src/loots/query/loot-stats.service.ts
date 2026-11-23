@@ -12,7 +12,7 @@ import {
 import type { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { DEFAULT_PERIOD, type Period } from "@lootlog/schema/http-scalars";
 import type { ItemRarityEnum as ItemRarity } from "@lootlog/schema/item-rarity";
-import type { Permission } from "@lootlog/schema/permissions";
+import type { Capability } from "@lootlog/schema/permissions";
 import { organizationLootRecordTable } from "#src/database/drizzle/loot.schema";
 import type { roleTable } from "#src/database/drizzle/organization.schema";
 import { createHash } from "node:crypto";
@@ -137,7 +137,7 @@ export class LootStatsService {
 
   private buildCacheKey(
     guildId: string,
-    permissions: Permission[],
+    permissions: Capability[],
     roles: Role[],
     period: Period,
     world?: string,

@@ -10,7 +10,7 @@ import {
   normalizeEventScoringMode,
   normalizeEventScoringRules,
 } from "@lootlog/domain/scoring";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { useState } from "react";
@@ -180,8 +180,8 @@ export const useEventHeader = () => {
     deleteEvent,
     canManage: canManageEvent(accessPolicy),
     canDeleteEvent: Boolean(
-      accessPolicy?.allows(Permission.ADMIN) ||
-      accessPolicy?.allows(Permission.OWNER),
+      accessPolicy?.allows(Capability.ADMIN) ||
+      accessPolicy?.allows(Capability.OWNER),
     ),
     endDialogOpen,
     setEndDialogOpen,

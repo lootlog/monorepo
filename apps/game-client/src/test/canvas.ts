@@ -1,8 +1,29 @@
-import { createCanvas, Image, type Canvas } from "@napi-rs/canvas";
+import {
+  createCanvas,
+  Image,
+  type Canvas,
+  type ImageData as SkiaImageData,
+} from "@napi-rs/canvas";
 import { vi } from "vitest";
 
 const isCanvasDimension = (value: number | ImageData): value is number =>
   typeof value === "number";
+
+const toBrowserImageData = (imageData: SkiaImageData): ImageData => {
+  const browserImageData = Object.assign(imageData, {
+    colorSpace: "srgb" as const,
+  });
+
+  if (!hasArrayBufferData(browserImageData))
+    throw new Error("Skia image data is not backed by an ArrayBuffer");
+
+  return browserImageData;
+};
+
+const hasArrayBufferData = <TImageData extends { data: Uint8ClampedArray }>(
+  imageData: TImageData,
+): imageData is TImageData & { data: Uint8ClampedArray<ArrayBuffer> } =>
+  imageData.data.buffer instanceof ArrayBuffer;
 
 export const installTestCanvas = () => {
   const contexts = new WeakMap<HTMLCanvasElement, CanvasRenderingContext2D>();
@@ -80,21 +101,18 @@ export const installTestCanvas = () => {
       else throw new Error("Invalid drawImage coordinates");
     };
 
-    const drawingContext = Object.assign(native, {
+    const browserOverrides = {
       canvas: element,
       getTransform: () =>
         new DOMMatrix(Array.from(getTransform().toFloat64Array())),
       createImageData: (width: number | ImageData, height?: number) =>
-        Object.assign(
+        toBrowserImageData(
           isCanvasDimension(width)
             ? createImageData(width, height ?? width)
             : createImageData(width.width, width.height),
-          { colorSpace: "srgb" as const },
         ),
       getImageData: (x: number, y: number, width: number, height: number) =>
-        Object.assign(getImageData(x, y, width, height), {
-          colorSpace: "srgb" as const,
-        }),
+        toBrowserImageData(getImageData(x, y, width, height)),
       drawFocusIfNeeded: () => {
         throw new Error("Browser focus painting is unavailable in Skia tests");
       },
@@ -111,11 +129,13 @@ export const installTestCanvas = () => {
 
         return createPattern(browserImage(source), repetition);
       },
-    });
+    };
 
-    // SAFETY: Skia implements the drawing API; DOM image/canvas arguments are
-    // converted to their actual Skia backing objects by drawBrowserImage.
-    const context = drawingContext as CanvasRenderingContext2D;
+    const context: CanvasRenderingContext2D = Object.assign<
+      Omit<typeof native, keyof typeof browserOverrides>,
+      typeof browserOverrides
+    >(native, browserOverrides);
+
     contexts.set(element, context);
 
     return context;

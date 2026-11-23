@@ -62,24 +62,28 @@ type AuraRuntimeWindow = Window & {
 
 const getRuntimeWindow = (): AuraRuntimeWindow => window;
 
+type DrawImageCoordinates =
+  | [dx: number, dy: number]
+  | [dx: number, dy: number, dw: number, dh: number]
+  | [
+      sx: number,
+      sy: number,
+      sw: number,
+      sh: number,
+      dx: number,
+      dy: number,
+      dw: number,
+      dh: number,
+    ];
+
 let recorded: RuntimeCharacterFrame | null = null;
 
 const recorder = {
   globalAlpha: 1,
-  drawImage(...args: unknown[]) {
-    if (args.length < 9) return;
+  drawImage(image: CanvasImageSource, ...coordinates: DrawImageCoordinates) {
+    if (coordinates.length !== 8) return;
 
-    // SAFETY: the nine-argument drawImage is the source-rect form, so its first seven
-    // arguments are the image, the source rect and the destination corner.
-    const [image, sx, sy, sw, sh, dx, dy] = args as [
-      CanvasImageSource,
-      number,
-      number,
-      number,
-      number,
-      number,
-      number,
-    ];
+    const [sx, sy, sw, sh, dx, dy] = coordinates;
 
     if (recorded && recorded.sh >= sh) return;
     recorded = { image, sx, sy, sw, sh, dx, dy };

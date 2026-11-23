@@ -21,12 +21,16 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { Maximize2 } from "lucide-react";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import type { BattleHpTimelineGroupSelection } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-group-series";
 
 type BattleHpTimelineDialogProps = {
   timeline: BattleTimelineResponseDtoOutput["timeline"];
   warriors: BattleTimelineResponseDtoOutput["warriors"];
   characterId: string | null;
+  groupSelection: BattleHpTimelineGroupSelection | null;
+  warriorPicker: ReactNode;
   config: BattleHpTimelineLayerConfig;
   selectedTurn: number | null;
   onLayerVisibilityChange: (
@@ -41,6 +45,8 @@ export function BattleHpTimelineDialog({
   timeline,
   warriors,
   characterId,
+  groupSelection,
+  warriorPicker,
   config,
   selectedTurn,
   onLayerVisibilityChange,
@@ -76,10 +82,11 @@ export function BattleHpTimelineDialog({
         <TooltipContent>{openLabel}</TooltipContent>
       </Tooltip>
       <DialogContent className="flex h-[88dvh] max-h-[900px] w-[calc(100vw-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-[calc(100vw-2rem)] xl:max-w-[1500px] max-sm:h-dvh max-sm:w-screen max-sm:max-w-none max-sm:rounded-none">
-        <DialogHeader className="shrink-0 border-b px-4 py-3 pr-12">
+        <DialogHeader className="shrink-0 flex-row items-center justify-between gap-2 border-b px-4 py-3 pr-12">
           <DialogTitle className="px-0 pt-0 text-base">
             {t("battlePanel.single.chart.dialogTitle")}
           </DialogTitle>
+          {warriorPicker}
         </DialogHeader>
         <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
           <div className="flex min-h-0 flex-1 flex-col p-4">
@@ -87,6 +94,7 @@ export function BattleHpTimelineDialog({
               timeline={timeline}
               warriors={warriors}
               characterId={characterId}
+              groupSelection={groupSelection}
               layers={config}
               selectedTurn={selectedTurn}
               compact={false}

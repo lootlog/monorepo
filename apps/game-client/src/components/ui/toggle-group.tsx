@@ -37,8 +37,7 @@ function ToggleGroup<Value extends string>({
       data-size={size}
       data-spacing={spacing}
       data-orientation={orientation}
-      // SAFETY: React.CSSProperties has no index signature for custom properties; "--gap" is a valid CSS custom property name consumed by the gap utility below.
-      style={{ "--gap": spacing } as React.CSSProperties}
+      style={{ "--gap": spacing }}
       className={cn(
         "ll:group/toggle-group ll:flex ll:w-fit ll:flex-row ll:items-center ll:gap-[--spacing(var(--gap))] ll:rounded-sm ll:data-vertical:flex-col ll:data-vertical:items-stretch",
         className,

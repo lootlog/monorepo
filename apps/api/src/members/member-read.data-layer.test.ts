@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { Effect } from "effect";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
 import {
   createGuildFixture,
@@ -31,14 +31,14 @@ test("config summaries hide members who left, Lootlogs they can no longer submit
           id: "role-writer",
           guildId: "guild-1",
           name: "Writer",
-          permissions: [Permission.LOOTLOG_LOOTS_WRITE],
+          permissions: [Capability.LOOTLOG_LOOTS_WRITE],
           updatedAt: new Date(0),
         },
         {
           id: "role-reader",
           guildId: "guild-1",
           name: "Reader",
-          permissions: [Permission.LOOTLOG_ACCESS],
+          permissions: [Capability.LOOTLOG_ACCESS],
           updatedAt: new Date(0),
         },
       ]),

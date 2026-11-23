@@ -19,7 +19,7 @@ import { ApiDatabase } from "#src/database/drizzle/database";
 import { timerTable } from "#src/database/drizzle/timer.schema";
 import { userSettingDocumentTable } from "#src/database/drizzle/user.schema";
 import { TIMER_TYPES } from "@lootlog/domain/npc-identity";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { NpcTypeEnum } from "@lootlog/schema/npc-type";
 import { PermissionDeniedError } from "@lootlog/protocol/http/errors";
 import { getTimerListCacheScope } from "#src/shared/cache";
@@ -148,7 +148,7 @@ export const makeAllTimerList = (database: typeof ApiDatabase.Service) => {
     const guildAccess = yield* selectAccessibleGuildRoles(
       database,
       identity.discordId,
-      [Permission.LOOTLOG_TIMERS_READ],
+      [Capability.LOOTLOG_TIMERS_READ],
     );
 
     if (guildAccess.size === 0) {

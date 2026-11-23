@@ -2,7 +2,6 @@ import {
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
   useUsersControllerGetCurrentUserAccessibleGuilds,
   usersControllerGetCurrentUserAccessibleGuilds,
-  type UserCurrentGuildResponseDtoOutput,
 } from "@lootlog/client/main";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -26,9 +25,7 @@ export const useAccessibleGuilds = (enabled = true) => {
         const startingPolicy = getGameAccessPolicy(queryClient);
 
         let guilds =
-          (await readGameClientBootstrap<UserCurrentGuildResponseDtoOutput[]>(
-            queryKey,
-          )) ??
+          (await readGameClientBootstrap("accessibleGuilds", queryKey)) ??
           (await usersControllerGetCurrentUserAccessibleGuilds({ signal }));
 
         const policy = getGameAccessPolicy(queryClient);

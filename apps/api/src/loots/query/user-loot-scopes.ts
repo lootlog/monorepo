@@ -1,6 +1,6 @@
+import { Capability } from "@lootlog/schema/permissions";
 import {
   createAccessPolicy,
-  Capability,
   memberCapabilities,
 } from "@lootlog/domain/access-policy";
 import { and, eq, or, sql } from "drizzle-orm";

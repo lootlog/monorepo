@@ -138,6 +138,15 @@ redis.call("PUBLISH", ARGV[1], '{"sequence":' .. sequence .. ',' .. string.sub(A
 return sequence
 `;
 
+const publishOnceScript = `
+if not redis.call("SET", KEYS[2], "1", "NX", "EX", ARGV[3]) then return 0 end
+local sequence = redis.call("INCR", KEYS[1])
+redis.call("PUBLISH", ARGV[1], '{"sequence":' .. sequence .. ',' .. string.sub(ARGV[2], 2))
+return sequence
+`;
+
+const PUBLICATION_RETENTION_SECONDS = 3_600;
+
 const FEDERATION_REORDER_WINDOW_MS = 1_000;
 
 export type FederationState = "subscribed" | "interrupted" | "gap";
@@ -242,6 +251,29 @@ export class RedisGatewayStore {
         this.channel,
         encodeFederatedRealtimeMessage(message, frames),
       );
+    } finally {
+      this.pendingPublications--;
+    }
+  }
+
+  async publishOnce(
+    message: FederatedRealtimeMessage,
+    frames?: FederatedFrameTexts,
+  ): Promise<boolean> {
+    this.pendingPublications++;
+
+    try {
+      const sequence = await this.command.eval<number>(
+        publishOnceScript,
+        2,
+        FEDERATION_SEQUENCE_KEY,
+        `realtime:publication:${message.id}`,
+        this.channel,
+        encodeFederatedRealtimeMessage(message, frames),
+        PUBLICATION_RETENTION_SECONDS,
+      );
+
+      return sequence > 0;
     } finally {
       this.pendingPublications--;
     }

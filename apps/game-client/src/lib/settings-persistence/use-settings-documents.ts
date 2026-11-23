@@ -13,7 +13,6 @@ import {
   getGuildTimersDocumentsQueryKey,
   getSettingsDocumentsParams,
   type GuildSettingsDocuments,
-  type SettingsDocuments,
 } from "./settings-documents";
 import { readGameClientBootstrap } from "@/lib/game-client-bootstrap";
 
@@ -41,7 +40,7 @@ export const useSettingsDocuments = () => {
 
   return useQuery({
     queryFn: async ({ signal }) =>
-      (await readGameClientBootstrap<SettingsDocuments>(queryKey)) ??
+      (await readGameClientBootstrap("settingsDocuments", queryKey)) ??
       decodeSettingsDocuments(
         await settingsDocumentsControllerGetPreferences(params, { signal }),
       ),
@@ -62,7 +61,7 @@ export const useGuildTimersDocuments = (guildIds: readonly string[]) => {
   return useQuery({
     queryKey,
     queryFn: async ({ signal }): Promise<GuildSettingsDocuments> =>
-      (await readGameClientBootstrap<GuildSettingsDocuments>(queryKey)) ??
+      (await readGameClientBootstrap("guildTimerDocuments", queryKey)) ??
       decodeGuildSettingsDocuments(
         await settingsDocumentsControllerGetGuildPreferences(params, {
           signal,

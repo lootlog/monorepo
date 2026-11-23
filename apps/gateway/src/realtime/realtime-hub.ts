@@ -13,26 +13,15 @@ import {
 import {
   encodeRealtimeFrame,
   prepareRealtimeFrame,
-  tryDecodeRealtimeFrameValue,
-  tryParseEncodedRealtimeFrame,
 } from "@lootlog/protocol/realtime/codec";
 import {
   type Response as RealtimeResponse,
-  RealtimeFrame,
   type ServerEvent,
   isServerEventFrame,
   REALTIME_SERVER_CLOSE_CODES,
   type SubscriptionScope,
 } from "@lootlog/protocol/realtime";
-import {
-  type Cause,
-  Context,
-  Effect,
-  Layer,
-  Predicate,
-  Result,
-  Schema,
-} from "effect";
+import { type Cause, Context, Effect, Layer, Result, Schema } from "effect";
 import {
   GatewayConfig,
   type GatewayConfiguration,
@@ -69,6 +58,14 @@ import {
 import { SubscriptionLimitExceeded } from "#src/realtime/realtime-errors";
 import type { PartyGatheringEventSource } from "#src/realtime/npc-event-visibility";
 import type { GlobalChatCounts } from "#src/realtime/gateway-metrics";
+import {
+  decodePublishedFrame,
+  encodePublishedFrame,
+  FRAME_SCHEMA,
+  type PublishedFrame,
+} from "#src/realtime/published-frame";
+import { closeGradually } from "#src/realtime/close-gradually";
+import { RecentIds } from "#src/realtime/recent-ids";
 
 type Scope = SubscriptionScope;
 
@@ -76,67 +73,25 @@ type Event = ServerEvent;
 
 type Response = RealtimeResponse;
 
-interface PublishedFrame {
-  readonly event: Event;
-  text?: string;
-}
-
-const encodePublishedFrame = (frame: PublishedFrame): string =>
-  (frame.text ??= JSON.stringify(frame.event));
-
-const MAX_DEDUPLICATION_ENTRIES = 10_000;
-
 const MAX_SUBSCRIPTIONS = 4_096;
 
 const MAX_SCOPE_BYTES = 1_024;
-
-const FRAME_SCHEMA = Bun.hash(
-  JSON.stringify(Schema.toJsonSchemaDocument(RealtimeFrame)),
-).toString(36);
-
-const CLOSE_BATCH_INTERVAL_MS = 100;
-
-export const closeGradually = (
-  sockets: ReadonlyArray<GatewaySocket>,
-  spreadMs: number,
-  close: (socket: GatewaySocket) => void,
-) =>
-  Effect.gen(function* () {
-    const batchSize = Math.max(
-      1,
-      Math.ceil(
-        sockets.length / Math.max(1, spreadMs / CLOSE_BATCH_INTERVAL_MS),
-      ),
-    );
-
-    for (let index = 0; index < sockets.length; index += batchSize) {
-      if (index > 0) yield* Effect.sleep(CLOSE_BATCH_INTERVAL_MS);
-
-      for (const socket of sockets.slice(index, index + batchSize))
-        close(socket);
-    }
-  });
 
 const FEDERATION_GRACE_MS = 15_000;
 
 const FEDERATION_CLOSE_SPREAD_MS = 10_000;
 
-export const globalChatScope = (world: string | undefined): Scope =>
-  world === undefined
-    ? { topic: "global.chat" }
-    : { topic: "global.chat.world", world };
-
-export const isGlobalChatTopic = (topic: Scope["topic"]): boolean =>
-  topic === "global.chat" || topic === "global.chat.world";
-
-type RealtimeFederationStore = Pick<RedisGatewayStore, "publish" | "subscribe">;
+type RealtimeFederationStore = Pick<
+  RedisGatewayStore,
+  "publish" | "publishOnce" | "subscribe"
+>;
 
 export class RealtimeHub {
   private readonly logger = new ContextLogger(RealtimeHub.name);
   private readonly sockets = new Map<string, GatewaySocket>();
   private readonly audiences = new RealtimeAudiences();
   private readonly backpressuredSockets = new WeakSet<GatewaySocket>();
-  private readonly seenEventIds = new Set<string>();
+  private readonly deliveredIds = new RecentIds(10_000);
   private readonly permissionRebalanceListeners = new Set<
     (discordId: string, userId: string) => Effect.Effect<void, unknown>
   >();
@@ -303,6 +258,13 @@ export class RealtimeHub {
       scope,
       frame: event,
     });
+
+    if (publicationId) {
+      if (await this.redis.publishOnce(message, frames))
+        this.deliver(message, prepared);
+
+      return;
+    }
 
     this.deliver(message, prepared);
     await this.redis.publish(message, frames);
@@ -552,7 +514,7 @@ export class RealtimeHub {
     if (message.sourceInstanceId === this.instanceId) return;
 
     if (message.control) {
-      if (!this.remember(message.id)) return;
+      if (!this.deliveredIds.add(message.id)) return;
 
       for (const listener of this.permissionRebalanceListeners) {
         this.runBackground(
@@ -572,19 +534,7 @@ export class RealtimeHub {
     frameSchema: string | undefined,
     local?: ReturnType<typeof prepareRealtimeFrame>,
   ): PublishedFrame | undefined {
-    const decoded =
-      local !== undefined
-        ? local.frame
-          ? Result.succeed(local.frame)
-          : tryParseEncodedRealtimeFrame(local.text)
-        : value === undefined
-          ? undefined
-          : frameSchema === FRAME_SCHEMA
-            ? Predicate.isObject(value)
-              ? // SAFETY: a replica with this schema encoded the value through it.
-                Result.succeed(value as RealtimeFrame)
-              : Result.fail(new Error("Federation frame is not an object"))
-            : tryDecodeRealtimeFrameValue(value);
+    const decoded = decodePublishedFrame(value, frameSchema, local);
 
     if (decoded === undefined) return;
 
@@ -607,7 +557,7 @@ export class RealtimeHub {
     local?: ReturnType<typeof prepareRealtimeFrame>,
     localPrecise?: ReturnType<typeof prepareRealtimeFrame>,
   ): void {
-    if (!this.remember(message.id)) return;
+    if (!this.deliveredIds.add(message.id)) return;
     const candidates = this.audiences.candidates(message);
 
     if (candidates.size === 0) return;
@@ -694,19 +644,6 @@ export class RealtimeHub {
     return published
       ? { organizationId: message.organizationId, published }
       : null;
-  }
-
-  private remember(id: string): boolean {
-    if (this.seenEventIds.has(id)) return false;
-    this.seenEventIds.add(id);
-
-    if (this.seenEventIds.size > MAX_DEDUPLICATION_ENTRIES) {
-      const evicted = this.seenEventIds.values().next().value;
-
-      if (evicted !== undefined) this.seenEventIds.delete(evicted);
-    }
-
-    return true;
   }
 
   private sendFrame(socket: GatewaySocket, frame: Response | Event): boolean {

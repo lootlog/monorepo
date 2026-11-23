@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { filterHeroesByLevel } from "./event-hero-visibility.js";
 
 type Role = Parameters<typeof filterHeroesByLevel>[1][number];
@@ -15,7 +15,7 @@ describe("filterHeroesByLevel", () => {
   it("allows administrative users to see all heroes", () => {
     const heroes = [{ npcLvl: 50 }, { npcLvl: 300 }];
 
-    expect(filterHeroesByLevel(heroes, [], [Permission.ADMIN])).toEqual(heroes);
+    expect(filterHeroesByLevel(heroes, [], [Capability.ADMIN])).toEqual(heroes);
   });
 
   it("keeps heroes with unknown level visible", () => {
@@ -25,7 +25,7 @@ describe("filterHeroesByLevel", () => {
       filterHeroesByLevel(
         heroes,
         [createRole()],
-        [Permission.LOOTLOG_EVENTS_READ],
+        [Capability.LOOTLOG_EVENTS_READ],
       ),
     ).toEqual(heroes);
   });
@@ -37,7 +37,7 @@ describe("filterHeroesByLevel", () => {
       filterHeroesByLevel(
         heroes,
         [createRole(100, 200)],
-        [Permission.LOOTLOG_EVENTS_READ],
+        [Capability.LOOTLOG_EVENTS_READ],
       ),
     ).toEqual([{ npcLvl: 120 }]);
   });
@@ -47,7 +47,7 @@ describe("filterHeroesByLevel", () => {
       filterHeroesByLevel(
         [{ npcLvl: 320 }],
         [createRole(100, 200)],
-        [Permission.LOOTLOG_EVENTS_READ],
+        [Capability.LOOTLOG_EVENTS_READ],
       ),
     ).toEqual([]);
   });

@@ -1,6 +1,6 @@
 import { NpcTypeSchema } from "@lootlog/schema/npc-type";
 import { getNpcTypeRoutingTier } from "@lootlog/schema/npc-routing";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { Schema } from "effect";
 
 export type NpcPermissionData = {
@@ -15,10 +15,10 @@ export type RolePermissionData = {
 };
 
 export const NOTIFICATION_SEND_PERMISSIONS = [
-  Permission.LOOTLOG_NOTIFICATIONS_SEND,
-  Permission.OWNER,
-  Permission.ADMIN,
-  Permission.LOOTLOG_MANAGE,
+  Capability.LOOTLOG_NOTIFICATIONS_SEND,
+  Capability.OWNER,
+  Capability.ADMIN,
+  Capability.LOOTLOG_MANAGE,
 ] as const;
 
 export const canManageOwnPartyGathering = (
@@ -35,25 +35,25 @@ export const canManageOwnPartyGathering = (
 
 export const NPC_FEATURE_PERMISSIONS = {
   timers: {
-    base: Permission.LOOTLOG_TIMERS_READ,
-    titans: Permission.LOOTLOG_TIMERS_TITANS_READ,
-    heroes: Permission.LOOTLOG_TIMERS_HEROES_READ,
+    base: Capability.LOOTLOG_TIMERS_READ,
+    titans: Capability.LOOTLOG_TIMERS_TITANS_READ,
+    heroes: Capability.LOOTLOG_TIMERS_HEROES_READ,
   },
   chat: {
-    base: Permission.LOOTLOG_CHAT_READ,
-    titans: Permission.LOOTLOG_CHAT_TITANS_READ,
-    heroes: Permission.LOOTLOG_CHAT_HEROES_READ,
+    base: Capability.LOOTLOG_CHAT_READ,
+    titans: Capability.LOOTLOG_CHAT_TITANS_READ,
+    heroes: Capability.LOOTLOG_CHAT_HEROES_READ,
   },
   notifications: {
-    base: Permission.LOOTLOG_NOTIFICATIONS_READ,
-    titans: Permission.LOOTLOG_NOTIFICATIONS_TITANS_READ,
-    heroes: Permission.LOOTLOG_NOTIFICATIONS_HEROES_READ,
+    base: Capability.LOOTLOG_NOTIFICATIONS_READ,
+    titans: Capability.LOOTLOG_NOTIFICATIONS_TITANS_READ,
+    heroes: Capability.LOOTLOG_NOTIFICATIONS_HEROES_READ,
   },
 } as const;
 
 export const HERO_SIGHTING_READ_FEATURE: NpcFeature = "timers";
 
-export const HERO_SIGHTING_WRITE_PERMISSION = Permission.LOOTLOG_TIMERS_WRITE;
+export const HERO_SIGHTING_WRITE_PERMISSION = Capability.LOOTLOG_TIMERS_WRITE;
 
 const TIMER_PERMISSION = NPC_FEATURE_PERMISSIONS.timers;
 

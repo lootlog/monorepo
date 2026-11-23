@@ -1,3 +1,4 @@
+import type { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { ChatOperationError, ChatData } from "#src/chat/chat-data";
 import {
   pathString,
@@ -13,8 +14,8 @@ import {
   reauthenticationRequiredResponse,
 } from "@lootlog/protocol/http/errors";
 import {
-  Permission,
-  type Permission as PermissionValue,
+  Capability,
+  type Capability as PermissionValue,
 } from "@lootlog/schema/permissions";
 import {
   ChatMessageActionResponse,
@@ -58,7 +59,7 @@ export class ChatAuthorization extends Context.Service<
     readonly requireGuild: (options: {
       readonly guildId: string;
       readonly allOf: ReadonlyArray<PermissionValue>;
-    }) => Effect.Effect<ChatGuildAccess, AccessFailure>;
+    }) => Effect.Effect<ChatGuildAccess, AccessFailure, ForwardAuthIdentity>;
   }
 >()("@lootlog/api/http-api/chat/authorization") {}
 
@@ -106,11 +107,11 @@ const ChatMessageDomainResponse = Schema.Struct({
 
 const ChatMessagesDomainResponse = Schema.Array(ChatMessageDomainResponse);
 
-const readCapabilities = [Permission.LOOTLOG_CHAT_READ] as const;
+const readCapabilities = [Capability.LOOTLOG_CHAT_READ] as const;
 
 const writeCapabilities = [
-  Permission.LOOTLOG_CHAT_READ,
-  Permission.LOOTLOG_CHAT_WRITE,
+  Capability.LOOTLOG_CHAT_READ,
+  Capability.LOOTLOG_CHAT_WRITE,
 ] as const;
 
 export const getChatMessages = Effect.fn("getChatMessages")(function* (

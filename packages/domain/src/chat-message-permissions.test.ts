@@ -1,5 +1,5 @@
+import { Capability } from "@lootlog/schema/permissions";
 import { expect, test } from "bun:test";
-import { Capability } from "./access-policy.js";
 import { canDeleteChatMessage } from "./chat-message-permissions.js";
 
 test("chat deletion permits authors with write capability and moderators", () => {

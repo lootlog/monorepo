@@ -10,7 +10,7 @@ import {
 } from "@lootlog/client/main";
 import { configureApiClients } from "@lootlog/client/transport";
 import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { createRealtimeTest } from "@/test/realtime-test";
 import { useActivePartyGatherings } from "./use-active-party-gatherings";
 
@@ -181,7 +181,7 @@ it("patches observer rosters without HTTP and preserves pushes over delayed disc
   const initial = Promise.withResolvers<Response>();
   const request = vi.fn(() => initial.promise);
 
-  const policy = (permissions: Permission[]) =>
+  const policy = (permissions: Capability[]) =>
     createAccessPolicySnapshot(
       [
         {
@@ -203,7 +203,7 @@ it("patches observer rosters without HTTP and preserves pushes over delayed disc
   try {
     act(() => harness.setSessionDiscordId("observer"));
     harness.open();
-    await harness.join(["guild-1"], policy([Permission.LOOTLOG_CHAT_READ]));
+    await harness.join(["guild-1"], policy([Capability.LOOTLOG_CHAT_READ]));
     await waitFor(() => expect(request).toHaveBeenCalled());
     const requestsAfterJoin = request.mock.calls.length;
 
@@ -317,8 +317,8 @@ it("patches observer rosters without HTTP and preserves pushes over delayed disc
           organizationIds: ["guild-1"],
           subscriptionScopes: [],
           accessPolicy: policy([
-            Permission.LOOTLOG_CHAT_READ,
-            Permission.LOOTLOG_TIMERS_READ,
+            Capability.LOOTLOG_CHAT_READ,
+            Capability.LOOTLOG_TIMERS_READ,
           ]),
         },
       },

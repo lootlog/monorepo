@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
 import type { ServerEvent } from "@lootlog/protocol/realtime";
 import type { NpcPresenceSnapshot } from "@lootlog/schema/npc-presence";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { createOnlinePlayersTest } from "@/test/online-players-fixtures";
 import { NpcPresenceSource } from "./npc-presence-source";
 import { getSocket } from "./socket";
@@ -38,7 +38,7 @@ async function setup() {
           guild: { id: "guild-1", ownerId: "owner" },
           roles: [
             {
-              permissions: [Permission.LOOTLOG_TIMERS_READ],
+              permissions: [Capability.LOOTLOG_TIMERS_READ],
               lvlRangeFrom: 1,
               lvlRangeTo: 300,
             },

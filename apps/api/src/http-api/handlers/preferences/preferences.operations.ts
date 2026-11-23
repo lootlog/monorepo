@@ -1,3 +1,4 @@
+import type { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { httpErrorResponse } from "@lootlog/protocol/http/errors";
 import {
   SettingsOperationError,
@@ -25,7 +26,13 @@ export class SettingsAccessDenied extends TaggedErrorClass<
 
 export class SettingsIdentity extends Context.Service<
   SettingsIdentity,
-  { readonly userId: Effect.Effect<string, SettingsAccessDenied> }
+  {
+    readonly userId: Effect.Effect<
+      string,
+      SettingsAccessDenied,
+      ForwardAuthIdentity
+    >;
+  }
 >()("@lootlog/api/http-api/settings/identity") {}
 
 const withIdentity = <A>(

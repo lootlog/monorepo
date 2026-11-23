@@ -1,6 +1,6 @@
 import {
   isServerEventFrame,
-  ORGANIZATION_ACCESS_DENIED_MESSAGE,
+  REALTIME_ERROR_REASONS,
   REALTIME_JSON_SUBPROTOCOL,
   PRESENCE_HEARTBEAT_INTERVAL_MS,
   PRESENCE_EXPIRY_MS,
@@ -81,6 +81,7 @@ export class RealtimeRequestError extends Error {
     message: string,
     readonly retryable: boolean,
     readonly retryAfterMs?: number,
+    readonly reason?: string,
   ) {
     super(message);
     this.name = "RealtimeRequestError";
@@ -91,8 +92,7 @@ export const isOrganizationAccessDenied = (
   error: unknown,
 ): error is RealtimeRequestError =>
   error instanceof RealtimeRequestError &&
-  error.code === "COMMAND_REJECTED" &&
-  error.message === ORGANIZATION_ACCESS_DENIED_MESSAGE;
+  error.reason === REALTIME_ERROR_REASONS.organizationAccessDenied;
 
 const normalizeUrl = (baseUrl: string, path: string): string => {
   const fallbackBase =
@@ -529,6 +529,7 @@ export class RealtimeClient {
             frame.error.message,
             frame.error.retryable,
             frame.error.retryAfterMs,
+            frame.error.reason,
           ),
         );
       }

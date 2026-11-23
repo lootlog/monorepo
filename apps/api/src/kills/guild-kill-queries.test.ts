@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
 import { createGuildFixture } from "../../test/organization-fixtures.js";
 import {
@@ -26,7 +26,7 @@ const passthrough: StaleKillQueryCache = {
     })),
 };
 
-const policy = createAccessPolicy({ capabilities: [Permission.OWNER] });
+const policy = createAccessPolicy({ capabilities: [Capability.OWNER] });
 
 describe("guild kill rankings", () => {
   it("return their documented default size when the query omits a limit", async () => {

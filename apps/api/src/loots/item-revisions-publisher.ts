@@ -1,11 +1,10 @@
 import { eventMessage, type RabbitMessaging } from "@lootlog/messaging";
 import type { CatalogItemRevisions } from "@lootlog/protocol/rabbit/catalog";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
-import { sql } from "drizzle-orm";
 import { Effect } from "effect";
+import { tryAdvisoryTransactionLock } from "#src/shared/advisory-lock";
 import { chunk } from "es-toolkit";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
-import { itemSnapshotTable } from "#src/database/drizzle/loot.schema";
 import {
   buildItemRevisionsQuery,
   toItemRevisionHistories,
@@ -22,14 +21,11 @@ export const makeItemRevisionsPublisher = (
   Effect.gen(function* () {
     const rows = yield* database.transaction((transaction) =>
       Effect.gen(function* () {
-        const [lock] = yield* transaction
-          .select({
-            acquired: sql<boolean>`pg_try_advisory_xact_lock(${ITEM_REVISIONS_LOCK})`,
-          })
-          .from(itemSnapshotTable)
-          .limit(1);
-
-        if (!lock?.acquired) return null;
+        if (
+          !(yield* tryAdvisoryTransactionLock(transaction, ITEM_REVISIONS_LOCK))
+        ) {
+          return null;
+        }
 
         return yield* buildItemRevisionsQuery(transaction);
       }),

@@ -1,8 +1,8 @@
+import { queryKeys } from "@/lib/query-keys";
 import { Schema } from "effect";
 import type { QueryClient, Query } from "@tanstack/react-query";
 import {
   getGuildsControllerGetGuildPermissionsQueryKey,
-  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
   type UserCurrentGuildResponseDtoOutput,
 } from "@lootlog/client/main";
 import {
@@ -11,7 +11,7 @@ import {
   type AccessPolicySnapshot,
   type AccessPolicyChange,
 } from "@lootlog/protocol/realtime/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { HERO_SIGHTING_READ_FEATURE } from "@lootlog/domain/npc-permissions";
 
 const isQueryPath = Schema.is(Schema.String);
@@ -84,7 +84,7 @@ const filterOrganizations = (
     if (!organization) return [];
 
     const hasLootlogAccess = organization.permissions.includes(
-      Permission.LOOTLOG_ACCESS,
+      Capability.LOOTLOG_ACCESS,
     );
 
     return guild.hasLootlogAccess === hasLootlogAccess &&
@@ -164,7 +164,7 @@ const reconcileTimers = (
     const canReadScope = policy.organizations.some(
       (organization) =>
         (scope === null || scope === organization.organizationId) &&
-        organization.permissions.includes(Permission.LOOTLOG_TIMERS_READ),
+        organization.permissions.includes(Capability.LOOTLOG_TIMERS_READ),
     );
 
     if (!canReadScope) pendingQueries.delete(query);
@@ -253,7 +253,7 @@ const reconcileOrganizations = (
   initial: boolean,
   pendingQueries: Set<Query>,
 ) => {
-  const guildsKey = getUsersControllerGetCurrentUserAccessibleGuildsQueryKey();
+  const guildsKey = queryKeys.guilds();
 
   const membershipChanged = changes?.some((change) =>
     change.areas.includes("organization"),
@@ -268,9 +268,8 @@ const reconcileOrganizations = (
       pendingQueries.add(activeQuery);
 
     if (!initial) void queryClient.cancelQueries({ queryKey: guildsKey });
-    queryClient.setQueryData<UserCurrentGuildResponseDtoOutput[]>(
-      guildsKey,
-      (guilds) => (guilds ? filterOrganizations(guilds, policy) : guilds),
+    queryClient.setQueryData(guildsKey, (guilds) =>
+      guilds ? filterOrganizations(guilds, policy) : guilds,
     );
 
     if (
@@ -279,9 +278,7 @@ const reconcileOrganizations = (
         activeQuery.state.fetchStatus !== "fetching" &&
         isOrganizationMetadataMissing(
           policy,
-          queryClient.getQueryData<UserCurrentGuildResponseDtoOutput[]>(
-            guildsKey,
-          ) ?? [],
+          queryClient.getQueryData(guildsKey) ?? [],
         )) ||
       (!initial &&
         changes?.some(

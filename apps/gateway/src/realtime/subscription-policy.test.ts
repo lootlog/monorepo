@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import {
   canReadPreciseLocation,
   canSubscribe,
@@ -7,7 +7,7 @@ import {
 } from "./subscription-policy.js";
 import type { SessionData } from "./session.js";
 
-const makeSession = (permissions: Permission[]): SessionData => ({
+const makeSession = (permissions: Capability[]): SessionData => ({
   discordId: "discord-1",
   userId: "user-1",
   connectionId: "connection-1",
@@ -26,7 +26,7 @@ const makeSession = (permissions: Permission[]): SessionData => ({
 
 describe("logical subscription policy", () => {
   test("does not accept an organization identifier as an implicit room name", () => {
-    const viewer = makeSession([Permission.LOOTLOG_CHAT_READ]);
+    const viewer = makeSession([Capability.LOOTLOG_CHAT_READ]);
     expect(
       canSubscribe(viewer, {
         topic: "organization.chat",
@@ -36,11 +36,11 @@ describe("logical subscription policy", () => {
   });
 
   test("rebalances basic and precise presence capabilities independently", () => {
-    const basic = makeSession([Permission.LOOTLOG_ONLINE_PLAYERS_READ]);
+    const basic = makeSession([Capability.LOOTLOG_ONLINE_PLAYERS_READ]);
 
     const precise = makeSession([
-      Permission.LOOTLOG_ONLINE_PLAYERS_READ,
-      Permission.LOOTLOG_PRESENCE_LOCATION_READ,
+      Capability.LOOTLOG_ONLINE_PLAYERS_READ,
+      Capability.LOOTLOG_PRESENCE_LOCATION_READ,
     ]);
 
     const scope = {

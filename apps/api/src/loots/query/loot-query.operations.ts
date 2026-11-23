@@ -2,7 +2,7 @@ import {
   OperationError,
   adapterOperation,
 } from "@lootlog/instrumentation/operation";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { Effect, Schema } from "effect";
 import type {
   guildTable,
@@ -45,19 +45,19 @@ type QueryEffect<A> = Effect.Effect<A, OperationError>;
 export interface LootQueryOperations {
   readonly isLootVisible: (
     guild: Guild,
-    permissions: Permission[],
+    permissions: Capability[],
     roles: Role[],
     lootId: number,
   ) => QueryEffect<boolean>;
   readonly fetchLootsByGuildId: (
     guild: Guild,
-    permissions: Permission[],
+    permissions: Capability[],
     roles: Role[],
     params: LootListParams,
   ) => QueryEffect<LootQueryResult[]>;
   readonly fetchLootById: (
     guild: Guild,
-    permissions: Permission[],
+    permissions: Capability[],
     roles: Role[],
     lootId: number,
   ) => QueryEffect<LootQueryResult | null>;
@@ -67,13 +67,13 @@ export interface LootQueryOperations {
   ) => QueryEffect<LootQueryResult | null>;
   readonly resolveLootItemByHid: (
     guild: Guild,
-    permissions: Permission[],
+    permissions: Capability[],
     roles: Role[],
     options: { readonly hid: string; readonly world?: string },
   ) => QueryEffect<LootItemDto | null>;
   readonly summarizeLootsByNpcName: (
     guild: Guild,
-    permissions: Permission[],
+    permissions: Capability[],
     roles: Role[],
     filters: LootQueryFilters,
   ) => QueryEffect<LootNpcNameSummary>;
@@ -195,7 +195,7 @@ export const makeLootQueryOperations = (
         "loots.query.organizationLoot",
         persistence.findOne({
           guildId,
-          permissions: [Permission.OWNER],
+          permissions: [Capability.OWNER],
           roles: [],
           filters: { lootId },
         }),

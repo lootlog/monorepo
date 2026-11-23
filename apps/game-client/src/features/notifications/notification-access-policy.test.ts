@@ -1,5 +1,5 @@
 import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import {
   getNotificationReportCount,
   useNotificationsStore,
@@ -17,8 +17,8 @@ const snapshot = () =>
         roles: [
           {
             permissions: [
-              Permission.LOOTLOG_NOTIFICATIONS_READ,
-              Permission.LOOTLOG_CHAT_READ,
+              Capability.LOOTLOG_NOTIFICATIONS_READ,
+              Capability.LOOTLOG_CHAT_READ,
             ],
             lvlRangeFrom: 50,
             lvlRangeTo: 100,

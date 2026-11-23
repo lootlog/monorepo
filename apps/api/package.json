@@ -29,7 +29,7 @@
     "test": "bun --conditions=development test --timeout=30000 --path-ignore-patterns=dist --path-ignore-patterns='**/*.integration.*' --path-ignore-patterns='**/*.e2e.*'",
     "test:integration": "bun --conditions=development test --preload ./test/bun.e2e.setup.ts --max-concurrency 1 .integration.",
     "test:debug": "bun --conditions=development test --inspect-brk src",
-    "test:e2e": "bun --conditions=development test --preload ./test/bun.e2e.setup.ts --max-concurrency 1 ./test/http-boundary.e2e.test.ts",
+    "test:e2e": "bun --conditions=development test --preload ./test/bun.e2e.setup.ts --max-concurrency 1 .e2e.test.",
     "test:watch": "bun --conditions=development test --timeout=30000 --watch --path-ignore-patterns=dist --path-ignore-patterns='**/*.integration.*' --path-ignore-patterns='**/*.e2e.*'",
     "openapi:generate": "bun --conditions=development src/openapi/generate-effect-openapi.ts",
     "db:generate": "drizzle-kit generate --config drizzle.config.ts",

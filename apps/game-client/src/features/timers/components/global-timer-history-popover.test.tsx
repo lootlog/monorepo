@@ -163,7 +163,17 @@ it("reloads a recently closed history after a deletion and stops offering restor
 
 it("retries failed history loading and reset rollback without losing the active timer, then refreshes history", async () => {
   const user = userEvent.setup();
-  let history = createTimerHistoryFixture({ id: 44, action: "RESET" });
+
+  const resetSpawnTimes = {
+    minSpawnTime: new Date(2026, 4, 3, 12, 5).toISOString(),
+    maxSpawnTime: new Date(2026, 4, 3, 12, 10).toISOString(),
+  };
+
+  let history = createTimerHistoryFixture({
+    id: 44,
+    action: "RESET",
+    ...resetSpawnTimes,
+  });
 
   const previousTimer = createTimerFixture({
     timerKey: history.timerKey,
@@ -175,8 +185,7 @@ it("retries failed history loading and reset rollback without losing the active 
 
   const activeTimer = {
     ...previousTimer,
-    minSpawnTime: history.minSpawnTime,
-    maxSpawnTime: history.maxSpawnTime,
+    ...resetSpawnTimes,
     wasReset: true,
   };
 

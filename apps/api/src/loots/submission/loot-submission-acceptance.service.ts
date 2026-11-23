@@ -10,13 +10,12 @@ import {
 } from "@lootlog/protocol/http/errors";
 import { createHash } from "node:crypto";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import type {
   CreateLootRequest,
   CreateLootResponse,
 } from "#src/contracts/loots/schemas";
 import { ErrorKey } from "#src/loots/error-key";
-import { parseCharacterIdentity } from "#src/shared/margonem/player-snapshot.repository";
 
 import type { LootPublication } from "./loot-publication-outbox.js";
 import type {
@@ -25,11 +24,12 @@ import type {
 } from "#src/loots/submission/loot-submission-acceptance.repository";
 import { inferInitialAllocation } from "./loot-submission-allocation.js";
 import {
+  type AcceptedPlayer,
   getItemStats,
-  LEGACY_ID,
   mapLootItemsToPersistence,
   mapLootNpcsToPersistence,
   mapLootPlayersToPersistence,
+  parsePlayers,
   processNpcs,
 } from "./loot-submission-normalization.js";
 import {
@@ -114,7 +114,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
             options.uniqueId,
           ),
           guilds: this.repository.findGuildsForPermissions(options.discordId, [
-            Permission.LOOTLOG_LOOTS_WRITE,
+            Capability.LOOTLOG_LOOTS_WRITE,
           ]),
           characterConfig: this.repository.findCharacterConfig(
             options.discordId,
@@ -163,12 +163,9 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         { concurrency: "unbounded" },
       );
 
-      if (
-        options.submission.players.some(
-          (player) =>
-            !parseCharacterIdentity(player.id, player.accountId, LEGACY_ID),
-        )
-      ) {
+      const players = parsePlayers(options.submission.players);
+
+      if (!players) {
         return yield* new InvalidRequestError("Invalid player id");
       }
 
@@ -235,6 +232,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         outcome,
         primaryNpcType,
         submission: options.submission,
+        players,
         uniqueId: options.uniqueId,
         publications: (lootId, npcs) =>
           newLootPublications({
@@ -243,6 +241,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
             observedAt,
             outcome,
             submission: options.submission,
+            players,
           }),
       });
 
@@ -299,6 +298,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     outcome: AcceptanceOutcome;
     primaryNpcType: NpcType;
     submission: CreateLootRequest;
+    players: ReadonlyArray<AcceptedPlayer>;
     uniqueId: string;
     publications: (
       lootId: number,
@@ -309,6 +309,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
       const initialAllocation = yield* inferInitialAllocation(
         this.repository,
         options.submission,
+        options.players,
         options.npcData.primary,
         options.primaryNpcType,
       );
@@ -328,7 +329,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
             options.submission.gameVersion,
           ),
           players: mapLootPlayersToPersistence(
-            options.submission.players,
+            options.players,
             options.submission.world,
           ),
           npcs: mapLootNpcsToPersistence(options.submission.npcs),

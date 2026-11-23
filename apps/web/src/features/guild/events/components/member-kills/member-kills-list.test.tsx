@@ -16,6 +16,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { stubResultsTableViewport } from "@/lib/testing/viewport";
 
 import type { KillHistoryMemberEntry } from "@lootlog/client/main";
+import { createHistoryQuery } from "../shared/create-history-query";
 import { MemberKillsList } from "./member-kills-list";
 
 await initializeTestTranslations();
@@ -36,52 +37,53 @@ describe("MemberKillsList", () => {
     const commonProps = {
       allKills: [],
       eventId: "event-1",
-      fetchNextPage: vi.fn(),
-      onRetry: vi.fn(),
       guildId: "guild-1",
-      hasNextPage: false,
-      isFetchingNextPage: false,
       resetKey: "all",
       scrollElement: document.createElement("div"),
     };
 
     const { rerender } = renderList(
-      <MemberKillsList {...commonProps} isLoading hasError={false} />,
+      <MemberKillsList
+        {...commonProps}
+        query={createHistoryQuery({ isLoading: true })}
+      />,
     );
 
     expect(screen.getByLabelText("events.kills.loading")).toBeTruthy();
 
-    rerender(<MemberKillsList {...commonProps} isLoading={false} hasError />);
+    rerender(
+      <MemberKillsList
+        {...commonProps}
+        query={createHistoryQuery({ isError: true })}
+      />,
+    );
     expect(screen.getByText("events.error")).toBeTruthy();
 
-    rerender(
-      <MemberKillsList {...commonProps} isLoading={false} hasError={false} />,
-    );
+    rerender(<MemberKillsList {...commonProps} query={createHistoryQuery()} />);
     expect(screen.getByText("events.kills.noKills")).toBeTruthy();
   });
 
   it("shows kills when data arrives after the loading state", () => {
     const commonProps = {
       eventId: "event-1",
-      fetchNextPage: vi.fn(),
-      onRetry: vi.fn(),
       guildId: "guild-1",
-      hasError: false,
-      hasNextPage: false,
-      isFetchingNextPage: false,
       resetKey: "all",
       scrollElement: document.createElement("div"),
     };
 
     const { rerender } = renderList(
-      <MemberKillsList {...commonProps} allKills={[]} isLoading />,
+      <MemberKillsList
+        {...commonProps}
+        allKills={[]}
+        query={createHistoryQuery({ isLoading: true })}
+      />,
     );
 
     rerender(
       <MemberKillsList
         {...commonProps}
         allKills={[createKill()]}
-        isLoading={false}
+        query={createHistoryQuery()}
       />,
     );
 
@@ -104,13 +106,8 @@ describe("MemberKillsList", () => {
           }),
         ]}
         eventId="event-1"
-        fetchNextPage={vi.fn()}
-        onRetry={vi.fn()}
         guildId="guild-1"
-        hasError={false}
-        hasNextPage={false}
-        isFetchingNextPage={false}
-        isLoading={false}
+        query={createHistoryQuery()}
         resetKey="all"
         scrollElement={document.createElement("div")}
       />,
@@ -195,13 +192,8 @@ describe("MemberKillsList", () => {
       <MemberKillsList
         allKills={[createKill()]}
         eventId="event-1"
-        fetchNextPage={fetchNextPage}
-        onRetry={vi.fn()}
         guildId="guild-1"
-        hasError={false}
-        hasNextPage
-        isFetchingNextPage={false}
-        isLoading={false}
+        query={createHistoryQuery({ hasNextPage: true, fetchNextPage })}
         resetKey="all"
         scrollElement={document.createElement("div")}
       />,
@@ -212,7 +204,6 @@ describe("MemberKillsList", () => {
 
   it("preserves loaded member history after a failed page and retries on request", () => {
     const fetchNextPage = vi.fn();
-    const retry = vi.fn();
     vi.stubGlobal("IntersectionObserver", ImmediateIntersectionObserver);
 
     renderList(
@@ -222,12 +213,12 @@ describe("MemberKillsList", () => {
         guildId="guild-1"
         scrollElement={document.createElement("div")}
         resetKey="all"
-        isLoading={false}
-        hasError
-        hasNextPage
-        isFetchingNextPage={false}
-        fetchNextPage={fetchNextPage}
-        onRetry={retry}
+        query={createHistoryQuery({
+          isError: true,
+          isFetchNextPageError: true,
+          hasNextPage: true,
+          fetchNextPage,
+        })}
       />,
     );
 
@@ -238,7 +229,7 @@ describe("MemberKillsList", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "common.actions.retry" }),
     );
-    expect(retry).toHaveBeenCalledOnce();
+    expect(fetchNextPage).toHaveBeenCalledOnce();
   });
 });
 

@@ -2,7 +2,7 @@ import { afterEach, beforeEach, expect, it } from "bun:test";
 import { eq } from "drizzle-orm";
 import { Effect } from "effect";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
 import {
   createGuildFixture,
@@ -33,7 +33,7 @@ const access: TimersGuildAccess = {
   userId: member.userId,
   discordId: member.userId,
   roles: [],
-  accessPolicy: createAccessPolicy({ capabilities: [Permission.ADMIN] }),
+  accessPolicy: createAccessPolicy({ capabilities: [Capability.ADMIN] }),
 };
 
 const ports = {

@@ -5,7 +5,7 @@ import {
   getGuildsControllerGetGuildPermissionsQueryKey,
   type HeroSightingResponseDto,
 } from "@lootlog/client/main";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { HERO_SIGHTING_WRITE_PERMISSION } from "@lootlog/domain/npc-permissions";
 import { afterEach, expect, it, onTestFinished } from "vitest";
 import { sessionQueryOptions } from "@/hooks/auth/use-session-query";
@@ -48,7 +48,7 @@ const sighting: HeroSightingResponseDto = {
 afterEach(cleanup);
 
 const mount = async (
-  capabilities: Permission[],
+  capabilities: Capability[],
   shown: HeroSightingResponseDto = sighting,
 ) => {
   const client = new QueryClient({
@@ -82,8 +82,8 @@ const mount = async (
 
 it("offers no claim to a member who may only read hero sightings", async () => {
   await mount([
-    Permission.LOOTLOG_TIMERS_READ,
-    Permission.LOOTLOG_TIMERS_HEROES_READ,
+    Capability.LOOTLOG_TIMERS_READ,
+    Capability.LOOTLOG_TIMERS_HEROES_READ,
   ]);
 
   expect(screen.queryByRole("button")).toBeNull();

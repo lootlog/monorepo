@@ -1,7 +1,7 @@
 import { QueryClient, QueryObserver } from "@tanstack/react-query";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import type { ChatMessage } from "@/api/chat.api";
 import { getChatControllerGetChatMessagesQueryKey } from "@lootlog/client/main";
 import {
@@ -55,9 +55,9 @@ const policy = (titanAccess = true, maxLevel = 500) =>
       roles: [
         {
           permissions: [
-            Permission.LOOTLOG_CHAT_READ,
+            Capability.LOOTLOG_CHAT_READ,
             ...(id === "two" || titanAccess
-              ? [Permission.LOOTLOG_CHAT_TITANS_READ]
+              ? [Capability.LOOTLOG_CHAT_TITANS_READ]
               : []),
           ],
           lvlRangeFrom: 0,

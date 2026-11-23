@@ -1,3 +1,4 @@
+import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
 import { decodeDomainJson } from "../../domain-json.schema.js";
@@ -85,7 +86,11 @@ const provideServices = (
   authorization: ReadyRoomAuthorization["Service"],
   data: ReadyRoomData["Service"],
 ) =>
-  Layer.merge(
+  Layer.mergeAll(
+    Layer.succeed(ForwardAuthIdentity, {
+      userId: "user",
+      discordId: "discord",
+    }),
     Layer.succeed(ReadyRoomAuthorization, authorization),
     Layer.succeed(ReadyRoomData, data),
   );

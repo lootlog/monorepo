@@ -1,10 +1,10 @@
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 
 interface GuildRole {
   readonly id: string;
   readonly lvlRangeFrom: number;
   readonly lvlRangeTo: number;
-  readonly permissions: ReadonlyArray<Permission>;
+  readonly permissions: ReadonlyArray<Capability>;
 }
 
 interface Guild {

@@ -1,3 +1,4 @@
+import type { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import {
   type ReauthenticationRequired,
   reauthenticationRequiredResponse,
@@ -25,8 +26,8 @@ import {
 } from "#src/timers/timer-response.schema";
 
 import {
-  Permission,
-  type Permission as PermissionValue,
+  Capability,
+  type Capability as PermissionValue,
 } from "@lootlog/schema/permissions";
 
 import { LootlogApi } from "../../lootlog-api.js";
@@ -54,13 +55,18 @@ export class TimersAccessDenied extends TaggedErrorClass<
 export class TimersAuthorization extends Context.Service<
   TimersAuthorization,
   {
-    readonly identity: Effect.Effect<TimersIdentity, TimersAccessDenied>;
+    readonly identity: Effect.Effect<
+      TimersIdentity,
+      TimersAccessDenied,
+      ForwardAuthIdentity
+    >;
     readonly requireGuild: (options: {
       readonly guildId: string;
       readonly capability: PermissionValue;
     }) => Effect.Effect<
       TimersGuildAccess,
-      TimersAccessDenied | TimersNotFound | ReauthenticationRequired
+      TimersAccessDenied | TimersNotFound | ReauthenticationRequired,
+      ForwardAuthIdentity
     >;
   }
 >()("@lootlog/api/http-api/timers/authorization") {}
@@ -111,7 +117,7 @@ export const getAllTimers = Effect.fn("getAllTimers")(function* (
 
 export const getRecentTimerHistory = Effect.fn("getRecentTimerHistory")(
   function* (guildId: string, world: string, limit?: number) {
-    const access = yield* requireGuild(guildId, Permission.LOOTLOG_TIMERS_READ);
+    const access = yield* requireGuild(guildId, Capability.LOOTLOG_TIMERS_READ);
 
     const value = yield* data((service) =>
       service.getRecentHistory(access, world, limit),
@@ -125,7 +131,7 @@ export const getGuildTimers = Effect.fn("getGuildTimers")(function* (
   guildId: string,
   world?: string,
 ) {
-  const access = yield* requireGuild(guildId, Permission.LOOTLOG_TIMERS_READ);
+  const access = yield* requireGuild(guildId, Capability.LOOTLOG_TIMERS_READ);
   const value = yield* data((service) => service.getGuildTimers(access, world));
 
   return yield* mapResponseError(decodeTimersResponse(value));
@@ -135,7 +141,7 @@ const getGuildHeroTimers = Effect.fn("getGuildHeroTimers")(function* (
   guildId: string,
   world: string,
 ) {
-  const access = yield* requireGuild(guildId, Permission.LOOTLOG_TIMERS_READ);
+  const access = yield* requireGuild(guildId, Capability.LOOTLOG_TIMERS_READ);
 
   const value = yield* data((service) =>
     service.getGuildHeroTimers(access, world),
@@ -148,7 +154,7 @@ export const searchTimerNpcs = Effect.fn("searchTimerNpcs")(function* (
   guildId: string,
   query: TimerNpcSearchQuery,
 ) {
-  const access = yield* requireGuild(guildId, Permission.LOOTLOG_TIMERS_READ);
+  const access = yield* requireGuild(guildId, Capability.LOOTLOG_TIMERS_READ);
   const value = yield* data((service) => service.searchNpcs(access, query));
 
   return yield* mapResponseError(decodeTimerNpcSearchResponse(value));
@@ -168,7 +174,7 @@ export const resetGuildTimer = Effect.fn("resetGuildTimer")(function* (
   timerIdentifier: string,
   payload: ResetTimerRequest,
 ) {
-  const access = yield* requireGuild(guildId, Permission.LOOTLOG_TIMERS_RESET);
+  const access = yield* requireGuild(guildId, Capability.LOOTLOG_TIMERS_RESET);
 
   const value = yield* data((service) =>
     service.reset(access, timerIdentifier, payload),
@@ -182,7 +188,7 @@ export const deleteGuildTimer = Effect.fn("deleteGuildTimer")(function* (
   timerIdentifier: string,
   world?: string,
 ) {
-  const access = yield* requireGuild(guildId, Permission.LOOTLOG_MANAGE);
+  const access = yield* requireGuild(guildId, Capability.LOOTLOG_MANAGE);
   yield* data((service) => service.delete(access, timerIdentifier, world));
 });
 
@@ -193,7 +199,7 @@ export const getGuildTimerHistory = Effect.fn("getGuildTimerHistory")(
     timerIdentifier: string,
     limit?: number,
   ) {
-    const access = yield* requireGuild(guildId, Permission.LOOTLOG_TIMERS_READ);
+    const access = yield* requireGuild(guildId, Capability.LOOTLOG_TIMERS_READ);
 
     const value = yield* data((service) =>
       service.getHistory(access, world, timerIdentifier, limit),
@@ -207,7 +213,7 @@ export const restoreGuildTimer = Effect.fn("restoreGuildTimer")(function* (
   guildId: string,
   historyEntryId: number,
 ) {
-  const access = yield* requireGuild(guildId, Permission.LOOTLOG_TIMERS_WRITE);
+  const access = yield* requireGuild(guildId, Capability.LOOTLOG_TIMERS_WRITE);
 
   const value = yield* data((service) =>
     service.restore(access, historyEntryId),
@@ -220,7 +226,7 @@ export const createManualGuildTimer = Effect.fn("createManualGuildTimer")(
   function* (guildId: string, payload: CreateManualTimerRequest) {
     const access = yield* requireGuild(
       guildId,
-      Permission.LOOTLOG_TIMERS_WRITE,
+      Capability.LOOTLOG_TIMERS_WRITE,
     );
 
     const value = yield* data((service) =>

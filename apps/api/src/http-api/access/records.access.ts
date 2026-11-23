@@ -1,3 +1,4 @@
+import type { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import {
   type ReauthenticationRequired,
   reauthenticationRequiredResponse,
@@ -16,7 +17,7 @@ import type {
 import { statusCodeResponse } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
-import type { Permission as PermissionValue } from "@lootlog/schema/permissions";
+import type { Capability as PermissionValue } from "@lootlog/schema/permissions";
 import { Context, Effect, Layer, Schema } from "effect";
 import { applicationErrorResponse } from "../application-error-response.js";
 
@@ -115,14 +116,16 @@ export class RecordsAuthorization extends Context.Service<
   {
     readonly requireCaller: Effect.Effect<
       AuthenticatedCaller,
-      RecordsAccessDenied
+      RecordsAccessDenied,
+      ForwardAuthIdentity
     >;
     readonly requireGuild: (options: {
       readonly guildId: string;
       readonly capability: PermissionValue;
     }) => Effect.Effect<
       AuthorizedGuildCaller,
-      RecordsAccessDenied | RecordsNotFound | ReauthenticationRequired
+      RecordsAccessDenied | RecordsNotFound | ReauthenticationRequired,
+      ForwardAuthIdentity
     >;
   }
 >()("@lootlog/api/http-api/records/authorization") {}

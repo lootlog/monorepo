@@ -67,12 +67,7 @@ beforeAll(async () => {
 afterAll(() => runtime.dispose());
 
 const pagination = () =>
-  makeBattlePagination(
-    // SAFETY: PGlite stands in for @effect/sql-pg. Their raw `execute` results
-    // differ only in metadata; pagination reads rows alone.
-    database as never,
-    (effect) => effect,
-  ).paginateBattles;
+  makeBattlePagination(database, (effect) => effect).paginateBattles;
 
 const page = (sortOrder: SortOrder, cursor?: string) =>
   runtime.runPromise(
@@ -148,12 +143,7 @@ describe("battle list pagination against PostgreSQL", () => {
         budgetedReads += 1;
       }).pipe(Effect.andThen(effect));
 
-    const paginate = makeBattlePagination(
-      // SAFETY: PGlite stands in for @effect/sql-pg. Their raw `execute` results
-      // differ only in metadata; pagination reads rows alone.
-      database as never,
-      read,
-    ).paginateBattles;
+    const paginate = makeBattlePagination(database, read).paginateBattles;
 
     for (const cursor of [previousFormat, "not-a-cursor"]) {
       await expect(

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { MessageType } from "./chat-message.js";
 import type { ChatStoredMessage } from "./chat-stored-message.js";
 import { canViewChatMessage } from "./chat-message-visibility.js";
@@ -7,7 +7,7 @@ import { canViewChatMessage } from "./chat-message-visibility.js";
 type Role = Parameters<typeof canViewChatMessage>[1][number];
 
 function createRole(
-  permissions: Permission[],
+  permissions: Capability[],
   lvlRangeFrom = 1,
   lvlRangeTo = 500,
 ): Role {
@@ -42,19 +42,19 @@ function createMessage(
 
 describe("canViewChatMessage", () => {
   it("returns false without base chat permission", () => {
-    const roles = [createRole([Permission.LOOTLOG_CHAT_TITANS_READ])];
+    const roles = [createRole([Capability.LOOTLOG_CHAT_TITANS_READ])];
 
     expect(canViewChatMessage(createMessage(), roles)).toBe(false);
   });
 
   it("returns true for normal messages with base chat permission", () => {
-    const roles = [createRole([Permission.LOOTLOG_CHAT_READ])];
+    const roles = [createRole([Capability.LOOTLOG_CHAT_READ])];
 
     expect(canViewChatMessage(createMessage(), roles)).toBe(true);
   });
 
   it("returns false for NPC messages without npc payload", () => {
-    const roles = [createRole([Permission.LOOTLOG_CHAT_READ])];
+    const roles = [createRole([Capability.LOOTLOG_CHAT_READ])];
 
     expect(
       canViewChatMessage(
@@ -70,7 +70,7 @@ describe("canViewChatMessage", () => {
   it("returns true for titan NPC messages when permission and level match", () => {
     const roles = [
       createRole(
-        [Permission.LOOTLOG_CHAT_READ, Permission.LOOTLOG_CHAT_TITANS_READ],
+        [Capability.LOOTLOG_CHAT_READ, Capability.LOOTLOG_CHAT_TITANS_READ],
         250,
         350,
       ),
@@ -98,7 +98,7 @@ describe("canViewChatMessage", () => {
   });
 
   it("returns false for titan NPC messages without titan permission", () => {
-    const roles = [createRole([Permission.LOOTLOG_CHAT_READ], 250, 350)];
+    const roles = [createRole([Capability.LOOTLOG_CHAT_READ], 250, 350)];
 
     expect(
       canViewChatMessage(
@@ -124,7 +124,7 @@ describe("canViewChatMessage", () => {
   it("returns false for titan NPC messages outside level range", () => {
     const roles = [
       createRole(
-        [Permission.LOOTLOG_CHAT_READ, Permission.LOOTLOG_CHAT_TITANS_READ],
+        [Capability.LOOTLOG_CHAT_READ, Capability.LOOTLOG_CHAT_TITANS_READ],
         100,
         299,
       ),
@@ -153,8 +153,8 @@ describe("canViewChatMessage", () => {
 
   it("allows access when chat read and titan access come from different roles", () => {
     const roles = [
-      createRole([Permission.LOOTLOG_CHAT_READ], 1, 500),
-      createRole([Permission.LOOTLOG_CHAT_TITANS_READ], 250, 350),
+      createRole([Capability.LOOTLOG_CHAT_READ], 1, 500),
+      createRole([Capability.LOOTLOG_CHAT_TITANS_READ], 250, 350),
     ];
 
     expect(
@@ -180,8 +180,8 @@ describe("canViewChatMessage", () => {
 
   it("blocks access when titan permission and matching level are split across roles", () => {
     const roles = [
-      createRole([Permission.LOOTLOG_CHAT_READ], 1, 500),
-      createRole([Permission.LOOTLOG_CHAT_TITANS_READ], 1, 299),
+      createRole([Capability.LOOTLOG_CHAT_READ], 1, 500),
+      createRole([Capability.LOOTLOG_CHAT_TITANS_READ], 1, 299),
       createRole([], 300, 400),
     ];
 
@@ -209,7 +209,7 @@ describe("canViewChatMessage", () => {
   it("returns true for hero messages with heroes permission", () => {
     const roles = [
       createRole(
-        [Permission.LOOTLOG_CHAT_READ, Permission.LOOTLOG_CHAT_HEROES_READ],
+        [Capability.LOOTLOG_CHAT_READ, Capability.LOOTLOG_CHAT_HEROES_READ],
         80,
         180,
       ),
@@ -237,7 +237,7 @@ describe("canViewChatMessage", () => {
   });
 
   it("requires level check for base NPC messages", () => {
-    const roles = [createRole([Permission.LOOTLOG_CHAT_READ], 1, 49)];
+    const roles = [createRole([Capability.LOOTLOG_CHAT_READ], 1, 49)];
 
     expect(
       canViewChatMessage(
@@ -263,7 +263,7 @@ describe("canViewChatMessage", () => {
   it("treats party gathering with npc like an NPC-scoped message", () => {
     const roles = [
       createRole(
-        [Permission.LOOTLOG_CHAT_READ, Permission.LOOTLOG_CHAT_HEROES_READ],
+        [Capability.LOOTLOG_CHAT_READ, Capability.LOOTLOG_CHAT_HEROES_READ],
         100,
         200,
       ),
@@ -296,7 +296,7 @@ describe("canViewChatMessage", () => {
   });
 
   it("treats party gathering without npc like a base chat message", () => {
-    const roles = [createRole([Permission.LOOTLOG_CHAT_READ])];
+    const roles = [createRole([Capability.LOOTLOG_CHAT_READ])];
 
     expect(
       canViewChatMessage(
@@ -316,7 +316,7 @@ describe("canViewChatMessage", () => {
   it("includes level range boundaries", () => {
     const roles = [
       createRole(
-        [Permission.LOOTLOG_CHAT_READ, Permission.LOOTLOG_CHAT_TITANS_READ],
+        [Capability.LOOTLOG_CHAT_READ, Capability.LOOTLOG_CHAT_TITANS_READ],
         300,
         300,
       ),

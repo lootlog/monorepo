@@ -87,7 +87,7 @@ type PaginatedActivitiesResponseDto =
 
 const PaginatedActivitiesResponseDto = Schema.Struct({
   data: Schema.Array(ActivityResponse),
-  nextCursor: Schema.optionalKey(Schema.String),
+  nextCursor: Schema.optionalKey(ActivityCursor),
   hasMore: Schema.Boolean,
 }).annotate({ identifier: "PaginatedActivitiesResponseDto" });
 

@@ -3,7 +3,7 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Effect, Layer } from "effect";
 import { apiKeyAllowsOrganization } from "@lootlog/schema/api-key-policy";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
-import type { Permission as PermissionValue } from "@lootlog/schema/permissions";
+import type { Capability as PermissionValue } from "@lootlog/schema/permissions";
 import {
   ChatAccessDenied,
   ChatAuthorization,
@@ -382,10 +382,7 @@ const publicSystemAuthorization = Effect.map(
 );
 
 const timersAccess = guildAccess(
-  (access) => ({
-    ...toRoleScopedCaller(access),
-    roles: [...access.context.roles],
-  }),
+  toRoleScopedCaller,
   TimersNotFound,
   TimersAccessDenied,
 );

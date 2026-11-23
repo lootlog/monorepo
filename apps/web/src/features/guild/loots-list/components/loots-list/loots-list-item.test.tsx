@@ -1,3 +1,4 @@
+import { Capability } from "@lootlog/schema/permissions";
 // @vitest-environment happy-dom
 
 import { initializeTestTranslations } from "@/lib/testing/i18n";
@@ -8,7 +9,6 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
-import { Capability } from "@lootlog/domain/access-policy";
 import { afterEach, describe, expect, it } from "vitest";
 import { createLoot } from "@/lib/testing/loot";
 import { createLootTestWrapper } from "@/lib/testing/loot-wrapper";

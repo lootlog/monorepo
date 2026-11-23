@@ -8,7 +8,7 @@ import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance";
 import {
   getMembersControllerGetGuildMembersSummaryQueryKey,
@@ -129,8 +129,8 @@ describe("OnlinePlayersList", () => {
           roles: [
             {
               permissions: [
-                Permission.LOOTLOG_ONLINE_PLAYERS_READ,
-                Permission.LOOTLOG_PRESENCE_LOCATION_READ,
+                Capability.LOOTLOG_ONLINE_PLAYERS_READ,
+                Capability.LOOTLOG_PRESENCE_LOCATION_READ,
               ],
               lvlRangeFrom: 0,
               lvlRangeTo: 500,

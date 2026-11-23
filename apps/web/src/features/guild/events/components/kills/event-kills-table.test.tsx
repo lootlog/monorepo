@@ -15,6 +15,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { stubResultsTableViewport } from "@/lib/testing/viewport";
 
 import { createHeroKill as createKill } from "@/lib/testing/event-kill";
+import { createHistoryQuery } from "../shared/create-history-query";
 import { EventKillsTable } from "./event-kills-table";
 
 await initializeTestTranslations();
@@ -33,20 +34,19 @@ afterEach(() => {
 describe("EventKillsTable", () => {
   const defaultProps = {
     eventId: "event-1",
-    fetchNextPage: vi.fn(),
-    onRetry: vi.fn(),
     guildId: "guild-1",
-    hasError: false,
-    hasNextPage: false,
-    isFetchingNextPage: false,
-    isLoading: false,
+    query: createHistoryQuery(),
     resetKey: "all",
     scrollElement: document.createElement("div"),
   };
 
   it("shows stable loading, error, and empty states", () => {
     const { rerender } = renderTable(
-      <EventKillsTable {...defaultProps} kills={[]} isLoading />,
+      <EventKillsTable
+        {...defaultProps}
+        kills={[]}
+        query={createHistoryQuery({ isLoading: true })}
+      />,
     );
 
     expect(screen.getByLabelText("events.kills.loading")).toBeTruthy();
@@ -55,15 +55,12 @@ describe("EventKillsTable", () => {
       <EventKillsTable
         {...defaultProps}
         kills={[]}
-        isLoading={false}
-        hasError
+        query={createHistoryQuery({ isError: true })}
       />,
     );
     expect(screen.getByText("events.error")).toBeTruthy();
 
-    rerender(
-      <EventKillsTable {...defaultProps} kills={[]} isLoading={false} />,
-    );
+    rerender(<EventKillsTable {...defaultProps} kills={[]} />);
     expect(screen.getByText("events.kills.noKills")).toBeTruthy();
   });
 
@@ -101,8 +98,7 @@ describe("EventKillsTable", () => {
       <EventKillsTable
         {...defaultProps}
         kills={[createKill()]}
-        hasNextPage
-        fetchNextPage={fetchNextPage}
+        query={createHistoryQuery({ hasNextPage: true, fetchNextPage })}
       />,
     );
 
@@ -142,7 +138,11 @@ describe("EventKillsTable", () => {
     );
 
     renderTable(
-      <EventKillsTable {...defaultProps} kills={[createKill()]} hasNextPage />,
+      <EventKillsTable
+        {...defaultProps}
+        kills={[createKill()]}
+        query={createHistoryQuery({ hasNextPage: true })}
+      />,
     );
 
     expect(observerOptions).toHaveBeenCalledWith(
@@ -171,16 +171,19 @@ describe("EventKillsTable", () => {
 
   it("preserves rows and disables observation after a pagination error", () => {
     const observer = vi.fn();
-    const retry = vi.fn();
+    const fetchNextPage = vi.fn();
     vi.stubGlobal("IntersectionObserver", observer);
 
     renderTable(
       <EventKillsTable
         {...defaultProps}
         kills={[createKill()]}
-        hasError
-        hasNextPage
-        onRetry={retry}
+        query={createHistoryQuery({
+          isError: true,
+          isFetchNextPageError: true,
+          hasNextPage: true,
+          fetchNextPage,
+        })}
       />,
     );
 
@@ -190,7 +193,7 @@ describe("EventKillsTable", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "common.actions.retry" }),
     );
-    expect(retry).toHaveBeenCalledOnce();
+    expect(fetchNextPage).toHaveBeenCalledOnce();
   });
 
   it("resets the scroll position after the hero filter changes", () => {

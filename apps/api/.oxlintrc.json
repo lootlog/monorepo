@@ -1,0 +1,685 @@
+{
+  "extends": ["../../.oxlintrc.json"],
+  "overrides": [
+    {
+      "files": ["**/*.{ts,tsx}"],
+      "rules": {
+        "@typescript-eslint/consistent-type-imports": "off"
+      }
+    },
+    {
+      "files": ["src/shared/application-logger.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": [
+              "log",
+              "info",
+              "warn",
+              "error",
+              "debug",
+              "verbose"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/shared/schema/encode-response.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["encodeUnknownResponse"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/shared/http/handler-response.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["pathString", "optionalPathString"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["pathString", "optionalPathString"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/timers/timer-projection.ts"],
+      "rules": {
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["mapTimerNpc", "parseTimerNpc"]
+          }
+        ],
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": [
+              "mapTimerNpc",
+              "parseTimerNpc",
+              "parseTimerNpcRouting",
+              "timerNpcField",
+              "timerNpcTemplateId"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/discord/discord-error.util.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": [
+              "extractHttpStatus",
+              "isDiscordNotFoundError",
+              "isDiscordUnauthorizedError",
+              "recordInvalidDiscordRequest",
+              "toDiscordRequestError",
+              "getInvalidDiscordRequestStatus"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/users/user-preferences.data-layer.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": [
+              "normalizeMutedPlayers",
+              "normalizeMutedNpcs",
+              "storedMutes",
+              "chatAppearance",
+              "storedGamePreferences",
+              "normalizeNotification",
+              "normalizeNotifications",
+              "normalizeDetectorType",
+              "normalizeRoutingRules",
+              "normalizeDetector",
+              "normalizePings",
+              "normalizeAirTags"
+            ]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": [
+              "normalizeMutedPlayers",
+              "normalizeMutedNpcs",
+              "storedMutes",
+              "chatAppearance",
+              "storedGamePreferences",
+              "normalizeNotification",
+              "normalizeNotifications",
+              "normalizeDetectorType",
+              "normalizeRoutingRules",
+              "normalizeDetector",
+              "normalizePings",
+              "normalizeAirTags"
+            ]
+          }
+        ],
+        "anti-slop/no-unsafe-dictionary-type": [
+          "error",
+          {
+            "boundaryTypes": ["StoredGamePreferences"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/shared/http/http-errors.ts"],
+      "rules": {
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["errorMessage"]
+          }
+        ],
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["applicationErrorStatusOrUndefined"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/timer-settings/timer-settings.service.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": [
+              "asRecord",
+              "asJsonValue",
+              "asJsonObject",
+              "asStringArray"
+            ]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": [
+              "asRecord",
+              "asJsonValue",
+              "asJsonObject",
+              "asStringArray"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/sound-settings/sound-settings.service.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["getVolume", "mergeSoundConfigMap"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["getVolume", "mergeSoundConfigMap"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/settings-documents/settings-resolver.ts"],
+      "rules": {
+        "anti-slop/no-unsafe-dictionary-type": [
+          "error",
+          {
+            "boundaryTypes": ["JsonRecord"]
+          }
+        ],
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["setPath"]
+          }
+        ],
+        "anti-slop/no-unknown-returns": [
+          "error",
+          {
+            "boundaryFunctions": ["getPath"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/auth/auth.service.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": [
+              "mapFetchError",
+              "mapTokenError",
+              "getErrorMessage",
+              "getErrorResponse",
+              "isAccountNotFoundError",
+              "isClientError",
+              "isTokenError"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/redis/redis.service.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["stringify", "onError"]
+          }
+        ],
+        "anti-slop/no-unknown-returns": [
+          "error",
+          {
+            "boundaryFunctions": ["parse"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/notifications/jobs/notification-job-dispatch.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["errorMessage"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["errorMessage", "parseDispatchPayload"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/timers/timer-list.data-layer.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["visibleExpiredKeys"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/openapi/generate-effect-openapi.ts"],
+      "rules": {
+        "anti-slop/no-unsafe-dictionary-type": [
+          "error",
+          {
+            "boundaryTypes": ["JsonObject"]
+          }
+        ],
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": [
+              "replaceReferences",
+              "normalizeNullableSchemas"
+            ]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["replaceReferences"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/notifications/notification-test-content.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["npcName"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["npcName"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/timers/timer-search.data-layer.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["parseNpc", "projectSearchTimer"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["parseNpc", "projectSearchTimer"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/shared/schema/json.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["BoundaryDecoder"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/guilds/guild-discord-sync.data-layer.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["recordFailure", "discordSyncErrorMessage"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "boundaryFunctions": ["discordSyncErrorMessage"],
+            "allowInTypeGuards": true
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/guilds/current-user-guilds.data-layer.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["fallbackEligible"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/discord/discord-rate-limiter.service.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["isOptional"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "boundaryFunctions": ["isOptional"],
+            "allowInTypeGuards": true
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/members/member-discord-sync-status.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["getTransientMemberSyncStatus"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "boundaryFunctions": ["getApplicationErrorMessage"],
+            "allowInTypeGuards": true
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/members/member-refresh-scheduler.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["errorCode"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "boundaryFunctions": ["errorCode"],
+            "allowInTypeGuards": true
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/runtime/auth/organization-context.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["parseDate"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "boundaryFunctions": ["parseDate"],
+            "allowInTypeGuards": true
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/reservations/reservation-catalog.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["parseCard", "parseReservationCatalogPayload"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "boundaryFunctions": ["parseReservationCatalogPayload"],
+            "allowInTypeGuards": true
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/settings-documents/settings-documents.repository.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["getPostgresErrorCode"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "boundaryFunctions": ["getPostgresErrorCode"],
+            "allowInTypeGuards": true
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/notifications/content/notification-content.service.ts"],
+      "rules": {
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "boundaryFunctions": ["parseAllowedMentions"],
+            "allowInTypeGuards": true
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/messaging/ready-room/ready-room.repository.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["parseCommit", "parseCreate"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "boundaryFunctions": ["parseCommit", "parseCreate"],
+            "allowInTypeGuards": true
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/events/respawn/event-timer-npc.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["extractEventTimerNpc"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["extractEventTimerNpc"]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/timers/timer-auto-guild-write.ts",
+        "src/timers/timer-auto.repository.ts"
+      ],
+      "rules": {
+        "anti-slop-effect/no-service-constructor-imports": [
+          "error",
+          {
+            "nonServiceImports": ["makeNpc"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/events/catalog/events-catalog-read.ts"],
+      "rules": {
+        "anti-slop-effect/no-service-constructor-imports": [
+          "error",
+          {
+            "nonServiceImports": ["makeEventMapRead"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/events/catalog/event-catalog-mutations.ts"],
+      "rules": {
+        "anti-slop-effect/no-service-constructor-imports": [
+          "error",
+          {
+            "nonServiceImports": ["makeEventMapRead"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/settings-documents/settings-data.ts"],
+      "rules": {
+        "anti-slop-effect/no-service-constructor-imports": [
+          "error",
+          {
+            "nonServiceImports": ["makeSettingsDocuments"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/docs/docs-data.ts"],
+      "rules": {
+        "anti-slop-effect/no-service-constructor-imports": [
+          "error",
+          {
+            "nonServiceImports": ["makeDocsService"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/messaging/ready-room/ready-room.data-layer.ts"],
+      "rules": {
+        "anti-slop-effect/no-service-constructor-imports": [
+          "error",
+          {
+            "nonServiceImports": [
+              "makeReadyRoomRepository",
+              "makeReadyRoomPublicationOutbox"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/kills/user-kill-queries.ts"],
+      "rules": {
+        "anti-slop-effect/no-service-constructor-imports": [
+          "error",
+          {
+            "nonServiceImports": ["makeUserKillAnalytics"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/events/wrapped/event-wrapped.aggregates.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["countMapStats"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/loots/submission/loot-submission-publications.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["rabbit"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/kills/kill-stats.repository.ts"],
+      "rules": {
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["npcConditions"]
+          }
+        ]
+      }
+    },
+    {
+      // Shared test fixtures wire concrete services exactly as the tests that import them do.
+      "files": ["test/*-fixtures.ts", "src/**/*.fixtures.ts"],
+      "rules": {
+        "anti-slop-effect/no-service-constructor-imports": "off"
+      }
+    }
+  ]
+}

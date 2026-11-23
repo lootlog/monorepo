@@ -2,7 +2,7 @@ import { expect, it } from "bun:test";
 import { eq } from "drizzle-orm";
 import { Effect } from "effect";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
 import {
   createGuildFixture,
@@ -125,7 +125,7 @@ const ownerAccess = (
     ...createMemberFixture({ id: memberId, guildId, userId: "discord" }),
     roles: [],
   },
-  accessPolicy: createAccessPolicy({ capabilities: [Permission.OWNER] }),
+  accessPolicy: createAccessPolicy({ capabilities: [Capability.OWNER] }),
   roles: [],
 });
 
@@ -334,9 +334,9 @@ it("does not return a sighting to a writer whose roles cannot see the hero", asy
         guildId: "a",
         name: "Low writers",
         permissions: [
-          Permission.LOOTLOG_TIMERS_READ,
-          Permission.LOOTLOG_TIMERS_WRITE,
-          Permission.LOOTLOG_TIMERS_HEROES_READ,
+          Capability.LOOTLOG_TIMERS_READ,
+          Capability.LOOTLOG_TIMERS_WRITE,
+          Capability.LOOTLOG_TIMERS_HEROES_READ,
         ],
         lvlRangeFrom: 0,
         lvlRangeTo: 200,
@@ -382,8 +382,8 @@ it("shows sightings only to roles that see the hero, and only in their Organizat
           guildId: "a",
           name: "Low heroes",
           permissions: [
-            Permission.LOOTLOG_TIMERS_READ,
-            Permission.LOOTLOG_TIMERS_HEROES_READ,
+            Capability.LOOTLOG_TIMERS_READ,
+            Capability.LOOTLOG_TIMERS_HEROES_READ,
           ],
           lvlRangeFrom: 0,
           lvlRangeTo: 200,
@@ -499,9 +499,9 @@ it("refuses a manual sighting of a hero outside the Member's level range, and an
         guildId: "a",
         name: "Low writers",
         permissions: [
-          Permission.LOOTLOG_TIMERS_READ,
-          Permission.LOOTLOG_TIMERS_WRITE,
-          Permission.LOOTLOG_TIMERS_HEROES_READ,
+          Capability.LOOTLOG_TIMERS_READ,
+          Capability.LOOTLOG_TIMERS_WRITE,
+          Capability.LOOTLOG_TIMERS_HEROES_READ,
         ],
         lvlRangeFrom: 0,
         lvlRangeTo: 200,

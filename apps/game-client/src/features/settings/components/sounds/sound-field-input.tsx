@@ -2,6 +2,7 @@ import { NpcTypeChip } from "@/features/settings/components/shared/npc-type-chip
 import { IconButton } from "@/components/ui/icon-button";
 import { SettingsRow } from "@/features/settings/components/shared/settings-row";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Play } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
@@ -15,6 +16,11 @@ interface SoundFieldInputProps {
   error?: string;
   onSoundUrlChange: (value: string) => void;
   onPlaySound: () => void;
+  enabled?: {
+    checked: boolean;
+    label: string;
+    onCheckedChange: (checked: boolean) => void;
+  };
 }
 
 const NON_NPC_FIELD_KEYS = new Set(["message"]);
@@ -28,6 +34,7 @@ export const SoundFieldInput: FC<SoundFieldInputProps> = ({
   error,
   onSoundUrlChange,
   onPlaySound,
+  enabled,
 }) => {
   const { t } = useTranslation();
   const inputId = `sound-url-${category}-${fieldKey}`;
@@ -48,6 +55,13 @@ export const SoundFieldInput: FC<SoundFieldInputProps> = ({
       control="wide"
       controlClassName="ll:gap-1"
     >
+      {enabled ? (
+        <Switch
+          aria-label={enabled.label}
+          checked={enabled.checked}
+          onCheckedChange={enabled.onCheckedChange}
+        />
+      ) : null}
       <Input
         id={inputId}
         type="url"

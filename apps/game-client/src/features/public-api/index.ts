@@ -11,8 +11,6 @@ import type {
   LootlogGameClientApi,
   PublicSocketState,
 } from "@lootlog/game-client-api";
-import type { GuildResponseDtoOutput } from "@lootlog/client/main";
-import type { Timer } from "@/api/timers.api";
 
 declare global {
   interface Window {
@@ -41,9 +39,7 @@ export function bootstrapPublicApi(queryClient: QueryClient): () => void {
     },
 
     getGuilds() {
-      const data = queryClient.getQueryData<GuildResponseDtoOutput[]>(
-        queryKeys.guilds(),
-      );
+      const data = queryClient.getQueryData(queryKeys.guilds());
 
       return mapGuilds(data);
     },
@@ -51,9 +47,7 @@ export function bootstrapPublicApi(queryClient: QueryClient): () => void {
     getTimers(options?: { world?: string }) {
       if (!options?.world) return undefined;
 
-      const data = queryClient.getQueryData<Timer[]>(
-        queryKeys.timers(options.world),
-      );
+      const data = queryClient.getQueryData(queryKeys.timers(options.world));
 
       return mapTimers(data);
     },

@@ -9,7 +9,8 @@ import type {
 import type { GlobalChatChannelUpdate } from "@lootlog/schema/chat";
 import { Effect, Option, Schema, type Types } from "effect";
 import type { CommandHandler } from "#src/realtime/command-handler";
-import { globalChatScope, type RealtimeHub } from "#src/realtime/realtime-hub";
+import type { RealtimeHub } from "#src/realtime/realtime-hub";
+import { globalChatScope } from "#src/realtime/global-chat-scope";
 import type { PresenceStore } from "#src/realtime/presence-store";
 import { RealtimeDependencyError } from "#src/realtime/realtime-errors";
 import type { CoveragePublisher } from "#src/rabbit/coverage-publisher";

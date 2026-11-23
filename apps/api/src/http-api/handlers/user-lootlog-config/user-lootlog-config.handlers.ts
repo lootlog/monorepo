@@ -1,3 +1,4 @@
+import type { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import {
   UserLootlogConfigOperationError,
   UserLootlogConfigData,
@@ -29,7 +30,13 @@ export class UserLootlogConfigAccessDenied extends TaggedErrorClass<
 
 export class UserLootlogConfigIdentity extends Context.Service<
   UserLootlogConfigIdentity,
-  { readonly discordId: Effect.Effect<string, UserLootlogConfigAccessDenied> }
+  {
+    readonly discordId: Effect.Effect<
+      string,
+      UserLootlogConfigAccessDenied,
+      ForwardAuthIdentity
+    >;
+  }
 >()("@lootlog/api/http-api/user-lootlog-config/identity") {}
 
 const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>

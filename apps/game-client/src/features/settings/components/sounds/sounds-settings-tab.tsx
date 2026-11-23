@@ -4,21 +4,27 @@ import { SettingsRow } from "@/features/settings/components/shared/settings-row"
 import { SettingsSection } from "@/features/settings/components/shared/settings-section";
 import { SettingsTabLayout } from "@/features/settings/components/shared/settings-tab-layout";
 import { SettingsVolumeControl } from "@/features/settings/components/shared/settings-volume-row";
-import { getFallbackSoundUrl } from "@/lib/default-sounds";
+import {
+  getCategoryFallbackSoundUrl,
+  type ConfigurableSoundCategory,
+  type SoundCategory,
+} from "@/lib/default-sounds";
 import { omit } from "es-toolkit";
 import { Play } from "lucide-react";
 import { SoundCategorySection } from "./sound-category-section";
 import { SoundFieldInput } from "./sound-field-input";
-import type { ConfigurableSoundCategory, VisibleSoundCategory } from "./types";
+import { TimerSoundTriggers } from "./timer-sound-triggers";
+import { TIMER_NPC_TYPES } from "@/features/timers/constants/timer-npc-types";
 import { NpcType } from "@/api/npcs.api";
 import {
   useSoundSettings,
+  useTimerSoundSettings,
   useUpdateSoundSettings,
 } from "@/lib/settings-persistence/use-sound-settings";
 import { useSoundPlayback } from "@/hooks/use-sound-playback";
 import { useGameStore } from "@/store/game.store";
 import { useSettingsStore } from "@/store/settings.store";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 const DEFAULT_NPC_CONFIG = { volume: 0.5, soundUrl: "" };
@@ -41,6 +47,7 @@ export function SoundsSettingsTab() {
   const gameInterface = useGameStore((state) => state.game?.interface);
   const { data: settings, isLoading } = useSoundSettings();
   const { mutate: updateSettings } = useUpdateSoundSettings();
+  const timerSoundSettings = useTimerSoundSettings();
   const masterVolume = useSettingsStore((state) => state.masterVolume);
   const setMasterVolume = useSettingsStore((state) => state.setMasterVolume);
   const soundsMuted = useSettingsStore((state) => state.soundsMuted);
@@ -56,16 +63,17 @@ export function SoundsSettingsTab() {
     Record<string, Record<string, string>>
   >({});
 
-  const volumes: Record<VisibleSoundCategory, number> = {
+  const volumes: Record<SoundCategory, number> = {
     notifications: settings?.notificationsVolume ?? UNMUTED_VOLUME,
     detector: settings?.detectorVolume ?? UNMUTED_VOLUME,
+    timers: settings?.timersVolume ?? UNMUTED_VOLUME,
     pings: settings?.pingsVolume ?? 0,
   };
 
-  const commitVolume = (category: VisibleSoundCategory, value: number) =>
+  const commitVolume = (category: SoundCategory, value: number) =>
     updateSettings({ [`${category}Volume`]: value });
 
-  const toggleMuted = (category: VisibleSoundCategory) =>
+  const toggleMuted = (category: SoundCategory) =>
     commitVolume(category, volumes[category] === 0 ? UNMUTED_VOLUME : 0);
 
   const notificationFields = [
@@ -83,6 +91,8 @@ export function SoundsSettingsTab() {
     label: string;
     description: string;
     fields: readonly { label: string; key: string }[];
+    canDisableFields?: boolean;
+    triggers?: ReactNode;
   }[] = [
     {
       id: "notifications",
@@ -95,6 +105,17 @@ export function SoundsSettingsTab() {
       label: t("settings.sounds.categories.detector.label"),
       description: t("settings.sounds.categories.detector.description"),
       fields: notificationFields.filter((field) => field.key !== "message"),
+    },
+    {
+      id: "timers",
+      label: t("settings.sounds.categories.timers.label"),
+      description: t("settings.sounds.categories.timers.description"),
+      fields: TIMER_NPC_TYPES.map((npcType) => ({
+        label: t(`npcType:${npcType}`),
+        key: npcType,
+      })),
+      canDisableFields: true,
+      triggers: <TimerSoundTriggers settings={timerSoundSettings} />,
     },
   ];
 
@@ -178,8 +199,10 @@ export function SoundsSettingsTab() {
             onVolumeCommit={(value) => commitVolume(category.id, value)}
             onMuteToggle={() => toggleMuted(category.id)}
           >
+            {category.triggers}
             {category.fields.map((field) => {
-              const soundUrl = categoryConfig[field.key]?.soundUrl ?? "";
+              const fieldConfig = categoryConfig[field.key];
+              const soundUrl = fieldConfig?.soundUrl ?? "";
 
               return (
                 <SoundFieldInput
@@ -188,11 +211,31 @@ export function SoundsSettingsTab() {
                   fieldKey={field.key}
                   label={field.label}
                   soundUrl={soundUrl}
-                  placeholder={getFallbackSoundUrl(categoryConfig, field.key)}
+                  placeholder={getCategoryFallbackSoundUrl(
+                    category.id,
+                    categoryConfig,
+                    field.key,
+                  )}
                   error={categoryErrors[field.key]}
                   onSoundUrlChange={(value) => setSoundUrl(field.key, value)}
                   onPlaySound={() =>
                     playSoundTest(category.id, field.key, soundUrl)
+                  }
+                  enabled={
+                    category.canDisableFields
+                      ? {
+                          checked: fieldConfig?.enabled ?? false,
+                          label: t("settings.sounds.fieldEnabledLabel", {
+                            field: field.label,
+                          }),
+                          onCheckedChange: (checked) =>
+                            updateSettings({
+                              [configKey]: {
+                                [field.key]: { enabled: checked },
+                              },
+                            }),
+                        }
+                      : undefined
                   }
                 />
               );

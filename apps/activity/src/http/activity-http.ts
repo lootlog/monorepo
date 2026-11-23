@@ -11,8 +11,8 @@ import {
 } from "@lootlog/instrumentation/service";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import {
-  Permission,
-  type Permission as PermissionValue,
+  Capability,
+  type Capability as PermissionValue,
 } from "@lootlog/schema/permissions";
 import {
   Context,
@@ -252,7 +252,7 @@ const ActivityHandlers = Layer.mergeAll(
       .handle("ActivitiesControllerFindByGuild", ({ params, query }) =>
         respond(
           Effect.gen(function* () {
-            const guildId = yield* authorize(params.guildId, Permission.ADMIN);
+            const guildId = yield* authorize(params.guildId, Capability.ADMIN);
             const repository = yield* ActivityRepository;
 
             const page = yield* repository.findMany(
@@ -270,7 +270,7 @@ const ActivityHandlers = Layer.mergeAll(
       .handle("ActivitiesControllerSuggestActorNames", ({ params, query }) =>
         respond(
           Effect.gen(function* () {
-            const guildId = yield* authorize(params.guildId, Permission.ADMIN);
+            const guildId = yield* authorize(params.guildId, Capability.ADMIN);
             const repository = yield* ActivityRepository;
 
             const suggestions = yield* repository.suggestActorNames(
@@ -286,7 +286,7 @@ const ActivityHandlers = Layer.mergeAll(
       .handle("ActivitiesControllerSuggestWorlds", ({ params, query }) =>
         respond(
           Effect.gen(function* () {
-            const guildId = yield* authorize(params.guildId, Permission.ADMIN);
+            const guildId = yield* authorize(params.guildId, Capability.ADMIN);
             const repository = yield* ActivityRepository;
 
             const worlds = yield* repository.suggestWorlds(
@@ -302,7 +302,7 @@ const ActivityHandlers = Layer.mergeAll(
       .handle("ActivitiesControllerSuggestClanNames", ({ params, query }) =>
         respond(
           Effect.gen(function* () {
-            const guildId = yield* authorize(params.guildId, Permission.ADMIN);
+            const guildId = yield* authorize(params.guildId, Capability.ADMIN);
             const repository = yield* ActivityRepository;
 
             const suggestions = yield* repository.suggestClanNames(
@@ -318,7 +318,7 @@ const ActivityHandlers = Layer.mergeAll(
       .handle("ActivitiesControllerGetMemberActivityStats", ({ params }) =>
         respond(
           Effect.gen(function* () {
-            const guildId = yield* authorize(params.guildId, Permission.ADMIN);
+            const guildId = yield* authorize(params.guildId, Capability.ADMIN);
             const repository = yield* ActivityRepository;
 
             const stats = yield* repository.memberStats(guildId);
@@ -330,7 +330,7 @@ const ActivityHandlers = Layer.mergeAll(
       .handle("ActivitiesControllerFindOne", ({ params }) =>
         respond(
           Effect.gen(function* () {
-            const guildId = yield* authorize(params.guildId, Permission.ADMIN);
+            const guildId = yield* authorize(params.guildId, Capability.ADMIN);
             const repository = yield* ActivityRepository;
 
             return activityResponse(
@@ -342,7 +342,7 @@ const ActivityHandlers = Layer.mergeAll(
       .handle("ActivitiesControllerDeleteActivity", ({ params }) =>
         respond(
           Effect.gen(function* () {
-            const guildId = yield* authorize(params.guildId, Permission.OWNER);
+            const guildId = yield* authorize(params.guildId, Capability.OWNER);
             const repository = yield* ActivityRepository;
 
             return {

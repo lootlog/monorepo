@@ -13,6 +13,7 @@ import {
   normalizeTimerMember,
   normalizeTimerNpc,
 } from "@/lib/api/generated-helpers";
+import type { TimerUpdated } from "@lootlog/protocol/realtime/organization-events";
 import type { GuildMember } from "@/types/guild-member";
 import { getFixedT } from "@/i18n/get-fixed-t";
 import { requireLocation } from "./require-location";
@@ -217,7 +218,9 @@ export type Timer = Omit<TimerResponseDto, "npc" | "member"> & {
   isPending?: boolean;
 };
 
-export const normalizeTimerResponse = (timer: TimerResponseDto): Timer => {
+export const normalizeTimerResponse = (
+  timer: TimerResponseDto | TimerUpdated,
+): Timer => {
   const member = normalizeTimerMember(timer.member);
 
   return {

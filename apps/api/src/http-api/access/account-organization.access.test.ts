@@ -4,7 +4,7 @@ import { SchemaErrorResponseLive } from "@lootlog/protocol/http/schema-error-res
 import { apiKeyEndpointPolicyLayer } from "@lootlog/protocol/http/api-key-http";
 import { describe, expect, it } from "bun:test";
 import { Effect, FileSystem, Layer, Path, Schema } from "effect";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { Etag, HttpPlatform, HttpRouter } from "effect/http";
 import { HttpApiTest } from "effect/http-api";
 import { BearerSecurityMiddleware } from "#src/contracts/api-shared";
@@ -129,7 +129,7 @@ const makeAuthorization = (
     requireGuild: ({ guildId }) =>
       Effect.succeed({
         guildId,
-        permissions: [Permission.LOOTLOG_ACCESS],
+        permissions: [Capability.LOOTLOG_ACCESS],
       }),
     ...overrides,
   });
@@ -140,6 +140,10 @@ const provideServices = (
   guildConfiguration: GuildConfigurationData["Service"] = makeGuildConfigurationData(),
 ) =>
   Layer.mergeAll(
+    Layer.succeed(ForwardAuthIdentity, {
+      userId: "user",
+      discordId: "discord",
+    }),
     Layer.succeed(AccountOrganizationAuthorization, authorization),
     Layer.succeed(AccountOrganizationData, data),
     Layer.succeed(GuildConfigurationData, guildConfiguration),
@@ -361,7 +365,7 @@ describe("Users and Guilds HttpApi handlers", () => {
 
           return Effect.succeed({
             guildId: "guild-a",
-            permissions: [Permission.ADMIN],
+            permissions: [Capability.ADMIN],
           });
         },
       }),

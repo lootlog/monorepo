@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import {
   canReadPolicyNpc,
   createAccessPolicySnapshot,
@@ -7,7 +7,7 @@ import {
   isAccessPolicySnapshot,
 } from "../src/realtime/access-policy.js";
 
-const role = (permissions: Permission[], from = 0, to = 500) => ({
+const role = (permissions: Capability[], from = 0, to = 500) => ({
   permissions,
   lvlRangeFrom: from,
   lvlRangeTo: to,
@@ -23,16 +23,16 @@ const snapshot = (guilds: ReturnType<typeof guild>[], viewer = "member") =>
 
 describe("realtime effective access policy", () => {
   test("duplicate and overlapping grants, role and organization ordering do not change access", () => {
-    const a = guild([role([Permission.LOOTLOG_TIMERS_READ], 0, 500)]);
-    const b = guild([role([Permission.LOOTLOG_CHAT_READ])], "two");
+    const a = guild([role([Capability.LOOTLOG_TIMERS_READ], 0, 500)]);
+    const b = guild([role([Capability.LOOTLOG_CHAT_READ])], "two");
     const previous = snapshot([a, b]);
 
     const next = snapshot([
       b,
       guild([
-        role([Permission.LOOTLOG_TIMERS_READ], 200, 500),
-        role([Permission.LOOTLOG_TIMERS_READ], 0, 300),
-        role([Permission.LOOTLOG_TIMERS_READ], 0, 300),
+        role([Capability.LOOTLOG_TIMERS_READ], 200, 500),
+        role([Capability.LOOTLOG_TIMERS_READ], 0, 300),
+        role([Capability.LOOTLOG_TIMERS_READ], 0, 300),
       ]),
     ]);
 
@@ -43,13 +43,13 @@ describe("realtime effective access policy", () => {
 
   test("integer-adjacent grants preserve fractional NPC access gaps", () => {
     const previous = snapshot([
-      guild([role([Permission.LOOTLOG_TIMERS_READ], 0, 200)]),
+      guild([role([Capability.LOOTLOG_TIMERS_READ], 0, 200)]),
     ]);
 
     const next = snapshot([
       guild([
-        role([Permission.LOOTLOG_TIMERS_READ], 0, 100),
-        role([Permission.LOOTLOG_TIMERS_READ], 101, 200),
+        role([Capability.LOOTLOG_TIMERS_READ], 0, 100),
+        role([Capability.LOOTLOG_TIMERS_READ], 101, 200),
       ]),
     ]);
 
@@ -88,14 +88,14 @@ describe("realtime effective access policy", () => {
   });
 
   test("tier revocation and narrower levels affect only timers of their organization", () => {
-    const unaffected = guild([role([Permission.LOOTLOG_CHAT_READ])], "two");
+    const unaffected = guild([role([Capability.LOOTLOG_CHAT_READ])], "two");
 
     const previous = snapshot([
       guild([
         role([
-          Permission.LOOTLOG_TIMERS_READ,
-          Permission.LOOTLOG_TIMERS_TITANS_READ,
-          Permission.LOOTLOG_CHAT_READ,
+          Capability.LOOTLOG_TIMERS_READ,
+          Capability.LOOTLOG_TIMERS_TITANS_READ,
+          Capability.LOOTLOG_CHAT_READ,
         ]),
       ]),
       unaffected,
@@ -103,8 +103,8 @@ describe("realtime effective access policy", () => {
 
     const next = snapshot([
       guild([
-        role([Permission.LOOTLOG_TIMERS_READ], 200, 500),
-        role([Permission.LOOTLOG_CHAT_READ]),
+        role([Capability.LOOTLOG_TIMERS_READ], 200, 500),
+        role([Capability.LOOTLOG_CHAT_READ]),
       ]),
       unaffected,
     ]);
@@ -135,8 +135,8 @@ describe("realtime effective access policy", () => {
   test("hero trackers need the heroes tier, as on the server", () => {
     const policy = snapshot([
       guild([
-        role([Permission.LOOTLOG_NOTIFICATIONS_READ], 0, 100),
-        role([Permission.LOOTLOG_NOTIFICATIONS_HEROES_READ], 0, 300),
+        role([Capability.LOOTLOG_NOTIFICATIONS_READ], 0, 100),
+        role([Capability.LOOTLOG_NOTIFICATIONS_HEROES_READ], 0, 300),
       ]),
     ]).organizations[0];
 
@@ -154,15 +154,15 @@ describe("realtime effective access policy", () => {
 
   test("expansion never marks a restriction and range shifts report both directions", () => {
     const previous = snapshot([
-      guild([role([Permission.LOOTLOG_TIMERS_READ], 100, 200)]),
+      guild([role([Capability.LOOTLOG_TIMERS_READ], 100, 200)]),
     ]);
 
     const expanded = snapshot([
-      guild([role([Permission.LOOTLOG_TIMERS_READ], 0, 500)]),
+      guild([role([Capability.LOOTLOG_TIMERS_READ], 0, 500)]),
     ]);
 
     const shifted = snapshot([
-      guild([role([Permission.LOOTLOG_TIMERS_READ], 150, 250)]),
+      guild([role([Capability.LOOTLOG_TIMERS_READ], 150, 250)]),
     ]);
 
     expect(diffAccessPolicies(previous, expanded)).toEqual([
@@ -184,8 +184,8 @@ describe("realtime effective access policy", () => {
   });
 
   test("removed organizations affect every area without changing remaining organizations", () => {
-    const one = guild([role([Permission.LOOTLOG_TIMERS_READ])]);
-    const two = guild([role([Permission.LOOTLOG_CHAT_READ])], "two");
+    const one = guild([role([Capability.LOOTLOG_TIMERS_READ])]);
+    const two = guild([role([Capability.LOOTLOG_CHAT_READ])], "two");
     const changes = diffAccessPolicies(snapshot([one, two]), snapshot([two]));
     expect(changes).toHaveLength(1);
     expect(changes[0]).toMatchObject({
@@ -198,12 +198,12 @@ describe("realtime effective access policy", () => {
   });
 
   test("administrator NPC reads ignore redundant grants while loot ranges remain significant", () => {
-    const previous = snapshot([guild([role([Permission.ADMIN])])]);
+    const previous = snapshot([guild([role([Capability.ADMIN])])]);
 
     const next = snapshot([
       guild([
-        role([Permission.ADMIN]),
-        role([Permission.LOOTLOG_TIMERS_TITANS_READ], 100, 200),
+        role([Capability.ADMIN]),
+        role([Capability.LOOTLOG_TIMERS_TITANS_READ], 100, 200),
       ]),
     ]);
 
@@ -211,9 +211,9 @@ describe("realtime effective access policy", () => {
 
     const withLoot = snapshot([
       guild([
-        role([Permission.ADMIN]),
+        role([Capability.ADMIN]),
         role(
-          [Permission.LOOTLOG_LOOTS_READ, Permission.LOOTLOG_LOOTS_TITANS_READ],
+          [Capability.LOOTLOG_LOOTS_READ, Capability.LOOTLOG_LOOTS_TITANS_READ],
           100,
           200,
         ),
@@ -241,7 +241,7 @@ describe("realtime effective access policy", () => {
 
   test("NPC tiers require base feature access and role-granted level coverage", () => {
     const previous = snapshot([
-      guild([role([Permission.LOOTLOG_CHAT_TITANS_READ])]),
+      guild([role([Capability.LOOTLOG_CHAT_TITANS_READ])]),
     ]);
 
     const policy = previous.organizations[0];
@@ -257,16 +257,16 @@ describe("realtime effective access policy", () => {
 test("loot tier coverage keeps the base grant on the same role", () => {
   const split = snapshot([
     guild([
-      role([Permission.LOOTLOG_LOOTS_READ]),
-      role([Permission.LOOTLOG_LOOTS_TITANS_READ]),
+      role([Capability.LOOTLOG_LOOTS_READ]),
+      role([Capability.LOOTLOG_LOOTS_TITANS_READ]),
     ]),
   ]);
 
   const combined = snapshot([
     guild([
       role([
-        Permission.LOOTLOG_LOOTS_READ,
-        Permission.LOOTLOG_LOOTS_TITANS_READ,
+        Capability.LOOTLOG_LOOTS_READ,
+        Capability.LOOTLOG_LOOTS_TITANS_READ,
       ]),
     ]),
   ]);

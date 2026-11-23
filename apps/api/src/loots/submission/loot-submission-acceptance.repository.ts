@@ -33,7 +33,7 @@ import {
 } from "#src/database/drizzle/loot.schema";
 import { userCharactersLootlogSettingsTable } from "#src/database/drizzle/user.schema";
 import { organizationLootRecordFactsOf } from "#src/loots/loot-record-facts";
-import type { Permission } from "@lootlog/schema/permissions";
+import type { Capability } from "@lootlog/schema/permissions";
 import type { NpcIdentityNamespace } from "@lootlog/schema/npc-identity";
 import {
   NpcTypeEnum as NpcTypeValue,
@@ -105,7 +105,7 @@ export type NewLootPersistence = {
 export interface LootSubmissionAcceptancePersistence {
   readonly findGuildsForPermissions: (
     discordId: string,
-    permissions: Permission[],
+    permissions: Capability[],
   ) => Effect.Effect<Array<typeof guildTable.$inferSelect>, unknown>;
   readonly findCharacterConfig: (
     userId: string,

@@ -24,7 +24,7 @@ import {
   useMembersControllerGetGuildMembers,
   useRolesControllerGetGuildRoles,
 } from "@lootlog/client/main";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { startTransition, useContext, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { SettingsListError } from "@/components/common/settings-list-error";
@@ -87,8 +87,8 @@ export const MembersSettingsContent = () => {
   const scrollsDocument = usePageScrollsDocument();
 
   const canManageMembers = Boolean(
-    accessPolicy?.allows(Permission.ADMIN) ||
-    accessPolicy?.allows(Permission.OWNER),
+    accessPolicy?.allows(Capability.ADMIN) ||
+    accessPolicy?.allows(Capability.OWNER),
   );
 
   const searchedMembers = members?.filter((member) =>

@@ -1,4 +1,4 @@
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { Effect, Layer, Struct } from "effect";
 import { HttpRouter, HttpServer, HttpServerRequest } from "effect/http";
 import { HttpApiBuilder } from "effect/http-api";
@@ -54,7 +54,7 @@ const readOrganizationPresence = Effect.fn("GatewayOrganizationPresence")(
       !hasPermission(
         viewer,
         organizationId,
-        Permission.LOOTLOG_ONLINE_PLAYERS_READ,
+        Capability.LOOTLOG_ONLINE_PLAYERS_READ,
       )
     )
       return yield* Effect.fail(forbidden);

@@ -6,7 +6,7 @@ import { QueryErrorNotice } from "@/components/common/query-error-notice";
 import { useTranslation } from "react-i18next";
 import { useParams } from "@tanstack/react-router";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { EventRankingTable } from "./components/ranking/event-ranking-table";
 import { HeroTabs } from "./components/shared/hero-tabs";
 import { EventHeader } from "./components/header/event-header";
@@ -29,8 +29,8 @@ export const EventRankingPage = () => {
   const { data: currentMember } = useCurrentMember(guildId);
 
   const canEditPoints =
-    accessPolicy?.allows(Permission.OWNER) ||
-    accessPolicy?.allows(Permission.ADMIN);
+    accessPolicy?.allows(Capability.OWNER) ||
+    accessPolicy?.allows(Capability.ADMIN);
 
   const {
     data: event,

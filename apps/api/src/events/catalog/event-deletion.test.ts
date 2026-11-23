@@ -5,7 +5,7 @@ import {
 import { guildTable } from "#src/database/drizzle/organization.schema";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
-import { describe, expect, it, mock } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { Effect, Logger } from "effect";
 
 import { ResourceNotFoundError } from "@lootlog/protocol/http/errors";
@@ -15,8 +15,6 @@ describe("event deletion Effect module", () => {
   it.each([false, true])(
     "does not delete an absent event or an event containing hidden heroes (%s)",
     async (hasHiddenHero) => {
-      const pending = mock(() => Promise.resolve([]));
-      const delayed = mock(() => Promise.resolve([]));
       const boundary = await createDatabaseBoundary();
 
       try {
@@ -48,15 +46,11 @@ describe("event deletion Effect module", () => {
           );
         }
 
-        const removeEvent = makeEventDeletion(
-          boundary.database,
-          {
-            invalidateScopes: () => Effect.void,
-            deleteByPattern: () =>
-              Effect.die(new Error("Unexpected cache invalidation")),
-          },
-          { pending, delayed },
-        );
+        const removeEvent = makeEventDeletion(boundary.database, {
+          invalidateScopes: () => Effect.void,
+          deleteByPattern: () =>
+            Effect.die(new Error("Unexpected cache invalidation")),
+        });
 
         const warnings: unknown[] = [];
 
@@ -79,8 +73,6 @@ describe("event deletion Effect module", () => {
           ),
         ).rejects.toBeInstanceOf(ResourceNotFoundError);
         expect(warnings).toEqual([]);
-        expect(pending).not.toHaveBeenCalled();
-        expect(delayed).not.toHaveBeenCalled();
         expect(
           await boundary.run(boundary.database.select().from(eventTable)),
         ).toHaveLength(hasHiddenHero ? 1 : 0);

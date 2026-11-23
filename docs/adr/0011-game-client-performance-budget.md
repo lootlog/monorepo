@@ -64,7 +64,6 @@ exceptions, or invariants that the compiler's memoization depends on.
 - **`TruncatedText`** (`apps/game-client/src/components/truncated-text.tsx`): measures truncation only on hover, never on render.
 - **`notifications-list.tsx`** (`apps/game-client/src/features/notifications/components/notifications-list.tsx`): the FLIP animation runs only for rows inside the viewport, as one transform-only Web Animation each, and reads positions only when the rendered rows change.
 - **`ListRowArrival`** (`apps/game-client/src/components/list-row-arrival.tsx`): animates only `opacity` and `transform`, so the effect stays on the compositor; a row replays it by remounting under a new key.
-- **`chat-host-runtime-adapter.ts`** (`apps/game-client/src/lib/margonem-runtime/adapters/chat-host-runtime-adapter.ts`): detects replacement of the game's interface by identity polling once per second instead of observing a DOM subtree that changes on every movement.
 
 ### Clocks, countdowns and browser timers
 

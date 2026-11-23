@@ -3,7 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { randomUUID } from "node:crypto";
 import { Client } from "pg";
 import { ManagedRuntime, Schema } from "effect";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { refreshOrganizationLootRecordFactsSql } from "./loot-fixtures.js";
 import { ApiDatabase, ApiDatabaseLive } from "#src/database/drizzle/database";
 import { makeUserLootStats } from "#src/loots/query/user-loot-stats";
@@ -45,9 +45,9 @@ const organization = async (user: string) => {
       roleId,
       guildId,
       [
-        Permission.LOOTLOG_ACCESS,
-        Permission.LOOTLOG_LOOTS_READ,
-        Permission.LOOTLOG_LOOTS_HEROES_READ,
+        Capability.LOOTLOG_ACCESS,
+        Capability.LOOTLOG_LOOTS_READ,
+        Capability.LOOTLOG_LOOTS_HEROES_READ,
       ],
     ],
   );

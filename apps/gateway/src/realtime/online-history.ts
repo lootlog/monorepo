@@ -1,4 +1,4 @@
-import { Effect, Schedule, Schema, Context, Layer, Redacted } from "effect";
+import { Effect, Schema, Context, Layer, Metric, Redacted } from "effect";
 import {
   UserOnlineCheckpointV1,
   type UserOnlineEventV1,
@@ -30,6 +30,12 @@ const CLAIM_BATCH_SIZE = 100;
 const FLUSH_INTERVAL_MS = 5_000;
 
 const MAX_BATCHES_PER_FLUSH = 10;
+
+const lag = Metric.gauge("lootlog_gateway_online_history_lag_seconds", {
+  description:
+    "Age of the oldest online-history checkpoint waiting for delivery past its due time",
+  attributes: { unit: "s" },
+});
 
 const OBSERVE = `
 local now = tonumber(ARGV[1])
@@ -158,6 +164,7 @@ export class OnlineHistory {
   get flush() {
     return Effect.gen({ self: this }, function* () {
       const startedAt = this.now();
+      let backlogged = false;
 
       for (let batch = 0; batch < MAX_BATCHES_PER_FLUSH; batch++) {
         const claimedAt = this.now();
@@ -199,10 +206,27 @@ export class OnlineHistory {
           );
         }
 
-        if (values.length < CLAIM_BATCH_SIZE) break;
+        backlogged = values.length === CLAIM_BATCH_SIZE;
+
+        if (!backlogged) break;
       }
 
       const now = this.now();
+
+      const oldestDue = yield* Effect.tryPromise(() =>
+        this.redis.eval<string[]>(
+          "return redis.call('ZRANGE', KEYS[1], 0, 0, 'WITHSCORES')",
+          1,
+          DUE,
+        ),
+      );
+
+      yield* Metric.update(
+        lag,
+        oldestDue.length > 0
+          ? Math.max(0, now - Number(oldestDue[1])) / 1_000
+          : 0,
+      );
 
       if (now - this.lastHealthAt >= INTERVAL_MS) {
         const oldest = yield* Effect.tryPromise(() =>
@@ -225,6 +249,8 @@ export class OnlineHistory {
         });
         this.lastHealthAt = now;
       }
+
+      return backlogged;
     }).pipe(
       Effect.catch((error) =>
         Effect.gen({ self: this }, function* () {
@@ -261,9 +287,14 @@ export class OnlineHistory {
   get run() {
     return this.flush.pipe(
       Effect.catch((error) =>
-        Effect.logError("Online history delivery failed; retrying", error),
+        Effect.logError("Online history delivery failed; retrying", error).pipe(
+          Effect.as(false),
+        ),
       ),
-      Effect.repeat(Schedule.spaced(FLUSH_INTERVAL_MS)),
+      Effect.flatMap((backlogged) =>
+        backlogged ? Effect.yieldNow : Effect.sleep(FLUSH_INTERVAL_MS),
+      ),
+      Effect.forever,
     );
   }
 }

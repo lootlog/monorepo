@@ -66,7 +66,7 @@ export const useCharacterAuras = () => {
     query: {
       queryKey: listKey,
       queryFn: async ({ signal }) =>
-        (await readGameClientBootstrap<CharacterAurasResponseDto>(listKey)) ??
+        (await readGameClientBootstrap("characterAuras", listKey)) ??
         characterAurasControllerGetAuras({ signal }),
       enabled: available,
       refetchInterval: AURAS_REFRESH_INTERVAL_MS,

@@ -10,7 +10,7 @@ import {
 import { useParams } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { toast } from "@lootlog/ui/lib/toast";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { resolveReservationSettings } from "@lootlog/domain/reservations";
 import {
   getListSpotReservationsQueryOptions,
@@ -123,8 +123,8 @@ export function ReservationsSchedule() {
   const canManageReservationSettings =
     isOwner ||
     Boolean(
-      accessPolicy?.allows(Permission.OWNER) ||
-      accessPolicy?.allows(Permission.ADMIN),
+      accessPolicy?.allows(Capability.OWNER) ||
+      accessPolicy?.allows(Capability.ADMIN),
     );
 
   const cancelMutation = useDeleteReservation({

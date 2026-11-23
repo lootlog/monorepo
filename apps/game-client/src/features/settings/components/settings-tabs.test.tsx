@@ -10,7 +10,10 @@ import { useWindowsStore } from "@/store/windows.store";
 import { useSettingsUiStore } from "@/features/settings/settings-ui.store";
 import { SETTINGS_MANIFEST } from "@/features/settings/settings-manifest";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
-import { getCharacterAurasControllerGetOwnAuraQueryKey } from "@lootlog/client/main";
+import {
+  getCharacterAurasControllerGetOwnAuraQueryKey,
+  type OwnCharacterAuraResponseDto,
+} from "@lootlog/client/main";
 import { queryClient } from "@/lib/query-client";
 
 import { createGuildPreferencesTest } from "@/test/guild-preferences-test";
@@ -254,7 +257,12 @@ describe("SettingsTabs manifest coverage", () => {
       soundSettingValues(createSoundSettings()),
     );
 
-    const ownAura = { auras: [], canChange: true, canGrant: false };
+    const ownAura: OwnCharacterAuraResponseDto = {
+      auras: [],
+      canChange: true,
+      canGrant: false,
+      personalAuraIds: [],
+    };
 
     for (const client of [harness.queryClient, queryClient]) {
       client.setQueryData(

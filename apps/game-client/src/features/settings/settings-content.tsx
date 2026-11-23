@@ -23,7 +23,7 @@ import { TimersSettingsColors } from "@/features/settings/components/timers/time
 import { TimersSettingsLists } from "@/features/settings/components/timers/timers-settings-lists";
 import { TimersSettingsGeneral } from "@/features/settings/components/timers/timers-settings-general";
 import type { SettingsSubsectionValue } from "@/constants/settings-tabs";
-import type { SettingsIconName } from "@/features/settings/settings-manifest";
+import type { SettingsIconName } from "@/features/settings/settings-manifest-types";
 import {
   Activity,
   Bell,

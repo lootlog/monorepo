@@ -33,20 +33,22 @@ the batch. Received counts include retry attempts.
 To rebuild the players index, run `bun run catalog:replay` in `apps/api`: it
 replays every looting character to the `search.players.replay` queue.
 
-## Search queries and legacy player records
+## Search queries and unknown accounts
 
 A single `search` value uses text search on `/players`. Repeated `search`
 parameters retain exact-name filtering.
 
 Player results collapse repeated character IDs within the same world and prefer
-records with a known account. An unknown-account record is also omitted when a
-known-account result has the same name and world: older records may contain a
-truncated character ID. Different worlds and different known characters remain
-separate. The limit is an upper bound; deduplication can return fewer results.
+the record with a known account: the Game client still reports party members
+it has not seen on the map without their account. Different worlds and
+different characters remain separate, even when they share a name. The limit is
+an upper bound; deduplication can return fewer results.
 
-The API's normalization of unknown-account character IDs is unchanged by this
-search-only change. Existing stored records are not rewritten or deleted;
-physical cleanup and a new index identity would require a separate migration.
+Records with a character ID truncated by a legacy API writer were repaired by
+the API migration `20261123005703_resolve_unknown_player_accounts`. Rebuild the
+players index after it: delete every document of the `players` index, then run
+`bun run catalog:replay` in `apps/api`. Replay only adds and updates documents,
+so without the deletion the truncated and unknown-account documents stay.
 
 Batch retries preserve ordering within a running consumer. Process or connection
 loss still returns individual unacknowledged messages to RabbitMQ; this does not

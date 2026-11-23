@@ -16,7 +16,6 @@ type StatisticsPlayTimeTilesProps = {
   available: boolean;
   world?: string;
   characterSelected: boolean;
-  coverage?: string;
   formatDuration: (seconds: number) => string;
 };
 
@@ -25,7 +24,6 @@ export function StatisticsPlayTimeTiles({
   available,
   world,
   characterSelected,
-  coverage,
   formatDuration,
 }: StatisticsPlayTimeTilesProps) {
   const { t } = useTranslation();
@@ -41,9 +39,7 @@ export function StatisticsPlayTimeTiles({
         icon={Clock}
         label={t("statistics.onlineTotal")}
         value={show(playTime.totalSeconds)}
-        detail={
-          coverage ?? (world ? upperFirst(world) : t("statistics.wholeAccount"))
-        }
+        detail={world ? upperFirst(world) : t("statistics.wholeAccount")}
       />
       <StatsTile
         icon={CalendarClock}

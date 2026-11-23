@@ -8,7 +8,7 @@ import {
 import { Effect, Layer, Schema } from "effect";
 import type { RedisService } from "#src/redis/redis.service";
 import { capabilitiesGrantingAny } from "@lootlog/domain/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { getMemberDisplayRole } from "@lootlog/domain/member-display-role";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -47,7 +47,7 @@ const snapshotKey = (accountId: number, characterId: number) =>
   `${accountId}:${characterId}`;
 
 const summaryPermissions = new Set(
-  capabilitiesGrantingAny([Permission.LOOTLOG_ACCESS]),
+  capabilitiesGrantingAny([Capability.LOOTLOG_ACCESS]),
 );
 
 const parseCharacterRef = (accountId: string, characterId: string) => {
@@ -220,7 +220,7 @@ export const makeMemberReadDataLayer = (cache: MemberReadCache) =>
                       database,
                       [discordId],
                       [{ id: guildId, ownerId }],
-                      [Permission.LOOTLOG_LOOTS_WRITE],
+                      [Capability.LOOTLOG_LOOTS_WRITE],
                     ),
                     database
                       .select()

@@ -72,7 +72,7 @@ export interface AirTagScopeSnapshot {
   epochStartedAt: number;
   revision: number;
   targets: AirTagTarget[];
-  serverTime?: number;
+  serverTime: number;
 }
 
 export interface AirTagScopeUpdateEvent {
@@ -203,7 +203,7 @@ const AirTagScopeIdentityFields = {
 export const AirTagScopeSnapshotSchema = Schema.Struct({
   ...AirTagScopeIdentityFields,
   targets: Schema.Array(AirTagTargetSchema),
-  serverTime: Schema.optionalKey(SafeNatural),
+  serverTime: SafeNatural,
 });
 
 export const AirTagScopeUpdateEventSchema = Schema.Struct({

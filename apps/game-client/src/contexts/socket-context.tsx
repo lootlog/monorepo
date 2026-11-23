@@ -1,4 +1,5 @@
 import { RealtimeRequestError } from "@lootlog/client/realtime";
+import { REALTIME_ERROR_REASONS } from "@lootlog/protocol/realtime";
 import type { AccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
 import type { QueryClient } from "@tanstack/react-query";
 import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
@@ -49,13 +50,13 @@ const JOIN_RETRY_BASE_DELAY_MS = 1_000;
 
 const JOIN_RETRY_MAX_DELAY_MS = 30_000;
 
-const getJoinRejectionReasonKey = (reason: string) => {
+const getJoinRejectionReasonKey = (reason: string | undefined) => {
   switch (reason) {
-    case "organization access denied":
+    case REALTIME_ERROR_REASONS.organizationAccessDenied:
       return "organizationAccessDenied";
-    case "game sessions require a character":
+    case REALTIME_ERROR_REASONS.characterRequired:
       return "characterRequired";
-    case "subscription limit exceeded":
+    case REALTIME_ERROR_REASONS.subscriptionLimit:
       return "subscriptionLimit";
     default:
       return null;
@@ -64,11 +65,11 @@ const getJoinRejectionReasonKey = (reason: string) => {
 
 const describeJoinRejection = (error: Error): string | null => {
   if (!(error instanceof RealtimeRequestError) || error.retryable) return null;
-  const reason = error.message.trim().toLowerCase();
 
-  if (reason === "no authorized organizations") return null;
+  if (error.reason === REALTIME_ERROR_REASONS.noAuthorizedOrganizations)
+    return null;
   const t = getFixedT("common");
-  const key = getJoinRejectionReasonKey(reason);
+  const key = getJoinRejectionReasonKey(error.reason);
 
   return key
     ? t(`realtimeJoin.reasons.${key}`)

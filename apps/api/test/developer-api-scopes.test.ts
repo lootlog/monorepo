@@ -14,7 +14,7 @@ import {
   HttpApiGroup,
   OpenApi,
 } from "effect/http-api";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { BearerSecurityMiddleware } from "../src/contracts/api-shared.js";
 import { ForwardAuthMiddlewareLive } from "#src/runtime/auth/forward-auth-middleware";
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
@@ -96,9 +96,9 @@ it("keeps timer/feed sources scoped across concurrent keys and membership loss",
         guildId,
         name: "Reader",
         permissions: [
-          Permission.LOOTLOG_ACCESS,
-          Permission.LOOTLOG_TIMERS_READ,
-          Permission.LOOTLOG_LOOTS_READ,
+          Capability.LOOTLOG_ACCESS,
+          Capability.LOOTLOG_TIMERS_READ,
+          Capability.LOOTLOG_LOOTS_READ,
         ],
         lvlRangeFrom: 0,
         lvlRangeTo: 999,

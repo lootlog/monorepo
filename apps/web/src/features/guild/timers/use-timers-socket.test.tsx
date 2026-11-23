@@ -7,7 +7,7 @@ import {
 } from "@lootlog/client/main";
 import type { TimerUpdated } from "@lootlog/protocol/realtime/organization-events";
 import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { configureApiClients } from "@lootlog/client/transport";
 import { RealtimeClient } from "@lootlog/client/realtime";
 import { createElement, type PropsWithChildren } from "react";
@@ -193,7 +193,7 @@ it.each([
         guild: { id: guild.id, ownerId: "owner" },
         roles: [
           {
-            permissions: [Permission.LOOTLOG_TIMERS_READ],
+            permissions: [Capability.LOOTLOG_TIMERS_READ],
             lvlRangeFrom: 0,
             lvlRangeTo: 500,
           },
@@ -261,7 +261,7 @@ it("clears restricted cached worlds and aliases and rejects an old in-flight res
         subscriptionScopes: [],
         accessPolicy: createTestAccessPolicy(
           ["one"],
-          [Permission.LOOTLOG_TIMERS_READ],
+          [Capability.LOOTLOG_TIMERS_READ],
         ),
       },
     }),
@@ -303,7 +303,7 @@ it("clears a restricted inactive organization's alias without disturbing the ope
         guild: { id: guild.id, ownerId: "owner" },
         roles: [
           {
-            permissions: [Permission.LOOTLOG_TIMERS_READ],
+            permissions: [Capability.LOOTLOG_TIMERS_READ],
             lvlRangeFrom: 0,
             lvlRangeTo: guild.id === "two" ? secondLevel : 300,
           },
