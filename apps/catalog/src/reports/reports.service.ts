@@ -22,6 +22,7 @@ import {
   hasPlatformRole,
   type PlatformRole,
 } from "@lootlog/schema/platform-roles";
+import { returnedRow } from "@lootlog/database/returned-row";
 import { Context, Effect, Layer } from "effect";
 import { groupBy } from "es-toolkit";
 import {
@@ -219,7 +220,7 @@ export const makeReportsModule = (database: CatalogDatabaseValue) => {
         });
       }
 
-      const rows = yield* database
+      const row = yield* database
         .insert(catalogReportTable)
         .values({
           subjectType: request.subjectType,
@@ -239,14 +240,10 @@ export const makeReportsModule = (database: CatalogDatabaseValue) => {
           targetWhere: isOpen,
           set: { reason: request.reason, comment },
         })
-        .returning();
+        .returning()
+        .pipe(Effect.flatMap(returnedRow("Report upsert")));
 
-      const [report] = rows.map(toReport);
-
-      return (
-        report ??
-        (yield* Effect.die(new Error("Report upsert returned no row")))
-      );
+      return toReport(row);
     });
 
   const getOwn = (caller: ReportCaller, subject: CatalogOwnReportQuery) =>
