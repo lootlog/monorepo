@@ -82,12 +82,6 @@ export const characterAuraTable = pgTable(
   ],
 );
 
-export const userCharacterAuraTable = pgTable("UserCharacterAura", {
-  userId: text("userId").notNull().primaryKey(),
-  auraId: text("auraId").notNull(),
-  updatedAt: timestamp("updatedAt", { mode: "date", precision: 3 }).notNull(),
-});
-
 export const userCharacterAuraGrantTable = pgTable("UserCharacterAuraGrant", {
   userId: text("userId").notNull().primaryKey(),
   grantedByUserId: text("grantedByUserId").notNull(),
@@ -129,18 +123,6 @@ export const userMargonemAccountTable = pgTable(
       table.accountId,
       table.verifiedAt.desc(),
     ),
-  ],
-);
-
-export const userCharacterAuraGameAccountTable = pgTable(
-  "UserCharacterAuraGameAccount",
-  {
-    gameAccountId: text("gameAccountId").notNull().primaryKey(),
-    userId: text("userId").notNull(),
-    linkedAt: timestamp("linkedAt", { mode: "date", precision: 3 }).notNull(),
-  },
-  (table) => [
-    index("UserCharacterAuraGameAccount_userId_idx").on(table.userId),
   ],
 );
 
