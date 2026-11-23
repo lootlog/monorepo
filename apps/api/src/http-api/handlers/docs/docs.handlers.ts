@@ -1,3 +1,4 @@
+import type { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import {
   type ReauthenticationRequired,
   reauthenticationRequiredResponse,
@@ -71,7 +72,8 @@ export class DocsAuthorization extends Context.Service<
       requirement: DocsAuthorizationRequirement,
     ) => Effect.Effect<
       AuthorizedDocsCaller,
-      DocsAccessDenied | DocsNotFound | ReauthenticationRequired
+      DocsAccessDenied | DocsNotFound | ReauthenticationRequired,
+      ForwardAuthIdentity
     >;
   }
 >()("@lootlog/api/http-api/docs/authorization") {}

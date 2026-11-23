@@ -32,6 +32,7 @@ import { GuildConfigurationData } from "#src/guilds/guild-configuration-data";
 import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 import { OrganizationContextLookup } from "#src/runtime/auth/organization-context";
+import { findActiveGuild } from "#src/guilds/active-guild-lookup";
 import { InternalGuildsData } from "#src/guilds/internal-guilds-data";
 import { OrganizationWorkspaceOperationError } from "#src/guilds/organization-workspace-access";
 import { RolesData } from "#src/guilds/roles-data";
@@ -86,11 +87,15 @@ export const organizationContextLookup = Layer.unwrap(
   Effect.gen(function* () {
     const redis = yield* ApiRedis;
     const { refresh } = yield* MemberServices;
+    const database = yield* ApiDatabase;
+    const { environment } = yield* ApiRuntimeConfig;
 
-    return OrganizationContextLookup.layerDatabase(
-      redis,
-      refresh.queueMemberRefresh,
-    );
+    return OrganizationContextLookup.layer({
+      environment,
+      cache: redis,
+      queueRefresh: refresh.queueMemberRefresh,
+      findGuild: (idOrVanityUrl) => findActiveGuild(database, idOrVanityUrl),
+    });
   }),
 ).pipe(Layer.provide(membersData));
 

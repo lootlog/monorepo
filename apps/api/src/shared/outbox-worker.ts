@@ -1,6 +1,6 @@
 import { asc, eq, notInArray, sql, type InferSelectModel } from "drizzle-orm";
 import type { PgColumn, PgTable } from "drizzle-orm/pg-core";
-import { Clock, Effect, Queue } from "effect";
+import { Clock, Effect, Queue, Schema } from "effect";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 
 export const makeOutboxWorker = Effect.fnUntraced(function* (
@@ -40,6 +40,10 @@ type OutboxTable = PgTable & {
   readonly lastAttemptAt: PgColumn;
 };
 
+const decodeOutboxRowId = Schema.decodeUnknownEffect(
+  Schema.Struct({ id: Schema.Int }),
+);
+
 export const makeOutboxDispatcher = <Table extends OutboxTable, E>(
   name: string,
   database: typeof ApiDatabase.Service,
@@ -49,15 +53,15 @@ export const makeOutboxDispatcher = <Table extends OutboxTable, E>(
     transaction: OutboxTransaction,
   ) => Effect.Effect<void, E>,
 ) => {
+  const outbox: OutboxTable = table;
+
   const dispatchOne = (attempted: number[]) => {
     let selectedId: number | undefined;
 
     return database
       .transaction((transaction) =>
         Effect.gen(function* () {
-          // SAFETY: `select()` returns every column of `table`, whose `id` is
-          // the serial primary key required by `OutboxTable`.
-          const [row] = (yield* transaction
+          const [row] = yield* transaction
             .select()
             .from(table)
             .where(
@@ -67,17 +71,16 @@ export const makeOutboxDispatcher = <Table extends OutboxTable, E>(
             )
             .orderBy(sql`${table.lastAttemptAt} ASC NULLS FIRST`, asc(table.id))
             .limit(1)
-            .for("update", { skipLocked: true })) as Array<
-            InferSelectModel<Table> & { id: number }
-          >;
+            .for("update", { skipLocked: true });
 
           if (!row) return undefined;
-          selectedId = row.id;
+          const { id } = yield* decodeOutboxRowId(row);
+          selectedId = id;
 
           yield* deliver(row, transaction);
-          yield* transaction.delete(table).where(eq(table.id, row.id));
+          yield* transaction.delete(table).where(eq(table.id, id));
 
-          return row.id;
+          return id;
         }).pipe(Effect.timeout("10 seconds")),
       )
       .pipe(
@@ -87,10 +90,8 @@ export const makeOutboxDispatcher = <Table extends OutboxTable, E>(
           if (rowId === undefined) return Effect.fail(error);
 
           return Effect.gen(function* () {
-            // SAFETY: `OutboxTable` requires a nullable `lastAttemptAt` timestamp;
-            // Drizzle cannot resolve that key on the generic table's update set.
             yield* database
-              .update(table as OutboxTable)
+              .update(outbox)
               .set({ lastAttemptAt: new Date(yield* Clock.currentTimeMillis) })
               .where(eq(table.id, rowId));
             yield* Effect.logError(

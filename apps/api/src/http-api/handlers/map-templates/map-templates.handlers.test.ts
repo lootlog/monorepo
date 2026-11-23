@@ -1,3 +1,4 @@
+import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
@@ -47,7 +48,11 @@ const provideTestServices = (
   authorization: MapTemplatesAuthorization["Service"],
   data: MapTemplatesData["Service"],
 ) =>
-  Layer.merge(
+  Layer.mergeAll(
+    Layer.succeed(ForwardAuthIdentity, {
+      userId: "user",
+      discordId: "discord",
+    }),
     Layer.succeed(MapTemplatesAuthorization, authorization),
     Layer.succeed(MapTemplatesData, data),
   );

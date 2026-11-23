@@ -1,3 +1,4 @@
+import type { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import {
   type GlobalChatCaller,
   GlobalChatRateLimited,
@@ -13,7 +14,13 @@ import { LootlogApi } from "../../lootlog-api.js";
 
 export class GlobalChatIdentity extends Context.Service<
   GlobalChatIdentity,
-  { readonly caller: Effect.Effect<GlobalChatCaller> }
+  {
+    readonly caller: Effect.Effect<
+      GlobalChatCaller,
+      never,
+      ForwardAuthIdentity
+    >;
+  }
 >()("@lootlog/api/http-api/global-chat/identity") {}
 
 const withCaller = <A, E>(

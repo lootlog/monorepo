@@ -1,3 +1,4 @@
+import type { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import {
   type ReauthenticationRequired,
   reauthenticationRequiredResponse,
@@ -54,13 +55,18 @@ export class TimersAccessDenied extends TaggedErrorClass<
 export class TimersAuthorization extends Context.Service<
   TimersAuthorization,
   {
-    readonly identity: Effect.Effect<TimersIdentity, TimersAccessDenied>;
+    readonly identity: Effect.Effect<
+      TimersIdentity,
+      TimersAccessDenied,
+      ForwardAuthIdentity
+    >;
     readonly requireGuild: (options: {
       readonly guildId: string;
       readonly capability: PermissionValue;
     }) => Effect.Effect<
       TimersGuildAccess,
-      TimersAccessDenied | TimersNotFound | ReauthenticationRequired
+      TimersAccessDenied | TimersNotFound | ReauthenticationRequired,
+      ForwardAuthIdentity
     >;
   }
 >()("@lootlog/api/http-api/timers/authorization") {}

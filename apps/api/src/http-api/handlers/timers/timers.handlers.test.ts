@@ -1,3 +1,4 @@
+import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { describe, expect, it } from "bun:test";
 import { Effect, Exit, Layer, Schema } from "effect";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
@@ -164,9 +165,13 @@ const provideServices = (
   data: TimersData["Service"],
   authorization = makeAuthorization(),
 ) =>
-  Layer.merge(
+  Layer.mergeAll(
     Layer.succeed(TimersData, data),
     Layer.succeed(TimersAuthorization, authorization),
+    Layer.succeed(ForwardAuthIdentity, {
+      userId: "user-a",
+      discordId: "discord-a",
+    }),
   );
 
 describe("Timers HttpApi handlers", () => {

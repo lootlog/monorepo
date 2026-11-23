@@ -1,3 +1,4 @@
+import type { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import {
   type ReauthenticationRequired,
   reauthenticationRequiredResponse,
@@ -40,7 +41,8 @@ export class HeroSightingsAuthorization extends Context.Service<
   {
     readonly identity: Effect.Effect<
       HeroSightingsIdentity,
-      HeroSightingsAccessDenied
+      HeroSightingsAccessDenied,
+      ForwardAuthIdentity
     >;
     readonly requireGuild: (options: {
       readonly guildId: string;
@@ -49,7 +51,8 @@ export class HeroSightingsAuthorization extends Context.Service<
       HeroSightingsGuildAccess,
       | HeroSightingsAccessDenied
       | HeroSightingsNotFound
-      | ReauthenticationRequired
+      | ReauthenticationRequired,
+      ForwardAuthIdentity
     >;
   }
 >()("@lootlog/api/http-api/hero-sightings/authorization") {}

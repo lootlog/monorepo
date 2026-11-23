@@ -1,7 +1,10 @@
 import { makeJsonCodec } from "@lootlog/database/redis-cache-fill";
 import { describe, expect, it, vi } from "bun:test";
-import { makeRedisService } from "./redis.service.js";
-import { Effect, Queue, Schema } from "effect";
+import {
+  makeRedisService,
+  type RedisCommandTransport,
+} from "./redis.service.js";
+import { Effect, Schema } from "effect";
 import { Redis } from "effect/persistence";
 
 type RedisReply = string | number | null | ReadonlyArray<RedisReply>;
@@ -20,25 +23,18 @@ type RedisClientMock = {
 };
 
 const createRedisService = (client: RedisClientMock) => {
-  const redis = Redis.Redis.of({
-    send: <A>(command: string, ...args: ReadonlyArray<string>) =>
+  const redis: RedisCommandTransport = {
+    send: (command, ...args) =>
       Effect.tryPromise({
         catch: (cause) => new Redis.RedisError({ cause }),
-        try: async () => {
+        try: () => {
           const key = Schema.decodeUnknownSync(
             Schema.Literals(["scan", "del", "get", "set", "eval", "keys"]),
           )(command.toLowerCase());
 
-          const reply = await client[key](...args);
-
-          // SAFETY: This is the Redis driver's generic transport seam. Each scenario
-          // supplies the protocol reply for the checked command used by RedisService;
-          // the transport cannot validate an arbitrary caller-selected A.
-          return reply as A;
+          return client[key](...args);
         },
       }),
-    subscribe: () => Queue.unbounded(),
-    reserve: Effect.die("unused"),
     eval:
       (script) =>
       (...parameters) =>
@@ -53,7 +49,7 @@ const createRedisService = (client: RedisClientMock) => {
               ),
             ),
         }),
-  });
+  };
 
   return makeRedisService(redis, { prefix: "lootlog" });
 };

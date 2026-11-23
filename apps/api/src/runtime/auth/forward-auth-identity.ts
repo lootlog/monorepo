@@ -6,15 +6,18 @@ export class ForwardAuthIdentity extends Context.Service<
   ForwardAuthIdentityValue
 >()("@lootlog/api/http-api/forward-auth-identity") {}
 
-// SAFETY: forwardAuthMiddleware supplies ForwardAuthIdentity around every authenticated
-// handler effect before these request-only authorization ports run. The port interfaces
-// deliberately keep this middleware-provided requirement ambient.
-export const requestScopedIdentity = Effect.map(
-  ForwardAuthIdentity,
-  (identity) => identity,
-) as Effect.Effect<ForwardAuthIdentityValue>;
+export const requestScopedIdentity = Effect.service(ForwardAuthIdentity);
+
+export const requestApiKeyCaller = Effect.map(
+  Effect.serviceOption(ForwardAuthIdentity),
+  (identity) => {
+    const caller = Option.getOrUndefined(identity);
+
+    return caller?.apiKey ? caller : undefined;
+  },
+);
 
 export const requestApiKeyAccess = Effect.map(
-  Effect.serviceOption(ForwardAuthIdentity),
-  (identity) => Option.getOrUndefined(identity)?.apiKey,
+  requestApiKeyCaller,
+  (caller) => caller?.apiKey,
 );

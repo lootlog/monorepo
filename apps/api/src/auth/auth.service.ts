@@ -30,19 +30,12 @@ const IdpTokenSuccess = Schema.Struct({
   scopes: Schema.mutable(Schema.Array(Schema.String)),
 });
 
-const IdpTokenFailure = Schema.Union([
-  Schema.Struct({ code: Schema.String }),
-  Schema.Struct({ error: Schema.String }),
-]);
+const IdpTokenFailure = Schema.Struct({ code: Schema.String });
 
 const IdpTokenResponse = Schema.Union([IdpTokenSuccess, IdpTokenFailure]);
 
 const failureReason = (data: typeof IdpTokenResponse.Type | undefined) =>
-  data === undefined || "accessToken" in data
-    ? undefined
-    : "code" in data
-      ? data.code
-      : data.error;
+  data === undefined || "accessToken" in data ? undefined : data.code;
 
 const decodeIdpTokenResponse = Schema.decodeUnknownSync(
   Schema.fromJsonString(IdpTokenResponse),

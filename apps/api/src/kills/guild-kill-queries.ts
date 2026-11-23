@@ -86,7 +86,7 @@ export const makeGuildKillQueries = (
           load: Effect.gen(function* () {
             const timelineUnit = getKillTimelineUnit(period);
 
-            const [memberStats, guildSummary, timelineRows, hourlyRows] =
+            const [memberStats, guildSummary, timeline, hourlyWeekday] =
               yield* Effect.all(
                 [
                   persistence.groupMemberStats(filter),
@@ -96,16 +96,6 @@ export const makeGuildKillQueries = (
                 ],
                 { concurrency: "unbounded" },
               );
-
-            const timeline = timelineRows.map(({ date, kills }) => ({
-              date,
-              kills: kills ?? 0,
-            }));
-
-            const hourlyWeekday = hourlyRows.map((row) => ({
-              ...row,
-              kills: row.kills ?? 0,
-            }));
 
             const now = yield* DateTime.nowAsDate;
 
@@ -121,7 +111,7 @@ export const makeGuildKillQueries = (
             let guildUniqueKills = 0;
 
             for (const summary of guildSummary) {
-              const uniqueKills = summary._sum.uniqueKills ?? 0;
+              const uniqueKills = summary._sum.uniqueKills;
               killsByType[summary.npcType] =
                 (killsByType[summary.npcType] ?? 0) + uniqueKills;
               guildUniqueKills += uniqueKills;
@@ -140,7 +130,7 @@ export const makeGuildKillQueries = (
             >();
 
             for (const stat of memberStats) {
-              const memberKills = stat._sum.memberKills ?? 0;
+              const memberKills = stat._sum.memberKills;
               participationsByType[stat.npcType] =
                 (participationsByType[stat.npcType] ?? 0) + memberKills;
               totalMemberParticipations += memberKills;
@@ -381,7 +371,7 @@ export const makeGuildKillQueries = (
               },
               killers: killers.map(({ member, participationCount }) => ({
                 member,
-                participationCount: participationCount ?? 0,
+                participationCount,
               })),
             };
           }),

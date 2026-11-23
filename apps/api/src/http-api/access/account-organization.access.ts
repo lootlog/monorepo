@@ -1,3 +1,4 @@
+import type { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import {
   type AuthenticatedIdentity,
   AccountOrganizationOperationError,
@@ -53,12 +54,17 @@ export class AccountOrganizationAuthorization extends Context.Service<
   {
     readonly identity: Effect.Effect<
       AuthenticatedIdentity,
-      AccountOrganizationAccessDenied
+      AccountOrganizationAccessDenied,
+      ForwardAuthIdentity
     >;
     readonly requireGuild: (options: {
       readonly guildId: string;
       readonly anyOf: ReadonlyArray<PermissionValue>;
-    }) => Effect.Effect<AuthorizedGuild, AuthorizationFailure>;
+    }) => Effect.Effect<
+      AuthorizedGuild,
+      AuthorizationFailure,
+      ForwardAuthIdentity
+    >;
   }
 >()("@lootlog/api/http-api/account-organization/authorization") {}
 

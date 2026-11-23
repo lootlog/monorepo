@@ -171,7 +171,7 @@ describe("internal guild HttpApi handlers", () => {
     expect(cached).toEqual([response]);
   });
 
-  it("preserves cached guild defaults without touching the database", async () => {
+  it("serves a cached guild without touching the database", async () => {
     let databaseRead = false;
 
     const persistence: InternalGuildsPersistence = {
@@ -194,6 +194,7 @@ describe("internal guild HttpApi handlers", () => {
             name: "Guild A",
             ownerId: "discord-owner",
             publicStatsCardEnabled: false,
+            lootDrawExcludedNpcTypes: DEFAULT_LOOT_DRAW_EXCLUDED_NPC_TYPES,
           }),
         ),
       set: () => Effect.void,

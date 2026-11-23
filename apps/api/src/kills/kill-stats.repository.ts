@@ -15,7 +15,6 @@ import {
   ne,
   notInArray,
   or,
-  sum,
   type SQL,
   type SQLWrapper,
 } from "drizzle-orm";
@@ -37,6 +36,9 @@ import { statsLocalTime, type KillTimelineUnit } from "./kill-stats-period.js";
 import { containsPattern } from "#src/shared/sql-like";
 
 type NpcType = (typeof memberKillBucketTable.npcType.enumValues)[number];
+
+const groupSum = (value: SQLWrapper) =>
+  sql<number>`sum(${value})`.mapWith(Number);
 
 export type KillStatsFilter = {
   readonly guildId?: string;
@@ -295,9 +297,7 @@ export const makeKillStatsPersistence = (
         memberName: memberTable.name,
         memberAvatar: memberTable.avatar,
         memberUserId: memberTable.userId,
-        totalParticipations: sum(source.kills)
-          .mapWith(Number)
-          .as("totalParticipations"),
+        totalParticipations: groupSum(source.kills).as("totalParticipations"),
         rank: sql<number>`row_number() over (partition by ${source.npcType} order by sum(${source.kills}) desc, ${source.memberId})`.as(
           "rank",
         ),
@@ -320,7 +320,7 @@ export const makeKillStatsPersistence = (
 
   const topNpcKillers = (filter: KillStatsFilter, limit: number) => {
     const source = memberSource(filter);
-    const participationCount = sum(source.kills).mapWith(Number);
+    const participationCount = groupSum(source.kills);
 
     return protect(
       "kills.stats.npc-killers",
@@ -377,7 +377,7 @@ export const makeKillStatsPersistence = (
         .select({
           memberId: source.memberId,
           npcType: source.npcType,
-          memberKills: sum(source.kills).mapWith(Number),
+          memberKills: groupSum(source.kills),
         })
         .from(source)
         .where(buildKillStatsCondition(memberColumns(source), filter))
@@ -402,7 +402,7 @@ export const makeKillStatsPersistence = (
       database
         .select({
           npcType: source.npcType,
-          uniqueKills: sum(source.kills).mapWith(Number),
+          uniqueKills: groupSum(source.kills),
         })
         .from(source)
         .where(buildKillStatsCondition(guildColumns(source), filter))
@@ -430,7 +430,7 @@ export const makeKillStatsPersistence = (
         database
           .select({
             date: day,
-            kills: sum(guildKillDayTable.kills).mapWith(Number),
+            kills: groupSum(guildKillDayTable.kills),
           })
           .from(guildKillDayTable)
           .where(buildKillStatsCondition(guildDayColumns, filter))
@@ -449,7 +449,7 @@ export const makeKillStatsPersistence = (
       database
         .select({
           date,
-          kills: sum(guildKillBucketTable.kills).mapWith(Number),
+          kills: groupSum(guildKillBucketTable.kills),
         })
         .from(guildKillBucketTable)
         .where(guildBucketCondition(filter))
@@ -469,7 +469,7 @@ export const makeKillStatsPersistence = (
           .select({
             weekday,
             hour,
-            kills: sql<number>`sum(hours.kills)`.mapWith(Number),
+            kills: groupSum(sql`hours.kills`),
           })
           .from(guildKillDayTable)
           .innerJoinLateral(
@@ -496,7 +496,7 @@ export const makeKillStatsPersistence = (
         .select({
           weekday,
           hour,
-          kills: sum(guildKillBucketTable.kills).mapWith(Number),
+          kills: groupSum(guildKillBucketTable.kills),
         })
         .from(guildKillBucketTable)
         .where(guildBucketCondition(filter))

@@ -140,6 +140,10 @@ const provideServices = (
   guildConfiguration: GuildConfigurationData["Service"] = makeGuildConfigurationData(),
 ) =>
   Layer.mergeAll(
+    Layer.succeed(ForwardAuthIdentity, {
+      userId: "user",
+      discordId: "discord",
+    }),
     Layer.succeed(AccountOrganizationAuthorization, authorization),
     Layer.succeed(AccountOrganizationData, data),
     Layer.succeed(GuildConfigurationData, guildConfiguration),

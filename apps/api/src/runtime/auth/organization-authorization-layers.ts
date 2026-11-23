@@ -382,10 +382,7 @@ const publicSystemAuthorization = Effect.map(
 );
 
 const timersAccess = guildAccess(
-  (access) => ({
-    ...toRoleScopedCaller(access),
-    roles: [...access.context.roles],
-  }),
+  toRoleScopedCaller,
   TimersNotFound,
   TimersAccessDenied,
 );

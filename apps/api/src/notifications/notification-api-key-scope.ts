@@ -6,8 +6,10 @@ import {
   notificationJobTable,
   notificationRuleTable,
 } from "#src/database/drizzle/notification.schema";
-import { requestScopedIdentity } from "#src/runtime/auth/forward-auth-identity";
-import { apiKeyAccessibleGuilds } from "#src/runtime/auth/organization-scope";
+import {
+  apiKeyAccessibleGuilds,
+  apiKeyCallerGuilds,
+} from "#src/runtime/auth/organization-scope";
 import { PermissionDeniedError } from "@lootlog/protocol/http/errors";
 import { parseNotificationFilters } from "./rules/notification-matching.service.js";
 import { notificationLootSourceCondition } from "./notification-loot-source-visibility.js";
@@ -93,9 +95,9 @@ export const notificationJobVisibilityFilter = (
   ownerDiscordId?: string,
 ) =>
   Effect.gen(function* () {
-    const guilds = yield* apiKeyAccessibleGuilds(database);
+    const scope = yield* apiKeyCallerGuilds(database);
 
-    if (!guilds) {
+    if (!scope) {
       if (ownerDiscordId === undefined) return undefined;
 
       return or(
@@ -105,13 +107,12 @@ export const notificationJobVisibilityFilter = (
       );
     }
 
-    const identity = yield* requestScopedIdentity;
-    const ids = guilds.map((guild) => guild.id);
+    const ids = scope.guilds.map((guild) => guild.id);
 
     const visibleLoot = yield* notificationLootSourceCondition(
       database,
-      identity.discordId,
-      guilds,
+      scope.discordId,
+      scope.guilds,
     );
 
     const personalMessage = and(

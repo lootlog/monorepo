@@ -1,3 +1,4 @@
+import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
@@ -67,6 +68,10 @@ const run = ({
   Effect.runPromise(
     getGameClientBootstrap({ gameAccountId: "202", characterId: "7" }).pipe(
       Effect.provide([
+        Layer.succeed(ForwardAuthIdentity, {
+          userId: "user",
+          discordId: "discord",
+        }),
         Layer.succeed(
           AccountOrganizationAuthorization,
           AccountOrganizationAuthorization.of({

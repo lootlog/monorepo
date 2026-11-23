@@ -36,11 +36,6 @@ type JsonValue = Schema.Json;
 
 type SettingsOperation = PatchSettingsDocuments["operations"][number];
 
-const toJson = <TValue extends object>(value: TValue): JsonValue =>
-  // SAFETY: every caller passes a normalized preference record built from plain
-  // JSON-compatible values, so the structured clone is a JSON object.
-  structuredClone(value) as JsonValue;
-
 const storedMutes = (
   notifications: SettingsDomainResolution | undefined,
 ): NotificationMutes => {
@@ -210,11 +205,11 @@ export const makeUserPreferencesData = (
     const mutesSet: Record<string, JsonValue> = {};
 
     if (payload.mutes?.players) {
-      mutesSet.players = toJson(normalizeMutedPlayers(payload.mutes.players));
+      mutesSet.players = normalizeMutedPlayers(payload.mutes.players);
     }
 
     if (payload.mutes?.npcs) {
-      mutesSet.npcs = toJson(normalizeMutedNpcs(payload.mutes.npcs));
+      mutesSet.npcs = normalizeMutedNpcs(payload.mutes.npcs);
     }
 
     if (Object.keys(mutesSet).length > 0) {
