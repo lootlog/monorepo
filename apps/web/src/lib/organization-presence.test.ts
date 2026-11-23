@@ -98,6 +98,8 @@ it("clears denied data, ignores deltas and only restores it after authorized fet
       "COMMAND_REJECTED",
       "organization access denied",
       false,
+      undefined,
+      "organization-access-denied",
     ),
   );
   store.refetch();

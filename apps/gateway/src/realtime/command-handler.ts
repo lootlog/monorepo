@@ -6,6 +6,7 @@ import {
 import { parseRealtimeJson } from "@lootlog/protocol/realtime/codec";
 import {
   decodeClientCommand,
+  REALTIME_ERROR_REASONS,
   type ClientCommand,
   type CommandSuccess,
   type Response,
@@ -78,14 +79,17 @@ type Command = ClientCommand;
 
 type RealtimeResponse = Response;
 
-const errorResponse = (
+const temporarilyUnavailable = {
+  reason: REALTIME_ERROR_REASONS.temporarilyUnavailable,
+  message: "command temporarily unavailable",
+  retryable: true,
+};
+
+const commandRejected = (
   requestId: string,
-  code: string,
-  message: string,
-  retryable = false,
-  retryAfterMs?: number,
+  { retryAfterMs, ...details }: ReturnType<typeof commandFailureDetails>,
 ): RealtimeResponse => {
-  const error = { code, message, retryable };
+  const error = { code: "COMMAND_REJECTED", ...details };
 
   return {
     v: 1,
@@ -243,12 +247,7 @@ export class CommandHandler {
       return Effect.sync(() => {
         this.hub.sendResponse(
           socket,
-          errorResponse(
-            command.requestId,
-            "COMMAND_REJECTED",
-            "command temporarily unavailable",
-            true,
-          ),
+          commandRejected(command.requestId, temporarilyUnavailable),
         );
       });
     }
@@ -301,18 +300,12 @@ export class CommandHandler {
 
         const failure = isCommandFailure(error)
           ? commandFailureDetails(error)
-          : { message: "command temporarily unavailable", retryable: true };
+          : temporarilyUnavailable;
 
         const respond = Effect.sync(() => {
           this.hub.sendResponse(
             socket,
-            errorResponse(
-              command.requestId,
-              "COMMAND_REJECTED",
-              failure.message,
-              failure.retryable,
-              failure.retryAfterMs,
-            ),
+            commandRejected(command.requestId, failure),
           );
         });
 

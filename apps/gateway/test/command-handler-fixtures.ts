@@ -1,5 +1,5 @@
 import { Permission } from "@lootlog/schema/permissions";
-import { Effect } from "effect";
+import { Effect, Tracer } from "effect";
 import type { MargonemProofVerifier } from "../src/auth/margonem-proof.js";
 import type { UserGuildData } from "../src/guilds/guild.js";
 import type { GuildStore } from "../src/guilds/guild-store.js";
@@ -210,4 +210,35 @@ export const makeCommandHandler = ({
     Effect.runPromise(handler.handle(socket, commandFrame(command, requestId)));
 
   return { handler, send, ...fakes };
+};
+
+export const onlinePresence = (
+  organizationIds: ReadonlyArray<string>,
+  platform: SessionData["platform"] = "web-app",
+): NonNullable<SessionData["presence"]> => ({
+  userId: "user-1",
+  sessionId: "connection-1",
+  organizationIds: [...organizationIds],
+  platform,
+  status: "online",
+  confidence: "reported",
+  isAfk: false,
+  lastSeen: 1,
+});
+
+export const join = commandFrame({ type: "session.join", data: {} }, "join");
+
+export const captureSpans = () => {
+  const spans: Tracer.Span[] = [];
+
+  const tracer = Tracer.make({
+    span: (options) => {
+      const span = new Tracer.NativeSpan(options);
+      spans.push(span);
+
+      return span;
+    },
+  });
+
+  return { spans, tracer };
 };

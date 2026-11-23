@@ -35,7 +35,12 @@ async function setup() {
 
   const respond = (
     index: number,
-    error?: { code: string; message: string; retryable: boolean },
+    error?: {
+      code: string;
+      reason?: string;
+      message: string;
+      retryable: boolean;
+    },
     presences: ReturnType<typeof createOnlinePresence>[] = [],
   ) => {
     const request = requests()[index];
@@ -225,6 +230,7 @@ describe("useOnlineCharacterOwners", () => {
     await waitFor(() => expect(test.requests()).toHaveLength(1));
     test.respond(0, {
       code: "COMMAND_REJECTED",
+      reason: "organization-access-denied",
       message: "organization access denied",
       retryable: false,
     });

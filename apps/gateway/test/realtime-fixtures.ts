@@ -158,6 +158,9 @@ export const makeTestSocket = (data: SessionData, bufferedAmount = 0) => {
   return { socket, sent, closes };
 };
 
+export const newSocket = (overrides: Partial<SessionData> = {}) =>
+  makeTestSocket(makeSession({ joined: false, ...overrides }));
+
 export const withApiKey = (
   session: SessionData,
   organizationIds: ReadonlyArray<string>,

@@ -276,6 +276,7 @@ export function createPageTransport(
                     message.message,
                     message.retryable ?? false,
                     message.retryAfterMs,
+                    message.reason,
                   )
                 : new Error(message.message),
             );
