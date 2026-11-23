@@ -1,3 +1,6 @@
+import { mapValues } from "es-toolkit";
+import { recordKeys } from "@/utils/record-keys";
+
 export const SETTINGS_DOMAIN_VALUES = [
   "general",
   "catching",
@@ -60,11 +63,8 @@ export const SETTINGS_SUBSECTION_DOMAINS = {
   build: "information",
 } as const satisfies Record<string, SettingsDomainValue>;
 
-// SAFETY: SETTINGS_SUBSECTION_DOMAINS is a closed literal object, so its keys
-// are exactly the SettingsSubsectionValue union.
-export const SETTINGS_SUBSECTION_VALUES = Object.keys(
-  SETTINGS_SUBSECTION_DOMAINS,
-) as readonly SettingsSubsectionValue[];
+export const SETTINGS_SUBSECTION_VALUES: readonly SettingsSubsectionValue[] =
+  recordKeys(SETTINGS_SUBSECTION_DOMAINS);
 
 export type SettingsSubsectionValue = keyof typeof SETTINGS_SUBSECTION_DOMAINS;
 
@@ -97,13 +97,10 @@ export const SETTINGS_DOMAIN_FIRST_SUBSECTIONS = {
 } as const satisfies Record<SettingsDomainValue, SettingsSubsectionValue>;
 
 const SETTINGS_PATHS: Record<SettingsTabValue, SettingsPath> = {
-  // SAFETY: the entries map every domain of a closed literal object to a path
-  // that opens a subsection of that domain.
-  ...(Object.fromEntries(
-    Object.entries(SETTINGS_DOMAIN_FIRST_SUBSECTIONS).map(
-      ([domain, subsection]) => [domain, { domain, subsection }],
-    ),
-  ) as Record<SettingsDomainValue, SettingsPath>),
+  ...mapValues(
+    SETTINGS_DOMAIN_FIRST_SUBSECTIONS,
+    (subsection, domain): SettingsPath => ({ domain, subsection }),
+  ),
   "game-data": { domain: "catching", subsection: "catching" },
   "hidden-timers": { domain: "timers", subsection: "hidden-timers" },
   "npc-detector": { domain: "detector", subsection: "detector" },

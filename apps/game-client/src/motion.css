@@ -1,0 +1,14 @@
+/*
+ * Motion tokens (`ll:ease-enter`, `ll:duration-medium`, and the matching
+ * `--ll-*` variables). Entrances decelerate into place; exits accelerate away
+ * and run shorter than the entrance they undo. src/lib/motion.ts reads this
+ * file for Web Animations, which cannot read CSS variables.
+ */
+@theme {
+  --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --ease-overshoot: cubic-bezier(0.2, 0.9, 0.3, 1.2);
+  --transition-duration-short: 130ms;
+  --transition-duration-medium: 190ms;
+  --transition-duration-long: 260ms;
+}

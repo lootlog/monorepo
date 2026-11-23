@@ -69,7 +69,7 @@ export const CharacterAuraSettings = () => {
     if (isAdminCharacterAuraId(id)) return own?.canGrant ?? false;
 
     if (isPersonalCharacterAuraId(id))
-      return own?.personalAuraIds?.includes(id) ?? false;
+      return own?.personalAuraIds.includes(id) ?? false;
 
     return own?.canChange ?? false;
   };

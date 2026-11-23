@@ -1,5 +1,5 @@
 import { cn } from "cn";
-import type { CSSProperties, FC, ReactNode } from "react";
+import type { FC, ReactNode } from "react";
 import type { TimerPhase } from "@lootlog/domain/timers";
 import { ListRow, veilColor } from "@/components/list-row";
 import type { TimerColorPaint } from "@lootlog/domain/timer-colors";
@@ -94,16 +94,12 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
             "ll-timer-standing": isStanding,
           },
         )}
-        // SAFETY: CSSProperties has no index signature for custom properties;
-        // the `--ll-timer-*` entries are consumed by this element's classes.
-        style={
-          {
-            "--ll-timer-accent": paint.accent,
-            "--ll-timer-fill": paint.fill,
-            "--ll-timer-hover-fill": paint.hoverFill ?? paint.fill,
-            fontSize: `${fontSize}px`,
-          } as CSSProperties
-        }
+        style={{
+          "--ll-timer-accent": paint.accent,
+          "--ll-timer-fill": paint.fill,
+          "--ll-timer-hover-fill": paint.hoverFill ?? paint.fill,
+          fontSize: `${fontSize}px`,
+        }}
       >
         {content}
       </span>
@@ -127,16 +123,12 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
           "ll-timer-standing": isStanding,
         },
       )}
-      // SAFETY: CSSProperties has no index signature for custom properties;
-      // "--ll-timer-accent" is consumed by the standing class.
-      style={
-        {
-          "--ll-timer-accent": isExpired
-            ? veilColor(paint.accent, EXPIRED_VEIL)
-            : paint.accent,
-          fontSize: `${fontSize}px`,
-        } as CSSProperties
-      }
+      style={{
+        "--ll-timer-accent": isExpired
+          ? veilColor(paint.accent, EXPIRED_VEIL)
+          : paint.accent,
+        fontSize: `${fontSize}px`,
+      }}
     >
       {content}
     </ListRow>

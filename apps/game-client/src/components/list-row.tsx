@@ -28,14 +28,10 @@ export const ListRow: FC<ListRowProps> = ({
       className,
     )}
     onDoubleClick={onDoubleClick}
-    // SAFETY: CSSProperties has no index signature for custom properties;
-    // "--ll-list-row-fill" is consumed by this element's own classes.
-    style={
-      {
-        "--ll-list-row-fill": fill,
-        ...style,
-      } as CSSProperties
-    }
+    style={{
+      "--ll-list-row-fill": fill,
+      ...style,
+    }}
   >
     {children}
   </span>
