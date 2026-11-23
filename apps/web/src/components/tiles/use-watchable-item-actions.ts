@@ -1,7 +1,6 @@
 import { invalidateUserNotificationQueries } from "@/lib/user-notifications/invalidate-user-notification-queries";
 import type { Item } from "@/lib/loots/loot-types";
 import { ROUTES } from "@/config/routes";
-import { USER_WATCHED_ITEMS_LIMIT } from "@/lib/user-notifications/user-watched-items-limit";
 import { useGuildWatchedItems } from "@/hooks/context/use-guild-watched-items";
 import type { WatchedItemScope } from "@/lib/user-notifications/watched-item-scope";
 import { getUserNotificationsErrorMessage } from "@/lib/user-notifications/get-user-notifications-error-message";
@@ -22,6 +21,7 @@ const getWatchableItemState = ({
   state,
   watchContext,
   watchedItemsCount,
+  watchedItemsLimit,
   hasWatchedItem,
   isItemWatchedInScope,
 }: {
@@ -31,6 +31,7 @@ const getWatchableItemState = ({
   state: "error" | "loading" | "ready";
   watchContext: WatchedItemScope;
   watchedItemsCount: number;
+  watchedItemsLimit: number;
   hasWatchedItem: (itemId: number, world: string) => boolean;
   isItemWatchedInScope: (itemId: number, scope: WatchedItemScope) => boolean;
 }) => {
@@ -51,7 +52,7 @@ const getWatchableItemState = ({
   const wouldCreate = isReady && !hasWatchedItem(itemId, watchContext.world);
 
   const limitReached =
-    isReady && watchedItemsCount >= USER_WATCHED_ITEMS_LIMIT && wouldCreate;
+    isReady && watchedItemsCount >= watchedItemsLimit && wouldCreate;
 
   return {
     effectiveGuildId,
@@ -82,6 +83,7 @@ export function useWatchableItemActions(
     hasActiveDm,
     isQuickAddPending,
     watchedItemsCount,
+    watchedItemsLimit,
     quickAddWatchedItem,
     hasWatchedItem,
     isItemWatchedInScope,
@@ -117,6 +119,7 @@ export function useWatchableItemActions(
     state,
     watchContext,
     watchedItemsCount,
+    watchedItemsLimit,
   });
 
   const formattedItemHid = formatItemHid(item.hid, watchContext.world);
@@ -181,7 +184,7 @@ export function useWatchableItemActions(
     if (isWatchedItemLimitReached) {
       toast.error(
         t("settings.userNotifications.validation.watchLimitReached", {
-          limit: USER_WATCHED_ITEMS_LIMIT,
+          limit: watchedItemsLimit,
         }),
       );
 
@@ -189,14 +192,14 @@ export function useWatchableItemActions(
     }
 
     const nextWatchedItemsCount = wouldCreateNewWatchedItem
-      ? Math.min(watchedItemsCount + 1, USER_WATCHED_ITEMS_LIMIT)
+      ? Math.min(watchedItemsCount + 1, watchedItemsLimit)
       : watchedItemsCount;
 
     const loadingToastId = toast.loading(
       t("settings.userNotifications.quickAdd.toasts.adding", {
         itemName: item.name,
         count: nextWatchedItemsCount,
-        limit: USER_WATCHED_ITEMS_LIMIT,
+        limit: watchedItemsLimit,
       }),
     );
 
@@ -213,7 +216,7 @@ export function useWatchableItemActions(
           t("settings.userNotifications.quickAdd.toasts.added", {
             itemName: item.name,
             count: nextWatchedItemsCount,
-            limit: USER_WATCHED_ITEMS_LIMIT,
+            limit: watchedItemsLimit,
           }),
           { id: loadingToastId },
         );
@@ -238,6 +241,7 @@ export function useWatchableItemActions(
     isRemovePending,
     effectiveGuildId,
     isWatchedItemLimitReached,
+    watchedItemsLimit,
     isWatchedInScope,
     showAddAction,
     showDmRequired,

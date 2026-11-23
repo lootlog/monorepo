@@ -208,9 +208,12 @@ test("operator mutations on an unknown Organization fail without writing an audi
 
   const failure = await boundary.run(
     Effect.flip(
-      data.setLimits(
+      data.setEntitlement(
         { ...operator, guildId: "missing" },
-        { notificationRuleLimit: 5, documentLimit: 5 },
+        {
+          grant: { plan: "premium", validUntil: null },
+          overrides: { notificationRules: 5, documents: 5 },
+        },
       ),
     ),
   );

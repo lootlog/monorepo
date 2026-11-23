@@ -51,15 +51,12 @@ export class CharacterAurasData extends Context.Service<
     ) => Operation<OwnCharacterAuraResponse>;
     readonly listGrantHolders: GrantOperation<CharacterAuraGrantHolders>;
     readonly getGrants: (userId: string) => GrantOperation<CharacterAuraGrants>;
-    readonly grantAuras: (
-      operatorUserId: string,
-      userId: string,
-    ) => GrantOperation<void>;
     readonly grantPersonalAura: (
       operatorUserId: string,
       userId: string,
       auraId: PersonalCharacterAuraId,
     ) => GrantOperation<void>;
-    readonly revokeAuras: (userId: string) => GrantOperation<void>;
+    readonly revokePersonalAuras: (userId: string) => GrantOperation<void>;
+    readonly refreshUser: (userId: string) => GrantOperation<void>;
   }
 >()("@lootlog/api/http-api/character-auras/data") {}

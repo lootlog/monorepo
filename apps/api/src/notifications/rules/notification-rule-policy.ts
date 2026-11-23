@@ -26,6 +26,8 @@ import { InvalidRequestError } from "@lootlog/protocol/http/errors";
 
 const MAX_NPCS_PER_RULE = 5;
 
+const SYSTEM_RULE_NAME_PREFIX = "__system:";
+
 type RuleInput = CreateNotificationRuleRequest | UpdateNotificationRuleRequest;
 
 type ExistingRule = {
@@ -54,6 +56,19 @@ const firstNonNullish = <T>(
 ): T =>
   values.find((value): value is T => value !== null && value !== undefined) ??
   fallback;
+
+const requestedRuleName = (
+  name: string | null | undefined,
+  existingName: string | null = null,
+) => {
+  if (name?.startsWith(SYSTEM_RULE_NAME_PREFIX) && name !== existingName) {
+    throw new InvalidRequestError({
+      code: NotificationError.NOTIFICATION_RULE_NAME_RESERVED,
+    });
+  }
+
+  return name ?? null;
+};
 
 const isScheduledMessage = (triggerType: NotificationTriggerTypeValue) =>
   triggerType === NotificationTriggerType.SCHEDULED_MESSAGE;
@@ -338,7 +353,7 @@ export const createNotificationRuleValues = (
     triggerType,
     guildId: ownerType === NotificationOwnerType.GUILD ? ownerId : null,
     world: scheduled ? null : (data.world ?? null),
-    name: data.name ?? null,
+    name: requestedRuleName(data.name),
     filters: scheduled ? null : buildFilters(data),
     contentTemplate: normalizeContentTemplate(data.contentTemplate),
     ...scheduleConfig(triggerType, data),
@@ -382,7 +397,9 @@ export const updateNotificationRuleValues = (
   return {
     triggerType,
     world,
-    name: Object.hasOwn(data, "name") ? (data.name ?? null) : existing.name,
+    name: Object.hasOwn(data, "name")
+      ? requestedRuleName(data.name, existing.name)
+      : existing.name,
     filters,
     contentTemplate: Object.hasOwn(data, "contentTemplate")
       ? normalizeContentTemplate(data.contentTemplate)

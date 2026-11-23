@@ -318,6 +318,7 @@ it("returns 503 while permissions are unavailable and recovers without caching t
       ]);
     },
     getMemberIdentity: unused,
+    getUserLimits: unused,
     getUserAccessibleGuilds: unused,
     listGuildEvents: unused,
     getEventRanking: unused,

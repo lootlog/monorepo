@@ -15,6 +15,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import type { PropsWithChildren } from "react";
 import { useGuildId } from "@/hooks/context/use-guild-id";
+import { useUserLimits } from "@/hooks/api/user/use-user-limits";
 
 const getWatchedItemGuildIds = (
   watchedItem: WatchedItemResponseDto,
@@ -26,6 +27,8 @@ export const GuildWatchedItemsProvider = ({ children }: PropsWithChildren) => {
   const targetsQuery = useNotificationsUserControllerGetUserTargets();
 
   const watchedItemsQuery = useNotificationsUserControllerGetWatchedItems();
+
+  const limitsQuery = useUserLimits();
 
   const quickAddWatchedItemMutation =
     useNotificationsUserControllerQuickAddWatchedItem({
@@ -83,9 +86,11 @@ export const GuildWatchedItemsProvider = ({ children }: PropsWithChildren) => {
   };
 
   const state =
-    targetsQuery.data !== undefined && watchedItemsQuery.data !== undefined
+    targetsQuery.data !== undefined &&
+    watchedItemsQuery.data !== undefined &&
+    limitsQuery.data !== undefined
       ? "ready"
-      : targetsQuery.isError || watchedItemsQuery.isError
+      : targetsQuery.isError || watchedItemsQuery.isError || limitsQuery.isError
         ? "error"
         : "loading";
 
@@ -96,6 +101,7 @@ export const GuildWatchedItemsProvider = ({ children }: PropsWithChildren) => {
         hasActiveDm,
         isQuickAddPending: quickAddWatchedItemMutation.isPending,
         watchedItemsCount: watchedItems.length,
+        watchedItemsLimit: limitsQuery.data?.watchedItems ?? 0,
         quickAddWatchedItem: (data) =>
           quickAddWatchedItemMutation.mutateAsync({ data }),
         hasWatchedItem: (itemId, world) =>

@@ -1,5 +1,6 @@
 import { PersonalCharacterAuraIdSchema } from "@lootlog/schema/character-aura";
 import { PlatformRole } from "@lootlog/schema/platform-roles";
+import { UserEntitlementChange } from "@lootlog/schema/plans";
 import { Schema } from "effect";
 
 export const BAN_DURATIONS = ["1h", "24h", "7d", "30d", "permanent"] as const;
@@ -34,12 +35,15 @@ export const UserAction = Schema.Union([
     action: Schema.Literal("revoke-api-key"),
     keyId: Schema.NonEmptyString,
   }),
-  Schema.Struct({ action: Schema.Literal("grant-auras") }),
+  Schema.Struct({
+    action: Schema.Literal("plan"),
+    change: UserEntitlementChange,
+  }),
   Schema.Struct({
     action: Schema.Literal("grant-personal-aura"),
     auraId: PersonalCharacterAuraIdSchema,
   }),
-  Schema.Struct({ action: Schema.Literal("revoke-auras") }),
+  Schema.Struct({ action: Schema.Literal("revoke-personal-auras") }),
 ]);
 
 export type UserAction = typeof UserAction.Type;

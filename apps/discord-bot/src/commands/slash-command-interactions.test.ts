@@ -75,6 +75,7 @@ const apiWeb = HttpRouter.toWebHandler(
         getUserGuildPermissions: unused,
         getGuildByIdOrVanityUrl: unused,
         getUserAccessibleGuilds: unused,
+        getUserLimits: unused,
         getEventTimers: unused,
         getGuildTopKilledNpcs: unused,
         listUserReservations: unused,

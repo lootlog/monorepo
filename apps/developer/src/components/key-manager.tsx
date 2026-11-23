@@ -9,22 +9,22 @@ import { KeySecretCard } from "@/components/key-secret-card";
 import { isApiKeyActive } from "@/lib/key-client";
 import {
   apiKeysQueryOptions,
+  keyLimitsQueryOptions,
   keyOrganizationsQueryOptions,
 } from "@/lib/key-queries";
 import { portalText as t } from "@/lib/translations";
-
-const ACTIVE_KEY_LIMIT = 10;
 
 export function KeyManager({ userId }: { userId: string }) {
   const queryClient = useQueryClient();
   const keysQueryOptions = apiKeysQueryOptions(userId);
   const keysQuery = useQuery(keysQueryOptions);
   const organizationsQuery = useQuery(keyOrganizationsQueryOptions(userId));
+  const limitsQuery = useQuery(keyLimitsQueryOptions(userId));
   const [secret, setSecret] = useState<string | null>(null);
   const createTrigger = useRef<HTMLButtonElement>(null);
   const secretHeading = useRef<HTMLHeadingElement>(null);
 
-  const queries = [keysQuery, organizationsQuery];
+  const queries = [keysQuery, organizationsQuery, limitsQuery];
   const isLoaded = queries.every((query) => query.data !== undefined);
 
   const hasLoadFailed =
@@ -43,6 +43,11 @@ export function KeyManager({ userId }: { userId: string }) {
   const activeKeys = keys.filter((key) =>
     isApiKeyActive(key, observedAt),
   ).length;
+
+  const activeKeyLimit = limitsQuery.data?.apiKeys;
+
+  const keyLimitReached =
+    activeKeyLimit !== undefined && activeKeys >= activeKeyLimit;
 
   const refresh = () =>
     queryClient.invalidateQueries({ queryKey: keysQueryOptions.queryKey });
@@ -87,11 +92,9 @@ export function KeyManager({ userId }: { userId: string }) {
           <KeyCreateSheet
             organizations={organizationsQuery.data ?? []}
             disabled={
-              secret !== null ||
-              activeKeys >= ACTIVE_KEY_LIMIT ||
-              refreshState !== "ready"
+              secret !== null || keyLimitReached || refreshState !== "ready"
             }
-            keyLimitReached={activeKeys >= ACTIVE_KEY_LIMIT}
+            keyLimitReached={keyLimitReached}
             triggerRef={createTrigger}
             finalFocus={() => secretHeading.current ?? createTrigger.current}
             onCreated={async (createdSecret) => {

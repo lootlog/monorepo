@@ -9,6 +9,7 @@ import { RolesForm } from "@/components/roles-form";
 import { Section } from "@/components/section";
 import { SessionsList } from "@/components/sessions-list";
 import { UserOrganizations } from "@/components/user-organizations";
+import { UserPlanForm } from "@/components/user-plan-form";
 import { UserSummary } from "@/components/user-summary";
 import { noticeText, text } from "@/lib/messages";
 import { getUser } from "@/server/queries";
@@ -27,9 +28,9 @@ const readNotice = Schema.decodeUnknownOption(
     "revoke-sessions",
     "revoke-session",
     "revoke-api-key",
-    "grant-auras",
+    "plan",
     "grant-personal-aura",
-    "revoke-auras",
+    "revoke-personal-auras",
   ]) satisfies Schema.Codec<UserAction["action"]>,
 );
 
@@ -48,7 +49,7 @@ export const Route = createFileRoute("/users/$userId")({
 });
 
 function UserPage() {
-  const { user, sessions, apiKeys, audit, auras, organizations } =
+  const { user, sessions, apiKeys, audit, auras, plan, organizations } =
     Route.useLoaderData();
 
   const { notice, error } = Route.useSearch();
@@ -93,6 +94,23 @@ function UserPage() {
           <BanForm user={user} own={operator?.userId === user.id} />
         </Section>
       </div>
+      <Section
+        id="plan"
+        title={text.planHeading}
+        description={text.planUserDescription}
+      >
+        {plan.status === "ok" ? (
+          <UserPlanForm
+            key={plan.value.changed?.at ?? "default"}
+            userId={user.id}
+            entitlement={plan.value}
+          />
+        ) : (
+          <Alert variant="destructive">
+            <AlertDescription>{text.planUnavailable}</AlertDescription>
+          </Alert>
+        )}
+      </Section>
       <Section
         id="auras"
         title={text.aurasHeading}

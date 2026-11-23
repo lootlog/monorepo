@@ -7,7 +7,6 @@ import { useTranslation } from "react-i18next";
 import { toast } from "@lootlog/ui/lib/toast";
 import { Schema } from "effect";
 
-import { USER_WATCHED_ITEMS_LIMIT } from "@/lib/user-notifications/user-watched-items-limit";
 import { getUserNotificationsErrorMessage } from "@/lib/user-notifications/get-user-notifications-error-message";
 import { useQueries, useQueryClient } from "@tanstack/react-query";
 import {
@@ -78,10 +77,12 @@ const watchFormSchema = Schema.toStandardSchemaV1(
 export function useWatchItemForm({
   hasActiveDm,
   watchedItems,
+  watchedItemsLimit,
   onOpenChange,
 }: {
   hasActiveDm: boolean;
   watchedItems: WatchedItemResponseDto[];
+  watchedItemsLimit: number;
   onOpenChange: (open: boolean) => void;
 }) {
   const { t } = useTranslation();
@@ -167,7 +168,7 @@ export function useWatchItemForm({
     );
 
   const isWatchedItemLimitReached =
-    watchedItemsCount >= USER_WATCHED_ITEMS_LIMIT && !hasSelectedItemWatched;
+    watchedItemsCount >= watchedItemsLimit && !hasSelectedItemWatched;
 
   const handleWorldChange = (world: string | null) => {
     form.setValue("world", world ?? "");
@@ -212,15 +213,12 @@ export function useWatchItemForm({
 
     const nextWatchedItemsCount = hasMatchingWatchedItem
       ? watchedItemsCount
-      : Math.min(watchedItemsCount + 1, USER_WATCHED_ITEMS_LIMIT);
+      : Math.min(watchedItemsCount + 1, watchedItemsLimit);
 
-    if (
-      watchedItemsCount >= USER_WATCHED_ITEMS_LIMIT &&
-      !hasMatchingWatchedItem
-    ) {
+    if (watchedItemsCount >= watchedItemsLimit && !hasMatchingWatchedItem) {
       toast.error(
         t("settings.userNotifications.validation.watchLimitReached", {
-          limit: USER_WATCHED_ITEMS_LIMIT,
+          limit: watchedItemsLimit,
         }),
       );
 
@@ -230,7 +228,7 @@ export function useWatchItemForm({
     const loadingToastId = toast.loading(
       t("settings.userNotifications.toasts.watchCreating", {
         count: nextWatchedItemsCount,
-        limit: USER_WATCHED_ITEMS_LIMIT,
+        limit: watchedItemsLimit,
       }),
     );
 
@@ -246,7 +244,7 @@ export function useWatchItemForm({
       toast.success(
         t("settings.userNotifications.toasts.watchCreated", {
           count: nextWatchedItemsCount,
-          limit: USER_WATCHED_ITEMS_LIMIT,
+          limit: watchedItemsLimit,
         }),
         { id: loadingToastId },
       );

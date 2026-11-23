@@ -1,9 +1,6 @@
 import { type UserAction, banExpiry } from "@/lib/user-action";
-import {
-  grantAuras,
-  grantPersonalAura,
-  revokeAuras,
-} from "./character-auras.js";
+import { grantPersonalAura, revokePersonalAuras } from "./character-auras.js";
+import { setUserEntitlement } from "./user-plans.js";
 import { asOperator } from "./rpc.js";
 
 export const runUserAction = async (userId: string, action: UserAction) => {
@@ -47,14 +44,14 @@ export const runUserAction = async (userId: string, action: UserAction) => {
         auth.revokeUserApiKey({ ...session, userId, keyId: action.keyId }),
       );
       break;
-    case "grant-auras":
-      await grantAuras(userId);
+    case "plan":
+      await setUserEntitlement(userId, action.change);
       break;
     case "grant-personal-aura":
       await grantPersonalAura(userId, action.auraId);
       break;
-    case "revoke-auras":
-      await revokeAuras(userId);
+    case "revoke-personal-auras":
+      await revokePersonalAuras(userId);
       break;
   }
 };

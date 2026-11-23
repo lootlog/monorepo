@@ -15,7 +15,12 @@ import {
   notificationRuleTable,
   notificationRuleTargetTable,
   notificationTargetTable,
+  watchedItemTable,
 } from "#src/database/drizzle/notification.schema";
+import { NotificationTriggerType } from "@lootlog/schema/notifications";
+import { ResourceConflictError } from "@lootlog/protocol/http/errors";
+import { USER_PLANS } from "#src/plans/plan-catalog";
+import { RESERVATION_REMINDER_RULE_NAME } from "./reservation-reminder.js";
 import { makeNotificationUserTargets } from "../targets/notification-user-targets.js";
 import { makeNotificationRuleOperations } from "./notification-rule-operations.js";
 
@@ -175,6 +180,82 @@ test("preserves an omitted end date and persists an explicitly cleared end date"
     expect(
       (await boundary.run(rules.listUser("user-1")))[0]?.scheduledUntil,
     ).toBeNull();
+  } finally {
+    await boundary.dispose();
+  }
+});
+
+test("counts only hand-made personal rules against the plan, not watched items or reservation reminders", async () => {
+  const boundary = await createDatabaseBoundary();
+
+  try {
+    const database = boundary.database;
+    const limit = USER_PLANS.free.notificationRules;
+
+    const personal = Array.from({ length: limit - 1 }, (_, index) =>
+      createNotificationRuleFixture({ id: 100 + index }),
+    );
+
+    const watched = Array.from({ length: limit }, (_, index) =>
+      createNotificationRuleFixture({
+        id: 200 + index,
+        triggerType: "WATCHED_ITEM_DROPPED",
+      }),
+    );
+
+    await boundary.run(
+      database
+        .insert(notificationTargetTable)
+        .values(createNotificationTargetFixture()),
+    );
+    await boundary.run(
+      database.insert(notificationRuleTable).values([
+        ...personal,
+        ...watched,
+        createNotificationRuleFixture({
+          id: 300,
+          name: RESERVATION_REMINDER_RULE_NAME,
+        }),
+      ]),
+    );
+    await boundary.run(
+      database.insert(watchedItemTable).values(
+        watched.map((rule, index) => ({
+          userId: "user-1",
+          itemId: index + 1,
+          itemName: `Item ${index + 1}`,
+          world: "tempest",
+          notificationRuleId: rule.id,
+          updatedAt: new Date(0),
+        })),
+      ),
+    );
+
+    const rules = makeNotificationRuleOperations(database, {
+      ensureGuildPermissions: () => Effect.void,
+      rebuildJobs: () => Effect.void,
+      cancelJobs: () => Effect.void,
+      buildTestPayload: () => Effect.succeed({}),
+      createTestJob: () => Effect.succeed(null),
+      enqueueJob: () => Effect.void,
+    });
+
+    const createPersonal = rules.createUser("user-1", "account-1", {
+      name: "Reminder",
+      triggerType: NotificationTriggerType.SCHEDULED_MESSAGE,
+      targetIds: [9],
+      scheduledAt: "2099-01-01T12:00:00.000Z",
+      contentTemplate: "Personal message",
+    });
+
+    await boundary.run(createPersonal);
+
+    const refused = await boundary.run(Effect.flip(createPersonal));
+
+    expect(refused).toBeInstanceOf(ResourceConflictError);
+    expect(refused).toMatchObject({
+      body: { details: { ruleLimit: limit, ruleCount: limit } },
+    });
   } finally {
     await boundary.dispose();
   }

@@ -19,7 +19,10 @@ import {
   watchedItemTable,
 } from "#src/database/drizzle/notification.schema";
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
-import { PermissionDeniedError } from "@lootlog/protocol/http/errors";
+import {
+  InvalidRequestError,
+  PermissionDeniedError,
+} from "@lootlog/protocol/http/errors";
 import { makeNotificationRuleOperations } from "./rules/notification-rule-operations.js";
 import { makeNotificationUserTargets } from "./targets/notification-user-targets.js";
 import { makeNotificationWatchedItems } from "./rules/notification-watched-items.js";
@@ -188,7 +191,7 @@ test("new user event rules keep the effective key organizations when their filte
 
     const created = await boundary.run(
       rules
-        .createUser("discord-1", {
+        .createUser("discord-1", identity.userId, {
           triggerType: NotificationTriggerType.WATCHED_ITEM_DROPPED,
           targetIds: [9],
           itemIds: [10],
@@ -365,7 +368,7 @@ test("personal API keys cannot cancel Organization reservation reminders through
     expect(removeFromQueue).not.toHaveBeenCalled();
     await expect(
       run(
-        rules.createUser("discord-1", {
+        rules.createUser("discord-1", identity.userId, {
           name: "__system:reservation-reminder__",
           triggerType: NotificationTriggerType.SCHEDULED_MESSAGE,
           targetIds: [9],
@@ -373,14 +376,14 @@ test("personal API keys cannot cancel Organization reservation reminders through
           contentTemplate: "Personal message",
         }),
       ),
-    ).rejects.toBeInstanceOf(PermissionDeniedError);
+    ).rejects.toBeInstanceOf(InvalidRequestError);
     await expect(
       run(
         rules.updateUser("discord-1", 8, {
           name: "__system:reservation-reminder__",
         }),
       ),
-    ).rejects.toBeInstanceOf(PermissionDeniedError);
+    ).rejects.toBeInstanceOf(InvalidRequestError);
 
     const persistedRules = await boundary.run(
       database.select().from(notificationRuleTable),

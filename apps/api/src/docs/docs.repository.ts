@@ -24,6 +24,7 @@ import {
 } from "#src/database/drizzle/guild-document.schema";
 import { guildTable } from "#src/database/drizzle/organization.schema";
 import { findMemberNames } from "#src/members/member-names";
+import { readOrganizationLimits } from "#src/plans/entitlements";
 import type { GuildDocumentContent } from "./guild-document-content.schema.js";
 
 type DocsDatabase = typeof ApiDatabase.Service;
@@ -53,7 +54,7 @@ export type StoredDocumentHistory =
 export type DocumentHistorySummary = Omit<StoredDocumentHistory, "content">;
 
 type DocumentListing = {
-  readonly guild: Pick<typeof guildTable.$inferSelect, "documentLimit"> | null;
+  readonly guild: { readonly documentLimit: number } | null;
   readonly used: number;
   readonly trashed: number;
   readonly documents: ReadonlyArray<DocumentSummary>;
@@ -68,7 +69,6 @@ export interface DocsRepositoryService {
     discordId: string;
     title: string;
     content: GuildDocumentContent;
-    defaultLimit: number;
   }) => Effect.Effect<StoredDocument, DocsRepositoryFailure>;
   readonly findActive: (
     guildId: string,
@@ -213,10 +213,11 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
         Effect.all(
           {
             guilds: database
-              .select({ documentLimit: guildTable.documentLimit })
+              .select({ id: guildTable.id })
               .from(guildTable)
               .where(eq(guildTable.id, guildId))
               .limit(1),
+            limits: readOrganizationLimits(database, guildId),
             usedRows: countDocuments(guildId),
             trashedRows: countDocuments(guildId, true),
             documents: database
@@ -242,8 +243,8 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
           { concurrency: "unbounded" },
         ),
       ).pipe(
-        Effect.map(({ guilds, usedRows, trashedRows, documents }) => ({
-          guild: guilds[0] ?? null,
+        Effect.map(({ guilds, limits, usedRows, trashedRows, documents }) => ({
+          guild: guilds[0] ? { documentLimit: limits.documents } : null,
           used: usedRows[0]?.value ?? 0,
           trashed: trashedRows[0]?.value ?? 0,
           documents,
@@ -253,27 +254,26 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
       transaction("docs.create.transaction", (transaction) =>
         Effect.gen(function* () {
           const guildRows = yield* transaction
-            .select({ documentLimit: guildTable.documentLimit })
+            .select({ id: guildTable.id })
             .from(guildTable)
             .where(eq(guildTable.id, options.guildId))
-            .limit(1);
+            .limit(1)
+            .for("no key update");
 
-          const guild = guildRows[0];
-
-          if (!guild)
+          if (!guildRows[0])
             return yield* new ResourceNotFoundError("Guild not found");
+
+          const limits = yield* readOrganizationLimits(
+            transaction,
+            options.guildId,
+          );
 
           const usedRows = yield* transaction
             .select({ value: count() })
             .from(guildDocumentTable)
             .where(eq(guildDocumentTable.guildId, options.guildId));
 
-          const limit = Math.max(
-            0,
-            guild.documentLimit ?? options.defaultLimit,
-          );
-
-          if ((usedRows[0]?.value ?? 0) >= limit) {
+          if ((usedRows[0]?.value ?? 0) >= limits.documents) {
             return yield* new ResourceConflictError(
               "Guild document limit reached",
             );

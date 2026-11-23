@@ -1,8 +1,9 @@
 import type {
   OrganizationAuditDetails,
-  OrganizationLimits,
   OrganizationOperatorAction,
 } from "@lootlog/schema/admin-organizations";
+import type { OrganizationEntitlementChange } from "@lootlog/schema/plans";
+import { writeOrganizationEntitlement } from "#src/plans/entitlements";
 import { and, eq } from "drizzle-orm";
 import { Clock, Effect } from "effect";
 import {
@@ -125,18 +126,28 @@ export const organizationChangeCommands = (
       );
     });
 
-  const setLimits = Effect.fn("organizationOperator.setLimits")(function* (
-    operator: OrganizationOperator & { readonly guildId: string },
-    limits: OrganizationLimits,
-  ) {
-    yield* audited(operator, "limits.set", (transaction, now) =>
-      transaction
-        .update(guildTable)
-        .set({ ...limits, updatedAt: now })
-        .where(eq(guildTable.id, operator.guildId))
-        .pipe(Effect.as({ ...limits })),
-    );
-  });
+  const setEntitlement = Effect.fn("organizationOperator.setEntitlement")(
+    function* (
+      operator: OrganizationOperator & { readonly guildId: string },
+      change: OrganizationEntitlementChange,
+    ) {
+      yield* audited(operator, "limits.set", (transaction, now) =>
+        writeOrganizationEntitlement(
+          transaction,
+          operator.guildId,
+          change,
+          operator.operatorUserId,
+          now,
+        ).pipe(
+          Effect.as({
+            plan: change.grant.plan,
+            validUntil: change.grant.validUntil,
+            ...change.overrides,
+          }),
+        ),
+      );
+    },
+  );
 
   const clearVanityUrl = Effect.fn("organizationOperator.clearVanityUrl")(
     function* (operator: OrganizationOperator & { readonly guildId: string }) {
@@ -233,5 +244,11 @@ export const organizationChangeCommands = (
     );
   });
 
-  return { setLimits, clearVanityUrl, refreshDiscordSync, suspend, resume };
+  return {
+    setEntitlement,
+    clearVanityUrl,
+    refreshDiscordSync,
+    suspend,
+    resume,
+  };
 };

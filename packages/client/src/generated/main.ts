@@ -11455,6 +11455,29 @@ export const UsersControllerGetUserFeedExcludedNpcCategoriesItem = {
   OTHER: 'OTHER',
 } as const;
 
+export type UsersControllerGetUserLimits200 = {
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  notificationRules: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  watchedItems: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  customThemes: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  apiKeys: number;
+};
+
 export type UsersControllerGetGameClientBootstrapParams = {
 /**
  * @minLength 1
@@ -13444,6 +13467,150 @@ export const useUsersControllerUpdateUserPreferences = <TError = ErrorType<Reque
       > => {
       return useMutation(getUsersControllerUpdateUserPreferencesMutationOptions(options), queryClient);
     }
+
+export const getUsersControllerGetUserLimitsUrl = () => {
+
+
+
+
+  return `/users/@me/limits`
+}
+
+/**
+ * Return how many personal notification rules, watched items, custom themes and active API keys the authenticated user may hold.
+ * @summary Get user limits
+ */
+export const usersControllerGetUserLimits = async ( options?: Parameters<typeof mainFetch>[1]): Promise<UsersControllerGetUserLimits200> => {
+
+  return mainFetch<UsersControllerGetUserLimits200>(getUsersControllerGetUserLimitsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getUsersControllerGetUserLimitsQueryKey = () => {
+    return [
+    `/users/@me/limits`
+    ] as const;
+    }
+
+
+export const getUsersControllerGetUserLimitsQueryOptions = <TData = Awaited<ReturnType<typeof usersControllerGetUserLimits>>, TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetUserLimits>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getUsersControllerGetUserLimitsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof usersControllerGetUserLimits>>> = ({ signal }) => usersControllerGetUserLimits({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetUserLimits>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type UsersControllerGetUserLimitsQueryResult = NonNullable<Awaited<ReturnType<typeof usersControllerGetUserLimits>>>
+export type UsersControllerGetUserLimitsQueryError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>
+
+
+export function useUsersControllerGetUserLimits<TData = Awaited<ReturnType<typeof usersControllerGetUserLimits>>, TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetUserLimits>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersControllerGetUserLimits>>,
+          TError,
+          Awaited<ReturnType<typeof usersControllerGetUserLimits>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUsersControllerGetUserLimits<TData = Awaited<ReturnType<typeof usersControllerGetUserLimits>>, TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetUserLimits>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersControllerGetUserLimits>>,
+          TError,
+          Awaited<ReturnType<typeof usersControllerGetUserLimits>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUsersControllerGetUserLimits<TData = Awaited<ReturnType<typeof usersControllerGetUserLimits>>, TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetUserLimits>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get user limits
+ */
+
+export function useUsersControllerGetUserLimits<TData = Awaited<ReturnType<typeof usersControllerGetUserLimits>>, TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetUserLimits>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getUsersControllerGetUserLimitsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get user limits
+ */
+export const prefetchUsersControllerGetUserLimitsQuery = async <TData = Awaited<ReturnType<typeof usersControllerGetUserLimits>>, TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>>(
+ queryClient: QueryClient,  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetUserLimits>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getUsersControllerGetUserLimitsQueryOptions(options)
+
+  await queryClient.query(queryOptions).catch(() => {});
+
+  return queryClient;
+}
+
+/**
+ * @summary Invalidates the {@link useUsersControllerGetUserLimits} query
+ */
+export const invalidateUsersControllerGetUserLimits = async (
+ queryClient: QueryClient,  options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getUsersControllerGetUserLimitsQueryKey() }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get user limits
+ */
+export const useSetUsersControllerGetUserLimitsQueryData = () => {
+  const queryClient = useQueryClient();
+  return (updater: Awaited<ReturnType<typeof usersControllerGetUserLimits>> | undefined | ((old: Awaited<ReturnType<typeof usersControllerGetUserLimits>> | undefined) => Awaited<ReturnType<typeof usersControllerGetUserLimits>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof usersControllerGetUserLimits>>>({ exact: $exactMatch, queryKey: getUsersControllerGetUserLimitsQueryKey() }, updater);
+  };
+}
+
+/**
+ * @summary Get user limits
+ */
+export const useGetUsersControllerGetUserLimitsQueryData = () => {
+  const queryClient = useQueryClient();
+  return () =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof usersControllerGetUserLimits>>>(getUsersControllerGetUserLimitsQueryKey());
+}
+
+
 
 export const getUsersControllerGetCurrentUserGuildsUrl = () => {
 

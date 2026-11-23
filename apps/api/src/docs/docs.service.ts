@@ -10,7 +10,6 @@ import {
 import { Effect, Predicate, Schema } from "effect";
 import {
   GUILD_DOCUMENT_CONTENT_MAX_LENGTH,
-  GUILD_DOCUMENT_DEFAULT_LIMIT,
   GUILD_DOCUMENT_TITLE_MAX_LENGTH,
 } from "./docs-limits.js";
 import type {
@@ -181,10 +180,7 @@ export const makeDocsService = (repository: DocsRepositoryService) => {
           return yield* new ResourceNotFoundError("Guild not found");
         }
 
-        const max = Math.max(
-          0,
-          result.guild.documentLimit ?? GUILD_DOCUMENT_DEFAULT_LIMIT,
-        );
+        const max = result.guild.documentLimit;
 
         return {
           items: yield* mapDocumentRecords(guildId, result.documents),
@@ -209,7 +205,6 @@ export const makeDocsService = (repository: DocsRepositoryService) => {
           discordId,
           title,
           content: EMPTY_DOCUMENT_CONTENT,
-          defaultLimit: GUILD_DOCUMENT_DEFAULT_LIMIT,
         });
 
         return yield* mapDocumentRecord(guildId, document);

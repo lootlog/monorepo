@@ -30,6 +30,7 @@ import {
   type CharacterAurasOperationError,
 } from "#src/character-auras/character-auras-data";
 import { InternalGuildsData } from "#src/guilds/internal-guilds-data";
+import { UserPlansData } from "#src/plans/user-plans";
 import {
   OrganizationOperatorData,
   type OrganizationOperatorFailure,
@@ -95,6 +96,13 @@ const auraGrantsUnavailable = <A>(
     ),
   );
 
+const plansUnavailable = <A, E>(operation: Effect.Effect<A, E>) =>
+  Effect.catch(operation, (error) =>
+    Effect.logError("Plan entitlement operation failed", error).pipe(
+      Effect.andThen(Effect.fail(new RpcUnavailableError())),
+    ),
+  );
+
 const operatorUnavailable = (error: OrganizationOperatorFailure) =>
   Effect.logError("Organization operator call failed", error).pipe(
     Effect.andThen(Effect.fail(new RpcUnavailableError())),
@@ -148,6 +156,7 @@ const makeApiRpcHandlers = <E, R>(routes: Layer.Layer<never, E, R>) =>
 
       const auras = yield* CharacterAurasData;
       const organizations = yield* OrganizationOperatorData;
+      const plans = yield* UserPlansData;
 
       const context = (yield* Effect.context<
         Exclude<
@@ -215,6 +224,7 @@ const makeApiRpcHandlers = <E, R>(routes: Layer.Layer<never, E, R>) =>
           getGuildByIdOrVanityUrl(lookup).pipe(withInternalGuilds),
         getMemberIdentity: (lookup) =>
           getMemberIdentity(lookup).pipe(withInternalGuilds),
+        getUserLimits: ({ userId }) => plansUnavailable(plans.limits(userId)),
         getUserAccessibleGuilds: (actor) =>
           asMember(actor, api.users.UsersControllerGetCurrentUserGuilds()).pipe(
             Effect.catchTags({
@@ -347,14 +357,15 @@ const makeApiRpcHandlers = <E, R>(routes: Layer.Layer<never, E, R>) =>
           auraGrantsUnavailable(auras.listGrantHolders),
         getCharacterAuraGrants: ({ userId }) =>
           auraGrantsUnavailable(auras.getGrants(userId)),
-        grantCharacterAuras: ({ operatorUserId, userId }) =>
-          auraGrantsUnavailable(auras.grantAuras(operatorUserId, userId)),
         grantPersonalCharacterAura: ({ operatorUserId, userId, auraId }) =>
           auraGrantsUnavailable(
             auras.grantPersonalAura(operatorUserId, userId, auraId),
           ),
-        revokeCharacterAuras: ({ userId }) =>
-          auraGrantsUnavailable(auras.revokeAuras(userId)),
+        revokePersonalCharacterAuras: ({ userId }) =>
+          auraGrantsUnavailable(auras.revokePersonalAuras(userId)),
+        getUserEntitlement: ({ userId }) => plansUnavailable(plans.get(userId)),
+        setUserEntitlement: ({ operatorUserId, userId, change }) =>
+          plansUnavailable(plans.set(operatorUserId, userId, change)),
         getOrganizationsOverview: () => operatorRead(organizations.getOverview),
         searchOrganizations: (search) =>
           operatorRead(organizations.searchOrganizations(search)),
@@ -366,8 +377,8 @@ const makeApiRpcHandlers = <E, R>(routes: Layer.Layer<never, E, R>) =>
           operatorRead(organizations.listUserOrganizations(discordId)),
         listOrganizationAudit: ({ limit, offset }) =>
           operatorRead(organizations.listAudit(limit, offset)),
-        setOrganizationLimits: ({ limits, ...operator }) =>
-          operatorTarget(organizations.setLimits(operator, limits)),
+        setOrganizationEntitlement: ({ change, ...operator }) =>
+          operatorTarget(organizations.setEntitlement(operator, change)),
         clearOrganizationVanityUrl: (operator) =>
           operatorTarget(organizations.clearVanityUrl(operator)),
         refreshOrganizationDiscordSync: (operator) =>

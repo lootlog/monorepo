@@ -11,6 +11,7 @@ import { Schema, type Types } from "effect";
 import { formatAuditDetails } from "@/lib/audit-details";
 import { UserActionRequest } from "@/lib/user-action";
 import { getAuraGrants, listAuraHolderIds } from "./character-auras.js";
+import { getUserEntitlement } from "./user-plans.js";
 import { adminConfig } from "./config.js";
 import { listUserOrganizations } from "./user-organizations.js";
 import { asOperator } from "./rpc.js";
@@ -106,11 +107,15 @@ export const getUser = createServerFn({ method: "GET" })
   .validator(Schema.decodeUnknownSync(Schema.NonEmptyString))
   .handler(async ({ data: userId }) => {
     try {
-      const [details, auras] = await Promise.all([
+      const [details, auras, plan] = await Promise.all([
         asOperator(({ auth }, session) =>
           auth.getUserDetails({ ...session, userId }),
         ),
         getAuraGrants(userId).then(
+          (value) => ({ status: "ok" as const, value }),
+          () => ({ status: "unavailable" as const }),
+        ),
+        getUserEntitlement(userId).then(
           (value) => ({ status: "ok" as const, value }),
           () => ({ status: "unavailable" as const }),
         ),
@@ -127,6 +132,7 @@ export const getUser = createServerFn({ method: "GET" })
         ...details,
         audit: details.audit.map(toAuditRow),
         auras,
+        plan,
         organizations,
       };
     } catch (error) {

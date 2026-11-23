@@ -47,7 +47,7 @@ describe("AdminService against PostgreSQL and Better Auth", () => {
     const { adapter } = await auth.$context;
     const now = new Date();
 
-    return adapter.create<typeof authUsers.$inferSelect>({
+    return adapter.create<Omit<typeof authUsers.$inferSelect, "apiKeyLimit">>({
       model: "user",
       data: {
         name,

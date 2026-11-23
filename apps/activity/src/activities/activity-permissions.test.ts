@@ -32,6 +32,7 @@ describe("Activity permissions", () => {
       getUserGuildPermissions: () => Effect.succeed(responses.shift() ?? []),
       getGuildByIdOrVanityUrl: unused,
       getMemberIdentity: unused,
+      getUserLimits: unused,
       getUserAccessibleGuilds: unused,
       listGuildEvents: unused,
       getEventRanking: unused,

@@ -149,10 +149,10 @@ const runOrganizationAction = (guildId: string, action: OrganizationAction) =>
       };
 
       switch (action.action) {
-        case "limits":
-          return api.setOrganizationLimits({
+        case "plan":
+          return api.setOrganizationEntitlement({
             ...target,
-            limits: action.limits,
+            change: action.change,
           });
         case "clear-vanity-url":
           return api.clearOrganizationVanityUrl(target);

@@ -1,12 +1,13 @@
 import type { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import {
+  httpErrorResponse,
   type ReauthenticationRequired,
   reauthenticationRequiredResponse,
 } from "@lootlog/protocol/http/errors";
 import {
   type StoredUserTheme,
   UserThemeNotFound,
-  UserThemeLimitReached,
+  type UserThemeLimitReached,
   UserThemesPersistenceError,
   UserThemesData,
 } from "#src/users/user-themes-data";
@@ -70,13 +71,6 @@ export const createUserTheme = Effect.fn("createUserTheme")(function* (
 ) {
   const { userId, data } = yield* currentUser;
   const theme = yield* data.create(userId, payload);
-
-  if (theme === null) {
-    return yield* new UserThemeLimitReached({
-      status: 409,
-      code: "USER_THEME_LIMIT_REACHED",
-    });
-  }
 
   return yield* decodeTheme(theme);
 });
@@ -148,7 +142,13 @@ const toHttpResponse = <A, R>(
 ) =>
   Effect.catchTags(effect, {
     UserThemeNotFound: statusCodeResponse,
-    UserThemeLimitReached: statusCodeResponse,
+    UserThemeLimitReached: ({ customThemeLimit }) =>
+      Effect.succeed(
+        httpErrorResponse(409, {
+          code: "USER_THEME_LIMIT_REACHED",
+          details: { customThemeLimit },
+        }),
+      ),
     ReauthenticationRequired: reauthenticationRequiredResponse,
     UserThemesPersistenceError: (error) => Effect.die(error.cause),
   });

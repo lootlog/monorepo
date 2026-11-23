@@ -1,0 +1,37 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "aea837c6-8c40-4440-bc96-9c768020bc35",
+  "prevIds": ["7d5adb22-a617-4a13-b557-253da67387d3"],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": ["column", "public", "user", "apiKeyLimit"],
+      "writes": [
+        "s|col|public.user.apiKeyLimit",
+        "n|col|public.user.apiKeyLimit",
+        "e|col|public.user.apiKeyLimit"
+      ],
+      "reads": ["n|tbl|public.user", "n|sch|public"]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "user",
+        "name": "apiKeyLimit",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "10",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}
