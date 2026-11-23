@@ -26,3 +26,9 @@ apps/web/public/lottie/** linguist-vendored=true
 docs/** size-limit-exempt
 apps/docs/content/** size-limit-exempt
 apps/developer/content/** size-limit-exempt
+
+# Test files may hold every scenario of one behaviour, so the staged file size
+# limit skips them
+*.test.ts size-limit-exempt
+*.test.tsx size-limit-exempt
+*.test.mjs size-limit-exempt

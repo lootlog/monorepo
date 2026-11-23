@@ -111,19 +111,16 @@ Split every file above into smaller files before committing:
   4. Update every import to point at the file that now owns the symbol.
      Do not leave the original file behind as a barrel that only re-exports
      the moved symbols; if nothing remains in it, delete it.
-  5. Split by file type:
-     - Tests: one file per behaviour under test
-       (e.g. timer-mutation.visibility.test.ts, timer-mutation.retries.test.ts);
-       move fixtures shared by several of them into a *.fixtures.ts file.
-     - JSON or translation data: split by top-level key or namespace into
-       separate files and load each one where it is used.
+  5. Split JSON or translation data by top-level key or namespace into
+     separate files and load each one where it is used.
   6. Run lint, typecheck, tests and \`bun run knip\` for the affected
      workspaces, stage the new files and the edited importers, and commit again.
 
 Do not bypass this check with --no-verify. If a file is generated or copied
 from a third party rather than authored here, mark its path in .gitattributes
-with linguist-generated=true or linguist-vendored=true instead. Documentation
-under docs/ and the docs apps' content is exempt through size-limit-exempt.
+with linguist-generated=true or linguist-vendored=true instead. Test files
+(*.test.ts, *.test.tsx, *.test.mjs), documentation under docs/, and the docs
+apps' content are exempt through size-limit-exempt.
 `;
 }
 
