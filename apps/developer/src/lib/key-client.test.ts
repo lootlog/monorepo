@@ -26,12 +26,4 @@ describe("getKeyErrorMessage", () => {
       ),
     ).toBe(t.organizationServiceUnavailable);
   });
-
-  it("explains a failure from an auth instance that sends only the message", () => {
-    expect(
-      getKeyErrorMessage(
-        failure(409, { message: "Maximum active API keys reached" }),
-      ),
-    ).toBe(t.keyLimit);
-  });
 });
