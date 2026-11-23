@@ -154,6 +154,8 @@ Wiadomość na Discordzie o nowym wykryciu ustawisz regułą **Wykrycie herosa**
 
 ## Uprawnienia
 
-Wykrycia korzystają z uprawnień timerów. Widzisz je z `LOOTLOG_TIMERS_READ` i
-`LOOTLOG_TIMERS_HEROES_READ` w zakresie poziomu herosa. Obstawianie, ręczne
-dodawanie i usuwanie własnego ręcznego wpisu wymagają `LOOTLOG_TIMERS_WRITE`.
+Wykrycia mają własne uprawnienia, niezależne od timerów. Widzisz je z
+`LOOTLOG_HERO_SIGHTINGS_READ`, gdy poziom herosa mieści się w zakresie roli z
+tym uprawnieniem. Zapisywanie wykryć z wykrywacza, obstawianie, ręczne
+dodawanie i usuwanie własnego ręcznego wpisu wymagają
+`LOOTLOG_HERO_SIGHTINGS_WRITE`.

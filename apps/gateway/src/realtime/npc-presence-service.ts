@@ -298,7 +298,12 @@ export class NpcPresenceService {
       !canSubscribe(socket.data, {
         topic: "organization.timers",
         organizationId,
-      })
+      }) ||
+      !hasPermission(
+        socket.data,
+        organizationId,
+        Capability.LOOTLOG_TIMERS_READ,
+      )
     )
       return Effect.succeed(null);
 

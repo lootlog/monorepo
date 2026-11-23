@@ -7,7 +7,7 @@ import {
   getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey,
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
 } from "@lootlog/client/main";
-import { HERO_SIGHTING_WRITE_PERMISSION } from "@lootlog/domain/npc-permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { createHeroSighting } from "@/test/hero-sighting-fixtures";
 import { createTimerGuildFixture } from "@/test/timer-fixtures";
 import { createTimerHttpFixture } from "@/test/timer-http-fixtures";
@@ -62,7 +62,7 @@ const mountForm = (rejectingGuildId?: string) => {
   for (const guildId of GUILD_IDS)
     fixture.queryClient.setQueryData(
       getGuildsControllerGetGuildPermissionsQueryKey({ guildId }),
-      [HERO_SIGHTING_WRITE_PERMISSION],
+      [Capability.LOOTLOG_HERO_SIGHTINGS_WRITE],
     );
 
   const onClose = vi.fn();

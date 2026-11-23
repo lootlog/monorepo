@@ -1,6 +1,6 @@
 import { useQueries } from "@tanstack/react-query";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
-import { HERO_SIGHTING_WRITE_PERMISSION } from "@lootlog/domain/npc-permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { getGuildPermissionsQueryOptions } from "@/hooks/api/guild-permissions-query";
 
 export const useHeroSightingWriteAccess = (
@@ -16,7 +16,7 @@ export const useHeroSightingWriteAccess = (
     guildIds.filter((_guildId, index) =>
       createAccessPolicy({
         capabilities: permissionQueries[index]?.data ?? [],
-      }).allows(HERO_SIGHTING_WRITE_PERMISSION),
+      }).allows(Capability.LOOTLOG_HERO_SIGHTINGS_WRITE),
     ),
   );
 };

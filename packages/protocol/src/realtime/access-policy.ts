@@ -86,7 +86,10 @@ const NPC_PERMISSIONS = {
   ],
 } as const;
 
-const RANGE_PERMISSIONS = Object.values(NPC_PERMISSIONS).flat();
+const RANGE_PERMISSIONS = [
+  ...Object.values(NPC_PERMISSIONS).flat(),
+  Capability.LOOTLOG_HERO_SIGHTINGS_READ,
+];
 
 const LOOT_RANGE_PERMISSIONS = new Set<Capability>(NPC_PERMISSIONS.loots);
 
@@ -124,7 +127,7 @@ export const createAccessPolicySnapshot = (
           )
         : [...explicit].sort();
 
-      const grants = RANGE_PERMISSIONS.map((permission) => {
+      const grants = RANGE_PERMISSIONS.flatMap((permission) => {
         const bypass =
           owner || (administrator && !LOOT_RANGE_PERMISSIONS.has(permission));
 
@@ -144,10 +147,8 @@ export const createAccessPolicySnapshot = (
                 })),
             );
 
-        return { permission, ranges };
-      })
-        .filter(({ ranges }) => ranges.length > 0)
-        .sort((a, b) => a.permission.localeCompare(b.permission));
+        return ranges.length > 0 ? [{ permission, ranges }] : [];
+      }).sort((a, b) => a.permission.localeCompare(b.permission));
 
       return { organizationId: guild.id, owner, permissions, grants };
     })
@@ -253,6 +254,15 @@ export const diffAccessPolicies = (
   return changes;
 };
 
+const grantCoversLevel = (
+  organization: OrganizationAccessPolicy,
+  permission: Capability,
+  lvl: number,
+): boolean =>
+  organization.grants
+    .find((grant) => grant.permission === permission)
+    ?.ranges.some(({ from, to }) => from <= lvl && to >= lvl) ?? false;
+
 export const canReadPolicyNpc = (
   organization: OrganizationAccessPolicy,
   area: "timers" | "chat" | "notifications",
@@ -274,9 +284,19 @@ export const canReadPolicyNpc = (
   if (!isNpcType(npc.type)) return false;
   const permission = { base, heroes, titans }[getNpcTypeRoutingTier(npc.type)];
 
-  return (
-    organization.grants
-      .find((grant) => grant.permission === permission)
-      ?.ranges.some(({ from, to }) => from <= npc.lvl && to >= npc.lvl) ?? false
-  );
+  return grantCoversLevel(organization, permission, npc.lvl);
 };
+
+export const canReadPolicyHeroSighting = (
+  organization: OrganizationAccessPolicy,
+  heroLvl: number,
+): boolean =>
+  Number.isFinite(heroLvl) &&
+  heroLvl >= 0 &&
+  (organization.owner ||
+    organization.permissions.includes(Capability.ADMIN) ||
+    grantCoversLevel(
+      organization,
+      Capability.LOOTLOG_HERO_SIGHTINGS_READ,
+      heroLvl,
+    ));

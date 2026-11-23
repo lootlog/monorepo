@@ -6,13 +6,13 @@ import {
   type UserCurrentGuildResponseDtoOutput,
 } from "@lootlog/client/main";
 import {
+  canReadPolicyHeroSighting,
   canReadPolicyNpc,
   diffAccessPolicies,
   type AccessPolicySnapshot,
   type AccessPolicyChange,
 } from "@lootlog/protocol/realtime/access-policy";
 import { Capability } from "@lootlog/schema/permissions";
-import { HERO_SIGHTING_READ_FEATURE } from "@lootlog/domain/npc-permissions";
 
 const isQueryPath = Schema.is(Schema.String);
 
@@ -28,10 +28,7 @@ const canReadRecord = (
 ) =>
   "npc" in row
     ? canReadPolicyNpc(organization, "timers", row.npc)
-    : canReadPolicyNpc(organization, HERO_SIGHTING_READ_FEATURE, {
-        type: "HERO",
-        lvl: row.hero.lvl,
-      });
+    : canReadPolicyHeroSighting(organization, row.hero.lvl);
 
 const policies = new WeakMap<QueryClient, AccessPolicySnapshot>();
 
@@ -161,10 +158,15 @@ const reconcileTimers = (
 
     if (scope === undefined) continue;
 
+    const readPermission =
+      query.queryKey[0] === "/hero-sightings"
+        ? Capability.LOOTLOG_HERO_SIGHTINGS_READ
+        : Capability.LOOTLOG_TIMERS_READ;
+
     const canReadScope = policy.organizations.some(
       (organization) =>
         (scope === null || scope === organization.organizationId) &&
-        organization.permissions.includes(Capability.LOOTLOG_TIMERS_READ),
+        organization.permissions.includes(readPermission),
     );
 
     if (!canReadScope) pendingQueries.delete(query);

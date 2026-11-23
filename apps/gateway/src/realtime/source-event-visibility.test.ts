@@ -236,7 +236,7 @@ describe("source visibility at delivery", () => {
       false,
     );
   });
-  test("shows a hero sighting only to roles that see that hero's timers", () => {
+  test("shows a hero sighting only to roles with the sighting capability for that hero", () => {
     const sighting = (
       hero: { readonly lvl: number } | undefined,
       guildId = "organization",
@@ -249,7 +249,10 @@ describe("source visibility at delivery", () => {
       },
     });
 
-    const heroReader = reader([role(timerRead, 200, 300)]);
+    const heroReader = reader([
+      role([Capability.LOOTLOG_HERO_SIGHTINGS_READ], 200, 300),
+    ]);
+
     expect(canReadSourceEvent(heroReader, sighting({ lvl: 258 }))).toBe(true);
     expect(canReadSourceEvent(heroReader, sighting({ lvl: 350 }))).toBe(false);
     expect(canReadSourceEvent(heroReader, sighting(undefined))).toBe(false);
@@ -257,8 +260,8 @@ describe("source visibility at delivery", () => {
       canReadSourceEvent(heroReader, sighting({ lvl: 258 }, "other")),
     ).toBe(false);
 
-    const baseReader = reader([role([Capability.LOOTLOG_TIMERS_READ])]);
-    expect(canReadSourceEvent(baseReader, sighting({ lvl: 258 }))).toBe(false);
+    const timerReader = reader([role(timerRead, 200, 300)]);
+    expect(canReadSourceEvent(timerReader, sighting({ lvl: 258 }))).toBe(false);
   });
   test("keeps ordinary chat and text notifications independent of NPC level", () => {
     const session = reader([

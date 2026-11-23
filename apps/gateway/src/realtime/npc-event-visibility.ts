@@ -1,7 +1,7 @@
 import {
   canManageOwnPartyGathering,
+  canReadHeroSighting,
   canReadNpcFeatureSource,
-  HERO_SIGHTING_READ_FEATURE,
   type NpcFeature,
 } from "@lootlog/domain/npc-permissions";
 import {
@@ -193,15 +193,18 @@ const canReadFeatureEvent = (
   event: NpcEvent,
   routing: Routing,
 ): boolean => {
+  if (event.type === "hero-sighting.updated")
+    return (
+      routing.npcLevel !== undefined &&
+      canReadHeroSighting(guild.roles, routing.npcLevel)
+    );
+
   let feature: NpcFeature;
 
   switch (event.type) {
     case "timer.created":
     case "timer.deleted":
       feature = "timers";
-      break;
-    case "hero-sighting.updated":
-      feature = HERO_SIGHTING_READ_FEATURE;
       break;
     case "notification.sent":
     case "notification.going":

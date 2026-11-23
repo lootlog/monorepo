@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { Capability } from "@lootlog/schema/permissions";
 import {
+  canReadHeroSighting,
   canViewNpcTimer,
   type NpcPermissionData,
   type RolePermissionData,
@@ -63,5 +64,31 @@ describe("NPC timer permissions", () => {
         ]),
       ).toBe(true);
     }
+  });
+});
+
+describe("hero sighting permissions", () => {
+  it("does not grant sightings through hero timer access", () => {
+    expect(
+      canReadHeroSighting(
+        [
+          role([
+            Capability.LOOTLOG_TIMERS_READ,
+            Capability.LOOTLOG_TIMERS_HEROES_READ,
+          ]),
+        ],
+        150,
+      ),
+    ).toBe(false);
+  });
+
+  it("grants sightings only inside the level range of the role holding the capability", () => {
+    const roles = [
+      role([Capability.LOOTLOG_HERO_SIGHTINGS_READ], 100, 200),
+      role([], 1, 500),
+    ];
+
+    expect(canReadHeroSighting(roles, 150)).toBe(true);
+    expect(canReadHeroSighting(roles, 250)).toBe(false);
   });
 });

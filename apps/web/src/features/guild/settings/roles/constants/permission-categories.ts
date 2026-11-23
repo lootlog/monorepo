@@ -4,6 +4,7 @@ import {
   Shield,
   Package,
   Clock,
+  Radar,
   CalendarCheck,
   FileText,
   MessageCircle,
@@ -61,6 +62,16 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
       Capability.LOOTLOG_TIMERS_DELETE,
       Capability.LOOTLOG_TIMERS_TITANS_READ,
       Capability.LOOTLOG_TIMERS_HEROES_READ,
+    ],
+  },
+  {
+    groupKey: "heroSightings",
+    icon: Radar,
+    color: "text-teal-500",
+    bgColor: "bg-teal-500/20",
+    permissions: [
+      Capability.LOOTLOG_HERO_SIGHTINGS_READ,
+      Capability.LOOTLOG_HERO_SIGHTINGS_WRITE,
     ],
   },
   {

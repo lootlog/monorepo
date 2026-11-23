@@ -14,12 +14,7 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
 import { HttpApiBuilder } from "effect/http-api";
 
-import {
-  HERO_SIGHTING_WRITE_PERMISSION,
-  NPC_FEATURE_PERMISSIONS,
-  HERO_SIGHTING_READ_FEATURE,
-} from "@lootlog/domain/npc-permissions";
-import type { Capability as PermissionValue } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { applicationErrorResponse } from "../../application-error-response.js";
 import { LootlogApi } from "../../lootlog-api.js";
 
@@ -46,7 +41,7 @@ export class HeroSightingsAuthorization extends Context.Service<
     >;
     readonly requireGuild: (options: {
       readonly guildId: string;
-      readonly capability: PermissionValue;
+      readonly capability: Capability;
     }) => Effect.Effect<
       HeroSightingsGuildAccess,
       | HeroSightingsAccessDenied
@@ -57,15 +52,12 @@ export class HeroSightingsAuthorization extends Context.Service<
   }
 >()("@lootlog/api/http-api/hero-sightings/authorization") {}
 
-const READ_PERMISSION =
-  NPC_FEATURE_PERMISSIONS[HERO_SIGHTING_READ_FEATURE].base;
-
 const identity = Effect.flatMap(
   HeroSightingsAuthorization,
   (service) => service.identity,
 );
 
-const requireGuild = (guildId: string, capability: PermissionValue) =>
+const requireGuild = (guildId: string, capability: Capability) =>
   Effect.flatMap(HeroSightingsAuthorization, (service) =>
     service.requireGuild({ guildId, capability }),
   );
@@ -114,7 +106,10 @@ export const HeroSightingsHandlers = HttpApiBuilder.group(
       .handle("HeroSightingsControllerGetHeroSightings", ({ params, query }) =>
         toHttpResponse(
           Effect.flatMap(
-            requireGuild(params.guildId, READ_PERMISSION),
+            requireGuild(
+              params.guildId,
+              Capability.LOOTLOG_HERO_SIGHTINGS_READ,
+            ),
             (access) =>
               data((service) => service.getGuildSightings(access, query.world)),
           ),
@@ -125,7 +120,10 @@ export const HeroSightingsHandlers = HttpApiBuilder.group(
         ({ params, query }) =>
           toHttpResponse(
             Effect.flatMap(
-              requireGuild(params.guildId, READ_PERMISSION),
+              requireGuild(
+                params.guildId,
+                Capability.LOOTLOG_HERO_SIGHTINGS_READ,
+              ),
               (access) =>
                 data((service) =>
                   service.getHistory(access, query.world, query.hero),
@@ -136,7 +134,10 @@ export const HeroSightingsHandlers = HttpApiBuilder.group(
       .handle("HeroSightingsControllerAddHeroSighting", ({ params, payload }) =>
         toHttpResponse(
           Effect.flatMap(
-            requireGuild(params.guildId, HERO_SIGHTING_WRITE_PERMISSION),
+            requireGuild(
+              params.guildId,
+              Capability.LOOTLOG_HERO_SIGHTINGS_WRITE,
+            ),
             (access) => data((service) => service.addManual(access, payload)),
           ),
         ),
@@ -144,7 +145,10 @@ export const HeroSightingsHandlers = HttpApiBuilder.group(
       .handle("HeroSightingsControllerWithdrawHeroSighting", ({ params }) =>
         toHttpResponse(
           Effect.flatMap(
-            requireGuild(params.guildId, HERO_SIGHTING_WRITE_PERMISSION),
+            requireGuild(
+              params.guildId,
+              Capability.LOOTLOG_HERO_SIGHTINGS_WRITE,
+            ),
             (access) =>
               data((service) =>
                 service.withdraw(access, sightingId(params.sightingId)),
@@ -157,7 +161,10 @@ export const HeroSightingsHandlers = HttpApiBuilder.group(
         ({ params, payload }) =>
           toHttpResponse(
             Effect.flatMap(
-              requireGuild(params.guildId, HERO_SIGHTING_WRITE_PERMISSION),
+              requireGuild(
+                params.guildId,
+                Capability.LOOTLOG_HERO_SIGHTINGS_WRITE,
+              ),
               (access) =>
                 data((service) =>
                   service.claim(access, sightingId(params.sightingId), payload),
@@ -168,7 +175,10 @@ export const HeroSightingsHandlers = HttpApiBuilder.group(
       .handle("HeroSightingsControllerUnclaimHeroSighting", ({ params }) =>
         toHttpResponse(
           Effect.flatMap(
-            requireGuild(params.guildId, HERO_SIGHTING_WRITE_PERMISSION),
+            requireGuild(
+              params.guildId,
+              Capability.LOOTLOG_HERO_SIGHTINGS_WRITE,
+            ),
             (access) =>
               data((service) =>
                 service.unclaim(access, sightingId(params.sightingId)),
