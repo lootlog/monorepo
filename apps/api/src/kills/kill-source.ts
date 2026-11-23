@@ -1,6 +1,5 @@
 import { getTableColumns, gte } from "drizzle-orm";
-import { QueryBuilder, type PgColumn, type PgTable } from "drizzle-orm/pg-core";
-import { mapValues } from "es-toolkit";
+import { QueryBuilder } from "drizzle-orm/pg-core";
 import {
   guildKillBucketTable,
   guildKillTotalTable,
@@ -12,68 +11,66 @@ import {
 
 const query = new QueryBuilder();
 
-const totalFields = <Fields extends Record<string, PgColumn>>(
-  fields: Fields,
-  total: PgTable,
-) => {
-  const columns: Record<string, PgColumn> = getTableColumns(total);
-
-  // SAFETY: every bucket column except periodStart exists in its total table
-  // under the same name and type (see schema.ts).
-  return mapValues(fields, (_column, name) => columns[name]) as Fields;
-};
-
-export const userKillSource = (periodStart?: Date) => {
+const userKillBuckets = (periodStart: Date) => {
   const { periodStart: start, ...fields } =
     getTableColumns(userKillBucketTable);
 
-  return periodStart
-    ? query
-        .select(fields)
-        .from(userKillBucketTable)
-        .where(gte(start, periodStart))
-        .as("kills")
-    : query
-        .select(totalFields(fields, userKillTotalTable))
-        .from(userKillTotalTable)
-        .as("kills");
+  return query
+    .select(fields)
+    .from(userKillBucketTable)
+    .where(gte(start, periodStart))
+    .as("kills");
 };
 
-export const memberKillSource = (periodStart?: Date) => {
+export type UserKillSource = ReturnType<typeof userKillBuckets>;
+
+export const userKillSource = (periodStart?: Date): UserKillSource =>
+  periodStart
+    ? userKillBuckets(periodStart)
+    : query
+        .select(getTableColumns(userKillTotalTable))
+        .from(userKillTotalTable)
+        .as("kills");
+
+const memberKillBuckets = (periodStart: Date) => {
   const { periodStart: start, ...fields } = getTableColumns(
     memberKillBucketTable,
   );
 
-  return periodStart
-    ? query
-        .select(fields)
-        .from(memberKillBucketTable)
-        .where(gte(start, periodStart))
-        .as("kills")
-    : query
-        .select(totalFields(fields, memberKillTotalTable))
-        .from(memberKillTotalTable)
-        .as("kills");
+  return query
+    .select(fields)
+    .from(memberKillBucketTable)
+    .where(gte(start, periodStart))
+    .as("kills");
 };
 
-export const guildKillSource = (periodStart?: Date) => {
+export type MemberKillSource = ReturnType<typeof memberKillBuckets>;
+
+export const memberKillSource = (periodStart?: Date): MemberKillSource =>
+  periodStart
+    ? memberKillBuckets(periodStart)
+    : query
+        .select(getTableColumns(memberKillTotalTable))
+        .from(memberKillTotalTable)
+        .as("kills");
+
+const guildKillBuckets = (periodStart: Date) => {
   const { periodStart: start, ...fields } =
     getTableColumns(guildKillBucketTable);
 
-  return periodStart
-    ? query
-        .select(fields)
-        .from(guildKillBucketTable)
-        .where(gte(start, periodStart))
-        .as("kills")
-    : query
-        .select(totalFields(fields, guildKillTotalTable))
-        .from(guildKillTotalTable)
-        .as("kills");
+  return query
+    .select(fields)
+    .from(guildKillBucketTable)
+    .where(gte(start, periodStart))
+    .as("kills");
 };
 
-export type UserKillSource = ReturnType<typeof userKillSource>;
+export type GuildKillSource = ReturnType<typeof guildKillBuckets>;
 
-export type MemberKillSource = ReturnType<typeof memberKillSource>;
-
-export type GuildKillSource = ReturnType<typeof guildKillSource>;
+export const guildKillSource = (periodStart?: Date): GuildKillSource =>
+  periodStart
+    ? guildKillBuckets(periodStart)
+    : query
+        .select(getTableColumns(guildKillTotalTable))
+        .from(guildKillTotalTable)
+        .as("kills");
