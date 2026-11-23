@@ -1,0 +1,1 @@
+DROP TABLE "battle_object_deletions";

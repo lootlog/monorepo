@@ -179,6 +179,8 @@
     },
     "log": {
       "title": "Przebieg walki",
+      "unavailable": "Przebieg tej walki nie jest już dostępny",
+      "unavailableDescription": "Walka została zapisana przed zmianą sposobu przechowywania przebiegów. Jej wynik i statystyki pozostają bez zmian.",
       "turnPosition": "Tura {{current}} / {{total}}",
       "search": {
         "label": "Szukaj w przebiegu walki",

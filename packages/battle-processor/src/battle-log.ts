@@ -82,16 +82,6 @@ export type MatchmakingInfo = {
   dailyRewardsMax?: number | undefined;
 };
 
-export type ParsedBattlePayload = {
-  accountId: string;
-  characterId: string;
-  world: string;
-  events: ParsedMove[];
-  warriors: Record<string, BattleWarriorSnapshot>;
-  duration?: number | undefined;
-  matchmaking?: MatchmakingInfo | undefined;
-};
-
 export const NO_WINNER = "?";
 
 const parseHpPercentage = (hp: string): number | null => {

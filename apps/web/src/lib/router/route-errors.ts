@@ -64,3 +64,7 @@ export const rethrowNotFoundOrError = (cause: unknown): never => {
 
   throw cause;
 };
+
+export const ignoreNotFound = (cause: unknown): void => {
+  if (getRouteErrorStatus(cause) !== 404) throw cause;
+};

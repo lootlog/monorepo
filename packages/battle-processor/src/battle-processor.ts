@@ -3,9 +3,7 @@ import {
   parseBattleMoves,
   readMatchmakingInfo,
   type BattlePayload,
-  type BattleWarriorSnapshot,
   type MatchmakingInfo,
-  type ParsedBattlePayload,
   type ParsedMove,
 } from "./battle-log.js";
 import { CombatTotals } from "./combat-totals.js";
@@ -92,27 +90,6 @@ export class BattleProcessor {
           totals.loser !== "",
       }),
       matchmaking: readMatchmakingInfo(battleData.events),
-    };
-  }
-
-  processParsedBattle(battleData: ParsedBattlePayload): BattleAnalysis {
-    const roster = new WarriorRoster();
-
-    for (const [id, snapshot] of Object.entries<BattleWarriorSnapshot>(
-      battleData.warriors,
-    )) {
-      roster.add(id, snapshot);
-    }
-
-    return {
-      duration: battleData.duration ?? 0,
-      ...this.analyze({
-        roster,
-        characterId: battleData.characterId,
-        moves: battleData.events,
-        ended: () => true,
-      }),
-      matchmaking: battleData.matchmaking,
     };
   }
 

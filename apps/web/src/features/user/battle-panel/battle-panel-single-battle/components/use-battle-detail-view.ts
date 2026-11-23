@@ -37,6 +37,7 @@ export type BattleDetailViewProps = {
   battle: Battle | undefined;
   battleId: string;
   isTimelinePending: boolean;
+  isTimelineUnavailable: boolean;
   rawBattle: RawBattle | undefined;
   sideContent?: ReactNode;
   timeline: BattleTimelineResponseDtoOutput | undefined;

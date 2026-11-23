@@ -1,7 +1,7 @@
 import { OperationError } from "@lootlog/instrumentation/operation";
 import { acquireBullQueue, acquireBullWorker } from "@lootlog/database/bullmq";
 import { reconnectingBunRedisLayer } from "@lootlog/database/bun-redis";
-import { Context, Effect, FiberSet, Layer, Redacted, Schedule } from "effect";
+import { Context, Effect, FiberSet, Layer, Redacted } from "effect";
 import { Redis } from "effect/persistence";
 import {
   makeBattlelogOperations,
@@ -24,7 +24,6 @@ import { makeBattlePagination } from "#src/battles/analytics/pagination.service"
 import { BattlelogConfig } from "#src/config/env";
 import { makeBattleReadBudget } from "#src/database/battle-read-budget";
 import { drizzleDatabaseEffect, PgClientLive } from "#src/database/database";
-import { makeBattleObjectStorage } from "#src/infrastructure/battle-object-storage";
 import { makeRedisStore } from "#src/infrastructure/redis-store";
 import { makeWeaponKills } from "#src/battles/weapon-kills/weapon-kills";
 
@@ -70,20 +69,11 @@ export class BattlelogApplication extends Context.Service<
 
       const battlesService = makeBattles(
         drizzle,
-        makeBattleObjectStorage(redis, config.r2),
         redis,
         makeBattlePagination(drizzle, read),
         analyticsService,
         makeBattleListFilter(drizzle),
         metadataService,
-      );
-
-      yield* battlesService.drainObjectDeletions.pipe(
-        Effect.catch((error) =>
-          Effect.logError("Battle object cleanup retry failed", error),
-        ),
-        Effect.repeat(Schedule.spaced("5 seconds")),
-        Effect.forkScoped,
       );
 
       const queue = yield* acquireBullQueue<DeleteUserBattlesJobData>(

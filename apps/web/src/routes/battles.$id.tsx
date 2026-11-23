@@ -8,6 +8,7 @@ import {
   getPublicBattlesControllerGetPublicBattleTimelineQueryOptions,
 } from "@lootlog/client/battlelog";
 import {
+  ignoreNotFound,
   rethrowNotFoundOrError,
   withRouteLoaderCancellation,
 } from "@/lib/router/route-errors";
@@ -28,11 +29,13 @@ export const Route = createFileRoute("/battles/$id")({
               battleId: params.id,
             }),
           ),
-          context.queryClient.ensureQueryData(
-            getPublicBattlesControllerGetPublicBattleRawQueryOptions({
-              battleId: params.id,
-            }),
-          ),
+          context.queryClient
+            .ensureQueryData(
+              getPublicBattlesControllerGetPublicBattleRawQueryOptions({
+                battleId: params.id,
+              }),
+            )
+            .catch(ignoreNotFound),
         ]);
         void context.queryClient.prefetchQuery(
           getPublicBattlesControllerGetPublicBattleTimelineQueryOptions({

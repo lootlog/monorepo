@@ -7,6 +7,7 @@ import {
   useBattlesControllerGetBattleRawData,
   useBattlesControllerGetBattleTimeline,
 } from "@lootlog/client/battlelog";
+import { getApiErrorStatus } from "@lootlog/client/transport";
 import { useParams } from "@tanstack/react-router";
 
 export const BattlePanelSingleBattle = () => {
@@ -16,9 +17,10 @@ export const BattlePanelSingleBattle = () => {
 
   const { data: battle } = useBattlesControllerGetBattle({ battleId });
 
-  const { data: rawBattle } = useBattlesControllerGetBattleRawData({
-    battleId,
-  });
+  const { data: rawBattle, error: rawBattleError } =
+    useBattlesControllerGetBattleRawData({
+      battleId,
+    });
 
   const { data: timeline, isPending: isTimelinePending } =
     useBattlesControllerGetBattleTimeline({ battleId });
@@ -34,6 +36,7 @@ export const BattlePanelSingleBattle = () => {
       battle={battle}
       battleId={battleId}
       isTimelinePending={isTimelinePending}
+      isTimelineUnavailable={getApiErrorStatus(rawBattleError) === 404}
       rawBattle={rawBattle?.rawData}
       sideContent={
         shouldShowRecentOpponentBattles ? (

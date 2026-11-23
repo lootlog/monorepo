@@ -1,0 +1,51 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "a0f54b0f-fb8a-4d5f-b99c-9460e191aa52",
+  "prevIds": ["70bb9bce-6104-4d07-80da-2398be5ba4db"],
+  "footprints": [
+    {
+      "statementType": "drop_table",
+      "statementTarget": ["table", "public", "battle_object_deletions"],
+      "writes": [
+        "s|tbl|public.battle_object_deletions",
+        "n|tbl|public.battle_object_deletions",
+        "e|tbl|public.battle_object_deletions",
+        "n|rel|public.battle_object_deletions",
+        "n|type|public.battle_object_deletions"
+      ],
+      "reads": ["n|sch|public"]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "drop",
+      "key": "tables\u0000[\"public\",\"battle_object_deletions\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"battle_object_deletions\",\"battleId\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"battle_object_deletions\",\"userId\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"battle_object_deletions\",\"createdAt\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"battle_object_deletions\",\"retryAt\"]"
+    },
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"battle_object_deletions_retryAt_idx\"]"
+    },
+    {
+      "op": "drop",
+      "key": "pks\u0000[\"public\",\"battle_object_deletions\",\"battle_object_deletions_pkey\"]"
+    }
+  ]
+}

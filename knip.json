@@ -20,7 +20,7 @@
     },
     "apps/battlelog": {
       "entry": ["src/main.ts!"],
-      "project": ["src/**/*.ts!", "test/**/*.ts", "scripts/**/*.ts"]
+      "project": ["src/**/*.ts!", "test/**/*.ts"]
     },
     "apps/catalog": {
       "entry": ["src/main.ts!"],

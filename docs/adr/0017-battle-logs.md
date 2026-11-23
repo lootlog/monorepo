@@ -12,8 +12,9 @@ blow must be stored once, and no side effect may abort an accepted battle.
 Battles live in TimescaleDB hypertables partitioned by UUIDv7 battle id, with
 older chunks compressed. Queries and deletions must respect compression
 quirks, partition-key comparisons and planner behaviour. Battles saved before
-UUIDv7 ids still keep their timelines in R2 under legacy ids that public links
-use, and those links are a compatibility contract.
+UUIDv7 ids lost their timelines with the R2 bucket, but keep their records,
+statistics and the legacy ids that public links use, and those links are a
+compatibility contract.
 
 ## Decisions
 
@@ -22,13 +23,13 @@ use, and those links are a compatibility contract.
 - **`createBattleId`** (`apps/battlelog/src/battles/battle-id.ts`): a battle id is a UUIDv7 whose first 48 bits are `createdAt` in Unix milliseconds, enforced by the database, so ordering by id orders battles by save time and the id serves as the hypertable partition key.
 - **`boundaryId`** (`apps/battlelog/src/battles/battle-id.ts`): time bounds on battle ids are the smallest or largest UUIDv7 of a millisecond (`firstBattleIdAt`, `lastBattleIdAt`), because TimescaleDB compares its UUID partition column only with UUIDv7 values.
 - **`resolveBattleId`** (`apps/battlelog/src/battles/catalog/battle-catalog.ts`): accepts legacy pre-UUIDv7 ids through `battle_legacy_ids`, because old public battle links use them.
-- **`battleLegacyIds`** (`apps/battlelog/src/database/schema.ts`): keeps old public links and R2 object keys of pre-UUIDv7 battles; it can be dropped only together with the R2 bucket.
+- **`battleLegacyIds`** (`apps/battlelog/src/database/schema.ts`): keeps old public links of pre-UUIDv7 battles resolving.
 
 ### Storage layout
 
 - **Hypertables** (`apps/battlelog/src/database/schema.ts`): `battles` and `battle_timelines` are partitioned by battle id and created by the migration, because the Drizzle schema cannot express hypertables.
 - **`encodeBattleEvents`** (`apps/battlelog/src/battles/battle-timeline.ts`): a timeline stores only the Margonem events the client submitted, as zstd-compressed JSON (about a third smaller than jsonb with TOAST); parsed moves and the timeline view are derived on read.
-- **`getBattleObjectId`** and **`loadRawBattleData`** (`apps/battlelog/src/battles/battle-timeline-read.ts`): newer battles keep events in PostgreSQL `battle_timelines` and legacy ones in R2, so reads try PostgreSQL first and fall back to R2.
+- **`loadBattleEvents`** (`apps/battlelog/src/battles/battle-timeline-read.ts`): `battle_timelines` is the only source of battle events; a legacy battle without a row answers its timeline and raw views with 404, and the Web app shows its summary with the timeline marked unavailable.
 - **`battleWarriorFilters`** (`apps/battlelog/src/database/schema.ts`): duplicates filterable warrior columns keyed by owner with a covering primary key, because `battle_warriors` can only be read per battle. Rows are written and removed with their `battle_warriors` row and never change.
 
 ### Submission idempotency
@@ -50,9 +51,8 @@ use, and those links are a compatibility contract.
 
 ### Deletion
 
-- **`makeBattleDeletion`** and **`removeBattles`** (`apps/battlelog/src/battles/deletion/battle-deletion.ts`): deletion removes a battle's rows from every hypertable in one transaction, since they have no foreign keys or cascades, and records the R2 cleanup intent in the same transaction so cleanup retries need no battle row. Only legacy battles still own an R2 object.
+- **`makeBattleDeletion`** and **`removeBattles`** (`apps/battlelog/src/battles/deletion/battle-deletion.ts`): deletion removes a battle's rows, including its legacy id, from every table in one transaction, since they have no foreign keys or cascades.
 - **`removeBattles`** (`apps/battlelog/src/battles/deletion/battle-deletion.ts`): sets `timescaledb.max_tuples_decompressed_per_dml_transaction` to 0 for its transaction, so deleting a whole owner removes compressed batches without hitting the decompression limit.
-- **`deleteBattlesData`** (`apps/battlelog/src/infrastructure/battle-object-storage.ts`): an R2 batch delete fails as a whole when an error lacks a key, since no object is then known removed, and a cache-eviction failure after removal keeps the durable cleanup intent so the retry is safe.
 
 ### HTTP contract
 
@@ -66,6 +66,6 @@ use, and those links are a compatibility contract.
 
 - Every new battle table must be partitioned by battle id, and every query bound on time must use UUIDv7 boundary ids.
 - Filters on columns added after compression started must tolerate default-only compressed chunks; new boolean filters need a check against TimescaleDB's vectorized path.
-- Legacy ids, `battle_legacy_ids` and the R2 bucket stay until public links to pre-UUIDv7 battles are deliberately retired.
+- Legacy ids and `battle_legacy_ids` stay until public links to pre-UUIDv7 battles are deliberately retired.
 - Planner fences such as OFFSET 0 are load-bearing; removing one needs a measured plan on production-sized data.
 - New battle side effects must not run inside the creation transaction unless their failure is absorbed.

@@ -5,8 +5,6 @@ import type { BattleListFilter } from "#src/battles/catalog/battle-list-filter.s
 import type { BattleMetadata } from "#src/battles/catalog/battle-metadata.service";
 import type { BattlePagination } from "#src/battles/analytics/pagination.service";
 import { makeBattleTimelineRead } from "#src/battles/battle-timeline-read";
-import type { DrizzleDatabase } from "#src/database/database";
-import type { BattleObjectStorage } from "#src/infrastructure/battle-object-storage";
 import { makeBattleCreation } from "#src/battles/submission/battle-creation";
 import {
   defaultBattleDeduplicationTiming,
@@ -15,23 +13,13 @@ import {
   type BattleDeduplicationTiming,
 } from "#src/battles/submission/battle-deduplication";
 
-type BattlesDatabase = Parameters<typeof makeBattleDeletion>[0] & {
-  query: {
-    battles: Pick<DrizzleDatabase["query"]["battles"], "findFirst">;
-    battleLegacyIds: Pick<
-      DrizzleDatabase["query"]["battleLegacyIds"],
-      "findFirst"
-    >;
-    battleTimelines: Pick<
-      DrizzleDatabase["query"]["battleTimelines"],
-      "findFirst"
-    >;
-  };
-};
+type BattlesDatabase = Parameters<typeof makeBattleDeletion>[0] &
+  Parameters<typeof makeBattleCreation>[0] &
+  Parameters<typeof makeBattleCatalog>[0] &
+  Parameters<typeof makeBattleTimelineRead>[0];
 
 export const makeBattles = (
   drizzle: BattlesDatabase,
-  r2Service: BattleObjectStorage,
   redisService: BattleDeduplicationStore,
   paginationService: BattlePagination,
   battleAnalyticsService: BattleAnalytics,
@@ -39,11 +27,7 @@ export const makeBattles = (
   battleMetadataService: BattleMetadata,
   deduplicationTiming: BattleDeduplicationTiming = defaultBattleDeduplicationTiming,
 ) => {
-  const deletion = makeBattleDeletion(
-    drizzle,
-    r2Service,
-    battleAnalyticsService,
-  );
+  const deletion = makeBattleDeletion(drizzle, battleAnalyticsService);
 
   const creation = makeBattleCreation(
     drizzle,
@@ -59,12 +43,7 @@ export const makeBattles = (
     battleListFilterService,
   );
 
-  const timelineRead = makeBattleTimelineRead(
-    drizzle,
-    r2Service,
-    redisService,
-    catalog,
-  );
+  const timelineRead = makeBattleTimelineRead(drizzle, redisService, catalog);
 
   return {
     createBattle: creation.createBattle,
@@ -83,7 +62,6 @@ export const makeBattles = (
 
     deleteUserBattles: deletion.deleteUserBattles,
     deleteBattle: deletion.deleteBattle,
-    drainObjectDeletions: deletion.drain,
   };
 };
 

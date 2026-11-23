@@ -35,9 +35,11 @@ export const PublicBattle = () => {
     return <PublicBattleSkeleton />;
   }
 
-  const error = battleError ?? rawBattleError;
+  const isTimelineUnavailable = getRouteErrorStatus(rawBattleError) === 404;
 
-  if (error || !battle || !rawBattle) {
+  const error = battleError ?? (isTimelineUnavailable ? null : rawBattleError);
+
+  if (error || !battle) {
     return (
       <div className="flex min-h-dvh bg-background">
         <RouteErrorState
@@ -54,7 +56,8 @@ export const PublicBattle = () => {
         battle={battle}
         battleId={battleId}
         isTimelinePending={isTimelinePending}
-        rawBattle={rawBattle.rawData}
+        isTimelineUnavailable={isTimelineUnavailable}
+        rawBattle={rawBattle?.rawData}
         timeline={timeline}
       />
     </div>
