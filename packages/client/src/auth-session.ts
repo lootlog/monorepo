@@ -1,3 +1,4 @@
+import { webSignInErrorUrl } from "@lootlog/domain/public-sites";
 import { useQueryClient } from "@tanstack/react-query";
 import { inferAdditionalFields } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
@@ -23,14 +24,14 @@ export type LootlogAuthClient = ReturnType<typeof createLootlogAuthClient>;
 
 type SignInOptions = Pick<
   Parameters<LootlogAuthClient["signIn"]["social"]>[0],
-  "callbackURL" | "errorCallbackURL" | "scopes"
->;
+  "scopes"
+> & { callbackURL: string; webOrigin: string };
 
 export const useDiscordSignIn = (authClient: LootlogAuthClient) => {
   const attemptPending = useRef(false);
   const [status, setStatus] = useState<"idle" | "pending" | "failed">("idle");
 
-  const signIn = async (options: SignInOptions) => {
+  const signIn = async ({ webOrigin, ...options }: SignInOptions) => {
     if (attemptPending.current) return;
 
     attemptPending.current = true;
@@ -48,7 +49,11 @@ export const useDiscordSignIn = (authClient: LootlogAuthClient) => {
         return;
       }
 
-      const oauthOptions = { ...options, provider: "discord" as const };
+      const oauthOptions = {
+        ...options,
+        errorCallbackURL: webSignInErrorUrl(webOrigin, options.callbackURL),
+        provider: "discord" as const,
+      };
 
       const result = session.data
         ? await authClient.linkSocial(oauthOptions)

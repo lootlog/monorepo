@@ -8,6 +8,8 @@ import { Button } from "@lootlog/ui/components/button";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useState } from "react";
 import { KeyManager } from "@/components/key-manager";
+import { getPortalEnvironment } from "@/lib/environment";
+import { webAppOrigin } from "@lootlog/schema/api-services";
 import { portalText as t } from "@/lib/translations";
 
 export function KeySession({ authClient }: { authClient: LootlogAuthClient }) {
@@ -19,6 +21,7 @@ export function KeySession({ authClient }: { authClient: LootlogAuthClient }) {
   const login = () =>
     signIn.signIn({
       callbackURL: `${location.origin}${import.meta.env.BASE_URL}keys`,
+      webOrigin: webAppOrigin(getPortalEnvironment(location.hostname)),
     });
 
   const signOut = () => {

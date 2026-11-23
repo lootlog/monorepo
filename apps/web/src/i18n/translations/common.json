@@ -4,6 +4,7 @@
     "template": "{{title}} - {{appName}}",
     "contextTemplate": "{{title}} - {{context}} - {{appName}}",
     "signin": "Logowanie",
+    "signinError": "Błąd logowania",
     "init": "Start",
     "publicBattle": "Walka #{{id}}",
     "fallback": "Lootlog"

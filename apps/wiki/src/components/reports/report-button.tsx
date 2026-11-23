@@ -35,7 +35,7 @@ export function ReportButton({
   subjectId,
   name,
 }: ReportButtonProps) {
-  const { authClient } = useWikiContext();
+  const { config, authClient } = useWikiContext();
   const { session } = useSession();
   const request = useSignedInCatalogRequest();
   const signIn = useDiscordSignIn(authClient);
@@ -91,7 +91,10 @@ export function ReportButton({
                 type="button"
                 disabled={signIn.isPending}
                 onClick={() =>
-                  void signIn.signIn({ callbackURL: window.location.href })
+                  void signIn.signIn({
+                    callbackURL: window.location.href,
+                    webOrigin: config.webAppUrl,
+                  })
                 }
               >
                 <ButtonLoadingContent loading={signIn.isPending}>

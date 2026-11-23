@@ -1,6 +1,7 @@
 import {
   baseServiceConfig,
   type BaseServiceConfiguration,
+  webAppUrlConfig,
 } from "@lootlog/instrumentation/service-config";
 import {
   type CallerTokens,
@@ -25,11 +26,6 @@ export interface BotConfigValue extends BaseServiceConfiguration {
   readonly webAppUrl: string;
 }
 
-const WEB_APP_URL_BY_ENVIRONMENT = new Map([
-  ["prod", "https://lootlog.pl"],
-  ["dev", "https://dev.lootlog.pl"],
-]);
-
 export class BotConfig extends Context.Service<BotConfig, BotConfigValue>()(
   "@lootlog/discord-bot/BotConfig",
 ) {
@@ -37,7 +33,6 @@ export class BotConfig extends Context.Service<BotConfig, BotConfigValue>()(
     BotConfig,
     Effect.gen(function* () {
       const base = yield* baseServiceConfig("discord-bot");
-      const { environment } = base;
 
       const value = yield* Config.all({
         rpc: Config.all({
@@ -52,11 +47,7 @@ export class BotConfig extends Context.Service<BotConfig, BotConfigValue>()(
         }),
         discordBotToken: Config.Redacted("DISCORD_BOT_TOKEN"),
         rabbitmqUri: Config.Redacted("RABBITMQ_URI"),
-        webAppUrl: Config.String("WEB_APP_URL").pipe(
-          Config.withDefault(
-            WEB_APP_URL_BY_ENVIRONMENT.get(environment) ?? "http://localhost",
-          ),
-        ),
+        webAppUrl: webAppUrlConfig,
       });
 
       return BotConfig.of({ ...base, ...value });

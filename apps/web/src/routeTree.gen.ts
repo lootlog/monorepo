@@ -15,6 +15,7 @@ import { Route as SigninRouteImport } from './routes/signin'
 import { Route as AuthenticatedGuildIdRouteImport } from './routes/_authenticated/$guildId'
 import { Route as AuthenticatedAtmeRouteImport } from './routes/_authenticated/@me'
 import { Route as BattlesIdRouteImport } from './routes/battles.$id'
+import { Route as SigninErrorRouteImport } from './routes/signin_.error'
 import { Route as AuthenticatedGuildIdIndexRouteImport } from './routes/_authenticated/$guildId/index'
 import { Route as AuthenticatedGuildIdActivityLogsRouteImport } from './routes/_authenticated/$guildId/activity-logs'
 import { Route as AuthenticatedGuildIdDocsRouteImport } from './routes/_authenticated/$guildId/docs'
@@ -121,6 +122,11 @@ const AuthenticatedAtmeRoute = AuthenticatedAtmeRouteImport.update({
 const BattlesIdRoute = BattlesIdRouteImport.update({
   id: '/battles/$id',
   path: '/battles/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SigninErrorRoute = SigninErrorRouteImport.update({
+  id: '/signin_/error',
+  path: '/signin/error',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedGuildIdIndexRoute =
@@ -599,6 +605,7 @@ export interface FileRoutesByFullPath {
   '/$guildId': typeof AuthenticatedGuildIdRouteWithChildren
   '/@me': typeof AuthenticatedAtmeRouteWithChildren
   '/battles/$id': typeof BattlesIdRoute
+  '/signin/error': typeof SigninErrorRoute
   '/$guildId/activity-logs': typeof AuthenticatedGuildIdActivityLogsRoute
   '/$guildId/docs': typeof AuthenticatedGuildIdDocsRouteWithChildren
   '/$guildId/events': typeof AuthenticatedGuildIdEventsRoute
@@ -683,6 +690,7 @@ export interface FileRoutesByTo {
   '/init': typeof InitRoute
   '/signin': typeof SigninRoute
   '/battles/$id': typeof BattlesIdRoute
+  '/signin/error': typeof SigninErrorRoute
   '/$guildId/activity-logs': typeof AuthenticatedGuildIdActivityLogsRoute
   '/$guildId/events': typeof AuthenticatedGuildIdEventsRoute
   '/$guildId/hero-sightings': typeof AuthenticatedGuildIdHeroSightingsRoute
@@ -760,6 +768,7 @@ export interface FileRoutesById {
   '/_authenticated/$guildId': typeof AuthenticatedGuildIdRouteWithChildren
   '/_authenticated/@me': typeof AuthenticatedAtmeRouteWithChildren
   '/battles/$id': typeof BattlesIdRoute
+  '/signin_/error': typeof SigninErrorRoute
   '/_authenticated/$guildId/activity-logs': typeof AuthenticatedGuildIdActivityLogsRoute
   '/_authenticated/$guildId/docs': typeof AuthenticatedGuildIdDocsRouteWithChildren
   '/_authenticated/$guildId/events': typeof AuthenticatedGuildIdEventsRoute
@@ -848,6 +857,7 @@ export interface FileRouteTypes {
     | '/$guildId'
     | '/@me'
     | '/battles/$id'
+    | '/signin/error'
     | '/$guildId/activity-logs'
     | '/$guildId/docs'
     | '/$guildId/events'
@@ -932,6 +942,7 @@ export interface FileRouteTypes {
     | '/init'
     | '/signin'
     | '/battles/$id'
+    | '/signin/error'
     | '/$guildId/activity-logs'
     | '/$guildId/events'
     | '/$guildId/hero-sightings'
@@ -1008,6 +1019,7 @@ export interface FileRouteTypes {
     | '/_authenticated/$guildId'
     | '/_authenticated/@me'
     | '/battles/$id'
+    | '/signin_/error'
     | '/_authenticated/$guildId/activity-logs'
     | '/_authenticated/$guildId/docs'
     | '/_authenticated/$guildId/events'
@@ -1093,6 +1105,7 @@ export interface RootRouteChildren {
   InitRoute: typeof InitRoute
   SigninRoute: typeof SigninRoute
   BattlesIdRoute: typeof BattlesIdRoute
+  SigninErrorRoute: typeof SigninErrorRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1137,6 +1150,13 @@ declare module '@tanstack/react-router' {
       path: '/battles/$id'
       fullPath: '/battles/$id'
       preLoaderRoute: typeof BattlesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signin_/error': {
+      id: '/signin_/error'
+      path: '/signin/error'
+      fullPath: '/signin/error'
+      preLoaderRoute: typeof SigninErrorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/$guildId/': {
@@ -2060,6 +2080,7 @@ const rootRouteChildren: RootRouteChildren = {
   InitRoute: InitRoute,
   SigninRoute: SigninRoute,
   BattlesIdRoute: BattlesIdRoute,
+  SigninErrorRoute: SigninErrorRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

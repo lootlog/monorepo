@@ -36,7 +36,7 @@ const { Route } = await import("../../routes/signin");
 
 await initializeTestTranslations();
 
-const renderSignIn = async (error = "state_mismatch", redirect = "/@me") => {
+const renderSignIn = async (redirect = "/@me") => {
   const root = createRootRoute();
 
   const signin = createRoute({
@@ -49,9 +49,7 @@ const renderSignIn = async (error = "state_mismatch", redirect = "/@me") => {
   const router = createRouter({
     routeTree: root.addChildren([signin]),
     history: createMemoryHistory({
-      initialEntries: [
-        `/signin?error=${error}&redirect=${encodeURIComponent(redirect)}`,
-      ],
+      initialEntries: [`/signin?redirect=${encodeURIComponent(redirect)}`],
     }),
   });
 
@@ -73,33 +71,8 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("SignIn OAuth recovery", () => {
-  it("shows a callback failure without automatically restarting OAuth", async () => {
-    await renderSignIn();
-    expect(screen.getByRole("alert").textContent).toBe(
-      "auth.signin.callbackErrors.expired",
-    );
-    expect(signInFetch).not.toHaveBeenCalled();
-  });
-
-  it("tells a player without a Discord email how to fix the account", async () => {
-    await renderSignIn("email_not_found");
-    expect(screen.getByRole("alert").textContent).toBe(
-      "auth.signin.callbackErrors.emailMissing",
-    );
-  });
-
-  it.each(["unable_to_create_user", "constructor"])(
-    "falls back to the generic callback failure for the unmapped code %s",
-    async (error) => {
-      await renderSignIn(error);
-      expect(screen.getByRole("alert").textContent).toBe(
-        "auth.signin.callbackFailed",
-      );
-    },
-  );
-
-  it("starts one OAuth flow after an explicit retry", async () => {
+describe("SignIn", () => {
+  it("starts one OAuth flow that reports failures on the sign-in error page", async () => {
     await renderSignIn();
     const button = screen.getByRole("button", { name: "auth.signin.submit" });
     fireEvent.click(button);
@@ -109,7 +82,7 @@ describe("SignIn OAuth recovery", () => {
       JSON.parse(String(signInFetch.mock.calls[0]?.[1]?.body)),
     ).toMatchObject({
       callbackURL: `${window.location.origin}/@me`,
-      errorCallbackURL: window.location.href,
+      errorCallbackURL: `${window.location.origin}/signin/error?retry=${encodeURIComponent(`${window.location.origin}/@me`)}`,
       provider: "discord",
     });
   });
@@ -122,7 +95,7 @@ describe("SignIn OAuth recovery", () => {
   ])(
     "never sends the OAuth callback off-origin for redirect %j",
     async (redirect) => {
-      await renderSignIn(undefined, redirect);
+      await renderSignIn(redirect);
       fireEvent.click(
         screen.getByRole("button", { name: "auth.signin.submit" }),
       );

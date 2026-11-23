@@ -170,7 +170,7 @@ it.each([
   ["/signin", "/42"],
   ["/signin?redirect=%2F43%2Ftimers", "/43/timers"],
   ["/signin?redirect=%2F%40me", "/@me"],
-  ["/signin?error=access_denied", "/signin"],
+  ["/signin?error=access_denied", "/signin/error"],
 ])(
   "opens %s at its intended destination",
   async (initialEntry, expectedPath) => {

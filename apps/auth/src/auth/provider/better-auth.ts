@@ -1,5 +1,6 @@
 import { apiKey, API_KEY_ERROR_CODES } from "@better-auth/api-key";
 import { DISCORD_AUTH_SCOPES } from "@lootlog/schema/discord";
+import { WEB_SIGN_IN_ERROR_PATH } from "@lootlog/domain/public-sites";
 import type { AuthProvider } from "#src/auth/auth-service";
 import { runLogEffect } from "@lootlog/instrumentation";
 import { betterAuth, type BetterAuthOptions } from "better-auth";
@@ -112,6 +113,9 @@ export const createLootlogAuth = ({
     appName: "@lootlog/auth",
     logger: betterAuthLogger,
     hooks: { after: logOAuthCallbackError },
+    onAPIError: {
+      errorURL: new URL(WEB_SIGN_IN_ERROR_PATH, config.webAppUrl).toString(),
+    },
     baseURL: betterAuthBaseURL,
     database: drizzleAdapter(database, {
       provider: "pg",

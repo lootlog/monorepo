@@ -29,6 +29,7 @@
     "@better-auth/api-key": "1.7.16",
     "@effect/sql-pg": "catalog:",
     "@lootlog/database": "workspace:*",
+    "@lootlog/domain": "workspace:*",
     "@lootlog/instrumentation": "workspace:*",
     "@lootlog/protocol": "workspace:*",
     "@lootlog/rpc": "workspace:*",
