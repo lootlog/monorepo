@@ -7,6 +7,7 @@ import {
   getBattlesControllerGetBattleRawDataQueryOptions,
 } from "@lootlog/client/battlelog";
 import {
+  ignoreNotFound,
   rethrowNotFoundOrError,
   withRouteLoaderCancellation,
 } from "@/lib/router/route-errors";
@@ -34,11 +35,13 @@ export const Route = createFileRoute(
               battleId: params.battleId,
             }),
           ),
-          context.queryClient.ensureQueryData(
-            getBattlesControllerGetBattleRawDataQueryOptions({
-              battleId: params.battleId,
-            }),
-          ),
+          context.queryClient
+            .ensureQueryData(
+              getBattlesControllerGetBattleRawDataQueryOptions({
+                battleId: params.battleId,
+              }),
+            )
+            .catch(ignoreNotFound),
         ]);
 
         return { battle };
