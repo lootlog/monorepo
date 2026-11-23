@@ -1,16 +1,14 @@
 import { apiKeyEndpointPolicyLayer } from "@lootlog/protocol/http/api-key-http";
 import { BearerSecurityPassthrough } from "@lootlog/protocol/http/bearer-security";
 import { readForwardAuthIdentity } from "@lootlog/schema/api-key-policy";
-import { ContextLogger } from "@lootlog/instrumentation";
 import { OperationError } from "@lootlog/instrumentation/operation";
 import {
   serviceApiRoutes,
   serviceHttpServer,
 } from "@lootlog/instrumentation/service";
-import { Cause, Effect, Layer, Option, Schema, SchemaIssue } from "effect";
+import { Effect, Layer, Schema, SchemaIssue } from "effect";
 import {
   HttpRouter,
-  HttpMiddleware,
   HttpServerRequest,
   HttpServerError,
   type HttpServerResponse,
@@ -55,8 +53,6 @@ import {
 } from "@lootlog/protocol/http/schema-error-response";
 
 export type { BattlelogOperations };
-
-const logger = new ContextLogger("BattlelogHttpApi");
 
 const currentUserId = Effect.fn("Battlelog.currentUserId")(function* () {
   const request = yield* HttpServerRequest.HttpServerRequest;
@@ -333,25 +329,6 @@ export const BattlelogRoutes = serviceApiRoutes(BattlelogApi, {
   Layer.provide(SchemaErrorResponseLive),
 );
 
-export const battlelogHttpMiddleware = HttpMiddleware.make(
-  <E, R>(
-    effect: Effect.Effect<HttpServerResponse.HttpServerResponse, E, R>,
-  ): Effect.Effect<
-    HttpServerResponse.HttpServerResponse,
-    E,
-    R | HttpServerRequest.HttpServerRequest
-  > =>
-    Effect.tapCause(effect, (cause) =>
-      Effect.sync(() => {
-        const [, failure] = HttpServerError.causeResponseStripped(cause);
-
-        if (Option.isSome(failure) && !Cause.hasInterruptsOnly(failure.value)) {
-          logger.error("Unhandled Battlelog HTTP failure", failure.value);
-        }
-      }),
-    ),
-);
-
 export const BattlelogHttpServer = Layer.unwrap(
   Effect.map(BattlelogApplication, (application) =>
     serviceHttpServer({
@@ -361,7 +338,6 @@ export const BattlelogHttpServer = Layer.unwrap(
         ),
       ),
       port: application.port,
-      middleware: battlelogHttpMiddleware,
     }),
   ),
 );

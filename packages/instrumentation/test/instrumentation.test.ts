@@ -1,5 +1,10 @@
 import { describe, expect, test } from "bun:test";
-import { Effect, Fiber, Layer, Logger, Metric } from "effect";
+import {
+  API_KEY_ACCESS_HEADER,
+  AUTH_DISCORD_ID_HEADER,
+  AUTH_USER_ID_HEADER,
+} from "@lootlog/schema/api-key-access";
+import { Effect, Fiber, Layer, Logger, Metric, References } from "effect";
 import { HttpRouter, HttpServer, HttpServerResponse } from "effect/http";
 import {
   httpServerDuration,
@@ -256,5 +261,127 @@ describe("HTTP server metrics", () => {
     expect(count.count).toBe(1);
     expect(duration.count).toBe(1);
     expect(duration.sum).toBe(0.012);
+  });
+
+  test("logs each rejected request once with its error code and caller", async () => {
+    const annotations: unknown[] = [];
+
+    const logger = Logger.make(({ fiber }) => {
+      annotations.push(fiber.getRef(References.CurrentLogAnnotations));
+    });
+
+    const boundary = HttpRouter.toWebHandler(
+      HttpRouter.add(
+        "POST",
+        "/loots",
+        HttpServerResponse.jsonUnsafe(
+          { code: "NPC_WT_TOO_LOW", message: "Rejected" },
+          { status: 400 },
+        ),
+      ).pipe(
+        Layer.merge(
+          HttpRouter.add(
+            "GET",
+            "/members",
+            Effect.die(
+              HttpServerResponse.jsonUnsafe(
+                { code: "FORBIDDEN" },
+                { status: 403 },
+              ),
+            ),
+          ),
+        ),
+        Layer.provide(HttpServer.layerServices),
+        Layer.provide(httpServerRouteMetrics),
+        Layer.merge(Logger.layer([logger])),
+      ),
+      { middleware: httpServerMetrics },
+    );
+
+    try {
+      await boundary.handler(
+        new Request("http://localhost/loots?world=x", { method: "POST" }),
+      );
+      await boundary.handler(
+        new Request("http://localhost/members", {
+          headers: {
+            [AUTH_USER_ID_HEADER]: "user-1",
+            [AUTH_DISCORD_ID_HEADER]: "discord-1",
+            [API_KEY_ACCESS_HEADER]: JSON.stringify({
+              keyId: "key-1",
+              organizationIds: [],
+              mode: "read",
+              personalData: false,
+              expiresAt: null,
+            }),
+            "user-agent": "integration-script/1.0",
+          },
+        }),
+      );
+
+      expect(annotations).toEqual([
+        {
+          "http.method": "POST",
+          "http.url": "/loots",
+          "http.status": 400,
+          "http.error_code": "NPC_WT_TOO_LOW",
+        },
+        {
+          "http.method": "GET",
+          "http.url": "/members",
+          "http.status": 403,
+          "http.error_code": "FORBIDDEN",
+          "user.id": "user-1",
+          "api_key.id": "key-1",
+          "user_agent.original": "integration-script/1.0",
+        },
+      ]);
+    } finally {
+      await boundary.dispose();
+    }
+  });
+
+  test("logs an aborted client request as a response, not a failure", async () => {
+    const messages: unknown[] = [];
+    const logger = Logger.make(({ message }) => messages.push(message));
+    const started = Promise.withResolvers<void>();
+
+    const boundary = HttpRouter.toWebHandler(
+      HttpRouter.add(
+        "GET",
+        "/aborted",
+        Effect.sync(() => started.resolve()).pipe(Effect.andThen(Effect.never)),
+      ).pipe(
+        Layer.provide(HttpServer.layerServices),
+        Layer.provide(httpServerRouteMetrics),
+        Layer.merge(Logger.layer([logger])),
+      ),
+      { middleware: httpServerMetrics },
+    );
+
+    const counter = Metric.withAttributes(httpServerRequestCount, {
+      "http.request.method": "GET",
+      "http.response.status_code": "499",
+      "http.route": "/aborted",
+    });
+
+    try {
+      const before = await Effect.runPromise(Metric.value(counter));
+      const controller = new AbortController();
+
+      const response = boundary.handler(
+        new Request("http://localhost/aborted", { signal: controller.signal }),
+      );
+
+      await started.promise;
+      controller.abort();
+      expect((await response).status).toBe(499);
+      expect(messages).toEqual([["Sent HTTP response"]]);
+      expect(
+        (await Effect.runPromise(Metric.value(counter))).count - before.count,
+      ).toBe(1);
+    } finally {
+      await boundary.dispose();
+    }
   });
 });

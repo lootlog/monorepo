@@ -1,5 +1,17 @@
-import { Clock, Context, Effect, Exit, FiberSet, Metric } from "effect";
+import { readForwardAuthIdentity } from "@lootlog/schema/api-key-policy";
 import {
+  Cause,
+  Clock,
+  Context,
+  Effect,
+  Exit,
+  FiberSet,
+  Metric,
+  Option,
+  Schema,
+} from "effect";
+import {
+  HttpBody,
   HttpMiddleware,
   HttpRouter,
   HttpServerError,
@@ -142,6 +154,82 @@ export const isHealthcheck = (url: string) =>
 
 const slowRequestLogThresholdMilliseconds = 1_000;
 
+const ErrorResponseCode = Schema.fromJsonString(
+  Schema.Struct({ code: Schema.String }),
+);
+
+const decodeErrorResponseCode = Schema.decodeUnknownOption(ErrorResponseCode);
+
+const maxErrorResponseCodeBodyBytes = 4_096;
+
+const errorResponseCode = (response: HttpServerResponse.HttpServerResponse) => {
+  const { body } = response;
+
+  if (
+    response.status < 400 ||
+    !(body instanceof HttpBody.Uint8Array) ||
+    !body.contentType.endsWith("json") ||
+    body.contentLength > maxErrorResponseCodeBodyBytes
+  ) {
+    return undefined;
+  }
+
+  return Option.getOrUndefined(
+    decodeErrorResponseCode(body.text ?? new TextDecoder().decode(body.body)),
+  )?.code;
+};
+
+const requestPath = (url: string) => url.split(/[?#]/u, 1)[0];
+
+const httpCallerAnnotations = (
+  request: HttpServerRequest.HttpServerRequest,
+) => {
+  const identity = readForwardAuthIdentity(request.headers);
+
+  return {
+    "user.id": identity?.userId,
+    "api_key.id": identity?.apiKey?.keyId,
+    "user_agent.original": request.headers["user-agent"],
+  };
+};
+
+const isClientAbortOnly = (cause: Cause.Cause<unknown>) =>
+  cause.reasons.every(
+    (reason) =>
+      Cause.isInterruptReason(reason) &&
+      reason.annotations.has(HttpServerError.ClientAbort.key),
+  );
+
+const logHttpResponse = (
+  request: HttpServerRequest.HttpServerRequest,
+  exit: Exit.Exit<HttpServerResponse.HttpServerResponse, unknown>,
+) => {
+  const [response, cause] = Exit.isFailure(exit)
+    ? HttpServerError.causeResponseStripped(exit.cause)
+    : [exit.value, Option.none()];
+
+  const message =
+    Option.isSome(cause) && !isClientAbortOnly(cause.value)
+      ? cause.value
+      : "Sent HTTP response";
+
+  const annotations = {
+    "http.method": request.method,
+    "http.url": requestPath(request.url),
+    "http.status": response.status,
+    "http.error_code": errorResponseCode(response),
+    ...httpCallerAnnotations(request),
+  };
+
+  return Effect.log(message).pipe(
+    Effect.annotateLogs(
+      Object.fromEntries(
+        Object.entries(annotations).filter(([, value]) => value !== undefined),
+      ),
+    ),
+  );
+};
+
 export const httpServerMetrics = HttpMiddleware.make(
   <E, R>(
     httpApp: Effect.Effect<
@@ -160,7 +248,7 @@ export const httpServerMetrics = HttpMiddleware.make(
       const startedAt = yield* Clock.currentTimeNanos;
       const metrics: RequestMetricsState = {};
 
-      return yield* httpApp.pipe(
+      return yield* HttpMiddleware.withLoggerDisabled(httpApp).pipe(
         Effect.onExit((exit) =>
           Effect.gen(function* () {
             const completedAt = yield* Clock.currentTimeNanos;
@@ -177,15 +265,16 @@ export const httpServerMetrics = HttpMiddleware.make(
             });
 
             if (
-              Exit.isSuccess(exit) &&
-              status < 400 &&
-              durationMilliseconds < slowRequestLogThresholdMilliseconds
+              Exit.isFailure(exit) ||
+              status >= 400 ||
+              durationMilliseconds >= slowRequestLogThresholdMilliseconds
             ) {
-              yield* HttpMiddleware.withLoggerDisabled(Effect.void);
+              yield* logHttpResponse(request, exit);
             }
           }),
         ),
         Effect.provideService(RequestMetrics, metrics),
+        Effect.withLogSpan("http.span"),
       );
     }),
 );
