@@ -1,4 +1,4 @@
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { expect, it } from "bun:test";
 import { sql } from "drizzle-orm";
 import {
@@ -54,14 +54,14 @@ it("isolates concurrently acquired boundaries and keeps the other database alive
       {
         boundary: first,
         name: "First boundary",
-        permissions: [Permission.LOOTLOG_CHAT_READ],
+        permissions: [Capability.LOOTLOG_CHAT_READ],
       },
       {
         boundary: second,
         name: "Second boundary",
         permissions: [
-          Permission.LOOTLOG_CHAT_READ,
-          Permission.LOOTLOG_CHAT_WRITE,
+          Capability.LOOTLOG_CHAT_READ,
+          Capability.LOOTLOG_CHAT_WRITE,
         ],
       },
     ]) {
@@ -102,8 +102,8 @@ it("isolates concurrently acquired boundaries and keeps the other database alive
       {
         name: "Second boundary",
         permissions: [
-          Permission.LOOTLOG_CHAT_READ,
-          Permission.LOOTLOG_CHAT_WRITE,
+          Capability.LOOTLOG_CHAT_READ,
+          Capability.LOOTLOG_CHAT_WRITE,
         ],
       },
     ]);

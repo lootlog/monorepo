@@ -1,3 +1,4 @@
+import type { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import {
   type CharacterAurasFailure,
   CharacterAurasData,
@@ -11,7 +12,7 @@ import { LootlogApi } from "../../lootlog-api.js";
 
 export class CharacterAurasIdentity extends Context.Service<
   CharacterAurasIdentity,
-  { readonly userId: Effect.Effect<string> }
+  { readonly userId: Effect.Effect<string, never, ForwardAuthIdentity> }
 >()("@lootlog/api/http-api/character-auras/identity") {}
 
 const withUser = <A, E>(

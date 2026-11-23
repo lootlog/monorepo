@@ -9,14 +9,10 @@ import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useGuildWorldFromUrl } from "@/hooks/context/use-guild-world";
 import { rememberOrganization } from "@/lib/last-organization";
 import {
-  loadOrganization,
-  loadOrganizationShell,
+  type loadOrganization,
+  loadOrganizationRoute,
   ORGANIZATION_OPEN_PENDING_MS,
 } from "@/lib/router/organization-loader";
-import {
-  rethrowNotFoundOrError,
-  withRouteLoaderCancellation,
-} from "@/lib/router/route-errors";
 import { Option, Schema } from "effect";
 
 const rememberVisitedOrganization = (match: {
@@ -70,25 +66,7 @@ export const Route = createFileRoute("/_authenticated/$guildId")({
       guildId: params.guildId,
     };
   },
-  loader: ({ abortController, context, params }) =>
-    withRouteLoaderCancellation(abortController, async () => {
-      try {
-        const organization = await loadOrganization(
-          context.queryClient,
-          params.guildId,
-        );
-
-        await loadOrganizationShell(
-          context.queryClient,
-          params.guildId,
-          organization.accessPolicy,
-        );
-
-        return organization;
-      } catch (error) {
-        rethrowNotFoundOrError(error);
-      }
-    }),
+  loader: loadOrganizationRoute,
   onEnter: rememberVisitedOrganization,
   onStay: rememberVisitedOrganization,
   errorComponent: GuildRouteError,

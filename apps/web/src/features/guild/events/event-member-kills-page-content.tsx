@@ -180,17 +180,7 @@ export const EventMemberKillsPageContent = ({
     },
   );
 
-  const {
-    data: killsData,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading: killsLoading,
-    error: killsError,
-    isFetchNextPageError,
-    isFetching,
-    refetch,
-  } = useEventMemberKillHistory({
+  const killsQuery = useEventMemberKillHistory({
     guildId: queryGuildId,
     eventId: queryEventId,
     memberId: queryMemberId,
@@ -239,8 +229,8 @@ export const EventMemberKillsPageContent = ({
   }
 
   const heroes = event.heroNpcs ?? [];
-  const allKills = killsData?.pages.flatMap((page) => page.items) ?? [];
-  const member = killsData?.pages[0]?.member;
+  const allKills = killsQuery.data?.pages.flatMap((page) => page.items) ?? [];
+  const member = killsQuery.data?.pages[0]?.member;
   const memberIdNumber = Number.parseInt(queryMemberId, 10);
 
   const selectedHero = selectedHeroId
@@ -309,15 +299,7 @@ export const EventMemberKillsPageContent = ({
         scrollElement={scrollElement}
         resetKey={selectedHeroId ?? "all"}
         allKills={allKills}
-        isLoading={killsLoading}
-        hasError={Boolean(killsError)}
-        hasNextPage={hasNextPage}
-        isFetchingNextPage={isFetchingNextPage}
-        fetchNextPage={fetchNextPage}
-        onRetry={() =>
-          void (isFetchNextPageError ? fetchNextPage() : refetch())
-        }
-        isRetrying={isFetching}
+        query={killsQuery}
         onShowAllHeroes={
           selectedHeroId ? () => setSelectedHeroId(undefined) : undefined
         }

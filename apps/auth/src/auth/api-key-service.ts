@@ -156,12 +156,10 @@ export class ApiKeyService extends Context.Service<
       const rateLimits = yield* AuthRedisStorage;
       const config = yield* AppConfig;
 
-      const apiRpc = config.apiRpcUrl
-        ? yield* makeRpcClient(ApiRpcGroup, {
-            url: config.apiRpcUrl,
-            spanPrefix: "auth.api-rpc",
-          })
-        : undefined;
+      const apiRpc = yield* makeRpcClient(ApiRpcGroup, {
+        ...config.rpc.api,
+        spanPrefix: "auth.api-rpc",
+      });
 
       const query = <A, E>(effect: Effect.Effect<A, E>) =>
         effect.pipe(
@@ -284,11 +282,6 @@ export class ApiKeyService extends Context.Service<
             );
 
           if (input.organizationIds.length > 0) {
-            if (!apiRpc)
-              return yield* new DependencyUnavailableError(
-                API_KEY_ERRORS.organizationServiceUnavailable,
-              );
-
             const users = yield* query(
               database
                 .select()

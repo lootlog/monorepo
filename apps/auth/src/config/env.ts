@@ -4,15 +4,25 @@ import {
   commaSeparatedConfig,
   redisUrlConfig,
 } from "@lootlog/instrumentation/service-config";
-import { DEFAULT_RPC_PORT } from "@lootlog/rpc/server";
+import { AuthRpcGroup } from "@lootlog/rpc/auth";
+import {
+  type CallerTokens,
+  type RpcUpstream,
+  rpcCallerTokensConfig,
+  rpcUpstreamConfig,
+} from "@lootlog/rpc/callers";
+import { rpcPortConfig } from "@lootlog/rpc/server";
 import { Config, Context, Layer, Option, Redacted } from "effect";
 
 const optionalString = (name: string) => Config.option(Config.String(name));
 
 export interface AuthConfig extends BaseServiceConfiguration {
-  readonly rpcPort: number;
+  readonly rpc: {
+    readonly port: number;
+    readonly callerTokens: CallerTokens;
+    readonly api: RpcUpstream;
+  };
   readonly adminApiSecret?: Redacted.Redacted<string>;
-  readonly apiRpcUrl?: string;
   readonly apiKeysEnabled?: boolean;
   readonly trustedOrigins: ReadonlyArray<string>;
   readonly cookieDomain: string;
@@ -36,11 +46,12 @@ export interface AuthConfig extends BaseServiceConfiguration {
 
 const authConfig: Config.Config<AuthConfig> = Config.all({
   base: baseServiceConfig("auth"),
-  rpcPort: Config.Int("RPC_PORT").pipe(Config.withDefault(DEFAULT_RPC_PORT)),
+  rpc: Config.all({
+    port: rpcPortConfig,
+    callerTokens: rpcCallerTokensConfig("auth", AuthRpcGroup),
+    api: rpcUpstreamConfig("auth", "api"),
+  }),
   adminApiSecret: Config.option(Config.Redacted("ADMIN_API_SECRET")).pipe(
-    Config.map(Option.getOrUndefined),
-  ),
-  apiRpcUrl: Config.option(Config.String("API_RPC_URL")).pipe(
     Config.map(Option.getOrUndefined),
   ),
   apiKeysEnabled: Config.Boolean("API_KEYS_ENABLED").pipe(

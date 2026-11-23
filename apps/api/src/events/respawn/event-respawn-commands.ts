@@ -29,16 +29,6 @@ import type {
 import type { EventTimersPort } from "#src/events/respawn/event-timers.port";
 import { getEventHeroNpcId } from "@lootlog/domain/npc-identity";
 
-export interface EventRespawnQueue {
-  readonly delayed: Effect.Effect<
-    ReadonlyArray<{
-      readonly heroId: string;
-      readonly remove: Effect.Effect<void, unknown>;
-    }>,
-    unknown
-  >;
-}
-
 export interface EventRespawnPublisher {
   readonly publish: <
     Key extends
@@ -69,7 +59,6 @@ export const makeEventRespawnCommands = (
   database: typeof ApiDatabase.Service,
   redis: RedisService,
   timers: EventTimersPort,
-  queue: EventRespawnQueue,
   publisher: EventRespawnPublisher,
   manualKill: EventManualKillRecorder,
 ) => {
@@ -114,16 +103,6 @@ export const makeEventRespawnCommands = (
       publisher.publish(routingKey, payload),
     );
 
-  const cancelAutoClose = (heroId: string) =>
-    Effect.gen(function* () {
-      const jobs = yield* queue.delayed;
-      yield* Effect.forEach(
-        jobs.filter((job) => job.heroId === heroId),
-        (job) => job.remove,
-        { concurrency: "unbounded", discard: true },
-      );
-    }).pipe(withAdapterSpan("events.respawn.cancelAutoClose", "events.bullmq"));
-
   return {
     open: Effect.fn("EventsMonitoringController_openRespawnWindow")(function* (
       guild: { id: string },
@@ -155,8 +134,6 @@ export const makeEventRespawnCommands = (
         createdById: actorMemberId,
         isUsingSyntheticId: row.hero.npcId === null,
       });
-
-      yield* cancelAutoClose(heroId);
 
       const maps = yield* query(
         "events.respawn.open.maps",
@@ -300,7 +277,6 @@ export const makeEventRespawnCommands = (
           yield* timers.closeEventRespawnTimer(timerLookup);
         }
 
-        yield* cancelAutoClose(heroId);
         yield* Effect.all(
           [
             invalidate(guild.id, eventId),
@@ -325,7 +301,6 @@ export const makeEventRespawnCommands = (
             database,
             redis,
             timers,
-            queue,
             publisher,
             manualKill,
           ).open(

@@ -4,10 +4,11 @@
 
 Synchronous service-to-service operations (`getIdpToken`, `listPlatformRoleHolders`,
 `getApiKeyStatuses`) are served over Effect RPC (`@lootlog/rpc/auth`) on the
-dedicated internal port `RPC_PORT` (default `4001`, path `/rpc`), which is not
-exposed through Traefik `IngressRoute`s and is excluded from `openapi.yaml`.
-Account-deletion cleanup for Battlelog is delivered asynchronously over RabbitMQ
-(`battlelog.user-data.delete`).
+internal port `RPC_PORT` (default `PORT + 100`, path `/rpc`). No Traefik
+`IngressRoute` targets that port and its procedures are excluded from
+`openapi.yaml`. Each procedure lists the services allowed to call it; a caller
+proves its identity with the bearer token of its own edge, such as
+`RPC_TOKEN_API_TO_AUTH`. See "Internal RPC" in `docs/operations.md`.
 
 `GET /auth/verify` remains on the public HTTP port for Traefik `forward-auth`.
 

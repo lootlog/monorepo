@@ -1,4 +1,4 @@
-import { Option, Schema } from "effect";
+import { Effect, Option, Schema, SchemaGetter, SchemaIssue } from "effect";
 
 const CURSOR_TIMESTAMP_PATTERN =
   /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{1,6}Z$/;
@@ -7,18 +7,14 @@ const decodeCursorJson = Schema.decodeUnknownOption(
   Schema.fromJsonString(Schema.Tuple([Schema.String, Schema.String])),
 );
 
-export interface ActivityCursorPosition {
-  readonly createdAt: string;
-  readonly id: string;
-}
+const ActivityCursorPosition = Schema.Struct({
+  createdAt: Schema.String,
+  id: Schema.String,
+});
 
-export const encodeActivityCursor = ({
-  createdAt,
-  id,
-}: ActivityCursorPosition) =>
-  Buffer.from(JSON.stringify([createdAt, id])).toString("base64url");
+export type ActivityCursorPosition = typeof ActivityCursorPosition.Type;
 
-export const parseActivityCursor = (
+const parseActivityCursor = (
   cursor: string,
 ): Option.Option<ActivityCursorPosition> =>
   decodeCursorJson(Buffer.from(cursor, "base64url").toString("utf8")).pipe(
@@ -31,8 +27,23 @@ export const parseActivityCursor = (
     Option.map(([createdAt, id]) => ({ createdAt, id })),
   );
 
-export const ActivityCursor = Schema.String.check(
-  Schema.makeFilter((value) => Option.isSome(parseActivityCursor(value)), {
-    expected: "a cursor returned by a previous page",
+export const ActivityCursor = Schema.String.pipe(
+  Schema.decodeTo(ActivityCursorPosition, {
+    decode: SchemaGetter.transformEffect((cursor: string, options) =>
+      Effect.fromOption(parseActivityCursor(cursor)).pipe(
+        Effect.mapError(
+          () =>
+            new SchemaIssue.InvalidValue(
+              { expected: "a cursor returned by a previous page" },
+              cursor,
+              options,
+            ),
+        ),
+      ),
+    ),
+    encode: SchemaGetter.transform(
+      ({ createdAt, id }: ActivityCursorPosition) =>
+        Buffer.from(JSON.stringify([createdAt, id])).toString("base64url"),
+    ),
   }),
 );

@@ -1,100 +1,95 @@
-import {
-  ApiRpcGroup,
-  RpcAccessibleGuild,
-  RpcEventRankingEntry,
-  RpcEventSummary,
-  RpcEventTimer,
-  RpcEventWrapped,
-  RpcGuildKillStats,
-  RpcGuildLootPage,
-  RpcGuildLookup,
-  RpcGuildTimer,
-  RpcNpcKillers,
-  RpcReservationPage,
-  RpcReservationSpot,
-  RpcTopKilledNpcs,
-} from "@lootlog/rpc/api";
+import { ApiRpcGroup } from "@lootlog/rpc/api";
 import {
   RpcForbiddenError,
   RpcNotFoundError,
   RpcUnauthorizedError,
   RpcUnavailableError,
 } from "@lootlog/rpc/errors";
-import { serviceRpcServer } from "@lootlog/rpc/server";
+import { serviceRpcRoutes, serviceRpcServer } from "@lootlog/rpc/server";
 import {
   AUTH_DISCORD_ID_HEADER,
   AUTH_USER_ID_HEADER,
 } from "@lootlog/schema/api-key-access";
-import { InternalMemberIdentityResponse } from "@lootlog/schema/internal-guilds";
-import { UserGuildPermissionsDtoSchema } from "@lootlog/schema/permissions";
-import { Effect, Layer, Schema } from "effect";
-import { HttpRouter, HttpServer } from "effect/http";
+import { Context, Effect, Layer, Schema } from "effect";
+import { isUndefined, omitBy } from "es-toolkit";
+import {
+  FetchHttpClient,
+  HttpClient,
+  HttpClientRequest,
+  HttpRouter,
+  HttpServer,
+} from "effect/http";
+import { HttpApiClient } from "effect/http-api";
 import { InternalGuildsData } from "#src/guilds/internal-guilds-data";
+import { LootlogApi } from "#src/http-api/lootlog-api";
+import {
+  getGuildByIdOrVanityUrl,
+  getMemberIdentity,
+  getUserGuildPermissions,
+} from "#src/rpc/internal-guilds-rpc";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 
-const UserPermissionsList = Schema.Array(UserGuildPermissionsDtoSchema);
+interface MemberActor {
+  readonly userId: string;
+  readonly discordId: string;
+}
 
-const AccessibleGuildsList = Schema.Array(RpcAccessibleGuild);
+class RpcActor extends Context.Service<RpcActor, MemberActor>()(
+  "@lootlog/api/rpc/RpcActor",
+) {}
 
-const EventsList = Schema.Array(RpcEventSummary);
+const defined = <Query extends object>(query: Query) =>
+  omitBy(query, isUndefined);
 
-const EventRankingList = Schema.Array(RpcEventRankingEntry);
-
-const EventTimersList = Schema.Array(RpcEventTimer);
-
-const GuildTimersList = Schema.Array(RpcGuildTimer);
-
-const ReservationSpotsList = Schema.Array(RpcReservationSpot);
-
-type QueryValue = string | number | boolean | ReadonlyArray<string> | undefined;
-
-const buildInternalUrl = (
-  path: string,
-  query?: Readonly<Record<string, QueryValue>>,
-) => {
-  const url = new URL(path, "http://api.internal");
-
-  if (query) {
-    for (const [key, value] of Object.entries(query)) {
-      if (value === undefined) continue;
-
-      for (const item of Array.isArray(value) ? value : [value]) {
-        url.searchParams.append(key, String(item));
-      }
-    }
-  }
-
-  return url.toString();
-};
-
-const mapHttpStatusError = (status: number) => {
+const statusFailure = (status: number) => {
   if (status === 401) return new RpcUnauthorizedError();
 
   if (status === 403) return new RpcForbiddenError();
 
   if (status === 404) return new RpcNotFoundError();
 
-  return new RpcUnavailableError({
-    message: `Internal API returned ${status}`,
-  });
+  return new RpcUnavailableError({ message: `API answered ${status}` });
 };
 
-export const makeApiRpcServer = <E, R>(routes: Layer.Layer<never, E, R>) =>
+const isStatusFailure = Schema.is(
+  Schema.Union([
+    RpcUnauthorizedError,
+    RpcForbiddenError,
+    RpcNotFoundError,
+    RpcUnavailableError,
+  ]),
+);
+
+const memberCalls =
+  (inProcessFetch: typeof globalThis.fetch) =>
+  <A, E>(actor: MemberActor, call: Effect.Effect<A, E, RpcActor>) =>
+    call.pipe(
+      Effect.provideService(RpcActor, actor),
+      Effect.provideService(FetchHttpClient.Fetch, inProcessFetch),
+      Effect.mapError((error) =>
+        isStatusFailure(error)
+          ? error
+          : new RpcUnavailableError({ message: "In-process API call failed" }),
+      ),
+    );
+
+const makeApiRpcHandlers = <E, R>(routes: Layer.Layer<never, E, R>) =>
   Layer.unwrap(
     Effect.gen(function* () {
-      const config = yield* ApiRuntimeConfig;
-      const internalGuilds = yield* InternalGuildsData;
+      const withInternalGuilds = Effect.provideService(
+        InternalGuildsData,
+        yield* InternalGuildsData,
+      );
 
-      const context =
-        yield* Effect.context<
-          Exclude<
-            R,
-            | HttpRouter.HttpRouter
-            | HttpRouter.Provided
-            | HttpRouter.Request<string, unknown>
-            | Layer.Success<typeof HttpServer.layerServices>
-          >
-        >();
+      const context = (yield* Effect.context<
+        Exclude<
+          R,
+          | HttpRouter.HttpRouter
+          | HttpRouter.Provided
+          | HttpRouter.Request<string, unknown>
+          | Layer.Success<typeof HttpServer.layerServices>
+        >
+      >()).pipe(Context.omit(HttpRouter.HttpRouter));
 
       const web = yield* Effect.acquireRelease(
         Effect.sync(() =>
@@ -112,242 +107,159 @@ export const makeApiRpcServer = <E, R>(routes: Layer.Layer<never, E, R>) =>
         (boundary) => Effect.promise(() => boundary.dispose()),
       );
 
-      const memberGet = <A, I>(
-        actor: { readonly userId: string; readonly discordId: string },
-        path: string,
-        schema: Schema.Codec<A, I>,
-        query?: Readonly<Record<string, QueryValue>>,
-      ) =>
-        Effect.tryPromise({
-          try: () =>
-            web.handler(
-              new Request(buildInternalUrl(path, query), {
-                headers: {
-                  [AUTH_USER_ID_HEADER]: actor.userId,
-                  [AUTH_DISCORD_ID_HEADER]: actor.discordId,
-                },
+      const asMember = memberCalls(
+        Object.assign(
+          (input: string | URL | Request, init?: RequestInit) =>
+            web.handler(new Request(input, init)),
+          { preconnect: () => {} },
+        ),
+      );
+
+      const inProcess = yield* HttpClient.HttpClient.pipe(
+        Effect.provide(FetchHttpClient.layer),
+      );
+
+      const api = yield* HttpApiClient.makeWith(LootlogApi, {
+        baseUrl: "http://api.internal",
+        httpClient: inProcess.pipe(
+          HttpClient.mapRequestEffect((request) =>
+            Effect.map(RpcActor, (actor) =>
+              HttpClientRequest.setHeaders(request, {
+                [AUTH_USER_ID_HEADER]: actor.userId,
+                [AUTH_DISCORD_ID_HEADER]: actor.discordId,
               }),
             ),
-          catch: () =>
-            new RpcUnavailableError({ message: "In-process API call failed" }),
-        }).pipe(
-          Effect.flatMap((response) => {
-            if (response.status < 200 || response.status >= 300) {
-              return Effect.fail(mapHttpStatusError(response.status));
-            }
+          ),
+          HttpClient.transformResponse(
+            Effect.flatMap((response) =>
+              response.status >= 200 && response.status < 300
+                ? Effect.succeed(response)
+                : Effect.fail(statusFailure(response.status)),
+            ),
+          ),
+        ),
+      });
 
-            return Effect.tryPromise({
-              try: () => response.text(),
-              catch: () =>
-                new RpcUnavailableError({
-                  message: "Failed to read in-process API response",
-                }),
-            }).pipe(
-              Effect.flatMap((text) =>
-                Schema.decodeEffect(Schema.fromJsonString(schema))(text).pipe(
-                  Effect.mapError(
-                    () =>
-                      new RpcUnavailableError({
-                        message: "Failed to decode in-process API response",
-                      }),
-                  ),
-                ),
-              ),
-            );
-          }),
-        );
-
-      const handlers = ApiRpcGroup.toLayer({
-        getUserGuildPermissions: ({ discordId, userId, freshness }) => {
-          if (discordId.length === 0 || userId.length === 0) {
-            return Effect.succeed([]);
-          }
-
-          return internalGuilds
-            .getUserPermissions(discordId, userId, freshness)
-            .pipe(
-              Effect.flatMap((value) =>
-                Schema.decodeEffect(UserPermissionsList)(value),
-              ),
-              Effect.mapError(
-                () =>
-                  new RpcUnavailableError({
-                    message: "Failed to load user guild permissions",
-                  }),
-              ),
-            );
-        },
-        getGuildByIdOrVanityUrl: ({ idOrVanityUrl }) =>
-          Effect.gen(function* () {
-            const guild = yield* internalGuilds.getGuild(idOrVanityUrl).pipe(
-              Effect.mapError(
-                () =>
-                  new RpcUnavailableError({
-                    message: "Failed to look up guild",
-                  }),
-              ),
-            );
-
-            if (guild === null) {
-              return yield* new RpcNotFoundError({
-                message: "Guild not found",
-              });
-            }
-
-            return yield* Schema.decodeUnknownEffect(RpcGuildLookup)(
-              guild,
-            ).pipe(
-              Effect.mapError(
-                () =>
-                  new RpcUnavailableError({
-                    message: "Invalid guild lookup payload",
-                  }),
-              ),
-            );
-          }),
-        getMemberIdentity: ({ guildId, discordId }) =>
-          Effect.gen(function* () {
-            const identity = yield* internalGuilds
-              .getMemberIdentity(guildId, discordId)
-              .pipe(
-                Effect.mapError(
-                  () =>
-                    new RpcUnavailableError({
-                      message: "Failed to resolve member identity",
-                    }),
-                ),
-              );
-
-            if (identity === null) {
-              return yield* new RpcNotFoundError({
-                message: "Member not found",
-              });
-            }
-
-            return yield* Schema.decodeEffect(InternalMemberIdentityResponse)(
-              identity,
-            ).pipe(
-              Effect.mapError(
-                () =>
-                  new RpcUnavailableError({
-                    message: "Invalid member identity payload",
-                  }),
-              ),
-            );
-          }),
-        getUserAccessibleGuilds: ({ userId, discordId }) =>
-          memberGet(
-            { userId, discordId },
-            "/users/@me/guilds",
-            AccessibleGuildsList,
-          ).pipe(
+      return ApiRpcGroup.toLayer({
+        getUserGuildPermissions: (query) =>
+          getUserGuildPermissions(query).pipe(withInternalGuilds),
+        getGuildByIdOrVanityUrl: (lookup) =>
+          getGuildByIdOrVanityUrl(lookup).pipe(withInternalGuilds),
+        getMemberIdentity: (lookup) =>
+          getMemberIdentity(lookup).pipe(withInternalGuilds),
+        getUserAccessibleGuilds: (actor) =>
+          asMember(actor, api.users.UsersControllerGetCurrentUserGuilds()).pipe(
             Effect.catchTags({
-              RpcForbiddenError: (error) =>
-                Effect.fail(
-                  new RpcUnavailableError({ message: error.message }),
-                ),
-              RpcNotFoundError: (error) =>
-                Effect.fail(
-                  new RpcUnavailableError({ message: error.message }),
-                ),
+              RpcForbiddenError: () => Effect.fail(new RpcUnavailableError()),
+              RpcNotFoundError: () => Effect.fail(new RpcUnavailableError()),
             }),
           ),
-        listGuildEvents: ({ userId, discordId, guildId }) =>
-          memberGet(
-            { userId, discordId },
-            `/guilds/${encodeURIComponent(guildId)}/events`,
-            EventsList,
+        listGuildEvents: ({ guildId, ...actor }) =>
+          asMember(
+            actor,
+            api.events.listEvents({ params: { guildId }, query: {} }),
           ),
-        getEventRanking: ({ userId, discordId, guildId, eventId }) =>
-          memberGet(
-            { userId, discordId },
-            `/guilds/${encodeURIComponent(guildId)}/events/${encodeURIComponent(eventId)}/ranking`,
-            EventRankingList,
+        getEventRanking: ({ guildId, eventId, ...actor }) =>
+          asMember(
+            actor,
+            api.events.listEventRanking({ params: { guildId, eventId } }),
           ),
-        getEventTimers: ({ userId, discordId, guildId, eventId, world }) =>
-          memberGet(
-            { userId, discordId },
-            `/guilds/${encodeURIComponent(guildId)}/events/${encodeURIComponent(eventId)}/timers`,
-            EventTimersList,
-            { world },
+        getEventTimers: ({ guildId, eventId, world, ...actor }) =>
+          asMember(
+            actor,
+            api.events.listEventHeroTimers({
+              params: { guildId, eventId },
+              query: { world },
+            }),
           ),
-        getEventWrapped: ({ userId, discordId, guildId, eventId }) =>
-          memberGet(
-            { userId, discordId },
-            `/guilds/${encodeURIComponent(guildId)}/events/${encodeURIComponent(eventId)}/wrapped`,
-            RpcEventWrapped,
+        getEventWrapped: ({ guildId, eventId, ...actor }) =>
+          asMember(
+            actor,
+            api.events.showEventWrapped({ params: { guildId, eventId } }),
           ),
-        listGuildTimers: ({ userId, discordId, guildId, world }) =>
-          memberGet(
-            { userId, discordId },
-            `/guilds/${encodeURIComponent(guildId)}/timers`,
-            GuildTimersList,
-            { world },
+        listGuildTimers: ({ guildId, world, ...actor }) =>
+          asMember(
+            actor,
+            api.timers.TimersControllerGetTimers({
+              params: { guildId },
+              query: defined({ world }),
+            }),
           ),
-        getGuildKillStats: ({ userId, discordId, guildId, period, npcTypes }) =>
-          memberGet(
-            { userId, discordId },
-            `/guilds/${encodeURIComponent(guildId)}/stats/kills`,
-            RpcGuildKillStats,
-            { period, npcTypes },
+        getGuildKillStats: ({ guildId, period, npcTypes, ...actor }) =>
+          asMember(
+            actor,
+            api.kills.KillsControllerGetGuildKillStats({
+              params: { guildId },
+              query: defined({ period, npcTypes }),
+            }),
           ),
-        getGuildTopKilledNpcs: ({
-          userId,
-          discordId,
-          guildId,
-          limit,
-          search,
-          period,
-        }) =>
-          memberGet(
-            { userId, discordId },
-            `/guilds/${encodeURIComponent(guildId)}/stats/kills/top-npcs`,
-            RpcTopKilledNpcs,
-            { limit, search, period },
+        getGuildTopKilledNpcs: ({ guildId, limit, search, period, ...actor }) =>
+          asMember(
+            actor,
+            api.kills.KillsControllerGetGuildTopNpcs({
+              params: { guildId },
+              query: defined({ limit, search, period }),
+            }),
           ),
-        getNpcKillers: ({ userId, discordId, guildId, npcId, limit, period }) =>
-          memberGet(
-            { userId, discordId },
-            `/guilds/${encodeURIComponent(guildId)}/stats/kills/npcs/${npcId}/killers`,
-            RpcNpcKillers,
-            { limit, period },
+        getNpcKillers: ({ guildId, npcId, limit, period, ...actor }) =>
+          asMember(
+            actor,
+            api.kills.KillsControllerGetNpcKillers({
+              params: { guildId, npcId: String(npcId) },
+              query: defined({ limit, period }),
+            }),
           ),
         listGuildLoots: ({
-          userId,
-          discordId,
           guildId,
           limit,
           players,
           npcs,
           rarities,
           itemNames,
+          ...actor
         }) =>
-          memberGet(
-            { userId, discordId },
-            `/guilds/${encodeURIComponent(guildId)}/loots`,
-            RpcGuildLootPage,
-            { limit, players, npcs, rarities, itemNames },
+          asMember(
+            actor,
+            api.loots.LootsControllerFetchLootsByGuildId({
+              params: { guildId },
+              query: defined({ limit, players, npcs, rarities, itemNames }),
+            }),
           ),
-        listUserReservations: ({ userId, discordId, status }) =>
-          memberGet(
-            { userId, discordId },
-            "/users/@me/reservations",
-            RpcReservationPage,
-            { status },
+        listUserReservations: ({ status, ...actor }) =>
+          asMember(
+            actor,
+            api.reservations.listMyReservations({ query: defined({ status }) }),
           ),
-        listGuildReservationSpots: ({ userId, discordId, guildId }) =>
-          memberGet(
-            { userId, discordId },
-            `/guilds/${encodeURIComponent(guildId)}/reservation-spots`,
-            ReservationSpotsList,
+        listGuildReservationSpots: ({ guildId, ...actor }) =>
+          asMember(
+            actor,
+            api.reservations.listReservationSpots({ params: { guildId } }),
           ),
-      });
-
-      return serviceRpcServer({
-        group: ApiRpcGroup,
-        handlers,
-        port: config.rpcPort,
-        spanPrefix: "api.rpc",
       });
     }),
+  );
+
+export const makeApiRpcRoutes = <E, R>(routes: Layer.Layer<never, E, R>) =>
+  Layer.unwrap(
+    Effect.map(ApiRuntimeConfig, (config) =>
+      serviceRpcRoutes({
+        group: ApiRpcGroup,
+        handlers: makeApiRpcHandlers(routes),
+        callerTokens: config.rpc.callerTokens,
+        spanPrefix: "api.rpc",
+      }),
+    ),
+  );
+
+export const makeApiRpcServer = <E, R>(routes: Layer.Layer<never, E, R>) =>
+  Layer.unwrap(
+    Effect.map(ApiRuntimeConfig, (config) =>
+      serviceRpcServer({
+        group: ApiRpcGroup,
+        handlers: makeApiRpcHandlers(routes),
+        callerTokens: config.rpc.callerTokens,
+        port: config.rpc.port,
+        spanPrefix: "api.rpc",
+      }),
+    ),
   );

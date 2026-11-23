@@ -3,10 +3,8 @@ import type {
   SettingsDomainValue,
   SettingsSubsectionValue,
 } from "@/constants/settings-tabs";
-import type {
-  SettingsControlId,
-  SettingsDomainManifestItem,
-} from "./settings-manifest";
+import type { SettingsControlId } from "./settings-manifest";
+import type { SettingsDomainManifestItem } from "./settings-manifest-types";
 
 export interface SettingsSearchItem {
   categoryId: SettingsDomainValue;

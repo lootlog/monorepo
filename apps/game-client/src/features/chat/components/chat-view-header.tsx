@@ -1,23 +1,17 @@
 import { GuildSwitcher } from "@/components/guild-switcher";
-import {
-  toolbarStripClassName,
-  toolbarStripDividerClassName,
-} from "@/components/ui/toolbar-strip";
+import { toolbarStripClassName } from "@/components/ui/toolbar-strip";
 import { cn } from "cn";
-import type { ReactNode } from "react";
 
 type Props = {
   selectedGuildId: string;
   onGuildChange: (guildId: string) => void;
   unreadGuildIds: Set<string>;
-  actions: ReactNode;
 };
 
 export function ChatViewHeader({
   selectedGuildId,
   onGuildChange,
   unreadGuildIds,
-  actions,
 }: Props) {
   return (
     <div
@@ -33,16 +27,6 @@ export function ChatViewHeader({
         onChange={onGuildChange}
         unreadGuildIds={unreadGuildIds}
       />
-      {actions ? (
-        <div
-          className={cn(
-            toolbarStripDividerClassName,
-            "ll:flex ll:shrink-0 ll:items-center ll:px-1",
-          )}
-        >
-          {actions}
-        </div>
-      ) : null}
     </div>
   );
 }

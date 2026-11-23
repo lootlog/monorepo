@@ -1,6 +1,7 @@
 import { makeLootQueryPersistence } from "#src/loots/query/loot-query.repository";
 import { strongestNpcFirst } from "#src/loots/strongest-npc-order";
 import { UserFeedItem } from "@lootlog/protocol/feed";
+import { joinItemStat } from "@lootlog/domain/item-stat";
 import {
   ACTIVITY_FEED_LOOT_AFTER_KILL_MS,
   ACTIVITY_FEED_LOOT_BEFORE_KILL_MS,
@@ -22,7 +23,7 @@ import {
   type SQL,
 } from "drizzle-orm";
 import { QueryBuilder } from "drizzle-orm/pg-core";
-import { Clock, Effect, Schema } from "effect";
+import { Clock, Effect, Schema, Struct } from "effect";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import { guildKillActivityTable } from "#src/database/drizzle/kill-statistics.schema";
 import {
@@ -321,9 +322,8 @@ export const buildUserFeedQuery = (
       name: itemSnapshotTable.name,
       icon: itemSnapshotTable.icon,
       rarity: itemSnapshotTable.rarity,
-      stat: sql`concat_ws(';', nullif(${itemSnapshotTable.statRaw}, ''), ${lootItemTable.instanceStat})`.as(
-        "stat",
-      ),
+      statRaw: itemSnapshotTable.statRaw,
+      instanceStat: lootItemTable.instanceStat,
       type: sql`${itemSnapshotTable.itemType}`.as("type"),
       lvl: itemSnapshotTable.lvl,
     })
@@ -384,6 +384,39 @@ export const buildUserFeedQuery = (
     .orderBy(desc(entries.occurredAt), desc(sql`${entries.item}->>'id'`));
 };
 
+const [KillFeedItem, LootFeedItem] = UserFeedItem.members;
+
+const LootFeedRowItem = LootFeedItem.mapFields(
+  Struct.assign({
+    items: Schema.Array(
+      LootFeedItem.fields.items.value.mapFields((fields) => ({
+        ...Struct.omit(fields, ["stat"]),
+        statRaw: Schema.String,
+        instanceStat: Schema.NullOr(Schema.String),
+      })),
+    ),
+  }),
+);
+
+const UserFeedRowItem = Schema.Union([KillFeedItem, LootFeedRowItem]);
+
+const decodeUserFeedRows = Schema.decodeUnknownEffect(
+  Schema.Struct({
+    rows: Schema.Array(Schema.Struct({ item: UserFeedRowItem })),
+  }),
+);
+
+const toUserFeedItem = (item: typeof UserFeedRowItem.Type): UserFeedItem =>
+  item.type === "kill"
+    ? item
+    : {
+        ...item,
+        items: item.items.map(({ statRaw, instanceStat, ...preview }) => ({
+          ...preview,
+          stat: joinItemStat(statRaw, instanceStat),
+        })),
+      };
+
 const enrichFeedLoots = Effect.fn("feed.enrich-loots")(function* (
   database: Pick<typeof ApiDatabase.Service, "select">,
   items: ReadonlyArray<UserFeedItem>,
@@ -428,18 +461,14 @@ export const makeUserFeed = (database: typeof ApiDatabase.Service) =>
       buildUserFeedQuery(scopes, discordId, windowStart, undefined, query),
     );
 
-    const decoded = yield* Schema.decodeUnknownEffect(
-      Schema.Struct({
-        rows: Schema.Array(Schema.Struct({ item: UserFeedItem })),
-      }),
-    )(result);
+    const decoded = yield* decodeUserFeedRows(result);
 
     return {
       generatedAt,
       windowStart,
       items: yield* enrichFeedLoots(
         database,
-        decoded.rows.map((row) => row.item),
+        decoded.rows.map((row) => toUserFeedItem(row.item)),
       ),
     } satisfies UserFeedResponse;
   });
@@ -470,15 +499,11 @@ export const readPublishedFeedEntry = Effect.fn("feed.read-published-entry")(
       ),
     );
 
-    const decoded = yield* Schema.decodeUnknownEffect(
-      Schema.Struct({
-        rows: Schema.Array(Schema.Struct({ item: UserFeedItem })),
-      }),
-    )(result);
+    const decoded = yield* decodeUserFeedRows(result);
 
     return (yield* enrichFeedLoots(
       database,
-      decoded.rows.map((row) => row.item),
+      decoded.rows.map((row) => toUserFeedItem(row.item)),
     ))[0];
   },
 );

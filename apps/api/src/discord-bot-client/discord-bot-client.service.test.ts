@@ -23,7 +23,9 @@ describe("DiscordBotClientService", () => {
       },
     };
 
-    const refreshGuildChannels = vi.fn(() => Effect.succeed(payload));
+    const refreshGuildChannels = vi.fn(() =>
+      Effect.succeed({ guildId: "guild-a", ...payload }),
+    );
 
     await expect(
       Effect.runPromise(
@@ -31,7 +33,7 @@ describe("DiscordBotClientService", () => {
           "guild-a",
         ),
       ),
-    ).resolves.toEqual(payload);
+    ).resolves.toEqual({ guildId: "guild-a", ...payload });
     expect(refreshGuildChannels).toHaveBeenCalledWith({ guildId: "guild-a" });
   });
 

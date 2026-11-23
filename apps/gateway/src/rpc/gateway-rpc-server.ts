@@ -1,7 +1,7 @@
 import { RpcForbiddenError, RpcUnavailableError } from "@lootlog/rpc/errors";
 import { GatewayRpcGroup } from "@lootlog/rpc/gateway";
 import { serviceRpcServer } from "@lootlog/rpc/server";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { Effect, Layer } from "effect";
 import { GatewayConfig } from "#src/config/gateway-config";
 import { Guilds } from "#src/guilds/guild-store";
@@ -33,7 +33,7 @@ const GatewayRpcHandlers = GatewayRpcGroup.toLayer(
             !hasPermission(
               viewer,
               organizationId,
-              Permission.LOOTLOG_ONLINE_PLAYERS_READ,
+              Capability.LOOTLOG_ONLINE_PLAYERS_READ,
             )
           ) {
             return yield* new RpcForbiddenError({
@@ -77,11 +77,12 @@ const GatewayRpcHandlers = GatewayRpcGroup.toLayer(
 );
 
 export const GatewayRpcServer = Layer.unwrap(
-  Effect.map(GatewayConfig, ({ rpcPort }) =>
+  Effect.map(GatewayConfig, ({ rpc }) =>
     serviceRpcServer({
       group: GatewayRpcGroup,
       handlers: GatewayRpcHandlers,
-      port: rpcPort,
+      callerTokens: rpc.callerTokens,
+      port: rpc.port,
       spanPrefix: "gateway.rpc",
     }),
   ),

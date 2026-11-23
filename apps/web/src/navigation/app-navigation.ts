@@ -1,6 +1,7 @@
+import { Capability } from "@lootlog/schema/permissions";
 import { maxBy } from "es-toolkit";
 import type { TOptions } from "i18next";
-import { Capability, type AccessPolicy } from "@lootlog/domain/access-policy";
+import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import i18n from "@/i18n/config";
 import { ROUTES } from "@/config/routes";
 import type { Battle } from "@/lib/api/battlelog-types";

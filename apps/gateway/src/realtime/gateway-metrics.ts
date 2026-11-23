@@ -11,12 +11,11 @@ import {
   CommandAdmissions,
   type CommandAdmission,
 } from "#src/realtime/command-admission";
+import { Hub, type RealtimeHub } from "#src/realtime/realtime-hub";
 import {
   globalChatScope,
   isGlobalChatTopic,
-  Hub,
-  type RealtimeHub,
-} from "#src/realtime/realtime-hub";
+} from "#src/realtime/global-chat-scope";
 
 const SNAPSHOTS = "realtime:metrics:instances:v2";
 
@@ -30,8 +29,24 @@ redis.call('EXPIRE', KEYS[1], 60)
 local snapshots = redis.call('HGETALL', KEYS[1])
 local connections, sessions, count = 0, 0, 0
 local players = {}
-local listeners = {}
-local worldPlayers = {}
+local listeners, listenerIds = {}, {}
+local worldPlayers, worldPlayerIds = {}, {}
+local function addUsers(counts, seen, key, users)
+  seen[key] = seen[key] or {}
+  for _, user in ipairs(users) do
+    if not seen[key][user] then
+      seen[key][user] = true
+      counts[key] = (counts[key] or 0) + 1
+    end
+  end
+end
+local function addAll(counts, seen, ids, legacy)
+  if ids then
+    for key, users in pairs(ids) do addUsers(counts, seen, key, users) end
+  else
+    for key, users in pairs(legacy) do counts[key] = (counts[key] or 0) + users end
+  end
+end
 for i = 1, #snapshots, 2 do
   local value = cjson.decode(snapshots[i + 1])
   if now - value.at >= 30000 then
@@ -42,12 +57,8 @@ for i = 1, #snapshots, 2 do
     for _, player in ipairs(value.players) do
       if not players[player] then players[player] = true; count = count + 1 end
     end
-    for channel, listening in pairs(value.globalChatListeners) do
-      listeners[channel] = (listeners[channel] or 0) + listening
-    end
-    for world, playing in pairs(value.worldPlayers) do
-      worldPlayers[world] = (worldPlayers[world] or 0) + playing
-    end
+    addAll(listeners, listenerIds, value.globalChatListenerIds, value.globalChatListeners)
+    addAll(worldPlayers, worldPlayerIds, value.worldPlayerIds, value.worldPlayers)
   end
 end
 return {connections, sessions, count, cjson.encode(listeners), cjson.encode(worldPlayers)}
@@ -66,16 +77,19 @@ const decodeCounts = Schema.decodeUnknownSync(
 const addUser = (
   sets: Map<string, Set<string>>,
   key: string,
-  discordId: string,
+  userId: string,
 ) => {
   const users = sets.get(key) ?? new Set<string>();
 
-  users.add(discordId);
+  users.add(userId);
   sets.set(key, users);
 };
 
 const countUsers = (sets: Map<string, Set<string>>) =>
   Object.fromEntries([...sets].map(([key, users]) => [key, users.size]));
+
+const listUsers = (sets: Map<string, Set<string>>) =>
+  Object.fromEntries([...sets].map(([key, users]) => [key, [...users]]));
 
 const SHARED_CHANNEL = "";
 
@@ -111,6 +125,12 @@ const gameSessions = Metric.gauge("lootlog_gateway_cluster_game_sessions", {
 const uniquePlayers = Metric.gauge("lootlog_gateway_cluster_unique_players", {
   description: "Unique Discord accounts with active game sessions",
   attributes: { unit: "" },
+});
+
+const sampleDuration = Metric.gauge("lootlog_gateway_cluster_sample_seconds", {
+  description:
+    "Duration of the cluster metrics Redis script including its round trip; it grows with replicas and players",
+  attributes: { unit: "s" },
 });
 
 const runtimeGauges = {
@@ -244,7 +264,7 @@ export class GatewayMetrics {
     for (const { data } of sockets) {
       for (const scope of data.subscriptions.values()) {
         if (!isGlobalChatTopic(scope.topic)) continue;
-        addUser(chatListeners, scope.world ?? SHARED_CHANNEL, data.discordId);
+        addUser(chatListeners, scope.world ?? SHARED_CHANNEL, data.userId);
       }
 
       const presence = data.presence;
@@ -259,8 +279,10 @@ export class GatewayMetrics {
       players.add(data.discordId);
 
       if (presence.character)
-        addUser(worldPlayers, presence.character.world, data.discordId);
+        addUser(worldPlayers, presence.character.world, data.userId);
     }
+
+    const sampleStartedAt = performance.now();
 
     const counts = yield* Effect.tryPromise(() =>
       this.redis.eval(
@@ -273,9 +295,16 @@ export class GatewayMetrics {
           sessions,
           players: [...players],
           globalChatListeners: countUsers(chatListeners),
+          globalChatListenerIds: listUsers(chatListeners),
           worldPlayers: countUsers(worldPlayers),
+          worldPlayerIds: listUsers(worldPlayers),
         }),
       ),
+    );
+
+    yield* Metric.update(
+      sampleDuration,
+      (performance.now() - sampleStartedAt) / 1_000,
     );
 
     const [

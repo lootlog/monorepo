@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 
 import type { roleTable } from "#src/database/drizzle/organization.schema";
 import { makeEventAccess } from "#src/events/event-access";
@@ -12,7 +12,7 @@ const role = (from: number, to: number): Role => ({
   name: "Role",
   color: 0,
   position: 0,
-  permissions: [Permission.LOOTLOG_EVENTS_READ],
+  permissions: [Capability.LOOTLOG_EVENTS_READ],
   lvlRangeFrom: from,
   lvlRangeTo: to,
   guildId: "guild-1",
@@ -29,7 +29,7 @@ describe("event access Effect module", () => {
     });
 
     const policy = createAccessPolicy({
-      capabilities: [Permission.LOOTLOG_EVENTS_READ],
+      capabilities: [Capability.LOOTLOG_EVENTS_READ],
     });
 
     expect(access.isHeroVisible({ npcLvl: 100 }, [role(90, 110)], policy)).toBe(

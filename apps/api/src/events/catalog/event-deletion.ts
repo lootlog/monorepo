@@ -20,21 +20,10 @@ import type { RedisService } from "#src/redis/redis.service";
 import { getEventWrappedCachePattern } from "#src/shared/cache";
 import { ResourceNotFoundError } from "@lootlog/protocol/http/errors";
 
-interface EventDeletionJob {
-  readonly eventId: string;
-  readonly remove: () => Promise<void>;
-}
-
-export interface EventDeletionQueue {
-  readonly pending: () => Promise<ReadonlyArray<EventDeletionJob>>;
-  readonly delayed: () => Promise<ReadonlyArray<EventDeletionJob>>;
-}
-
 export const makeEventDeletion =
   (
     database: typeof ApiDatabase.Service,
     redis: Pick<RedisService, "deleteByPattern" | "invalidateScopes">,
-    queue: EventDeletionQueue,
   ) =>
   (
     guild: { id: string },
@@ -87,39 +76,6 @@ export const makeEventDeletion =
       ) {
         return yield* new ResourceNotFoundError("Hero not found");
       }
-
-      const jobs = yield* Effect.all(
-        {
-          pending: Effect.tryPromise({
-            try: queue.pending,
-            catch: (cause) =>
-              new OperationError({
-                operation: "events.delete.pendingJobs",
-                cause,
-              }),
-          }),
-          delayed: Effect.tryPromise({
-            try: queue.delayed,
-            catch: (cause) =>
-              new OperationError({
-                operation: "events.delete.delayedJobs",
-                cause,
-              }),
-          }),
-        },
-        { concurrency: "unbounded" },
-      );
-
-      yield* Effect.forEach(
-        [...jobs.pending, ...jobs.delayed].filter(
-          (job) => job.eventId === eventId,
-        ),
-        (job) =>
-          Effect.tryPromise({ try: job.remove, catch: () => undefined }).pipe(
-            Effect.ignore,
-          ),
-        { concurrency: "unbounded", discard: true },
-      );
 
       yield* database
         .delete(eventTable)

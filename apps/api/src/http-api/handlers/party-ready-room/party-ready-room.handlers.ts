@@ -1,3 +1,4 @@
+import type { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import {
   type ReadyRoomIdentity,
   ReadyRoomOperationError,
@@ -36,7 +37,13 @@ export class ReadyRoomAccessDenied extends TaggedErrorClass<
 
 export class ReadyRoomAuthorization extends Context.Service<
   ReadyRoomAuthorization,
-  { readonly identity: Effect.Effect<ReadyRoomIdentity, ReadyRoomAccessDenied> }
+  {
+    readonly identity: Effect.Effect<
+      ReadyRoomIdentity,
+      ReadyRoomAccessDenied,
+      ForwardAuthIdentity
+    >;
+  }
 >()("@lootlog/api/http-api/party-ready-room/authorization") {}
 
 const identity = Effect.flatMap(

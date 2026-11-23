@@ -5,7 +5,7 @@ import {
   type ServerEvent,
 } from "@lootlog/client/realtime";
 import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { GatewayClient } from "./gateway-client";
 
 const presence: BasicPresence = {
@@ -138,7 +138,7 @@ it("treats the first access policy as the page's baseline and reports later revo
   const handler = vi.fn();
   client.on("join", handler);
 
-  const joined = (permissions: Permission[]) =>
+  const joined = (permissions: Capability[]) =>
     deliver?.({
       v: 1,
       type: "session.joined",
@@ -158,7 +158,7 @@ it("treats the first access policy as the page's baseline and reports later revo
       },
     });
 
-  joined([Permission.LOOTLOG_LOOTS_READ]);
+  joined([Capability.LOOTLOG_LOOTS_READ]);
   expect(handler).toHaveBeenLastCalledWith(
     expect.objectContaining({ accessPolicyChanges: [] }),
   );

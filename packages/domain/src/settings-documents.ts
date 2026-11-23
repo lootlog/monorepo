@@ -452,6 +452,11 @@ export const SETTINGS_CATALOG = {
       notificationsConfig: field({}, userScopes, Predicate.isObject),
       detectorConfig: field({}, userScopes, Predicate.isObject),
       timersConfig: field({}, userScopes, Predicate.isObject),
+      timerWindowSoonSound: field(false, userScopes, isBoolean),
+      timerWindowSoonMinutes: field(5, userScopes, isNumberInRange(1, 60)),
+      timerWindowOpenSound: field(false, userScopes, isBoolean),
+      timerWindowEndSound: field(false, userScopes, isBoolean),
+      timerSoundNpcNames: field<string[]>([], userScopes, isStringArray),
     },
   },
   controls: {

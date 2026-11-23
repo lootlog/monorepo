@@ -2,9 +2,12 @@ import {
   InternalMemberIdentityResponse,
   InternalUserPermissionsQuery,
 } from "@lootlog/schema/internal-guilds";
+import { NpcTypes, Period } from "@lootlog/schema/http-scalars";
+import { ItemRaritySchema } from "@lootlog/schema/item-rarity";
 import { UserGuildPermissionsDtoSchema } from "@lootlog/schema/permissions";
 import { Schema } from "effect";
 import { Rpc, RpcGroup } from "effect/rpc";
+import { CallerAuth, RpcCallers } from "./callers.js";
 import {
   RpcForbiddenError,
   RpcNotFoundError,
@@ -216,14 +219,14 @@ export class ApiRpcGroup extends RpcGroup.make(
     payload: InternalUserPermissionsQuery,
     success: Schema.Array(UserGuildPermissionsDtoSchema),
     error: RpcUnavailableError,
-  }),
+  }).annotate(RpcCallers, ["activity", "gateway"]),
   Rpc.make("getGuildByIdOrVanityUrl", {
     payload: {
       idOrVanityUrl: Schema.String,
     },
     success: RpcGuildLookup,
     error: Schema.Union([RpcNotFoundError, RpcUnavailableError]),
-  }),
+  }).annotate(RpcCallers, ["activity"]),
   Rpc.make("getMemberIdentity", {
     payload: {
       guildId: Schema.String,
@@ -231,17 +234,17 @@ export class ApiRpcGroup extends RpcGroup.make(
     },
     success: InternalMemberIdentityResponse,
     error: Schema.Union([RpcNotFoundError, RpcUnavailableError]),
-  }),
+  }).annotate(RpcCallers, ["discord-bot"]),
   Rpc.make("getUserAccessibleGuilds", {
     payload: MemberActor,
     success: Schema.Array(RpcAccessibleGuild),
     error: Schema.Union([RpcUnauthorizedError, RpcUnavailableError]),
-  }),
+  }).annotate(RpcCallers, ["auth"]),
   Rpc.make("listGuildEvents", {
     payload: MemberGuildActor,
     success: Schema.Array(RpcEventSummary),
     error: MemberReadError,
-  }),
+  }).annotate(RpcCallers, ["discord-bot"]),
   Rpc.make("getEventRanking", {
     payload: {
       ...MemberGuildActor,
@@ -249,7 +252,7 @@ export class ApiRpcGroup extends RpcGroup.make(
     },
     success: Schema.Array(RpcEventRankingEntry),
     error: MemberReadError,
-  }),
+  }).annotate(RpcCallers, ["discord-bot"]),
   Rpc.make("getEventTimers", {
     payload: {
       ...MemberGuildActor,
@@ -258,7 +261,7 @@ export class ApiRpcGroup extends RpcGroup.make(
     },
     success: Schema.Array(RpcEventTimer),
     error: MemberReadError,
-  }),
+  }).annotate(RpcCallers, ["discord-bot"]),
   Rpc.make("getEventWrapped", {
     payload: {
       ...MemberGuildActor,
@@ -266,7 +269,7 @@ export class ApiRpcGroup extends RpcGroup.make(
     },
     success: RpcEventWrapped,
     error: MemberReadError,
-  }),
+  }).annotate(RpcCallers, ["discord-bot"]),
   Rpc.make("listGuildTimers", {
     payload: {
       ...MemberGuildActor,
@@ -274,59 +277,59 @@ export class ApiRpcGroup extends RpcGroup.make(
     },
     success: Schema.Array(RpcGuildTimer),
     error: MemberReadError,
-  }),
+  }).annotate(RpcCallers, ["discord-bot"]),
   Rpc.make("getGuildKillStats", {
     payload: {
       ...MemberGuildActor,
-      period: Schema.optional(Schema.String),
-      npcTypes: Schema.optional(Schema.Array(Schema.String)),
+      period: Schema.optional(Period),
+      npcTypes: Schema.optional(NpcTypes),
     },
     success: RpcGuildKillStats,
     error: MemberReadError,
-  }),
+  }).annotate(RpcCallers, ["discord-bot"]),
   Rpc.make("getGuildTopKilledNpcs", {
     payload: {
       ...MemberGuildActor,
       limit: Schema.Finite,
       search: Schema.optional(Schema.String),
-      period: Schema.optional(Schema.String),
+      period: Schema.optional(Period),
     },
     success: RpcTopKilledNpcs,
     error: MemberReadError,
-  }),
+  }).annotate(RpcCallers, ["discord-bot"]),
   Rpc.make("getNpcKillers", {
     payload: {
       ...MemberGuildActor,
       npcId: Schema.Finite,
       limit: Schema.Finite,
-      period: Schema.optional(Schema.String),
+      period: Schema.optional(Period),
     },
     success: RpcNpcKillers,
     error: MemberReadError,
-  }),
+  }).annotate(RpcCallers, ["discord-bot"]),
   Rpc.make("listGuildLoots", {
     payload: {
       ...MemberGuildActor,
       limit: Schema.Finite,
       players: Schema.optional(Schema.Array(Schema.String)),
       npcs: Schema.optional(Schema.Array(Schema.String)),
-      rarities: Schema.optional(Schema.Array(Schema.String)),
+      rarities: Schema.optional(Schema.Array(ItemRaritySchema)),
       itemNames: Schema.optional(Schema.Array(Schema.String)),
     },
     success: RpcGuildLootPage,
     error: MemberReadError,
-  }),
+  }).annotate(RpcCallers, ["discord-bot"]),
   Rpc.make("listUserReservations", {
     payload: {
       ...MemberActor,
-      status: Schema.optional(Schema.String),
+      status: Schema.optional(Schema.Literals(["upcoming", "past"])),
     },
     success: RpcReservationPage,
     error: MemberReadError,
-  }),
+  }).annotate(RpcCallers, ["discord-bot"]),
   Rpc.make("listGuildReservationSpots", {
     payload: MemberGuildActor,
     success: Schema.Array(RpcReservationSpot),
     error: MemberReadError,
-  }),
-) {}
+  }).annotate(RpcCallers, ["discord-bot"]),
+).middleware(CallerAuth) {}

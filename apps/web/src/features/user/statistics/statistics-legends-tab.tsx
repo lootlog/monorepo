@@ -15,14 +15,9 @@ export function StatisticsLegendsTab({ search }: { search: StatisticsSearch }) {
       <StatisticsQueryState query={query}>
         {query.data && (
           <StatisticsLegendsTable
-            legends={query.data.legends
-              .filter((legend) =>
-                matchesStatisticsQuery(search.q, legend.name, legend.npc.name),
-              )
-              .map((legend) => ({
-                ...legend,
-                caughtBy: legend.caughtBy ?? [],
-              }))}
+            legends={query.data.legends.filter((legend) =>
+              matchesStatisticsQuery(search.q, legend.name, legend.npc.name),
+            )}
             filtered={Boolean(search.q?.trim())}
             showCharacters={!search.characterId}
             sort={sort}

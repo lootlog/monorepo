@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { inArray } from "drizzle-orm";
 import { Effect, ManagedRuntime } from "effect";
 import {
@@ -36,10 +36,10 @@ const userId = `${guildId}-user`;
 
 const otherUserId = `${userId}-other`;
 
-const policy = createAccessPolicy({ capabilities: [Permission.OWNER] });
+const policy = createAccessPolicy({ capabilities: [Capability.OWNER] });
 
 const restricted = createAccessPolicy({
-  capabilities: [Permission.LOOTLOG_LOOTS_READ],
+  capabilities: [Capability.LOOTLOG_LOOTS_READ],
 });
 
 const cache: KillQueryCache = { getOrSet: (_key, _schema, load) => load };
@@ -467,7 +467,7 @@ for (const period of ["all", "24h"] as const) {
             name: "Limited",
             color: null,
             position: null,
-            permissions: [Permission.LOOTLOG_LOOTS_READ],
+            permissions: [Capability.LOOTLOG_LOOTS_READ],
             lvlRangeFrom: 0,
             lvlRangeTo: 100,
             createdAt: new Date(),

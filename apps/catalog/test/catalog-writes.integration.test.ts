@@ -102,7 +102,7 @@ const catalog = <A>(
 ) =>
   runtime.runPromise(
     Effect.gen(function* () {
-      const { read, write } = makeCatalogStore<ItemEntry, NpcEntry>(
+      const { read, write } = makeCatalogStore(
         yield* CatalogDatabase,
         meilisearch,
       );

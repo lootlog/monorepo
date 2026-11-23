@@ -1,7 +1,8 @@
+import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { createGuildFixture } from "../../../test/organization-fixtures.js";
 import { describe, expect, it } from "bun:test";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { Effect, Layer } from "effect";
 import type {
   CreateKillResponse,
@@ -48,10 +49,10 @@ const guildCaller: AuthorizedGuildCaller = {
   guild: createGuildFixture({ id: "guild-a" }),
   accessPolicy: createAccessPolicy({
     capabilities: [
-      Permission.LOOTLOG_ACCESS,
-      Permission.LOOTLOG_LOOTS_READ,
-      Permission.LOOTLOG_LOOTS_WRITE,
-      Permission.LOOTLOG_LOOTS_ARCHIVE,
+      Capability.LOOTLOG_ACCESS,
+      Capability.LOOTLOG_LOOTS_READ,
+      Capability.LOOTLOG_LOOTS_WRITE,
+      Capability.LOOTLOG_LOOTS_ARCHIVE,
     ],
   }),
   roles: [],
@@ -103,7 +104,11 @@ const services = (
   authorization: RecordsAuthorization["Service"],
   data: RecordsData["Service"],
 ) =>
-  Layer.merge(
+  Layer.mergeAll(
+    Layer.succeed(ForwardAuthIdentity, {
+      userId: "user",
+      discordId: "discord",
+    }),
     Layer.succeed(RecordsAuthorization, authorization),
     RecordsData.layer(data),
   );
@@ -260,7 +265,7 @@ describe("Kills and Loots HttpApi handlers", () => {
 
     expect(error).toBe(denied);
     expect(authorizationCalls).toEqual([
-      { guildId: "guild-a", capability: Permission.LOOTLOG_LOOTS_READ },
+      { guildId: "guild-a", capability: Capability.LOOTLOG_LOOTS_READ },
     ]);
     expect(dataAccessed).toBe(false);
   });
@@ -365,13 +370,13 @@ describe("Kills and Loots HttpApi handlers", () => {
     );
 
     expect(result).toBe(created);
-    expect(authorizationCalls).toEqual([Permission.LOOTLOG_LOOTS_WRITE]);
+    expect(authorizationCalls).toEqual([Capability.LOOTLOG_LOOTS_WRITE]);
   });
 
   const readOnlyAuthorization = () =>
     makeAuthorization({
       requireGuild: (options) =>
-        options.capability === Permission.LOOTLOG_LOOTS_ARCHIVE
+        options.capability === Capability.LOOTLOG_LOOTS_ARCHIVE
           ? Effect.fail(
               new RecordsAccessDenied({ status: 403, code: "FORBIDDEN" }),
             )

@@ -329,11 +329,9 @@ export const UserOnlineEventV1 = Schema.Union([
 
 export type UserOnlineEventV1 = typeof UserOnlineEventV1.Type;
 
-export const BattlelogUserDataDelete = Schema.Struct({
+const BattlelogUserDataDelete = Schema.Struct({
   userId: Schema.NonEmptyString,
 });
-
-export type BattlelogUserDataDelete = typeof BattlelogUserDataDelete.Type;
 
 const canonicalRabbitEventSchemas = {
   [RabbitRoutingKey.BATTLELOG_USER_DATA_DELETE]: BattlelogUserDataDelete,

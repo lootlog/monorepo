@@ -2,7 +2,7 @@ import { selectCharacterCatchingGuildIds } from "#src/members/character-catching
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import { Clock, Effect, Result } from "effect";
 import { partition } from "es-toolkit";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import type { ReadyRoomOperationError } from "#src/messaging/ready-room/ready-room-data";
 import type { JsonValue } from "#src/contracts/api-shared";
@@ -64,7 +64,7 @@ export const makeAutoTimer = (
     const [guildRows, catchingGuildIds] = yield* Effect.all(
       [
         selectAccessibleGuilds(database, identity.discordId, [
-          Permission.LOOTLOG_TIMERS_WRITE,
+          Capability.LOOTLOG_TIMERS_WRITE,
         ]),
         selectCharacterCatchingGuildIds(database, identity.discordId, payload),
       ],

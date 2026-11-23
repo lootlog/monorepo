@@ -1,7 +1,7 @@
 import {
   canManageOwnPartyGathering,
+  canReadHeroSighting,
   canReadNpcFeatureSource,
-  HERO_SIGHTING_READ_FEATURE,
   type NpcFeature,
 } from "@lootlog/domain/npc-permissions";
 import {
@@ -12,7 +12,7 @@ import {
   NpcRoutingDataSchema,
   NpcRoutingTierSchema,
 } from "@lootlog/schema/npc-routing";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { NonNegativeInt } from "@lootlog/schema/primitives";
 import { PartyGatheringUpdateEnvelopeSchema } from "@lootlog/schema/party-ready-room";
 import { canViewEventHero } from "@lootlog/domain/event-hero-visibility";
@@ -91,7 +91,7 @@ const isOrganizationAdministrator = (
   return (
     guild !== undefined &&
     (guild.guild.ownerId === session.discordId ||
-      guild.roles.some((role) => role.permissions.includes(Permission.ADMIN)))
+      guild.roles.some((role) => role.permissions.includes(Capability.ADMIN)))
   );
 };
 
@@ -193,15 +193,18 @@ const canReadFeatureEvent = (
   event: NpcEvent,
   routing: Routing,
 ): boolean => {
+  if (event.type === "hero-sighting.updated")
+    return (
+      routing.npcLevel !== undefined &&
+      canReadHeroSighting(guild.roles, routing.npcLevel)
+    );
+
   let feature: NpcFeature;
 
   switch (event.type) {
     case "timer.created":
     case "timer.deleted":
       feature = "timers";
-      break;
-    case "hero-sighting.updated":
-      feature = HERO_SIGHTING_READ_FEATURE;
       break;
     case "notification.sent":
     case "notification.going":
@@ -227,11 +230,11 @@ const canReadEventHeroSource = (
   const administrator = isOrganizationAdministrator(session, guild);
 
   const permissions = administrator
-    ? [Permission.ADMIN]
+    ? [Capability.ADMIN]
     : guild.roles.flatMap((role) => role.permissions);
 
   return (
-    (administrator || permissions.includes(Permission.LOOTLOG_EVENTS_READ)) &&
+    (administrator || permissions.includes(Capability.LOOTLOG_EVENTS_READ)) &&
     canViewEventHero(
       { npcLvl: source.value.heroNpcLvl },
       guild.roles,

@@ -26,8 +26,7 @@ export const makeGatewayAuth = (
   config: Pick<
     GatewayConfiguration,
     "allowedWebOrigins" | "allowedExtensionOrigins"
-  > &
-    Partial<Pick<GatewayConfiguration, "authRpcUrl">>,
+  >,
 ): GatewayAuth => ({
   isAllowedOrigin: (origin) => {
     if (!origin) return false;
@@ -63,8 +62,6 @@ export const makeGatewayAuth = (
 
       return { userId, discordId };
     }
-
-    if (!config.authRpcUrl) return null;
 
     if (
       access.expiresAt !== null &&

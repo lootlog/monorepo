@@ -25,6 +25,7 @@ const createSnapshot = (
   epochStartedAt: 100,
   revision: 3,
   targets: [createTarget()],
+  serverTime: 2_000,
   ...overrides,
 });
 
@@ -108,7 +109,7 @@ describe("AirTagReceiveController", () => {
   });
 
   it("retains at most the 100 freshest targets in each scope", () => {
-    const controller = new AirTagReceiveController();
+    const controller = new AirTagReceiveController(() => 2_000);
     controller.beginSubscription("request-1", "aether", 42);
     controller.applySubscriptionAck({
       status: "accepted",
@@ -179,7 +180,7 @@ describe("AirTagReceiveController", () => {
   });
 
   it("ignores stale acknowledgements and stale revisions", () => {
-    const controller = new AirTagReceiveController();
+    const controller = new AirTagReceiveController(() => 2_000);
     controller.beginSubscription("current", "aether", 42);
     controller.applySubscriptionAck({
       status: "accepted",
@@ -199,7 +200,7 @@ describe("AirTagReceiveController", () => {
   });
 
   it("accepts a lower revision from a newer room epoch", () => {
-    const controller = new AirTagReceiveController();
+    const controller = new AirTagReceiveController(() => 2_000);
     controller.beginSubscription("request-1", "aether", 42);
     controller.applySubscriptionAck({
       status: "accepted",
@@ -229,7 +230,7 @@ describe("AirTagReceiveController", () => {
   });
 
   it("merges duplicate guild targets into one freshest render target", () => {
-    const controller = new AirTagReceiveController();
+    const controller = new AirTagReceiveController(() => 2_000);
     controller.beginSubscription("request-1", "aether", 42);
     controller.applySubscriptionAck({
       status: "accepted",
@@ -256,7 +257,7 @@ describe("AirTagReceiveController", () => {
   });
 
   it("drops expired targets and malformed runtime updates", () => {
-    const controller = new AirTagReceiveController();
+    const controller = new AirTagReceiveController(() => 2_000);
     controller.beginSubscription("request-1", "aether", 42);
     controller.applySubscriptionAck({
       status: "accepted",
@@ -270,7 +271,7 @@ describe("AirTagReceiveController", () => {
 });
 
 it("prunes revoked scopes during an in-flight refresh without clearing unrelated targets", () => {
-  const controller = new AirTagReceiveController();
+  const controller = new AirTagReceiveController(() => 2_000);
 
   const snapshots = [
     createSnapshot(),

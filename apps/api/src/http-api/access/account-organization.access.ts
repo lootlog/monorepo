@@ -1,3 +1,4 @@
+import type { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import {
   type AuthenticatedIdentity,
   AccountOrganizationOperationError,
@@ -12,7 +13,7 @@ import { applicationErrorResponse } from "../application-error-response.js";
 import { EffectDrizzleQueryError } from "drizzle-orm/effect-core/errors";
 import { SqlError } from "effect/sql/SqlError";
 
-import type { Permission as PermissionValue } from "@lootlog/schema/permissions";
+import type { Capability as PermissionValue } from "@lootlog/schema/permissions";
 
 import {
   ResourceConflictError,
@@ -53,12 +54,17 @@ export class AccountOrganizationAuthorization extends Context.Service<
   {
     readonly identity: Effect.Effect<
       AuthenticatedIdentity,
-      AccountOrganizationAccessDenied
+      AccountOrganizationAccessDenied,
+      ForwardAuthIdentity
     >;
     readonly requireGuild: (options: {
       readonly guildId: string;
       readonly anyOf: ReadonlyArray<PermissionValue>;
-    }) => Effect.Effect<AuthorizedGuild, AuthorizationFailure>;
+    }) => Effect.Effect<
+      AuthorizedGuild,
+      AuthorizationFailure,
+      ForwardAuthIdentity
+    >;
   }
 >()("@lootlog/api/http-api/account-organization/authorization") {}
 

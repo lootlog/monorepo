@@ -4,6 +4,7 @@ import {
 } from "@lootlog/schema/discord";
 import { Schema } from "effect";
 import { Rpc, RpcGroup } from "effect/rpc";
+import { CallerAuth, RpcCallers } from "./callers.js";
 import { RpcUnavailableError } from "./errors.js";
 
 export const DiscordGuildChannelsResult = Schema.Struct({
@@ -21,5 +22,5 @@ export class DiscordBotRpcGroup extends RpcGroup.make(
     },
     success: DiscordGuildChannelsResult,
     error: RpcUnavailableError,
-  }),
-) {}
+  }).annotate(RpcCallers, ["api"]),
+).middleware(CallerAuth) {}

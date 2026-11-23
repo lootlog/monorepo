@@ -2,7 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { getGuildsControllerGetGuildPermissionsQueryKey } from "@lootlog/client/main";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import type { ComponentProps } from "react";
 import { describe, expect, it, onTestFinished, vi } from "vitest";
 import {
@@ -61,7 +61,7 @@ const renderMenu = async (props: MenuProps) => {
   for (const guildId of ["guild-1", "guild-2"]) {
     fixture.queryClient.setQueryData(
       getGuildsControllerGetGuildPermissionsQueryKey({ guildId }),
-      [Permission.LOOTLOG_TIMERS_DELETE],
+      [Capability.LOOTLOG_TIMERS_DELETE],
     );
   }
 

@@ -14,6 +14,10 @@ const createTurn = (
   overrides: Partial<BattleHpTimelineTooltipTurn> = {},
 ): BattleHpTimelineTooltipTurn => ({
   turn: 7,
+  hpByWarrior: {
+    "101": 72.24,
+    "202": 41.99,
+  },
   teamHp: {
     "1": 72.24,
     "2": 41.99,
@@ -37,6 +41,10 @@ describe("battle HP timeline tooltip", () => {
       turn: 7,
       team1: 72.24,
       team2: 41.99,
+      warriorHp: {
+        "101": 72.24,
+        "202": 41.99,
+      },
       momentum: 30.3,
       deltas: [
         {

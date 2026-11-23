@@ -7,6 +7,7 @@ import {
   REALTIME_SERVER_CLOSE_CODES,
   type ServerEvent,
 } from "@lootlog/protocol/realtime";
+import { Capability } from "@lootlog/schema/permissions";
 import { Effect } from "effect";
 import { getScopeKey } from "#src/realtime/realtime-audiences";
 import type { RealtimeHub } from "#src/realtime/realtime-hub";
@@ -33,20 +34,32 @@ export const scopedGuilds = (
     : guilds;
 };
 
+const HERO_SIGHTING_CAPABILITIES: ReadonlySet<Capability> = new Set([
+  Capability.LOOTLOG_HERO_SIGHTINGS_READ,
+  Capability.LOOTLOG_HERO_SIGHTINGS_WRITE,
+]);
+
 export const sessionAccessPolicy = (session: PermissionViewer) => {
   const organizations = createAccessPolicySnapshot(
     session.guilds,
     session.discordId,
-  ).organizations.map((organization) =>
-    publishesPresenceTo(session, organization.organizationId)
-      ? organization
-      : {
-          ...organization,
-          permissions: organization.permissions.filter(
-            (permission) => !PRESENCE_PERMISSIONS.has(permission),
-          ),
-        },
-  );
+  ).organizations.map((organization) => {
+    const hidden = (capability: Capability) =>
+      (PRESENCE_PERMISSIONS.has(capability) &&
+        !publishesPresenceTo(session, organization.organizationId)) ||
+      (HERO_SIGHTING_CAPABILITIES.has(capability) &&
+        session.heroSightingCapabilities !== true);
+
+    return {
+      ...organization,
+      permissions: organization.permissions.filter(
+        (permission) => !hidden(permission),
+      ),
+      grants: organization.grants.filter(
+        ({ permission }) => !hidden(permission),
+      ),
+    };
+  });
 
   return {
     organizations,

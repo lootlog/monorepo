@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { Effect } from "effect";
 import { eq } from "drizzle-orm";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { createPermissionCacheBoundary } from "../../test/permission-cache-fixtures.js";
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
 import {
@@ -74,8 +74,8 @@ const createFixture = async () => {
           name: "Access",
           updatedAt: new Date(0),
           permissions: [
-            Permission.LOOTLOG_ACCESS,
-            Permission.LOOTLOG_LOOTS_READ,
+            Capability.LOOTLOG_ACCESS,
+            Capability.LOOTLOG_LOOTS_READ,
           ],
         },
         {
@@ -84,8 +84,8 @@ const createFixture = async () => {
           name: "Access",
           updatedAt: new Date(0),
           permissions: [
-            Permission.LOOTLOG_ACCESS,
-            Permission.LOOTLOG_LOOTS_READ,
+            Capability.LOOTLOG_ACCESS,
+            Capability.LOOTLOG_LOOTS_READ,
           ],
         },
       ]);

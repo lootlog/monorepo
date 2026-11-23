@@ -1,6 +1,6 @@
 import { useParams } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { useIsViewer } from "@/hooks/auth/use-is-viewer";
@@ -29,8 +29,8 @@ export const KillDetail = () => {
   const { data: accessPolicy } = useGuildPermissions();
 
   const canEditPoints =
-    Boolean(accessPolicy?.allows(Permission.OWNER)) ||
-    Boolean(accessPolicy?.allows(Permission.ADMIN));
+    Boolean(accessPolicy?.allows(Capability.OWNER)) ||
+    Boolean(accessPolicy?.allows(Capability.ADMIN));
 
   const queryGuildId = guildId ?? "";
   const queryEventId = eventId ?? "";

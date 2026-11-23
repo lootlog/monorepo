@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { Effect } from "effect";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
 import {
@@ -31,7 +31,7 @@ test("guild list waits on Discord only for missing access and at most twice", as
         id: "role-d",
         guildId: "guild-d",
         name: "Member",
-        permissions: [Permission.LOOTLOG_ACCESS],
+        permissions: [Capability.LOOTLOG_ACCESS],
         updatedAt: new Date(0),
       }),
     );
@@ -115,7 +115,7 @@ test("guild list past its max age reports every Organization as stale", async ()
         id: "role-a",
         guildId: "guild-a",
         name: "Member",
-        permissions: [Permission.LOOTLOG_ACCESS],
+        permissions: [Capability.LOOTLOG_ACCESS],
         updatedAt: new Date(0),
       }),
     );

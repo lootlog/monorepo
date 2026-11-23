@@ -12,7 +12,7 @@ import {
   onTestFinished,
   vi,
 } from "vitest";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { useGameStore } from "@/store/game.store";
 import { useTimersStore } from "@/store/timers.store";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
@@ -120,8 +120,8 @@ describe("SingleTimer", () => {
                 guildNamesById={{}}
                 accessPolicy={createAccessPolicy({
                   capabilities: [
-                    Permission.LOOTLOG_TIMERS_DELETE,
-                    Permission.LOOTLOG_TIMERS_RESET,
+                    Capability.LOOTLOG_TIMERS_DELETE,
+                    Capability.LOOTLOG_TIMERS_RESET,
                   ],
                 })}
                 timer={displayedTimer}
@@ -192,7 +192,7 @@ describe("SingleTimer", () => {
       });
       const timer = createTimer();
 
-      const content = (capabilities: Permission[]) => (
+      const content = (capabilities: Capability[]) => (
         <QueryClientProvider client={fixture.queryClient}>
           <TimerClockProvider>
             <TimerGridPopups
@@ -214,8 +214,8 @@ describe("SingleTimer", () => {
 
       const view = render(
         content([
-          Permission.LOOTLOG_TIMERS_DELETE,
-          Permission.LOOTLOG_TIMERS_RESET,
+          Capability.LOOTLOG_TIMERS_DELETE,
+          Capability.LOOTLOG_TIMERS_RESET,
         ]),
       );
 
@@ -259,7 +259,7 @@ describe("SingleTimer", () => {
               guildIds={["guild-1"]}
               guildNamesById={{}}
               accessPolicy={createAccessPolicy({
-                capabilities: [Permission.LOOTLOG_TIMERS_DELETE],
+                capabilities: [Capability.LOOTLOG_TIMERS_DELETE],
               })}
               timer={createTimer()}
               settingsKey="guild-1"

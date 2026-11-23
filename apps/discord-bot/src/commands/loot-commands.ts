@@ -85,7 +85,7 @@ const lootsReply = (
   filters: {
     readonly players?: ReadonlyArray<string>;
     readonly npcs?: ReadonlyArray<string>;
-    readonly rarities?: ReadonlyArray<string>;
+    readonly rarities?: ReadonlyArray<(typeof RARITIES)[number]>;
     readonly itemNames?: ReadonlyArray<string>;
   },
 ): Effect.Effect<CommandReply, CommandFailure> =>
@@ -139,6 +139,12 @@ export const lootsCommand: SlashCommand = {
       const { webAppUrl } = yield* BotConfig;
       const session = yield* memberSession(invocation);
 
+      const requestedRarity = invocation.options.string("rzadkosc");
+
+      const rarity = RARITIES.find(
+        (candidate) => candidate === requestedRarity,
+      );
+
       return yield* lootsReply(
         session,
         webAppUrl,
@@ -147,7 +153,7 @@ export const lootsCommand: SlashCommand = {
         {
           players: present(invocation.options.string("gracz")),
           npcs: present(invocation.options.string("npc")),
-          rarities: present(invocation.options.string("rzadkosc")),
+          rarities: rarity === undefined ? undefined : [rarity],
         },
       );
     }),

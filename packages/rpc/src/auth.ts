@@ -9,6 +9,7 @@ import {
 } from "@lootlog/schema/platform-roles";
 import { Schema } from "effect";
 import { Rpc, RpcGroup } from "effect/rpc";
+import { CallerAuth, RpcCallers } from "./callers.js";
 import {
   RpcBadRequestError,
   RpcUnauthorizedError,
@@ -37,17 +38,17 @@ export class AuthRpcGroup extends RpcGroup.make(
       RpcUnauthorizedError,
       RpcUnavailableError,
     ]),
-  }),
+  }).annotate(RpcCallers, ["api"]),
   Rpc.make("listPlatformRoleHolders", {
     payload: {
       role: PlatformRole,
     },
     success: PlatformRoleHolders,
     error: Schema.Union([RpcBadRequestError, RpcUnavailableError]),
-  }),
+  }).annotate(RpcCallers, ["api"]),
   Rpc.make("getApiKeyStatuses", {
     payload: ApiKeyStatusRequest,
     success: ApiKeyStatusResponse,
     error: RpcUnavailableError,
-  }),
-) {}
+  }).annotate(RpcCallers, ["gateway"]),
+).middleware(CallerAuth) {}

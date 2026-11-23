@@ -95,10 +95,7 @@ export function DashboardActivity() {
                               date: day.date,
                               value: day.onlineSeconds,
                               worlds: day.worlds,
-                              worldsComplete:
-                                day.worldsComplete ??
-                                (day.onlineSeconds === null ||
-                                  day.onlineSeconds === 0),
+                              worldsComplete: day.worldsComplete,
                               partial: day.partial,
                             },
                           ]
@@ -128,10 +125,7 @@ export function DashboardActivity() {
                             date: day.date,
                             value: day.kills,
                             worlds: day.worlds,
-                            worldsComplete:
-                              day.worlds !== undefined ||
-                              day.kills === null ||
-                              day.kills === 0,
+                            worldsComplete: true,
                             partial: day.partial,
                           },
                         ]

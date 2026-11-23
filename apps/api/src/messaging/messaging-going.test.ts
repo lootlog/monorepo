@@ -7,7 +7,7 @@ import {
   memberToRoleTable,
   roleTable,
 } from "#src/database/drizzle/organization.schema";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
 import {
   createGuildFixture,
@@ -128,8 +128,8 @@ it("shares a going answer only with the Lootlogs where the caller reads the noti
           name: "Heroes",
           updatedAt: new Date(),
           permissions: [
-            Permission.LOOTLOG_NOTIFICATIONS_READ,
-            Permission.LOOTLOG_NOTIFICATIONS_HEROES_READ,
+            Capability.LOOTLOG_NOTIFICATIONS_READ,
+            Capability.LOOTLOG_NOTIFICATIONS_HEROES_READ,
           ],
           lvlRangeFrom: 1,
           lvlRangeTo: 500,
@@ -139,7 +139,7 @@ it("shares a going answer only with the Lootlogs where the caller reads the noti
           guildId: "restricted",
           name: "Base",
           updatedAt: new Date(),
-          permissions: [Permission.LOOTLOG_NOTIFICATIONS_READ],
+          permissions: [Capability.LOOTLOG_NOTIFICATIONS_READ],
           lvlRangeFrom: 1,
           lvlRangeTo: 500,
         },

@@ -1,12 +1,12 @@
 import { inArray } from "drizzle-orm";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import { Effect } from "effect";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import {
   requestApiKeyAccess,
-  requestScopedIdentity,
+  requestApiKeyCaller,
 } from "./forward-auth-identity.js";
 
 export const apiKeyOrganizationFilter = (column: AnyPgColumn) =>
@@ -20,19 +20,32 @@ export const apiKeyCacheSuffix = Effect.map(requestApiKeyAccess, (access) =>
   access === undefined ? "" : `:api-key:${access.keyId}`,
 );
 
-export const apiKeyAccessibleGuilds = (
+export const apiKeyCallerGuilds = (
   database: typeof ApiDatabase.Service,
-  permissions: ReadonlyArray<Permission> = [Permission.LOOTLOG_ACCESS],
+  permissions: ReadonlyArray<Capability> = [Capability.LOOTLOG_ACCESS],
 ) =>
   Effect.gen(function* () {
-    if (!(yield* requestApiKeyAccess)) return undefined;
-    const identity = yield* requestScopedIdentity;
+    const caller = yield* requestApiKeyCaller;
+
+    if (!caller) return undefined;
 
     const rows = yield* selectAccessibleGuilds(
       database,
-      identity.discordId,
+      caller.discordId,
       permissions,
     );
 
-    return rows.map(({ guild }) => guild);
+    return {
+      discordId: caller.discordId,
+      guilds: rows.map(({ guild }) => guild),
+    };
   });
+
+export const apiKeyAccessibleGuilds = (
+  database: typeof ApiDatabase.Service,
+  permissions?: ReadonlyArray<Capability>,
+) =>
+  Effect.map(
+    apiKeyCallerGuilds(database, permissions),
+    (scope) => scope?.guilds,
+  );

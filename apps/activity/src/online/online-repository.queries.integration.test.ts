@@ -1,3 +1,4 @@
+import { testRpcUpstream } from "@lootlog/rpc/testing";
 import { ActivityConfig } from "#src/config/activity-config";
 import { PgClient } from "@effect/sql-pg";
 import {
@@ -255,7 +256,7 @@ describe("durable private online history queries and ingestion", () => {
                 serviceNamespace: "test",
                 databaseUrl: Redacted.make(harness.postgres.getConnectionUri()),
                 rabbitmqUri: Redacted.make("amqp://unused"),
-                apiRpcUrl: "http://unused",
+                apiRpc: testRpcUpstream,
                 signatureSecret: Redacted.make(secret),
               }),
             ),

@@ -1,6 +1,6 @@
 import { QueryClient, QueryObserver } from "@tanstack/react-query";
 import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { createGameAccessCache } from "./game-access-cache";
 
 const policy = (titans = true, maxLevel = 500) =>
@@ -10,10 +10,10 @@ const policy = (titans = true, maxLevel = 500) =>
       roles: [
         {
           permissions: [
-            Permission.LOOTLOG_ACCESS,
-            Permission.LOOTLOG_TIMERS_READ,
+            Capability.LOOTLOG_ACCESS,
+            Capability.LOOTLOG_TIMERS_READ,
             ...(titans || id === "b"
-              ? [Permission.LOOTLOG_TIMERS_TITANS_READ]
+              ? [Capability.LOOTLOG_TIMERS_TITANS_READ]
               : []),
           ],
           lvlRangeFrom: 0,

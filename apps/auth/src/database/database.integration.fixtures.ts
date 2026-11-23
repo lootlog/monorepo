@@ -1,5 +1,5 @@
 import { ApiRpcGroup, type RpcAccessibleGuild } from "@lootlog/rpc/api";
-import { makeRpcTestHttpClient } from "@lootlog/rpc/testing";
+import { makeRpcTestHttpClient, testRpcUpstream } from "@lootlog/rpc/testing";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import type { StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import { drizzle } from "drizzle-orm/node-postgres";
@@ -37,7 +37,7 @@ export const makeAuthAdapterOptions = (
   config: {
     environment: RuntimeEnvironment.LOCAL,
     port: 4000,
-    rpcPort: 4001,
+    rpc: { port: 0, callerTokens: {}, api: testRpcUpstream },
     serviceName: "auth-adapter-test",
     appUrl: "https://auth.example.test",
     trustedOrigins: ["https://example.test"],
@@ -103,6 +103,7 @@ export const makeApiKeysRuntimeFactory = ({
       listUserReservations: unused,
       listGuildReservationSpots: unused,
     }),
+    ["auth"],
   );
 
   return (apiKeysEnabled: boolean) =>
@@ -116,7 +117,6 @@ export const makeApiKeysRuntimeFactory = ({
           Layer.succeed(AppConfig, {
             ...config,
             apiKeysEnabled,
-            apiRpcUrl: "http://api.test",
           }),
         ),
       ),

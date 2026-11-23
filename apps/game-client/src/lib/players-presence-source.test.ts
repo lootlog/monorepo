@@ -2,7 +2,7 @@ import { publishedPresence } from "@/test/realtime-wire";
 import { act, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import type {
   PresenceWithLocation,
   ServerEvent,
@@ -24,8 +24,8 @@ const policy = (location = true) =>
         roles: [
           {
             permissions: [
-              Permission.LOOTLOG_ONLINE_PLAYERS_READ,
-              ...(location ? [Permission.LOOTLOG_PRESENCE_LOCATION_READ] : []),
+              Capability.LOOTLOG_ONLINE_PLAYERS_READ,
+              ...(location ? [Capability.LOOTLOG_PRESENCE_LOCATION_READ] : []),
             ],
             lvlRangeFrom: 1,
             lvlRangeTo: 300,

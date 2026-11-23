@@ -1,5 +1,5 @@
 import type { OrganizationAccessPolicy } from "@lootlog/protocol/realtime/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { delay, randomInt } from "es-toolkit";
 import type {
   BasicPresence,
@@ -235,13 +235,13 @@ export const requestServerPresence = async (
 export const canReadPresence = (
   policy: OrganizationAccessPolicy | undefined,
 ): boolean =>
-  policy?.permissions.includes(Permission.LOOTLOG_ONLINE_PLAYERS_READ) ?? false;
+  policy?.permissions.includes(Capability.LOOTLOG_ONLINE_PLAYERS_READ) ?? false;
 
 export const canReadPresenceLocation = (
   policy: OrganizationAccessPolicy | undefined,
 ): boolean =>
   canReadPresence(policy) &&
-  (policy?.permissions.includes(Permission.LOOTLOG_PRESENCE_LOCATION_READ) ??
+  (policy?.permissions.includes(Capability.LOOTLOG_PRESENCE_LOCATION_READ) ??
     false);
 
 export const filterPresenceByPolicy = (

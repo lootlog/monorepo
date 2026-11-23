@@ -16,19 +16,9 @@ import {
   NPCS_INDEX,
 } from "#src/projection/catalog-indexes";
 import type { CatalogDatabaseValue } from "./database.js";
+import type { ItemEntry } from "#src/items/items.service";
+import type { NpcEntry } from "#src/npcs/npcs.service";
 import { catalogItemTable, catalogNpcTable } from "./schema.js";
-
-export type ItemDocumentKeys = {
-  readonly uid: string;
-  readonly id: number;
-  readonly gameVersion: string;
-  readonly droppedByMonsterKeys?: ReadonlyArray<string>;
-};
-
-export type NpcDocumentKeys = {
-  readonly uid: string;
-  readonly monsterKey: string;
-};
 
 type Transaction = Parameters<
   Parameters<CatalogDatabaseValue["transaction"]>[0]
@@ -99,15 +89,10 @@ export type CatalogWriteFailure =
   | SearchOperationFailure
   | SqlError;
 
-const documents = <Document>(rows: ReadonlyArray<{ document: object }>) =>
-  // SAFETY: `saveItems` and `saveNpcs` are the only writers of these columns,
-  // and each stores the documents of its own table's type.
-  rows.map(({ document }) => document as Document);
+const documents = <Document>(rows: ReadonlyArray<{ document: Document }>) =>
+  rows.map(({ document }) => document);
 
-export const makeCatalogStore = <
-  Item extends ItemDocumentKeys,
-  Npc extends NpcDocumentKeys,
->(
+export const makeCatalogStore = (
   database: CatalogDatabaseValue,
   meilisearch: Meilisearch,
 ) => {
@@ -129,20 +114,20 @@ export const makeCatalogStore = <
           .select({ document: catalogNpcTable.document })
           .from(catalogNpcTable)
           .where(inArray(catalogNpcTable.uid, batch)),
-      ).pipe(Effect.map((pages) => documents<Npc>(pages.flat()))),
+      ).pipe(Effect.map((pages) => documents(pages.flat()))),
     npcsByMonsterKeys: (monsterKeys: ReadonlyArray<string>) =>
       Effect.forEach(chunk([...monsterKeys], READ_BATCH), (batch) =>
         executor
           .select({ document: catalogNpcTable.document })
           .from(catalogNpcTable)
           .where(inArray(catalogNpcTable.monsterKey, batch)),
-      ).pipe(Effect.map((pages) => documents<Npc>(pages.flat()))),
+      ).pipe(Effect.map((pages) => documents(pages.flat()))),
   });
 
   const npcDocument = (field: string) =>
     sql`${catalogNpcTable.document}->>${field}`;
 
-  const read: CatalogReads<Npc> = {
+  const read: CatalogReads<NpcEntry> = {
     ...npcLookups(database),
     monsterKeyOf: (npcKey) =>
       database
@@ -189,7 +174,7 @@ export const makeCatalogStore = <
         .orderBy(asc(catalogNpcTable.uid)),
   };
 
-  const storeNpcs = (transaction: Transaction, npcs: ReadonlyArray<Npc>) =>
+  const storeNpcs = (transaction: Transaction, npcs: ReadonlyArray<NpcEntry>) =>
     Effect.forEach(
       chunk([...npcs], WRITE_BATCH),
       (batch) =>
@@ -213,7 +198,9 @@ export const makeCatalogStore = <
       { discard: true },
     );
 
-  const change = (transaction: Transaction): CatalogChange<Item, Npc> => ({
+  const change = (
+    transaction: Transaction,
+  ): CatalogChange<ItemEntry, NpcEntry> => ({
     ...npcLookups(transaction),
     itemsByUids: (uids) =>
       Effect.forEach(chunk([...uids], READ_BATCH), (batch) =>
@@ -221,13 +208,13 @@ export const makeCatalogStore = <
           .select({ document: catalogItemTable.document })
           .from(catalogItemTable)
           .where(inArray(catalogItemTable.uid, batch)),
-      ).pipe(Effect.map((pages) => documents<Item>(pages.flat()))),
+      ).pipe(Effect.map((pages) => documents(pages.flat()))),
     itemsByMonsterKey: (monsterKey) =>
       transaction
         .select({ document: catalogItemTable.document })
         .from(catalogItemTable)
         .where(arrayContains(catalogItemTable.monsterKeys, [monsterKey]))
-        .pipe(Effect.map(documents<Item>)),
+        .pipe(Effect.map(documents)),
     itemsByIds: (gameVersion, ids) =>
       Effect.forEach(chunk([...ids], READ_BATCH), (batch) =>
         transaction
@@ -239,7 +226,7 @@ export const makeCatalogStore = <
               inArray(catalogItemTable.itemId, batch),
             ),
           ),
-      ).pipe(Effect.map((pages) => documents<Item>(pages.flat()))),
+      ).pipe(Effect.map((pages) => documents(pages.flat()))),
     saveItems: (items) =>
       Effect.gen(function* () {
         for (const batch of chunk([...items], WRITE_BATCH)) {
@@ -286,7 +273,7 @@ export const makeCatalogStore = <
   });
 
   const write = <A, E>(
-    run: (change: CatalogChange<Item, Npc>) => Effect.Effect<A, E>,
+    run: (change: CatalogChange<ItemEntry, NpcEntry>) => Effect.Effect<A, E>,
   ) =>
     Effect.gen(function* () {
       const settled = yield* database.transaction(

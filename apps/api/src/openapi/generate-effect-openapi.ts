@@ -1,11 +1,11 @@
-import { Predicate } from "effect";
+import { Context, Predicate, SchemaAST } from "effect";
 import {
   integerSchema,
   normalizeSchemaAnnotations,
   normalizeNullableSchema,
 } from "@lootlog/schema/openapi-compatibility";
 import { rename, unlink } from "node:fs/promises";
-import { OpenApi } from "effect/http-api";
+import { HttpApi, OpenApi } from "effect/http-api";
 import { stringify } from "yaml";
 import { LootlogApi } from "../http-api/lootlog-api.js";
 import {
@@ -41,9 +41,6 @@ const HTTP_METHODS = [
   "head",
   "trace",
 ] as const;
-
-const ENCODED_NUMBER_PATTERN =
-  "^[+-]?(?:\\d+(?:\\.\\d+)?|\\.\\d+)(?:[Ee][+-]?\\d+)?$";
 
 type JsonObject = Record<string, unknown>;
 
@@ -176,6 +173,33 @@ const temporary = new URL("../../openapi.yaml.tmp", import.meta.url);
 
 const document = { ...OpenApi.fromApi(LootlogApi), openapi: "3.0.0" };
 
+const numericPathParameters = new Set<string>();
+
+HttpApi.reflect(LootlogApi, {
+  onGroup: () => undefined,
+  onEndpoint: ({ group, endpoint }) => {
+    if (endpoint.params === undefined) return;
+    const params = SchemaAST.toType(endpoint.params.ast);
+
+    if (!SchemaAST.isObjects(params)) return;
+
+    const operationId = Context.getOrElse(
+      endpoint.annotations,
+      OpenApi.Identifier,
+      () =>
+        group.topLevel
+          ? endpoint.identifier
+          : `${group.identifier}.${endpoint.identifier}`,
+    );
+
+    for (const property of params.propertySignatures) {
+      if (SchemaAST.isNumber(SchemaAST.toType(property.type))) {
+        numericPathParameters.add(`${operationId}:${String(property.name)}`);
+      }
+    }
+  },
+});
+
 const duplicateSchemaReferences = new Map<string, string>();
 
 for (const [name, schema] of Object.entries(document.components.schemas)) {
@@ -223,10 +247,7 @@ for (const path of Object.values(document.paths)) {
 
       if (
         parameter.in === "path" &&
-        "type" in schema &&
-        schema.type === "string" &&
-        "pattern" in schema &&
-        schema.pattern === ENCODED_NUMBER_PATTERN
+        numericPathParameters.has(`${operationId}:${parameter.name}`)
       ) {
         parameter.schema = { type: "number" };
         continue;

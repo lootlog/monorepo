@@ -245,3 +245,9 @@ export const consumerRoute = <Key extends RabbitEventRoutingKey>(
     ],
   };
 };
+
+export const battlelogUserDataDeleteRoute = consumerRoute(
+  "battlelog-user-data-delete",
+  RabbitRoutingKey.BATTLELOG_USER_DATA_DELETE,
+  { failure: "retry" },
+);

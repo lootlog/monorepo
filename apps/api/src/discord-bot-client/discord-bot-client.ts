@@ -1,20 +1,11 @@
 import {
-  DiscordGuildChannel,
-  DiscordGuildSyncState,
-} from "@lootlog/schema/discord";
-import { DiscordBotRpcGroup } from "@lootlog/rpc/discord-bot";
-import { makeRpcClient } from "@lootlog/rpc/client";
-import type { RpcUnavailableError } from "@lootlog/rpc/errors";
+  type DiscordGuildChannelsResult,
+  DiscordBotRpcGroup,
+} from "@lootlog/rpc/discord-bot";
+import type { RpcUpstream } from "@lootlog/rpc/callers";
+import { makeRpcClient, type ServiceRpcClient } from "@lootlog/rpc/client";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Effect, Schema } from "effect";
-import type { RpcClientError } from "effect/rpc";
-
-const DiscordGuildChannelsResponse = Schema.Struct({
-  channels: Schema.Array(DiscordGuildChannel),
-  syncState: DiscordGuildSyncState,
-});
-
-type GuildChannels = typeof DiscordGuildChannelsResponse.Type;
 
 class DiscordBotClientFailure extends TaggedErrorClass<
   DiscordBotClientFailure,
@@ -27,17 +18,10 @@ class DiscordBotClientFailure extends TaggedErrorClass<
 export interface DiscordBotClient {
   readonly refreshGuildChannels: (
     guildId: string,
-  ) => Effect.Effect<GuildChannels, DiscordBotClientFailure>;
+  ) => Effect.Effect<DiscordGuildChannelsResult, DiscordBotClientFailure>;
 }
 
-interface DiscordBotRpcClient {
-  readonly refreshGuildChannels: (input: {
-    readonly guildId: string;
-  }) => Effect.Effect<
-    GuildChannels,
-    RpcUnavailableError | RpcClientError.RpcClientError
-  >;
-}
+type DiscordBotRpcClient = ServiceRpcClient<typeof DiscordBotRpcGroup>;
 
 export const makeDiscordBotClient = (
   rpc: DiscordBotRpcClient,
@@ -60,6 +44,13 @@ export const makeDiscordBotClient = (
               message: error.message ?? "Discord Bot synchronization failed",
             }),
           ),
+        RpcCallerRejectedError: () =>
+          Effect.fail(
+            new DiscordBotClientFailure({
+              reason: "status",
+              message: "Discord Bot rejected the API as caller",
+            }),
+          ),
         RpcClientError: () =>
           Effect.fail(
             new DiscordBotClientFailure({
@@ -71,8 +62,8 @@ export const makeDiscordBotClient = (
     ),
 });
 
-export const makeDiscordBotRpcClient = (discordBotRpcUrl: URL) =>
+export const makeDiscordBotRpcClient = (upstream: RpcUpstream) =>
   makeRpcClient(DiscordBotRpcGroup, {
-    url: discordBotRpcUrl,
+    ...upstream,
     spanPrefix: "api.discord-bot-rpc",
   }).pipe(Effect.map(makeDiscordBotClient));

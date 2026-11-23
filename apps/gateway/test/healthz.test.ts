@@ -10,7 +10,7 @@ import {
   Schema,
 } from "effect";
 import { observabilityLayer } from "@lootlog/instrumentation/observability";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { makeGatewayAuth } from "../src/auth/auth-service.js";
 import type { UserGuildData } from "../src/guilds/guild.js";
 import {
@@ -29,7 +29,7 @@ const hub = { unavailableReason: () => undefined };
 
 const memberGrant = (
   organizationId: string,
-  permissions: ReadonlyArray<Permission>,
+  permissions: ReadonlyArray<Capability>,
 ): UserGuildData => ({
   guild: { id: organizationId, ownerId: "discord-owner" },
   roles: [{ id: "role", lvlRangeFrom: 0, lvlRangeTo: 500, permissions }],
@@ -38,13 +38,13 @@ const memberGrant = (
 const grantsByDiscordId = new Map<string, UserGuildData[]>([
   [
     "discord-reader",
-    [memberGrant("organization-1", [Permission.LOOTLOG_ONLINE_PLAYERS_READ])],
+    [memberGrant("organization-1", [Capability.LOOTLOG_ONLINE_PLAYERS_READ])],
   ],
   [
     "discord-member",
     [
-      memberGrant("organization-1", [Permission.LOOTLOG_ACCESS]),
-      memberGrant("organization-2", [Permission.LOOTLOG_ONLINE_PLAYERS_READ]),
+      memberGrant("organization-1", [Capability.LOOTLOG_ACCESS]),
+      memberGrant("organization-2", [Capability.LOOTLOG_ONLINE_PLAYERS_READ]),
     ],
   ],
 ]);
@@ -499,7 +499,6 @@ test("server API key upgrades allow absent Origin while preserving session and a
   const keyAuth = makeGatewayAuth({
     allowedWebOrigins: new Set(["https://lootlog.example"]),
     allowedExtensionOrigins: new Set(),
-    authRpcUrl: "http://auth.internal:4001",
   });
 
   const fetch = gatewayFetch({ ...application, auth: keyAuth });

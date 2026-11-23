@@ -1,4 +1,5 @@
-import { Capability, type AccessPolicy } from "@lootlog/domain/access-policy";
+import { Capability } from "@lootlog/schema/permissions";
+import type { AccessPolicy } from "@lootlog/domain/access-policy";
 
 export const canManageGuild = (accessPolicy: AccessPolicy | undefined) =>
   accessPolicy?.allows(Capability.ADMIN) ?? false;

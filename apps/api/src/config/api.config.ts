@@ -3,7 +3,14 @@ import {
   baseServiceConfig,
   redisUrlConfig,
 } from "@lootlog/instrumentation/service-config";
-import { DEFAULT_RPC_PORT } from "@lootlog/rpc/server";
+import { ApiRpcGroup } from "@lootlog/rpc/api";
+import {
+  type CallerTokens,
+  type RpcUpstream,
+  rpcCallerTokensConfig,
+  rpcUpstreamConfig,
+} from "@lootlog/rpc/callers";
+import { rpcPortConfig } from "@lootlog/rpc/server";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { Config, Option, type Redacted, Schema } from "effect";
 
@@ -15,12 +22,15 @@ export const rabbitmqUriConfig = Config.Redacted("RABBITMQ_URI");
 export const databaseUrlConfig = Config.Redacted("POSTGRESQL_CONNECTION_URI");
 
 export interface ApiConfiguration extends BaseServiceConfiguration {
-  readonly rpcPort: number;
+  readonly rpc: {
+    readonly port: number;
+    readonly callerTokens: CallerTokens;
+    readonly auth: RpcUpstream;
+    readonly discordBot: RpcUpstream;
+  };
   readonly isLocal: boolean;
   readonly rabbitmqUri: Redacted.Redacted<string>;
   readonly redisUrl: Redacted.Redacted<string>;
-  readonly authRpcUrl: URL;
-  readonly discordBotRpcUrl: URL;
   readonly reservationsCardsUrl: URL;
   readonly mapsApiUrl: URL;
   readonly timerCleanup: {
@@ -37,14 +47,14 @@ export interface ApiConfiguration extends BaseServiceConfiguration {
 
 export const apiConfiguration: Config.Config<ApiConfiguration> = Config.all({
   base: baseServiceConfig("api"),
-  rpcPort: Config.Int("RPC_PORT").pipe(Config.withDefault(DEFAULT_RPC_PORT)),
+  rpc: Config.all({
+    port: rpcPortConfig,
+    callerTokens: rpcCallerTokensConfig("api", ApiRpcGroup),
+    auth: rpcUpstreamConfig("api", "auth"),
+    discordBot: rpcUpstreamConfig("api", "discord-bot"),
+  }),
   rabbitmqUri: rabbitmqUriConfig,
   redisUrl: redisUrlConfig,
-  authRpcUrl: Config.schema(Schema.URLFromString, "AUTH_RPC_URL"),
-  discordBotRpcUrl: Config.schema(
-    Schema.URLFromString,
-    "DISCORD_BOT_RPC_URL",
-  ).pipe(Config.withDefault(new URL("http://discord-bot:4001"))),
   reservationsCardsUrl: Config.schema(
     Schema.URLFromString,
     "RESERVATIONS_CARDS_URL",

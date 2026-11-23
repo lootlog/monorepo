@@ -12,7 +12,9 @@ import {
   formatBattleHpTimelineTooltipNumber,
   getBattleHpTimelineTooltipPayload,
   type BattleHpTimelineTooltipDeltaKey,
+  type BattleHpTimelineTooltipSeries,
 } from "./battle-hp-timeline-tooltip";
+import { BattleHpTimelineSeriesSwatch } from "./battle-hp-timeline-series-swatch";
 import { PRODUCT_LOCALE } from "@lootlog/domain/locale";
 
 type BattleHpTimelineTooltipPayloadItem = {
@@ -29,10 +31,8 @@ type BattleHpTimelineTooltipContentProps = {
   chartRootRef: RefObject<HTMLDivElement | null>;
   coordinate?: BattleHpTimelineTooltipCoordinate;
   payload?: BattleHpTimelineTooltipPayloadItem[];
-  team1Color: string;
-  team1Label: string;
-  team2Color: string;
-  team2Label: string;
+  series: BattleHpTimelineTooltipSeries[];
+  getTeamLabel: (team: number) => string;
 };
 
 const deltaClassNameByKey = {
@@ -46,10 +46,8 @@ export function BattleHpTimelineTooltipContent({
   chartRootRef,
   coordinate,
   payload,
-  team1Color,
-  team1Label,
-  team2Color,
-  team2Label,
+  series,
+  getTeamLabel,
 }: BattleHpTimelineTooltipContentProps) {
   const { i18n, t } = useTranslation();
   const tooltipData = getBattleHpTimelineTooltipPayload(payload?.[0]?.payload);
@@ -81,30 +79,27 @@ export function BattleHpTimelineTooltipContent({
       </div>
 
       <div className="grid gap-1.5">
-        <div className="flex items-center justify-between gap-3">
-          <span className="flex min-w-0 items-center gap-1.5 text-muted-foreground">
-            <span
-              className="size-2 shrink-0 rounded-full"
-              style={{ backgroundColor: team1Color }}
-            />
-            <span className="truncate">{team1Label}</span>
-          </span>
-          <span className="font-mono font-medium tabular-nums text-foreground">
-            {formatPercent(tooltipData.team1)}
-          </span>
-        </div>
-        <div className="flex items-center justify-between gap-3">
-          <span className="flex min-w-0 items-center gap-1.5 text-muted-foreground">
-            <span
-              className="size-2 shrink-0 rounded-full"
-              style={{ backgroundColor: team2Color }}
-            />
-            <span className="truncate">{team2Label}</span>
-          </span>
-          <span className="font-mono font-medium tabular-nums text-foreground">
-            {formatPercent(tooltipData.team2)}
-          </span>
-        </div>
+        {series.map((item) => {
+          const value = item.getValue(tooltipData);
+
+          return (
+            <div
+              key={item.key}
+              className="flex items-center justify-between gap-3"
+            >
+              <span className="flex min-w-0 items-center gap-1.5 text-muted-foreground">
+                <BattleHpTimelineSeriesSwatch
+                  color={item.color}
+                  isAverage={item.isAverage}
+                />
+                <span className="truncate">{item.label}</span>
+              </span>
+              <span className="font-mono font-medium tabular-nums text-foreground">
+                {value === undefined ? "–" : formatPercent(value)}
+              </span>
+            </div>
+          );
+        })}
       </div>
 
       {tooltipData.deltas.length > 0 ? (
@@ -148,9 +143,7 @@ export function BattleHpTimelineTooltipContent({
               <span className="truncate">
                 {t("battlePanel.single.chart.legendary.bonusRecipient", {
                   bonus: t(bonus.labelKey),
-                  recipient:
-                    bonus.recipientName ??
-                    (bonus.team === 1 ? team1Label : team2Label),
+                  recipient: bonus.recipientName ?? getTeamLabel(bonus.team),
                 })}
               </span>
             </div>

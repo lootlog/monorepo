@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { RedisError } from "effect/persistence/Redis";
 import { MessagingError } from "@lootlog/messaging";
 import { Effect } from "effect";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
 import {
   createGuildFixture,
@@ -51,7 +51,7 @@ test("Discord role revocation and deletion rebalance only active holders, surviv
         id: "role-1",
         guildId: "guild-1",
         name: "Admin",
-        permissions: [Permission.ADMIN, Permission.LOOTLOG_ACCESS],
+        permissions: [Capability.ADMIN, Capability.LOOTLOG_ACCESS],
         updatedAt: new Date(0),
       }),
     );
@@ -136,7 +136,7 @@ test("Discord role revocation and deletion rebalance only active holders, surviv
         id: "role-2",
         guildId: "guild-1",
         name: "Reader",
-        permissions: [Permission.LOOTLOG_ACCESS],
+        permissions: [Capability.LOOTLOG_ACCESS],
         updatedAt: new Date(0),
       }),
     );
@@ -175,7 +175,7 @@ test("Organization removal revokes members through the outbox and the owner's ag
         id: "role-1",
         guildId: "guild-1",
         name: "Reader",
-        permissions: [Permission.LOOTLOG_ACCESS],
+        permissions: [Capability.LOOTLOG_ACCESS],
         updatedAt: new Date(0),
       }),
     );

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { Effect } from "effect";
 import { ChatOperationError } from "#src/chat/chat-data";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import type { roleTable } from "#src/database/drizzle/organization.schema";
 import { PermissionDeniedError } from "@lootlog/protocol/http/errors";
 import { makeChatOperations, type ChatRedis } from "#src/chat/chat.data-layer";
@@ -33,7 +33,7 @@ const message = {
   },
 };
 
-const setup = (permissions: Permission[], levelFrom = 200) => {
+const setup = (permissions: Capability[], levelFrom = 200) => {
   const roles: Array<typeof roleTable.$inferSelect> = [
     {
       id: "role",
@@ -100,8 +100,8 @@ const setup = (permissions: Permission[], levelFrom = 200) => {
 describe("chat mutation source visibility", () => {
   it("rejects deletion after the author loses the source level", async () => {
     const fixture = setup([
-      Permission.LOOTLOG_CHAT_READ,
-      Permission.LOOTLOG_CHAT_WRITE,
+      Capability.LOOTLOG_CHAT_READ,
+      Capability.LOOTLOG_CHAT_WRITE,
     ]);
 
     const operation = fixture.operations.deleteMessage(
@@ -119,7 +119,7 @@ describe("chat mutation source visibility", () => {
 
   it("retains author deletion for a visible source and broadcasts their result", async () => {
     const fixture = setup(
-      [Permission.LOOTLOG_CHAT_READ, Permission.LOOTLOG_CHAT_WRITE],
+      [Capability.LOOTLOG_CHAT_READ, Capability.LOOTLOG_CHAT_WRITE],
       0,
     );
 
@@ -135,7 +135,7 @@ describe("chat mutation source visibility", () => {
   });
 
   it("preserves system updates when a party gathering ends", async () => {
-    const fixture = setup([Permission.LOOTLOG_CHAT_READ]);
+    const fixture = setup([Capability.LOOTLOG_CHAT_READ]);
     fixture.records[0] = JSON.stringify({
       ...message,
       type: "PARTY_GATHERING",
@@ -162,7 +162,7 @@ describe("chat mutation source visibility", () => {
   });
 
   it("allows administrators to delete messages outside their role range", async () => {
-    const fixture = setup([Permission.ADMIN]);
+    const fixture = setup([Capability.ADMIN]);
     await Effect.runPromise(
       fixture.operations.deleteMessage(
         fixture.viewer("administrator"),
@@ -176,7 +176,7 @@ describe("chat mutation source visibility", () => {
 
   it("lets moderators delete another member's visible message", async () => {
     const fixture = setup(
-      [Permission.LOOTLOG_CHAT_READ, Permission.LOOTLOG_MANAGE],
+      [Capability.LOOTLOG_CHAT_READ, Capability.LOOTLOG_MANAGE],
       0,
     );
 

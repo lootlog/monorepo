@@ -1,9 +1,15 @@
-import type { InfiniteData, QueryClient } from "@tanstack/react-query";
+import type {
+  InfiniteData,
+  QueryClient,
+  QueryKey,
+} from "@tanstack/react-query";
 import { Option, Schema } from "effect";
 import { getShortnameByProf } from "@lootlog/domain/profession";
 import {
   getLootsControllerFetchLootByIdQueryKey,
+  getLootsControllerFetchLootsByGuildIdQueryKey,
   type LootPageResponseDto,
+  type LootsControllerFetchLootsByGuildIdParams,
 } from "@lootlog/client/main";
 import type { Loot } from "@/lib/loots/loot-types";
 
@@ -14,6 +20,20 @@ export const LOOTS_PAGE_LIMIT = 20;
 export const FIRST_PAGE_CURSOR = "";
 
 type LootsInfiniteData = InfiniteData<LootPageResponseDto>;
+
+const LOOT_LIST_KEY_SCOPE = "infinite";
+
+export const lootListQueryKey = (
+  guildId: string,
+  params: LootsControllerFetchLootsByGuildIdParams,
+) =>
+  [
+    ...getLootsControllerFetchLootsByGuildIdQueryKey({ guildId }, params),
+    LOOT_LIST_KEY_SCOPE,
+  ] as const;
+
+const isLootListKey = (queryKey: QueryKey) =>
+  queryKey[2] === LOOT_LIST_KEY_SCOPE;
 
 const LootListParams = Schema.Struct({
   world: Schema.optional(Schema.String),
@@ -166,27 +186,28 @@ const placeLoot = (
   };
 };
 
-const LootPage = Schema.Struct({
-  items: Schema.Array(Schema.Unknown),
-  nextCursor: Schema.NullOr(Schema.String),
-});
+const cachedLootLists = (
+  queryClient: QueryClient,
+  guildId: string,
+  type: "all" | "active" = "all",
+) =>
+  queryClient
+    .getQueriesData<LootsInfiniteData>({
+      queryKey: [`/guilds/${guildId}/loots`],
+      type,
+      predicate: ({ queryKey }) => isLootListKey(queryKey),
+    })
+    .flatMap(([key, data]) => (data ? [{ key, data }] : []));
 
-const isLootPage = Schema.is(LootPage);
-
-const isLootPageList = Schema.is(
-  Schema.Struct({ pages: Schema.Array(LootPage) }),
-);
-
-const isLootPages = (data: unknown): data is LootsInfiniteData =>
-  isLootPageList(data);
-
-const cachedLootLists = (queryClient: QueryClient, guildId: string) => {
-  const path = `/guilds/${guildId}/loots`;
-
-  return queryClient
-    .getQueriesData({ queryKey: [path] })
-    .filter(([key, data]) => key[0] === path && isLootPages(data));
-};
+export const findCachedLoot = (
+  queryClient: QueryClient,
+  guildId: string,
+  lootId: number,
+) =>
+  cachedLootLists(queryClient, guildId)
+    .flatMap(({ data }) => data.pages)
+    .flatMap((page) => page.items)
+    .find((loot) => loot.id === lootId);
 
 export function applyLootSnapshots(
   queryClient: QueryClient,
@@ -195,7 +216,7 @@ export function applyLootSnapshots(
 ): boolean {
   let needsServer = false;
 
-  for (const [key] of cachedLootLists(queryClient, guildId)) {
+  for (const { key } of cachedLootLists(queryClient, guildId)) {
     const params = decodeLootListParams(key[1] ?? {});
 
     for (const loot of loots) {
@@ -236,7 +257,7 @@ export function patchLoot(
 ) {
   const apply = (loot: Loot): Loot => ({ ...loot, ...patch });
 
-  for (const [key] of cachedLootLists(queryClient, guildId)) {
+  for (const { key } of cachedLootLists(queryClient, guildId)) {
     queryClient.setQueryData<LootsInfiniteData>(key, (old) =>
       old?.pages.some((page) => page.items.some((loot) => loot.id === lootId))
         ? {
@@ -267,12 +288,7 @@ export async function reconcileActiveLootLists(
   const queryKey = [`/guilds/${guildId}/loots`];
   await queryClient.cancelQueries({ queryKey, type: "active" });
 
-  for (const [key, data] of queryClient.getQueriesData({
-    queryKey,
-    type: "active",
-  })) {
-    if (!isLootPages(data)) continue;
-
+  for (const { key, data } of cachedLootLists(queryClient, guildId, "active")) {
     queryClient.setQueryData<LootsInfiniteData>(key, {
       pages: data.pages.slice(0, 1),
       pageParams: [FIRST_PAGE_CURSOR],
@@ -288,6 +304,16 @@ export async function reconcileActiveLootLists(
 const isLootPath = Schema.is(
   Schema.String.check(Schema.isPattern(/^\/guilds\/[^/]+\/loots(?:\/\d+)?$/)),
 );
+
+const isLootPagePath = Schema.is(
+  Schema.String.check(Schema.isPattern(/\/loots$/)),
+);
+
+const emptyLootData = (queryKey: QueryKey) => {
+  if (isLootListKey(queryKey)) return { pages: [], pageParams: [] };
+
+  return isLootPagePath(queryKey[0]) ? { items: [], nextCursor: null } : null;
+};
 
 export async function clearLootPolicyData(
   queryClient: QueryClient,
@@ -310,18 +336,11 @@ export async function clearLootPolicyData(
   await queryClient.cancelQueries(filters);
   queryClient.removeQueries({ ...filters, type: "inactive" });
 
-  for (const [key, data] of queryClient.getQueriesData({
+  for (const [key] of queryClient.getQueriesData({
     ...filters,
     type: "active",
   })) {
-    queryClient.setQueryData(
-      key,
-      isLootPages(data)
-        ? { pages: [], pageParams: [] }
-        : isLootPage(data)
-          ? { items: [], nextCursor: null }
-          : null,
-    );
+    queryClient.setQueryData(key, emptyLootData(key));
   }
 
   await queryClient.invalidateQueries({ ...filters, refetchType: "none" });

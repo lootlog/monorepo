@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { ApiRpcGroup } from "@lootlog/rpc/api";
-import { makeRpcTestHttpClient } from "@lootlog/rpc/testing";
-import { Permission } from "@lootlog/schema/permissions";
+import { makeRpcTestHttpClient, testRpcUpstream } from "@lootlog/rpc/testing";
+import { Capability } from "@lootlog/schema/permissions";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { Effect, Layer, Queue, Redacted } from "effect";
 import { Redis } from "effect/persistence";
@@ -20,7 +20,7 @@ describe("Activity permissions", () => {
             id: "admin",
             lvlRangeFrom: 0,
             lvlRangeTo: 999,
-            permissions: [Permission.ADMIN],
+            permissions: [Capability.ADMIN],
           },
         ],
       },
@@ -81,7 +81,7 @@ describe("Activity permissions", () => {
       databaseUrl: Redacted.make("postgresql://unused"),
       rabbitmqUri: Redacted.make("amqp://unused"),
       redisUrl: Redacted.make("redis://configured"),
-      apiRpcUrl: "http://api.test",
+      apiRpc: testRpcUpstream,
       signatureSecret: Redacted.make("a".repeat(32)),
     });
 
@@ -96,7 +96,7 @@ describe("Activity permissions", () => {
         Effect.provide(
           Layer.provide(
             Permissions.layer,
-            makeRpcTestHttpClient(ApiRpcGroup, apiRpcHandlers),
+            makeRpcTestHttpClient(ApiRpcGroup, apiRpcHandlers, ["activity"]),
           ),
         ),
         Effect.provideService(ActivityConfig, config),
@@ -104,7 +104,7 @@ describe("Activity permissions", () => {
       ),
     );
 
-    expect(before).toEqual([Permission.ADMIN]);
+    expect(before).toEqual([Capability.ADMIN]);
     expect(after).toEqual([]);
   });
 });

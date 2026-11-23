@@ -1,4 +1,5 @@
-import { Duration, Effect, Random, Schedule, Stream } from "effect";
+import { Effect, Schedule, Stream } from "effect";
+import { jitteredRetryDelay } from "./retry-delay.js";
 import { withScope, type HttpClient } from "effect/http/HttpClient";
 
 type FailureReason =
@@ -7,16 +8,6 @@ type FailureReason =
   | "status"
   | "timeout"
   | "transport";
-
-const retryDelay = Schedule.exponential("100 millis").pipe(
-  Schedule.modifyDelay(({ duration }) =>
-    Random.next.pipe(
-      Effect.map((random) =>
-        Duration.millis(Math.min(2_000, Duration.toMillis(duration)) * random),
-      ),
-    ),
-  ),
-);
 
 export const boundedHttpGet = Effect.fnUntraced(function* <
   A,
@@ -119,7 +110,10 @@ export const boundedHttpGet = Effect.fnUntraced(function* <
 
   return yield* attempt.pipe(
     Effect.retry({
-      schedule: Schedule.max([retryDelay, Schedule.recurs(options.retries)]),
+      schedule: Schedule.max([
+        jitteredRetryDelay,
+        Schedule.recurs(options.retries),
+      ]),
       while: (error) => error.retryable,
     }),
   );

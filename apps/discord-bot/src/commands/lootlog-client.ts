@@ -17,21 +17,17 @@ import {
   CatalogRpcGroup,
   type CatalogItemSearchResult,
 } from "@lootlog/rpc/catalog";
-import { makeRpcClient } from "@lootlog/rpc/client";
 import {
-  RpcBadRequestError,
-  RpcForbiddenError,
-  RpcNotFoundError,
-  RpcUnauthorizedError,
-  RpcUnavailableError,
-} from "@lootlog/rpc/errors";
-import type { RpcClientError } from "effect/rpc";
+  boundedRpcCall,
+  makeRpcClient,
+  type ServiceRpcClient,
+} from "@lootlog/rpc/client";
 import {
   GatewayRpcGroup,
   type GatewayPresenceSnapshot,
 } from "@lootlog/rpc/gateway";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { type Cause, Context, Effect, Layer, Schema } from "effect";
+import { Context, Effect, Layer, Schema } from "effect";
 import { HttpClient } from "effect/http";
 import { BotConfig } from "#src/config/bot-config";
 
@@ -48,38 +44,29 @@ export class CommandFailure extends TaggedErrorClass<
   ]),
 }) {}
 
-type RpcCallError =
-  | RpcUnauthorizedError
-  | RpcForbiddenError
-  | RpcNotFoundError
-  | RpcUnavailableError
-  | RpcBadRequestError
-  | RpcClientError.RpcClientError
-  | Cause.TimeoutError;
+const FAILURE_REASON_BY_RPC_ERROR = new Map<string, CommandFailure["reason"]>([
+  ["RpcUnauthorizedError", "reauthenticate"],
+  ["RpcForbiddenError", "forbidden"],
+  ["RpcNotFoundError", "not-found"],
+]);
 
-const mapRpcFailure = (error: RpcCallError): CommandFailure => {
-  if (Schema.is(RpcUnauthorizedError)(error)) {
-    return new CommandFailure({ reason: "reauthenticate" });
-  }
+const boundedCall = boundedRpcCall({ timeout: "2500 millis", retries: 1 });
 
-  if (Schema.is(RpcForbiddenError)(error)) {
-    return new CommandFailure({ reason: "forbidden" });
-  }
-
-  if (Schema.is(RpcNotFoundError)(error)) {
-    return new CommandFailure({ reason: "not-found" });
-  }
-
-  return new CommandFailure({ reason: "unavailable" });
-};
-
-const runRpc = <A, E extends RpcCallError>(
-  effect: Effect.Effect<A, E>,
+const runRpc = <A, E extends { readonly _tag: string }>(
+  call: () => Effect.Effect<A, E>,
 ): Effect.Effect<A, CommandFailure> =>
-  effect.pipe(
-    Effect.timeout("2500 millis"),
-    Effect.mapError((error) => mapRpcFailure(error)),
+  boundedCall(call).pipe(
+    Effect.mapError(
+      (error) =>
+        new CommandFailure({
+          reason: FAILURE_REASON_BY_RPC_ERROR.get(error._tag) ?? "unavailable",
+        }),
+    ),
   );
+
+type ApiClient = ServiceRpcClient<typeof ApiRpcGroup>;
+
+type ApiPayload<Name extends keyof ApiClient> = Parameters<ApiClient[Name]>[0];
 
 interface MemberApiClient {
   readonly listGuildEvents: Effect.Effect<
@@ -102,29 +89,26 @@ interface MemberApiClient {
   readonly listGuildTimers: (
     world?: string,
   ) => Effect.Effect<ReadonlyArray<typeof RpcGuildTimer.Type>, CommandFailure>;
-  readonly getGuildKillStats: (params: {
-    readonly period?: string;
-    readonly npcTypes?: ReadonlyArray<string>;
-  }) => Effect.Effect<typeof RpcGuildKillStats.Type, CommandFailure>;
-  readonly getGuildTopKilledNpcs: (params: {
-    readonly limit: number;
-    readonly search?: string;
-    readonly period?: string;
-  }) => Effect.Effect<typeof RpcTopKilledNpcs.Type, CommandFailure>;
-  readonly getNpcKillers: (params: {
-    readonly npcId: number;
-    readonly limit: number;
-    readonly period?: string;
-  }) => Effect.Effect<typeof RpcNpcKillers.Type, CommandFailure>;
-  readonly listGuildLoots: (params: {
-    readonly limit: number;
-    readonly players?: ReadonlyArray<string>;
-    readonly npcs?: ReadonlyArray<string>;
-    readonly rarities?: ReadonlyArray<string>;
-    readonly itemNames?: ReadonlyArray<string>;
-  }) => Effect.Effect<typeof RpcGuildLootPage.Type, CommandFailure>;
+  readonly getGuildKillStats: (
+    params: Pick<ApiPayload<"getGuildKillStats">, "period" | "npcTypes">,
+  ) => Effect.Effect<typeof RpcGuildKillStats.Type, CommandFailure>;
+  readonly getGuildTopKilledNpcs: (
+    params: Pick<
+      ApiPayload<"getGuildTopKilledNpcs">,
+      "limit" | "search" | "period"
+    >,
+  ) => Effect.Effect<typeof RpcTopKilledNpcs.Type, CommandFailure>;
+  readonly getNpcKillers: (
+    params: Pick<ApiPayload<"getNpcKillers">, "npcId" | "limit" | "period">,
+  ) => Effect.Effect<typeof RpcNpcKillers.Type, CommandFailure>;
+  readonly listGuildLoots: (
+    params: Pick<
+      ApiPayload<"listGuildLoots">,
+      "limit" | "players" | "npcs" | "rarities" | "itemNames"
+    >,
+  ) => Effect.Effect<typeof RpcGuildLootPage.Type, CommandFailure>;
   readonly listUserReservations: (
-    status?: string,
+    status?: ApiPayload<"listUserReservations">["status"],
   ) => Effect.Effect<typeof RpcReservationPage.Type, CommandFailure>;
   readonly listGuildReservationSpots: Effect.Effect<
     ReadonlyArray<typeof RpcReservationSpot.Type>,
@@ -185,17 +169,17 @@ export class LootlogClient extends Context.Service<
       const httpClient = yield* HttpClient.HttpClient;
 
       const apiRpc = yield* makeRpcClient(ApiRpcGroup, {
-        url: config.apiRpcUrl,
+        ...config.rpc.api,
         spanPrefix: "discord-bot.api-rpc",
       });
 
       const gatewayRpc = yield* makeRpcClient(GatewayRpcGroup, {
-        url: config.gatewayRpcUrl,
+        ...config.rpc.gateway,
         spanPrefix: "discord-bot.gateway-rpc",
       });
 
       const catalogRpc = yield* makeRpcClient(CatalogRpcGroup, {
-        url: config.catalogRpcUrl,
+        ...config.rpc.catalog,
         spanPrefix: "discord-bot.catalog-rpc",
       });
 
@@ -203,7 +187,7 @@ export class LootlogClient extends Context.Service<
         guildId: string,
         discordId: string,
       ) {
-        const { userId, memberId } = yield* runRpc(
+        const { userId, memberId } = yield* runRpc(() =>
           apiRpc.getMemberIdentity({ guildId, discordId }),
         ).pipe(
           Effect.catchIf(
@@ -219,41 +203,45 @@ export class LootlogClient extends Context.Service<
           guildId,
           memberId,
           api: {
-            listGuildEvents: runRpc(apiRpc.listGuildEvents(guildActor)),
+            listGuildEvents: runRpc(() => apiRpc.listGuildEvents(guildActor)),
             getEventRanking: (eventId) =>
-              runRpc(apiRpc.getEventRanking({ ...guildActor, eventId })),
+              runRpc(() => apiRpc.getEventRanking({ ...guildActor, eventId })),
             getEventTimers: (eventId, world) =>
-              runRpc(apiRpc.getEventTimers({ ...guildActor, eventId, world })),
+              runRpc(() =>
+                apiRpc.getEventTimers({ ...guildActor, eventId, world }),
+              ),
             getEventWrapped: (eventId) =>
-              runRpc(apiRpc.getEventWrapped({ ...guildActor, eventId })),
+              runRpc(() => apiRpc.getEventWrapped({ ...guildActor, eventId })),
             listGuildTimers: (world) =>
-              runRpc(
+              runRpc(() =>
                 apiRpc.listGuildTimers(
                   world !== undefined ? { ...guildActor, world } : guildActor,
                 ),
               ),
             getGuildKillStats: (params) =>
-              runRpc(apiRpc.getGuildKillStats({ ...guildActor, ...params })),
+              runRpc(() =>
+                apiRpc.getGuildKillStats({ ...guildActor, ...params }),
+              ),
             getGuildTopKilledNpcs: (params) =>
-              runRpc(
+              runRpc(() =>
                 apiRpc.getGuildTopKilledNpcs({ ...guildActor, ...params }),
               ),
             getNpcKillers: (params) =>
-              runRpc(apiRpc.getNpcKillers({ ...guildActor, ...params })),
+              runRpc(() => apiRpc.getNpcKillers({ ...guildActor, ...params })),
             listGuildLoots: (params) =>
-              runRpc(apiRpc.listGuildLoots({ ...guildActor, ...params })),
+              runRpc(() => apiRpc.listGuildLoots({ ...guildActor, ...params })),
             listUserReservations: (status) =>
-              runRpc(
+              runRpc(() =>
                 apiRpc.listUserReservations(
                   status !== undefined ? { ...actor, status } : actor,
                 ),
               ),
-            listGuildReservationSpots: runRpc(
+            listGuildReservationSpots: runRpc(() =>
               apiRpc.listGuildReservationSpots(guildActor),
             ),
           },
           gateway: {
-            getOrganizationPresence: runRpc(
+            getOrganizationPresence: runRpc(() =>
               gatewayRpc.getOrganizationPresence({
                 userId,
                 discordId,
@@ -287,7 +275,7 @@ export class LootlogClient extends Context.Service<
       return LootlogClient.of({
         member,
         catalog: {
-          searchItems: (params) => runRpc(catalogRpc.searchItems(params)),
+          searchItems: (params) => runRpc(() => catalogRpc.searchItems(params)),
         },
         publicFile,
       });

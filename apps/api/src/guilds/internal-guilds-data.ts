@@ -33,7 +33,7 @@ export interface MemberIdentity {
   readonly memberId: number;
 }
 
-interface InternalGuildsPersistence extends UserGuildPermissionsPersistence {
+export interface InternalGuildsPersistence extends UserGuildPermissionsPersistence {
   readonly findActiveGuild: (
     idOrVanityUrl: string,
   ) => Effect.Effect<GuildRecord | null, unknown>;
@@ -43,7 +43,7 @@ interface InternalGuildsPersistence extends UserGuildPermissionsPersistence {
   ) => Effect.Effect<MemberIdentity | null, unknown>;
 }
 
-const makeInternalGuildsData = (
+export const makeInternalGuildsData = (
   persistence: InternalGuildsPersistence,
   cache: InternalGuildsCache,
 ) => {

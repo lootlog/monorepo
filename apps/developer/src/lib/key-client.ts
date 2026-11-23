@@ -24,13 +24,8 @@ const keyErrorCopy = [
 
 export function getKeyErrorMessage(cause: unknown) {
   const code = getApiErrorStringField(cause, "code");
-  const message = getApiErrorStringField(cause, "message");
 
-  const copy =
-    keyErrorCopy.find(([reason]) => reason.code === code) ??
-    keyErrorCopy.find(([reason]) => reason.message === message);
-
-  return copy?.[1] ?? t.error;
+  return keyErrorCopy.find(([reason]) => reason.code === code)?.[1] ?? t.error;
 }
 
 const EXPIRY_BY_DAYS = {

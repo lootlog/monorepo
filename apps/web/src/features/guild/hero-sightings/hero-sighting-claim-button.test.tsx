@@ -5,8 +5,7 @@ import {
   getGuildsControllerGetGuildPermissionsQueryKey,
   type HeroSightingResponseDto,
 } from "@lootlog/client/main";
-import { Permission } from "@lootlog/schema/permissions";
-import { HERO_SIGHTING_WRITE_PERMISSION } from "@lootlog/domain/npc-permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { afterEach, expect, it, onTestFinished } from "vitest";
 import { sessionQueryOptions } from "@/hooks/auth/use-session-query";
 import { createOrganizationTestWrapper } from "@/lib/testing/router";
@@ -48,7 +47,7 @@ const sighting: HeroSightingResponseDto = {
 afterEach(cleanup);
 
 const mount = async (
-  capabilities: Permission[],
+  capabilities: Capability[],
   shown: HeroSightingResponseDto = sighting,
 ) => {
   const client = new QueryClient({
@@ -80,23 +79,23 @@ const mount = async (
   await screen.findByRole("heading", { name: "Board" });
 };
 
-it("offers no claim to a member who may only read hero sightings", async () => {
+it("offers no claim to a member who reads hero sightings and writes timers", async () => {
   await mount([
-    Permission.LOOTLOG_TIMERS_READ,
-    Permission.LOOTLOG_TIMERS_HEROES_READ,
+    Capability.LOOTLOG_HERO_SIGHTINGS_READ,
+    Capability.LOOTLOG_TIMERS_WRITE,
   ]);
 
   expect(screen.queryByRole("button")).toBeNull();
 });
 
 it("offers withdrawal to the member whose Lootlog user already claims the hero", async () => {
-  await mount([HERO_SIGHTING_WRITE_PERMISSION]);
+  await mount([Capability.LOOTLOG_HERO_SIGHTINGS_WRITE]);
 
   expect(await screen.findByRole("button", { name: /Wycofaj/ })).toBeTruthy();
 });
 
 it("offers a claim to another member on a hero that will spawn, none on a roaming or closed one", async () => {
-  await mount([HERO_SIGHTING_WRITE_PERMISSION], {
+  await mount([Capability.LOOTLOG_HERO_SIGHTINGS_WRITE], {
     ...sighting,
     state: "SPAWNING",
     claims: [],
@@ -105,12 +104,15 @@ it("offers a claim to another member on a hero that will spawn, none on a roamin
   expect(await screen.findByRole("button", { name: /Obstawiam/ })).toBeTruthy();
 
   cleanup();
-  await mount([HERO_SIGHTING_WRITE_PERMISSION], { ...sighting, claims: [] });
+  await mount([Capability.LOOTLOG_HERO_SIGHTINGS_WRITE], {
+    ...sighting,
+    claims: [],
+  });
 
   expect(screen.queryByRole("button")).toBeNull();
 
   cleanup();
-  await mount([HERO_SIGHTING_WRITE_PERMISSION], {
+  await mount([Capability.LOOTLOG_HERO_SIGHTINGS_WRITE], {
     ...sighting,
     closedAt: "2026-11-03T10:20:00.000Z",
     closeReason: "PROBABLY_KILLED",

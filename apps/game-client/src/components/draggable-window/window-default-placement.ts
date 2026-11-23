@@ -1,5 +1,6 @@
 import type { WindowPosition, WindowSize } from "@/hooks/ui/window-viewport";
 import type { WindowId } from "@/store/windows.store";
+import { recordKeys } from "@/utils/record-keys";
 
 const GAME_TOP_BAR_HEIGHT = 60;
 
@@ -44,15 +45,11 @@ const WINDOW_SLOTS: Record<WindowId, WindowSlot> = {
 
 type StackZone = Exclude<Zone, "prompts">;
 
-// SAFETY: WINDOW_SLOTS is a Record<WindowId, WindowSlot> literal, so its own
-// keys are exactly the window ids.
-const STACKED_WINDOWS = (Object.keys(WINDOW_SLOTS) as WindowId[]).flatMap(
-  (id) => {
-    const { zone } = WINDOW_SLOTS[id];
+const STACKED_WINDOWS = recordKeys(WINDOW_SLOTS).flatMap((id) => {
+  const { zone } = WINDOW_SLOTS[id];
 
-    return zone === "prompts" ? [] : [{ id, zone }];
-  },
-);
+  return zone === "prompts" ? [] : [{ id, zone }];
+});
 
 const STACK_ZONES: Record<
   StackZone,

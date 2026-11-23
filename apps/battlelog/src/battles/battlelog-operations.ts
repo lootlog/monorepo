@@ -23,7 +23,6 @@ import type {
 } from "#src/battles/battle-service";
 import type { BattleAnalytics } from "#src/battles/analytics/battle-analytics.service";
 import type { BattleMetadata } from "#src/battles/catalog/battle-metadata.service";
-import type { DeleteUserData } from "./internal-operations.js";
 import type {
   RecordWeaponKillsInput,
   WeaponKills,
@@ -248,19 +247,13 @@ export const makeBattlelogOperations = (
           ),
       ),
     },
-    internal: {
-      deleteUserData: battlelogOperation(
-        "InternalController_deleteUserData",
-        (body: DeleteUserData) =>
-          promiseOperation("InternalController_deleteUserData", () =>
-            deleteQueue.add("delete-user-battles", { userId: body.userId }),
-          ).pipe(
-            Effect.as({ status: "ACCEPTED" as const }),
-            withAdapterSpan(
-              "InternalController_enqueueDeleteUserData",
-              "bullmq",
-            ),
-          ),
+    userData: {
+      requestDeletion: battlelogOperation(
+        "UserData_requestDeletion",
+        (userId: string) =>
+          promiseOperation("UserData_requestDeletion", () =>
+            deleteQueue.add("delete-user-battles", { userId }),
+          ).pipe(withAdapterSpan("UserData_enqueueDeletion", "bullmq")),
       ),
     },
   };

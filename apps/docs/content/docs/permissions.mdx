@@ -79,17 +79,30 @@ go zapisał, bo przydział jest wspólny.
 
 ### Timery
 
-| Uprawnienie                  | Nazwa w panelu       | Zakres                                           |
-| ---------------------------- | -------------------- | ------------------------------------------------ |
-| `LOOTLOG_TIMERS_READ`        | Przeglądanie timerów | Odczyt timerów i wykrytych herosów               |
-| `LOOTLOG_TIMERS_WRITE`       | Zapisywanie timerów  | Ręczne timery, przywracanie, obstawianie herosów |
-| `LOOTLOG_TIMERS_RESET`       | Resetowanie timerów  | Reset timera                                     |
-| `LOOTLOG_TIMERS_DELETE`      | Usuwanie timerów     | Usunięcie timera                                 |
-| `LOOTLOG_TIMERS_TITANS_READ` | Timery tytanów       | Timery tytanów                                   |
-| `LOOTLOG_TIMERS_HEROES_READ` | Timery herosów       | Timery i wykrycia herosów                        |
+| Uprawnienie                  | Nazwa w panelu       | Zakres                      |
+| ---------------------------- | -------------------- | --------------------------- |
+| `LOOTLOG_TIMERS_READ`        | Przeglądanie timerów | Odczyt timerów              |
+| `LOOTLOG_TIMERS_WRITE`       | Zapisywanie timerów  | Ręczne timery, przywracanie |
+| `LOOTLOG_TIMERS_RESET`       | Resetowanie timerów  | Reset timera                |
+| `LOOTLOG_TIMERS_DELETE`      | Usuwanie timerów     | Usunięcie timera            |
+| `LOOTLOG_TIMERS_TITANS_READ` | Timery tytanów       | Timery tytanów              |
+| `LOOTLOG_TIMERS_HEROES_READ` | Timery herosów       | Timery herosów              |
 
 Każda zmiana timera wymaga też dostępu do typu i poziomu potwora. Znajomość
 identyfikatora timera tego nie omija.
+
+### Wykryci herosi
+
+| Uprawnienie                    | Nazwa w panelu                 | Zakres                                              |
+| ------------------------------ | ------------------------------ | --------------------------------------------------- |
+| `LOOTLOG_HERO_SIGHTINGS_READ`  | Przeglądanie wykrytych herosów | Gdzie wykryto herosa i kto go obstawia              |
+| `LOOTLOG_HERO_SIGHTINGS_WRITE` | Zgłaszanie wykrytych herosów   | Zapis wykryć, ręczne dodawanie, obstawianie herosów |
+
+Wykrycie widać, gdy poziom herosa mieści się w zakresie roli z
+**Przeglądanie wykrytych herosów**. Uprawnienia do timerów nie dają dostępu do
+wykryć. Role, które przed wprowadzeniem tych uprawnień miały **Timery
+herosów** albo **Zapisywanie timerów**, dostały odpowiednio przeglądanie albo
+zgłaszanie wykrytych herosów.
 
 ### Rezerwacje, dokumenty i członkowie
 

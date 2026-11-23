@@ -2,7 +2,7 @@ import {
   LOOT_PERMISSION,
   type LootVisibilityRole,
 } from "@lootlog/domain/loot-visibility";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { eq, sql, type SQLWrapper } from "drizzle-orm";
 import { alias, QueryBuilder } from "drizzle-orm/pg-core";
 import {
@@ -61,7 +61,7 @@ export function buildLootNpcVisibilityCondition(
     readonly permissions: readonly string[];
   }[],
 ) {
-  if (permissions.includes(Permission.OWNER)) return undefined;
+  if (permissions.includes(Capability.OWNER)) return undefined;
 
   const granted = roles.flatMap((role) => {
     if (!role.permissions.includes(LOOT_PERMISSION.read)) return [];

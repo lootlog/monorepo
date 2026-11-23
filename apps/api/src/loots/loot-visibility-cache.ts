@@ -1,4 +1,4 @@
-import type { Permission } from "@lootlog/schema/permissions";
+import type { Capability } from "@lootlog/schema/permissions";
 import type { roleTable } from "#src/database/drizzle/organization.schema";
 
 type VisibilityRole = Pick<
@@ -19,7 +19,7 @@ export const buildLootVisibilityCacheRoles = (
     .sort((left, right) => left.id.localeCompare(right.id));
 
 export const buildLootVisibilityCacheScope = (
-  permissions: readonly Permission[],
+  permissions: readonly Capability[],
   roles: readonly VisibilityRole[],
 ) => ({
   permissions: [...permissions].sort(),

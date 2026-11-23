@@ -1,12 +1,7 @@
 import { screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import ReactDOM from "react-dom/client";
-import entrypoint from "../../extension/entrypoints/game.content";
-
-// SAFETY: game.content.ts defines main() with no parameters. WXT widens that
-// declaration to a context-taking SDK signature; this MAIN-world entry never reads a context.
-const start = entrypoint.main as () => void;
-
+import { startGameEntrypoint as start } from "./game-entrypoint";
 import { bootstrapGameClient, type GameClientRuntime } from "@/bootstrap";
 import { encodeMessage, type ExtensionClosedReason } from "./protocol";
 

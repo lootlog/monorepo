@@ -1,3 +1,4 @@
+import type { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import {
   type ReauthenticationRequired,
   reauthenticationRequiredResponse,
@@ -15,8 +16,8 @@ import { statusCodeResponse } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { AccessRequirement } from "@lootlog/domain/access-policy";
 import {
-  Permission,
-  type Permission as PermissionValue,
+  Capability,
+  type Capability as PermissionValue,
 } from "@lootlog/schema/permissions";
 import { Context, Effect, Schema } from "effect";
 
@@ -71,7 +72,8 @@ export class DocsAuthorization extends Context.Service<
       requirement: DocsAuthorizationRequirement,
     ) => Effect.Effect<
       AuthorizedDocsCaller,
-      DocsAccessDenied | DocsNotFound | ReauthenticationRequired
+      DocsAccessDenied | DocsNotFound | ReauthenticationRequired,
+      ForwardAuthIdentity
     >;
   }
 >()("@lootlog/api/http-api/docs/authorization") {}
@@ -82,12 +84,12 @@ type DocsHttpFailure =
   | ReauthenticationRequired;
 
 const readRequirement = {
-  capabilities: [Permission.LOOTLOG_DOCS_READ, Permission.LOOTLOG_DOCS_WRITE],
+  capabilities: [Capability.LOOTLOG_DOCS_READ, Capability.LOOTLOG_DOCS_WRITE],
   mode: "any",
 } as const;
 
 const writeRequirement = {
-  capabilities: [Permission.LOOTLOG_DOCS_WRITE],
+  capabilities: [Capability.LOOTLOG_DOCS_WRITE],
   mode: "all",
 } as const;
 

@@ -8,6 +8,7 @@ import {
 } from "@lootlog/rpc/errors";
 import { GatewayRpcGroup } from "@lootlog/rpc/gateway";
 import { serviceRpcRoutes } from "@lootlog/rpc/server";
+import { TEST_RPC_TOKEN } from "@lootlog/rpc/testing";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { afterAll, beforeEach, describe, expect, it } from "bun:test";
 import { Effect, Layer, Redacted } from "effect";
@@ -68,6 +69,8 @@ const apiWeb = HttpRouter.toWebHandler(
   Layer.mergeAll(
     serviceRpcRoutes({
       group: ApiRpcGroup,
+      callerTokens: { "discord-bot": TEST_RPC_TOKEN },
+      spanPrefix: "test.rpc",
       handlers: ApiRpcGroup.toLayer({
         getUserGuildPermissions: unused,
         getGuildByIdOrVanityUrl: unused,
@@ -127,6 +130,8 @@ const gatewayWeb = HttpRouter.toWebHandler(
   Layer.mergeAll(
     serviceRpcRoutes({
       group: GatewayRpcGroup,
+      callerTokens: { "discord-bot": TEST_RPC_TOKEN },
+      spanPrefix: "test.rpc",
       handlers: GatewayRpcGroup.toLayer({
         getOrganizationPresence: record(
           "gateway.getOrganizationPresence",
@@ -144,6 +149,8 @@ const catalogWeb = HttpRouter.toWebHandler(
   Layer.mergeAll(
     serviceRpcRoutes({
       group: CatalogRpcGroup,
+      callerTokens: { "discord-bot": TEST_RPC_TOKEN },
+      spanPrefix: "test.rpc",
       handlers: CatalogRpcGroup.toLayer({
         searchItems: () => Effect.succeed({ hits: [] }),
       }),
@@ -184,15 +191,18 @@ const services = LootlogClient.layer.pipe(
       BotConfig.of({
         environment: RuntimeEnvironment.DEV,
         port: 0,
-        rpcPort: 0,
+        rpc: {
+          port: 0,
+          callerTokens: {},
+          api: { url: "http://api.test", token: TEST_RPC_TOKEN },
+          catalog: { url: "http://catalog.test", token: TEST_RPC_TOKEN },
+          gateway: { url: "http://gateway.test", token: TEST_RPC_TOKEN },
+        },
         serviceName: "discord-bot",
         serviceNamespace: "test",
         discordBotToken: Redacted.make("token"),
         rabbitmqUri: Redacted.make("amqp://test"),
         apiServiceUrl: "http://api.test",
-        apiRpcUrl: "http://api.test",
-        catalogRpcUrl: "http://catalog.test",
-        gatewayRpcUrl: "http://gateway.test",
         webAppUrl: "https://lootlog.test",
       }),
     ),

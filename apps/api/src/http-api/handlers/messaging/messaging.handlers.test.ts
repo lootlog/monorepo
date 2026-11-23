@@ -1,3 +1,4 @@
+import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer } from "effect";
 import { MessagingData } from "#src/messaging/messaging-data";
@@ -32,7 +33,11 @@ const provideServices = (
     caller: Effect.succeed({ userId: "user-a", discordId: "discord-a" }),
   }),
 ) =>
-  Layer.merge(
+  Layer.mergeAll(
+    Layer.succeed(ForwardAuthIdentity, {
+      userId: "user",
+      discordId: "discord",
+    }),
     Layer.succeed(MessagingData, data),
     Layer.succeed(MessagingIdentity, identity),
   );

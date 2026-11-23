@@ -1,6 +1,6 @@
 import { makeRpcClient } from "@lootlog/rpc/client";
 import { DiscordBotRpcGroup } from "@lootlog/rpc/discord-bot";
-import { makeRpcTestHttpClient } from "@lootlog/rpc/testing";
+import { makeRpcTestHttpClient, testRpcUpstream } from "@lootlog/rpc/testing";
 import { describe, expect, mock, test } from "bun:test";
 import { Client } from "discord.js";
 import { Effect, Layer } from "effect";
@@ -84,13 +84,16 @@ describe("Discord bot HTTP & RPC contracts", () => {
     const result = await Effect.runPromise(
       Effect.gen(function* () {
         const client = yield* makeRpcClient(DiscordBotRpcGroup, {
-          url: "http://discord-bot.internal:4001",
+          ...testRpcUpstream,
+          spanPrefix: "test.rpc-client",
         });
 
         return yield* client.refreshGuildChannels({ guildId: "guild-1" });
       }).pipe(
         Effect.scoped,
-        Effect.provide(makeRpcTestHttpClient(DiscordBotRpcGroup, handlers)),
+        Effect.provide(
+          makeRpcTestHttpClient(DiscordBotRpcGroup, handlers, ["api"]),
+        ),
       ),
     );
 

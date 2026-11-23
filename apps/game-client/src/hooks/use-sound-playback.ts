@@ -4,7 +4,12 @@ import {
   useSoundSettings,
   type SoundSettings,
 } from "@/lib/settings-persistence/use-sound-settings";
-import { DEFAULT_SOUND_URLS, resolveSoundUrl } from "@/lib/default-sounds";
+import {
+  DEFAULT_SOUND_URLS,
+  resolveCategorySoundUrl,
+  type ConfigurableSoundCategory,
+  type SoundCategory,
+} from "@/lib/default-sounds";
 
 import {
   acquireSoundPlayback,
@@ -13,21 +18,7 @@ import {
 } from "@/lib/shared-audio-playback";
 import { useSettingsStore } from "@/store/settings.store";
 
-type SoundCategory = "notifications" | "detector" | "timers" | "pings";
-
-type ConfigurableSoundCategory = Exclude<SoundCategory, "pings">;
-
 let hasAudioInteraction = navigator.userActivation?.hasBeenActive ?? false;
-
-const getSoundUrl = (
-  settings: SoundSettings,
-  category: SoundCategory,
-  key: string,
-) =>
-  resolveSoundUrl(
-    category === "pings" ? undefined : settings[`${category}Config`],
-    key,
-  );
 
 export const useSoundPlayback = () => {
   const { data: soundSettings } = useSoundSettings();
@@ -56,7 +47,11 @@ export const useSoundPlayback = () => {
         const categoryConfig = soundSettings[`${category}Config`];
 
         for (const key of Object.keys(categoryConfig)) {
-          const soundUrl = getSoundUrl(soundSettings, category, key);
+          const soundUrl = resolveCategorySoundUrl(
+            soundSettings,
+            category,
+            key,
+          );
 
           if (soundUrl) {
             preloadSoundUrl(soundUrl);
@@ -114,7 +109,7 @@ export const useSoundPlayback = () => {
     const resolvedSoundUrls = new Set<string>();
 
     for (const key of keys) {
-      const soundUrl = getSoundUrl(settings, category, key);
+      const soundUrl = resolveCategorySoundUrl(settings, category, key);
 
       if (soundUrl) {
         resolvedSoundUrls.add(soundUrl);
@@ -145,7 +140,9 @@ export const useSoundPlayback = () => {
     }
 
     const categoryVolume = settings[`${category}Volume`];
-    const soundUrl = customSoundUrl || getSoundUrl(settings, category, key);
+
+    const soundUrl =
+      customSoundUrl || resolveCategorySoundUrl(settings, category, key);
 
     if (!soundUrl) {
       return;

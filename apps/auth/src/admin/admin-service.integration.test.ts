@@ -1,3 +1,4 @@
+import { testRpcUpstream } from "@lootlog/rpc/testing";
 import { PgClient } from "@effect/sql-pg";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import {
@@ -79,7 +80,7 @@ describe("AdminService against PostgreSQL and Better Auth", () => {
       cookiePrefix: "test",
       adminAccountIds,
       adminApiSecret: Redacted.make(SECRET),
-      rpcPort: 4001,
+      rpc: { port: 0, callerTokens: {}, api: testRpcUpstream },
       authSecret: Redacted.make(AUTH_SECRET),
       discordClientId: "test-discord-client",
       discordClientSecret: Redacted.make("test-discord-secret"),

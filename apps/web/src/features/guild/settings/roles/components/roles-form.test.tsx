@@ -4,7 +4,7 @@ import { initializeTestTranslations } from "@/lib/testing/i18n";
 import { createOrganizationTestRouter } from "@/lib/testing/router";
 import { configureApiClients } from "@lootlog/client/transport";
 import type { RoleResponseDtoOutput } from "@lootlog/client/main";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "@tanstack/react-router";
 import {
@@ -30,10 +30,10 @@ const role = {
   color: 0,
   position: 1,
   permissions: [
-    Permission.LOOTLOG_ACCESS,
-    Permission.LOOTLOG_LOOTS_READ,
-    Permission.LOOTLOG_ONLINE_PLAYERS_READ,
-    Permission.LOOTLOG_PRESENCE_LOCATION_READ,
+    Capability.LOOTLOG_ACCESS,
+    Capability.LOOTLOG_LOOTS_READ,
+    Capability.LOOTLOG_ONLINE_PLAYERS_READ,
+    Capability.LOOTLOG_PRESENCE_LOCATION_READ,
   ],
   lvlRangeFrom: 0,
   lvlRangeTo: 500,
@@ -149,7 +149,7 @@ it.each([true, false])(
   "lets a user change location access from %s while keeping online player access",
   async (initialLocationAccess) => {
     const basicPermissions = role.permissions.filter(
-      (permission) => permission !== Permission.LOOTLOG_PRESENCE_LOCATION_READ,
+      (permission) => permission !== Capability.LOOTLOG_PRESENCE_LOCATION_READ,
     );
 
     const { save } = await renderForm({

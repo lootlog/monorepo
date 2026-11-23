@@ -18,10 +18,7 @@ import { makeGuildChannelDeletedDispatcher } from "#src/guilds/guild-channel-del
 import { makeGuildDiscordSyncData } from "#src/guilds/guild-discord-sync.data-layer";
 import { makeOutboxWorker } from "#src/shared/outbox-worker";
 import { makeManageableGuilds } from "#src/guilds/manageable-guilds.data-layer";
-import {
-  BattlelogCleanupFailed,
-  makeUserAccountDeletion,
-} from "#src/users/user-account-deletion.data-layer";
+import { makeUserAccountDeletion } from "#src/users/user-account-deletion.data-layer";
 import { makeUserPreferencesData } from "#src/users/user-preferences.data-layer";
 import { SettingsDocumentsRepository } from "#src/settings-documents/settings-documents.repository";
 import { makeSettingsDocuments } from "#src/settings-documents/settings-documents.service";
@@ -30,6 +27,7 @@ import { GuildConfigurationData } from "#src/guilds/guild-configuration-data";
 import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 import { OrganizationContextLookup } from "#src/runtime/auth/organization-context";
+import { findActiveGuild } from "#src/guilds/active-guild-lookup";
 import { InternalGuildsData } from "#src/guilds/internal-guilds-data";
 import { OrganizationWorkspaceOperationError } from "#src/guilds/organization-workspace-access";
 import { RolesData } from "#src/guilds/roles-data";
@@ -49,7 +47,7 @@ export const guildDiscordSyncLive = Layer.effect(
     const rabbit = yield* RabbitMessaging;
     const config = yield* ApiRuntimeConfig;
 
-    const discordBot = yield* makeDiscordBotRpcClient(config.discordBotRpcUrl);
+    const discordBot = yield* makeDiscordBotRpcClient(config.rpc.discordBot);
 
     const channelDeletions = yield* makeOutboxWorker(
       "Discord channel deletion",
@@ -80,11 +78,15 @@ export const organizationContextLookup = Layer.unwrap(
   Effect.gen(function* () {
     const redis = yield* ApiRedis;
     const { refresh } = yield* MemberServices;
+    const database = yield* ApiDatabase;
+    const { environment } = yield* ApiRuntimeConfig;
 
-    return OrganizationContextLookup.layerDatabase(
-      redis,
-      refresh.queueMemberRefresh,
-    );
+    return OrganizationContextLookup.layer({
+      environment,
+      cache: redis,
+      queueRefresh: refresh.queueMemberRefresh,
+      findGuild: (idOrVanityUrl) => findActiveGuild(database, idOrVanityUrl),
+    });
   }),
 ).pipe(Layer.provide(membersData));
 
@@ -107,16 +109,12 @@ export const accountOrganizationOperationsLive = Layer.effect(
     const settingsRepository = yield* SettingsDocumentsRepository;
 
     const deleteAccount = makeUserAccountDeletion(database, {
-      cleanupBattlelog: (userId) =>
-        rabbit
-          .publish(
-            eventMessage(RabbitRoutingKey.BATTLELOG_USER_DATA_DELETE, {
-              userId,
-            }),
-          )
-          .pipe(
-            Effect.mapError(() => new BattlelogCleanupFailed({ status: 503 })),
-          ),
+      requestBattlelogDeletion: (userId) =>
+        rabbit.publish(
+          eventMessage(RabbitRoutingKey.BATTLELOG_USER_DATA_DELETE, {
+            userId,
+          }),
+        ),
       invalidateCacheScopes: redis.invalidateScopes,
       deleteCacheKey: redis.del,
       deleteCachePattern: (pattern) => redis.deleteByPattern(pattern),

@@ -6,7 +6,8 @@ const requiredEnvironment = {
   PORT: "4000",
   RABBITMQ_URI: "amqp://rabbitmq.internal",
   REDIS_HOST: "redis.internal",
-  AUTH_RPC_URL: "http://auth.internal:4001",
+  AUTH_RPC_URL: "http://auth.internal:4100",
+  DISCORD_BOT_RPC_URL: "http://discord-bot.internal:4100",
   RESERVATIONS_CARDS_URL: "https://cards.example.test/render",
   MAPS_API_URL: "https://maps.example.test/api",
 };

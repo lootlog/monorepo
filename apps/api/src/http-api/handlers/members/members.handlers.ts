@@ -1,3 +1,4 @@
+import type { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import {
   type MembersIdentity,
   MembersOperationError,
@@ -26,8 +27,8 @@ import {
 } from "#src/members/member-response.schema";
 import { decodeDomainJson } from "../../domain-json.schema.js";
 import {
-  Permission,
-  type Permission as PermissionValue,
+  Capability,
+  type Capability as PermissionValue,
 } from "@lootlog/schema/permissions";
 import { LootlogApi } from "../../lootlog-api.js";
 import {
@@ -64,11 +65,15 @@ type AccessFailure =
 export class MembersAuthorization extends Context.Service<
   MembersAuthorization,
   {
-    readonly identity: Effect.Effect<MembersIdentity, MembersAccessDenied>;
+    readonly identity: Effect.Effect<
+      MembersIdentity,
+      MembersAccessDenied,
+      ForwardAuthIdentity
+    >;
     readonly requireGuild: (options: {
       readonly guildId: string;
       readonly anyOf: ReadonlyArray<PermissionValue>;
-    }) => Effect.Effect<MembersGuildAccess, AccessFailure>;
+    }) => Effect.Effect<MembersGuildAccess, AccessFailure, ForwardAuthIdentity>;
   }
 >()("@lootlog/api/http-api/members/authorization") {}
 
@@ -240,7 +245,7 @@ export const MembersHandlers = HttpApiBuilder.group(
             const guildId = yield* pathString(params.guildId, "guildId");
 
             const access = yield* requireGuild(guildId, [
-              Permission.LOOTLOG_ACCESS,
+              Capability.LOOTLOG_ACCESS,
             ]);
 
             if (query.includeInactive === true) {
@@ -267,7 +272,7 @@ export const MembersHandlers = HttpApiBuilder.group(
               const guildId = yield* pathString(params.guildId, "guildId");
 
               const access = yield* requireGuild(guildId, [
-                Permission.LOOTLOG_ACCESS,
+                Capability.LOOTLOG_ACCESS,
               ]);
 
               const value = yield* readData((service) =>
@@ -288,7 +293,7 @@ export const MembersHandlers = HttpApiBuilder.group(
             const guildId = yield* pathString(params.guildId, "guildId");
 
             const access = yield* requireGuild(guildId, [
-              Permission.LOOTLOG_ACCESS,
+              Capability.LOOTLOG_ACCESS,
             ]);
 
             const value = yield* readData((service) =>

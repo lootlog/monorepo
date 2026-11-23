@@ -11,9 +11,14 @@
   "overrides": [
     {
       // requestJson accepts GET or POST; only POST callers supply a body.
-      "files": ["src/battles/submission/battle-creation.test.ts"],
+      "files": ["src/battles/submission/battle-creation.fixtures.ts"],
       "rules": {
-        "unicorn/no-invalid-fetch-options": "off"
+        "unicorn/no-invalid-fetch-options": "off",
+        "require-await": "off",
+        "anti-slop-effect/no-service-constructor-imports": [
+          "error",
+          { "nonServiceImports": ["makeBattlelogTestBoundary"] }
+        ]
       }
     }
   ]

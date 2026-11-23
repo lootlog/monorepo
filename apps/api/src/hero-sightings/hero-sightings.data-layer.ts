@@ -3,19 +3,13 @@ import { and, desc, eq, inArray, isNull, lte, or } from "drizzle-orm";
 import type { MessagingError } from "@lootlog/messaging";
 import { Clock, Effect, Result } from "effect";
 import { partition } from "es-toolkit";
-import { AccessRequirement } from "@lootlog/domain/access-policy";
 import {
   getHeroSightingKey,
   HERO_SIGHTING_HISTORY_LIMIT,
   resolveHeroSightingTransition,
 } from "@lootlog/domain/hero-sightings";
-import {
-  canReadHeroSighting,
-  HERO_SIGHTING_WRITE_PERMISSION,
-  NPC_FEATURE_PERMISSIONS,
-  HERO_SIGHTING_READ_FEATURE,
-  type RolePermissionData,
-} from "@lootlog/domain/npc-permissions";
+import { canRead, guildReader } from "./hero-sighting-reader.js";
+import { Capability } from "@lootlog/schema/permissions";
 import { getProfByShortname } from "@lootlog/domain/profession";
 import { normalizeNpcName } from "@lootlog/schema/npc-identity";
 import {
@@ -66,8 +60,6 @@ const MAX_OBSERVATION_AGE_MS = 15 * 60 * 1000;
 
 const KILL_REPORT_DELAY_MS = 2 * 60 * 1000;
 
-const BOARD_CLOSED_RETENTION_MS = 24 * 60 * 60 * 1000;
-
 export interface HeroSightingPorts {
   readonly publish: (
     sighting: HeroSightingResponse,
@@ -81,19 +73,6 @@ export interface HeroSightingPorts {
 type Database = typeof ApiDatabase.Service;
 
 type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
-
-const canRead = (
-  access: {
-    readonly administers: boolean;
-    readonly roles: readonly RolePermissionData[];
-  },
-  sighting: { readonly hero: { readonly lvl: number } },
-) => access.administers || canReadHeroSighting(access.roles, sighting.hero.lvl);
-
-const guildReader = (access: HeroSightingsGuildAccess) => ({
-  administers: access.accessPolicy.allowsAny(AccessRequirement.ADMINISTER),
-  roles: access.roles,
-});
 
 const publishAll = (
   ports: HeroSightingPorts,
@@ -316,11 +295,11 @@ export const makeCreateHeroSighting = (
     const [guildRows, catchingGuildIds, readers] = yield* Effect.all(
       [
         selectAccessibleGuilds(database, identity.discordId, [
-          HERO_SIGHTING_WRITE_PERMISSION,
+          Capability.LOOTLOG_HERO_SIGHTINGS_WRITE,
         ]),
         selectCharacterCatchingGuildIds(database, identity.discordId, payload),
         selectAccessibleGuildRoles(database, identity.discordId, [
-          NPC_FEATURE_PERMISSIONS[HERO_SIGHTING_READ_FEATURE].base,
+          Capability.LOOTLOG_HERO_SIGHTINGS_READ,
         ]),
       ],
       { concurrency: "unbounded" },
@@ -404,128 +383,6 @@ export const makeCreateHeroSighting = (
     operation(identity, payload).pipe(
       Effect.mapError(toHeroSightingsDataFailure),
     );
-};
-
-const readBoard = Effect.fnUntraced(function* (
-  database: Database,
-  guildIds: ReadonlyArray<string>,
-  world: string,
-) {
-  if (guildIds.length === 0) return [];
-
-  const latest = yield* database
-    .selectDistinctOn([heroSightingTable.guildId, heroSightingTable.heroKey], {
-      id: heroSightingTable.id,
-      closedAt: heroSightingTable.closedAt,
-    })
-    .from(heroSightingTable)
-    .where(
-      and(
-        inArray(heroSightingTable.guildId, [...guildIds]),
-        eq(heroSightingTable.world, world),
-      ),
-    )
-    .orderBy(
-      heroSightingTable.guildId,
-      heroSightingTable.heroKey,
-      desc(heroSightingTable.id),
-    );
-
-  const now = yield* Clock.currentTimeMillis;
-
-  const ids = latest
-    .filter(
-      ({ closedAt }) =>
-        closedAt === null ||
-        now - closedAt.getTime() <= BOARD_CLOSED_RETENTION_MS,
-    )
-    .map(({ id }) => id);
-
-  const sightings = yield* loadHeroSightings(database, ids);
-
-  return sightings.toSorted((left, right) =>
-    right.lastSeenAt.localeCompare(left.lastSeenAt),
-  );
-});
-
-export const makeHeroSightingReads = (database: Database) => {
-  const getAll = Effect.fn("getAllHeroSightingsData")(function* (
-    identity: HeroSightingsIdentity,
-    world: string,
-  ) {
-    const guildAccess = yield* selectAccessibleGuildRoles(
-      database,
-      identity.discordId,
-      [NPC_FEATURE_PERMISSIONS[HERO_SIGHTING_READ_FEATURE].base],
-    );
-
-    const sightings = yield* readBoard(
-      database,
-      [...guildAccess.keys()],
-      world,
-    );
-
-    return sightings.filter((sighting) => {
-      const access = guildAccess.get(sighting.guildId);
-
-      return access !== undefined && canRead(access, sighting);
-    });
-  });
-
-  const getGuildSightings = Effect.fn("getGuildHeroSightingsData")(function* (
-    access: HeroSightingsGuildAccess,
-    world: string,
-  ) {
-    const sightings = yield* readBoard(database, [access.guild.id], world);
-    const reader = guildReader(access);
-
-    return sightings.filter((sighting) => canRead(reader, sighting));
-  });
-
-  const getHistory = Effect.fn("getHeroSightingHistoryData")(function* (
-    access: HeroSightingsGuildAccess,
-    world: string,
-    hero: string,
-  ) {
-    const rows = yield* database
-      .select({ id: heroSightingTable.id })
-      .from(heroSightingTable)
-      .where(
-        heroSightingScopeCondition({
-          guildId: access.guild.id,
-          world,
-          heroKey: getHeroSightingKey(hero),
-        }),
-      )
-      .orderBy(desc(heroSightingTable.id))
-      .limit(HERO_SIGHTING_HISTORY_LIMIT);
-
-    const sightings = yield* loadHeroSightings(
-      database,
-      rows.map(({ id }) => id),
-    );
-
-    const reader = guildReader(access);
-
-    return sightings.filter((sighting) => canRead(reader, sighting));
-  });
-
-  return {
-    getAll: (identity: HeroSightingsIdentity, world: string) =>
-      getAll(identity, world).pipe(Effect.mapError(toHeroSightingsDataFailure)),
-    getGuildSightings: (access: HeroSightingsGuildAccess, world: string) =>
-      getGuildSightings(access, world).pipe(
-        Effect.mapError(toHeroSightingsDataFailure),
-      ),
-    getHistory: (
-      access: HeroSightingsGuildAccess,
-      world: string,
-      hero: string,
-    ) =>
-      getHistory(access, world, hero).pipe(
-        Effect.mapError(toHeroSightingsDataFailure),
-      ),
-  };
 };
 
 const notFound = () =>

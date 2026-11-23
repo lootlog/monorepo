@@ -12,7 +12,6 @@ import type { EffectDrizzleQueryError } from "drizzle-orm/effect-core";
 import { CatalogDatabase } from "#src/database/database";
 import {
   type IndexItemsCommand,
-  type ItemEntry,
   type ItemRevisionsCommand,
   makeItemsModule,
   type MonsterDropsCommand,
@@ -21,7 +20,6 @@ import {
   type IndexNpcsCommand,
   makeNpcsModule,
   type MonsterLocationsCommand,
-  type NpcEntry,
 } from "#src/npcs/npcs.service";
 import { catalogIndexSettings } from "#src/projection/catalog-indexes";
 import type {
@@ -82,10 +80,7 @@ export class CatalogOperations extends Context.Service<
         apiKey: Redacted.value(config.meilisearchApiKey),
       });
 
-      const { read, write } = makeCatalogStore<ItemEntry, NpcEntry>(
-        database,
-        meilisearch,
-      );
+      const { read, write } = makeCatalogStore(database, meilisearch);
 
       const items = makeItemsModule(write);
       const npcs = makeNpcsModule(write);

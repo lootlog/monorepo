@@ -26,10 +26,24 @@ export type BattleHpTimelineTooltipData = {
   turn: number;
   team1: number;
   team2: number;
+  warriorHp: Record<string, number>;
   momentum: number;
   deltas: BattleHpTimelineTooltipDelta[];
   legendaryBonuses: BattleHpTimelineTooltipLegendaryBonus[];
   flagLabelKeys: string[];
+};
+
+export type BattleHpTimelineSeriesValues = Pick<
+  BattleHpTimelineTooltipData,
+  "team1" | "team2" | "warriorHp"
+>;
+
+export type BattleHpTimelineTooltipSeries = {
+  key: string;
+  label: string;
+  color: string;
+  isAverage: boolean;
+  getValue: (data: BattleHpTimelineSeriesValues) => number | undefined;
 };
 
 type BattleHpTimelineTooltipLegendaryGroup = {
@@ -44,7 +58,7 @@ type BattleHpTimelineTooltipLegendaryGroup = {
 
 type BattleHpTimelineTooltipTurn = Pick<
   BattleTimelineResponseDtoOutputTimelineItem,
-  "deltas" | "flags" | "teamHp" | "turn"
+  "deltas" | "flags" | "hpByWarrior" | "teamHp" | "turn"
 >;
 
 const KNOWN_FLAG_KEYS = [
@@ -99,6 +113,7 @@ const TooltipData = Schema.Struct({
   turn: Schema.Finite,
   team1: Schema.Finite,
   team2: Schema.Finite,
+  warriorHp: Schema.Record(Schema.String, Schema.Finite),
   momentum: Schema.Finite,
   deltas: Schema.Array(TooltipDelta),
   legendaryBonuses: Schema.Array(TooltipLegendaryBonus),
@@ -109,6 +124,7 @@ const TooltipPayload = Schema.Struct({
   turn: CoercedFinite,
   team1: CoercedFinite,
   team2: CoercedFinite,
+  warriorHp: Schema.optional(Schema.Record(Schema.String, CoercedFinite)),
   momentum: Schema.optional(CoercedFinite),
   deltas: readableEntries(TooltipDelta),
   legendaryBonuses: readableEntries(TooltipLegendaryBonus),
@@ -118,12 +134,14 @@ const TooltipPayload = Schema.Struct({
     TooltipData,
     SchemaTransformation.transform<
       typeof TooltipData.Encoded,
-      Omit<typeof TooltipData.Encoded, "momentum"> & {
+      Omit<typeof TooltipData.Encoded, "momentum" | "warriorHp"> & {
         readonly momentum?: number | undefined;
+        readonly warriorHp?: Record<string, number> | undefined;
       }
     >({
       decode: (payload) => ({
         ...payload,
+        warriorHp: payload.warriorHp ?? {},
         momentum: payload.momentum ?? payload.team1 - payload.team2,
       }),
       encode: (data) => data,
@@ -146,6 +164,7 @@ export const buildBattleHpTimelineTooltipData = (
     turn: turn.turn,
     team1,
     team2,
+    warriorHp: turn.hpByWarrior,
     momentum: getRoundedTooltipNumber(team1 - team2),
     deltas: getBattleHpTimelineTooltipDeltas(turn),
     legendaryBonuses,

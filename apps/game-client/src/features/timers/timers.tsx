@@ -2,6 +2,7 @@ import { TimersView } from "@/features/timers/timers-view";
 import { useWindowPresence } from "@/hooks/ui/use-window-presence";
 import { useTimersSocket } from "@/features/timers/hooks/use-timers-socket";
 import { useTimersWorld } from "@/features/timers/hooks/use-timers-world";
+import { useTimerSounds } from "@/features/timers/hooks/use-timer-sounds";
 import { useTimers } from "@/hooks/api/use-timers";
 import { useGameStore } from "@/store/game.store";
 import { useTimersStore } from "@/store/timers.store";
@@ -10,8 +11,9 @@ import { useWindowsStore } from "@/store/windows.store";
 export const Timers = () => {
   useTimersSocket();
 
-  const { world } = useTimersWorld();
-  useTimers({ world });
+  const { world, guildId } = useTimersWorld();
+  const { data: timers } = useTimers({ world });
+  useTimerSounds(timers, guildId);
 
   const open = useWindowsStore((state) => state.timers.open);
 

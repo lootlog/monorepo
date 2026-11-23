@@ -3,12 +3,17 @@ import {
   baseServiceConfig,
   InvalidServiceConfiguration,
 } from "@lootlog/instrumentation/service-config";
-import { DEFAULT_RPC_PORT } from "@lootlog/rpc/server";
+import { type CallerTokens, rpcCallerTokensConfig } from "@lootlog/rpc/callers";
+import { CatalogRpcGroup } from "@lootlog/rpc/catalog";
+import { rpcPortConfig } from "@lootlog/rpc/server";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { Config, Context, Effect, Layer, Option, Redacted } from "effect";
 
 export interface CatalogConfigValue extends BaseServiceConfiguration {
-  readonly rpcPort: number;
+  readonly rpc: {
+    readonly port: number;
+    readonly callerTokens: CallerTokens;
+  };
   readonly databaseUrl: Redacted.Redacted<string>;
   readonly rabbitmqUri: Redacted.Redacted<string>;
   readonly meilisearchHost: string;
@@ -46,9 +51,13 @@ export class CatalogConfig extends Context.Service<
 
       return CatalogConfig.of({
         ...base,
-        rpcPort: yield* Config.Int("RPC_PORT").pipe(
-          Config.withDefault(DEFAULT_RPC_PORT),
-        ),
+        rpc: {
+          port: yield* rpcPortConfig,
+          callerTokens: yield* rpcCallerTokensConfig(
+            "catalog",
+            CatalogRpcGroup,
+          ),
+        },
         databaseUrl: yield* Config.Redacted("POSTGRESQL_CONNECTION_URI"),
         rabbitmqUri: yield* Config.Redacted("RABBITMQ_URI"),
         meilisearchHost: yield* Config.String("MEILISEARCH_HOST"),

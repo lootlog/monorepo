@@ -1,13 +1,8 @@
 import { makeJsonCodec } from "@lootlog/database/redis-cache-fill";
-import type { AuthIdpTokenResult } from "@lootlog/rpc/auth";
-import type {
-  RpcBadRequestError,
-  RpcUnauthorizedError,
-  RpcUnavailableError,
-} from "@lootlog/rpc/errors";
+import type { AuthRpcGroup } from "@lootlog/rpc/auth";
+import type { ServiceRpcClient } from "@lootlog/rpc/client";
 import { DISCORD_AUTH_SCOPES } from "@lootlog/schema/discord";
 import { Effect, Schema } from "effect";
-import type { RpcClientError } from "effect/rpc";
 import {
   AccountNotFoundError,
   AuthBadRequestError,
@@ -50,18 +45,10 @@ export interface AuthService {
   ) => Effect.Effect<void>;
 }
 
-export interface AuthIdpRpcClient {
-  readonly getIdpToken: (input: {
-    readonly userId: string;
-    readonly discordId: string;
-  }) => Effect.Effect<
-    AuthIdpTokenResult,
-    | RpcBadRequestError
-    | RpcUnauthorizedError
-    | RpcUnavailableError
-    | RpcClientError.RpcClientError
-  >;
-}
+type AuthIdpRpcClient = Pick<
+  ServiceRpcClient<typeof AuthRpcGroup>,
+  "getIdpToken"
+>;
 
 export const fingerprintAccessToken = (accessToken: string) =>
   new Bun.CryptoHasher("sha256").update(accessToken).digest("hex");
@@ -138,6 +125,8 @@ export const makeAuthService = (options: {
             userId,
             error.message ?? "Auth service unavailable",
           ),
+        RpcCallerRejectedError: () =>
+          connectionFailure(userId, "Auth service rejected the API as caller"),
         RpcClientError: (error) =>
           connectionFailure(userId, error.message || "Auth RPC error"),
       }),

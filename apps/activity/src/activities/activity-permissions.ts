@@ -1,12 +1,14 @@
 import { OperationError } from "@lootlog/instrumentation/operation";
 import { reconnectingBunRedisLayer } from "@lootlog/database/bun-redis";
 import { ApiRpcGroup } from "@lootlog/rpc/api";
-import { makeRpcClient } from "@lootlog/rpc/client";
-import { Permission } from "@lootlog/schema/permissions";
+import { boundedRpcCall, makeRpcClient } from "@lootlog/rpc/client";
+import { Capability } from "@lootlog/schema/permissions";
 import { Context, Effect, Layer, Redacted, Schema } from "effect";
 import { Redis } from "effect/persistence";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { ActivityConfig } from "#src/config/activity-config";
+
+const callApi = boundedRpcCall({ timeout: "3 seconds", retries: 2 });
 
 class PermissionsUnavailable extends TaggedErrorClass<
   PermissionsUnavailable,
@@ -28,7 +30,7 @@ export interface PermissionsValue {
   readonly getUserCapabilities: (
     discordId: string,
     userId: string,
-  ) => Effect.Effect<(guildId: string) => Permission[], PermissionsUnavailable>;
+  ) => Effect.Effect<(guildId: string) => Capability[], PermissionsUnavailable>;
 }
 
 export class Permissions extends Context.Service<
@@ -41,7 +43,7 @@ export class Permissions extends Context.Service<
       const config = yield* ActivityConfig;
 
       const apiRpc = yield* makeRpcClient(ApiRpcGroup, {
-        url: config.apiRpcUrl,
+        ...config.apiRpc,
         spanPrefix: "activity.api-rpc",
       });
 
@@ -118,19 +120,18 @@ export class Permissions extends Context.Service<
 
         if (cached) return cached;
 
-        const guild = yield* apiRpc
-          .getGuildByIdOrVanityUrl({ idOrVanityUrl: id })
-          .pipe(
-            Effect.timeout("3 seconds"),
-            Effect.catchTag("RpcNotFoundError", () => Effect.succeed(null)),
-            Effect.mapError(
-              (cause) =>
-                new PermissionsUnavailable({
-                  operation: "guild-response",
-                  cause,
-                }),
-            ),
-          );
+        const guild = yield* callApi(() =>
+          apiRpc.getGuildByIdOrVanityUrl({ idOrVanityUrl: id }),
+        ).pipe(
+          Effect.catchTag("RpcNotFoundError", () => Effect.succeed(null)),
+          Effect.mapError(
+            (cause) =>
+              new PermissionsUnavailable({
+                operation: "guild-response",
+                cause,
+              }),
+          ),
+        );
 
         if (!guild) return null;
 
@@ -149,30 +150,29 @@ export class Permissions extends Context.Service<
 
       const getUserPermissions = Effect.fn("Permissions.getUserPermissions")(
         function* (discordId: string, userId: string) {
-          return yield* apiRpc
-            .getUserGuildPermissions({ discordId, userId })
-            .pipe(
-              Effect.timeout("3 seconds"),
-              Effect.mapError(
-                (cause) =>
-                  new PermissionsUnavailable({
-                    operation: "permissions-response",
-                    cause,
-                  }),
-              ),
-            );
+          return yield* callApi(() =>
+            apiRpc.getUserGuildPermissions({ discordId, userId }),
+          ).pipe(
+            Effect.mapError(
+              (cause) =>
+                new PermissionsUnavailable({
+                  operation: "permissions-response",
+                  cause,
+                }),
+            ),
+          );
         },
       );
 
       const getUserCapabilities = (discordId: string, userId: string) =>
         getUserPermissions(discordId, userId).pipe(
-          Effect.map((grants) => (guildId: string): Permission[] => {
+          Effect.map((grants) => (guildId: string): Capability[] => {
             const guild = grants.find((entry) => entry.guild.id === guildId);
 
             if (!guild) return [];
 
             if (guild.guild.ownerId === discordId)
-              return Object.values(Permission);
+              return Object.values(Capability);
 
             return [
               ...new Set(guild.roles.flatMap((role) => role.permissions)),

@@ -1,6 +1,7 @@
 import type { RoleHolders } from "#src/platform-roles/role-holders";
 import { ignorePublicationFailure } from "#src/shared/best-effort-publication";
 import { and, asc, desc, eq, gt, isNull, or, type SQL } from "drizzle-orm";
+import { returnedRow } from "@lootlog/database/returned-row";
 import { Effect, Exit, Layer, Option, Schema } from "effect";
 import {
   GLOBAL_CHAT_PAGE_SIZE,
@@ -457,7 +458,7 @@ export const makeGlobalChatOperations = (
             createdAt: now,
           };
 
-          const [row] = yield* database
+          const row = yield* database
             .insert(globalChatMuteTable)
             .values({ id: Bun.randomUUIDv7(), userId: senderUserId, ...mute })
             .onConflictDoUpdate({
@@ -465,9 +466,10 @@ export const makeGlobalChatOperations = (
               set: mute,
             })
             .returning()
-            .pipe(Effect.mapError(operationError));
-
-          if (!row) return yield* Effect.die("Mute upsert returned no row");
+            .pipe(
+              Effect.mapError(operationError),
+              Effect.flatMap(returnedRow("Mute upsert")),
+            );
 
           return muteResponse(row);
         }),

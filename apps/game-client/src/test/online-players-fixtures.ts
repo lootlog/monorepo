@@ -82,6 +82,7 @@ export const createOnlinePlayersTest = () => {
           status: "error",
           error: {
             code: "COMMAND_REJECTED",
+            reason: "organization-access-denied",
             message: "organization access denied",
             retryable: false,
           },

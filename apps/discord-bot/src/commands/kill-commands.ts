@@ -77,7 +77,11 @@ export const rankingCommand: SlashCommand = {
     Effect.gen(function* () {
       const { webAppUrl } = yield* BotConfig;
       const session = yield* memberSession(invocation);
-      const type = invocation.options.string("typ") ?? "ELITE2";
+      const requested = invocation.options.string("typ");
+
+      const type =
+        RANKED_NPC_TYPES.find((ranked) => ranked === requested) ?? "ELITE2";
+
       const period = readPeriod(invocation.options);
 
       const stats = yield* session.api.getGuildKillStats({

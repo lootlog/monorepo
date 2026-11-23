@@ -1,5 +1,6 @@
 import { Schema } from "effect";
 import { Rpc, RpcGroup } from "effect/rpc";
+import { CallerAuth, RpcCallers } from "./callers.js";
 import {
   RpcForbiddenError,
   RpcUnauthorizedError,
@@ -37,5 +38,5 @@ export class GatewayRpcGroup extends RpcGroup.make(
       RpcForbiddenError,
       RpcUnavailableError,
     ]),
-  }),
-) {}
+  }).annotate(RpcCallers, ["discord-bot"]),
+).middleware(CallerAuth) {}

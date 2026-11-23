@@ -8,7 +8,7 @@ import { usePartyReadyRoomSync } from "@/features/party-finder/hooks/use-party-r
 import { areReadyRoomsSynchronized } from "@/features/party-finder/hooks/use-ready-rooms";
 import { mergeReadyRoomProjectionIntoCache } from "@/features/party-finder/hooks/use-ready-rooms-cache";
 import { RealtimeClient } from "@lootlog/client/realtime";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { SocketProvider } from "@/contexts/socket-context";
 import { configureGameClientPlatform } from "@/lib/game-client-platform";
 import { disposeSocket } from "@/lib/socket";
@@ -125,7 +125,7 @@ describe("usePartyReadyRoomSync", () => {
         }),
     });
 
-    const receiveAccess = (permissions: Permission[]) =>
+    const receiveAccess = (permissions: Capability[]) =>
       act(() =>
         wire.receive({
           v: 1,
@@ -161,19 +161,19 @@ describe("usePartyReadyRoomSync", () => {
     });
 
     act(() => wire.open());
-    await receiveAccess([Permission.LOOTLOG_ACCESS]);
+    await receiveAccess([Capability.LOOTLOG_ACCESS]);
     mergeReadyRoomProjectionIntoCache(createProjection(3), queryClient);
 
     await receiveAccess([
-      Permission.LOOTLOG_ACCESS,
-      Permission.LOOTLOG_ONLINE_PLAYERS_READ,
+      Capability.LOOTLOG_ACCESS,
+      Capability.LOOTLOG_ONLINE_PLAYERS_READ,
     ]);
     expect(readCache().projections).toHaveProperty("room-1");
 
     await receiveAccess([
-      Permission.LOOTLOG_ACCESS,
-      Permission.LOOTLOG_ONLINE_PLAYERS_READ,
-      Permission.LOOTLOG_CHAT_READ,
+      Capability.LOOTLOG_ACCESS,
+      Capability.LOOTLOG_ONLINE_PLAYERS_READ,
+      Capability.LOOTLOG_CHAT_READ,
     ]);
     await waitFor(() => expect(readCache().projections).toEqual({}));
 

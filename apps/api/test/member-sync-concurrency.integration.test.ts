@@ -4,7 +4,7 @@ import { GuildMemberFlags, type APIGuildMember } from "discord-api-types/v10";
 import { eq } from "drizzle-orm";
 import { Effect, ManagedRuntime, Schema } from "effect";
 import { Client } from "pg";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { ApiDatabase, ApiDatabaseLive } from "#src/database/drizzle/database";
 import {
   guildTable,
@@ -88,7 +88,7 @@ const createSyncFixture = async () => {
         id,
         guildId,
         name: id,
-        permissions: [Permission.LOOTLOG_ACCESS],
+        permissions: [Capability.LOOTLOG_ACCESS],
         updatedAt: new Date(0),
       })),
     ),

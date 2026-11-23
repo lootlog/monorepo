@@ -1,3 +1,4 @@
+import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { AccessRequirement } from "@lootlog/domain/access-policy";
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
@@ -45,7 +46,11 @@ const provideServices = (
   data: LootlogConfigData["Service"],
   authorization: LootlogConfigAuthorization["Service"],
 ) =>
-  Layer.merge(
+  Layer.mergeAll(
+    Layer.succeed(ForwardAuthIdentity, {
+      userId: "user",
+      discordId: "discord",
+    }),
     Layer.succeed(LootlogConfigData, data),
     Layer.succeed(LootlogConfigAuthorization, authorization),
   );

@@ -1,3 +1,4 @@
+import { recordKeys } from "@/utils/record-keys";
 import type { GameNpc } from "@lootlog/margonem/npcs";
 import { create } from "zustand";
 
@@ -34,9 +35,7 @@ const hasNpcFieldChange = (
   npc: GameNpcWithLocation,
   update: Partial<GameNpcWithLocation>,
 ) => {
-  // SAFETY: update is a Partial<GameNpcWithLocation> literal built by the
-  // callers, so its own keys are a subset of the npc's keys.
-  for (const key of Object.keys(update) as (keyof GameNpcWithLocation)[]) {
+  for (const key of recordKeys(update)) {
     if (update[key] !== npc[key]) return true;
   }
 

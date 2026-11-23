@@ -5,7 +5,7 @@ import { apiKeyAccessibleGuilds } from "#src/runtime/auth/organization-scope";
 import { randomUUID } from "node:crypto";
 
 import { Effect, Layer } from "effect";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { NOTIFICATION_SEND_PERMISSIONS } from "@lootlog/domain/npc-permissions";
 import {
   PARTY_GATHERING_LIFETIME_MS,
@@ -188,7 +188,7 @@ const makeReadyRoomContext = (
       database,
       discordId,
       includeReadable
-        ? [...NOTIFICATION_SEND_PERMISSIONS, Permission.LOOTLOG_CHAT_READ]
+        ? [...NOTIFICATION_SEND_PERMISSIONS, Capability.LOOTLOG_CHAT_READ]
         : NOTIFICATION_SEND_PERMISSIONS,
     ).pipe(Effect.map((rows) => rows.map(({ guild }) => guild.id)));
 

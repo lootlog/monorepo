@@ -1,3 +1,4 @@
+import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { afterAll, beforeEach, describe, expect, it } from "bun:test";
 import { eq, inArray } from "drizzle-orm";
 import { Effect, Layer, ManagedRuntime } from "effect";
@@ -50,7 +51,11 @@ const definition: CustomThemeDefinition = {
 
 const as = <A, E>(
   userId: string,
-  effect: Effect.Effect<A, E, UserThemesData | UserThemesIdentity>,
+  effect: Effect.Effect<
+    A,
+    E,
+    UserThemesData | UserThemesIdentity | ForwardAuthIdentity
+  >,
 ) =>
   runtime.runPromise(
     effect.pipe(
@@ -58,12 +63,20 @@ const as = <A, E>(
         UserThemesIdentity,
         UserThemesIdentity.of({ userId: Effect.succeed(userId) }),
       ),
+      Effect.provideService(ForwardAuthIdentity, {
+        userId,
+        discordId: `discord-${userId}`,
+      }),
     ),
   );
 
 const failureOf = <A, E>(
   userId: string,
-  effect: Effect.Effect<A, E, UserThemesData | UserThemesIdentity>,
+  effect: Effect.Effect<
+    A,
+    E,
+    UserThemesData | UserThemesIdentity | ForwardAuthIdentity
+  >,
 ) => as(userId, Effect.flip(effect));
 
 const create = (userId: string, name = "Mój motyw") =>
@@ -134,7 +147,11 @@ describe("User themes against migrated PostgreSQL", () => {
     expect(await as(stranger, getUserThemes())).toEqual([]);
 
     const operations: ReadonlyArray<
-      Effect.Effect<unknown, unknown, UserThemesData | UserThemesIdentity>
+      Effect.Effect<
+        unknown,
+        unknown,
+        UserThemesData | UserThemesIdentity | ForwardAuthIdentity
+      >
     > = [
       getUserTheme(theme.id),
       updateUserTheme(theme.id, { name: "Przejęty" }),
@@ -201,7 +218,7 @@ describe("User themes against migrated PostgreSQL", () => {
     await runtime.runPromise(
       Effect.flatMap(ApiDatabase, (db) =>
         makeUserAccountDeletion(db, {
-          cleanupBattlelog: () => Effect.void,
+          requestBattlelogDeletion: () => Effect.void,
           deleteCacheKey: () => Effect.void,
           invalidateCacheScopes: () => Effect.void,
           deleteCachePattern: () => Effect.void,

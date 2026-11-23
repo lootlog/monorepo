@@ -7,7 +7,7 @@ import { LootlogApiHandlers } from "#src/http-api/handlers/handlers-layer";
 import { LootlogApi } from "#src/http-api/lootlog-api";
 import { ForwardAuthMiddlewareLive } from "#src/runtime/auth/forward-auth-middleware";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
-import { makeApiRpcServer } from "#src/rpc/api-rpc-server";
+import { makeApiRpcRoutes, makeApiRpcServer } from "#src/rpc/api-rpc-server";
 import {
   apiDataLayers,
   apiRequestDataLayers,
@@ -37,6 +37,10 @@ const LootlogApiRoutes = HttpApiBuilder.layer(LootlogApi, {
 );
 
 export const LootlogApiRouter = LootlogApiRoutes.pipe(
+  Layer.provideMerge(HandlerInfrastructure),
+);
+
+export const ApiRpcRouter = makeApiRpcRoutes(LootlogApiRoutes).pipe(
   Layer.provideMerge(HandlerInfrastructure),
 );
 

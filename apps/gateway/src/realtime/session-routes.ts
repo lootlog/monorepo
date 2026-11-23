@@ -11,10 +11,8 @@ import type { CommandRoutes } from "#src/realtime/command-routes";
 import { getGlobalChatStats } from "#src/realtime/gateway-metrics";
 import type { NpcPresenceService } from "#src/realtime/npc-presence-service";
 import type { PresenceStore } from "#src/realtime/presence-store";
-import {
-  isGlobalChatTopic,
-  type RealtimeHub,
-} from "#src/realtime/realtime-hub";
+import type { RealtimeHub } from "#src/realtime/realtime-hub";
+import { isGlobalChatTopic } from "#src/realtime/global-chat-scope";
 import {
   JoinCapacityExceeded,
   OrganizationAccessDenied,

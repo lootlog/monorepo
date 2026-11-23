@@ -1,7 +1,7 @@
 import { afterAll, describe, expect, it } from "bun:test";
 import { Effect, ManagedRuntime } from "effect";
 import { eq } from "drizzle-orm";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import type { GuildMemberChanged } from "@lootlog/protocol/rabbit/events";
 import { ApiDatabase, ApiDatabaseLive } from "#src/database/drizzle/database";
 import {
@@ -40,8 +40,8 @@ describe("Role policy rebalance against PostgreSQL", () => {
             guildId,
             name: "Role",
             permissions: [
-              Permission.LOOTLOG_TIMERS_READ,
-              Permission.LOOTLOG_TIMERS_TITANS_READ,
+              Capability.LOOTLOG_TIMERS_READ,
+              Capability.LOOTLOG_TIMERS_TITANS_READ,
             ],
             lvlRangeFrom: 0,
             lvlRangeTo: 500,
@@ -123,7 +123,7 @@ describe("Role policy rebalance against PostgreSQL", () => {
                   .where(eq(roleTable.id, roleId));
 
                 expect(saved?.permissions).toEqual([
-                  Permission.LOOTLOG_TIMERS_READ,
+                  Capability.LOOTLOG_TIMERS_READ,
                 ]);
                 published.push(member);
               }),
@@ -135,7 +135,7 @@ describe("Role policy rebalance against PostgreSQL", () => {
             const roles = yield* RolesData;
 
             return yield* roles.updateRole("owner", guildId, roleId, {
-              permissions: [Permission.LOOTLOG_TIMERS_READ],
+              permissions: [Capability.LOOTLOG_TIMERS_READ],
               lvlRangeFrom,
               lvlRangeTo,
             });

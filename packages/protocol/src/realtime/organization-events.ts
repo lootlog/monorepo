@@ -111,18 +111,20 @@ const TimerMember = Schema.Struct({
   avatar: Schema.NullOr(Schema.String),
   banner: Schema.NullOr(Schema.String),
   active: Schema.Boolean,
-  roles: Schema.mutable(
-    Schema.Array(
-      Schema.Struct({
-        id: Schema.String,
-        guildId: Schema.String,
-        name: Schema.String,
-        color: nullableNumber,
-        position: Schema.optionalKey(nullableNumber),
-        permissions: Schema.mutable(Schema.Array(CapabilitySchema)),
-        lvlRangeFrom: Schema.optionalKey(nullableNumber),
-        lvlRangeTo: Schema.optionalKey(nullableNumber),
-      }),
+  roles: Schema.optionalKey(
+    Schema.mutable(
+      Schema.Array(
+        Schema.Struct({
+          id: Schema.String,
+          guildId: Schema.String,
+          name: Schema.String,
+          color: nullableNumber,
+          position: Schema.optionalKey(nullableNumber),
+          permissions: Schema.mutable(Schema.Array(CapabilitySchema)),
+          lvlRangeFrom: Schema.optionalKey(nullableNumber),
+          lvlRangeTo: Schema.optionalKey(nullableNumber),
+        }),
+      ),
     ),
   ),
   globalUserId: Schema.NullOr(Schema.String),

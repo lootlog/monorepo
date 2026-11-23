@@ -9,7 +9,7 @@ import { RefreshCw, UserRoundX } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { getMemberColor } from "@/utils/get-member-color";
 import { MemberIdentity } from "@/components/common/member-identity";
 import { getDiscordAvatarUrl } from "@lootlog/domain/discord-avatar";
@@ -67,8 +67,8 @@ export const MemberSettingsDetailPageContent = () => {
   const member = updatedMember ?? queryMember;
 
   const canManageMembers = Boolean(
-    accessPolicy?.allows(Permission.ADMIN) ||
-    accessPolicy?.allows(Permission.OWNER),
+    accessPolicy?.allows(Capability.ADMIN) ||
+    accessPolicy?.allows(Capability.OWNER),
   );
 
   const [previousMemberId, setPreviousMemberId] = useState(memberId);

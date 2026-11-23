@@ -16,6 +16,8 @@ export const Capability = {
   LOOTLOG_TIMERS_DELETE: "LOOTLOG_TIMERS_DELETE",
   LOOTLOG_TIMERS_TITANS_READ: "LOOTLOG_TIMERS_TITANS_READ",
   LOOTLOG_TIMERS_HEROES_READ: "LOOTLOG_TIMERS_HEROES_READ",
+  LOOTLOG_HERO_SIGHTINGS_READ: "LOOTLOG_HERO_SIGHTINGS_READ",
+  LOOTLOG_HERO_SIGHTINGS_WRITE: "LOOTLOG_HERO_SIGHTINGS_WRITE",
   LOOTLOG_RESERVATIONS_READ: "LOOTLOG_RESERVATIONS_READ",
   LOOTLOG_RESERVATIONS_WRITE: "LOOTLOG_RESERVATIONS_WRITE",
   LOOTLOG_MEMBERS_READ: "LOOTLOG_MEMBERS_READ",
@@ -38,22 +40,13 @@ export const Capability = {
 
 export type Capability = (typeof Capability)[keyof typeof Capability];
 
-/** @alias */
-export const Permission = Capability;
-
-/** @alias */
-export type Permission = Capability;
-
 export const CapabilitySchema = Schema.Literals(Object.values(Capability));
-
-/** @alias */
-export const PermissionSchema = CapabilitySchema;
 
 const UserGuildPermissionsRoleSchema = Schema.Struct({
   id: Schema.NonEmptyString,
   lvlRangeFrom: Schema.Int,
   lvlRangeTo: Schema.Int,
-  permissions: Schema.Array(PermissionSchema),
+  permissions: Schema.Array(CapabilitySchema),
 });
 
 const UserGuildPermissionsGuildSchema = Schema.Struct({

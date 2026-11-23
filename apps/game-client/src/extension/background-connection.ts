@@ -106,6 +106,7 @@ export function createBackgroundConnection(
                 : "Extension request failed",
             ...(error instanceof RealtimeRequestError && {
               code: error.code,
+              reason: error.reason,
               retryable: error.retryable,
               retryAfterMs: error.retryAfterMs,
             }),

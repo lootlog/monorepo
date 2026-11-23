@@ -1,3 +1,4 @@
+import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
 import { SettingsDocumentsResponseSchema } from "@lootlog/schema/settings-documents";
@@ -24,7 +25,11 @@ const provideServices = (
     userId: Effect.succeed("user-a"),
   }),
 ) =>
-  Layer.merge(
+  Layer.mergeAll(
+    Layer.succeed(ForwardAuthIdentity, {
+      userId: "user",
+      discordId: "discord",
+    }),
     Layer.succeed(SettingsData, data),
     Layer.succeed(SettingsIdentity, identity),
   );

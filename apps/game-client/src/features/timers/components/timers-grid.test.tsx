@@ -5,7 +5,7 @@ import {
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
   getGuildsControllerGetGuildPermissionsQueryKey,
 } from "@lootlog/client/main";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { beforeEach, afterEach, expect, it, onTestFinished, vi } from "vitest";
 import { useTimersStore } from "@/store/timers.store";
 import {
@@ -51,8 +51,8 @@ it("renders guild metadata and hidden timers and applies each organization's rea
   const fixture = createTimerHttpFixture((request) =>
     Response.json(
       new URL(request.url).pathname.includes("guild-1")
-        ? [Permission.LOOTLOG_TIMERS_DELETE]
-        : [Permission.LOOTLOG_TIMERS_RESET],
+        ? [Capability.LOOTLOG_TIMERS_DELETE]
+        : [Capability.LOOTLOG_TIMERS_RESET],
     ),
   );
 
@@ -120,7 +120,7 @@ it("updates twenty countdowns without adding permission observers or remounting 
   });
 
   fixture.queryClient.setQueryData(permissionKey, [
-    Permission.LOOTLOG_TIMERS_DELETE,
+    Capability.LOOTLOG_TIMERS_DELETE,
   ]);
 
   const view = render(
@@ -186,7 +186,7 @@ it("keeps grouped reset pending and retryable when a refreshed snapshot changes 
   for (const guildId of ["guild-1", "guild-2"])
     fixture.queryClient.setQueryData(
       getGuildsControllerGetGuildPermissionsQueryKey({ guildId }),
-      [Permission.LOOTLOG_TIMERS_RESET],
+      [Capability.LOOTLOG_TIMERS_RESET],
     );
 
   const content = (timers: Timer[]) => (
@@ -252,7 +252,7 @@ it.each([false, true])(
       getGuildsControllerGetGuildPermissionsQueryKey({
         guildId: timer.guildId,
       }),
-      [Permission.LOOTLOG_TIMERS_RESET],
+      [Capability.LOOTLOG_TIMERS_RESET],
     );
     useTimersStore.setState((state) => ({
       generalConfig: { ...state.generalConfig, timersGrouping: grouped },

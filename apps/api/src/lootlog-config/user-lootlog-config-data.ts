@@ -9,7 +9,7 @@ import {
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Clock, Context, Effect, Layer, Schema } from "effect";
 import { and, arrayOverlaps, desc, eq, or, sql } from "drizzle-orm";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { userCharactersLootlogSettingsTable } from "#src/database/drizzle/user.schema";
 import { getUserLootlogConfigCacheScope } from "#src/shared/cache";
@@ -70,7 +70,7 @@ export class UserLootlogConfigData extends Context.Service<
             ),
           );
 
-        const findGuilds = (discordId: string, permission: Permission) =>
+        const findGuilds = (discordId: string, permission: Capability) =>
           selectAccessibleGuilds(database, discordId, [permission]).pipe(
             Effect.map((rows) =>
               rows.map(({ guild }) => ({
@@ -109,7 +109,7 @@ export class UserLootlogConfigData extends Context.Service<
                         .orderBy(
                           desc(userCharactersLootlogSettingsTable.createdAt),
                         ),
-                      findGuilds(discordId, Permission.LOOTLOG_LOOTS_WRITE),
+                      findGuilds(discordId, Capability.LOOTLOG_LOOTS_WRITE),
                     ],
                     { concurrency: "unbounded" },
                   );
@@ -147,7 +147,7 @@ export class UserLootlogConfigData extends Context.Service<
               Effect.gen(function* () {
                 const guilds = yield* findGuilds(
                   discordId,
-                  Permission.LOOTLOG_LOOTS_WRITE,
+                  Capability.LOOTLOG_LOOTS_WRITE,
                 );
 
                 const writableGuildIds = new Set(guilds.map(({ id }) => id));
@@ -240,7 +240,7 @@ export class UserLootlogConfigData extends Context.Service<
 
                 const guilds = yield* findGuilds(
                   discordId,
-                  Permission.LOOTLOG_ACCESS,
+                  Capability.LOOTLOG_ACCESS,
                 );
 
                 const guildById = new Map(
@@ -292,7 +292,7 @@ export class UserLootlogConfigData extends Context.Service<
                     database,
                     configs.map(({ userId }) => userId),
                     guilds,
-                    [Permission.LOOTLOG_LOOTS_WRITE],
+                    [Capability.LOOTLOG_LOOTS_WRITE],
                   );
 
                 const visibleByPlayer = new Map<string, Set<string>>();

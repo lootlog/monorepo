@@ -80,17 +80,7 @@ export const EventKillsHistoryContent = ({
     },
   );
 
-  const {
-    data: killsData,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading: killsLoading,
-    isError: killsHasError,
-    isFetchNextPageError,
-    isFetching,
-    refetch,
-  } = useEventKillHistory({
+  const killsQuery = useEventKillHistory({
     guildId: routeIds.guildId,
     eventId: routeIds.eventId,
     heroId: selectedHeroId,
@@ -114,7 +104,7 @@ export const EventKillsHistoryContent = ({
   }
 
   const heroes = event.heroNpcs ?? [];
-  const allKills = killsData?.pages.flatMap((page) => page.items) ?? [];
+  const allKills = killsQuery.data?.pages.flatMap((page) => page.items) ?? [];
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -146,15 +136,7 @@ export const EventKillsHistoryContent = ({
           eventId={routeIds.eventId}
           scrollElement={scrollElement}
           resetKey={selectedHeroId ?? "all"}
-          isLoading={killsLoading}
-          hasError={killsHasError}
-          hasNextPage={hasNextPage}
-          isFetchingNextPage={isFetchingNextPage}
-          fetchNextPage={fetchNextPage}
-          onRetry={() =>
-            void (isFetchNextPageError ? fetchNextPage() : refetch())
-          }
-          isRetrying={isFetching}
+          query={killsQuery}
           onShowAllHeroes={
             selectedHeroId ? () => handleHeroChange(undefined) : undefined
           }

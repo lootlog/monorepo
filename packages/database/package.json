@@ -12,7 +12,8 @@
     "./redis-cache-fill": "./src/redis-cache-fill.ts",
     "./sliding-window-rate-limit": "./src/sliding-window-rate-limit.ts",
     "./bun-redis": "./src/bun-redis.ts",
-    "./bullmq": "./src/bullmq.ts"
+    "./bullmq": "./src/bullmq.ts",
+    "./returned-row": "./src/returned-row.ts"
   },
   "scripts": {
     "lint": "oxlint src test && effect-tsgo diagnostics --project tsconfig.json --severity error,warning --strict",

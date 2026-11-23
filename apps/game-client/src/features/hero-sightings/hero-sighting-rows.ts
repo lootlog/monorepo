@@ -5,15 +5,6 @@ type HeroSightingClaim = HeroSightingResponseDto["claims"][number];
 
 type HeroSightingMember = HeroSightingResponseDto["detectedBy"];
 
-export type HeroSightingClaimer = HeroSightingClaim & {
-  readonly isDetector: boolean;
-};
-
-export const isHeroSightingDetectorClaim = (
-  sighting: HeroSightingResponseDto,
-  claim: HeroSightingClaim,
-): boolean => claim.member.memberId === sighting.detectedBy.memberId;
-
 export const isWithdrawableHeroSighting = (
   sighting: HeroSightingResponseDto,
   userId: string | undefined,
@@ -35,7 +26,7 @@ export type HeroSightingRow = {
   readonly detectedBy: HeroSightingMember;
   readonly manual: boolean;
   readonly refreshedBy: HeroSightingMember | null;
-  readonly claims: readonly HeroSightingClaimer[];
+  readonly claims: readonly HeroSightingClaim[];
   readonly sightings: readonly HeroSightingResponseDto[];
 };
 
@@ -85,17 +76,13 @@ const toRow = (
     getMemberKey(latest.guildId, latest.lastSeenBy) ===
     getMemberKey(first.guildId, first.detectedBy);
 
-  const claims = new Map<string, HeroSightingClaimer>();
+  const claims = new Map<string, HeroSightingClaim>();
 
   for (const sighting of sightings)
     for (const claim of sighting.claims) {
       const claimerKey = getMemberKey(sighting.guildId, claim.member);
-      const isDetector = isHeroSightingDetectorClaim(sighting, claim);
-      const known = claims.get(claimerKey);
 
-      if (!known) claims.set(claimerKey, { ...claim, isDetector });
-      else if (isDetector && !known.isDetector)
-        claims.set(claimerKey, { ...known, isDetector });
+      if (!claims.has(claimerKey)) claims.set(claimerKey, claim);
     }
 
   return {

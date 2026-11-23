@@ -35,3 +35,8 @@ export class RpcUnavailableError extends TaggedErrorClass<
 >()("RpcUnavailableError", {
   message: Schema.optionalKey(Schema.String),
 }) {}
+
+export class RpcCallerRejectedError extends TaggedErrorClass<
+  RpcCallerRejectedError,
+  { readonly brand: unique symbol }
+>()("RpcCallerRejectedError", {}) {}

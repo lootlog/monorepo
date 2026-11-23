@@ -144,4 +144,22 @@ describe("SoundsSettingsTab", () => {
       ]);
     });
   });
+
+  it("enables timer sounds for one NPC type without touching its sound url", async () => {
+    const user = userEvent.setup();
+    render();
+
+    await user.click(
+      screen.getByRole("switch", { name: "Dźwięk dla typu Heros" }),
+    );
+
+    await waitFor(() => {
+      expect(lastPatchOperations()).toEqual([
+        expect.objectContaining({
+          domain: "sounds",
+          set: { timersConfig: { HERO: { enabled: true } } },
+        }),
+      ]);
+    });
+  });
 });

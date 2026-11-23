@@ -140,11 +140,12 @@ export const BotRpcHandlers = DiscordBotRpcGroup.toLayer(
 );
 
 const BotRpcServer = Layer.unwrap(
-  Effect.map(BotConfig, ({ rpcPort }) =>
+  Effect.map(BotConfig, ({ rpc }) =>
     serviceRpcServer({
       group: DiscordBotRpcGroup,
       handlers: BotRpcHandlers,
-      port: rpcPort,
+      callerTokens: rpc.callerTokens,
+      port: rpc.port,
       spanPrefix: "discord-bot.rpc",
     }),
   ),

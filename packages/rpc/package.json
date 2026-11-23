@@ -9,6 +9,7 @@
     "./client": "./src/client.ts",
     "./testing": "./src/testing.ts",
     "./errors": "./src/errors.ts",
+    "./callers": "./src/callers.ts",
     "./api": "./src/api.ts",
     "./auth": "./src/auth.ts",
     "./gateway": "./src/gateway.ts",
@@ -23,6 +24,7 @@
   "dependencies": {
     "@effect/platform-bun": "catalog:",
     "@lootlog/instrumentation": "workspace:*",
+    "@lootlog/protocol": "workspace:*",
     "@lootlog/schema": "workspace:*",
     "effect": "catalog:"
   },

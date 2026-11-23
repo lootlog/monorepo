@@ -3,7 +3,7 @@ import { Client } from "pg";
 import { and, desc, eq } from "drizzle-orm";
 import { Effect, ManagedRuntime, Result, Schema } from "effect";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { ApiDatabase, ApiDatabaseLive } from "#src/database/drizzle/database";
 import {
   guildTable,
@@ -120,7 +120,7 @@ it.each(["restore", "new spawn"] as const)(
       userId: member.userId,
       discordId: member.userId,
       roles: [],
-      accessPolicy: createAccessPolicy({ capabilities: [Permission.ADMIN] }),
+      accessPolicy: createAccessPolicy({ capabilities: [Capability.ADMIN] }),
     };
 
     const publications: string[] = [];
@@ -277,7 +277,7 @@ it.each(["rollback", "new spawn", "identical reset", "delete"] as const)(
       userId: member.userId,
       discordId: member.userId,
       roles: [],
-      accessPolicy: createAccessPolicy({ capabilities: [Permission.ADMIN] }),
+      accessPolicy: createAccessPolicy({ capabilities: [Capability.ADMIN] }),
     };
 
     const publications: string[] = [];
@@ -530,7 +530,7 @@ it("restores a deleted manual timer until cleanup removes it with its history", 
     userId: member.userId,
     discordId: member.userId,
     roles: [],
-    accessPolicy: createAccessPolicy({ capabilities: [Permission.ADMIN] }),
+    accessPolicy: createAccessPolicy({ capabilities: [Capability.ADMIN] }),
   };
 
   const ports = {

@@ -1,4 +1,4 @@
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { Effect, Metric } from "effect";
 import { HttpServerResponse } from "effect/http";
 import type {
@@ -27,7 +27,7 @@ export const fetchLoots = Effect.fn("loots.fetchLoots")(function* (
   guildId: string | undefined,
   query: LootsQuery,
 ) {
-  const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_READ);
+  const caller = yield* requireGuild(guildId, Capability.LOOTLOG_LOOTS_READ);
 
   return yield* data((service) => service.fetchLoots(caller, query));
 });
@@ -36,7 +36,7 @@ const getLootStats = Effect.fn("loots.getLootStats")(function* (
   guildId: string | undefined,
   query: LootStatsQuery,
 ) {
-  const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_READ);
+  const caller = yield* requireGuild(guildId, Capability.LOOTLOG_LOOTS_READ);
 
   return yield* data((service) => service.getLootStats(caller, query));
 });
@@ -53,7 +53,7 @@ const resolveLootItem = Effect.fn("loots.resolveLootItem")(function* (
   guildId: string | undefined,
   query: ResolveLootItemQuery,
 ) {
-  const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_READ);
+  const caller = yield* requireGuild(guildId, Capability.LOOTLOG_LOOTS_READ);
 
   return yield* data((service) => service.resolveLootItem(caller, query));
 });
@@ -67,7 +67,7 @@ export const fetchLoot = Effect.fn("loots.fetchLoot")(function* (
   guildId: string | undefined,
   lootId: number,
 ) {
-  const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_READ);
+  const caller = yield* requireGuild(guildId, Capability.LOOTLOG_LOOTS_READ);
   const loot = yield* data((service) => service.fetchLoot(caller, lootId));
   const outcome = loot === null ? "unavailable" : "visible";
   yield* Metric.update(Metric.withAttributes(lootDetailReads, { outcome }), 1);
@@ -91,7 +91,7 @@ const archiveLoot = Effect.fn("loots.archiveLoot")(function* (
   guildId: string | undefined,
   lootId: number,
 ) {
-  const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_ARCHIVE);
+  const caller = yield* requireGuild(guildId, Capability.LOOTLOG_LOOTS_ARCHIVE);
 
   const archived = yield* data((service) =>
     service.archiveLoot(caller, lootId),
@@ -119,7 +119,7 @@ const getComments = Effect.fn("loots.getComments")(function* (
   guildId: string | undefined,
   lootId: number,
 ) {
-  const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_READ);
+  const caller = yield* requireGuild(guildId, Capability.LOOTLOG_LOOTS_READ);
 
   const comments = yield* data((service) =>
     service.getComments(caller, lootId),
@@ -140,7 +140,7 @@ export const createComment = Effect.fn("loots.createComment")(function* (
   lootId: number,
   payload: CreateLootCommentRequest,
 ) {
-  const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_WRITE);
+  const caller = yield* requireGuild(guildId, Capability.LOOTLOG_LOOTS_WRITE);
 
   const comment = yield* data((service) =>
     service.createComment(caller, lootId, payload),
@@ -163,7 +163,7 @@ const getLootDraws = Effect.fn("loots.getDraws")(function* (
   guildId: string | undefined,
   lootId: number,
 ) {
-  const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_READ);
+  const caller = yield* requireGuild(guildId, Capability.LOOTLOG_LOOTS_READ);
   const draws = yield* data((service) => service.getDraws(caller, lootId));
 
   if (draws === null) return yield* lootNotFound();
@@ -176,7 +176,7 @@ export const createLootDraw = Effect.fn("loots.createDraw")(function* (
   lootId: number,
   payload: CreateLootDrawRequest,
 ) {
-  const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_ARCHIVE);
+  const caller = yield* requireGuild(guildId, Capability.LOOTLOG_LOOTS_ARCHIVE);
 
   const draw = yield* data((service) =>
     service.createDraw(caller, lootId, payload),
@@ -193,7 +193,7 @@ export const voidLootDraw = Effect.fn("loots.voidDraw")(function* (
   drawId: number,
   payload: VoidLootDrawRequest,
 ) {
-  const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_ARCHIVE);
+  const caller = yield* requireGuild(guildId, Capability.LOOTLOG_LOOTS_ARCHIVE);
 
   const draw = yield* data((service) =>
     service.voidDraw(caller, lootId, drawId, payload),
@@ -209,7 +209,7 @@ const setLootLike = Effect.fn("loots.setLike")(function* (
   lootId: number,
   liked: boolean,
 ) {
-  const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_READ);
+  const caller = yield* requireGuild(guildId, Capability.LOOTLOG_LOOTS_READ);
 
   const likes = yield* data((service) =>
     service.setLike(caller, lootId, liked),

@@ -1,6 +1,6 @@
 import type { NpcRoutingData } from "@lootlog/schema/npc-routing";
 import { describe, expect, test } from "bun:test";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import type { ServerEvent } from "@lootlog/protocol/realtime";
 import type { SessionData } from "./session.js";
 import { canReadSourceEvent } from "./source-event-visibility.js";
@@ -8,7 +8,7 @@ import { canSubscribe } from "./subscription-policy.js";
 
 type Event = ServerEvent;
 
-const role = (permissions: Permission[], from = 200, to = 500) => ({
+const role = (permissions: Capability[], from = 200, to = 500) => ({
   id: "role",
   permissions,
   lvlRangeFrom: from,
@@ -52,9 +52,9 @@ const timerDeleted = (
 });
 
 const timerRead = [
-  Permission.LOOTLOG_TIMERS_READ,
-  Permission.LOOTLOG_TIMERS_HEROES_READ,
-  Permission.LOOTLOG_TIMERS_TITANS_READ,
+  Capability.LOOTLOG_TIMERS_READ,
+  Capability.LOOTLOG_TIMERS_HEROES_READ,
+  Capability.LOOTLOG_TIMERS_TITANS_READ,
 ];
 
 describe("source visibility at delivery", () => {
@@ -67,7 +67,7 @@ describe("source visibility at delivery", () => {
     "%s uses the HTTP hero visibility policy and rejects missing source metadata",
     (type) => {
       const session = reader([
-        role([Permission.LOOTLOG_EVENTS_READ], 100, 200),
+        role([Capability.LOOTLOG_EVENTS_READ], 100, 200),
       ]);
 
       const event = (
@@ -95,7 +95,7 @@ describe("source visibility at delivery", () => {
       );
       expect(
         canReadSourceEvent(
-          reader([role([Permission.ADMIN], 100, 200)]),
+          reader([role([Capability.ADMIN], 100, 200)]),
           event(300),
         ),
       ).toBe(true);
@@ -126,8 +126,8 @@ describe("source visibility at delivery", () => {
   });
   test("does not borrow titan access from a role whose range does not cover the NPC", () => {
     const session = reader([
-      role([Permission.LOOTLOG_TIMERS_READ]),
-      role([Permission.LOOTLOG_TIMERS_TITANS_READ], 0, 199),
+      role([Capability.LOOTLOG_TIMERS_READ]),
+      role([Capability.LOOTLOG_TIMERS_TITANS_READ], 0, 199),
       role([], 0, 500),
     ]);
 
@@ -144,7 +144,7 @@ describe("source visibility at delivery", () => {
   test("requires base access as well as tier access, even for an old subscription", () => {
     expect(
       canReadSourceEvent(
-        reader([role([Permission.LOOTLOG_TIMERS_TITANS_READ])]),
+        reader([role([Capability.LOOTLOG_TIMERS_TITANS_READ])]),
         timer({ type: "TITAN", lvl: 250 }),
       ),
     ).toBe(false);
@@ -154,7 +154,7 @@ describe("source visibility at delivery", () => {
     (type) => {
       expect(
         canReadSourceEvent(
-          reader([role([Permission.LOOTLOG_TIMERS_READ])]),
+          reader([role([Capability.LOOTLOG_TIMERS_READ])]),
           timer({ type, lvl: 250 }),
         ),
       ).toBe(false);
@@ -186,7 +186,7 @@ describe("source visibility at delivery", () => {
     ).toBe(false);
   });
   test("recognizes raw game NPC weight without downgrading hero or titan access", () => {
-    const baseReader = reader([role([Permission.LOOTLOG_TIMERS_READ])]);
+    const baseReader = reader([role([Capability.LOOTLOG_TIMERS_READ])]);
     const tierReader = reader([role(timerRead)]);
 
     for (const wt of [80, "100"]) {
@@ -197,7 +197,7 @@ describe("source visibility at delivery", () => {
   });
 
   test("keeps administrator and owner bypasses for valid timers", () => {
-    const administrator = reader([role([Permission.ADMIN], 0, 0)]);
+    const administrator = reader([role([Capability.ADMIN], 0, 0)]);
     const owner = { ...reader([]), discordId: "owner" };
 
     for (const session of [administrator, owner]) {
@@ -236,7 +236,7 @@ describe("source visibility at delivery", () => {
       false,
     );
   });
-  test("shows a hero sighting only to roles that see that hero's timers", () => {
+  test("shows a hero sighting only to roles with the sighting capability for that hero", () => {
     const sighting = (
       hero: { readonly lvl: number } | undefined,
       guildId = "organization",
@@ -249,7 +249,10 @@ describe("source visibility at delivery", () => {
       },
     });
 
-    const heroReader = reader([role(timerRead, 200, 300)]);
+    const heroReader = reader([
+      role([Capability.LOOTLOG_HERO_SIGHTINGS_READ], 200, 300),
+    ]);
+
     expect(canReadSourceEvent(heroReader, sighting({ lvl: 258 }))).toBe(true);
     expect(canReadSourceEvent(heroReader, sighting({ lvl: 350 }))).toBe(false);
     expect(canReadSourceEvent(heroReader, sighting(undefined))).toBe(false);
@@ -257,13 +260,13 @@ describe("source visibility at delivery", () => {
       canReadSourceEvent(heroReader, sighting({ lvl: 258 }, "other")),
     ).toBe(false);
 
-    const baseReader = reader([role([Permission.LOOTLOG_TIMERS_READ])]);
-    expect(canReadSourceEvent(baseReader, sighting({ lvl: 258 }))).toBe(false);
+    const timerReader = reader([role(timerRead, 200, 300)]);
+    expect(canReadSourceEvent(timerReader, sighting({ lvl: 258 }))).toBe(false);
   });
   test("keeps ordinary chat and text notifications independent of NPC level", () => {
     const session = reader([
       role(
-        [Permission.LOOTLOG_CHAT_READ, Permission.LOOTLOG_NOTIFICATIONS_READ],
+        [Capability.LOOTLOG_CHAT_READ, Capability.LOOTLOG_NOTIFICATIONS_READ],
         400,
         500,
       ),
@@ -308,12 +311,12 @@ describe("source visibility at delivery", () => {
       },
     } as const;
 
-    const member = reader([role([Permission.LOOTLOG_MEMBERS_READ])]);
+    const member = reader([role([Capability.LOOTLOG_MEMBERS_READ])]);
     expect(canSubscribe(member, scope)).toBe(false);
     expect(canReadSourceEvent(member, event)).toBe(false);
 
     for (const session of [
-      reader([role([Permission.ADMIN])]),
+      reader([role([Capability.ADMIN])]),
       { ...reader([]), discordId: "owner" },
     ]) {
       expect(canSubscribe(session, scope)).toBe(true);
@@ -334,14 +337,14 @@ test("NPC gathering updates retain source tier and level restrictions after sign
 
   expect(
     canReadSourceEvent(
-      reader([role([Permission.LOOTLOG_CHAT_READ], 100, 200)]),
+      reader([role([Capability.LOOTLOG_CHAT_READ], 100, 200)]),
       update(150),
     ),
   ).toBe(false);
 
   const session = reader([
     role(
-      [Permission.LOOTLOG_CHAT_READ, Permission.LOOTLOG_CHAT_HEROES_READ],
+      [Capability.LOOTLOG_CHAT_READ, Capability.LOOTLOG_CHAT_HEROES_READ],
       100,
       200,
     ),
@@ -372,9 +375,9 @@ test("gathering organizers retain their own NPC updates with sending permission"
   });
 
   for (const permission of [
-    Permission.LOOTLOG_NOTIFICATIONS_SEND,
-    Permission.OWNER,
-    Permission.LOOTLOG_MANAGE,
+    Capability.LOOTLOG_NOTIFICATIONS_SEND,
+    Capability.OWNER,
+    Capability.LOOTLOG_MANAGE,
   ]) {
     const session = reader([role([permission], 100, 200)]);
     expect(canReadSourceEvent(session, update())).toBe(true);

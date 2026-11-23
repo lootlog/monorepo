@@ -25,7 +25,7 @@ export const useTimersCache = () => {
       void queryClient.cancelQueries({ queryKey, exact: true });
     }
 
-    queryClient.setQueryData<Timer[]>(queryKey, update);
+    queryClient.setQueryData(queryKey, update);
 
     if (wasFetching || (state && state.data === undefined)) {
       void queryClient.invalidateQueries({ queryKey, exact: true });

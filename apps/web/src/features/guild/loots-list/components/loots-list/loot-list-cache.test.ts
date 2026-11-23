@@ -11,6 +11,7 @@ import {
   LOOTS_PAGE_LIMIT,
   LOOTS_QUERY_GC_TIME_MS,
   applyLootSnapshots,
+  lootListQueryKey,
   lootMatchesListParams,
   patchLoot,
   reconcileActiveLootLists,
@@ -27,17 +28,17 @@ it("reconciles one server page for active filters, preserves other organizations
     },
   });
 
-  const activeKey = [
-    "/guilds/one/loots",
-    { world: "tempest", search: "sword" },
-  ];
+  const activeKey = lootListQueryKey("one", {
+    world: "tempest",
+    search: "sword",
+  });
 
-  const inactiveKey = [
-    "/guilds/one/loots",
-    { world: "tempest", search: "old" },
-  ];
+  const inactiveKey = lootListQueryKey("one", {
+    world: "tempest",
+    search: "old",
+  });
 
-  const otherKey = ["/guilds/two/loots", { world: "tempest" }];
+  const otherKey = lootListQueryKey("two", { world: "tempest" });
 
   const page = (nextCursor: string | null): LootPageResponseDto => ({
     items: [],
@@ -92,7 +93,7 @@ it("reports server reconciliation failures rather than marking retained rows cur
   });
 
   const observer = new InfiniteQueryObserver(client, {
-    queryKey: ["/guilds/one/loots"],
+    queryKey: lootListQueryKey("one", {}),
     initialData: {
       pages: [{ items: [], nextCursor: null }],
       pageParams: [FIRST_PAGE_CURSOR],
@@ -181,7 +182,7 @@ it("matches live loots against list filters as the server query does", () => {
 
 it("places snapshots by id among loaded pages and leaves unread pages to pagination", () => {
   const client = new QueryClient();
-  const key = ["/guilds/one/loots", { world: "tempest" }];
+  const key = lootListQueryKey("one", { world: "tempest" });
 
   const fullPage = Array.from({ length: LOOTS_PAGE_LIMIT }, (_, index) =>
     lootWith(100 - index),
@@ -208,10 +209,10 @@ it("places snapshots by id among loaded pages and leaves unread pages to paginat
   expect(ids()).not.toContain(50);
 });
 
-it("patches loot lists while event pages cache plain loots under the same path", () => {
+it("patches loot lists without touching plain loot pages of the same filters", () => {
   const client = new QueryClient();
-  const listKey = ["/guilds/one/loots", { world: "tempest" }];
-  const eventKey = ["/guilds/one/loots", { world: "tempest", npcs: ["Hero"] }];
+  const listKey = lootListQueryKey("one", { world: "tempest" });
+  const eventKey = ["/guilds/one/loots", { world: "tempest" }];
 
   const eventPage = { items: [lootWith(1)], nextCursor: null };
   client.setQueryData(eventKey, eventPage);

@@ -8,39 +8,46 @@ import { useTranslation } from "react-i18next";
 import { RetryButton } from "@/components/common/retry-button";
 import { ClearFiltersButton } from "@/components/common/clear-filters-button";
 
+export type EventHistoryQuery = {
+  isLoading: boolean;
+  isError: boolean;
+  isFetching: boolean;
+  hasNextPage: boolean;
+  isFetchingNextPage: boolean;
+  isFetchNextPageError: boolean;
+  fetchNextPage: () => void;
+  refetch: () => void;
+};
+
 type EventHistoryResultsProps = {
   scrollElement: HTMLDivElement | null;
   resetKey: string;
   isEmpty: boolean;
-  isLoading: boolean;
-  hasError: boolean;
-  hasNextPage?: boolean;
-  isFetchingNextPage: boolean;
-  fetchNextPage: () => void;
-  onRetry: () => void;
-  isRetrying?: boolean;
+  query: EventHistoryQuery;
   onShowAllHeroes?: () => void;
   skeleton: ReactNode;
   children: ReactNode;
 };
 
-// oxlint-disable-next-line react-doctor/no-many-boolean-props
 export const EventHistoryResults = ({
   scrollElement,
   resetKey,
   isEmpty,
-  isLoading,
-  hasError,
-  hasNextPage = false,
-  isFetchingNextPage,
-  fetchNextPage,
-  onRetry,
-  isRetrying = false,
+  query,
   onShowAllHeroes,
   skeleton,
   children,
 }: EventHistoryResultsProps) => {
   const { t } = useTranslation();
+  const { hasNextPage, isError: hasError } = query;
+
+  const onRetry = () => {
+    if (query.isFetchNextPageError) {
+      query.fetchNextPage();
+    } else {
+      query.refetch();
+    }
+  };
 
   useResetScrollTop({
     getScrollElement: () => scrollElement,
@@ -49,13 +56,13 @@ export const EventHistoryResults = ({
 
   const sentinelRef = useInfiniteScrollSentinel<HTMLDivElement>({
     enabled: !hasError,
-    fetchNextPage,
+    fetchNextPage: query.fetchNextPage,
     hasNextPage,
-    isFetchingNextPage,
+    isFetchingNextPage: query.isFetchingNextPage,
     scrollElement,
   });
 
-  if (isLoading) {
+  if (query.isLoading) {
     return (
       <div aria-busy="true" aria-label={t("events.kills.loading")}>
         {skeleton}
@@ -70,7 +77,9 @@ export const EventHistoryResults = ({
           fill
           icon={CircleAlert}
           title={t("events.error")}
-          action={<RetryButton onRetry={onRetry} isRetrying={isRetrying} />}
+          action={
+            <RetryButton onRetry={onRetry} isRetrying={query.isFetching} />
+          }
         />
       </div>
     );

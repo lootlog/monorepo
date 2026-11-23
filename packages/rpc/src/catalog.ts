@@ -1,5 +1,6 @@
 import { Schema } from "effect";
 import { Rpc, RpcGroup } from "effect/rpc";
+import { CallerAuth, RpcCallers } from "./callers.js";
 import { RpcUnavailableError } from "./errors.js";
 
 export const CatalogItemSearchHit = Schema.Struct({
@@ -22,5 +23,5 @@ export class CatalogRpcGroup extends RpcGroup.make(
     },
     success: CatalogItemSearchResult,
     error: RpcUnavailableError,
-  }),
-) {}
+  }).annotate(RpcCallers, ["discord-bot"]),
+).middleware(CallerAuth) {}

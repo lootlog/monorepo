@@ -1,11 +1,4 @@
-import {
-  Capability as CapabilityValues,
-  type Capability as CapabilityName,
-} from "@lootlog/schema/permissions";
-
-export const Capability = CapabilityValues;
-
-export type Capability = CapabilityName;
+import { Capability } from "@lootlog/schema/permissions";
 
 export type AccessPolicySnapshot = {
   capabilities: readonly Capability[];

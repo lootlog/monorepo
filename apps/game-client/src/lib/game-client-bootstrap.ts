@@ -15,6 +15,8 @@ import {
 import {
   decodeGuildSettingsDocuments,
   decodeSettingsDocuments,
+  type GuildSettingsDocuments,
+  type SettingsDocuments,
   getGuildTimersDocumentsQueryKey,
   getSettingsDocumentsQueryKey,
 } from "@/lib/settings-persistence/settings-documents";
@@ -23,9 +25,41 @@ import { applyGameOrganizationAccess } from "@/lib/game-access-cache";
 import { useGameStore } from "@/store/game.store";
 import { useGlobalStore } from "@/store/global.store";
 
+type BootstrapResponse = Awaited<
+  ReturnType<typeof usersControllerGetGameClientBootstrap>
+>;
+
+type BootstrapPartData = {
+  accessibleGuilds: NonNullable<BootstrapResponse["accessibleGuilds"]>;
+  guildTimerDocuments: GuildSettingsDocuments;
+  guildPermissions: NonNullable<BootstrapResponse["guildPermissions"]>[string];
+  userPreferences: NonNullable<BootstrapResponse["userPreferences"]>;
+  lootlogConfig: NonNullable<BootstrapResponse["lootlogConfig"]>;
+  characterAura: NonNullable<BootstrapResponse["characterAura"]>;
+  characterAuras: NonNullable<BootstrapResponse["characterAuras"]>;
+  settingsDocuments: SettingsDocuments;
+};
+
+type BootstrapPart = keyof BootstrapPartData;
+
+type BootstrapParts = {
+  readonly [Part in BootstrapPart]: Map<string, BootstrapPartData[Part]>;
+};
+
+const createBootstrapParts = (): BootstrapParts => ({
+  accessibleGuilds: new Map(),
+  guildTimerDocuments: new Map(),
+  guildPermissions: new Map(),
+  userPreferences: new Map(),
+  lootlogConfig: new Map(),
+  characterAura: new Map(),
+  characterAuras: new Map(),
+  settingsDocuments: new Map(),
+});
+
 type Bootstrap = {
   settled: boolean;
-  readonly parts: Promise<ReadonlyMap<string, unknown>>;
+  readonly parts: Promise<BootstrapParts>;
 };
 
 let current: Bootstrap | undefined;
@@ -78,10 +112,15 @@ const load = async (queryClient: QueryClient, signal: AbortSignal) => {
     { signal, apiClient: { timeoutMs: BOOTSTRAP_REQUEST_TIMEOUT_MS } },
   );
 
-  const parts = new Map<string, unknown>();
+  const parts = createBootstrapParts();
 
-  const seed = <T>(queryKey: QueryKey, data: T, cached: T = data) => {
-    parts.set(hashKey(queryKey), data);
+  const seed = <Part extends BootstrapPart>(
+    part: Part,
+    queryKey: QueryKey,
+    data: BootstrapPartData[Part],
+    cached: BootstrapPartData[Part] = data,
+  ) => {
+    parts[part].set(hashKey(queryKey), data);
 
     if (queryClient.getQueryData(queryKey) === undefined)
       queryClient.setQueryData(queryKey, cached);
@@ -94,6 +133,7 @@ const load = async (queryClient: QueryClient, signal: AbortSignal) => {
     );
 
     seed(
+      "accessibleGuilds",
       getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
       response.accessibleGuilds,
       guilds,
@@ -103,6 +143,7 @@ const load = async (queryClient: QueryClient, signal: AbortSignal) => {
 
     if (response.guildTimerDocuments && guildIds.length > 0)
       seed(
+        "guildTimerDocuments",
         getGuildTimersDocumentsQueryKey(guildIds),
         decodeGuildSettingsDocuments(response.guildTimerDocuments),
       );
@@ -113,18 +154,21 @@ const load = async (queryClient: QueryClient, signal: AbortSignal) => {
       response.guildPermissions,
     ))
       seed(
+        "guildPermissions",
         getGuildsControllerGetGuildPermissionsQueryKey({ guildId }),
         capabilities,
       );
 
   if (response.userPreferences)
     seed(
+      "userPreferences",
       getUsersControllerGetUserPreferencesQueryKey(),
       response.userPreferences,
     );
 
   if (response.lootlogConfig)
     seed(
+      "lootlogConfig",
       getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({
         accountId,
       }),
@@ -133,18 +177,21 @@ const load = async (queryClient: QueryClient, signal: AbortSignal) => {
 
   if (response.characterAura)
     seed(
+      "characterAura",
       getCharacterAurasControllerGetOwnAuraQueryKey(),
       response.characterAura,
     );
 
   if (response.characterAuras)
     seed(
+      "characterAuras",
       getCharacterAurasControllerGetAurasQueryKey(),
       response.characterAuras,
     );
 
   if (response.settingsDocuments)
     seed(
+      "settingsDocuments",
       getSettingsDocumentsQueryKey({ gameAccountId: accountId, characterId }),
       decodeSettingsDocuments(response.settingsDocuments),
     );
@@ -158,7 +205,7 @@ export const startGameClientBootstrap = (queryClient: QueryClient) => {
   const bootstrap: Bootstrap = {
     settled: false,
     parts: load(queryClient, controller.signal)
-      .catch((): ReadonlyMap<string, unknown> => new Map())
+      .catch(createBootstrapParts)
       .finally(() => {
         bootstrap.settled = true;
       }),
@@ -173,14 +220,13 @@ export const startGameClientBootstrap = (queryClient: QueryClient) => {
   };
 };
 
-export const readGameClientBootstrap = async <T>(
+export const readGameClientBootstrap = async <Part extends BootstrapPart>(
+  part: Part,
   queryKey: QueryKey,
-): Promise<T | undefined> => {
+): Promise<BootstrapPartData[Part] | undefined> => {
   const bootstrap = current;
 
   if (!bootstrap || bootstrap.settled) return undefined;
 
-  // SAFETY: each part is stored under the key of the query whose response
-  // it is, already in the shape that query caches.
-  return (await bootstrap.parts).get(hashKey(queryKey)) as T | undefined;
+  return (await bootstrap.parts)[part].get(hashKey(queryKey));
 };

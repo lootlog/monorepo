@@ -1,5 +1,5 @@
 import { AuthRpcGroup } from "@lootlog/rpc/auth";
-import { makeRpcClient } from "@lootlog/rpc/client";
+import { boundedRpcCall, makeRpcClient } from "@lootlog/rpc/client";
 import type { PlatformRole } from "@lootlog/schema/platform-roles";
 import { Context, Effect, Layer } from "effect";
 import {
@@ -8,19 +8,21 @@ import {
 } from "#src/platform-roles/role-holders";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 
+const callAuth = boundedRpcCall({ timeout: "5 seconds", retries: 0 });
+
 const roleHolders = (role: PlatformRole) =>
   Effect.gen(function* () {
     const config = yield* ApiRuntimeConfig;
 
     const authRpc = yield* makeRpcClient(AuthRpcGroup, {
-      url: config.authRpcUrl,
+      ...config.rpc.auth,
       spanPrefix: "api.auth-rpc",
     });
 
     const fetchRoleHolders = Effect.gen(function* () {
-      const { userIds } = yield* authRpc
-        .listPlatformRoleHolders({ role })
-        .pipe(Effect.timeout("5 seconds"));
+      const { userIds } = yield* callAuth(() =>
+        authRpc.listPlatformRoleHolders({ role }),
+      );
 
       return userIds;
     });

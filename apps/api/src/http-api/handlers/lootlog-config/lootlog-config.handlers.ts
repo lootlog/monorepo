@@ -1,3 +1,4 @@
+import type { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import {
   type ReauthenticationRequired,
   reauthenticationRequiredResponse,
@@ -7,7 +8,7 @@ import {
   LootlogConfigData,
 } from "#src/lootlog-config/lootlog-config-data";
 import { AccessRequirement } from "@lootlog/domain/access-policy";
-import type { Permission as PermissionValue } from "@lootlog/schema/permissions";
+import type { Capability as PermissionValue } from "@lootlog/schema/permissions";
 import {
   optionalPathString,
   statusCodeResponse,
@@ -42,7 +43,8 @@ export class LootlogConfigAuthorization extends Context.Service<
       readonly anyOf: ReadonlyArray<PermissionValue>;
     }) => Effect.Effect<
       { readonly guildId: string },
-      LootlogConfigAccessDenied | ReauthenticationRequired
+      LootlogConfigAccessDenied | ReauthenticationRequired,
+      ForwardAuthIdentity
     >;
   }
 >()("@lootlog/api/http-api/lootlog-config/authorization") {}

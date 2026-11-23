@@ -64,7 +64,8 @@ export const AuthRpcServer = Layer.unwrap(
     serviceRpcServer({
       group: AuthRpcGroup,
       handlers: AuthRpcHandlers,
-      port: config.rpcPort,
+      callerTokens: config.rpc.callerTokens,
+      port: config.rpc.port,
       spanPrefix: "auth.rpc",
     }),
   ),

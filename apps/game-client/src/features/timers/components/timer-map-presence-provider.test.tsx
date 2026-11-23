@@ -3,7 +3,7 @@ import { act, render, screen, waitFor, within } from "@testing-library/react";
 import i18n from "i18next";
 import { expect, it, vi } from "vitest";
 import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { NpcType } from "@/api/npcs.api";
 import type { HeroSightingResponseDto } from "@lootlog/client/main";
 import { queryKeys } from "@/lib/query-keys";
@@ -53,8 +53,8 @@ const policy = (organizations: string[]) =>
       roles: [
         {
           permissions: [
-            Permission.LOOTLOG_ONLINE_PLAYERS_READ,
-            Permission.LOOTLOG_PRESENCE_LOCATION_READ,
+            Capability.LOOTLOG_ONLINE_PLAYERS_READ,
+            Capability.LOOTLOG_PRESENCE_LOCATION_READ,
           ],
           lvlRangeFrom: 1,
           lvlRangeTo: 300,
@@ -323,10 +323,11 @@ const heroSightingPolicy = (organizations: string[]) =>
       roles: [
         {
           permissions: [
-            Permission.LOOTLOG_ONLINE_PLAYERS_READ,
-            Permission.LOOTLOG_PRESENCE_LOCATION_READ,
-            Permission.LOOTLOG_TIMERS_READ,
-            Permission.LOOTLOG_TIMERS_HEROES_READ,
+            Capability.LOOTLOG_ONLINE_PLAYERS_READ,
+            Capability.LOOTLOG_PRESENCE_LOCATION_READ,
+            Capability.LOOTLOG_TIMERS_READ,
+            Capability.LOOTLOG_TIMERS_HEROES_READ,
+            Capability.LOOTLOG_HERO_SIGHTINGS_READ,
           ],
           lvlRangeFrom: 1,
           lvlRangeTo: 300,

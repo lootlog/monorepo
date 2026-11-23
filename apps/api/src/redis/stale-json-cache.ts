@@ -21,29 +21,24 @@ export type StaleJsonRedis = Pick<
   "getOrSetJson" | "setNX" | "setJson"
 >;
 
-export const getOrSetStaleJson = <
-  S extends Schema.ConstraintDecoder<unknown>,
-  E,
->(
+export const getOrSetStaleJson = <T, E>(
   redis: StaleJsonRedis,
   options: {
     readonly key: string;
-    readonly schema: S;
+    readonly schema: Schema.ConstraintDecoder<T>;
     readonly freshSeconds: number;
     readonly retainSeconds: number;
-    readonly factory: Effect.Effect<S["Type"], E>;
+    readonly factory: Effect.Effect<T, E>;
     readonly onError: CacheErrorHandler;
   },
-): Effect.Effect<StaleJson<S["Type"]>, E> => {
-  // SAFETY: the codec parses exactly the struct that `StaleJson<S["Type"]>`
-  // describes; only the generic schema type hides that from the compiler.
-  const codec = makeJsonCodec(
+): Effect.Effect<StaleJson<T>, E> => {
+  const codec: JsonCodec<StaleJson<T>> = makeJsonCodec(
     Schema.Struct({ value: options.schema, computedAt: Schema.String }),
-  ) as JsonCodec<StaleJson<S["Type"]>>;
+  );
 
   const compute = Effect.map(
     Effect.zip(options.factory, Clock.currentTimeMillis),
-    ([value, now]): StaleJson<S["Type"]> => ({
+    ([value, now]): StaleJson<T> => ({
       value,
       computedAt: new Date(now).toISOString(),
     }),

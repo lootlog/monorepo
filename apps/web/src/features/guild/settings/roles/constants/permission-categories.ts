@@ -1,9 +1,10 @@
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import {
   KeyRound,
   Shield,
   Package,
   Clock,
+  Radar,
   CalendarCheck,
   FileText,
   MessageCircle,
@@ -18,7 +19,7 @@ export type PermissionCategory = {
   icon: LucideIcon;
   color: string;
   bgColor: string;
-  permissions: Permission[];
+  permissions: Capability[];
 };
 
 export const PERMISSION_CATEGORIES: PermissionCategory[] = [
@@ -27,14 +28,14 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
     icon: KeyRound,
     color: "text-emerald-500",
     bgColor: "bg-emerald-500/20",
-    permissions: [Permission.LOOTLOG_ACCESS],
+    permissions: [Capability.LOOTLOG_ACCESS],
   },
   {
     groupKey: "admin",
     icon: Shield,
     color: "text-red-500",
     bgColor: "bg-red-500/20",
-    permissions: [Permission.ADMIN, Permission.LOOTLOG_MANAGE],
+    permissions: [Capability.ADMIN, Capability.LOOTLOG_MANAGE],
   },
   {
     groupKey: "loots",
@@ -42,11 +43,11 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
     color: "text-amber-500",
     bgColor: "bg-amber-500/20",
     permissions: [
-      Permission.LOOTLOG_LOOTS_READ,
-      Permission.LOOTLOG_LOOTS_WRITE,
-      Permission.LOOTLOG_LOOTS_ARCHIVE,
-      Permission.LOOTLOG_LOOTS_TITANS_READ,
-      Permission.LOOTLOG_LOOTS_HEROES_READ,
+      Capability.LOOTLOG_LOOTS_READ,
+      Capability.LOOTLOG_LOOTS_WRITE,
+      Capability.LOOTLOG_LOOTS_ARCHIVE,
+      Capability.LOOTLOG_LOOTS_TITANS_READ,
+      Capability.LOOTLOG_LOOTS_HEROES_READ,
     ],
   },
   {
@@ -55,12 +56,22 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
     color: "text-blue-500",
     bgColor: "bg-blue-500/20",
     permissions: [
-      Permission.LOOTLOG_TIMERS_READ,
-      Permission.LOOTLOG_TIMERS_WRITE,
-      Permission.LOOTLOG_TIMERS_RESET,
-      Permission.LOOTLOG_TIMERS_DELETE,
-      Permission.LOOTLOG_TIMERS_TITANS_READ,
-      Permission.LOOTLOG_TIMERS_HEROES_READ,
+      Capability.LOOTLOG_TIMERS_READ,
+      Capability.LOOTLOG_TIMERS_WRITE,
+      Capability.LOOTLOG_TIMERS_RESET,
+      Capability.LOOTLOG_TIMERS_DELETE,
+      Capability.LOOTLOG_TIMERS_TITANS_READ,
+      Capability.LOOTLOG_TIMERS_HEROES_READ,
+    ],
+  },
+  {
+    groupKey: "heroSightings",
+    icon: Radar,
+    color: "text-teal-500",
+    bgColor: "bg-teal-500/20",
+    permissions: [
+      Capability.LOOTLOG_HERO_SIGHTINGS_READ,
+      Capability.LOOTLOG_HERO_SIGHTINGS_WRITE,
     ],
   },
   {
@@ -69,8 +80,8 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
     color: "text-purple-500",
     bgColor: "bg-purple-500/20",
     permissions: [
-      Permission.LOOTLOG_RESERVATIONS_READ,
-      Permission.LOOTLOG_RESERVATIONS_WRITE,
+      Capability.LOOTLOG_RESERVATIONS_READ,
+      Capability.LOOTLOG_RESERVATIONS_WRITE,
     ],
   },
   {
@@ -78,7 +89,7 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
     icon: FileText,
     color: "text-indigo-500",
     bgColor: "bg-indigo-500/20",
-    permissions: [Permission.LOOTLOG_DOCS_READ, Permission.LOOTLOG_DOCS_WRITE],
+    permissions: [Capability.LOOTLOG_DOCS_READ, Capability.LOOTLOG_DOCS_WRITE],
   },
   {
     groupKey: "members",
@@ -86,9 +97,9 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
     color: "text-cyan-500",
     bgColor: "bg-cyan-500/20",
     permissions: [
-      Permission.LOOTLOG_MEMBERS_READ,
-      Permission.LOOTLOG_ONLINE_PLAYERS_READ,
-      Permission.LOOTLOG_PRESENCE_LOCATION_READ,
+      Capability.LOOTLOG_MEMBERS_READ,
+      Capability.LOOTLOG_ONLINE_PLAYERS_READ,
+      Capability.LOOTLOG_PRESENCE_LOCATION_READ,
     ],
   },
   {
@@ -97,10 +108,10 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
     color: "text-green-500",
     bgColor: "bg-green-500/20",
     permissions: [
-      Permission.LOOTLOG_CHAT_READ,
-      Permission.LOOTLOG_CHAT_WRITE,
-      Permission.LOOTLOG_CHAT_TITANS_READ,
-      Permission.LOOTLOG_CHAT_HEROES_READ,
+      Capability.LOOTLOG_CHAT_READ,
+      Capability.LOOTLOG_CHAT_WRITE,
+      Capability.LOOTLOG_CHAT_TITANS_READ,
+      Capability.LOOTLOG_CHAT_HEROES_READ,
     ],
   },
   {
@@ -109,10 +120,10 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
     color: "text-orange-500",
     bgColor: "bg-orange-500/20",
     permissions: [
-      Permission.LOOTLOG_NOTIFICATIONS_READ,
-      Permission.LOOTLOG_NOTIFICATIONS_SEND,
-      Permission.LOOTLOG_NOTIFICATIONS_TITANS_READ,
-      Permission.LOOTLOG_NOTIFICATIONS_HEROES_READ,
+      Capability.LOOTLOG_NOTIFICATIONS_READ,
+      Capability.LOOTLOG_NOTIFICATIONS_SEND,
+      Capability.LOOTLOG_NOTIFICATIONS_TITANS_READ,
+      Capability.LOOTLOG_NOTIFICATIONS_HEROES_READ,
     ],
   },
   {
@@ -121,9 +132,9 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
     color: "text-fuchsia-500",
     bgColor: "bg-fuchsia-500/20",
     permissions: [
-      Permission.LOOTLOG_EVENTS_READ,
-      Permission.LOOTLOG_EVENTS_WRITE,
-      Permission.LOOTLOG_EVENTS_MANAGE,
+      Capability.LOOTLOG_EVENTS_READ,
+      Capability.LOOTLOG_EVENTS_WRITE,
+      Capability.LOOTLOG_EVENTS_MANAGE,
     ],
   },
 ];

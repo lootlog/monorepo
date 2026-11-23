@@ -2,26 +2,28 @@ import { useChatSendError } from "@/features/chat/hooks/use-chat-send-error";
 import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 import type { InputVariant } from "@/components/ui/input";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import type { MessageType } from "@/api/chat.api";
 import {
   applyChatMentionSuggestion,
   getActiveChatMention,
-  getChatMentionMemberSuggestions,
   getChatMentionSuggestionDisplayLabel,
-  getChatMentionRoleSuggestions,
   getChatMentionSuggestions,
   type ActiveChatMention,
   type ChatMentionSuggestion,
 } from "@/features/chat/chat-mention-suggestions.helpers";
+import { hasChatMentionToken } from "@/features/chat/chat-mentions.helpers";
 import {
-  buildChatMentionContext,
-  hasChatMentionToken,
-} from "@/features/chat/chat-mentions.helpers";
+  getActiveMentionForSuggestions,
+  resolveSelectedSuggestionIndex,
+  resolveSuggestionKeys,
+  resolveSuggestionPresentation,
+  type TabCompletionSession,
+} from "@/features/chat/chat-input-suggestions.helpers";
 import type { ChatInputEditorHandle } from "@/features/chat/components/chat-input-editor";
 import type { ChatInputSuggestion } from "@/features/chat/components/chat-mention-suggestions";
 import { upsertChatMessage } from "@/features/chat/chat.helpers";
-import { CHAT_QUERY_GC_TIME_MS } from "@/features/chat/chat.constants";
+import { useChatMentionData } from "@/features/chat/hooks/use-chat-mention-data";
 import {
   NotificationChatPublishError,
   useNotificationChatOrchestration,
@@ -30,18 +32,14 @@ import {
   filterCommandSuggestions,
   getCommandSuggestionInsertValue,
   getCommandSuggestions,
-  isCommandSuggestionsInput,
   type CommandSuggestion,
 } from "@/features/command/command-suggestions.helpers";
 import { usePartyCommand } from "@/features/command/hooks/use-party-command";
 import { getGuildPermissionsQueryOptions } from "@/hooks/api/guild-permissions-query";
-import { useGuildMembersSummary } from "@/hooks/api/guild-members-summary-query";
 import {
   useChatControllerClearChatMessages,
   useChatControllerSendChatMessage,
-  useMembersControllerGetMe,
   type ChatMessageResponseDtoOutput,
-  useRolesControllerGetGuildRoles,
 } from "@lootlog/client/main";
 import { buildChatCharacterData } from "@/lib/api/generated-helpers";
 import { useGameStore } from "@/store/game.store";
@@ -70,142 +68,7 @@ export type ChatComposerOptions = ChatInputProps & {
   onSubmitted?: () => void;
 };
 
-type TabCompletionSession = {
-  insertedLabel: string;
-  mention: ActiveChatMention;
-};
-
-const REQUIRED_CLEAR_CHAT_PERMISSIONS = [Permission.OWNER, Permission.ADMIN];
-
-const getActiveMentionForSuggestions = ({
-  activeMention,
-  caretIndex,
-  messageValue,
-  tabCompletionSession,
-}: {
-  activeMention: ActiveChatMention | null;
-  caretIndex: number;
-  messageValue: string;
-  tabCompletionSession: TabCompletionSession | null;
-}) => {
-  if (activeMention) {
-    return activeMention;
-  }
-
-  if (!tabCompletionSession) {
-    return null;
-  }
-
-  const { insertedLabel, mention } = tabCompletionSession;
-
-  const isSessionActive =
-    caretIndex === mention.end + 1 &&
-    /\s/.test(messageValue[mention.end] ?? "") &&
-    messageValue.slice(mention.start, mention.end) === insertedLabel;
-
-  return isSessionActive ? mention : null;
-};
-
-const resolveSuggestionKeys = (
-  messageValue: string,
-  activeMention: ActiveChatMention | null,
-  dismissedSuggestionKey: string | null,
-) => {
-  const activeMentionKey = activeMention
-    ? [activeMention.start, activeMention.end, activeMention.query].join(":")
-    : null;
-
-  const commandKey = isCommandSuggestionsInput(messageValue)
-    ? `command:${messageValue}`
-    : null;
-
-  const isCommandInput = commandKey !== null;
-  const activeSuggestionKey = isCommandInput ? commandKey : activeMentionKey;
-
-  return {
-    activeSuggestionKey,
-    areSuggestionsDismissed:
-      activeSuggestionKey !== null &&
-      dismissedSuggestionKey === activeSuggestionKey,
-    isCommandInput,
-  };
-};
-
-const resolveSuggestionPresentation = ({
-  activeMention,
-  areSuggestionsDismissed,
-  filteredCommandSuggestions,
-  isCommandInput,
-  isFetchingMemberNames,
-  isFetchingRoleNames,
-  mentionSuggestions,
-}: {
-  activeMention: ActiveChatMention | null;
-  areSuggestionsDismissed: boolean;
-  filteredCommandSuggestions: CommandSuggestion[];
-  isCommandInput: boolean;
-  isFetchingMemberNames: boolean;
-  isFetchingRoleNames: boolean;
-  mentionSuggestions: ChatMentionSuggestion[];
-}) => {
-  const isCommandSuggestionsOpen =
-    isCommandInput &&
-    filteredCommandSuggestions.length > 0 &&
-    !areSuggestionsDismissed;
-
-  const isMentionSuggestionsOpen =
-    !isCommandInput && activeMention !== null && !areSuggestionsDismissed;
-
-  let suggestionMode: "command" | "mention" | null = null;
-
-  let activeSuggestions: ChatInputSuggestion[] = mentionSuggestions.map(
-    (suggestion) => ({ ...suggestion, type: "mention" as const }),
-  );
-
-  if (isCommandSuggestionsOpen) {
-    suggestionMode = "command";
-    activeSuggestions = filteredCommandSuggestions.map((suggestion) => ({
-      ...suggestion,
-      type: "command" as const,
-    }));
-  } else if (isMentionSuggestionsOpen) {
-    suggestionMode = "mention";
-  }
-
-  return {
-    activeSuggestions,
-    isMentionSuggestionsOpen,
-    showMentionSuggestionNoResults:
-      isMentionSuggestionsOpen &&
-      !isFetchingMemberNames &&
-      !isFetchingRoleNames &&
-      mentionSuggestions.length === 0,
-    suggestionMode,
-  };
-};
-
-const shouldLoadChatMentionData = (
-  selectedGuildId: string,
-  hasMentionInput: boolean,
-  isCommandInput: boolean,
-) => selectedGuildId !== "" && hasMentionInput && !isCommandInput;
-
-const getChatMentionQueryData = <MemberItem, RoleItem>({
-  members,
-  roles,
-}: {
-  members: MemberItem[] | undefined;
-  roles: RoleItem[] | undefined;
-}) => ({
-  members: members ?? [],
-  roles: roles ?? [],
-});
-
-function resolveSelectedSuggestionIndex(count: number, requested: number) {
-  if (count === 0) return -1;
-
-  return requested >= 0 && requested < count ? requested : 0;
-}
+const REQUIRED_CLEAR_CHAT_PERMISSIONS = [Capability.OWNER, Capability.ADMIN];
 
 export function useChatInputController({
   variant = "default",
@@ -243,10 +106,6 @@ export function useChatInputController({
   }, [selectedGuildId]);
   const clearConfirmAnchorRef = useRef<HTMLDivElement>(null);
   const world = useGameStore((state) => state.game?.world ?? "unknown");
-
-  const currentCharacterNick = useGameStore(
-    (state) => state.game?.hero.name ?? "",
-  );
 
   const { mutateAsync: sendChatMessage, isPending: isSendingMessage } =
     useChatControllerSendChatMessage();
@@ -315,60 +174,23 @@ export function useChatInputController({
       dismissedMentionKey,
     );
 
-  const shouldLoadMentionData = shouldLoadChatMentionData(
-    resolvedGuildId,
-    hasMentionInput,
-    isCommandInput,
-  );
-
   const guildPermissionsQuery = useQuery(
     getGuildPermissionsQueryOptions(resolvedGuildId, {
       enabled: Boolean(selectedGuildId),
     }),
   );
 
-  const guildMembersQuery = useGuildMembersSummary(
-    { guildId: resolvedGuildId },
-    {
-      query: {
-        enabled: shouldLoadMentionData,
-      },
-    },
-  );
-
-  const isFetchingMemberNames = guildMembersQuery.isFetching;
-
-  const guildRolesQuery = useRolesControllerGetGuildRoles(
-    { guildId: resolvedGuildId },
-    {
-      query: {
-        enabled: shouldLoadMentionData,
-        gcTime: CHAT_QUERY_GC_TIME_MS,
-        staleTime: 5 * 60 * 1000,
-      },
-    },
-  );
-
-  const isFetchingRoleNames = guildRolesQuery.isFetching;
-
-  const { members: guildMembers, roles: guildRoles } = getChatMentionQueryData({
-    members: guildMembersQuery.data,
-    roles: guildRolesQuery.data,
+  const {
+    isFetchingMemberNames,
+    isFetchingRoleNames,
+    memberSuggestions,
+    mentionContext,
+    roleSuggestions,
+  } = useChatMentionData({
+    guildId: resolvedGuildId,
+    hasMentionInput,
+    isCommandInput,
   });
-
-  const { data: currentMember } = useMembersControllerGetMe(
-    { guildId: resolvedGuildId },
-    {
-      query: {
-        enabled: shouldLoadMentionData,
-        gcTime: CHAT_QUERY_GC_TIME_MS,
-        staleTime: 5 * 60 * 1000,
-      },
-    },
-  );
-
-  const memberSuggestions = getChatMentionMemberSuggestions(guildMembers);
-  const roleSuggestions = getChatMentionRoleSuggestions(guildRoles);
 
   const accessPolicy = createAccessPolicy({
     capabilities: guildPermissionsQuery.data ?? [],
@@ -389,13 +211,6 @@ export function useChatInputController({
     memberSuggestions,
     roleSuggestions,
     query: activeMentionForSuggestions?.query ?? "",
-  });
-
-  const mentionContext = buildChatMentionContext({
-    currentCharacterNick,
-    currentMember,
-    members: guildMembers,
-    roles: guildRoles,
   });
 
   const {

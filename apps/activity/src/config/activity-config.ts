@@ -4,6 +4,7 @@ import {
   type BaseServiceConfiguration,
   redisUrlConfig,
 } from "@lootlog/instrumentation/service-config";
+import { type RpcUpstream, rpcUpstreamConfig } from "@lootlog/rpc/callers";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { Config, Context, Effect, Layer, Option, Redacted } from "effect";
 
@@ -11,7 +12,7 @@ export interface ActivityConfigValue extends BaseServiceConfiguration {
   readonly databaseUrl: Redacted.Redacted<string>;
   readonly rabbitmqUri: Redacted.Redacted<string>;
   readonly redisUrl?: Redacted.Redacted<string>;
-  readonly apiRpcUrl: string;
+  readonly apiRpc: RpcUpstream;
   readonly signatureSecret: Redacted.Redacted<string>;
 }
 
@@ -56,7 +57,7 @@ export class ActivityConfig extends Context.Service<
             : yield* new InvalidServiceConfiguration({
                 message: `REDIS_HOST is required when ENV=${environment}`,
               }),
-        apiRpcUrl: yield* Config.String("API_RPC_URL"),
+        apiRpc: yield* rpcUpstreamConfig("activity", "api"),
         signatureSecret,
       });
     }),

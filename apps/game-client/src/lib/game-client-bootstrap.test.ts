@@ -58,8 +58,8 @@ it("leaves an unavailable part, and every later refetch, to the query's own endp
 
   try {
     const startup = Promise.all([
-      readGameClientBootstrap(guildsKey),
-      readGameClientBootstrap(preferencesKey),
+      readGameClientBootstrap("accessibleGuilds", guildsKey),
+      readGameClientBootstrap("userPreferences", preferencesKey),
     ]);
 
     setTestRuntimeGame({ hero: { accountId: "202", characterId: "7" } });
@@ -69,7 +69,9 @@ it("leaves an unavailable part, and every later refetch, to the query's own endp
     expect(requests).toEqual(["?gameAccountId=202&characterId=7"]);
     expect(client.getQueryData(guildsKey)).toEqual([guild]);
     expect(client.getQueryData(preferencesKey)).toBeUndefined();
-    expect(await readGameClientBootstrap(guildsKey)).toBeUndefined();
+    expect(
+      await readGameClientBootstrap("accessibleGuilds", guildsKey),
+    ).toBeUndefined();
   } finally {
     stop();
     restore();
@@ -106,8 +108,8 @@ it("answers a guild's permissions query only for guilds the bootstrap read", asy
 
   try {
     const startup = Promise.all([
-      readGameClientBootstrap(readKey),
-      readGameClientBootstrap(failedKey),
+      readGameClientBootstrap("guildPermissions", readKey),
+      readGameClientBootstrap("guildPermissions", failedKey),
     ]);
 
     setTestRuntimeGame({ hero: { accountId: "202", characterId: "7" } });

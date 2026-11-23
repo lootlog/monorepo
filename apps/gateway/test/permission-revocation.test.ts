@@ -4,7 +4,7 @@ import { HttpClient } from "effect/http";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { decodeRealtimeFrame } from "@lootlog/protocol/realtime/codec";
 import {
-  Permission,
+  Capability,
   type UserGuildPermissionsDtoSchema,
 } from "@lootlog/schema/permissions";
 import { makeGuildStore } from "../src/guilds/guild-store.js";
@@ -31,11 +31,11 @@ import {
 const identity = { discordId: "discord-member", userId: "user-member" };
 
 const grantedPermissions = [
-  Permission.LOOTLOG_ACCESS,
-  Permission.LOOTLOG_CHAT_READ,
-  Permission.LOOTLOG_TIMERS_READ,
-  Permission.LOOTLOG_TIMERS_HEROES_READ,
-  Permission.LOOTLOG_TIMERS_TITANS_READ,
+  Capability.LOOTLOG_ACCESS,
+  Capability.LOOTLOG_CHAT_READ,
+  Capability.LOOTLOG_TIMERS_READ,
+  Capability.LOOTLOG_TIMERS_HEROES_READ,
+  Capability.LOOTLOG_TIMERS_TITANS_READ,
 ];
 
 type Npc = { readonly type: string; readonly lvl: number };
@@ -87,7 +87,7 @@ const setup = async () => {
   const redis = makeGuildStoreRedis(identity);
 
   const stores = Array.from({ length: 3 }, () =>
-    makeGuildStore(config, redis.store, apiRpc),
+    makeGuildStore(redis.store, apiRpc),
   );
 
   const bus = makeFederationBus();
@@ -250,7 +250,7 @@ const setup = async () => {
           lvlRangeTo: 200,
           permissions: role.permissions.filter(
             (permission) =>
-              permission !== Permission.LOOTLOG_TIMERS_TITANS_READ,
+              permission !== Capability.LOOTLOG_TIMERS_TITANS_READ,
           ),
         })),
       }));
@@ -264,8 +264,8 @@ const setup = async () => {
               roles: entry.roles.map((role) => ({
                 ...role,
                 permissions: [
-                  Permission.LOOTLOG_ACCESS,
-                  Permission.LOOTLOG_TIMERS_READ,
+                  Capability.LOOTLOG_ACCESS,
+                  Capability.LOOTLOG_TIMERS_READ,
                 ],
               })),
             },

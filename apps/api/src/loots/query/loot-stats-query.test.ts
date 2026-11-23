@@ -1,4 +1,4 @@
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { buildLootNpcVisibilityCondition } from "#src/loots/loot-visibility";
 import { describe, expect, it } from "bun:test";
@@ -53,8 +53,8 @@ describe("loot statistics at the PostgreSQL boundary", () => {
       );
 
       const permissions = [
-        Permission.LOOTLOG_LOOTS_READ,
-        Permission.LOOTLOG_LOOTS_HEROES_READ,
+        Capability.LOOTLOG_LOOTS_READ,
+        Capability.LOOTLOG_LOOTS_HEROES_READ,
       ];
 
       const visibility = buildLootNpcVisibilityCondition(

@@ -21,7 +21,7 @@ export type TimersIdentity = {
 export type TimersGuildAccess = TimersIdentity & {
   readonly guild: Guild;
   readonly accessPolicy: AccessPolicy;
-  readonly roles: Role[];
+  readonly roles: ReadonlyArray<Role>;
 };
 
 type DataEffect<A> = Effect.Effect<A, TimersDataFailure>;

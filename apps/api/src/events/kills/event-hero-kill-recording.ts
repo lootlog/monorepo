@@ -1,20 +1,15 @@
 import { Clock, Effect } from "effect";
-import type { Queue } from "bullmq";
 import type {
   eventHeroNpcTable,
   eventTable,
 } from "#src/database/drizzle/event.schema";
-import {
-  runPromiseAdapter,
-  withEventAdapterSpan,
-} from "#src/events/event-adapter";
+import { withEventAdapterSpan } from "#src/events/event-adapter";
 import type { EventEmitter } from "#src/events/event-emitter";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import type { EventPoints } from "#src/events/kills/event-points.service";
 import type { EventReadCache } from "#src/events/catalog/event-read-cache.service";
 import type { EventPresenceTracking } from "#src/events/monitoring/event-presence-tracking";
 import type { EventSummary } from "#src/events/monitoring/event-summary.service";
-import type { AutoCloseRespawnWindowJobData } from "#src/events/respawn/auto-close-respawn-window-job-data";
 import type { KillTimerData } from "#src/events/respawn/kill-timer-data";
 import { getEventHeroKillWindowKey } from "#src/events/kills/event-hero-kill-job";
 import {
@@ -36,7 +31,6 @@ export const makeEventHeroKillRecording = (
   killPoints: EventKillPoints,
   trackingService: EventPresenceTracking,
   summaryService: EventSummary,
-  respawnWindowQueue: Queue<AutoCloseRespawnWindowJobData>,
 ) => {
   const logContext = Effect.annotateLogs({ context: "EventKills" });
 
@@ -146,8 +140,6 @@ export const makeEventHeroKillRecording = (
       isManualClose,
     );
 
-    yield* cancelScheduledAutoClose(eventHero.id);
-
     yield* eventReadCache
       .invalidateEvent(guildId, event.id)
       .pipe(withEventAdapterSpan("redis.eventReadCache.invalidate"));
@@ -195,29 +187,6 @@ export const makeEventHeroKillRecording = (
 
     return kill.kill;
   });
-
-  function cancelScheduledAutoClose(heroId: string) {
-    return Effect.gen(function* () {
-      const delayedJobs = yield* runPromiseAdapter("bull.respawn.getJobs", () =>
-        respawnWindowQueue.getJobs(["delayed"]),
-      );
-
-      yield* Effect.forEach(
-        delayedJobs.filter((job) => job.data.heroId === heroId),
-        (job) =>
-          runPromiseAdapter("bull.respawn.remove", () => job.remove()).pipe(
-            Effect.tap(() =>
-              Effect.logInfo({
-                message: "Cancelled scheduled auto-close job (kill recorded)",
-                heroId,
-                jobId: job.id,
-              }).pipe(logContext),
-            ),
-          ),
-        { concurrency: "unbounded", discard: true },
-      );
-    });
-  }
 
   return recordHeroKill;
 };

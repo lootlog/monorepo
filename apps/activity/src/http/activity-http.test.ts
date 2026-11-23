@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test";
 import { PgClient } from "@effect/sql-pg";
 import { Reactivity } from "effect/reactivity";
 import { SqlClient, SqlError } from "effect/sql";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { Effect, Layer, Redacted, Queue } from "effect";
 import { HttpRouter, HttpServer } from "effect/http";
 import {
@@ -14,7 +14,7 @@ import {
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { ApiRpcGroup } from "@lootlog/rpc/api";
 import { RpcUnavailableError } from "@lootlog/rpc/errors";
-import { makeRpcTestHttpClient } from "@lootlog/rpc/testing";
+import { makeRpcTestHttpClient, testRpcUpstream } from "@lootlog/rpc/testing";
 import { Redis } from "effect/persistence";
 import { ActivityConfig } from "#src/config/activity-config";
 import { OnlineRepository } from "#src/online/online-repository";
@@ -83,7 +83,7 @@ const unusedOnlineRepository = Layer.succeed(OnlineRepository, {
 });
 
 const makeBoundary = (
-  capabilities: Permission[],
+  capabilities: Capability[],
   readinessLayer = Layer.succeed(ActivityReadiness, readiness),
 ) => {
   const routes = ActivityRoutes.pipe(
@@ -118,7 +118,7 @@ const headers = {
 
 describe("Activity HttpApi contract", () => {
   it("requires the deployed forward-auth headers", async () => {
-    const boundary = makeBoundary([Permission.ADMIN]);
+    const boundary = makeBoundary([Capability.ADMIN]);
 
     const response = await boundary.handler(
       new Request("https://activity/guilds/g/activity-logs", {
@@ -132,7 +132,7 @@ describe("Activity HttpApi contract", () => {
   });
 
   it("answers a missing activity with the declared 404 body", async () => {
-    const boundary = makeBoundary([Permission.ADMIN]);
+    const boundary = makeBoundary([Capability.ADMIN]);
 
     const response = await boundary.handler(
       new Request("https://activity/guilds/g/activity-logs/missing", {
@@ -158,7 +158,7 @@ describe("Activity HttpApi contract", () => {
   ])(
     "rejects a cursor no page issued as a request error: %s",
     async (cursor) => {
-      const boundary = makeBoundary([Permission.ADMIN]);
+      const boundary = makeBoundary([Capability.ADMIN]);
 
       const response = await boundary.handler(
         new Request(
@@ -173,7 +173,7 @@ describe("Activity HttpApi contract", () => {
   );
 
   it("resolves vanity organizations before querying", async () => {
-    const boundary = makeBoundary([Permission.ADMIN]);
+    const boundary = makeBoundary([Capability.ADMIN]);
 
     const response = await boundary.handler(
       new Request("https://activity/guilds/vanity/activity-logs", { headers }),
@@ -199,7 +199,7 @@ describe("Activity HttpApi contract", () => {
   });
 
   it("filters by user inside the resolved organization only", async () => {
-    const admin = makeBoundary([Permission.ADMIN]);
+    const admin = makeBoundary([Capability.ADMIN]);
     const member = makeBoundary([]);
     const url = "https://activity/guilds/vanity/activity-logs?userId=other";
 
@@ -216,8 +216,8 @@ describe("Activity HttpApi contract", () => {
   });
 
   it("requires OWNER for deletion", async () => {
-    const admin = makeBoundary([Permission.ADMIN]);
-    const owner = makeBoundary([Permission.OWNER]);
+    const admin = makeBoundary([Capability.ADMIN]);
+    const owner = makeBoundary([Capability.OWNER]);
 
     const forbidden = await admin.handler(
       new Request("https://activity/guilds/g/activity-logs/a", {
@@ -244,7 +244,7 @@ describe("Activity HttpApi contract", () => {
   });
 
   it("keeps suggestion response envelopes", async () => {
-    const boundary = makeBoundary([Permission.ADMIN]);
+    const boundary = makeBoundary([Capability.ADMIN]);
 
     const response = await boundary.handler(
       new Request(
@@ -258,136 +258,130 @@ describe("Activity HttpApi contract", () => {
   });
 });
 
-for (const failure of ["status", "transport", "invalid-body"] as const) {
-  it(`returns 503 on ${failure} authorization failure and recovers without caching the failure`, async () => {
-    const cache = new Map<string, string>();
+it("returns 503 while permissions are unavailable and recovers without caching the failure", async () => {
+  const cache = new Map<string, string>();
 
-    const redis = Redis.Redis.of({
-      send: <A>(command: string, ...args: ReadonlyArray<string | number>) =>
-        Effect.sync(() => {
-          if (command !== "GET" && command !== "SET" && command !== "PING") {
-            throw new Error(`Unexpected Redis command: ${command}`);
-          }
-
-          if (command === "SET") cache.set(String(args[0]), String(args[1]));
-
-          const reply =
-            command === "GET" ? (cache.get(String(args[0])) ?? null) : "OK";
-
-          // SAFETY: These cache scenarios request string | null for GET and ignore SET/PING replies; Redis's caller-selected A is erased at the fake transport boundary.
-          return reply as A;
-        }),
-      subscribe: () => Queue.unbounded<Redis.RedisMessage, Redis.RedisError>(),
-      reserve: Effect.die("unused"),
-      eval:
-        <
-          Config extends {
-            readonly params: ReadonlyArray<unknown>;
-            readonly result: unknown;
-          },
-        >() =>
-        (..._params: Config["params"]) =>
-          Effect.die("unused"),
-    });
-
-    let unavailable = true;
-    let permissionRequests = 0;
-
-    const config = ActivityConfig.of({
-      environment: RuntimeEnvironment.LOCAL,
-      port: 0,
-      serviceName: "activity-test",
-      serviceNamespace: "test",
-      databaseUrl: Redacted.make("postgresql://unused"),
-      rabbitmqUri: Redacted.make("amqp://unused"),
-      redisUrl: Redacted.make("redis://configured"),
-      apiRpcUrl: "http://api.test",
-      signatureSecret: Redacted.make("a".repeat(32)),
-    });
-
-    const unused = () => Effect.die("unused");
-
-    const apiRpcHandlers = ApiRpcGroup.toLayer({
-      getGuildByIdOrVanityUrl: () =>
-        Effect.succeed({ id: "g", name: "Guild", ownerId: "discord" }),
-      getUserGuildPermissions: () => {
-        permissionRequests++;
-
-        if (unavailable) {
-          return Effect.fail(
-            new RpcUnavailableError({ message: `failure:${failure}` }),
-          );
+  const redis = Redis.Redis.of({
+    send: <A>(command: string, ...args: ReadonlyArray<string | number>) =>
+      Effect.sync(() => {
+        if (command !== "GET" && command !== "SET" && command !== "PING") {
+          throw new Error(`Unexpected Redis command: ${command}`);
         }
 
-        return Effect.succeed([
-          { guild: { id: "g", ownerId: "discord" }, roles: [] },
-        ]);
-      },
-      getMemberIdentity: unused,
-      getUserAccessibleGuilds: unused,
-      listGuildEvents: unused,
-      getEventRanking: unused,
-      getEventTimers: unused,
-      getEventWrapped: unused,
-      listGuildTimers: unused,
-      getGuildKillStats: unused,
-      getGuildTopKilledNpcs: unused,
-      getNpcKillers: unused,
-      listGuildLoots: unused,
-      listUserReservations: unused,
-      listGuildReservationSpots: unused,
-    });
+        if (command === "SET") cache.set(String(args[0]), String(args[1]));
 
-    const permissions = Permissions.layer.pipe(
-      Layer.provide(Layer.succeed(ActivityConfig, config)),
-      Layer.provide(Layer.succeed(Redis.Redis, redis)),
-      Layer.provide(makeRpcTestHttpClient(ApiRpcGroup, apiRpcHandlers)),
-    );
+        const reply =
+          command === "GET" ? (cache.get(String(args[0])) ?? null) : "OK";
 
-    const boundary = HttpRouter.toWebHandler(
-      ActivityRoutes.pipe(
-        Layer.provideMerge(permissions),
-        Layer.provideMerge(Layer.succeed(ActivityRepository, repository)),
-        Layer.provideMerge(Layer.succeed(ActivityReadiness, readiness)),
-        Layer.provideMerge(unusedOnlineRepository),
-        Layer.provide(HttpServer.layerServices),
-      ),
-      { disableLogger: true },
-    );
-
-    const handler = boundary.handler;
-
-    try {
-      const response = await handler(
-        new Request("https://activity/guilds/g/activity-logs", { headers }),
-      );
-
-      expect(response.status).toBe(503);
-      expect(await response.json()).toEqual({
-        code: "SERVICE_UNAVAILABLE",
-        message: "Service unavailable",
-      });
-      expect(cache.has("permissions:user:discord")).toBe(false);
-      unavailable = false;
-
-      const recovered = await handler(
-        new Request("https://activity/guilds/g/activity-logs", { headers }),
-      );
-
-      expect(recovered.status).toBe(200);
-      expect(await recovered.json()).toMatchObject({
-        data: [{ guildId: "g" }],
-        hasMore: false,
-      });
-      expect(permissionRequests).toBe(2);
-    } finally {
-      await boundary.dispose();
-    }
+        // SAFETY: These cache scenarios request string | null for GET and ignore SET/PING replies; Redis's caller-selected A is erased at the fake transport boundary.
+        return reply as A;
+      }),
+    subscribe: () => Queue.unbounded<Redis.RedisMessage, Redis.RedisError>(),
+    reserve: Effect.die("unused"),
+    eval:
+      <
+        Config extends {
+          readonly params: ReadonlyArray<unknown>;
+          readonly result: unknown;
+        },
+      >() =>
+      (..._params: Config["params"]) =>
+        Effect.die("unused"),
   });
-}
+
+  let unavailable = true;
+
+  const config = ActivityConfig.of({
+    environment: RuntimeEnvironment.LOCAL,
+    port: 0,
+    serviceName: "activity-test",
+    serviceNamespace: "test",
+    databaseUrl: Redacted.make("postgresql://unused"),
+    rabbitmqUri: Redacted.make("amqp://unused"),
+    redisUrl: Redacted.make("redis://configured"),
+    apiRpc: testRpcUpstream,
+    signatureSecret: Redacted.make("a".repeat(32)),
+  });
+
+  const unused = () => Effect.die("unused");
+
+  const apiRpcHandlers = ApiRpcGroup.toLayer({
+    getGuildByIdOrVanityUrl: () =>
+      Effect.succeed({ id: "g", name: "Guild", ownerId: "discord" }),
+    getUserGuildPermissions: () => {
+      if (unavailable) {
+        return Effect.fail(new RpcUnavailableError({ message: "unavailable" }));
+      }
+
+      return Effect.succeed([
+        { guild: { id: "g", ownerId: "discord" }, roles: [] },
+      ]);
+    },
+    getMemberIdentity: unused,
+    getUserAccessibleGuilds: unused,
+    listGuildEvents: unused,
+    getEventRanking: unused,
+    getEventTimers: unused,
+    getEventWrapped: unused,
+    listGuildTimers: unused,
+    getGuildKillStats: unused,
+    getGuildTopKilledNpcs: unused,
+    getNpcKillers: unused,
+    listGuildLoots: unused,
+    listUserReservations: unused,
+    listGuildReservationSpots: unused,
+  });
+
+  const permissions = Permissions.layer.pipe(
+    Layer.provide(Layer.succeed(ActivityConfig, config)),
+    Layer.provide(Layer.succeed(Redis.Redis, redis)),
+    Layer.provide(
+      makeRpcTestHttpClient(ApiRpcGroup, apiRpcHandlers, ["activity"]),
+    ),
+  );
+
+  const boundary = HttpRouter.toWebHandler(
+    ActivityRoutes.pipe(
+      Layer.provideMerge(permissions),
+      Layer.provideMerge(Layer.succeed(ActivityRepository, repository)),
+      Layer.provideMerge(Layer.succeed(ActivityReadiness, readiness)),
+      Layer.provideMerge(unusedOnlineRepository),
+      Layer.provide(HttpServer.layerServices),
+    ),
+    { disableLogger: true },
+  );
+
+  const handler = boundary.handler;
+
+  try {
+    const response = await handler(
+      new Request("https://activity/guilds/g/activity-logs", { headers }),
+    );
+
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({
+      code: "SERVICE_UNAVAILABLE",
+      message: "Service unavailable",
+    });
+    expect(cache.has("permissions:user:discord")).toBe(false);
+    unavailable = false;
+
+    const recovered = await handler(
+      new Request("https://activity/guilds/g/activity-logs", { headers }),
+    );
+
+    expect(recovered.status).toBe(200);
+    expect(await recovered.json()).toMatchObject({
+      data: [{ guildId: "g" }],
+      hasMore: false,
+    });
+  } finally {
+    await boundary.dispose();
+  }
+});
 
 it("restricts API keys after canonical organization resolution and before writes", async () => {
-  const boundary = makeBoundary([Permission.OWNER, Permission.ADMIN]);
+  const boundary = makeBoundary([Capability.OWNER, Capability.ADMIN]);
 
   const access = {
     keyId: "key",

@@ -1,0 +1,70 @@
+{
+  "logs": {
+    "description": "Zapisane akcje użytkownika z rozwijanymi żądaniami API: wysłanymi danymi, odpowiedzią i statusem.",
+    "consoleDebugTitle": "Diagnostyka konsoli",
+    "lootDebugLoggingLabel": "Loguj tworzenie łupów",
+    "lootDebugLoggingDescription": "Zapisuje w konsoli przeglądarki pełny przebieg tworzenia łupów z walk i dialogów. Logi zawierają pełne dane żądań, w tym nazwy oraz identyfikatory kont, postaci i NPC.",
+    "searchPlaceholder": "Szukaj w logach",
+    "actionTypeAria": "Typ akcji",
+    "actionTypePlaceholder": "Typ akcji",
+    "statusAria": "Status akcji",
+    "statusPlaceholder": "Status akcji",
+    "listTitle": "Lista akcji",
+    "emptyState": "Żadna akcja nie pasuje do filtrów.",
+    "noActions": "Nie ma jeszcze zapisanych akcji.",
+    "exportSuccess": "Logi wyeksportowane do pliku",
+    "exportFailed": "Nie udało się wyeksportować logów",
+    "copyFailed": "Nie udało się skopiować logu",
+    "copyActionSuccess": "Akcja skopiowana do schowka",
+    "copyRequestSuccess": "Żądanie skopiowane do schowka",
+    "actionPayload": "Dane akcji",
+    "actionDetails": "Szczegóły akcji",
+    "toggleActionDetails": "Przełącz szczegóły akcji",
+    "noRequests": "Brak zapisanych żądań dla tej akcji.",
+    "payload": "Wysłane dane",
+    "response": "Odpowiedź",
+    "statuses": {
+      "all": "Wszystkie statusy",
+      "success": "Sukces",
+      "partial": "Częściowy sukces",
+      "error": "Błąd",
+      "skipped": "Pominięto"
+    },
+    "actionTypes": {
+      "create_kill": "Dodanie zabicia",
+      "create_battle": "Dodanie walki",
+      "record_weapon_kills": "Zapisanie graczy zabitych bronią",
+      "create_loot": "Dodanie łupu",
+      "update_loot": "Aktualizacja łupu",
+      "create_timer": "Dodanie timera",
+      "create_manual_timer": "Ręczne dodanie timera",
+      "delete_timer": "Usunięcie timera",
+      "reset_timer": "Zresetowanie timera",
+      "send_chat_message": "Wysłanie wiadomości",
+      "create_notification": "Utworzenie powiadomienia",
+      "volunteer": "Zgłoszenie do zbiórki",
+      "create_party_gathering": "Utworzenie zbiórki",
+      "cancel_party_gathering": "Anulowanie zbiórki",
+      "update_timer_settings": "Aktualizacja ustawień timerów",
+      "update_guild_timer_settings": "Aktualizacja ustawień timerów Lootloga",
+      "migrate_timer_settings": "Migracja ustawień timerów",
+      "update_sound_settings": "Aktualizacja ustawień dźwięków",
+      "update_user_preferences": "Aktualizacja preferencji użytkownika",
+      "update_user_game_account_preferences": "Aktualizacja preferencji konta gry",
+      "update_lootlog_characters_config": "Aktualizacja konfiguracji postaci"
+    },
+    "allActions": "Wszystkie akcje",
+    "toggleRequestDetails": "Przełącz szczegóły żądania",
+    "columns": {
+      "time": "Czas",
+      "action": "Akcja",
+      "status": "Status"
+    },
+    "requestColumns": {
+      "method": "Metoda",
+      "url": "URL",
+      "status": "Status",
+      "time": "Czas"
+    }
+  }
+}

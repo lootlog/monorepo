@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { expect, it, onTestFinished, vi } from "vitest";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import {
   getGuildsControllerGetGuildPermissionsQueryKey,
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/context-menu";
 import { DeleteTimerPopover } from "./delete-timer-popover";
 
-const setup = async (permissions: Permission[][] | null) => {
+const setup = async (permissions: Capability[][] | null) => {
   const fixture = createTimerHttpFixture(
     () => new Promise<Response>(() => undefined),
   );
@@ -91,7 +91,7 @@ it("shows pending permissions without exposing deletion", async () => {
 
 it("deletes a single organization's timer only after confirmation", async () => {
   const { user, onDeleteTimer } = await setup([
-    [Permission.LOOTLOG_TIMERS_DELETE],
+    [Capability.LOOTLOG_TIMERS_DELETE],
     [],
   ]);
 
@@ -117,8 +117,8 @@ it("deletes a single organization's timer only after confirmation", async () => 
 
 it("keeps the organization chooser open until its target is selected", async () => {
   const { user, onDeleteTimer } = await setup([
-    [Permission.ADMIN],
-    [Permission.OWNER],
+    [Capability.ADMIN],
+    [Capability.OWNER],
   ]);
 
   await user.click(screen.getByRole("menuitem", { name: "Usuń timer" }));

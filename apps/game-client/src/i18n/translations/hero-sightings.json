@@ -12,13 +12,18 @@
     "KILLED": "zbity",
     "WITHDRAWN": "usunięty"
   },
-  "detectedBy": "Wykrycie: {{name}}",
-  "addedBy": "Dodane ręcznie: {{name}}",
-  "refreshedBy": "Odświeżenie: {{name}}",
+  "detectedBy": "wykrył: {{name}}",
+  "detectedByLabel": "wykrył:",
+  "addedBy": "dodał: {{name}}",
+  "addedByLabel": "dodał:",
+  "refreshedBy": "odświeżył: {{name}}",
+  "refreshedByLabel": "odświeżył:",
   "claims": {
-    "label": "Obstawiają:",
-    "none": "Nikt nie obstawia",
-    "detector": "(autor wykrycia)"
+    "label_one": "obstawia:",
+    "label_few": "obstawiają:",
+    "label_many": "obstawiają:",
+    "label_other": "obstawiają:",
+    "none": "nikt nie obstawia"
   },
   "actions": {
     "add": "Dodaj herosa",

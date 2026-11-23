@@ -69,6 +69,26 @@ type DeadNpc = {
   isHeroFromEvent?: boolean;
 };
 
+const toBattleNpc = (
+  key: string,
+  warrior: BattleWarriorsWithAccountId[string],
+): DeadNpc => ({
+  id: Number.parseInt(key, 10),
+  name: warrior.name,
+  lvl: warrior.lvl,
+  prof: warrior.prof || "",
+  icon: warrior.mapNpc?.icon ?? normalizeNpcIcon(warrior.icon),
+  wt: warrior.wt,
+  type: warrior.type,
+  isHeroFromEvent: warrior.mapNpc?.isHeroFromEvent,
+});
+
+const getTrackableNpcType = (npc: DeadNpc): NpcType | null => {
+  const npcType = getNpcType(NpcType, npc);
+
+  return TRACKABLE_NPC_TYPES.has(npcType) ? npcType : null;
+};
+
 const getNpcBattleSummary = (warriors: BattleWarriorsWithAccountId) => {
   let hasNpcInBattle = false;
   let hasLivingNpc = false;
@@ -86,16 +106,7 @@ const getNpcBattleSummary = (warriors: BattleWarriorsWithAccountId) => {
       continue;
     }
 
-    const deadNpc = {
-      id: Number.parseInt(key, 10),
-      name: warrior.name,
-      lvl: warrior.lvl,
-      prof: warrior.prof || "",
-      icon: warrior.mapNpc?.icon ?? normalizeNpcIcon(warrior.icon),
-      wt: warrior.wt,
-      type: warrior.type,
-      isHeroFromEvent: warrior.mapNpc?.isHeroFromEvent,
-    };
+    const deadNpc = toBattleNpc(key, warrior);
 
     if (!topNpc || deadNpc.wt > topNpc.wt) {
       topNpc = deadNpc;
@@ -118,22 +129,16 @@ const getTrackableNpcs = (
 
     if (!key.startsWith("-") || !warrior) return [];
 
-    const npcType = getNpcType(NpcType, {
-      wt: warrior.wt,
-      prof: warrior.prof || "",
-      type: warrior.type,
-      icon: warrior.mapNpc?.icon ?? normalizeNpcIcon(warrior.icon),
-      isHeroFromEvent: warrior.mapNpc?.isHeroFromEvent,
-      name: warrior.name,
-    });
+    const npc = toBattleNpc(key, warrior);
+    const npcType = getTrackableNpcType(npc);
 
-    if (!TRACKABLE_NPC_TYPES.has(npcType)) return [];
+    if (npcType === null) return [];
 
     return [
       {
-        id: Number.parseInt(key, 10),
-        name: warrior.name,
-        lvl: warrior.lvl,
+        id: npc.id,
+        name: npc.name,
+        lvl: npc.lvl,
         type: npcType,
         dead: isWarriorDead(warrior),
       },
@@ -450,7 +455,7 @@ export class BattleEventProcessor {
   ): KillIntent | null {
     if (!topNpc || !game) return null;
 
-    if (!TRACKABLE_NPC_TYPES.has(getNpcType(NpcType, topNpc))) return null;
+    if (getTrackableNpcType(topNpc) === null) return null;
 
     const { type: _, ...npcWithoutType } = topNpc;
 

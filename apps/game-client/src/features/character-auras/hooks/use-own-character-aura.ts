@@ -2,7 +2,6 @@ import {
   characterAurasControllerGetOwnAura,
   getCharacterAurasControllerGetOwnAuraQueryKey,
   useCharacterAurasControllerGetOwnAura,
-  type OwnCharacterAuraResponseDto,
 } from "@lootlog/client/main";
 import { readGameClientBootstrap } from "@/lib/game-client-bootstrap";
 
@@ -15,9 +14,8 @@ export const useOwnCharacterAura = ({
     query: {
       queryKey,
       queryFn: async ({ signal }) =>
-        (await readGameClientBootstrap<OwnCharacterAuraResponseDto>(
-          queryKey,
-        )) ?? characterAurasControllerGetOwnAura({ signal }),
+        (await readGameClientBootstrap("characterAura", queryKey)) ??
+        characterAurasControllerGetOwnAura({ signal }),
       refetchOnWindowFocus: false,
       refetchOnMount,
       staleTime: Infinity,

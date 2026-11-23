@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { MapPin, ChevronRight } from "lucide-react";
 import { useState } from "react";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import { cn } from "cn";
 import type { EventMap, EventMapLocation } from "@/lib/api/event-types";
 import type { PlayerPresence } from "@/lib/gateway-client";
@@ -190,9 +190,9 @@ export const EventMapGrid = ({
   const { data: accessPolicy } = useGuildPermissions();
 
   const canManage =
-    accessPolicy?.allows(Permission.LOOTLOG_MANAGE) ||
-    accessPolicy?.allows(Permission.ADMIN) ||
-    accessPolicy?.allows(Permission.OWNER);
+    accessPolicy?.allows(Capability.LOOTLOG_MANAGE) ||
+    accessPolicy?.allows(Capability.ADMIN) ||
+    accessPolicy?.allows(Capability.OWNER);
 
   const totalMaps =
     locations.reduce((sum, location) => sum + location.maps.length, 0) +

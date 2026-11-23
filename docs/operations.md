@@ -59,6 +59,40 @@ workers. See [loot publication recovery](../apps/api/drizzle/README.md) and
 [battle object cleanup](../apps/battlelog/drizzle/README.md) for pending-work
 inspection and rollback constraints.
 
+## Internal RPC
+
+Services call each other synchronously over Effect RPC (`@lootlog/rpc`) on a
+second port: `RPC_PORT`, which defaults to `PORT + 100` (4100 in the cluster).
+No Traefik `IngressRoute` targets it, and a `NetworkPolicy` per service admits
+only the pods that call it.
+
+Every procedure lists the services allowed to call it, and the server rejects
+any other caller with `RpcCallerRejectedError`. A caller authenticates with a
+bearer token that belongs to one edge, named `RPC_TOKEN_<CALLER>_TO_<CALLEE>`
+and set to the same value on both ends. Outside `ENV=local` a service refuses
+to start without the tokens of its edges; locally they default to a fixed
+development value.
+
+| Caller      | Callee      | Procedures                                           |
+| ----------- | ----------- | ---------------------------------------------------- |
+| gateway     | api         | `getUserGuildPermissions`                            |
+| activity    | api         | `getUserGuildPermissions`, `getGuildByIdOrVanityUrl` |
+| auth        | api         | `getUserAccessibleGuilds`                            |
+| discord-bot | api         | `getMemberIdentity` and the member reads             |
+| api         | auth        | `getIdpToken`, `listPlatformRoleHolders`             |
+| gateway     | auth        | `getApiKeyStatuses`                                  |
+| discord-bot | gateway     | `getOrganizationPresence`                            |
+| discord-bot | catalog     | `searchItems`                                        |
+| api         | discord-bot | `refreshGuildChannels`                               |
+
+A new edge needs the caller listed on the procedure in `packages/rpc`, the
+token in both deployments, and the caller added to the callee's
+`NetworkPolicy`.
+
+Account deletion asks Battlelog to remove a User's battles through RabbitMQ
+(`battlelog.user-data.delete`). The API and Battlelog both declare the queue,
+so a request published while Battlelog is down waits for it.
+
 ## Admin panel
 
 `apps/admin` manages platform roles, bans, sessions, and API keys of Users. It
@@ -130,13 +164,12 @@ the auth service; until then no role is forwarded and role checks refuse.
 
 The API cannot learn role holders from the caller alone: it marks other Users'
 messages and shows their auras. Every minute it asks the auth service
-(`/auth/internal/platform-role-holders`, with `AUTH_IDP_TOKEN_SECRET`) for the
-holders of `global-chat-admin`, who moderate the global chat, and of `admin`,
+(`listPlatformRoleHolders` over internal RPC) for the holders of `global-chat-admin`, who moderate the global chat, and of `admin`,
 the only Users who grant and revoke auras, choose any aura without a grant,
 and wear the admin auras. The platform roles are the only source of both; no
 environment variable adds a chat or aura admin. While the auth service cannot
 be reached the last answer stands. Deploy the auth service before the API;
-without `AUTH_IDP_TOKEN_SECRET` the API knows no chat or aura admin.
+without a valid `RPC_TOKEN_API_TO_AUTH` the API knows no chat or aura admin.
 
 A role change, a revoked session, and a ban reach a signed-in browser within
 five minutes, when its session cookie cache expires; a bearer token issued

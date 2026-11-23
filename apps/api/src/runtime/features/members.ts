@@ -89,7 +89,7 @@ export const memberServicesLive = Layer.effect(
     const memberRefreshQueue = yield* MemberRefreshQueue;
 
     const authRpc = yield* makeRpcClient(AuthRpcGroup, {
-      url: config.authRpcUrl,
+      ...config.rpc.auth,
       spanPrefix: "api.auth-rpc",
     });
 

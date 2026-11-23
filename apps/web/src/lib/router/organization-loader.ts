@@ -1,5 +1,5 @@
+import { Capability } from "@lootlog/schema/permissions";
 import {
-  Capability,
   createAccessPolicy,
   type AccessPolicy,
 } from "@lootlog/domain/access-policy";
@@ -13,7 +13,11 @@ import {
   getListPinnedEventsQueryOptions,
   getMembersControllerGetMeQueryOptions,
 } from "@lootlog/client/main";
-import { throwForbiddenRouteError } from "@/lib/router/route-errors";
+import {
+  rethrowNotFoundOrError,
+  throwForbiddenRouteError,
+  withRouteLoaderCancellation,
+} from "@/lib/router/route-errors";
 import {
   ensureRouteQueryData,
   fetchRouteQueryData,
@@ -64,7 +68,7 @@ export const loadOrganization = async (
   return { guild, guildMember, accessPolicy };
 };
 
-export const loadOrganizationShell = (
+const loadOrganizationShell = (
   queryClient: QueryClient,
   guildId: string,
   accessPolicy: AccessPolicy,
@@ -103,3 +107,31 @@ export const loadOrganizationShell = (
 
   return settleRoutePrefetches(prefetches);
 };
+
+export const loadOrganizationRoute = ({
+  abortController,
+  context,
+  params,
+}: {
+  abortController: AbortController;
+  context: { queryClient: QueryClient };
+  params: { guildId: string };
+}) =>
+  withRouteLoaderCancellation(abortController, async () => {
+    try {
+      const organization = await loadOrganization(
+        context.queryClient,
+        params.guildId,
+      );
+
+      await loadOrganizationShell(
+        context.queryClient,
+        params.guildId,
+        organization.accessPolicy,
+      );
+
+      return organization;
+    } catch (error) {
+      rethrowNotFoundOrError(error);
+    }
+  });

@@ -2,17 +2,27 @@ import {
   baseServiceConfig,
   type BaseServiceConfiguration,
 } from "@lootlog/instrumentation/service-config";
-import { DEFAULT_RPC_PORT } from "@lootlog/rpc/server";
+import {
+  type CallerTokens,
+  type RpcUpstream,
+  rpcCallerTokensConfig,
+  rpcUpstreamConfig,
+} from "@lootlog/rpc/callers";
+import { DiscordBotRpcGroup } from "@lootlog/rpc/discord-bot";
+import { rpcPortConfig } from "@lootlog/rpc/server";
 import { Config, Context, Effect, Layer, Redacted } from "effect";
 
 export interface BotConfigValue extends BaseServiceConfiguration {
-  readonly rpcPort: number;
+  readonly rpc: {
+    readonly port: number;
+    readonly callerTokens: CallerTokens;
+    readonly api: RpcUpstream;
+    readonly catalog: RpcUpstream;
+    readonly gateway: RpcUpstream;
+  };
   readonly discordBotToken: Redacted.Redacted<string>;
   readonly rabbitmqUri: Redacted.Redacted<string>;
   readonly apiServiceUrl: string;
-  readonly apiRpcUrl: string;
-  readonly catalogRpcUrl: string;
-  readonly gatewayRpcUrl: string;
   readonly webAppUrl: string;
 }
 
@@ -31,22 +41,20 @@ export class BotConfig extends Context.Service<BotConfig, BotConfigValue>()(
       const { environment } = base;
 
       const value = yield* Config.all({
-        rpcPort: Config.Int("RPC_PORT").pipe(
-          Config.withDefault(DEFAULT_RPC_PORT),
-        ),
+        rpc: Config.all({
+          port: rpcPortConfig,
+          callerTokens: rpcCallerTokensConfig(
+            "discord-bot",
+            DiscordBotRpcGroup,
+          ),
+          api: rpcUpstreamConfig("discord-bot", "api"),
+          catalog: rpcUpstreamConfig("discord-bot", "catalog"),
+          gateway: rpcUpstreamConfig("discord-bot", "gateway"),
+        }),
         discordBotToken: Config.Redacted("DISCORD_BOT_TOKEN"),
         rabbitmqUri: Config.Redacted("RABBITMQ_URI"),
         apiServiceUrl: Config.String("API_SERVICE_URL").pipe(
           Config.withDefault("http://api:4000"),
-        ),
-        apiRpcUrl: Config.String("API_RPC_URL").pipe(
-          Config.withDefault("http://api:4001"),
-        ),
-        catalogRpcUrl: Config.String("CATALOG_RPC_URL").pipe(
-          Config.withDefault("http://catalog:4001"),
-        ),
-        gatewayRpcUrl: Config.String("GATEWAY_RPC_URL").pipe(
-          Config.withDefault("http://gateway:4001"),
         ),
         webAppUrl: Config.String("WEB_APP_URL").pipe(
           Config.withDefault(

@@ -3,6 +3,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@lootlog/ui/scroll-fade.css";
+@import "./motion.css";
 @source "src/**/*.{ts,tsx}";
 
 @variant dark (&:where(#lootlog-root.dark-theme, .ll-theme-boundary.dark-theme, #lootlog-root.dark-theme *, .ll-theme-boundary.dark-theme *));
@@ -71,21 +72,6 @@
 
 .ll-scroll-area-viewport::-webkit-scrollbar {
   display: none;
-}
-
-/*
- * Motion tokens (`ll:ease-enter`, `ll:duration-medium`, and the matching
- * `--ll-*` variables). Entrances decelerate into place; exits accelerate away
- * and run shorter than the entrance they undo. Web Animations take the same
- * values from src/lib/motion.ts.
- */
-@theme {
-  --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
-  --ease-overshoot: cubic-bezier(0.2, 0.9, 0.3, 1.2);
-  --transition-duration-short: 130ms;
-  --transition-duration-medium: 190ms;
-  --transition-duration-long: 260ms;
 }
 
 @theme inline {

@@ -1,7 +1,4 @@
-import {
-  encodeActivityCursor,
-  parseActivityCursor,
-} from "./activity-cursor.js";
+import type { ActivityCursorPosition } from "./activity-cursor.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   and,
@@ -65,10 +62,12 @@ export interface ActivityRepositoryValue {
     guildId: string;
     discordId: string;
   }) => Effect.Effect<void, ActivityDatabaseFailure>;
-  readonly findMany: (
-    query: QueryActivities,
-  ) => Effect.Effect<
-    { data: ActivityRecord[]; nextCursor?: string; hasMore: boolean },
+  readonly findMany: (query: QueryActivities) => Effect.Effect<
+    {
+      data: ActivityRecord[];
+      nextCursor?: ActivityCursorPosition;
+      hasMore: boolean;
+    },
     ActivityDatabaseFailure
   >;
   readonly findOne: (
@@ -153,20 +152,9 @@ export class ActivityRepository extends Context.Service<
       const snapshotId = Effect.fn("ActivityRepository.snapshotId")(function* (
         dto: CreateActivity,
       ) {
-        if (!dto.actorSnapshot) return undefined;
         const snapshot = dto.actorSnapshot;
 
-        if (
-          snapshot.accountId === undefined ||
-          snapshot.characterId === undefined ||
-          snapshot.name === undefined ||
-          snapshot.icon === undefined ||
-          snapshot.lvl === undefined ||
-          snapshot.prof === undefined
-        )
-          return yield* Effect.die(
-            new Error("Actor snapshot is missing a database-required field"),
-          );
+        if (!snapshot) return undefined;
 
         const snapshotFields = {
           accountId: snapshot.accountId,
@@ -280,12 +268,7 @@ export class ActivityRepository extends Context.Service<
                 new Error("Activity insert did not return a row"),
               );
 
-            const sessionId = detailsString(dto, "sessionId");
-
-            if (!sessionId)
-              return yield* Effect.die(
-                new Error("Activity session identifier is missing"),
-              );
+            const { sessionId } = dto.details;
 
             const countActiveSessions = () =>
               tx
@@ -411,17 +394,9 @@ export class ActivityRepository extends Context.Service<
       const findMany = Effect.fn("ActivityRepository.findMany")(function* (
         query: QueryActivities,
       ) {
-        const position =
-          query.cursor === undefined
-            ? undefined
-            : Option.getOrUndefined(parseActivityCursor(query.cursor));
-
-        if (query.cursor !== undefined && position === undefined)
-          return yield* Effect.die("Activity cursor did not parse");
-
-        const cursor = position && {
-          createdAt: drizzleSql`${position.createdAt}::timestamptz`,
-          id: position.id,
+        const cursor = query.cursor && {
+          createdAt: drizzleSql`${query.cursor.createdAt}::timestamptz`,
+          id: query.cursor.id,
         };
 
         const conditions = [
@@ -479,10 +454,7 @@ export class ActivityRepository extends Context.Service<
           data: page.map(mapActivityRow),
           nextCursor:
             hasMore && lastRow
-              ? encodeActivityCursor({
-                  createdAt: lastRow.cursorCreatedAt,
-                  id: lastRow.activity.id,
-                })
+              ? { createdAt: lastRow.cursorCreatedAt, id: lastRow.activity.id }
               : undefined,
           hasMore,
         };

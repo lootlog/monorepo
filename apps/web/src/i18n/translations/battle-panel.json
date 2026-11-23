@@ -209,6 +209,19 @@
         "title": "Warstwy",
         "reset": "Przywróć domyślne warstwy"
       },
+      "group": {
+        "open": "Wybierz linie na wykresie",
+        "title": "Linie na wykresie",
+        "reset": "Przywróć domyślne linie",
+        "searchPlaceholder": "Szukaj wojownika...",
+        "empty": "Brak wojowników",
+        "allMembers": "Cała drużyna",
+        "average": "Średnie HP drużyny",
+        "teamAverage": "{{team}} (średnia)",
+        "ownTeam": "Twoja drużyna",
+        "opponents": "Przeciwnicy",
+        "legendLabel": "Linie na wykresie"
+      },
       "legend": {
         "title": "Legenda wykresu",
         "open": "Pokaż legendę wykresu",

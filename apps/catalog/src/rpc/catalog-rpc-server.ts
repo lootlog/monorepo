@@ -31,11 +31,12 @@ const CatalogRpcHandlers = CatalogRpcGroup.toLayer(
 );
 
 export const CatalogRpcServer = Layer.unwrap(
-  Effect.map(CatalogConfig, ({ rpcPort }) =>
+  Effect.map(CatalogConfig, ({ rpc }) =>
     serviceRpcServer({
       group: CatalogRpcGroup,
       handlers: CatalogRpcHandlers,
-      port: rpcPort,
+      callerTokens: rpc.callerTokens,
+      port: rpc.port,
       spanPrefix: "catalog.rpc",
     }),
   ),

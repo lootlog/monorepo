@@ -1,5 +1,6 @@
 import { RabbitMessaging } from "@lootlog/messaging";
 import {
+  battlelogUserDataDeleteRoute,
   consumerRoute,
   RabbitRoutingKey,
 } from "@lootlog/protocol/rabbit/topology";
@@ -123,7 +124,10 @@ export const ApiRabbitLive = Layer.unwrap(
     RabbitMessaging.layer({
       uri: Redacted.value(config.rabbitmqUri),
       connectionName: config.serviceName,
-      queues: Object.values(apiRabbitRoutes).flatMap((route) => route.queues),
+      queues: [
+        ...Object.values(apiRabbitRoutes),
+        battlelogUserDataDeleteRoute,
+      ].flatMap((route) => route.queues),
     }),
   ),
 );

@@ -8,9 +8,9 @@ import type { HeroSightingResponse } from "#src/contracts/hero-sightings/schemas
 import {
   makeCreateHeroSighting,
   makeHeroSightingClaims,
-  makeHeroSightingReads,
   makeManualHeroSightings,
 } from "#src/hero-sightings/hero-sightings.data-layer";
+import { makeHeroSightingReads } from "#src/hero-sightings/hero-sighting-reads.data-layer";
 import { HeroSightingsData } from "#src/hero-sightings/hero-sightings-data";
 import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
 

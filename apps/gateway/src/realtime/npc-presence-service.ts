@@ -8,7 +8,7 @@ import {
   type NpcPresenceReportAck,
   type NpcPresenceSnapshot,
 } from "@lootlog/schema/npc-presence";
-import { Permission } from "@lootlog/schema/permissions";
+import { Capability } from "@lootlog/schema/permissions";
 import type { ServerEvent } from "@lootlog/protocol/realtime";
 import { Schema, Context, Effect, Exit, Layer, Semaphore } from "effect";
 import {
@@ -298,7 +298,12 @@ export class NpcPresenceService {
       !canSubscribe(socket.data, {
         topic: "organization.timers",
         organizationId,
-      })
+      }) ||
+      !hasPermission(
+        socket.data,
+        organizationId,
+        Capability.LOOTLOG_TIMERS_READ,
+      )
     )
       return Effect.succeed(null);
 
@@ -432,7 +437,7 @@ export class NpcPresenceService {
       hasPermission(
         socket.data,
         organizationId,
-        Permission.LOOTLOG_TIMERS_WRITE,
+        Capability.LOOTLOG_TIMERS_WRITE,
       ),
     );
   }

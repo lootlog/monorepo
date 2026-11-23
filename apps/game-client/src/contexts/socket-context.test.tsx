@@ -74,7 +74,7 @@ describe("SocketProvider", () => {
     expect(command.data).toEqual({
       world: "alpha",
       character: expectedJoinData,
-      features: ["character-auras"],
+      features: ["character-auras", "hero-sighting-capabilities"],
     });
     expect(command.data).not.toHaveProperty("location");
     const requestId = command.requestId;
@@ -270,10 +270,7 @@ describe("SocketProvider", () => {
     expect(useGlobalStore.getState().socketState.joinedGuilds).toEqual([]);
   });
 
-  const refuseJoin = async (
-    test: ReturnType<typeof setup>,
-    message: string,
-  ) => {
+  const refuseJoin = async (test: ReturnType<typeof setup>, reason: string) => {
     act(() =>
       useGlobalStore.setState({ gameState: { gameInitialized: true } }),
     );
@@ -295,7 +292,12 @@ describe("SocketProvider", () => {
         v: 1,
         requestId: refusedRequestId,
         status: "error",
-        error: { code: "COMMAND_REJECTED", message, retryable: false },
+        error: {
+          code: "COMMAND_REJECTED",
+          reason,
+          message: "refused with reworded text",
+          retryable: false,
+        },
       }),
     );
     await waitFor(() =>
@@ -306,7 +308,7 @@ describe("SocketProvider", () => {
   it("tells the player why the gateway refused the session", async () => {
     const messages = captureRuntimeMessages();
     const test = setup();
-    await refuseJoin(test, "organization access denied");
+    await refuseJoin(test, "organization-access-denied");
 
     expect(messages).toEqual([
       "Serwer Lootloga odrzucił połączenie tej postaci. Nie masz już dostępu do tego Lootloga.",
@@ -316,7 +318,7 @@ describe("SocketProvider", () => {
   it("does not report a user without an Organization as a connection failure", async () => {
     const messages = captureRuntimeMessages();
     const test = setup();
-    await refuseJoin(test, "no authorized organizations");
+    await refuseJoin(test, "no-authorized-organizations");
 
     expect(messages).toEqual([]);
   });

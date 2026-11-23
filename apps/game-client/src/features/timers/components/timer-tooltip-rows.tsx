@@ -1,5 +1,5 @@
 import { cn } from "cn";
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import {
   TIMER_TOOLTIP_EXPANDED_MAX_ROWS,
@@ -57,9 +57,7 @@ export function TimerTooltipRows<Item>({
                   "ll-timer-tooltip-reveal-row",
                   getRowClassName?.(item),
                 )}
-                // SAFETY: CSSProperties has no index signature for custom
-                // properties; the reveal row animation reads this one.
-                style={{ "--ll-reveal-index": index } as CSSProperties}
+                style={{ "--ll-reveal-index": index }}
               >
                 {renderRow(item)}
               </li>

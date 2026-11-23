@@ -1,4 +1,11 @@
-import type { NpcTypeSoundConfig } from "@/lib/settings-persistence/use-sound-settings";
+import type {
+  NpcTypeSoundConfig,
+  SoundSettings,
+} from "@/lib/settings-persistence/use-sound-settings";
+
+export type SoundCategory = "notifications" | "detector" | "timers" | "pings";
+
+export type ConfigurableSoundCategory = Exclude<SoundCategory, "pings">;
 
 export const DEFAULT_SOUND_URLS = {
   message: "https://gordion.margonem.pl/sounds/new_mail.mp3",
@@ -23,7 +30,7 @@ const getDefaultSoundUrl = (key: string): string | undefined =>
 
 type SoundConfig = Readonly<Record<string, Partial<NpcTypeSoundConfig>>>;
 
-export const getFallbackSoundUrl = (
+const getFallbackSoundUrl = (
   config: SoundConfig | undefined,
   key: string,
 ): string | undefined =>
@@ -31,8 +38,30 @@ export const getFallbackSoundUrl = (
     ? resolveSoundUrl(config, "HERO")
     : getDefaultSoundUrl(key);
 
-export const resolveSoundUrl = (
+const resolveSoundUrl = (
   config: SoundConfig | undefined,
   key: string,
 ): string | undefined =>
   config?.[key]?.soundUrl || getFallbackSoundUrl(config, key);
+
+export const getCategoryFallbackSoundUrl = (
+  category: ConfigurableSoundCategory,
+  config: SoundConfig | undefined,
+  key: string,
+): string | undefined =>
+  category === "timers"
+    ? DEFAULT_SOUND_URLS.timerReady
+    : getFallbackSoundUrl(config, key);
+
+export const resolveCategorySoundUrl = (
+  settings: SoundSettings,
+  category: SoundCategory,
+  key: string,
+): string | undefined => {
+  if (category === "pings") return getDefaultSoundUrl(key);
+  const config = settings[`${category}Config`];
+
+  return (
+    config[key]?.soundUrl || getCategoryFallbackSoundUrl(category, config, key)
+  );
+};

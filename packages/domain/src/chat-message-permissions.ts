@@ -1,8 +1,5 @@
-import {
-  AccessRequirement,
-  Capability,
-  createAccessPolicy,
-} from "./access-policy.js";
+import { Capability } from "@lootlog/schema/permissions";
+import { AccessRequirement, createAccessPolicy } from "./access-policy.js";
 
 type ChatMessageViewer = {
   readonly discordId: string;

@@ -1,10 +1,8 @@
 import { and, eq, gte, inArray, sql } from "drizzle-orm";
 import type { MessagingError } from "@lootlog/messaging";
-import { Clock, Effect, Schema } from "effect";
-import { TaggedError as TaggedErrorClass } from "effect/Schema";
+import { Clock, Effect } from "effect";
 import type { RedisError } from "effect/persistence/Redis";
 import type { RedisService } from "#src/redis/redis.service";
-import type { OutboundHttpFailure } from "#src/shared/http/outbound-http";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   memberKillTotalTable,
@@ -26,9 +24,7 @@ import {
 } from "#src/database/drizzle/notification.schema";
 import {
   characterAuraTable,
-  userCharacterAuraGameAccountTable,
   userCharacterAuraGrantTable,
-  userCharacterAuraTable,
   userCharactersLootlogSettingsTable,
   userMargonemAccountTable,
   userPersonalCharacterAuraGrantTable,
@@ -59,11 +55,6 @@ import {
   AccountOrganizationOperationError,
 } from "#src/guilds/account-organization-data";
 
-export class BattlelogCleanupFailed extends TaggedErrorClass<
-  BattlelogCleanupFailed,
-  { readonly brand: unique symbol }
->()("BattlelogCleanupFailed", { status: Schema.Finite }) {}
-
 type RemovedMember = {
   readonly discordId: string;
   readonly guildId: string;
@@ -71,9 +62,9 @@ type RemovedMember = {
 };
 
 export interface UserAccountDeletionPorts {
-  readonly cleanupBattlelog: (
+  readonly requestBattlelogDeletion: (
     userId: string,
-  ) => Effect.Effect<void, BattlelogCleanupFailed | OutboundHttpFailure>;
+  ) => Effect.Effect<void, MessagingError>;
   readonly deleteCacheKey: (key: string) => Effect.Effect<void, RedisError>;
   readonly invalidateCacheScopes: RedisService["invalidateScopes"];
   readonly deleteCachePattern: (
@@ -165,17 +156,11 @@ const deletePersistedAccount = (
         .delete(characterAuraTable)
         .where(eq(characterAuraTable.userId, identity.userId));
       yield* transaction
-        .delete(userCharacterAuraTable)
-        .where(eq(userCharacterAuraTable.userId, identity.userId));
-      yield* transaction
         .delete(userCharacterAuraGrantTable)
         .where(eq(userCharacterAuraGrantTable.userId, identity.userId));
       yield* transaction
         .delete(userPersonalCharacterAuraGrantTable)
         .where(eq(userPersonalCharacterAuraGrantTable.userId, identity.userId));
-      yield* transaction
-        .delete(userCharacterAuraGameAccountTable)
-        .where(eq(userCharacterAuraGameAccountTable.userId, identity.userId));
       yield* transaction
         .delete(userMargonemAccountTable)
         .where(eq(userMargonemAccountTable.userId, identity.userId));
@@ -297,7 +282,7 @@ export const makeUserAccountDeletion = (
   const deleteAccount = Effect.fn("deleteAccount")(function* (
     identity: AuthenticatedIdentity,
   ) {
-    yield* ports.cleanupBattlelog(identity.userId).pipe(
+    yield* ports.requestBattlelogDeletion(identity.userId).pipe(
       Effect.mapError(
         () =>
           new DependencyUnavailableError({
