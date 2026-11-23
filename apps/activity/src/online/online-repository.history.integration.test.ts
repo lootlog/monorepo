@@ -429,9 +429,20 @@ describe("compacted online interval keys", () => {
   });
 
   it("merges a segment recorded under both id spellings before compaction and extends it on redelivery", async () => {
-    const intervals = await harness.runAt(
+    const { compacted, redelivered } = await harness.runAt(
       "2026-09-02T00:00:00Z",
       Effect.gen(function* () {
+        const sql = yield* PgClient.PgClient;
+
+        const read = sql<{
+          segmentStartedAt: string;
+          endedAt: string;
+          world: string | null;
+        }>`SELECT "segmentStartedAt"::text AS "segmentStartedAt", "endedAt"::text AS "endedAt", "world"
+          FROM "UserOnlineInterval" WHERE "userId" = ${legacy.userId}`;
+
+        const compacted = yield* read;
+
         const repo = yield* OnlineRepository;
         yield* repo.ingest({
           ...legacy,
@@ -440,21 +451,25 @@ describe("compacted online interval keys", () => {
           observedAt: "2026-09-01T10:00:00Z",
         });
 
-        const sql = yield* PgClient.PgClient;
-
-        return yield* sql<{
-          segmentStartedAt: string;
-          endedAt: string;
-        }>`SELECT "segmentStartedAt"::text AS "segmentStartedAt", "endedAt"::text AS "endedAt"
-          FROM "UserOnlineInterval" WHERE "userId" = ${legacy.userId}`;
+        return { compacted, redelivered: yield* read };
       }).pipe(Effect.provide(harness.database)),
     );
 
-    expect(intervals).toEqual([
-      {
-        segmentStartedAt: "2026-09-01 08:00:00+00",
-        endedAt: "2026-09-01 10:00:00+00",
-      },
-    ]);
+    expect({ compacted, redelivered }).toEqual({
+      compacted: [
+        {
+          segmentStartedAt: "2026-09-01 08:00:00+00",
+          endedAt: "2026-09-01 09:30:00+00",
+          world: "luvia",
+        },
+      ],
+      redelivered: [
+        {
+          segmentStartedAt: "2026-09-01 08:00:00+00",
+          endedAt: "2026-09-01 10:00:00+00",
+          world: "luvia",
+        },
+      ],
+    });
   });
 });
