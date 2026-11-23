@@ -73,12 +73,16 @@ export const makeGuildKillActivityPublisher = (
         ),
       );
     },
-    Effect.timeout("2 seconds"),
-    Effect.catch(() =>
-      Effect.logWarning(
-        "Live guild kill publication failed; history remains available",
+    (publication, { guildId, world, npcId }) =>
+      publication.pipe(
+        Effect.timeout("2 seconds"),
+        Effect.catch((error) =>
+          Effect.logWarning(
+            "Live guild kill publication failed; history remains available",
+            { guildId, world, npcId, error },
+          ),
+        ),
       ),
-    ),
   );
 
 export const makeGuildKillActivityCleanup = (

@@ -94,6 +94,7 @@ export const buildUserFeedQuery = (
   const activity = guildKillActivityTable;
   const record = organizationLootRecordTable;
   const minute = sql`date_trunc('minute', ${activity.occurredAt})`;
+  const killMinuteKey = sql`${activity.world} || ':' || ${activity.npcId} || ':' || to_char(${minute}, 'YYYYMMDDHH24MI')`;
   const cutoffTimestamp = sql`${cutoff}::timestamptz at time zone 'UTC'`;
   let killSelection: SQL | undefined;
   let lootSelection: SQL | undefined;
@@ -132,15 +133,12 @@ export const buildUserFeedQuery = (
         npcId: activity.npcId,
         minute: minute.as("minute"),
         entryId:
-          sql`'kill:' || ${activity.guildId} || ':' || ${activity.world} || ':' || ${activity.npcId} || ':' || to_char(${minute}, 'YYYYMMDDHH24MI')`.as(
+          sql`'kill:' || ${activity.guildId} || ':' || ${killMinuteKey}`.as(
             "entry_id",
           ),
         occurredAt: sql`max(${activity.occurredAt})`.as("occurred_at"),
         count: sql`count(*)::int`.as("count"),
-        groupKey:
-          sql`'kill:' || ${activity.world} || ':' || ${activity.npcId} || ':' || md5(string_agg(to_char(${activity.occurredAt}, 'YYYY-MM-DD"T"HH24:MI:SS.MS'), ',' order by ${activity.occurredAt}))`.as(
-            "group_key",
-          ),
+        groupKey: sql`'kill:' || ${killMinuteKey}`.as("group_key"),
         name: sql`(array_agg(${activity.npcName} order by ${activity.occurredAt} desc, ${activity.id} desc))[1]`.as(
           "name",
         ),

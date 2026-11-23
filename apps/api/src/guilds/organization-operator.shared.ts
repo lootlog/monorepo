@@ -4,7 +4,7 @@ import type {
   OrganizationAuditEntry,
   OrganizationOperatorAction,
 } from "@lootlog/schema/admin-organizations";
-import { type SQL, and, count, eq, isNotNull, isNull, sql } from "drizzle-orm";
+import { type SQL, and, eq, isNotNull, isNull, sql } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { ApiDatabase } from "#src/database/drizzle/database";

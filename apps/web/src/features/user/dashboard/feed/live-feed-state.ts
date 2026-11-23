@@ -107,7 +107,13 @@ export function groupFeedItems(items: FeedItems): FeedGroup[] {
               : latest,
           entries[0]?.occurredAt ?? "",
         ),
-        kill: entries.find((entry) => entry.type === "kill"),
+        kill: entries
+          .filter((entry) => entry.type === "kill")
+          .reduce<FeedKill | undefined>(
+            (largest, entry) =>
+              largest && largest.count >= entry.count ? largest : entry,
+            undefined,
+          ),
         loots: [...loots.values()],
         organizations: [...organizations.values()],
         entryIds: entries.map((entry) => entry.id),

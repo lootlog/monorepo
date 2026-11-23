@@ -58,7 +58,7 @@ describe("personal Organization activity feed", () => {
     );
     expect((await run(makeUserFeed(database)(reader))).items).toEqual([]);
   });
-  it("groups only identical kill event sets and limits groups without dropping organizations", async () => {
+  it("merges one NPC kill reported by several organizations within a minute and limits groups without dropping organizations", async () => {
     const { guild, owner } = await seed();
     const other = await seed();
     await run(
@@ -96,12 +96,27 @@ describe("personal Organization activity feed", () => {
       }),
     );
 
-    const distinct = (await run(makeUserFeed(database)(owner))).items.filter(
-      (item) => item.npc?.id === 100,
+    await run(
+      kill(guild.id, {
+        npcId: 101,
+        occurredAt: new Date(recent.getTime() + 59000),
+      }),
+    );
+    await run(
+      kill(other.guild.id, {
+        npcId: 101,
+        occurredAt: new Date(recent.getTime() + 61000),
+      }),
     );
 
-    expect(distinct).toHaveLength(2);
-    expect(distinct[0]?.groupKey).not.toBe(distinct[1]?.groupKey);
+    const items = (await run(makeUserFeed(database)(owner))).items;
+    const sameMinute = items.filter((item) => item.npc?.id === 100);
+    const nextMinute = items.filter((item) => item.npc?.id === 101);
+
+    expect(sameMinute).toHaveLength(2);
+    expect(sameMinute[0]?.groupKey).toBe(sameMinute[1]?.groupKey);
+    expect(nextMinute).toHaveLength(2);
+    expect(nextMinute[0]?.groupKey).not.toBe(nextMinute[1]?.groupKey);
   });
   it("selects twenty groups after aggregation and uses the same tie order as the final feed", async () => {
     const { guild, owner } = await seed();
