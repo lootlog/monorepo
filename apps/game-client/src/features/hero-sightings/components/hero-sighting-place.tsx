@@ -2,7 +2,6 @@ import { cn } from "cn";
 import { useTranslation } from "react-i18next";
 import type { HeroSightingResponseDto } from "@lootlog/client/main";
 import { isHeroSightingStale } from "@lootlog/domain/hero-sightings";
-import { TruncatedText } from "@/components/truncated-text";
 
 type HeroSightingPlaceProps = {
   sighting: Pick<
@@ -28,23 +27,25 @@ export function HeroSightingPlace({
       : null;
 
   return (
-    <span className="ll:flex ll:min-w-0 ll:items-baseline ll:gap-1">
-      <span className="ll:shrink-0 ll:font-normal ll:text-muted-foreground">
-        {t(`state.${sighting.state}`)}
+    <span className="ll:flex ll:min-w-0 ll:items-baseline ll:justify-between ll:gap-1">
+      <span className="ll:min-w-0 ll:flex-1 ll:break-words">
+        <span className="ll:font-normal ll:text-muted-foreground">
+          {t(`state.${sighting.state}`)}{" "}
+        </span>
+        <span
+          className={
+            isCurrent && sighting.state === "SPAWNING"
+              ? "ll:text-green-300"
+              : "ll:text-white"
+          }
+        >
+          {sighting.mapName}
+        </span>
       </span>
-      <TruncatedText
-        className={
-          isCurrent && sighting.state === "SPAWNING"
-            ? "ll:text-green-300"
-            : "ll:text-white"
-        }
-      >
-        {sighting.mapName}
-      </TruncatedText>
       {status ? (
         <span
           className={cn(
-            "ll:ml-auto ll:shrink-0",
+            "ll:shrink-0",
             sighting.closeReason ? "ll:text-red-400" : "ll:text-orange-300",
           )}
         >

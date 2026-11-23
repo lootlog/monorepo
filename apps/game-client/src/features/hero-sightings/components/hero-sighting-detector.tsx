@@ -1,32 +1,36 @@
 import { cn } from "cn";
 import { useTranslation } from "react-i18next";
 import type { HeroSightingMemberDto } from "@lootlog/client/main";
-import { MemberAvatar } from "@/components/member-avatar";
-import { heroSightingDetectorClassName } from "@/features/hero-sightings/hero-sighting-detector-style";
+import { TruncatedText } from "@/components/truncated-text";
+import type { HeroSightingMemberColors } from "@/features/hero-sightings/hooks/use-hero-sighting-member-colors";
 
 export function HeroSightingDetector({
   member,
   manual,
+  memberColors,
+  className,
 }: {
   member: HeroSightingMemberDto;
   manual: boolean;
+  memberColors: HeroSightingMemberColors;
+  className?: string;
 }) {
   const { t } = useTranslation("heroSightings");
+  const color = memberColors.get(member.memberId) ?? "FFF";
 
   return (
     <span
       className={cn(
-        heroSightingDetectorClassName,
-        "ll:flex ll:min-w-0 ll:shrink-0 ll:items-center ll:gap-1",
+        "ll:flex ll:min-w-0 ll:items-baseline ll:gap-1 ll:overflow-hidden ll:font-normal",
+        className,
       )}
     >
-      <MemberAvatar name={member.displayName} avatarUrl={member.avatarUrl} />
-      <span className="ll:sr-only">
-        {t(manual ? "addedBy" : "detectedBy", { name: member.displayName })}
+      <span className="ll:shrink-0 ll:text-muted-foreground">
+        {t(manual ? "addedByLabel" : "detectedByLabel")}
       </span>
-      <span aria-hidden="true" className="ll:max-w-24 ll:truncate">
-        {member.displayName}
-      </span>
+      <TruncatedText className="ll:font-semibold">
+        <span style={{ color: `#${color}` }}>{member.displayName}</span>
+      </TruncatedText>
     </span>
   );
 }

@@ -8,6 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { AddHeroSightingPanel } from "@/features/hero-sightings/components/add-hero-sighting-panel";
 import { HeroDetectionNotice } from "@/features/hero-sightings/components/hero-detection-notice";
 import { HeroSightingsList } from "@/features/hero-sightings/components/hero-sightings-list";
+import { useHeroSightingMemberColors } from "@/features/hero-sightings/hooks/use-hero-sighting-member-colors";
 import { useHeroSightingRows } from "@/features/hero-sightings/hooks/use-hero-sighting-rows";
 import { useHeroSightingWriteAccess } from "@/features/hero-sightings/hooks/use-hero-sighting-write-access";
 import { useTimersWorld } from "@/features/timers/hooks/use-timers-world";
@@ -33,12 +34,15 @@ export const HeroSightingsWindow = ({ isOpen }: HeroSightingsWindowProps) => {
   const { world } = useTimersWorld();
   const [addOpen, setAddOpen] = useState(false);
 
-  const writableGuildIds = useHeroSightingWriteAccess([
+  const relevantGuildIds = [
     ...new Set([
       ...sightings.map((sighting) => sighting.guildId),
       ...(ownDetection?.sightings.map((sighting) => sighting.guildId) ?? []),
     ]),
-  ]);
+  ];
+
+  const writableGuildIds = useHeroSightingWriteAccess(relevantGuildIds);
+  const memberColors = useHeroSightingMemberColors(relevantGuildIds);
 
   return (
     <DraggableWindow
@@ -87,6 +91,7 @@ export const HeroSightingsWindow = ({ isOpen }: HeroSightingsWindowProps) => {
                 rows={rows}
                 userId={userId}
                 writableGuildIds={writableGuildIds}
+                memberColors={memberColors}
               />
             </ScrollArea>
           </AsyncContent>
