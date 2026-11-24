@@ -124,6 +124,7 @@ const messages = {
     },
     slotBlocked: "Zajęte przez broń dwuręczną",
     comparedWith: "Założony w zestawie",
+    lostStats: "Tracisz względem założonego",
     openItem: "Otwórz stronę przedmiotu",
     takeOff: "Zdejmij",
   },
