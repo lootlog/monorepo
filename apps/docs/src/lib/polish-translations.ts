@@ -11,26 +11,7 @@ export const docsTranslations = {
     menu: "Menu",
     navigation: "Nawigacja",
     section: "Dokumentacja",
-    sites: "Serwisy Lootlog",
     skipToContent: "Przejdź do treści",
-  },
-  siteNames: {
-    lootlog: "Lootlog",
-    docs: "Dokumentacja",
-    wiki: "Wiki",
-    developer: "Dla programistów",
-    github: "GitHub",
-    discord: "Discord",
-  },
-  footer: {
-    brand: "Lootlog",
-    copyright: (year: number) => `© ${year} Lootlog · open source`,
-    legalNotice:
-      "Grafiki wykorzystane na stronie są własnością Garmory sp. z o.o.",
-    navigation: "Linki w stopce",
-    privacy: "Prywatność",
-    tagline: "Darmowy dodatek open source do Margonem dla graczy i klanów.",
-    terms: "Regulamin",
   },
   status: {
     backHome: "Wróć do dokumentacji",

@@ -2,7 +2,6 @@ import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { RootProvider } from "fumadocs-ui/provider/tanstack";
 import { DocsError } from "@/components/docs-error";
-import { DocsFooter } from "@/components/docs-footer";
 import { DocsHeader } from "@/components/docs-header";
 import { DocsNotFound } from "@/components/docs-not-found";
 import { DocsSearchDialog } from "@/components/docs-search-dialog";
@@ -58,7 +57,6 @@ function RootDocument({ children }: { children: ReactNode }) {
           >
             {children}
           </div>
-          <DocsFooter />
         </RootProvider>
         <Scripts />
       </body>

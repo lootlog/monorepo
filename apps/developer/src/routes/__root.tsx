@@ -5,7 +5,6 @@ import { Toaster } from "@lootlog/ui/components/sonner";
 import { preventIosFocusZoom } from "@lootlog/ui/lib/ios-focus-zoom";
 import { portalText } from "@/lib/translations";
 import { DeveloperError } from "@/components/developer-error";
-import { DeveloperFooter } from "@/components/developer-footer";
 import { DeveloperNotFound } from "@/components/developer-not-found";
 import { PortalNav } from "@/components/portal-nav";
 import {
@@ -74,7 +73,6 @@ function RootComponent({ children }: { children: ReactNode }) {
           >
             {children}
           </div>
-          <DeveloperFooter />
           <Toaster toastOptions={{ closeButtonAriaLabel: portalText.close }} />
         </RootProvider>
         <Scripts />
