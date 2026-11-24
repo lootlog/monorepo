@@ -10,22 +10,19 @@ import { PageBreadcrumbs } from "@/components/article/page-breadcrumbs";
 import { NpcPortrait } from "@/components/common/npc-portrait";
 import { PortalPageHeader } from "@lootlog/ui/components/portal-page-header";
 import { t } from "@/i18n/messages";
-import { WIKI_GAME_VERSION } from "@/lib/catalog-links";
 import { isHeroTrackersEvent } from "@/lib/hero-trackers";
 import { prefetchPageQueries } from "@/lib/catalog-page-queries";
-import { eventSubtitle } from "@/lib/item-events";
+import { WIKI_EVENTS_QUERY, eventSubtitle } from "@/lib/item-events";
 import { canonicalLink } from "@/lib/link-preview";
 import { formatNumber } from "@lootlog/domain/locale";
 import { Card } from "@lootlog/ui/components/card";
-
-const EVENTS_QUERY = { gameVersion: WIKI_GAME_VERSION } as const;
 
 export const Route = createFileRoute("/events")({
   component: EventsRoute,
   loader: ({ context: { queryClient } }) =>
     prefetchPageQueries(
       queryClient.prefetchQuery(
-        getCatalogControllerGetEventsQueryOptions(EVENTS_QUERY),
+        getCatalogControllerGetEventsQueryOptions(WIKI_EVENTS_QUERY),
       ),
     ),
   head: () => ({
@@ -39,7 +36,7 @@ const HERO_TRACKERS_SECTION = "hero-trackers";
 const EVENT_GRID = "grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-3";
 
 function EventsRoute() {
-  const { data, isError } = useCatalogControllerGetEvents(EVENTS_QUERY);
+  const { data, isError } = useCatalogControllerGetEvents(WIKI_EVENTS_QUERY);
 
   const sections = orderBy(
     Object.entries(

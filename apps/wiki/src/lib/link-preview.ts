@@ -17,7 +17,7 @@ import {
   mapStatsToDisplaySections,
 } from "@lootlog/ui/components/item-stat-utils";
 import {
-  ITEM_RARITIES_BY_VALUE,
+  itemRarityRank,
   type DisplayItemRarity,
   resolveItemRarity,
 } from "@lootlog/domain/item-rarity";
@@ -136,9 +136,7 @@ export const npcLinkPreview = (
       ),
   );
 
-  const valuable = sortBy(current, [
-    (item) => ITEM_RARITIES_BY_VALUE.indexOf(resolveItemRarity(item.rarity)),
-  ]);
+  const valuable = sortBy(current, [({ rarity }) => itemRarityRank(rarity)]);
 
   return {
     title: npc.name,

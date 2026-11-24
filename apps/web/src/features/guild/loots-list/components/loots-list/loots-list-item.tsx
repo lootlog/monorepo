@@ -9,7 +9,8 @@ import {
 import { LootPresentation } from "./loot-presentation";
 import { LootHeaderActions } from "./loot-header-actions";
 import { LootItemStackLootIdContext } from "./loot-item-stack-context";
-import { LegendarySparks } from "./legendary-sparks";
+import { EmberSparks } from "@lootlog/ui/components/ember-sparks";
+import "./legendary-loot.css";
 import { LootItemDraw } from "@/features/guild/loots-list/components/loot-draw/loot-item-draw";
 import { isLootDrawItem } from "@lootlog/domain/loot-draw";
 
@@ -42,7 +43,7 @@ export const LootsListItem = ({
         hasLegendaryItem && "loot-legendary",
       )}
     >
-      {hasLegendaryItem && <LegendarySparks seed={loot.id} />}
+      {hasLegendaryItem && <EmberSparks seed={loot.id} />}
       <LootItemStackLootIdContext value={loot.id}>
         <LootPresentation
           loot={loot}

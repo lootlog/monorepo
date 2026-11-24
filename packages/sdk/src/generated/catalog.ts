@@ -265,7 +265,7 @@ export interface CatalogEventDtoOutput {
  * Public catalog events
  */
 export interface CatalogEventsResponseDtoOutput {
-  /** The latest year first, then by name. */
+  /** The latest edition first, by the day it ends; events without a year last, by name. */
   events: CatalogEventDtoOutput[];
 }
 

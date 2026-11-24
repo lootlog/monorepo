@@ -6,6 +6,9 @@ import {
 import { itemStatValue } from "@lootlog/domain/item-stat";
 import { t } from "@/i18n/messages";
 import { isHeroTrackersEvent } from "@/lib/hero-trackers";
+import { WIKI_GAME_VERSION } from "@/lib/catalog-links";
+
+export const WIKI_EVENTS_QUERY = { gameVersion: WIKI_GAME_VERSION } as const;
 
 export const itemEvents = (stat: string) =>
   itemEventLabels(itemStatValue(stat, "etiquette") ?? "");

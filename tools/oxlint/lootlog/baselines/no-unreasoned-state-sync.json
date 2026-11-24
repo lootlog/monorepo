@@ -149,7 +149,6 @@
   "apps/web/src/features/guild/loots-list/components/loots-filters/loots-filters-sidebar.tsx": 1,
   "apps/web/src/features/guild/loots-list/components/loots-list/use-item-stack-expansion.ts": 2,
   "apps/web/src/features/guild/loots-list/components/loots-list/use-live-loot-list.ts": 2,
-  "apps/web/src/features/guild/loots-list/components/loots-list/use-pause-sparks-while-scrolling.ts": 1,
   "apps/web/src/features/guild/notifications/components/notification-job-countdown.tsx": 1,
   "apps/web/src/features/guild/notifications/components/use-notification-template-editor.ts": 2,
   "apps/web/src/features/guild/notifications/hooks/use-notification-rule-form.ts": 1,

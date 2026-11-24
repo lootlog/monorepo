@@ -408,7 +408,8 @@ export type CatalogEventsResponseDto_Output =
 
 export const CatalogEventsResponseDto_Output = Schema.Struct({
   events: Schema.Array(CatalogEventDto_Output).annotate({
-    description: "The latest year first, then by name.",
+    description:
+      "The latest edition first, by the day it ends; events without a year last, by name.",
   }),
 }).annotate({
   description: "Public catalog events",

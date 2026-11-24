@@ -20,6 +20,7 @@ const onScroll = () => {
 };
 
 export const usePauseSparksWhileScrolling = () => {
+  // oxlint-disable-next-line lootlog/no-unreasoned-state-sync -- holds one shared capturing document scroll listener while any ember is mounted
   useEffect(() => {
     mountedSparks += 1;
 

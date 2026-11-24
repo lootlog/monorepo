@@ -21,3 +21,6 @@ export const resolveItemRarity = (
 ): DisplayItemRarity =>
   Object.values(DisplayItemRarity).find((rarity) => rarity === value) ??
   DisplayItemRarity.COMMON;
+
+export const itemRarityRank = (value: string | null | undefined) =>
+  ITEM_RARITIES_BY_VALUE.indexOf(resolveItemRarity(value));

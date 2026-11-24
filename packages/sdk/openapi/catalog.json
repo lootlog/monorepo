@@ -1131,7 +1131,7 @@
             "items": {
               "$ref": "#/components/schemas/CatalogEventDto_Output"
             },
-            "description": "The latest year first, then by name."
+            "description": "The latest edition first, by the day it ends; events without a year last, by name."
           }
         },
         "required": ["events"],

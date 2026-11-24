@@ -3,6 +3,13 @@ title: Contract changelog
 description: Every change to the HTTP, realtime and game client contracts, by the date it reached production.
 ---
 
+## 2026-11-24 — Catalog events in calendar order
+
+`GET /public/catalog/events` lists events by when each edition ends, the
+latest first, instead of by year and then by name, so Halloween comes before
+Grzybobranie of the same year. Events without a year, such as hero days, come
+last, by name. The response fields are unchanged.
+
 ## 2026-11-21 — NPC map tiles
 
 - `POST /loots` accepts an optional `npcs[].mapId` with the existing optional

@@ -27,13 +27,13 @@ export function HomeSearch() {
   return (
     <form
       role="search"
-      className="flex w-full max-w-2xl gap-2"
+      className="flex w-full max-w-xl gap-2"
       onSubmit={handleSubmit}
     >
       <label htmlFor={inputId} className="sr-only">
         {t("home.searchLabel")}
       </label>
-      <InputGroup className="h-10 flex-1 bg-background/60">
+      <InputGroup className="h-12 flex-1 bg-background/70 backdrop-blur">
         <InputGroupAddon>
           <Search aria-hidden="true" />
         </InputGroupAddon>
@@ -43,9 +43,10 @@ export function HomeSearch() {
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder={t("home.searchPlaceholder")}
+          className="text-base"
         />
       </InputGroup>
-      <Button type="submit" size="lg">
+      <Button type="submit" size="lg" className="h-12 px-5">
         {t("home.searchSubmit")}
       </Button>
     </form>
