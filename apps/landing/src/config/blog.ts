@@ -1,4 +1,6 @@
+import { PUBLIC_SITE_ORIGINS } from "@lootlog/domain/public-sites";
 import translations from "../i18n/translations/landing.json" with { type: "json" };
+import { landingPageHead } from "./page-head";
 
 export const blogPosts = (
   [
@@ -59,25 +61,27 @@ export function blogPageHead({
   path: string;
   post?: BlogPost;
 }) {
-  const image = "https://lootlog.pl/brand/lootlog-icon-512.png";
+  const head = landingPageHead({
+    path,
+    title,
+    documentTitle: `${title} | Lootlog`,
+    description,
+    type: post ? "article" : "website",
+    image: post
+      ? {
+          url: `${PUBLIC_SITE_ORIGINS.web}${post.preview}`,
+          width: post.previewWidth,
+          height: post.previewHeight,
+          alt: post.title,
+        }
+      : undefined,
+  });
 
   return {
+    ...head,
     meta: [
-      { title: `${title} | Lootlog` },
-      { name: "description", content: description },
+      ...head.meta,
       { name: "author", content: post?.author ?? translations.blog.author },
-      { property: "og:title", content: title },
-      { property: "og:description", content: description },
-      { property: "og:type", content: post ? "article" : "website" },
-      { property: "og:url", content: `https://lootlog.pl${path}` },
-      { property: "og:image", content: image },
-      { property: "og:image:alt", content: "Lootlog" },
-      { property: "og:image:width", content: "512" },
-      { property: "og:image:height", content: "512" },
-      { name: "twitter:card", content: "summary" },
-      { name: "twitter:title", content: title },
-      { name: "twitter:description", content: description },
-      { name: "twitter:image", content: image },
       ...(post
         ? [
             { property: "article:published_time", content: post.publishedAt },
@@ -86,6 +90,5 @@ export function blogPageHead({
           ]
         : []),
     ],
-    links: [{ rel: "canonical", href: `https://lootlog.pl${path}` }],
   };
 }

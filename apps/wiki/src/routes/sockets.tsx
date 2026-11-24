@@ -19,6 +19,7 @@ import { ChestCard } from "@/components/sockets/chest-card";
 import { SymbolCard } from "@/components/sockets/symbol-card";
 import { socketItemsQuery } from "@/hooks/use-socket-items";
 import { t } from "@/i18n/messages";
+import { wikiPageHead } from "@/lib/link-preview";
 import { MECHANICS_DOCUMENTATION_URL } from "@/lib/calculators";
 import { prefetchPageQueries } from "@/lib/catalog-page-queries";
 import { formatGold } from "@/lib/upgrade-cost-format";
@@ -33,9 +34,12 @@ export const Route = createFileRoute("/sockets")({
         getCatalogControllerGetItemsQueryOptions(socketItemsQuery),
       ),
     ),
-  head: () => ({
-    meta: [{ title: `${t("socket.page.metaTitle")} | ${t("meta.title")}` }],
-  }),
+  head: () =>
+    wikiPageHead({
+      path: "/sockets",
+      title: t("socket.page.metaTitle"),
+      description: t("socket.page.description"),
+    }),
 });
 
 function SocketsRoute() {

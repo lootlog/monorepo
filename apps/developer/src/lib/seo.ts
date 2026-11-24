@@ -1,4 +1,7 @@
-import { PUBLIC_SITE_ORIGINS } from "@lootlog/domain/public-sites";
+import {
+  PUBLIC_SITE_ORIGINS,
+  publicPageHead,
+} from "@lootlog/domain/public-sites";
 import ogImage from "@/assets/og-image.png?no-inline";
 import { portalText } from "@/lib/translations";
 
@@ -15,32 +18,22 @@ export function pageHead({
   noindex?: boolean;
   type?: "website" | "article";
 }) {
-  const url = `${PUBLIC_SITE_ORIGINS.developer}${path}`;
-
   const fullTitle =
     title === portalText.title ? title : `${title} | ${portalText.title}`;
 
-  const image = `${PUBLIC_SITE_ORIGINS.developer}${ogImage}`;
-
-  return {
-    meta: [
-      { title: fullTitle },
-      { name: "description", content: description },
-      ...(noindex ? [{ name: "robots", content: "noindex, follow" }] : []),
-      { property: "og:type", content: type },
-      { property: "og:site_name", content: portalText.title },
-      { property: "og:title", content: fullTitle },
-      { property: "og:description", content: description },
-      { property: "og:url", content: url },
-      { property: "og:image", content: image },
-      { property: "og:image:width", content: "1200" },
-      { property: "og:image:height", content: "630" },
-      { property: "og:image:alt", content: portalText.ogImageAlt },
-      { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: fullTitle },
-      { name: "twitter:description", content: description },
-      { name: "twitter:image", content: image },
-    ],
-    links: [{ rel: "canonical", href: url }],
-  };
+  return publicPageHead({
+    url: `${PUBLIC_SITE_ORIGINS.developer}${path}`,
+    siteName: portalText.title,
+    title: fullTitle,
+    description,
+    image: {
+      url: `${PUBLIC_SITE_ORIGINS.developer}${ogImage}`,
+      width: 1200,
+      height: 630,
+      alt: portalText.ogImageAlt,
+    },
+    type,
+    locale: "en_US",
+    noindex,
+  });
 }

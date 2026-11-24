@@ -41,6 +41,7 @@ export default defineConfig({
       prerender: {
         failOnError: true,
         crawlLinks: false,
+        autoSubfolderIndex: false,
       },
       sitemap: {
         enabled: false,

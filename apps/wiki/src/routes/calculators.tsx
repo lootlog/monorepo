@@ -17,6 +17,7 @@ import { TransferCostCalculator } from "@/components/calculators/transfer-cost-c
 import { UnbindCostCalculator } from "@/components/calculators/unbind-cost-calculator";
 import { PortalPageHeader } from "@lootlog/ui/components/portal-page-header";
 import { t } from "@/i18n/messages";
+import { wikiPageHead } from "@/lib/link-preview";
 
 const CALCULATORS: Record<CalculatorId, () => React.JSX.Element> = {
   "unik-i-blok": DefenceChanceCalculator,
@@ -32,9 +33,12 @@ const CALCULATORS: Record<CalculatorId, () => React.JSX.Element> = {
 
 export const Route = createFileRoute("/calculators")({
   component: CalculatorsRoute,
-  head: () => ({
-    meta: [{ title: `${t("calculators.metaTitle")} | ${t("meta.title")}` }],
-  }),
+  head: () =>
+    wikiPageHead({
+      path: "/calculators",
+      title: t("calculators.metaTitle"),
+      description: t("meta.calculatorsDescription"),
+    }),
   validateSearch: (search: {
     calculator?: unknown;
   }): { calculator?: CalculatorId } =>
