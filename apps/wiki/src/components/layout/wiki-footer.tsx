@@ -19,16 +19,23 @@ const legalLinks = [
 
 const copyrightYear = new Date().getFullYear();
 
-export function WikiFooter() {
+export function WikiFooter({
+  containerClassName,
+}: {
+  containerClassName: string;
+}) {
   return (
     <PortalFooter
       site="wiki"
       home={<Link to="/" />}
+      containerClassName={containerClassName}
       legalLinks={legalLinks}
       labels={{
         brand: t("header.brand"),
         tagline: t("footer.tagline"),
         navigation: t("footer.navigation"),
+        sites: t("footer.sites"),
+        community: t("footer.community"),
         copyright: t("footer.copyright", { year: copyrightYear }),
         legalNotice: t("footer.legalNotice"),
         siteNames: wikiSiteNames,
