@@ -56,6 +56,8 @@ const messages = {
   footer: {
     tagline: "Darmowy dodatek open source do Margonem dla graczy i klanów.",
     navigation: "Linki w stopce",
+    sites: "Serwisy Lootlog",
+    community: "Społeczność",
     copyright: "© {{year}} Lootlog · open source",
     legalNotice:
       "Grafiki wykorzystane na stronie są własnością Garmory sp. z o.o.",

@@ -14,6 +14,11 @@ export function WikiLayout({ children }: { children: ReactNode }) {
   const docksSet = !PAGES_WITHOUT_DOCK.has(pathname);
   const isFullWidth = FULL_WIDTH_PAGES.has(pathname);
 
+  const containerClassName = cn(
+    "px-4 md:px-6",
+    !isFullWidth && "max-w-[100rem]",
+  );
+
   return (
     <div
       className={cn(
@@ -24,8 +29,9 @@ export function WikiLayout({ children }: { children: ReactNode }) {
       <WikiHeader />
       <div
         className={cn(
-          "mx-auto w-full flex-1 px-4 md:px-6",
-          !isFullWidth && "max-w-[100rem] pb-10",
+          "mx-auto w-full flex-1",
+          containerClassName,
+          !isFullWidth && "pb-10",
         )}
       >
         <main
@@ -36,7 +42,7 @@ export function WikiLayout({ children }: { children: ReactNode }) {
           {children}
         </main>
       </div>
-      <WikiFooter />
+      <WikiFooter containerClassName={containerClassName} />
       {docksSet ? <EquipmentSetDock /> : null}
     </div>
   );

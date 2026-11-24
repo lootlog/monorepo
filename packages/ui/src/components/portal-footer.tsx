@@ -1,4 +1,5 @@
 import { useRender } from "@base-ui/react/use-render";
+import { cn } from "cn";
 import type { ReactElement } from "react";
 import {
   otherPortalSites,
@@ -15,15 +16,23 @@ type PortalFooterLink = {
   render: ReactElement;
 };
 
+type PortalFooterColumn = {
+  title: string;
+  links: readonly PortalFooterLink[];
+};
+
 type PortalFooterProps = {
   site: PortalSiteId;
   home: ReactElement;
-  links?: readonly PortalFooterLink[];
+  containerClassName: string;
+  resources?: PortalFooterColumn;
   legalLinks: readonly PortalFooterLink[];
   labels: {
     brand: string;
     tagline: string;
     navigation: string;
+    sites: string;
+    community: string;
     copyright: string;
     legalNotice?: string;
     siteNames: PortalSiteLabels;
@@ -35,7 +44,8 @@ const footerLinkClassName = "inline-flex items-center gap-1 text-sm";
 export function PortalFooter({
   site,
   home,
-  links = [],
+  containerClassName,
+  resources,
   legalLinks,
   labels,
 }: PortalFooterProps) {
@@ -53,44 +63,62 @@ export function PortalFooter({
     },
   });
 
+  const portalSiteLinks = (thirdParty: boolean) =>
+    otherPortalSites(site)
+      .filter((portalSite) => portalSite.thirdParty === thirdParty)
+      .map((portalSite) => ({
+        id: portalSite.id,
+        label: labels.siteNames[portalSite.id],
+        render: <PortalSiteLink site={portalSite} />,
+      }));
+
+  const columns: readonly PortalFooterColumn[] = [
+    ...(resources ? [resources] : []),
+    { title: labels.sites, links: portalSiteLinks(false) },
+    { title: labels.community, links: portalSiteLinks(true) },
+  ];
+
   return (
     <footer className="border-t border-sidebar-border bg-sidebar">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-10 md:px-6">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between lg:gap-12">
+      <div className={cn("mx-auto w-full", containerClassName)}>
+        <div className="grid gap-10 py-12 md:grid-cols-[minmax(0,1fr)_auto] md:gap-16 lg:py-16">
           <div className="flex flex-col gap-3">
             <div>{brand}</div>
-            <p className="max-w-md text-sm/6 text-pretty text-muted-foreground">
+            <p className="max-w-sm text-sm/6 text-pretty text-muted-foreground">
               {labels.tagline}
             </p>
           </div>
-          <nav aria-label={labels.navigation}>
-            <ul className="flex flex-wrap items-center gap-x-6 gap-y-2">
-              {links.map((link) => (
-                <li key={link.id}>
-                  <TextLink
-                    className={footerLinkClassName}
-                    render={link.render}
-                  >
-                    {link.label}
-                  </TextLink>
-                </li>
-              ))}
-              {otherPortalSites(site).map((portalSite) => (
-                <li key={portalSite.id}>
-                  <TextLink
-                    className={footerLinkClassName}
-                    render={<PortalSiteLink site={portalSite} />}
-                  >
-                    {labels.siteNames[portalSite.id]}
-                  </TextLink>
-                </li>
-              ))}
-            </ul>
+          <nav
+            aria-label={labels.navigation}
+            className="grid grid-cols-2 gap-x-8 gap-y-10 sm:flex sm:gap-x-16 lg:gap-x-20"
+          >
+            {columns.map((column) => (
+              <div key={column.title} className="flex min-w-0 flex-col gap-4">
+                <h2 className="text-xs font-semibold text-foreground">
+                  {column.title}
+                </h2>
+                <ul className="flex flex-col gap-3">
+                  {column.links.map((link) => (
+                    <li key={link.id}>
+                      <TextLink
+                        className={footerLinkClassName}
+                        render={link.render}
+                      >
+                        {link.label}
+                      </TextLink>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </nav>
         </div>
-        <div className="flex flex-col gap-3 border-t border-sidebar-border pt-5 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-xs text-muted-foreground">{labels.copyright}</p>
-          <ul className="flex gap-6">
+        <div className="flex flex-col gap-4 border-t border-sidebar-border py-6 sm:flex-row sm:items-start sm:justify-between sm:gap-8">
+          <div className="flex flex-col gap-1 text-xs/5 text-muted-foreground">
+            <p>{labels.copyright}</p>
+            {labels.legalNotice && <p>{labels.legalNotice}</p>}
+          </div>
+          <ul className="flex shrink-0 gap-6">
             {legalLinks.map((link) => (
               <li key={link.id}>
                 <TextLink render={link.render}>{link.label}</TextLink>
@@ -98,11 +126,6 @@ export function PortalFooter({
             ))}
           </ul>
         </div>
-        {labels.legalNotice && (
-          <p className="-mt-5 text-xs/5 text-muted-foreground">
-            {labels.legalNotice}
-          </p>
-        )}
       </div>
     </footer>
   );

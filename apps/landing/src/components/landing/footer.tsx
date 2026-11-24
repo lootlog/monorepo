@@ -15,20 +15,26 @@ export function LandingFooter() {
     <PortalFooter
       site="lootlog"
       home={<Link to="/" />}
-      links={[
-        {
-          id: "blog",
-          label: t("landing.footer.blog"),
-          render: <Link to="/blog" />,
-        },
-        {
-          id: "support",
-          label: t("landing.footer.support"),
-          render: (
-            <PortalSiteLink site={{ href: links.support, thirdParty: true }} />
-          ),
-        },
-      ]}
+      containerClassName="landing-container"
+      resources={{
+        title: t("landing.footer.resourcesHeading"),
+        links: [
+          {
+            id: "blog",
+            label: t("landing.footer.blog"),
+            render: <Link to="/blog" />,
+          },
+          {
+            id: "support",
+            label: t("landing.footer.support"),
+            render: (
+              <PortalSiteLink
+                site={{ href: links.support, thirdParty: true }}
+              />
+            ),
+          },
+        ],
+      }}
       legalLinks={[
         {
           id: "privacy",
@@ -45,6 +51,8 @@ export function LandingFooter() {
         brand: t("landing.header.brand"),
         tagline: t("landing.footer.tagline"),
         navigation: t("landing.footer.navigationLabel"),
+        sites: t("landing.footer.sitesHeading"),
+        community: t("landing.footer.communityHeading"),
         copyright: t("landing.footer.copyright", { year: copyrightYear }),
         legalNotice: t("landing.footer.legalNotice"),
         siteNames,
