@@ -3,11 +3,11 @@
   --broadcast-ink-soft: var(--card);
   --broadcast-paper: var(--foreground);
   --broadcast-paper-ink: var(--background);
-  --broadcast-blue: var(--primary);
-  --broadcast-cyan: var(--signal-live);
-  --broadcast-lime: var(--signal-ready);
-  --broadcast-amber: var(--signal-timer);
-  --broadcast-coral: var(--signal-alert);
+  --broadcast-blue: oklch(0.7 0.17 262);
+  --broadcast-cyan: oklch(0.8 0.14 205);
+  --broadcast-lime: oklch(0.9 0.2 124);
+  --broadcast-amber: oklch(0.83 0.17 70);
+  --broadcast-coral: oklch(0.7 0.2 22);
   --broadcast-white: var(--foreground);
   --broadcast-error: color-mix(
     in oklab,
