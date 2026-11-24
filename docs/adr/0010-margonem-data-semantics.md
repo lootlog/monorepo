@@ -70,6 +70,7 @@ record each interpretation so it is not "fixed" back to a wrong reading.
 - **`SYMBOL_RECIPES`** (`packages/domain/src/item-socket.ts`): Recipes come from Margonem's forum list and are the same across level ranges; any other three components give a random symbol, and a socketed symbol carries its legendary bonus at the item's upgraded level. `OWN_ELEMENT_CHANCE` is 0.5 per the post-update chest rules, newer than the help page.
 - **`parseItemStatEntries`** (`packages/domain/src/item-stat.ts`): Each `;` entry splits at its first `=` and the last repeated key wins, matching the game's `parseItemStat`.
 - **`NON_LEGEND_ITEM_TYPES`** (`packages/domain/src/item-type.ts`): Legend lists and rankings exclude bless, upgrade, and consume items, because those drop as legendary consumables; legendary counters still count them.
+- **`characterStats`** (`apps/wiki/src/lib/character-stats.ts`): `poison=a,b` is a slow of `a / 100` attack speed and `b` damage, as the game's `SkillsParser` renders it and like `frost`; it is not a chance. A quiver's `pdmg` adds to the physical attack, because it is the quiver's weapon damage under the help page's item formula (`8 * 0.0303 * power`).
 - **`itemAttackSpeed`** (`packages/domain/src/attack-speed.ts`): Agility and all-attribute bonuses are valued at 0.002 per point, the rate past 100 agility, which trackers and hunters pass early.
 
 ### Events, worlds, and loot rolls

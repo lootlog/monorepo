@@ -71,6 +71,8 @@ type DamageRange = { min: number; max: number };
 
 type ChanceDamage = { chance: number; damage: number };
 
+type SlowingDamage = { slow: number; damage: number };
+
 export type CharacterStats = {
   hp: number;
   strength: number;
@@ -81,7 +83,7 @@ export type CharacterStats = {
   fire: DamageRange;
   frost: DamageRange;
   light: DamageRange;
-  poison: ChanceDamage;
+  poison: SlowingDamage;
   wound: ChanceDamage;
   attackSpeed: number;
   critChance: number;
@@ -121,7 +123,7 @@ type ItemSums = {
   fire: DamageRange;
   frost: DamageRange;
   light: DamageRange;
-  poison: ChanceDamage;
+  poison: SlowingDamage;
   wound: ChanceDamage;
 };
 
@@ -141,6 +143,76 @@ const chanceDamage = (numbers: readonly number[]): ChanceDamage => {
   return { chance: Math.max(0, chance), damage: Math.max(0, damage) };
 };
 
+const slowingDamage = (numbers: readonly number[]): SlowingDamage => ({
+  slow: numbers.length > 1 ? Math.max(0, numbers[0] ?? 0) : 0,
+  damage: Math.max(0, numbers.at(-1) ?? 0),
+});
+
+type AddEntry = (
+  sums: ItemSums,
+  numbers: readonly number[],
+  isOffhand: boolean,
+) => void;
+
+const DAMAGE_ENTRIES = new Map(
+  Object.entries({
+    dmg: (sums, numbers, isOffhand) => {
+      if (isOffhand) {
+        sums.offhandDamage = addRange(sums.offhandDamage, range(numbers));
+      } else {
+        sums.mainDamage = addRange(sums.mainDamage, range(numbers));
+      }
+    },
+    fire: (sums, numbers) => {
+      sums.fire = addRange(sums.fire, range(numbers));
+    },
+    light: (sums, numbers) => {
+      sums.light = addRange(sums.light, range(numbers));
+    },
+    frost: (sums, numbers) => {
+      const { damage } = slowingDamage(numbers);
+
+      sums.frost = addRange(sums.frost, { min: damage, max: damage });
+    },
+    poison: (sums, numbers, isOffhand) => {
+      if (isOffhand) return;
+
+      const effect = slowingDamage(numbers);
+
+      sums.poison = {
+        slow: sums.poison.slow + effect.slow,
+        damage: sums.poison.damage + effect.damage,
+      };
+    },
+    wound: (sums, numbers, isOffhand) => {
+      if (isOffhand) return;
+
+      const effect = chanceDamage(numbers);
+
+      sums.wound = {
+        chance: sums.wound.chance + effect.chance,
+        damage: sums.wound.damage + effect.damage,
+      };
+    },
+  } satisfies Record<string, AddEntry>),
+);
+
+const addSingleValue = (
+  sums: ItemSums,
+  key: string,
+  value: number,
+  isOffhand: boolean,
+) => {
+  if (key === "crit") {
+    if (isOffhand) sums.offhandCrit += value;
+    else sums.mainCrit += value;
+  } else if (key === "critval") {
+    if (!isOffhand) sums.mainCritValue += value;
+  } else {
+    sums.flat.set(key, (sums.flat.get(key) ?? 0) + value);
+  }
+};
+
 const sumItems = (wornItems: readonly WornItem[]): ItemSums => {
   const sums: ItemSums = {
     flat: new Map(),
@@ -152,7 +224,7 @@ const sumItems = (wornItems: readonly WornItem[]): ItemSums => {
     fire: { min: 0, max: 0 },
     frost: { min: 0, max: 0 },
     light: { min: 0, max: 0 },
-    poison: { chance: 0, damage: 0 },
+    poison: { slow: 0, damage: 0 },
     wound: { chance: 0, damage: 0 },
   };
 
@@ -161,43 +233,13 @@ const sumItems = (wornItems: readonly WornItem[]): ItemSums => {
 
     for (const { key, value } of parseItemStatEntries(item.stat)) {
       const numbers = statNumbers(value);
+      const addDamage = DAMAGE_ENTRIES.get(key);
+      const [single] = numbers;
 
-      if (numbers.length === 0) continue;
-
-      if (key === "dmg") {
-        if (isOffhand) {
-          sums.offhandDamage = addRange(sums.offhandDamage, range(numbers));
-        } else {
-          sums.mainDamage = addRange(sums.mainDamage, range(numbers));
-        }
-      } else if (key === "fire") {
-        sums.fire = addRange(sums.fire, range(numbers));
-      } else if (key === "light") {
-        sums.light = addRange(sums.light, range(numbers));
-      } else if (key === "frost") {
-        const damage = numbers.at(-1) ?? 0;
-
-        sums.frost = addRange(sums.frost, { min: damage, max: damage });
-      } else if (key === "poison" || key === "wound") {
-        const effect = chanceDamage(numbers);
-
-        if (!isOffhand) {
-          sums[key] = {
-            chance: sums[key].chance + effect.chance,
-            damage: sums[key].damage + effect.damage,
-          };
-        }
-      } else if (numbers.length === 1) {
-        const [number = 0] = numbers;
-
-        if (key === "crit") {
-          if (isOffhand) sums.offhandCrit += number;
-          else sums.mainCrit += number;
-        } else if (key === "critval") {
-          if (!isOffhand) sums.mainCritValue += number;
-        } else {
-          sums.flat.set(key, (sums.flat.get(key) ?? 0) + number);
-        }
+      if (addDamage && numbers.length > 0) {
+        addDamage(sums, numbers, isOffhand);
+      } else if (numbers.length === 1 && single !== undefined) {
+        addSingleValue(sums, key, single, isOffhand);
       }
     }
   }
@@ -278,12 +320,14 @@ export const characterStats = (
 
   const unarmed = Math.max(1, Math.floor(lvl / 4) - 1);
 
+  const physicalAttack = attributeDamage + item("pdmg");
+
   const physicalMin = round(
-    (items.mainDamage.min + attributeDamage) * multiplier,
+    (items.mainDamage.min + physicalAttack) * multiplier,
   );
 
   const physicalMax = round(
-    (items.mainDamage.max + attributeDamage) * multiplier,
+    (items.mainDamage.max + physicalAttack) * multiplier,
   );
 
   const offhandBonus = strength * skill("of-str");
@@ -333,7 +377,7 @@ export const characterStats = (
       ELEMENT_SPREAD,
     ),
     poison: {
-      chance: items.poison.chance,
+      slow: items.poison.slow / 100,
       damage: Math.round(items.poison.damage * multiplier),
     },
     wound: {
