@@ -1,20 +1,18 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
-import {
-  getCatalogControllerGetEventsQueryOptions,
-  getCatalogControllerGetItemsQueryOptions,
-} from "@lootlog/client/catalog";
+import { getCatalogControllerGetItemsQueryOptions } from "@lootlog/client/catalog";
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { AboutWiki } from "@/components/home/about-wiki";
-import { EventShelf } from "@/components/home/event-shelf";
+import { EventBento } from "@/components/home/event-bento";
 import { HomeHero } from "@/components/home/home-hero";
 import { HomeSection } from "@/components/home/home-section";
+import { NewMonsters } from "@/components/home/new-monsters";
 import { RecentItemChanges } from "@/components/home/recent-item-changes";
 import { SlotBrowser } from "@/components/home/slot-browser";
 import { prefetchCatalogSize } from "@/hooks/use-catalog-size";
+import { prefetchHomeEvents } from "@/hooks/use-home-events";
 import { NEW_BOSS_ITEMS } from "@/hooks/use-new-bosses";
 import { t } from "@/i18n/messages";
 import { prefetchPageQueries } from "@/lib/catalog-page-queries";
-import { WIKI_EVENTS_QUERY } from "@/lib/item-events";
 import { canonicalLink } from "@/lib/link-preview";
 
 export const Route = createFileRoute("/")({
@@ -24,9 +22,7 @@ export const Route = createFileRoute("/")({
       queryClient.prefetchQuery(
         getCatalogControllerGetItemsQueryOptions(NEW_BOSS_ITEMS),
       ),
-      queryClient.prefetchQuery(
-        getCatalogControllerGetEventsQueryOptions(WIKI_EVENTS_QUERY),
-      ),
+      prefetchHomeEvents(queryClient),
       ...prefetchCatalogSize(queryClient),
     ),
   head: () => ({
@@ -45,15 +41,22 @@ function HomeRoute() {
       <HomeHero />
 
       <HomeSection
+        title={t("home.newMonstersTitle")}
+        description={t("home.newMonstersDescription")}
+      >
+        <NewMonsters />
+      </HomeSection>
+
+      <HomeSection
         title={t("home.eventsTitle")}
-        description={t("home.eventShelfDescription")}
+        description={t("home.eventsSectionDescription")}
         action={
           <ChevronLink render={<Link to="/events" />}>
             {t("catalog.allEvents")}
           </ChevronLink>
         }
       >
-        <EventShelf />
+        <EventBento />
       </HomeSection>
 
       <SlotBrowser />

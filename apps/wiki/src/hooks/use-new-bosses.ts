@@ -4,6 +4,7 @@ import {
 } from "@lootlog/client/catalog";
 import { WIKI_GAME_VERSION } from "@/lib/catalog-links";
 import { groupItemsByMonster } from "@/lib/group-items-by-monster";
+import { npcKindOf } from "@/lib/npc-types";
 
 const NEW_BOSS_ITEMS_FILTER = {
   dropSourceTypes: ["HERO", "EVENT_HERO", "TITAN", "COLOSSUS"],
@@ -26,8 +27,11 @@ export const useNewBosses = () => {
   const { data, isError } = useCatalogControllerGetItems(NEW_BOSS_ITEMS);
 
   const bosses = data
-    ? groupItemsByMonster(data.hits, ({ type }) =>
-        BOSS_TYPES.has(type ?? ""),
+    ? groupItemsByMonster(
+        data.hits,
+        (source) =>
+          BOSS_TYPES.has(source.type ?? "") &&
+          npcKindOf(source) !== "HERO_TRACKERS",
       ).flatMap(({ monster, items }) => (monster ? [{ monster, items }] : []))
     : undefined;
 

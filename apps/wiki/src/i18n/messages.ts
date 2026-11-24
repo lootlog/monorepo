@@ -695,9 +695,19 @@ const messages = {
     bossDrops: "Przedmioty: {{name}}",
     bossPickerLabel: "Bossowie ostatnio w grze",
     bossesEmpty: "Lootlog nie zna jeszcze nowych bossów.",
-    eventsTitle: "Eventy",
-    eventShelfDescription:
-      "Od najnowszego. Każdy event z bossem i wszystkimi przedmiotami.",
+    newMonstersTitle: "Nowe w grze",
+    newMonstersDescription:
+      "Herosi, tytani i kolosi, którym gra ostatnio dodała lub zmieniła przedmioty. Najedź na przedmiot, żeby zobaczyć jego statystyki.",
+    newMonstersEmpty: "Lootlog nie zna jeszcze nowych potworów.",
+    eventsTitle: "Ostatnie eventy",
+    eventsSectionDescription:
+      "Przedmioty z ostatnich eventów, od najnowszego, z ich najsilniejszym bossem.",
+    newEventItemsEmpty:
+      "Lootlog nie zna jeszcze nowych przedmiotów eventowych.",
+    itemCount: "Przedmioty: {{count}}",
+    itemsOf: "Przedmioty: {{name}}",
+    moreItems: "+{{count}}",
+    allItemsOf: "Wszystkie przedmioty: {{name}}",
     eventEyebrow: "Event",
     quickSearchesLabel: "Szybkie wyszukiwania",
     quickSearches: {
