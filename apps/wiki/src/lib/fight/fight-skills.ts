@@ -86,8 +86,12 @@ export const isSimulatedActive = (skill: ActiveSkill) =>
 
 const isComboFinisher = (skill: ActiveSkill) => skill.effects.has("combo-max");
 
+const BUFFS_WITH_ATTACK = new Set(["sa_per"]);
+
 export const isAttackSkill = (skill: ActiveSkill) =>
-  [...skill.effects.keys()].some((key) => ATTACK_EFFECTS.has(key));
+  [...skill.effects.keys()].some(
+    (key) => ATTACK_EFFECTS.has(key) || BUFFS_WITH_ATTACK.has(key),
+  );
 
 export const buffTotal = (state: SkillUserState, key: string) => {
   let total = 0;
@@ -122,7 +126,7 @@ const wantsToUse = (state: SkillUserState, skill: ActiveSkill) => {
     return state.energy < ENERGY_RESTORE_THRESHOLD * state.combatant.energy;
   }
 
-  if (!isAttackSkill(skill)) {
+  if (![...skill.effects.keys()].some((key) => ATTACK_EFFECTS.has(key))) {
     return ![...skill.effects.keys()].some(
       (key) =>
         BUFF_EFFECTS.has(key) && state.buffs.some((buff) => buff.key === key),
