@@ -34,7 +34,7 @@ const EVENT_ENDS = new Map([
 
 const EVENTS_ENDING_NEXT_YEAR = new Set(["gwiazdka"]);
 
-const itemEventEditionEnd = (slug: string) => {
+export const itemEventEditionEnd = (slug: string) => {
   const edition = EDITION_SLUG.exec(slug);
 
   if (!edition) return undefined;

@@ -17,7 +17,7 @@ import {
   mapStatsToDisplaySections,
 } from "@lootlog/ui/components/item-stat-utils";
 import {
-  ITEM_RARITIES_BY_VALUE,
+  itemRarityRank,
   type DisplayItemRarity,
   resolveItemRarity,
 } from "@lootlog/domain/item-rarity";
@@ -26,7 +26,7 @@ import { sortBy } from "es-toolkit";
 import { t } from "@/i18n/messages";
 import { ITEM_TILE_LABELS } from "@/lib/item-options";
 import { itemStatText } from "@lootlog/ui/lib/item-stat-text";
-import { monsterIdentity } from "@/lib/group-items-by-monster";
+import { isRetiredDropOf } from "@/lib/group-items-by-monster";
 import { npcSummary } from "@/lib/npc-summary";
 
 export const canonicalLink = (path: string) => ({
@@ -128,17 +128,9 @@ export const npcLinkPreview = (
   npc: CatalogNpcDtoOutput,
   drops: readonly CatalogItemDtoOutput[],
 ): LinkPreview => {
-  const current = drops.filter(
-    (item) =>
-      !item.droppedBy.some(
-        (source) =>
-          source.retired && monsterIdentity(source) === monsterIdentity(npc),
-      ),
-  );
+  const current = drops.filter((item) => !isRetiredDropOf(item, npc));
 
-  const valuable = sortBy(current, [
-    (item) => ITEM_RARITIES_BY_VALUE.indexOf(resolveItemRarity(item.rarity)),
-  ]);
+  const valuable = sortBy(current, [({ rarity }) => itemRarityRank(rarity)]);
 
   return {
     title: npc.name,

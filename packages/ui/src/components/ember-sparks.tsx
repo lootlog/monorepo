@@ -1,7 +1,6 @@
 import { createSeededRandom } from "@lootlog/ui/lib/seeded-random";
 import type { CSSProperties } from "react";
-import { usePauseSparksWhileScrolling } from "./use-pause-sparks-while-scrolling";
-import "./legendary-loot.css";
+import { usePauseSparksWhileScrolling } from "@lootlog/ui/hooks/use-pause-sparks-while-scrolling";
 
 type SparkStyle = CSSProperties & { "--spark-color": string };
 
@@ -38,7 +37,7 @@ const buildSparkStyles = (seed: number): SparkStyle[] => {
       height: `${size.toFixed(1)}px`,
       "--spark-color":
         SPARK_COLORS[pickIndex(random, SPARK_COLORS.length)] ?? "#fb923c",
-      animationName: `loot-spark-rise-${pickIndex(random, SPARK_PATH_COUNT) + 1}`,
+      animationName: `ember-rise-${pickIndex(random, SPARK_PATH_COUNT) + 1}`,
       animationTimingFunction:
         SPARK_EASINGS[pickIndex(random, SPARK_EASINGS.length)],
       animationDuration: `${duration.toFixed(2)}s`,
@@ -47,13 +46,13 @@ const buildSparkStyles = (seed: number): SparkStyle[] => {
   });
 };
 
-export const LegendarySparks = ({ seed }: { seed: number }) => {
+export const EmberSparks = ({ seed }: { seed: number }) => {
   usePauseSparksWhileScrolling();
 
   return (
-    <span aria-hidden="true" className="loot-sparks">
+    <span aria-hidden="true" className="ember-sparks">
       {buildSparkStyles(seed).map((style, index) => (
-        <span key={index} className="loot-spark" style={style} />
+        <span key={index} className="ember-spark" style={style} />
       ))}
     </span>
   );

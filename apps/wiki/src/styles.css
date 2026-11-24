@@ -3,3 +3,22 @@
 @import "@lootlog/ui/themes/backgrounds.css";
 @import "@lootlog/ui/scrollbars.css";
 @import "@lootlog/ui/portal.css";
+@import "@lootlog/ui/ember-sparks.css";
+
+@theme {
+  --animate-sprite-float: sprite-float 4.5s ease-in-out infinite;
+  --animate-sprite-shadow: sprite-shadow 4.5s ease-in-out infinite;
+
+  @keyframes sprite-float {
+    50% {
+      translate: 0 -8px;
+    }
+  }
+
+  @keyframes sprite-shadow {
+    50% {
+      scale: 0.82;
+      opacity: 0.55;
+    }
+  }
+}

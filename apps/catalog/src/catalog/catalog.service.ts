@@ -1,6 +1,6 @@
 import { BOSS_ORIGIN_ICON_DIRECTORIES } from "@lootlog/domain/npc-type";
 import { Effect } from "effect";
-import { maxBy, orderBy, pick, uniqBy } from "es-toolkit";
+import { orderBy, pick, uniqBy } from "es-toolkit";
 import type { Meilisearch, MultiSearchParams, SearchParams } from "meilisearch";
 import { attemptMeilisearch } from "@lootlog/meilisearch/operation-failure";
 import { buildMeilisearchInFilter } from "@lootlog/meilisearch/query-builder";
@@ -17,12 +17,7 @@ import {
   ELASTIC_LEVELS,
   elasticItemLevel,
 } from "@lootlog/domain/elastic-level";
-import {
-  isEventEditionAvailableSince,
-  itemEventLabels,
-  itemEventSlug,
-} from "@lootlog/domain/item-events";
-import { itemStatValue } from "@lootlog/domain/item-stat";
+import { isEventEditionAvailableSince } from "@lootlog/domain/item-events";
 import {
   itemAtLevel,
   itemStatAttackSpeed,
@@ -41,10 +36,14 @@ import type {
   CatalogItemsResponseDto_Output,
   CatalogNpcsResponseDto_Output,
 } from "#src/http-api/contracts/catalog/schemas";
+import { toCatalogEvents } from "#src/catalog/catalog-events";
+import {
+  gameVersionFilter,
+  inFilter,
+  itemFilters,
+} from "#src/catalog/catalog-filters";
 
 const MAX_LIMIT = 96;
-
-const ITEM_TYPE = /^[A-Z_]+$/;
 
 const CATALOG_KEY = /^[a-z]{2}(?:_[a-z]+)?_\d+_\d+$/;
 
@@ -115,67 +114,6 @@ const ATTACK_SPEED_SORTS = new Map<
 ]);
 
 const MAX_HITS = 1000;
-
-const gameVersionFilter = (gameVersion: string | undefined) =>
-  gameVersion === undefined
-    ? undefined
-    : `gameVersion = ${JSON.stringify(gameVersion)}`;
-
-const levelFilter = (min: number | undefined, max: number | undefined) => {
-  const bounds = [
-    min === undefined ? undefined : `lvl >= ${Math.floor(min)}`,
-    max === undefined ? undefined : `lvl <= ${Math.floor(max)}`,
-  ].filter((bound) => bound !== undefined);
-
-  if (bounds.length === 0) return undefined;
-
-  const reachesElastic =
-    (max ?? ELASTIC_LEVELS.max) >= ELASTIC_LEVELS.min &&
-    (min ?? ELASTIC_LEVELS.min) <= ELASTIC_LEVELS.max;
-
-  return reachesElastic
-    ? `((${bounds.join(" AND ")}) OR elasticLevel = true)`
-    : bounds.join(" AND ");
-};
-
-const inFilter = (
-  field: string,
-  values: ReadonlyArray<string | number> | undefined,
-) => (values?.length ? buildMeilisearchInFilter(field, values) : undefined);
-
-const itemFilters = (
-  query: CatalogControllerGetItemsQuery,
-  monsterKey: string | undefined,
-) => {
-  const types = query.types?.filter((type) => ITEM_TYPE.test(type));
-
-  return [
-    gameVersionFilter(query.gameVersion),
-    inFilter("id", query.ids),
-    inFilter("rarity", query.rarities),
-    inFilter("type", types),
-    inFilter("category", query.categories),
-    inFilter("requiredProfessions", query.professions),
-    levelFilter(query.minLevel, query.maxLevel),
-    ...(query.statKeys ?? []).map(
-      (key) => `statsKeys = ${JSON.stringify(key)}`,
-    ),
-    ...(query.excludedStatKeys ?? []).map(
-      (key) => `NOT statsKeys = ${JSON.stringify(key)}`,
-    ),
-    inFilter("legendaryBonus", query.legendaryBonuses),
-    inFilter("droppedByTypes", query.dropSourceTypes),
-    query.event === undefined
-      ? undefined
-      : `eventSlugs = ${JSON.stringify(query.event)}`,
-    monsterKey === undefined
-      ? undefined
-      : `droppedByMonsterKeys = ${JSON.stringify(monsterKey)}`,
-    query.droppedBy === undefined || monsterKey !== undefined
-      ? undefined
-      : `droppedByKeys = ${JSON.stringify(query.droppedBy)}`,
-  ].filter((filter) => filter !== undefined);
-};
 
 const NPC_FIELDS = [
   "uid",
@@ -541,11 +479,9 @@ export const makeCatalogModule = (
 
     const filters = [
       gameVersionFilter(query.gameVersion),
-      query.ids?.length ? buildMeilisearchInFilter("id", query.ids) : undefined,
+      inFilter("id", query.ids),
       lookup ? undefined : "current != false",
-      query.types?.length
-        ? buildMeilisearchInFilter("type", query.types)
-        : undefined,
+      inFilter("type", query.types),
       bossOriginFilter(query),
       npcLevelFilter(query),
       firstSeenMonthFilter(query),
@@ -641,34 +577,10 @@ export const makeCatalogModule = (
       ),
     );
 
-    const events = counts.flatMap(([slug, itemCount], index) => {
-      const item = results[index]?.hits[0];
-
-      const name = itemEventLabels(
-        itemStatValue(item?.stat ?? "", "etiquette") ?? "",
-      ).find((label) => itemEventSlug(label) === slug);
-
-      if (!name) return [];
-
-      const boss = maxBy(item?.droppedBy ?? [], ({ lvl }) => lvl ?? 0);
-      const year = /\b(\d{4})\b/.exec(name)?.[1];
-
-      return [
-        {
-          slug,
-          name,
-          year: year === undefined ? null : Number(year),
-          itemCount,
-          boss: boss ? { name: boss.name, icon: boss.icon } : null,
-        },
-      ];
-    });
-
     return {
-      events: orderBy(
-        events,
-        [({ year }) => year ?? 0, ({ name }) => name],
-        ["desc", "asc"],
+      events: toCatalogEvents(
+        counts,
+        results.map(({ hits }) => hits[0]),
       ),
     } satisfies CatalogEventsResponseDto_Output;
   });

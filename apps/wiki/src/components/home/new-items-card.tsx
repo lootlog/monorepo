@@ -3,10 +3,7 @@ import { sortBy } from "es-toolkit";
 import { ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
 import type { CatalogItemDtoOutput } from "@lootlog/client/catalog";
-import {
-  ITEM_RARITIES_BY_VALUE,
-  resolveItemRarity,
-} from "@lootlog/domain/item-rarity";
+import { itemRarityRank } from "@lootlog/domain/item-rarity";
 import { CatalogItemTile } from "@/components/catalog/catalog-item-tile";
 import { useGridColumnCount } from "@/hooks/use-grid-column-count";
 import { t } from "@/i18n/messages";
@@ -19,17 +16,13 @@ type NewItemsCardProps = {
   link: LinkOptions;
   items: readonly CatalogItemDtoOutput[];
   itemCount: number;
+  itemLimit?: number;
 };
 
-const ITEMS_SHOWN = 12;
-
-const slotCount = (columnCount: number | null) =>
+const slotCount = (itemLimit: number, columnCount: number | null) =>
   columnCount === null
-    ? ITEMS_SHOWN + 1
-    : Math.max(1, Math.round((ITEMS_SHOWN + 1) / columnCount)) * columnCount;
-
-const rarityRank = ({ rarity }: CatalogItemDtoOutput) =>
-  ITEM_RARITIES_BY_VALUE.indexOf(resolveItemRarity(rarity));
+    ? itemLimit + 1
+    : Math.max(1, Math.round((itemLimit + 1) / columnCount)) * columnCount;
 
 export function NewItemsCard({
   title,
@@ -38,9 +31,10 @@ export function NewItemsCard({
   link,
   items,
   itemCount,
+  itemLimit = 12,
 }: NewItemsCardProps) {
   const { ref: gridRef, columnCount } = useGridColumnCount();
-  const slots = slotCount(columnCount);
+  const slots = slotCount(itemLimit, columnCount);
   const shownCount = itemCount > slots ? slots - 1 : itemCount;
 
   return (
@@ -74,7 +68,7 @@ export function NewItemsCard({
           aria-label={t("home.itemsOf", { name: title })}
           className="grid flex-1 grid-cols-[repeat(auto-fill,2.25rem)] content-start gap-2 border-t border-border bg-background/30 px-4 py-3"
         >
-          {sortBy(items, [rarityRank])
+          {sortBy(items, [({ rarity }) => itemRarityRank(rarity)])
             .slice(0, shownCount)
             .map((item) => (
               <li key={item.id}>

@@ -17,7 +17,7 @@ export function WikiLayout({ children }: { children: ReactNode }) {
   return (
     <div
       className={cn(
-        "app-content-frame flex min-h-dvh w-full flex-col bg-background text-foreground",
+        "app-content-frame flex min-h-dvh w-full flex-col overflow-x-clip bg-background text-foreground",
         docksSet && "pb-(--wiki-dock-height) [--wiki-dock-height:4.0625rem]",
       )}
     >

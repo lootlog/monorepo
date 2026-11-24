@@ -1,9 +1,6 @@
 import { WatchableItemTile } from "@/components/tiles/watchable-item-tile";
 import { ItemImage } from "@lootlog/ui/components/item-image";
-import {
-  ITEM_RARITIES_BY_VALUE,
-  DisplayItemRarity,
-} from "@lootlog/domain/item-rarity";
+import { DisplayItemRarity, itemRarityRank } from "@lootlog/domain/item-rarity";
 import type { WatchedItemScope } from "@/lib/user-notifications/watched-item-scope";
 import type { Item, Loot } from "@/lib/loots/loot-types";
 import { cn } from "cn";
@@ -14,11 +11,10 @@ import { ItemStackExpanded } from "@/features/guild/loots-list/components/loots-
 import { Check } from "lucide-react";
 import { useItemStackExpansion } from "./use-item-stack-expansion";
 
-const rarityRank = (item: Item) =>
-  ITEM_RARITIES_BY_VALUE.indexOf(item.rarity ?? DisplayItemRarity.COMMON);
-
 const sortByRarity = (items: Item[]): Item[] =>
-  [...items].sort((a, b) => rarityRank(a) - rarityRank(b));
+  [...items].sort(
+    (a, b) => itemRarityRank(a.rarity) - itemRarityRank(b.rarity),
+  );
 
 export type DecorateLootItem = (item: Item, tile: ReactNode) => ReactNode;
 

@@ -683,27 +683,32 @@ const messages = {
     next: "Następne",
   },
   home: {
-    eyebrow: "Wiki Margonem",
-    title: "Lootlog Wiki",
+    title: "Wiki Margonem",
     description:
-      "Katalog przedmiotów i potworów z Margonem. Wyszukasz tu przedmioty po statystykach i bonusach, sprawdzisz, z których potworów wypadają, i porównasz je ze sobą.",
+      "Statystyki, łupy i historia zmian przedmiotów i potworów z Margonem. Wszystko z walk zapisanych przez graczy.",
+    descriptionWithSize:
+      "Statystyki, łupy i historia zmian {{items}} przedmiotów i {{npcs}} potworów. Wszystko z walk zapisanych przez graczy.",
     searchLabel: "Szukaj przedmiotu",
     searchPlaceholder: "Wpisz nazwę przedmiotu, np. dria, serce, łowca",
     searchSubmit: "Szukaj",
-    newMonstersTitle: "Nowe potwory",
+    latestBoss: "Ostatnio w grze",
+    bossDrops: "Przedmioty: {{name}}",
+    bossPickerLabel: "Bossowie ostatnio w grze",
+    bossesEmpty: "Lootlog nie zna jeszcze nowych bossów.",
+    newMonstersTitle: "Nowe w grze",
     newMonstersDescription:
-      "Herosi, tytani i kolosi, którym gra ostatnio dodała lub zmieniła przedmioty. Najedź na przedmiot, żeby zobaczyć jego statystyki, albo kliknij, żeby otworzyć jego stronę.",
+      "Stali herosi, tytani i kolosi, którym gra ostatnio dodała lub zmieniła przedmioty. Najedź na przedmiot, żeby zobaczyć jego statystyki.",
     newMonstersEmpty: "Lootlog nie zna jeszcze nowych potworów.",
-    newEventItemsTitle: "Ostatnie eventy",
-    newEventItemsDescription:
-      "Przedmioty, które wypadały podczas ostatnich eventów, z ich najsilniejszym potworem.",
-    eventEyebrow: "Event",
+    eventsTitle: "Ostatnie eventy",
+    eventsSectionDescription:
+      "Przedmioty do założenia z ostatnich eventów, od najnowszego, z ich najsilniejszym bossem.",
+    newEventItemsEmpty:
+      "Lootlog nie zna jeszcze nowych przedmiotów eventowych.",
     itemCount: "Przedmioty: {{count}}",
     itemsOf: "Przedmioty: {{name}}",
     moreItems: "+{{count}}",
     allItemsOf: "Wszystkie przedmioty: {{name}}",
-    newEventItemsEmpty:
-      "Lootlog nie zna jeszcze nowych przedmiotów eventowych.",
+    eventEyebrow: "Event",
     quickSearchesLabel: "Szybkie wyszukiwania",
     quickSearches: {
       titanLegendaries: "Legendy z tytanów",
@@ -714,10 +719,11 @@ const messages = {
       fastestTrackerHelmets: "Najszybsze hełmy tropiciela",
       fastestHunterNecklaces: "Najszybsze naszyjniki łowcy",
     },
-    lineupTitle: "Ostatnio w grze",
-    slotsTitle: "Przeglądaj wiki",
+    slotsTitle: "Przeglądaj po slocie",
     slotsDescription:
-      "Kliknij slot, żeby zobaczyć przedmioty, które w nim nosisz, albo otwórz jeden z działów.",
+      "Wybierz slot, a katalog pokaże tylko pasujące przedmioty. Z wybranych złożysz zestaw i porównasz go z tym, co masz na sobie.",
+    buildSet: "Złóż zestaw",
+    compareItems: "Porównaj przedmioty",
     itemsDescription:
       "Szukaj przedmiotów po nazwie, poziomie, rzadkości i profesji.",
     npcsDescription: "Szukaj NPC-ów i potworów po nazwie.",

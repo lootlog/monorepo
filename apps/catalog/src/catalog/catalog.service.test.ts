@@ -551,9 +551,9 @@ test("keeps a query's relevance order among fixed items when it merges in elasti
   expect(response.hits.map(({ id }) => id)).toEqual([1, 3, 2]);
 });
 
-test("events take their name from the year the slug names, the latest first", async () => {
+test("events take their name from the slug and list the latest edition first", async () => {
   const pumpkinBoots = {
-    stat: "etiquette=Halloween 2025 r.|Halloween 2026 r.;lvl=112",
+    stat: "etiquette=Halloween 2025 r.|Halloween 2026 r.|Grzybobranie 2026 r.|Dzień Przerazy;lvl=112",
     droppedBy: [
       { ...nosferatu, lvl: 90, name: "Dynia", icon: "dynia.gif" },
       nosferatu,
@@ -574,7 +574,12 @@ test("events take their name from the year the slug names, the latest first", as
       return Promise.resolve({
         hits: [],
         facetDistribution: {
-          eventSlugs: { "halloween-2025": 6, "halloween-2026": 7 },
+          eventSlugs: {
+            "dzien-przerazy": 3,
+            "grzybobranie-2026": 2,
+            "halloween-2025": 6,
+            "halloween-2026": 7,
+          },
         },
       });
     },
@@ -584,20 +589,36 @@ test("events take their name from the year the slug names, the latest first", as
     makeCatalogModule(client, noReads).getEvents({ gameVersion: "pl" }),
   );
 
+  const boss = { name: "Nosferatu", icon: "nosferatu.gif" };
+
   expect(events).toEqual([
     {
       slug: "halloween-2026",
       name: "Halloween 2026 r.",
       year: 2026,
       itemCount: 7,
-      boss: { name: "Nosferatu", icon: "nosferatu.gif" },
+      boss,
+    },
+    {
+      slug: "grzybobranie-2026",
+      name: "Grzybobranie 2026 r.",
+      year: 2026,
+      itemCount: 2,
+      boss,
     },
     {
       slug: "halloween-2025",
       name: "Halloween 2025 r.",
       year: 2025,
       itemCount: 6,
-      boss: { name: "Nosferatu", icon: "nosferatu.gif" },
+      boss,
+    },
+    {
+      slug: "dzien-przerazy",
+      name: "Dzień Przerazy",
+      year: null,
+      itemCount: 3,
+      boss,
     },
   ]);
 });

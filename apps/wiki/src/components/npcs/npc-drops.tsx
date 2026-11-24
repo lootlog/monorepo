@@ -10,7 +10,7 @@ import { NpcElasticDropsLevel } from "@/components/npcs/npc-elastic-drops-level"
 import { NpcRetiredDrops } from "@/components/npcs/npc-retired-drops";
 import { t } from "@/i18n/messages";
 import { npcDropsQuery } from "@/lib/catalog-page-queries";
-import { monsterIdentity } from "@/lib/group-items-by-monster";
+import { isRetiredDropOf, monsterIdentity } from "@/lib/group-items-by-monster";
 
 export function NpcDrops({
   npc,
@@ -34,10 +34,7 @@ export function NpcDrops({
   }
 
   const [retired, current] = partition(data.hits, (item) =>
-    item.droppedBy.some(
-      (source) =>
-        source.retired && monsterIdentity(source) === monsterIdentity(npc),
-    ),
+    isRetiredDropOf(item, npc),
   );
 
   const hasDropRates = current.some(({ droppedBy }) =>
