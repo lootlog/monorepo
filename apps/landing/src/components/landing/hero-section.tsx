@@ -2,6 +2,7 @@ import { ArrowUpRight, Download } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
 import { Button } from "@lootlog/ui/components/button";
 
+import { DiscordCommunityLink } from "@/components/landing/discord-community-link";
 import { TimerIllustration } from "@/components/landing/timer-illustration";
 import { ADDON_URL } from "@/config/addon";
 import { links } from "@/config/links";
@@ -12,88 +13,60 @@ export function HeroSection() {
   return (
     <section
       aria-labelledby="landing-hero-title"
-      className="relative isolate overflow-hidden bg-[var(--broadcast-ink)]"
+      className="landing-hero relative isolate overflow-hidden bg-[var(--broadcast-ink)]"
     >
-      <div
-        aria-hidden="true"
-        className="landing-shape absolute -left-28 top-32 size-72 rounded-full bg-[var(--broadcast-blue)]/20 sm:size-[28rem]"
-      />
-      <div
-        aria-hidden="true"
-        className="landing-shape absolute -right-24 top-20 size-64 rounded-full bg-[var(--broadcast-amber)]/10 sm:size-[24rem]"
-      />
+      <div aria-hidden="true" className="landing-hero-deco">
+        <span className="landing-shape" />
+        <span className="landing-shape" />
+        <span className="landing-shape" />
+        <span className="landing-shape" />
+        <span className="landing-shape" />
+      </div>
 
-      <div
-        aria-hidden="true"
-        className="landing-shape pointer-events-none absolute bottom-10 left-[8%] size-8 rounded-full bg-[var(--broadcast-coral)]/70 sm:size-12"
-      />
-      <div
-        aria-hidden="true"
-        className="landing-shape pointer-events-none absolute right-[12%] top-8 size-7 rounded-lg bg-[var(--broadcast-cyan)]/60 sm:size-10"
-      />
-      <div
-        aria-hidden="true"
-        className="landing-shape pointer-events-none absolute bottom-8 right-[20%] hidden size-16 rounded-full border-[10px] border-[var(--broadcast-lime)]/40 sm:block"
-      />
+      <div className="broadcast-hero-layout landing-container relative z-10">
+        <div className="broadcast-hero-copy min-w-0">
+          <DiscordCommunityLink />
+          <h1
+            id="landing-hero-title"
+            className="landing-heading-display text-balance text-[var(--broadcast-white)]"
+          >
+            <Trans
+              i18nKey="landing.hero.title"
+              components={{ mark: <mark className="landing-hero-mark" /> }}
+            />
+          </h1>
 
-      <div className="broadcast-hero-layout relative z-10 landing-container min-h-[calc(100svh-6rem)] pb-14 pt-3 sm:pb-20 sm:pt-14 lg:pb-20 lg:pt-20">
-        <div className="broadcast-hero-copy min-w-0 self-center">
-          <div className="max-w-2xl">
-            <h1
-              id="landing-hero-title"
-              className="landing-heading-display max-w-3xl text-balance text-[var(--broadcast-white)]"
-            >
-              <Trans
-                i18nKey="landing.hero.title"
-                components={{ mark: <mark className="landing-hero-mark" /> }}
-              />
-            </h1>
-          </div>
+          <p className="landing-hero-lead landing-lead text-[var(--broadcast-text-muted)]">
+            {t("landing.hero.description")}
+          </p>
 
-          <div className="mt-5 max-w-2xl sm:mt-7">
-            <p className="landing-lead text-[var(--broadcast-text-muted)] max-sm:mx-auto lg:text-xl lg:leading-8">
-              {t("landing.hero.description")}
-            </p>
-
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Button
-                size="xl"
-                className="landing-action landing-action-solid"
-                render={
-                  <a href={links.dashboard}>
-                    {t("landing.hero.openDashboard")}
-                    <ArrowUpRight className="landing-action-arrow size-4" />
-                  </a>
-                }
-                nativeButton={false}
-              />
-              <Button
-                size="xl"
-                className="landing-action landing-action-light"
-                render={
-                  <a href={ADDON_URL} target="_blank" rel="noopener noreferrer">
-                    <Download className="size-4" />
-                    {t("landing.hero.installAddon")}
-                  </a>
-                }
-                nativeButton={false}
-              />
-            </div>
+          <div className="landing-hero-actions">
+            <Button
+              size="xl"
+              className="landing-action landing-action-solid"
+              render={
+                <a href={links.dashboard}>
+                  {t("landing.hero.openDashboard")}
+                  <ArrowUpRight className="landing-action-arrow size-4" />
+                </a>
+              }
+              nativeButton={false}
+            />
+            <Button
+              size="xl"
+              className="landing-action landing-action-light"
+              render={
+                <a href={ADDON_URL} target="_blank" rel="noopener noreferrer">
+                  <Download className="size-4" />
+                  {t("landing.hero.installAddon")}
+                </a>
+              }
+              nativeButton={false}
+            />
           </div>
         </div>
 
-        <div className="broadcast-hero-product relative min-w-0 self-center">
-          <div
-            aria-hidden="true"
-            className="landing-shape absolute -left-4 top-5 hidden size-20 rounded-full border-[12px] border-[var(--broadcast-cyan)]/80 sm:block lg:-left-10 lg:size-24 lg:border-[14px]"
-          />
-          <div
-            aria-hidden="true"
-            className="landing-shape absolute -right-3 -top-4 grid size-16 place-items-center rounded-full bg-[var(--broadcast-amber)]/90 text-[var(--broadcast-ink)] sm:-right-6 sm:-top-7 sm:size-24 lg:size-28"
-          >
-            <span className="size-4 rounded-full bg-current sm:size-6" />
-          </div>
-
+        <div className="broadcast-hero-product relative min-w-0">
           <TimerIllustration />
         </div>
       </div>

@@ -8,7 +8,7 @@ import { authClient } from "@/lib/auth-client";
 import { signinRedirectPath } from "@/features/signin/signin-redirect-path";
 import { useTranslation } from "react-i18next";
 import { WEB_SIGN_IN_PATH } from "@lootlog/domain/public-sites";
-import { DiscordIcon } from "@/features/signin/discord-icon";
+import { DiscordIcon } from "@lootlog/ui/components/discord-icon";
 
 export const SignIn: React.FC = () => {
   const search = useSearch({ from: "/signin" });
