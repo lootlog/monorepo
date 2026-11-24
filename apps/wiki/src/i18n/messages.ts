@@ -694,10 +694,12 @@ const messages = {
     latestBoss: "Ostatnio w grze",
     bossDrops: "Przedmioty: {{name}}",
     bossPickerLabel: "Bossowie ostatnio w grze",
+    pauseRotation: "Zatrzymaj przełączanie bossów",
+    resumeRotation: "Wznów przełączanie bossów",
     bossesEmpty: "Lootlog nie zna jeszcze nowych bossów.",
     newMonstersTitle: "Nowe w grze",
     newMonstersDescription:
-      "Herosi, tytani i kolosi, którzy ostatnio na stałe doszli do gry. Najedź na przedmiot, żeby zobaczyć jego statystyki.",
+      "Stali herosi, tytani i kolosi, którym gra ostatnio dodała lub zmieniła przedmioty. Najedź na przedmiot, żeby zobaczyć jego statystyki.",
     newMonstersEmpty: "Lootlog nie zna jeszcze nowych potworów.",
     eventsTitle: "Ostatnie eventy",
     eventsSectionDescription:
