@@ -99,7 +99,6 @@ export const NpcsForm: FC<NpcsFormProps> = ({ npc }) => {
         <BandSection
           id="npc-rarities"
           title={t("settings.npcs.raritiesTitle")}
-          description={t("settings.npcs.raritiesDescription")}
           count={`${enabledCount}/${NPC_RARITY_CONFIG.length}`}
           tiled
         >

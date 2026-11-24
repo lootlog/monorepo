@@ -239,7 +239,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Public catalog items",
+            "description": "",
             "content": {
               "application/json": {
                 "schema": {
@@ -456,7 +456,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Public catalog NPCs",
+            "description": "",
             "content": {
               "application/json": {
                 "schema": {
@@ -746,8 +746,7 @@
             "type": "number"
           }
         },
-        "required": ["hits", "estimatedTotalHits"],
-        "description": "Public catalog items"
+        "required": ["hits", "estimatedTotalHits"]
       },
       "CatalogItemDto_Output": {
         "type": "object",
@@ -1003,8 +1002,7 @@
             "type": "number"
           }
         },
-        "required": ["hits", "estimatedTotalHits"],
-        "description": "Public catalog NPCs"
+        "required": ["hits", "estimatedTotalHits"]
       },
       "CatalogNpcDto_Output": {
         "type": "object",
@@ -1054,8 +1052,7 @@
               "type": "object",
               "properties": {
                 "map": {
-                  "type": "string",
-                  "description": "The map's name."
+                  "type": "string"
                 },
                 "share": {
                   "type": "number",
@@ -1090,8 +1087,7 @@
               "type": "object",
               "properties": {
                 "lvl": {
-                  "type": "number",
-                  "description": "The level it had."
+                  "type": "number"
                 },
                 "until": {
                   "type": "string",
@@ -1134,8 +1130,7 @@
             "description": "The latest year first, then by name."
           }
         },
-        "required": ["events"],
-        "description": "Public catalog events"
+        "required": ["events"]
       },
       "CatalogEventDto_Output": {
         "type": "object",
@@ -1154,8 +1149,7 @@
             "type": "number"
           },
           "itemCount": {
-            "type": "number",
-            "description": "How many catalog items belong to the event."
+            "type": "number"
           },
           "boss": {
             "description": "The strongest monster its highest-level item drops from, which pictures the event; none when Lootlog has not seen that item drop.",

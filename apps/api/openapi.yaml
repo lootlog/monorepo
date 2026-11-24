@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: Lootlog API
   version: "1.0"
-  description: The Lootlog API documentation
+  description: Organizations, loots, timers, kills, events, notifications and other Lootlog records.
 paths:
   /users/@me/feed:
     get:
@@ -161,7 +161,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Retrieve user preferences
       summary: Get user preferences
     patch:
       tags:
@@ -209,7 +208,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Update user preferences
       summary: Update user preferences
       requestBody:
         content:
@@ -526,7 +524,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Retrieve the authenticated user's member information for this guild
       summary: Get current member
   /guilds/{guildId}/members/@me/refresh:
     post:
@@ -575,8 +572,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Refresh the authenticated user's member information from Discord
-      summary: Refresh current member
+      summary: Refresh current member from Discord
   /guilds/{guildId}/members/{discordId}/refresh:
     post:
       tags:
@@ -636,8 +632,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Refresh a specific member's information from Discord (admin only)
-      summary: Refresh specific member
+      description: Admin only.
+      summary: Refresh a member from Discord
   /guilds/{guildId}/members/{discordId}/deactivate:
     patch:
       tags:
@@ -697,7 +693,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Deactivate a specific member (admin only)
+      description: Admin only.
       summary: Deactivate member
   /guilds/{guildId}/members/{discordId}/lootlog-config-summary:
     get:
@@ -820,7 +816,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Retrieve all members for a guild
       summary: Get guild members
   /guilds/{guildId}/members/references:
     get:
@@ -994,7 +989,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Create a job to refresh all guild members (admin only)
+      description: Starts a refresh job; admin only.
       summary: Refresh all members
   /guilds/{guildId}/members/refresh-jobs/latest:
     get:
@@ -1049,7 +1044,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Retrieve the latest member refresh job for this guild
       summary: Get latest refresh job
   /guilds/{guildId}/members/refresh-jobs/{jobId}:
     get:
@@ -1109,7 +1103,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Retrieve the status of a specific refresh job
       summary: Get refresh job status
   /guilds/@me/manageable:
     get:
@@ -1210,7 +1203,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Retrieve guild information by guild ID
       summary: Get guild by ID
   /guilds/{guildId}/config:
     patch:
@@ -1336,7 +1328,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Retrieve the list of worlds configured for a guild
       summary: Get guild worlds
   /guilds/{guildId}/permissions:
     get:
@@ -1430,7 +1421,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Retrieve resolved permissions for the current member in a guild
+      description: Resolved for the current member.
       summary: Get guild permissions
   /guilds/{guildId}/discord-sync:
     get:
@@ -1486,7 +1477,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Retrieve the current Discord channel synchronization state for a guild
       summary: Get guild Discord sync status
   /guilds/{guildId}/discord-sync/refresh:
     post:
@@ -1544,7 +1534,6 @@ paths:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/HttpErrorResponse"
-      description: Trigger a refresh of the guild Discord channel synchronization state
       summary: Refresh guild Discord sync
   /guilds/{guildId}/roles:
     get:
@@ -1595,7 +1584,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Retrieve all roles for a guild
       summary: Get guild roles
   /guilds/{guildId}/roles/{roleId}/permissions:
     patch:
@@ -1656,7 +1644,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Update permissions for a specific role
       summary: Update role permissions
       requestBody:
         content:
@@ -1714,8 +1701,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Retrieve all timers accessible to the authenticated user across all guilds
-      summary: Get all user timers
+      summary: Get the user's timers in every accessible guild
   /timers/history:
     get:
       tags:
@@ -1779,7 +1765,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Retrieve latest visible timer history entries for an authenticated user guild
+      description: Only entries the caller can see.
       summary: Get recent timer action history
   /guilds/{guildId}/timers:
     get:
@@ -1838,7 +1824,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Retrieve timers for a specific guild
       summary: Get guild timers
   /guilds/{guildId}/timers/heroes:
     get:
@@ -2116,7 +2101,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Reset a timer for a specific NPC in a guild
       summary: Reset timer
       requestBody:
         content:
@@ -2190,7 +2174,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Delete a timer for a specific NPC in a guild
       summary: Delete timer
   /guilds/{guildId}/timers/{timerIdentifier}/history:
     get:
@@ -2272,7 +2255,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Retrieve latest action history entries for a guild timer
       summary: Get timer action history
   /guilds/{guildId}/timers/history/{historyEntryId}/restore:
     post:
@@ -2401,7 +2383,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Manually create a timer for a guild
       summary: Create manual timer
       requestBody:
         content:
@@ -2978,7 +2959,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Retrieve lootlog configuration for a specific account
       summary: Get user lootlog configuration
     put:
       tags:
@@ -3026,7 +3006,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Create or update lootlog configuration for a character
       summary: Create or update lootlog character configuration
       requestBody:
         content:
@@ -3706,7 +3685,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Resolve a single visible loot item by HID without loading full loot payloads
+      description: Returns the item without its full loot.
       summary: Resolve loot item by HID
   /guilds/{guildId}/loots/{lootId}:
     get:
@@ -3767,8 +3746,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Retrieve a single loot by ID
-      summary: Get single loot
+      summary: Get a loot
     delete:
       tags:
         - loots
@@ -3823,7 +3801,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Archive an Organization Loot record
       summary: Archive loot
   /loots:
     post:
@@ -3876,7 +3853,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Submit a loot from game client
       summary: Create loot
       requestBody:
         content:
@@ -3945,7 +3921,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Retrieve comments for a specific loot
       summary: Get loot comments
     post:
       tags:
@@ -4005,7 +3980,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Add a comment to a loot
       summary: Create loot comment
       requestBody:
         content:
@@ -4417,7 +4391,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Update loot information
       summary: Update loot
       requestBody:
         content:
@@ -4480,7 +4453,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Retrieve lootlog configuration for a guild
       summary: Get lootlog configuration
   /guilds/{guildId}/lootlog-config/{npcId}:
     put:
@@ -4542,7 +4514,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Update allowed rarities for a specific NPC type in lootlog configuration
+      description: Sets the allowed rarities for one NPC type.
       summary: Update NPC configuration
       requestBody:
         content:
@@ -4584,7 +4556,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Check the health status of the API
       summary: Health check
   /guilds/{guildId}/chat-messages:
     get:
@@ -4642,7 +4613,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Retrieve chat messages for a guild
       summary: Get chat messages
     post:
       tags:
@@ -4697,7 +4667,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Send a new chat message to a guild
       summary: Send chat message
       requestBody:
         content:
@@ -4758,7 +4727,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Clear all chat messages from a guild
       summary: Clear chat messages
   /guilds/{guildId}/chat-messages/{messageId}:
     delete:
@@ -4820,7 +4788,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Delete a chat message from a guild
       summary: Delete chat message
   /global-chat/worlds:
     get:
@@ -6337,7 +6304,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Retrieve configured notification targets for a guild
       summary: Get guild notification targets
     post:
       tags:
@@ -6386,8 +6352,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Create or reactivate a guild notification target
-      summary: Create guild notification target
+      summary: Create or reactivate guild notification target
       requestBody:
         content:
           application/json:
@@ -6440,7 +6405,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Retrieve selectable Discord channels for guild notifications
+      description: Discord channels that can be chosen as targets.
       summary: Get available guild notification targets
   /guilds/{guildId}/notifications/targets/{targetId}:
     delete:
@@ -6499,7 +6464,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Delete a guild notification target
       summary: Delete guild notification target
     patch:
       tags:
@@ -6557,7 +6521,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Update a guild notification target
       summary: Update guild notification target
       requestBody:
         content:
@@ -6611,7 +6574,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Retrieve configured notification rules for a guild
       summary: Get guild notification rules
     post:
       tags:
@@ -6672,7 +6634,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Create a guild notification rule
       summary: Create guild notification rule
       requestBody:
         content:
@@ -6737,7 +6698,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Delete a guild notification rule
       summary: Delete guild notification rule
     patch:
       tags:
@@ -6797,7 +6757,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Update a guild notification rule
       summary: Update guild notification rule
       requestBody:
         content:
@@ -6862,7 +6821,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Rebuild pending jobs for a guild notification rule
+      description: Rebuilds the pending jobs of one rule.
       summary: Rebuild guild notification jobs
   /guilds/{guildId}/notifications/rules/{ruleId}/test:
     post:
@@ -6929,7 +6888,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Trigger a test notification for a guild rule
       summary: Trigger guild notification rule test
   /guilds/{guildId}/notifications/jobs:
     get:
@@ -6977,7 +6935,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Retrieve pending and recent notification jobs for a guild
+      description: Pending and recent jobs.
       summary: Get guild notification jobs
   /guilds/{guildId}/notifications/jobs/{jobId}:
     delete:
@@ -7039,7 +6997,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Cancel a pending or blocked guild notification job
+      description: Only a pending or blocked job can be cancelled.
       summary: Cancel guild notification job
   /users/@me/notifications/targets:
     get:
@@ -7084,7 +7042,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Retrieve configured notification targets for the authenticated user
       summary: Get user notification targets
     post:
       tags:
@@ -7128,8 +7085,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Create or reactivate a notification target for the authenticated user
-      summary: Create user notification target
+      summary: Create or reactivate user notification target
       requestBody:
         content:
           application/json:
@@ -7188,7 +7144,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Delete a user notification target
       summary: Delete user notification target
     patch:
       tags:
@@ -7241,7 +7196,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Update a user notification target
       summary: Update user notification target
       requestBody:
         content:
@@ -7309,7 +7263,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Trigger a test notification for a user target
       summary: Trigger user notification target test
   /users/@me/notifications/rules:
     get:
@@ -7354,7 +7307,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Retrieve configured notification rules for the authenticated user
       summary: Get user notification rules
     post:
       tags:
@@ -7404,7 +7356,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Create a user notification rule
       summary: Create user notification rule
       requestBody:
         content:
@@ -7464,7 +7415,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Delete a user notification rule
       summary: Delete user notification rule
     patch:
       tags:
@@ -7519,7 +7469,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Update a user notification rule
       summary: Update user notification rule
       requestBody:
         content:
@@ -7568,7 +7517,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Retrieve pending and recent notification jobs for the authenticated user
+      description: Pending and recent jobs.
       summary: Get user notification jobs
   /users/@me/notifications/watched-items:
     get:
@@ -7613,7 +7562,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Retrieve watched items for the authenticated user
       summary: Get watched items
     post:
       tags:
@@ -7663,8 +7611,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Create or reactivate a watched item for the authenticated user
-      summary: Create watched item
+      summary: Create or reactivate watched item
       requestBody:
         content:
           application/json:
@@ -7720,7 +7667,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Add a guild scope to a watched item for the authenticated user
+      description: Adds a guild scope to a watched item.
       summary: Quick add watched item
       requestBody:
         content:
@@ -7780,7 +7727,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Delete a watched item for the authenticated user
       summary: Delete watched item
   /messaging:
     post:
@@ -7842,7 +7788,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Send a notification to the user
       summary: Send notification
       requestBody:
         content:
@@ -8756,7 +8701,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Get all events for a guild
       summary: List guild events
     post:
       tags:
@@ -8807,7 +8751,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Create a new guild event with maps and hero NPCs
       summary: Create event
       requestBody:
         content:
@@ -8872,7 +8815,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Get detailed information about a specific event
       summary: Get event details
     delete:
       tags:
@@ -8930,7 +8872,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Delete an event
       summary: Delete event
     patch:
       tags:
@@ -8990,7 +8931,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: "Update an existing event. heroNpcs lists every hero and map the event should have: heroes are matched by npcName and maps by mapId, so retained ones keep their kills and tracking history. It can add heroes and maps and rename maps; a list that omits an existing hero or map is rejected. Remove them with the hero and map delete operations."
+      description: "heroNpcs lists every hero and map the event should have: heroes are matched by npcName and maps by mapId, so retained ones keep their kills and tracking history. It can add heroes and maps and rename maps; a list that omits an existing hero or map is rejected. Remove them with the hero and map delete operations."
       summary: Update event
       requestBody:
         content:
@@ -9114,7 +9055,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Get map assignments grouped by hero for a specific event (read model for realtime map updates)
+      description: Map assignments grouped by hero.
       summary: Get event maps
   /guilds/{guildId}/events/{eventId}/recalculate-points:
     post:
@@ -9173,7 +9114,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Manually recalculate all event kill points with current rules
+      description: Recalculates every kill's points with the current rules.
       summary: Recalculate event points
   /guilds/{guildId}/events/{eventId}/maps/{mapId}/assign:
     post:
@@ -9233,7 +9174,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Assign a guild member to monitor a specific map
       summary: Assign member to map
       requestBody:
         content:
@@ -9305,7 +9245,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Remove an assigned member from a map. If memberId is provided, removes specific member; otherwise removes all.
+      description: Removes the member given by `memberId`, or every assigned member when it is omitted.
       summary: Unassign member from map
   /guilds/{guildId}/events/{eventId}/maps/{mapId}/self-assign:
     post:
@@ -9365,7 +9305,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Assign yourself to monitor a specific map
       summary: Self-assign to map
     delete:
       tags:
@@ -9424,7 +9363,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Remove yourself from a specific map
       summary: Self-unassign from map
   /guilds/{guildId}/events/{eventId}/heroes:
     post:
@@ -9485,7 +9423,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Add a new hero to an existing event. Rejected with 409 when another hero or ranking entries in the event already use the name.
+      description: Rejected with 409 when another hero or ranking entries in the event already use the name.
       summary: Add hero to event
       requestBody:
         content:
@@ -9610,7 +9548,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Update an existing hero details. Renaming moves the hero's ranking entries to the new name and is rejected with 409 when another hero or ranking entries in the event already use that name.
+      description: Renaming moves the hero's ranking entries to the new name and is rejected with 409 when another hero or ranking entries in the event already use that name.
       summary: Update hero
       requestBody:
         content:
@@ -9674,7 +9612,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Add a new map to an existing hero
       summary: Add map to hero
       requestBody:
         content:
@@ -9739,7 +9676,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Remove a map from a hero
       summary: Delete map
   /guilds/{guildId}/events/{eventId}/heroes/{heroId}/locations:
     get:
@@ -9793,7 +9729,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Get all locations for a hero with their maps
+      description: Each location includes its maps.
       summary: Get hero locations
     post:
       tags:
@@ -9848,7 +9784,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Create a new location for grouping maps
+      description: Locations group a hero's maps.
       summary: Create location
       requestBody:
         content:
@@ -9919,7 +9855,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Delete a location. Maps in this location will become ungrouped.
+      description: Its maps become ungrouped.
       summary: Delete location
     patch:
       tags:
@@ -9983,8 +9919,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Update a location name
-      summary: Update location
+      summary: Rename location
       requestBody:
         content:
           application/json:
@@ -10043,7 +9978,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Change the order of locations
       summary: Reorder locations
       requestBody:
         content:
@@ -10114,7 +10048,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Assign a map to a location or remove it from a location (set to null)
+      description: A null location removes the map from its location.
       summary: Assign map to location
       requestBody:
         content:
@@ -10173,7 +10107,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Get pending and expired kill participation confirmations for currently authenticated member
+      description: Pending and expired confirmations of the authenticated member.
       summary: Get participation confirmations
   /guilds/{guildId}/events/{eventId}/participation-confirmations/expired/acknowledge:
     post:
@@ -10289,7 +10223,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Confirm member participation for a kill within configured confirmation window
+      description: Only within the configured confirmation window.
       summary: Confirm participation in kill tracking
   /guilds/{guildId}/events/{eventId}/ranking:
     get:
@@ -10350,7 +10284,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Get the ranking for an event
       summary: Get event ranking
   /guilds/{guildId}/events/{eventId}/ranking/{rankingId}:
     patch:
@@ -10484,7 +10417,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Get timers for all hero NPCs in this event
       summary: Get event hero timers
   /guilds/{guildId}/events/{eventId}/hero-stats:
     get:
@@ -10545,7 +10477,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Get kill counts and stats for all heroes in an event
       summary: Get event hero stats
   /guilds/{guildId}/events/{eventId}/kill-history:
     get:
@@ -10704,7 +10635,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Get detailed information about a specific kill including participants, scoring breakdown, and matching loots
+      description: Includes participants, the scoring breakdown and matching loots.
       summary: Get kill details
   /guilds/{guildId}/events/{eventId}/kills/{killId}/points/{killPointId}:
     patch:
@@ -10846,7 +10777,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Get map timeline data with assignments and gaps for a specific kill
+      description: Includes map assignments and coverage gaps.
       summary: Get kill timeline data
   /guilds/{guildId}/events/{eventId}/heroes/{heroId}/coverage-gaps:
     get:
@@ -10906,7 +10837,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Get coverage gap history for a specific hero (periods when maps were unassigned or uncovered)
+      description: Periods when the hero's maps were unassigned or uncovered.
       summary: Get hero coverage gaps
   /guilds/{guildId}/events/{eventId}/maps/{mapId}/coverage-gaps:
     get:
@@ -10966,7 +10897,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Get coverage gap history for a specific map (periods when the map was unassigned or uncovered)
+      description: Periods when the map was unassigned or uncovered.
       summary: Get map coverage gaps
   /guilds/{guildId}/events/{eventId}/maps/{mapId}/active-gap:
     get:
@@ -11024,7 +10955,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Get the currently active (ongoing) coverage gap for a map if any exists
+      description: Null when the map has no ongoing gap.
       summary: Get active coverage gap for map
   /guilds/{guildId}/events/{eventId}/heroes/{heroId}/active-gaps:
     get:
@@ -11084,7 +11015,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Get all currently active (ongoing) coverage gaps for all maps of a hero
       summary: Get all active coverage gaps for hero
   /guilds/{guildId}/events/{eventId}/heroes/{heroId}/presence-stats:
     get:
@@ -11142,7 +11072,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Get aggregated presence statistics for all members assigned to hero maps
+      description: Aggregated over the members assigned to the hero's maps.
       summary: Get presence statistics for hero
   /guilds/{guildId}/events/{eventId}/heroes/{heroId}/respawn-config:
     get:
@@ -11200,7 +11130,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Get current respawn window status and default respawn times for a hero
+      description: Includes the current respawn window and the default respawn times.
       summary: Get hero respawn configuration
   /guilds/{guildId}/events/{eventId}/heroes/{heroId}/close-respawn-window:
     post:
@@ -11268,7 +11198,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Manually close a respawn window for a hero. Optionally creates a new window with specified or default times.
+      description: Optionally opens a new window with the given or default times.
       summary: Close hero respawn window
       requestBody:
         content:
@@ -11342,7 +11272,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Manually open a new respawn window for a hero with specified or default times.
+      description: Uses the given or default times.
       summary: Open hero respawn window
       requestBody:
         content:
@@ -11550,7 +11480,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Returns a list of all game maps from Margonem, cached for 1 hour
+      description: Cached for one hour.
       summary: Get all game maps
   /guilds/{guildId}/map-templates:
     get:
@@ -11600,7 +11530,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Get all map templates for this guild
       summary: Get map templates
     post:
       tags:
@@ -11647,7 +11576,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Create a new reusable map template
       summary: Create map template
       requestBody:
         content:
@@ -11706,7 +11634,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Update an existing reusable map template
       summary: Update map template
       requestBody:
         content:
@@ -11764,7 +11691,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Delete a map template
       summary: Delete map template
   /kills:
     post:
@@ -11925,7 +11851,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Retrieves kill statistics for a guild including overview and member ranking.
+      description: Includes an overview and a member ranking.
       summary: Get guild kill statistics
   /users/@me/stats/kills:
     get:
@@ -12021,7 +11947,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Retrieves kill statistics for the authenticated user across all guilds, deduplicated.
+      description: Across all guilds, counting each kill once.
       summary: Get personal kill statistics
   /users/@me/stats/kills/analytics:
     get:
@@ -12325,7 +12251,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Retrieves a paginated, searchable list of NPCs killed by the authenticated user.
+      description: NPCs the authenticated user killed; `search` filters them.
       summary: Get paginated list of killed NPCs
   /guilds/{guildId}/stats/kills/top-npcs:
     get:
@@ -12436,7 +12362,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Retrieves the most frequently killed NPCs in a guild.
       summary: Get top killed NPCs in guild
   /guilds/{guildId}/stats/kills/top-killers:
     get:
@@ -12515,7 +12440,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Retrieves top members by kill count for specific NPC types (TITAN, HERO).
+      description: Members ranked by kill count for each of the TITAN, HERO and EVENT_HERO types.
       summary: Get top killers by NPC type in guild
   /guilds/{guildId}/stats/kills/npcs/{npcId}/killers:
     get:
@@ -12607,8 +12532,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Retrieves a ranking of members who killed a specific NPC, sorted by kill count.
-      summary: Get killers ranking for a specific NPC
+      description: Members sorted by kill count.
+      summary: Get the killers ranking of an NPC
   /guilds/{guildId}/stats/kills/members/{memberId}:
     get:
       tags:
@@ -12743,8 +12668,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Retrieves kill statistics for a specific member including overview and list of killed NPCs.
-      summary: Get kill statistics for a specific guild member
+      description: Includes an overview and the NPCs the member killed.
+      summary: Get a guild member's kill statistics
   /guilds/{guildId}/stats-card/refresh:
     post:
       tags:
@@ -12799,7 +12724,7 @@ paths:
                 anyOf:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/HttpErrorResponse"
-      description: Regenerate the public guild stats card and update the cached PNG.
+      description: Regenerates the cached PNG.
       summary: Refresh public guild stats card
   /public/guilds/{guildId}/stats-card.png:
     get:
@@ -12846,7 +12771,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Generate a public PNG image with lightweight loot statistics for a guild.
+      description: A PNG image with lightweight loot statistics.
       summary: Get public guild loot stats card
   /guilds/{guildId}/docs:
     get:
@@ -12896,7 +12821,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Retrieve document summaries for a guild
+      description: Summaries without document content.
       summary: Get guild documents
     post:
       tags:
@@ -12949,7 +12874,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Create a new empty guild document
+      description: The document starts empty.
       summary: Create guild document
       requestBody:
         content:
@@ -13003,7 +12928,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Retrieve guild documents currently in trash
       summary: Get deleted guild documents
   /guilds/{guildId}/docs/{docId}/history:
     get:
@@ -13056,7 +12980,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Retrieve version metadata for a guild document
+      description: Version metadata only; read a snapshot for its content.
       summary: Get guild document history
   /guilds/{guildId}/docs/{docId}/history/{historyId}:
     get:
@@ -13114,7 +13038,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Retrieve a read-only snapshot for a document history entry
       summary: Get guild document history snapshot
   /guilds/{guildId}/docs/{docId}:
     get:
@@ -13167,7 +13090,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Retrieve a guild document with its current Lexical state
+      description: Includes its current Lexical state.
       summary: Get guild document
     put:
       tags:
@@ -13283,7 +13206,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Soft-delete a guild document
+      description: "Soft delete: the document can be restored until it is permanently deleted."
       summary: Move guild document to trash
   /guilds/{guildId}/docs/{docId}/restore:
     post:
@@ -13336,7 +13259,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Restore a guild document from trash
       summary: Restore guild document
   /guilds/{guildId}/docs/{docId}/purge:
     delete:
@@ -13389,7 +13311,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Permanently delete a guild document from trash
+      description: Fails with 409 when the document is not in trash.
       summary: Permanently delete guild document
   /users/@me/themes:
     get:
@@ -13434,7 +13356,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Retrieve the authenticated user's own web themes
       summary: Get user themes
     post:
       tags:
@@ -13542,7 +13463,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Retrieve one of the user's own themes
       summary: Get user theme
     patch:
       tags:
@@ -13595,7 +13515,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Rename or change one of the user's themes
       summary: Update user theme
       requestBody:
         content:
@@ -13761,7 +13680,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Revoke the theme's share link so it no longer resolves
       summary: Stop sharing user theme
   /public/themes/{shareToken}:
     get:
@@ -26916,7 +26834,7 @@ components:
           type: array
           items:
             type: string
-          description: Guild IDs used for catching-related actions
+          description: Organizations (Discord guild IDs) the character submits loots, kills, automatic timers and hero sightings to. IDs of Organizations where the user cannot write loots are ignored.
       required:
         - characterId
         - catchingGuildIds

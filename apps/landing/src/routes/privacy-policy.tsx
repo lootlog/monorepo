@@ -8,8 +8,7 @@ export const Route = createFileRoute("/privacy-policy")({
       { title: "Lootlog.pl - Polityka Prywatności" },
       {
         name: "description",
-        content:
-          "Szczegóły dotyczące przetwarzania danych osobowych w Lootlog.pl",
+        content: "Jak Lootlog przetwarza dane osobowe.",
       },
     ],
     links: [

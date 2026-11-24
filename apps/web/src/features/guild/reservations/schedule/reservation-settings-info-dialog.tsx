@@ -50,9 +50,7 @@ export const ReservationSettingsInfoDialog = ({
       value: t("reservations.schedule.infoDialog.values.minutes", {
         minutes: settings.reservationMaxDurationMinutes,
       }),
-      description: t(
-        "reservations.schedule.infoDialog.sections.maxDuration.description",
-      ),
+      description: null,
     },
     {
       icon: Ruler,
@@ -104,9 +102,11 @@ export const ReservationSettingsInfoDialog = ({
                 <Icon aria-hidden className="mt-0.5 size-4 text-primary" />
                 <dt className="font-medium">{title}</dt>
                 <dd className="font-semibold tabular-nums">{value}</dd>
-                <dd className="col-span-2 col-start-2 text-xs text-muted-foreground">
-                  {description}
-                </dd>
+                {description ? (
+                  <dd className="col-span-2 col-start-2 text-xs text-muted-foreground">
+                    {description}
+                  </dd>
+                ) : null}
               </div>
             ))}
           </dl>

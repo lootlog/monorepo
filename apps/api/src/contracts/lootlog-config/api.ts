@@ -30,11 +30,7 @@ export class LootlogConfigGroup extends HttpApiGroup.make("lootlog-config").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "LootlogConfigController_getLootlogConfig")
-    .annotate(OpenApi.Summary, "Get lootlog configuration")
-    .annotate(
-      OpenApi.Description,
-      "Retrieve lootlog configuration for a guild",
-    ),
+    .annotate(OpenApi.Summary, "Get lootlog configuration"),
   HttpApiEndpoint.put(
     "LootlogConfigControllerUpdateNpc",
     "/guilds/:guildId/lootlog-config/:npcId",
@@ -54,6 +50,6 @@ export class LootlogConfigGroup extends HttpApiGroup.make("lootlog-config").add(
     .annotate(OpenApi.Summary, "Update NPC configuration")
     .annotate(
       OpenApi.Description,
-      "Update allowed rarities for a specific NPC type in lootlog configuration",
+      "Sets the allowed rarities for one NPC type.",
     ),
 ) {}

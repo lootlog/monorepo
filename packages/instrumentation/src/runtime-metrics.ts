@@ -37,7 +37,7 @@ export const processEventLoopDelay = Metric.histogram(
 );
 
 export const serviceUp = Metric.gauge("lootlog.service.up", {
-  description: "Running service process",
+  description: "1 while the service process runs",
   attributes: { unit: "" },
 });
 

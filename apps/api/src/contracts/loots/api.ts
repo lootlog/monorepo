@@ -100,10 +100,7 @@ export class LootsGroup extends HttpApiGroup.make("loots").add(
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "LootsController_resolveLootItemByHid")
     .annotate(OpenApi.Summary, "Resolve loot item by HID")
-    .annotate(
-      OpenApi.Description,
-      "Resolve a single visible loot item by HID without loading full loot payloads",
-    ),
+    .annotate(OpenApi.Description, "Returns the item without its full loot."),
   HttpApiEndpoint.get(
     "LootsControllerFetchLootById",
     "/guilds/:guildId/loots/:lootId",
@@ -118,8 +115,7 @@ export class LootsGroup extends HttpApiGroup.make("loots").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "LootsController_fetchLootById")
-    .annotate(OpenApi.Summary, "Get single loot")
-    .annotate(OpenApi.Description, "Retrieve a single loot by ID"),
+    .annotate(OpenApi.Summary, "Get a loot"),
   HttpApiEndpoint.delete(
     "LootsControllerDeleteLoot",
     "/guilds/:guildId/loots/:lootId",
@@ -134,8 +130,7 @@ export class LootsGroup extends HttpApiGroup.make("loots").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "LootsController_deleteLoot")
-    .annotate(OpenApi.Summary, "Archive loot")
-    .annotate(OpenApi.Description, "Archive an Organization Loot record"),
+    .annotate(OpenApi.Summary, "Archive loot"),
   HttpApiEndpoint.post("LootsControllerCreateLoot", "/loots", {
     payload: CreateLootRequest,
     success: CreateLootResponse.pipe(HttpApiSchema.status(201)),
@@ -145,8 +140,7 @@ export class LootsGroup extends HttpApiGroup.make("loots").add(
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "LootsController_createLoot")
-    .annotate(OpenApi.Summary, "Create loot")
-    .annotate(OpenApi.Description, "Submit a loot from game client"),
+    .annotate(OpenApi.Summary, "Create loot"),
   HttpApiEndpoint.get(
     "LootsControllerGetComments",
     "/guilds/:guildId/loots/:lootId/comments",
@@ -161,8 +155,7 @@ export class LootsGroup extends HttpApiGroup.make("loots").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "LootsController_getComments")
-    .annotate(OpenApi.Summary, "Get loot comments")
-    .annotate(OpenApi.Description, "Retrieve comments for a specific loot"),
+    .annotate(OpenApi.Summary, "Get loot comments"),
   HttpApiEndpoint.post(
     "LootsControllerCreateComment",
     "/guilds/:guildId/loots/:lootId/comments",
@@ -178,8 +171,7 @@ export class LootsGroup extends HttpApiGroup.make("loots").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "LootsController_createComment")
-    .annotate(OpenApi.Summary, "Create loot comment")
-    .annotate(OpenApi.Description, "Add a comment to a loot"),
+    .annotate(OpenApi.Summary, "Create loot comment"),
   HttpApiEndpoint.get(
     "LootsControllerGetDraws",
     "/guilds/:guildId/loots/:lootId/draws",
@@ -290,6 +282,5 @@ export class LootsGroup extends HttpApiGroup.make("loots").add(
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "LootsController_updateLoot")
-    .annotate(OpenApi.Summary, "Update loot")
-    .annotate(OpenApi.Description, "Update loot information"),
+    .annotate(OpenApi.Summary, "Update loot"),
 ) {}

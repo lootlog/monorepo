@@ -186,12 +186,14 @@ export const publishCommand = Command.make(
     ),
     routingKey: Flag.String("routing-key").pipe(
       Flag.withAlias("r"),
-      Flag.withDescription("Custom routing key"),
+      Flag.withDescription("RabbitMQ routing key; requires --payload"),
       Flag.optional,
     ),
     payload: Flag.String("payload").pipe(
       Flag.withAlias("p"),
-      Flag.withDescription("Custom payload as a JSON string"),
+      Flag.withDescription(
+        "Event payload as a JSON string; requires --routing-key",
+      ),
       Flag.optional,
     ),
   },
@@ -223,17 +225,10 @@ export const publishCommand = Command.make(
       command: "bun run events:publish",
       description: "Pick an event interactively",
     },
-    {
-      command: "bun run events:publish --continuous",
-      description: "Publish several events in a row",
-    },
-    {
-      command: "bun run events:publish --event loot-created",
-      description: "Publish a predefined event",
-    },
+    { command: "bun run events:publish --continuous" },
+    { command: "bun run events:publish --event loot-created" },
     {
       command: `bun run events:publish --routing-key users.kill-stats.changed --payload '{"recipientUserId": "user-1"}'`,
-      description: "Publish a custom event",
     },
   ]),
 );

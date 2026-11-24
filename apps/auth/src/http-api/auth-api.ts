@@ -7,10 +7,7 @@ import { SchemaErrorResponse } from "@lootlog/protocol/http/schema-error-respons
 export class AuthApi extends HttpApi.make("AuthApi")
   .annotate(OpenApi.Title, "Auth API")
   .annotate(OpenApi.Version, "1.0")
-  .annotate(
-    OpenApi.Description,
-    "Authentication and identity service documentation",
-  )
+  .annotate(OpenApi.Description, "Discord sign-in, sessions and API keys.")
   .annotate(OpenApi.Servers, [])
   .add(healthGroup(), AuthGroup, ApiKeysGroup)
   .middleware(SchemaErrorResponse) {}

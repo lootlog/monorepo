@@ -125,7 +125,6 @@
     "npcNotFound": "Nie znaleziono potwora",
     "npcNotFoundDescription": "Ten wpis konfiguracji nie istnieje w tym Lootlogu albo nie ma go już w pobranej konfiguracji.",
     "raritiesTitle": "Zbierane rzadkości",
-    "raritiesDescription": "Wybierz, które rzadkości mają być zbierane dla tego potwora.",
     "rarityCountCompact": "{{count}}/{{total}} rzadkości",
     "noRarities": "Brak rzadkości",
     "updateSuccess": "Zaktualizowano ustawienia potwora",
@@ -137,25 +136,21 @@
       "updateError": "Nie udało się zaktualizować konfiguracji rezerwacji"
     },
     "duration": {
-      "title": "Długość rezerwacji",
-      "description": "Określ minimalny i maksymalny czas pojedynczej rezerwacji."
+      "title": "Długość rezerwacji"
     },
     "schedule": {
       "title": "Harmonogram",
       "description": "Ustaw krok zaznaczania na kalendarzu i jak daleko do przodu można planować expowiska."
     },
     "limits": {
-      "title": "Limity graczy",
-      "description": "Ogranicz liczbę aktywnych rezerwacji jednej osoby na tym samym expowisku."
+      "title": "Limity graczy"
     },
     "fields": {
       "minDuration": {
-        "label": "Minimalna długość (min)",
-        "description": "Najkrótszy dozwolony czas rezerwacji."
+        "label": "Minimalna długość (min)"
       },
       "maxDuration": {
-        "label": "Maksymalna długość (min)",
-        "description": "Najdłuższy dozwolony czas rezerwacji."
+        "label": "Maksymalna długość (min)"
       },
       "granularity": {
         "label": "Krok siatki kalendarza",
@@ -225,7 +220,7 @@
       "viewDetails": "Zobacz szczegóły"
     },
     "refreshingProgress": "Odświeżanie {{processed}}/{{total}}",
-    "refreshSuccess": "Odświeżono pomyślnie",
+    "refreshSuccess": "Odświeżono",
     "refreshSuccessWithCooldown": "Odświeżono. Kolejne odświeżenie za {{time}}",
     "refreshAccessDisabled": "Odświeżenie dezaktywowało dostęp członka",
     "refreshNotFound": "Discord nie potwierdził członkostwa na serwerze tego Lootloga",
@@ -267,7 +262,7 @@
           "description": "Odświeżenie zostanie wykonane po zakończeniu limitu zapytań."
         },
         "cached": {
-          "title": "Dostęp oparty na danych z cache",
+          "title": "Dostęp oparty na zapisanych danych",
           "description": "Ostatnia próba nie dała pewnej odpowiedzi z Discorda, więc tymczasowo używane są ostatnie poprawne dane."
         },
         "notFound": {
@@ -279,8 +274,8 @@
           "description": "Token Discorda użytkownika jest nieważny albo wygasł. Użytkownik musi ponownie się autoryzować."
         },
         "rateLimited": {
-          "title": "Rate limit API Discorda",
-          "description": "Żądanie trafiło w rate limit API Discorda, więc dostęp nie jest usuwany na podstawie tej próby."
+          "title": "Limit zapytań do Discorda",
+          "description": "Discord odrzucił zapytanie z powodu limitu, więc dostęp nie jest usuwany na podstawie tej próby."
         },
         "authServiceUnavailable": {
           "title": "Serwis autoryzacji chwilowo niedostępny",
@@ -320,7 +315,7 @@
         },
         "unknownStatus": {
           "title": "Nieznany status synchronizacji",
-          "description": "System zapisał status, którego frontend jeszcze nie rozpoznaje. Surowa wartość jest widoczna poniżej."
+          "description": "Ta wersja aplikacji nie rozpoznaje zapisanego statusu. Surowa wartość jest widoczna poniżej."
         }
       }
     },
@@ -448,7 +443,7 @@
       },
       "jobs": {
         "title": "Kolejka wysyłki",
-        "description": "Po spełnieniu warunków reguły, tworzony jest job wysyłki. Możesz śledzić oczekujące i zakończone wysyłki."
+        "description": "Gdy warunki reguły są spełnione, wysyłka trafia do kolejki. Możesz śledzić oczekujące i zakończone wysyłki."
       },
       "limits": {
         "title": "Limity",
@@ -929,7 +924,6 @@
     "title": "Informacje",
     "refresh": "Odśwież status",
     "syncStatus": "Status synchronizacji Discorda",
-    "syncStatusDescription": "Ten widok pokazuje aktualny stan połączenia bota z serwerem Discord i kanałami.",
     "syncUnknown": {
       "title": "Uprawnienia bota nie są jeszcze potwierdzone",
       "description": "Lootlog nie ma jeszcze aktualnych danych o uprawnieniach bota na tym serwerze. Odśwież status, aby je sprawdzić.",
@@ -1002,34 +996,32 @@
     "mapCount_few": "{{count}} mapy",
     "mapCount_many": "{{count}} map",
     "deleteConfirmTitle": "Usunąć szablon?",
-    "deleteConfirmDescription": "Czy na pewno chcesz usunąć szablon {{name}}?",
+    "deleteConfirmDescription": "Mapy dodane już z tego szablonu do eventów zostaną bez zmian.",
     "createDialog": {
-      "title": "Nowy szablon map",
-      "description": "Utwórz nowy szablon z listą map"
+      "title": "Nowy szablon map"
     },
     "editDialog": {
-      "title": "Edytuj szablon",
-      "description": "Edytuj nazwę i mapy szablonu"
+      "title": "Edytuj szablon"
     },
     "form": {
       "nameRequired": "Nazwa szablonu jest wymagana",
       "mapsRequired": "Dodaj przynajmniej jedną mapę"
     },
     "toasts": {
-      "created": "Szablon utworzony pomyślnie",
+      "created": "Utworzono szablon",
       "updated": "Szablon zaktualizowany",
       "duplicateName": "Szablon o tej nazwie już istnieje",
-      "createError": "Błąd podczas tworzenia szablonu",
-      "updateError": "Błąd podczas aktualizacji szablonu",
+      "createError": "Nie udało się utworzyć szablonu",
+      "updateError": "Nie udało się zaktualizować szablonu",
       "deleted": "Szablon usunięty",
-      "deleteError": "Błąd podczas usuwania szablonu"
+      "deleteError": "Nie udało się usunąć szablonu"
     }
   },
   "account": {
     "title": "Konto",
     "session": {
       "title": "Sesja",
-      "description": "Wyloguj się z bieżącej sesji na tym urządzeniu",
+      "description": "Wylogowuje tylko tę przeglądarkę. Na innych urządzeniach pozostaniesz zalogowany.",
       "logout": "Wyloguj się"
     },
     "dangerZone": {
@@ -1236,65 +1228,83 @@
     "themes": {
       "default": {
         "title": "Default v2",
-        "description": "Ciemny system sygnałów Lootloga"
+        "description": "Niebieski akcent na ciemnym tle"
       },
       "muted": {
         "title": "Stonowany",
-        "description": "Czerń bez jaskrawych kolorów"
+        "description": "Stonowana zieleń na czarnym tle"
       },
-      "cyberpunk": { "title": "Cyberpunk", "description": "Neon" },
-      "pastel": { "title": "Pastel", "description": "Miękkie kolory" },
+      "cyberpunk": {
+        "title": "Cyberpunk",
+        "description": "Neonowy róż i morski turkus na czarnym tle"
+      },
+      "pastel": {
+        "title": "Pastel",
+        "description": "Pastelowy róż na ciemnym tle"
+      },
       "fantasy": {
         "title": "Dark Fantasy",
-        "description": "Głębokie purpury i złoto"
+        "description": "Liliowy fiolet na ciemnopurpurowym tle"
       },
-      "shonen": { "title": "Shonen", "description": "Jasne i energetyczne" },
+      "shonen": {
+        "title": "Shonen",
+        "description": "Koralowy pomarańcz na ciemnobrązowym tle"
+      },
       "onepiece": {
         "title": "One Piece - Zoro",
-        "description": "Łowca piratów"
+        "description": "Zieleń na czarnym tle"
       },
-      "anime": { "title": "Anime Kawaii", "description": "Marin ❤️" },
+      "anime": {
+        "title": "Anime Kawaii",
+        "description": "Różowy akcent na ciemnym tle"
+      },
       "waguri": {
         "title": "Kaoruko Waguri",
-        "description": "Słodka i stylowa"
+        "description": "Brzoskwiniowy pomarańcz na ciemnym tle"
       },
-      "goth": { "title": "Gothic", "description": "Mroczny i elegancki" },
+      "goth": {
+        "title": "Gothic",
+        "description": "Ciemny róż i fiolet na czarnym tle"
+      },
       "halloween": {
         "title": "Halloween",
-        "description": "Dynie, duchy i księżyc"
+        "description": "Pomarańcz na brązowoczarnym tle"
       },
       "realmadrid": {
         "title": "Real Madrid",
-        "description": "Calma y ganando"
+        "description": "Błękit na czarnym tle"
       },
       "realmadrid-3rd": {
         "title": "Real Madrid vs Juventus",
-        "description": "La Duodécima"
+        "description": "Lawendowy fiolet na granatowym tle"
       },
-      "barcelona": { "title": "FC Barcelona", "description": "Blaugrana" },
+      "barcelona": {
+        "title": "FC Barcelona",
+        "description": "Koralowa czerwień i granat na ciemnym tle"
+      },
       "rukia": {
         "title": "Rukia Kuchiki",
-        "description": "Hakka no Togame - Absolute Zero"
+        "description": "Lodowy błękit na granatowym tle"
       },
       "rias": {
         "title": "Rias Gremory",
-        "description": "Crimson-Haired Ruin Princess"
+        "description": "Malinowa czerwień na ciemnym tle"
       },
       "cat-pink": {
-        "title": "Różowy Kociak 🐱",
-        "description": "Słodki i ciepły jak kociak w kwiatach"
+        "title": "Różowy Kociak",
+        "description": "Pudrowy róż na ciemnym tle"
       },
       "cat-purple": {
-        "title": "Fioletowy Mruczek 🐱",
-        "description": "Mistyczny jak kotek pod gwiazdami"
+        "title": "Fioletowy Mruczek",
+        "description": "Lawendowy fiolet na ciemnym tle"
       },
       "cat-blue": {
-        "title": "Niebieski Kocurek 🐱",
-        "description": "Spokojny jak kotek na parapecie"
+        "title": "Niebieski Kocurek",
+        "description": "Błękit na ciemnym, morskim tle"
       },
       "cat-random": {
-        "title": "Losowy Kotek 🎲",
-        "description": "Losuje wariant przy każdym odświeżeniu"
+        "title": "Losowy Kotek",
+        "description": "Przy każdym odświeżeniu losuje wariant różowy, fioletowy albo niebieski"
       }
     }
   }

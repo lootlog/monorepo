@@ -286,17 +286,8 @@ export const generateCommand = Command.make(
       command: "bun run env:generate",
       description: "Auto-generate with smart defaults",
     },
-    {
-      command: "bun run env:generate --interactive",
-      description: "Interactive mode",
-    },
-    {
-      command: "bun run env:generate --skip-existing",
-      description: "Only create missing files",
-    },
-    {
-      command: "bun run env:generate --force",
-      description: "Overwrite all files",
-    },
+    { command: "bun run env:generate --interactive" },
+    { command: "bun run env:generate --skip-existing" },
+    { command: "bun run env:generate --force" },
   ]),
 );

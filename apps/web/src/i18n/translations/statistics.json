@@ -90,7 +90,7 @@
     "title": "Potwory i legendy"
   },
   "versusPrevious": "względem poprzednich {{days}} dni",
-  "favouriteNpc": "Ulubiony potwór",
+  "favouriteNpc": "Najczęściej bity potwór",
   "longestStreakDetail_one": "najdłuższa: {{count}} dzień",
   "longestStreakDetail_few": "najdłuższa: {{count}} dni",
   "longestStreakDetail_many": "najdłuższa: {{count}} dni",
@@ -138,7 +138,7 @@
   "hourCell_few": "{{weekday}}, {{hour}}: {{count}} bicia",
   "hourCell_many": "{{weekday}}, {{hour}}: {{count}} bić",
   "hourCell_other": "{{weekday}}, {{hour}}: {{count}} bicia",
-  "feedTitle": "Feed aktywności",
+  "feedTitle": "Ostatnie zdarzenia",
   "feedKill": "Bicie: {{name}}",
   "feedLoot": "Nowy łup",
   "feedLootOf": "Łup: {{name}}",
@@ -154,7 +154,7 @@
   "feedEmpty": "Brak nowych zdarzeń z ostatnich 24 godzin",
   "feedNoResults": "Brak pasujących zdarzeń",
   "feedNoResultsDescription": "Zmień kryteria albo wyczyść filtry, aby zobaczyć więcej zdarzeń.",
-  "feedSettingsError": "Nie udało się zapisać ustawień feedu.",
+  "feedSettingsError": "Nie udało się zapisać ustawień zdarzeń.",
   "feedLootlogs": "Lootlogi",
   "feedLootlogsSearch": "Szukaj Lootloga...",
   "feedAllLootlogs": "Wszystkie Lootlogi",
@@ -206,7 +206,7 @@
     }
   },
   "today": {
-    "title": "Twój dzień",
+    "title": "Dzisiaj",
     "kills": "Bicia dziś",
     "versusAverage": "vs średnia dnia gry",
     "averageOnline": "śr. {{duration}} na dzień gry",
@@ -218,7 +218,7 @@
     "minutes": "{{minutes}} min",
     "weekMonster": "Potwór tygodnia"
   },
-  "feedFilters": "Filtry feedu",
+  "feedFilters": "Filtry zdarzeń",
   "feedShowOlder": "Pokaż starsze ({{count}})",
   "feedShowLess": "Pokaż mniej"
 }

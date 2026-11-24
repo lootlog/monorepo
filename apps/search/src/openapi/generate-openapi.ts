@@ -14,10 +14,7 @@ preserveOpenApi30Contract(
   {
     "PlayersController_getPlayers:limit": numberWithDefault(10),
   },
-  {
-    "HealthzController_healthCheck:200": "Search service is healthy",
-    "PlayersController_getPlayers:200": "List of matching players",
-  },
+  {},
 );
 
 await Bun.write(

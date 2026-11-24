@@ -101,7 +101,6 @@ export const TimersSettingsGeneral: FC = () => {
         <SettingsRow
           htmlFor="timers-remove-after"
           label={t("settings.timers.general.removeTimerAfterLabel")}
-          description={t("settings.timers.general.removeTimerAfterDescription")}
         >
           <SettingsNumberField
             id="timers-remove-after"

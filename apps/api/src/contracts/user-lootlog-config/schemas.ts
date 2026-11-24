@@ -26,7 +26,8 @@ export type UpdateCharacterLootlogConfigRequest =
 export const UpdateCharacterLootlogConfigRequest = Schema.Struct({
   characterId: NonEmptyString,
   catchingGuildIds: Schema.Array(Schema.String).annotate({
-    description: "Guild IDs used for catching-related actions",
+    description:
+      "Organizations (Discord guild IDs) the character submits loots, kills, automatic timers and hero sightings to. IDs of Organizations where the user cannot write loots are ignored.",
   }),
 }).annotate({ identifier: "CreateOrUpdateLootlogCharacterConfigDto" });
 

@@ -110,7 +110,6 @@ export const TimersSettingsAppearance: FC = () => {
       >
         <SettingsRow
           label={t("settings.timers.appearance.fontSizeLabel")}
-          description={t("settings.timers.appearance.fontSizeDescription")}
           control="wide"
         >
           <SettingsSliderField

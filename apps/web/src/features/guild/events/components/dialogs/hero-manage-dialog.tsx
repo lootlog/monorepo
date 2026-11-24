@@ -126,9 +126,7 @@ export const HeroManageDialog = ({
         <IconDialogHeader
           icon={Swords}
           title={isEditing ? t("events.heroes.edit") : t("events.heroes.add")}
-          description={
-            isEditing ? hero?.npcName : t("events.heroes.addDescription")
-          }
+          description={isEditing ? hero?.npcName : undefined}
         />
 
         <form

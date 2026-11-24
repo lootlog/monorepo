@@ -7,7 +7,6 @@
     "limitShort": "{{used}} / {{max}}",
     "create": "Nowy dokument",
     "createTitle": "Nowy dokument",
-    "createDescription": "Utwórz pusty dokument, który później zapiszesz w edytorze.",
     "titleLabel": "Tytuł",
     "titlePlaceholder": "Np. Zasady bicia tytanów",
     "emptyTitle": "Brak dokumentów",
@@ -75,7 +74,6 @@
   },
   "tableDialog": {
     "title": "Wstaw tabelę",
-    "description": "Wybierz liczbę wierszy i kolumn. Domyślnie tabela ma rozmiar 3 na 3.",
     "rows": "Wiersze",
     "columns": "Kolumny",
     "includeHeaders": "Dodaj nagłówki",

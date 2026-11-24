@@ -176,16 +176,6 @@ http:
       entryPoints:
         - "web"
 
-    # web-client-ws:
-    #   rule: "HeaderRegexp(`Upgrade`, `(?i)websocket`)"
-    #   service: "web-client"
-    #   entryPoints:
-    #     - "web"
-    #   priority: 100
-    #   middlewares:
-    #     - "cors"
-    #     - "apiCompress"
-
   services:
     web-client:
       loadBalancer:

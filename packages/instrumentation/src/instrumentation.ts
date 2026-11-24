@@ -91,7 +91,10 @@ export const httpServerDuration = Metric.histogram(
 
 export const httpServerRequestCount = Metric.counter(
   "http.server.request.count",
-  { description: "HTTP server requests", incremental: true },
+  {
+    description: "HTTP server requests, excluding health checks",
+    incremental: true,
+  },
 );
 
 export const recordHttpServerMetrics = (input: {

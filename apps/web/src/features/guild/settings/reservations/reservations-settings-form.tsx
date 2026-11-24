@@ -99,7 +99,6 @@ export const ReservationsSettingsForm = ({
         <BandSection
           id="reservation-settings-duration"
           title={t("settings.reservations.duration.title")}
-          description={t("settings.reservations.duration.description")}
         >
           <div className="grid gap-4 md:grid-cols-2">
             <FormField
@@ -122,9 +121,6 @@ export const ReservationsSettingsForm = ({
                       }
                     />
                   />
-                  <FormDescription>
-                    {t("settings.reservations.fields.minDuration.description")}
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -150,9 +146,6 @@ export const ReservationsSettingsForm = ({
                       }
                     />
                   />
-                  <FormDescription>
-                    {t("settings.reservations.fields.maxDuration.description")}
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -244,7 +237,6 @@ export const ReservationsSettingsForm = ({
         <BandSection
           id="reservation-settings-limits"
           title={t("settings.reservations.limits.title")}
-          description={t("settings.reservations.limits.description")}
         >
           <div className="grid gap-4 md:grid-cols-2">
             <FormField

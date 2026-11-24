@@ -3,7 +3,7 @@
   "info": {
     "title": "Activity Logger API",
     "version": "1.0",
-    "description": "The Activity Logger API documentation",
+    "description": "Organization activity history and players' confirmed game online time.",
     "contact": {}
   },
   "servers": [
@@ -202,7 +202,7 @@
             }
           }
         },
-        "summary": "Get activities for a specific guild",
+        "summary": "List a guild's activities",
         "x-lootlog-access": "read",
         "x-lootlog-data": "organization"
       }
@@ -753,7 +753,7 @@
             }
           },
           "404": {
-            "description": "Activity not found",
+            "description": "",
             "content": {
               "application/json": {
                 "schema": {
@@ -783,7 +783,7 @@
             }
           }
         },
-        "summary": "Get a single activity by ID",
+        "summary": "Get an activity",
         "x-lootlog-access": "read",
         "x-lootlog-data": "organization"
       },
@@ -869,7 +869,7 @@
             }
           },
           "404": {
-            "description": "Activity not found",
+            "description": "",
             "content": {
               "application/json": {
                 "schema": {
@@ -899,7 +899,7 @@
             }
           }
         },
-        "summary": "Delete a specific activity by ID",
+        "summary": "Delete an activity",
         "x-lootlog-access": "write",
         "x-lootlog-data": "organization"
       }

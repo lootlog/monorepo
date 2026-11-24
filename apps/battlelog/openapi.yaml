@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: Battle Log API
   version: "1.0"
-  description: The Battle Log API documentation
+  description: Margonem battle logs, public battle links and battle statistics.
   contact: {}
 paths:
   /healthz:
@@ -13,7 +13,7 @@ paths:
       parameters: []
       responses:
         "200":
-          description: API is healthy
+          description: ""
         "400":
           description: ""
           content:
@@ -38,7 +38,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Check the health status of the API
       summary: Health check
   /battles:
     post:
@@ -1998,7 +1997,7 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/HttpErrorResponse"
         "404":
-          description: Battle not found
+          description: ""
           content:
             application/json:
               schema:
@@ -2053,7 +2052,7 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/HttpErrorResponse"
         "404":
-          description: Battle not found
+          description: ""
           content:
             application/json:
               schema:
@@ -2064,7 +2063,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      summary: Get a single battle
+      summary: Get a battle
     patch:
       tags:
         - battles
@@ -2107,7 +2106,7 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/HttpErrorResponse"
         "404":
-          description: Battle not found
+          description: ""
           content:
             application/json:
               schema:
@@ -2167,7 +2166,7 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/HttpErrorResponse"
         "404":
-          description: Battle not found
+          description: ""
           content:
             application/json:
               schema:
@@ -2222,7 +2221,7 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/HttpErrorResponse"
         "404":
-          description: Battle not found
+          description: ""
           content:
             application/json:
               schema:
@@ -2372,7 +2371,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
         "404":
-          description: Public battle not found
+          description: ""
           content:
             application/json:
               schema:
@@ -2421,7 +2420,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
         "404":
-          description: Public battle not found
+          description: ""
           content:
             application/json:
               schema:
@@ -2470,7 +2469,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
         "404":
-          description: Public battle not found
+          description: ""
           content:
             application/json:
               schema:

@@ -66,18 +66,18 @@
     "close": "Zamknij"
   },
   "toasts": {
-    "battleDeleted": "Walka została usunięta.",
-    "battleDeleteError": "Wystąpił błąd podczas usuwania walki.",
+    "battleDeleted": "Usunięto walkę.",
+    "battleDeleteError": "Nie udało się usunąć walki.",
     "bulkBattlesDeleted": "Usunięto zaznaczone walki: {{count}}.",
     "bulkBattleDeleteError": "Nie udało się usunąć zaznaczonych walk.",
-    "linkCopied": "Link do walki został skopiowany do schowka!",
-    "linkCopyError": "Wystąpił błąd podczas kopiowania linku.",
-    "battleShared": "Walka została udostępniona!",
-    "battleShareError": "Wystąpił błąd podczas udostępniania walki.",
+    "linkCopied": "Skopiowano link do walki.",
+    "linkCopyError": "Nie udało się skopiować linku.",
+    "battleShared": "Udostępniono walkę.",
+    "battleShareError": "Nie udało się udostępnić walki.",
     "bulkBattlesShared": "Udostępniono i skopiowano linki do walk: {{count}}.",
     "bulkBattleShareError": "Nie udało się udostępnić zaznaczonych walk.",
-    "battleHidden": "Walka została ukryta!",
-    "battleHideError": "Wystąpił błąd podczas ukrywania walki.",
+    "battleHidden": "Ukryto walkę.",
+    "battleHideError": "Nie udało się ukryć walki.",
     "selectionLimitReached": "Możesz zaznaczyć maksymalnie {{limit}} walk."
   },
   "dialogs": {
@@ -89,7 +89,7 @@
   },
   "list": {
     "empty": "Brak walk",
-    "emptyDescription": "Nowe walki pojawią się tutaj automatycznie.",
+    "emptyDescription": "Walki zapisuje dodatek w grze, gdy w jego ustawieniach jest włączone zbieranie walk.",
     "noResults": "Brak pasujących walk",
     "noResultsDescription": "Zmień kryteria albo wyczyść filtry, aby zobaczyć więcej walk.",
     "loadError": "Nie udało się wczytać walk.",
@@ -206,7 +206,7 @@
         "deltas": "Zmiany tury",
         "damage": "Obrażenia",
         "healing": "Leczenie",
-        "mitigation": "Mitigacja"
+        "mitigation": "Powstrzymane obrażenia"
       },
       "layers": {
         "title": "Warstwy",

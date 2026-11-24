@@ -78,15 +78,14 @@
     "open": "Pokaż wyjaśnienie ustawienia",
     "dependency": "Zależność:",
     "recommendation": "Rekomendacja:",
-    "example": "Przykład:",
-    "animationsRecommendation": "Wyłącz tę opcję, jeżeli interfejs gry traci płynność."
+    "example": "Przykład:"
   },
   "chat": {
     "preset": {
       "section": "Gotowe ustawienia",
       "label": "Gotowe ustawienia wyglądu",
       "readable": "Czytelny",
-      "readableDescription": "Większy tekst i więcej przestrzeni – najłatwiejszy do czytania.",
+      "readableDescription": "Większy tekst i większe odstępy.",
       "compact": "Kompaktowy",
       "compactDescription": "Więcej wiadomości na ekranie przy mniejszych odstępach."
     },
@@ -95,7 +94,7 @@
     },
     "npcLayout": {
       "label": "Wiadomości NPC",
-      "description": "Wybierz osobny miękki kafelek, oszczędny wpis w linii albo samą nazwę NPC w treści wiadomości.",
+      "description": "Jak pokazywać NPC w wiadomości: jako osobny kafelek, krótki wpis w linii albo samą nazwę.",
       "tile": "Kafelek",
       "inline": "W linii",
       "text": "Tekst",
@@ -107,8 +106,7 @@
       "description": "Wielkość tekstu wiadomości względem domyślnej."
     },
     "messageGap": {
-      "label": "Odstęp wiadomości",
-      "description": "Pionowy odstęp między kolejnymi wiadomościami."
+      "label": "Odstęp wiadomości"
     },
     "metadata": {
       "title": "Widoczne informacje",
@@ -117,11 +115,7 @@
       "showNpcAvatar": "Ikona NPC",
       "showNpcLevel": "Poziom NPC",
       "showNpcLocationAndCoordinates": "Lokacja i koordynaty NPC",
-      "showTimestampDescription": "Godzina wysłania przy każdej wiadomości.",
-      "showGuildLabelDescription": "Nazwa Lootloga, z którego pochodzi wiadomość, w widoku wszystkich Lootlogów.",
-      "showNpcAvatarDescription": "Ikona potwora w wiadomościach o NPC.",
-      "showNpcLevelDescription": "Poziom potwora w wiadomościach o NPC.",
-      "showNpcLocationAndCoordinatesDescription": "Nazwa mapy i koordynaty w wiadomościach o NPC."
+      "showGuildLabelDescription": "Nazwa Lootloga, z którego pochodzi wiadomość, w widoku wszystkich Lootlogów."
     }
   },
   "npcColors": {
@@ -138,8 +132,7 @@
     "editColor": "Edytuj kolor NPC",
     "preview": "Podgląd powierzchni",
     "notificationPreview": "Powiadomienie o wykryciu potwora",
-    "detectorPreview": "Potwór widoczny w wykrywaczu",
-    "resetAllDescription": "Wraca do domyślnej palety dla wszystkich typów potworów."
+    "detectorPreview": "Potwór widoczny w wykrywaczu"
   },
   "characterAura": {
     "title": "Aura postaci",
@@ -200,12 +193,11 @@
     }
   },
   "general": {
-    "description": "Skonfiguruj ogólne ustawienia dotyczące działania dodatku w grze.",
     "behaviorTitle": "Zachowanie dodatku",
     "allowWorldSelectionLabel": "Pozwalaj na wybór świata",
     "allowWorldSelectionDescription": "Pozwala wybrać świat przy dodawaniu timera; nie działa na zgrupowanych timerach.",
     "animationEffectsLabel": "Efekty animacji",
-    "animationEffectsDescription": "Włącz płynne animacje interfejsu. Wyłącz na słabszym komputerze, aby ograniczyć lagi.",
+    "animationEffectsDescription": "Wyłącz, jeśli gra traci płynność.",
     "mapAurasLabel": "Aury na mapie",
     "mapAurasDescription": "Które aury postaci rysować na mapie. Na komputerze bez akceleracji grafiki tryb automatyczny pokazuje tylko twoją aurę i dwie najbliższe.",
     "mapAurasModes": {
@@ -261,7 +253,6 @@
   },
   "information": {
     "title": "Informacje o kliencie",
-    "description": "Informacje o aktualnie uruchomionej wersji dodatku.",
     "buildDetailsTitle": "Szczegóły kompilacji",
     "versionLabel": "Wersja klienta",
     "commitShaLabel": "Commit SHA",
@@ -285,11 +276,10 @@
   "battlePanel": {
     "dataCollectionTitle": "Zbieranie danych",
     "enableCollectionLabel": "Włącz zbieranie walk",
-    "enableCollectionDescription": "Rejestruje dane walk używane przez panel."
+    "enableCollectionDescription": "Zapisuje Twoje walki z graczami na koncie Lootloga. Znajdziesz je w Panelu walk na stronie."
   },
   "hotkeys": {
     "title": "Skróty klawiszowe",
-    "description": "Skonfiguruj skróty klawiaturowe i przyciski myszy.",
     "capture": "Naciśnij klawisz lub przycisk myszy…",
     "conflict": "Ten skrót jest już przypisany do innej akcji. Wybierz inny skrót lub zmień przypisanie tamtej akcji.",
     "changeLabel": "Zmień skrót: {{action}}",
@@ -341,8 +331,7 @@
         "description": "Włącza lub wyłącza autowysyłkę wykrytych potworów wszystkich typów na postaci, którą grasz."
       }
     },
-    "restoreDefaultsTitle": "Domyślne skróty",
-    "restoreDefaultsDescription": "Cofa wszystkie zmienione skróty."
+    "restoreDefaultsTitle": "Domyślne skróty"
   },
   "notifications": {
     "title": "Ustawienia powiadomień",
@@ -399,7 +388,6 @@
     }
   },
   "sounds": {
-    "description": "Skonfiguruj dźwięki dla różnych funkcji.",
     "loading": "Ładowanie ustawień…",
     "invalidUrl": "Nieprawidłowy adres URL",
     "masterTitle": "Głośność główna",

@@ -67,33 +67,7 @@ for (const operationId of statisticOperations) {
   }
 }
 
-const responseDescriptions = new Map<string, string>([
-  ["HealthzController_healthCheck:200", "API is healthy"],
-]);
-
-for (const operationId of [
-  "BattlesController_getBattleTimeline",
-  "BattlesController_getBattle",
-  "BattlesController_updateBattle",
-  "BattlesController_deleteBattle",
-  "BattlesController_getBattleRawData",
-] as const) {
-  responseDescriptions.set(`${operationId}:404`, "Battle not found");
-}
-
-for (const operationId of [
-  "PublicBattlesController_getPublicBattle",
-  "PublicBattlesController_getPublicBattleRaw",
-  "PublicBattlesController_getPublicBattleTimeline",
-] as const) {
-  responseDescriptions.set(`${operationId}:404`, "Public battle not found");
-}
-
-preserveOpenApi30Contract(
-  document,
-  Object.fromEntries(parameterSchemas),
-  Object.fromEntries(responseDescriptions),
-);
+preserveOpenApi30Contract(document, Object.fromEntries(parameterSchemas), {});
 
 setOpenApiCompatibilityValue(
   document,

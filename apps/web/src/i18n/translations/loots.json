@@ -51,7 +51,6 @@
     },
     "saveDialog": {
       "title": "Zapisz szybki filtr",
-      "description": "Nadaj nazwę swojemu szybkiemu filtrowi, aby łatwo go znaleźć później.",
       "nameLabel": "Nazwa filtru",
       "namePlaceholder": "np. Moje ulubione filtry",
       "cancel": "Anuluj",
@@ -88,7 +87,7 @@
       "heroLabel": "Heros",
       "itemCategory": "Przedmiot",
       "npcCategory": "Potwór",
-      "applied": "Włączony. Kliknij, aby wyłączyć.",
+      "applied": "Włączony",
       "remove": "Usuń szybki filtr {{label}}"
     }
   },
@@ -107,7 +106,7 @@
     "dialogDescription": "Przejdź do strony, wyszukaj przedmiot, potwora lub gracza albo wklej identyfikator HID.",
     "placeholder": "Szukaj stron, przedmiotów, potworów, graczy...",
     "loading": "Wyszukiwanie...",
-    "idleTitle": "Znajdź łup szybciej",
+    "idleTitle": "Szukaj łupów",
     "startTyping": "Wpisz nazwę przedmiotu, potwora lub gracza.",
     "keepTyping": "Wpisz jeszcze co najmniej jeden znak.",
     "hidHint": "Możesz też wkleić",
@@ -145,7 +144,7 @@
     "emptyCat": "Kot przeszukał wszystko... nic nie znalazł 😿",
     "emptyRukia": "Absolutne zero... nie znaleziono żadnych łupów.",
     "emptyRias": "Moc Zniszczenia nie wykryła żadnych łupów.",
-    "emptyDescription": "Nowe łupy pojawią się tutaj automatycznie.",
+    "emptyDescription": "Łupy zapisuje dodatek w grze, gdy członkowie tego Lootloga zdobywają przedmioty.",
     "noResults": "Brak pasujących łupów",
     "noResultsDescription": "Zmień kryteria albo wyczyść filtry, aby zobaczyć więcej łupów.",
     "newLootsNoun_one": "nowy łup",
@@ -271,7 +270,7 @@
       "defaultTickets_few": "Przywróć {{count}} losy",
       "defaultTickets_many": "Przywróć {{count}} losów",
       "defaultTickets_other": "Przywróć {{count}} losu",
-      "shuffle": "Shuffle",
+      "shuffle": "Wymieszaj",
       "unshuffle": "Ułóż po kolei"
     },
     "moreActions": "Więcej akcji"

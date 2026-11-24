@@ -83,7 +83,6 @@ export const NpcColorsSettings = () => {
             variant="outline"
             size="sm"
             disabled={!anyModified}
-            title={t("settings.npcColors.resetAllDescription")}
             onClick={resetAll}
           >
             {t("settings.npcColors.resetAll")}

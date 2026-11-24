@@ -14,15 +14,12 @@ export const WrappedSlideContent = ({
   eventName,
   world,
 }: WrappedSlideContentProps) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   if (slide.kind === "opening") {
     return (
       <div className="mx-auto flex h-full w-full max-w-4xl flex-col justify-center px-6 py-14 sm:px-12">
-        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">
-          {t("events.summaryDialog.eyebrow")}
-        </p>
-        <h2 className="mt-5 max-w-3xl text-4xl font-bold tracking-[-0.04em] text-balance sm:text-6xl">
+        <h2 className="max-w-3xl text-4xl font-bold tracking-[-0.04em] text-balance sm:text-6xl">
           {eventName}
         </h2>
         <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
@@ -38,10 +35,7 @@ export const WrappedSlideContent = ({
   if (slide.kind === "finale") {
     return (
       <div className="mx-auto flex h-full w-full max-w-4xl flex-col justify-center px-6 py-14 sm:px-12">
-        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">
-          {t("events.summaryDialog.finaleEyebrow")}
-        </p>
-        <h2 className="mt-5 text-4xl font-bold tracking-[-0.04em] sm:text-6xl">
+        <h2 className="text-4xl font-bold tracking-[-0.04em] sm:text-6xl">
           {t("events.summaryDialog.finaleTitle")}
         </h2>
         <div className="mt-10 divide-y divide-border border-y border-border">
@@ -65,6 +59,7 @@ export const WrappedSlideContent = ({
 
   const displayValue = slide.subject ?? getFactValue(slide);
   const detailValue = getFactValue(slide);
+  const descriptionKey = `events.summaryDialog.facts.${slide.id}.description`;
 
   return (
     <div className="mx-auto flex h-full w-full max-w-4xl flex-col justify-center px-6 py-14 sm:px-12">
@@ -81,12 +76,14 @@ export const WrappedSlideContent = ({
           })}
         </p>
       ) : null}
-      <p className="mt-5 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-        {t(`events.summaryDialog.facts.${slide.id}.description`, {
-          value: detailValue,
-          count: slide.secondaryValue,
-        })}
-      </p>
+      {i18n.exists(descriptionKey, { count: slide.secondaryValue }) ? (
+        <p className="mt-5 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+          {t(descriptionKey, {
+            value: detailValue,
+            count: slide.secondaryValue,
+          })}
+        </p>
+      ) : null}
     </div>
   );
 };

@@ -23,11 +23,7 @@ export class UserThemesGroup extends HttpApiGroup.make("user-themes").add(
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "UserThemesController_getThemes")
-    .annotate(OpenApi.Summary, "Get user themes")
-    .annotate(
-      OpenApi.Description,
-      "Retrieve the authenticated user's own web themes",
-    ),
+    .annotate(OpenApi.Summary, "Get user themes"),
   HttpApiEndpoint.post("UserThemesControllerCreateTheme", "/users/@me/themes", {
     payload: CreateUserThemeRequest,
     success: UserThemeResponse.pipe(HttpApiSchema.status(201)),
@@ -51,8 +47,7 @@ export class UserThemesGroup extends HttpApiGroup.make("user-themes").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "UserThemesController_getTheme")
-    .annotate(OpenApi.Summary, "Get user theme")
-    .annotate(OpenApi.Description, "Retrieve one of the user's own themes"),
+    .annotate(OpenApi.Summary, "Get user theme"),
   HttpApiEndpoint.patch(
     "UserThemesControllerUpdateTheme",
     "/users/@me/themes/:themeId",
@@ -65,8 +60,7 @@ export class UserThemesGroup extends HttpApiGroup.make("user-themes").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "UserThemesController_updateTheme")
-    .annotate(OpenApi.Summary, "Update user theme")
-    .annotate(OpenApi.Description, "Rename or change one of the user's themes"),
+    .annotate(OpenApi.Summary, "Update user theme"),
   HttpApiEndpoint.delete(
     "UserThemesControllerDeleteTheme",
     "/users/@me/themes/:themeId",
@@ -110,11 +104,7 @@ export class UserThemesGroup extends HttpApiGroup.make("user-themes").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "UserThemesController_unshareTheme")
-    .annotate(OpenApi.Summary, "Stop sharing user theme")
-    .annotate(
-      OpenApi.Description,
-      "Revoke the theme's share link so it no longer resolves",
-    ),
+    .annotate(OpenApi.Summary, "Stop sharing user theme"),
   HttpApiEndpoint.get(
     "UserThemesControllerGetSharedTheme",
     "/public/themes/:shareToken",

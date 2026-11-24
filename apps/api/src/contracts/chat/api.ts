@@ -30,8 +30,7 @@ export class ChatGroup extends HttpApiGroup.make("chat").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "ChatController_getChatMessages")
-    .annotate(OpenApi.Summary, "Get chat messages")
-    .annotate(OpenApi.Description, "Retrieve chat messages for a guild"),
+    .annotate(OpenApi.Summary, "Get chat messages"),
   HttpApiEndpoint.post(
     "ChatControllerSendChatMessage",
     "/guilds/:guildId/chat-messages",
@@ -47,8 +46,7 @@ export class ChatGroup extends HttpApiGroup.make("chat").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "ChatController_sendChatMessage")
-    .annotate(OpenApi.Summary, "Send chat message")
-    .annotate(OpenApi.Description, "Send a new chat message to a guild"),
+    .annotate(OpenApi.Summary, "Send chat message"),
   HttpApiEndpoint.delete(
     "ChatControllerClearChatMessages",
     "/guilds/:guildId/chat-messages",
@@ -63,8 +61,7 @@ export class ChatGroup extends HttpApiGroup.make("chat").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "ChatController_clearChatMessages")
-    .annotate(OpenApi.Summary, "Clear chat messages")
-    .annotate(OpenApi.Description, "Clear all chat messages from a guild"),
+    .annotate(OpenApi.Summary, "Clear chat messages"),
   HttpApiEndpoint.delete(
     "ChatControllerDeleteChatMessage",
     "/guilds/:guildId/chat-messages/:messageId",
@@ -79,6 +76,5 @@ export class ChatGroup extends HttpApiGroup.make("chat").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "ChatController_deleteChatMessage")
-    .annotate(OpenApi.Summary, "Delete chat message")
-    .annotate(OpenApi.Description, "Delete a chat message from a guild"),
+    .annotate(OpenApi.Summary, "Delete chat message"),
 ) {}

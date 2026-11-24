@@ -15,19 +15,20 @@ const specs = { main, activity, battlelog, catalog, search };
 
 describe("API reference metadata", () => {
   test.each(PUBLIC_API_SERVICES)(
-    "%s lists every operation tag in exactly one named group",
+    "%s names exactly its operation tags, each in one group",
     (service) => {
       const metadata = referenceMetadata[service];
       const grouped = metadata.groups.flatMap((group) => group.tags);
-      const document = decodeReferenceDocument(specs[service]);
 
-      for (const tag of getOperationTags(document)) {
-        expect(metadata.tags[tag], tag).toBeDefined();
-        expect(
-          grouped.filter((name) => name === tag),
-          tag,
-        ).toHaveLength(1);
-      }
+      const operationTags = getOperationTags(
+        decodeReferenceDocument(specs[service]),
+      );
+
+      expect(new Set(Object.keys(metadata.tags))).toEqual(
+        new Set(operationTags),
+      );
+      expect(new Set(grouped)).toEqual(new Set(operationTags));
+      expect(grouped).toHaveLength(operationTags.length);
     },
   );
 });

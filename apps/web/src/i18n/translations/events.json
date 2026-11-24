@@ -24,7 +24,7 @@
   "filterPlaceholder": "Filtruj po nazwie eventu…",
   "noResults": "Brak pasujących eventów",
   "noResultsDescription": "Zmień kryteria albo wyczyść filtry, aby zobaczyć więcej eventów.",
-  "error": "Błąd podczas pobierania",
+  "error": "Nie udało się wczytać danych",
   "accessDenied": "Brak dostępu do eventów",
   "loadError": {
     "title": "Nie udało się wczytać eventu.",
@@ -41,9 +41,9 @@
   "resume": "Wznów",
   "endSuccess": "Zakończono event",
   "resumeSuccess": "Wznowiono event",
-  "statusError": "Błąd podczas zmiany statusu",
+  "statusError": "Nie udało się zmienić statusu eventu",
   "deleteSuccess": "Usunięto event",
-  "deleteError": "Błąd podczas usuwania eventu",
+  "deleteError": "Nie udało się usunąć eventu",
   "deleteDialog": {
     "title": "Usunąć event?",
     "description": "Czy na pewno chcesz usunąć event „{{name}}”? Ta operacja usuwa wszystkie dane eventowe i jest nieodwracalna.",
@@ -51,11 +51,11 @@
   },
   "endDialog": {
     "title": "Zakończyć event?",
-    "description": "Czy na pewno chcesz zakończyć ten event? Będzie on oznaczony jako nieaktywny."
+    "description": "Nowe bicia herosów przestaną się liczyć do eventu. Zapisane wyniki zostaną, a event możesz później wznowić."
   },
   "resumeDialog": {
     "title": "Wznowić event?",
-    "description": "Czy na pewno chcesz wznowić ten event? Będzie on ponownie aktywny."
+    "description": "Nowe bicia herosów znów będą się liczyć do eventu."
   },
   "createDialog": {
     "title": "Nowy event",
@@ -75,8 +75,8 @@
     "nameRequired": "Nazwa eventu jest wymagana",
     "worldRequired": "Świat jest wymagany",
     "endDateMustBeAfterStart": "Data zakończenia musi być późniejsza niż data rozpoczęcia",
-    "success": "Event utworzony pomyślnie",
-    "error": "Błąd podczas tworzenia eventu",
+    "success": "Utworzono event",
+    "error": "Nie udało się utworzyć eventu",
     "cancel": "Anuluj",
     "create": "Utwórz",
     "back": "Wstecz",
@@ -113,25 +113,20 @@
     "play": "Wznów automatyczne przejście",
     "openingProgressLabel": "Otwarcie",
     "finaleProgressLabel": "Podsumowanie",
-    "eyebrow": "Podsumowanie eventu",
     "openingDescription": "Najważniejsze potwierdzone statystyki z przebiegu eventu.",
-    "finaleEyebrow": "W skrócie",
-    "finaleTitle": "To był ten event",
-    "sparseEyebrow": "Podsumowanie",
+    "finaleTitle": "Podsumowanie",
     "sparseDescription": "Danych jest jeszcze za mało na pełne podsumowanie. Pokazujemy tylko statystyki, które można potwierdzić.",
     "noVerifiedFacts": "Nie ma jeszcze potwierdzonych statystyk do pokazania.",
     "facts": {
       "kills": {
-        "label": "Odnotowane bicia",
-        "description": "Łączna liczba bić zapisana w historii eventu."
+        "label": "Odnotowane bicia"
       },
       "tracked-time": {
         "label": "Czas w rankingu",
         "description": "Łączny czas aktywności uwzględniony w rankingu."
       },
       "loot-records": {
-        "label": "Zapisane łupy",
-        "description": "Liczba łupów powiązanych z eventem."
+        "label": "Zapisane łupy"
       },
       "rarity-items": {
         "label": "Przedmioty z rzadkością",
@@ -151,8 +146,7 @@
       },
       "top-scorer": {
         "label": "Najwięcej punktów",
-        "value": "{{value}} pkt",
-        "description": "Jedyny najwyższy wynik wśród co najmniej dwóch sklasyfikowanych osób."
+        "value": "{{value}} pkt"
       },
       "longest-duty": {
         "label": "Najdłuższa obstawa",
@@ -161,21 +155,17 @@
       },
       "top-hunter": {
         "label": "Najwięcej bić",
-        "value": "{{value}} bić",
-        "description": "Jedyny najwyższy wynik, zgodny z historią bić eventu."
+        "value": "{{value}} bić"
       },
       "dominant-hero": {
         "label": "Najczęściej bity heros",
-        "value": "{{value}} bić",
-        "description": "Jedyny heros z najwyższą liczbą bić w spójnych danych rankingowych."
+        "value": "{{value}} bić"
       },
       "participants": {
-        "label": "Uczestnicy rankingu",
-        "description": "Liczba osób uwzględnionych w rankingu eventu."
+        "label": "Uczestnicy rankingu"
       },
       "points": {
-        "label": "Punkty",
-        "description": "Łączna liczba punktów zapisana w rankingu eventu."
+        "label": "Punkty"
       }
     }
   },
@@ -239,7 +229,7 @@
     "unassign": "Usuń przypisanie",
     "remove": "Usuń mapę: {{name}}",
     "assignSuccess": "Przypisano do mapy",
-    "assignError": "Błąd podczas przypisywania",
+    "assignError": "Nie udało się przypisać do mapy",
     "unassignSuccess": "Wypisano z mapy",
     "unassignError": "Nie udało się wypisać z mapy",
     "noMaps": "Brak map",
@@ -260,12 +250,12 @@
     "templateLoaded_many": "Dodano {{count}} map z szablonu „{{name}}”",
     "errors": {
       "duplicate": "Ta mapa już istnieje",
-      "addFailed": "Błąd podczas dodawania mapy",
-      "deleteFailed": "Błąd podczas usuwania mapy"
+      "addFailed": "Nie udało się dodać mapy",
+      "deleteFailed": "Nie udało się usunąć mapy"
     },
     "clearAll": "Wyczyść przypisania",
     "clearAllSuccess": "Wyczyszczono wszystkie przypisania",
-    "clearAllError": "Błąd podczas czyszczenia przypisań",
+    "clearAllError": "Nie udało się wyczyścić przypisań",
     "assignedMembers": "Przypisani członkowie",
     "noAssignedMembers": "Brak przypisanych członków",
     "addMember": "Dodaj członka",
@@ -312,7 +302,6 @@
       "idValue": "ID: {{id}}",
       "mine": "Ty"
     },
-    "addDescription": "Dodaj nowego herosa do eventu",
     "nameHint": "Nazwa musi być <strong>dokładnie</strong> taka sama jak w grze.",
     "saveError": "Nie udało się zapisać herosa",
     "mapsHint": "Mapy dla herosa dodasz po jego utworzeniu.",
@@ -324,7 +313,7 @@
     "deleteTitle": "Usunąć herosa?",
     "deleteDescription": "Czy na pewno chcesz usunąć herosa {{name}}? Spowoduje to również usunięcie wszystkich powiązanych map.",
     "deleteAction": "Usuń",
-    "deleteError": "Błąd podczas usuwania",
+    "deleteError": "Nie udało się usunąć herosa",
     "empty": "Brak herosów"
   },
   "loots": {
@@ -405,9 +394,9 @@
     "createNewWindow": "Utwórz nowe okno respawnu",
     "closeWindowButton": "Zamknij okno",
     "closeSuccess": "Okno respawnu zostało zamknięte",
-    "closeError": "Błąd podczas zamykania okna respawnu",
+    "closeError": "Nie udało się zamknąć okna respawnu",
     "openSuccess": "Okno respawnu zostało otwarte",
-    "openError": "Błąd podczas otwierania okna respawnu"
+    "openError": "Nie udało się otworzyć okna respawnu"
   },
   "killDetail": {
     "title": "Szczegóły bicia",
@@ -889,7 +878,7 @@
   "points": {
     "edit": "Edytuj punkty",
     "editSuccess": "Punkty zostały zaktualizowane",
-    "editError": "Błąd podczas aktualizacji punktów",
+    "editError": "Nie udało się zaktualizować punktów",
     "modified": "Punkty zostały ręcznie zmodyfikowane",
     "history": "Historia edycji",
     "historyTypeRanking": "Ranking",
@@ -924,11 +913,11 @@
     "updateSuccess": "Lokacja zaktualizowana",
     "deleteSuccess": "Lokacja usunięta",
     "errors": {
-      "createFailed": "Błąd podczas tworzenia lokacji",
-      "updateFailed": "Błąd podczas aktualizacji lokacji",
-      "deleteFailed": "Błąd podczas usuwania lokacji",
+      "createFailed": "Nie udało się utworzyć lokacji",
+      "updateFailed": "Nie udało się zaktualizować lokacji",
+      "deleteFailed": "Nie udało się usunąć lokacji",
       "duplicateName": "Lokacja o tej nazwie już istnieje",
-      "assignFailed": "Błąd podczas przypisywania mapy do lokacji"
+      "assignFailed": "Nie udało się przypisać mapy do lokacji"
     }
   },
   "tabs": {

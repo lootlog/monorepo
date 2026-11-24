@@ -34,11 +34,7 @@ export class MembersGroup extends HttpApiGroup.make("members").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "MembersController_getMe")
-    .annotate(OpenApi.Summary, "Get current member")
-    .annotate(
-      OpenApi.Description,
-      "Retrieve the authenticated user's member information for this guild",
-    ),
+    .annotate(OpenApi.Summary, "Get current member"),
   HttpApiEndpoint.post(
     "MembersControllerRefreshMe",
     "/guilds/:guildId/members/@me/refresh",
@@ -49,11 +45,7 @@ export class MembersGroup extends HttpApiGroup.make("members").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "MembersController_refreshMe")
-    .annotate(OpenApi.Summary, "Refresh current member")
-    .annotate(
-      OpenApi.Description,
-      "Refresh the authenticated user's member information from Discord",
-    ),
+    .annotate(OpenApi.Summary, "Refresh current member from Discord"),
   HttpApiEndpoint.post(
     "MembersControllerRefreshMember",
     "/guilds/:guildId/members/:discordId/refresh",
@@ -68,11 +60,8 @@ export class MembersGroup extends HttpApiGroup.make("members").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "MembersController_refreshMember")
-    .annotate(OpenApi.Summary, "Refresh specific member")
-    .annotate(
-      OpenApi.Description,
-      "Refresh a specific member's information from Discord (admin only)",
-    ),
+    .annotate(OpenApi.Summary, "Refresh a member from Discord")
+    .annotate(OpenApi.Description, "Admin only."),
   HttpApiEndpoint.patch(
     "MembersControllerDeactivateMember",
     "/guilds/:guildId/members/:discordId/deactivate",
@@ -88,7 +77,7 @@ export class MembersGroup extends HttpApiGroup.make("members").add(
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "MembersController_deactivateMember")
     .annotate(OpenApi.Summary, "Deactivate member")
-    .annotate(OpenApi.Description, "Deactivate a specific member (admin only)"),
+    .annotate(OpenApi.Description, "Admin only."),
   HttpApiEndpoint.get(
     "MembersControllerGetMemberLootlogConfigSummary",
     "/guilds/:guildId/members/:discordId/lootlog-config-summary",
@@ -126,8 +115,7 @@ export class MembersGroup extends HttpApiGroup.make("members").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "MembersController_getGuildMembers")
-    .annotate(OpenApi.Summary, "Get guild members")
-    .annotate(OpenApi.Description, "Retrieve all members for a guild"),
+    .annotate(OpenApi.Summary, "Get guild members"),
   HttpApiEndpoint.get(
     "MembersControllerGetGuildMemberReferences",
     "/guilds/:guildId/members/references",
@@ -182,10 +170,7 @@ export class MembersGroup extends HttpApiGroup.make("members").add(
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "MembersController_refreshAllMembers")
     .annotate(OpenApi.Summary, "Refresh all members")
-    .annotate(
-      OpenApi.Description,
-      "Create a job to refresh all guild members (admin only)",
-    ),
+    .annotate(OpenApi.Description, "Starts a refresh job; admin only."),
   HttpApiEndpoint.get(
     "MembersControllerGetLatestRefreshJob",
     "/guilds/:guildId/members/refresh-jobs/latest",
@@ -200,11 +185,7 @@ export class MembersGroup extends HttpApiGroup.make("members").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "MembersController_getLatestRefreshJob")
-    .annotate(OpenApi.Summary, "Get latest refresh job")
-    .annotate(
-      OpenApi.Description,
-      "Retrieve the latest member refresh job for this guild",
-    ),
+    .annotate(OpenApi.Summary, "Get latest refresh job"),
   HttpApiEndpoint.get(
     "MembersControllerGetRefreshJobStatus",
     "/guilds/:guildId/members/refresh-jobs/:jobId",
@@ -219,9 +200,5 @@ export class MembersGroup extends HttpApiGroup.make("members").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "MembersController_getRefreshJobStatus")
-    .annotate(OpenApi.Summary, "Get refresh job status")
-    .annotate(
-      OpenApi.Description,
-      "Retrieve the status of a specific refresh job",
-    ),
+    .annotate(OpenApi.Summary, "Get refresh job status"),
 ) {}

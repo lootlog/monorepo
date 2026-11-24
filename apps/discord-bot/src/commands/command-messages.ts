@@ -57,8 +57,8 @@ export const rarityMark = (rarity: string) => RARITY_MARKS.get(rarity);
 
 export const COMMAND_TEXT = {
   visibilityOption: "Pokaż odpowiedź wszystkim na kanale",
-  periodOption: "Okres",
-  worldOption: "Świat",
+  periodOption: "Okres, z którego liczyć bicia (domyślnie cały czas)",
+  worldOption: "Tylko timery z tego świata (domyślnie wszystkie)",
   ranking: {
     description: "Ranking bić członków Lootloga",
     typeOption: "Typ potworów",
@@ -84,7 +84,7 @@ export const COMMAND_TEXT = {
   },
   npc: {
     description: "Kto najczęściej bije wybranego potwora",
-    nameOption: "Nazwa potwora",
+    nameOption: "Potwór bity przez członków Lootloga; wybierz go z podpowiedzi",
     title: (name: string, level: number) => `⚔️ ${name} (${level} lvl)`,
     kills: "Unikalnych bić Lootloga",
     participations: "Udziałów członków",
@@ -173,15 +173,15 @@ export const COMMAND_TEXT = {
   },
   loots: {
     description: "Ostatnie łupy Lootloga",
-    playerOption: "Nick postaci",
-    npcOption: "Nazwa potwora",
-    rarityOption: "Rzadkość przedmiotu",
+    playerOption: "Tylko łupy z udziałem postaci o dokładnie tym nicku",
+    npcOption: "Tylko łupy z potwora o tej nazwie",
+    rarityOption: "Tylko łupy z przedmiotem tej rzadkości",
     title: "💰 Ostatnie łupy",
     empty: "Brak łupów pasujących do filtrów.",
   },
   item: {
     description: "Kto i z czego zdobył przedmiot",
-    nameOption: "Nazwa przedmiotu",
+    nameOption: "Nazwa przedmiotu; podpowiedzi pochodzą z katalogu Lootloga",
     title: (name: string) => `🎒 Przedmiot: ${name}`,
     empty: "Nikt z Lootloga nie zdobył jeszcze tego przedmiotu.",
   },

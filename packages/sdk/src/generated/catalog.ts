@@ -106,9 +106,6 @@ export interface CatalogItemDtoOutput {
   elasticLevel: boolean;
 }
 
-/**
- * Public catalog items
- */
 export interface CatalogItemsResponseDtoOutput {
   hits: CatalogItemDtoOutput[];
   estimatedTotalHits: number;
@@ -181,7 +178,6 @@ export type CatalogNpcDtoOutputLocationsItemTilesItem = {
 };
 
 export type CatalogNpcDtoOutputLocationsItem = {
-  /** The map's name. */
   map: string;
   /** The share of the NPC's latest recorded fights on the map, from 0 to 1, rounded to a hundredth. */
   share: number;
@@ -190,7 +186,6 @@ export type CatalogNpcDtoOutputLocationsItem = {
 };
 
 export type CatalogNpcDtoOutputFormerLevelsItem = {
-  /** The level it had. */
   lvl: number;
   /** The UTC day, as `YYYY-MM-DD`, its next level was first recorded. */
   until: string;
@@ -221,9 +216,6 @@ export interface CatalogNpcDtoOutput {
   firstSeenOn: string | null;
 }
 
-/**
- * Public catalog NPCs
- */
 export interface CatalogNpcsResponseDtoOutput {
   hits: CatalogNpcDtoOutput[];
   estimatedTotalHits: number;
@@ -252,7 +244,6 @@ export interface CatalogEventDtoOutput {
      * @nullable
      */
   year: number | null;
-  /** How many catalog items belong to the event. */
   itemCount: number;
   /**
      * The strongest monster its highest-level item drops from, which pictures the event; none when Lootlog has not seen that item drop.
@@ -261,9 +252,6 @@ export interface CatalogEventDtoOutput {
   boss: CatalogEventDtoOutputBoss;
 }
 
-/**
- * Public catalog events
- */
 export interface CatalogEventsResponseDtoOutput {
   /** The latest year first, then by name. */
   events: CatalogEventDtoOutput[];

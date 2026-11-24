@@ -26,7 +26,6 @@ export const InfoSettingsSkeletonSections = () => {
       <BandSection
         id="guild-info-sync-skeleton"
         title={t("settings.guildInfo.syncStatus")}
-        description={t("settings.guildInfo.syncStatusDescription")}
         trailing=<Skeleton className="h-8 w-37.5 rounded-lg" />
       >
         <dl className="divide-y divide-border/60">

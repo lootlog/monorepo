@@ -13,7 +13,7 @@ paths:
       parameters: []
       responses:
         "200":
-          description: Catalog service is healthy
+          description: ""
         "400":
           description: ""
           content:
@@ -40,7 +40,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Check the health status of the catalog service
       summary: Health check
   /catalog/items:
     get:
@@ -207,7 +206,7 @@ paths:
           required: false
       responses:
         "200":
-          description: Public catalog items
+          description: ""
           content:
             application/json:
               schema:
@@ -346,7 +345,7 @@ paths:
           required: false
       responses:
         "200":
-          description: Public catalog NPCs
+          description: ""
           content:
             application/json:
               schema:
@@ -635,7 +634,6 @@ paths:
             enum:
               - ITEM
               - NPC
-            description: "The kind of catalog page: an item or an NPC."
           required: true
         - name: gameVersion
           in: query
@@ -925,7 +923,6 @@ components:
       required:
         - subjects
         - total
-      description: Reported catalog pages
     CatalogReportedSubjectDto_Output:
       type: object
       properties:
@@ -934,7 +931,6 @@ components:
           enum:
             - ITEM
             - NPC
-          description: "The kind of catalog page: an item or an NPC."
         gameVersion:
           type: string
           enum:
@@ -975,7 +971,6 @@ components:
           enum:
             - ITEM
             - NPC
-          description: "The kind of catalog page: an item or an NPC."
         gameVersion:
           type: string
           enum:
@@ -1050,7 +1045,6 @@ components:
           enum:
             - ITEM
             - NPC
-          description: "The kind of catalog page: an item or an NPC."
         gameVersion:
           type: string
           enum:
@@ -1118,7 +1112,6 @@ components:
           description: The latest year first, then by name.
       required:
         - events
-      description: Public catalog events
     CatalogEventDto_Output:
       type: object
       properties:
@@ -1134,7 +1127,6 @@ components:
           type: number
         itemCount:
           type: number
-          description: How many catalog items belong to the event.
         boss:
           description: The strongest monster its highest-level item drops from, which pictures the event; none when Lootlog has not seen that item drop.
           nullable: true
@@ -1168,7 +1160,6 @@ components:
       required:
         - hits
         - estimatedTotalHits
-      description: Public catalog NPCs
     CatalogNpcDto_Output:
       type: object
       properties:
@@ -1211,7 +1202,6 @@ components:
             properties:
               map:
                 type: string
-                description: The map's name.
               share:
                 type: number
                 description: The share of the NPC's latest recorded fights on the map, from 0 to 1, rounded to a hundredth.
@@ -1242,7 +1232,6 @@ components:
             properties:
               lvl:
                 type: number
-                description: The level it had.
               until:
                 type: string
                 description: The UTC day, as `YYYY-MM-DD`, its next level was first recorded.
@@ -1279,7 +1268,6 @@ components:
       required:
         - hits
         - estimatedTotalHits
-      description: Public catalog items
     CatalogItemDto_Output:
       type: object
       properties:

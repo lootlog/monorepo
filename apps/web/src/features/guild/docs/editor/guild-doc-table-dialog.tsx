@@ -80,11 +80,7 @@ export const GuildDocTableDialog = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <IconDialogHeader
-          icon={Table2}
-          title={t("docs.tableDialog.title")}
-          description={t("docs.tableDialog.description")}
-        />
+        <IconDialogHeader icon={Table2} title={t("docs.tableDialog.title")} />
 
         <form className="space-y-4 p-5" onSubmit={handleSubmit}>
           <div className="grid gap-3 sm:grid-cols-2">

@@ -40,7 +40,7 @@ export class GuildsGroup extends HttpApiGroup.make("guilds").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "ActivitiesController_findByGuild")
-    .annotate(OpenApi.Summary, "Get activities for a specific guild"),
+    .annotate(OpenApi.Summary, "List a guild's activities"),
   HttpApiEndpoint.get(
     "ActivitiesControllerSuggestActorNames",
     "/guilds/:guildId/activity-logs/actor-name-suggestions",
@@ -106,7 +106,7 @@ export class GuildsGroup extends HttpApiGroup.make("guilds").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "ActivitiesController_findOne")
-    .annotate(OpenApi.Summary, "Get a single activity by ID"),
+    .annotate(OpenApi.Summary, "Get an activity"),
   HttpApiEndpoint.delete(
     "ActivitiesControllerDeleteActivity",
     "/guilds/:guildId/activity-logs/:id",
@@ -118,5 +118,5 @@ export class GuildsGroup extends HttpApiGroup.make("guilds").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "ActivitiesController_deleteActivity")
-    .annotate(OpenApi.Summary, "Delete a specific activity by ID"),
+    .annotate(OpenApi.Summary, "Delete an activity"),
 ) {}

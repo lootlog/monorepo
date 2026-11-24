@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: Search API
   version: "1.0"
-  description: Player search
+  description: Search Margonem players by name.
   contact: {}
 paths:
   /healthz:
@@ -13,7 +13,7 @@ paths:
       parameters: []
       responses:
         "200":
-          description: Search service is healthy
+          description: ""
         "400":
           description: ""
           content:
@@ -38,7 +38,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      description: Check the health status of the search service
       summary: Health check
   /players:
     get:
@@ -68,7 +67,7 @@ paths:
           required: false
       responses:
         "200":
-          description: List of matching players
+          description: ""
           content:
             application/json:
               schema:
@@ -185,6 +184,5 @@ components:
         - characterId
         - accountId
         - world
-      description: Player search hit
 tags: []
 servers: []

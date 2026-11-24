@@ -48,8 +48,7 @@ export class UsersGroup extends HttpApiGroup.make("users").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "UsersController_getUserPreferences")
-    .annotate(OpenApi.Summary, "Get user preferences")
-    .annotate(OpenApi.Description, "Retrieve user preferences"),
+    .annotate(OpenApi.Summary, "Get user preferences"),
   HttpApiEndpoint.patch(
     "UsersControllerUpdateUserPreferences",
     "/users/@me/preferences",
@@ -61,8 +60,7 @@ export class UsersGroup extends HttpApiGroup.make("users").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "UsersController_updateUserPreferences")
-    .annotate(OpenApi.Summary, "Update user preferences")
-    .annotate(OpenApi.Description, "Update user preferences"),
+    .annotate(OpenApi.Summary, "Update user preferences"),
   HttpApiEndpoint.get("UsersControllerGetUserLimits", "/users/@me/limits", {
     success: UserLimits,
   })

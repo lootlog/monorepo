@@ -8,7 +8,7 @@ export const Route = createFileRoute("/terms-of-service")({
       { title: "Lootlog.pl - Regulamin Serwisu" },
       {
         name: "description",
-        content: "Szczegóły dotyczące regulaminu serwisu Lootlog.pl",
+        content: "Regulamin serwisu Lootlog.pl.",
       },
     ],
     links: [

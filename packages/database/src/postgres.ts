@@ -15,7 +15,7 @@ const pendingRequests = Metric.gauge("db.client.connection.pending_requests", {
 });
 
 const connectionMax = Metric.gauge("db.client.connection.max", {
-  description: "Maximum PostgreSQL pool connections",
+  description: "Configured maximum size of the PostgreSQL pool",
   attributes: { unit: "" },
 });
 

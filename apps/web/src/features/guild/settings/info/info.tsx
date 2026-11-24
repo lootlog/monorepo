@@ -84,7 +84,6 @@ export const InfoSettings = () => {
           <BandSection
             id="guild-info-sync"
             title={t("settings.guildInfo.syncStatus")}
-            description={t("settings.guildInfo.syncStatusDescription")}
             trailing={
               <>
                 <CooldownAnnouncement countdown={refreshCooldown} />

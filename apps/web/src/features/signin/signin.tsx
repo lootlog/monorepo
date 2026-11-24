@@ -24,10 +24,7 @@ export const SignIn: React.FC = () => {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
       <div className="w-full max-w-md space-y-8 px-4">
-        <PageHeader
-          title={t("auth.signin.title")}
-          description={t("auth.signin.description")}
-        >
+        <PageHeader title={t("auth.signin.title")}>
           <SectionCardContent>
             {hasError && (
               <Alert variant="destructive" className="mb-4">

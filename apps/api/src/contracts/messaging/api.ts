@@ -30,8 +30,7 @@ export class MessagingGroup extends HttpApiGroup.make("messaging").add(
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "MessagingController_sendNotification")
-    .annotate(OpenApi.Summary, "Send notification")
-    .annotate(OpenApi.Description, "Send a notification to the user"),
+    .annotate(OpenApi.Summary, "Send notification"),
   HttpApiEndpoint.post(
     "MessagingControllerVolunteer",
     "/messaging/:notificationId/volunteer",

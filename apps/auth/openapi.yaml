@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: Auth API
   version: "1.0"
-  description: Authentication and identity service documentation
+  description: Discord sign-in, sessions and API keys.
   contact: {}
 paths:
   /healthz:
@@ -13,7 +13,7 @@ paths:
       parameters: []
       responses:
         "200":
-          description: Auth service is healthy
+          description: ""
         "400":
           description: ""
           content:

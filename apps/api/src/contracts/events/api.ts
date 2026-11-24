@@ -72,8 +72,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "listEvents")
-    .annotate(OpenApi.Summary, "List guild events")
-    .annotate(OpenApi.Description, "Get all events for a guild"),
+    .annotate(OpenApi.Summary, "List guild events"),
   HttpApiEndpoint.post("createEvent", "/guilds/:guildId/events", {
     params: EventOrganizationPath,
     payload: CreateEventRequest,
@@ -85,11 +84,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "createEvent")
-    .annotate(OpenApi.Summary, "Create event")
-    .annotate(
-      OpenApi.Description,
-      "Create a new guild event with maps and hero NPCs",
-    ),
+    .annotate(OpenApi.Summary, "Create event"),
   HttpApiEndpoint.get("showEvent", "/guilds/:guildId/events/:eventId", {
     params: EventPath,
     success: EventOverviewResponse,
@@ -97,11 +92,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "showEvent")
-    .annotate(OpenApi.Summary, "Get event details")
-    .annotate(
-      OpenApi.Description,
-      "Get detailed information about a specific event",
-    ),
+    .annotate(OpenApi.Summary, "Get event details"),
   HttpApiEndpoint.delete("deleteEvent", "/guilds/:guildId/events/:eventId", {
     params: EventPath,
     success: SuccessResponse,
@@ -109,8 +100,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "deleteEvent")
-    .annotate(OpenApi.Summary, "Delete event")
-    .annotate(OpenApi.Description, "Delete an event"),
+    .annotate(OpenApi.Summary, "Delete event"),
   HttpApiEndpoint.patch("updateEvent", "/guilds/:guildId/events/:eventId", {
     params: EventPath,
     payload: UpdateEventRequest,
@@ -125,7 +115,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     .annotate(OpenApi.Summary, "Update event")
     .annotate(
       OpenApi.Description,
-      "Update an existing event. heroNpcs lists every hero and map the event should have: heroes are matched by npcName and maps by mapId, so retained ones keep their kills and tracking history. It can add heroes and maps and rename maps; a list that omits an existing hero or map is rejected. Remove them with the hero and map delete operations.",
+      "heroNpcs lists every hero and map the event should have: heroes are matched by npcName and maps by mapId, so retained ones keep their kills and tracking history. It can add heroes and maps and rename maps; a list that omits an existing hero or map is rejected. Remove them with the hero and map delete operations.",
     ),
   HttpApiEndpoint.get(
     "showEventWrapped",
@@ -155,10 +145,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "listEventMaps")
     .annotate(OpenApi.Summary, "Get event maps")
-    .annotate(
-      OpenApi.Description,
-      "Get map assignments grouped by hero for a specific event (read model for realtime map updates)",
-    ),
+    .annotate(OpenApi.Description, "Map assignments grouped by hero."),
   HttpApiEndpoint.post(
     "recalculateEventPoints",
     "/guilds/:guildId/events/:eventId/recalculate-points",
@@ -173,7 +160,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     .annotate(OpenApi.Summary, "Recalculate event points")
     .annotate(
       OpenApi.Description,
-      "Manually recalculate all event kill points with current rules",
+      "Recalculates every kill's points with the current rules.",
     ),
   HttpApiEndpoint.post(
     "EventsAssignmentControllerAssignMember",
@@ -187,11 +174,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "EventsAssignmentController_assignMember")
-    .annotate(OpenApi.Summary, "Assign member to map")
-    .annotate(
-      OpenApi.Description,
-      "Assign a guild member to monitor a specific map",
-    ),
+    .annotate(OpenApi.Summary, "Assign member to map"),
   HttpApiEndpoint.delete(
     "EventsAssignmentControllerUnassignMember",
     "/guilds/:guildId/events/:eventId/maps/:mapId/assign",
@@ -207,7 +190,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     .annotate(OpenApi.Summary, "Unassign member from map")
     .annotate(
       OpenApi.Description,
-      "Remove an assigned member from a map. If memberId is provided, removes specific member; otherwise removes all.",
+      "Removes the member given by `memberId`, or every assigned member when it is omitted.",
     ),
   HttpApiEndpoint.post(
     "EventsAssignmentControllerSelfAssignMember",
@@ -220,8 +203,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "EventsAssignmentController_selfAssignMember")
-    .annotate(OpenApi.Summary, "Self-assign to map")
-    .annotate(OpenApi.Description, "Assign yourself to monitor a specific map"),
+    .annotate(OpenApi.Summary, "Self-assign to map"),
   HttpApiEndpoint.delete(
     "EventsAssignmentControllerSelfUnassignMember",
     "/guilds/:guildId/events/:eventId/maps/:mapId/self-assign",
@@ -236,8 +218,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
       OpenApi.Identifier,
       "EventsAssignmentController_selfUnassignMember",
     )
-    .annotate(OpenApi.Summary, "Self-unassign from map")
-    .annotate(OpenApi.Description, "Remove yourself from a specific map"),
+    .annotate(OpenApi.Summary, "Self-unassign from map"),
   HttpApiEndpoint.post(
     "EventsAssignmentControllerAddHero",
     "/guilds/:guildId/events/:eventId/heroes",
@@ -256,7 +237,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     .annotate(OpenApi.Summary, "Add hero to event")
     .annotate(
       OpenApi.Description,
-      "Add a new hero to an existing event. Rejected with 409 when another hero or ranking entries in the event already use the name.",
+      "Rejected with 409 when another hero or ranking entries in the event already use the name.",
     ),
   HttpApiEndpoint.delete(
     "EventsAssignmentControllerDeleteHero",
@@ -291,7 +272,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     .annotate(OpenApi.Summary, "Update hero")
     .annotate(
       OpenApi.Description,
-      "Update an existing hero details. Renaming moves the hero's ranking entries to the new name and is rejected with 409 when another hero or ranking entries in the event already use that name.",
+      "Renaming moves the hero's ranking entries to the new name and is rejected with 409 when another hero or ranking entries in the event already use that name.",
     ),
   HttpApiEndpoint.post(
     "EventsAssignmentControllerAddMap",
@@ -304,8 +285,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "EventsAssignmentController_addMap")
-    .annotate(OpenApi.Summary, "Add map to hero")
-    .annotate(OpenApi.Description, "Add a new map to an existing hero"),
+    .annotate(OpenApi.Summary, "Add map to hero"),
   HttpApiEndpoint.delete(
     "EventsAssignmentControllerDeleteMap",
     "/guilds/:guildId/events/:eventId/heroes/:heroId/maps/:mapId",
@@ -316,8 +296,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "EventsAssignmentController_deleteMap")
-    .annotate(OpenApi.Summary, "Delete map")
-    .annotate(OpenApi.Description, "Remove a map from a hero"),
+    .annotate(OpenApi.Summary, "Delete map"),
   HttpApiEndpoint.get(
     "EventsAssignmentControllerGetLocations",
     "/guilds/:guildId/events/:eventId/heroes/:heroId/locations",
@@ -329,10 +308,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "EventsAssignmentController_getLocations")
     .annotate(OpenApi.Summary, "Get hero locations")
-    .annotate(
-      OpenApi.Description,
-      "Get all locations for a hero with their maps",
-    ),
+    .annotate(OpenApi.Description, "Each location includes its maps."),
   HttpApiEndpoint.post(
     "EventsAssignmentControllerCreateLocation",
     "/guilds/:guildId/events/:eventId/heroes/:heroId/locations",
@@ -346,7 +322,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "EventsAssignmentController_createLocation")
     .annotate(OpenApi.Summary, "Create location")
-    .annotate(OpenApi.Description, "Create a new location for grouping maps"),
+    .annotate(OpenApi.Description, "Locations group a hero's maps."),
   HttpApiEndpoint.delete(
     "EventsAssignmentControllerDeleteLocation",
     "/guilds/:guildId/events/:eventId/heroes/:heroId/locations/:locationId",
@@ -359,10 +335,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "EventsAssignmentController_deleteLocation")
     .annotate(OpenApi.Summary, "Delete location")
-    .annotate(
-      OpenApi.Description,
-      "Delete a location. Maps in this location will become ungrouped.",
-    ),
+    .annotate(OpenApi.Description, "Its maps become ungrouped."),
   HttpApiEndpoint.patch(
     "EventsAssignmentControllerUpdateLocation",
     "/guilds/:guildId/events/:eventId/heroes/:heroId/locations/:locationId",
@@ -375,8 +348,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "EventsAssignmentController_updateLocation")
-    .annotate(OpenApi.Summary, "Update location")
-    .annotate(OpenApi.Description, "Update a location name"),
+    .annotate(OpenApi.Summary, "Rename location"),
   HttpApiEndpoint.post(
     "EventsAssignmentControllerReorderLocations",
     "/guilds/:guildId/events/:eventId/heroes/:heroId/locations/reorder",
@@ -388,8 +360,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "EventsAssignmentController_reorderLocations")
-    .annotate(OpenApi.Summary, "Reorder locations")
-    .annotate(OpenApi.Description, "Change the order of locations"),
+    .annotate(OpenApi.Summary, "Reorder locations"),
   HttpApiEndpoint.patch(
     "EventsAssignmentControllerAssignMapToLocation",
     "/guilds/:guildId/events/:eventId/heroes/:heroId/maps/:mapId/location",
@@ -408,7 +379,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     .annotate(OpenApi.Summary, "Assign map to location")
     .annotate(
       OpenApi.Description,
-      "Assign a map to a location or remove it from a location (set to null)",
+      "A null location removes the map from its location.",
     ),
   HttpApiEndpoint.get(
     "listPendingParticipationConfirmations",
@@ -423,7 +394,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     .annotate(OpenApi.Summary, "Get participation confirmations")
     .annotate(
       OpenApi.Description,
-      "Get pending and expired kill participation confirmations for currently authenticated member",
+      "Pending and expired confirmations of the authenticated member.",
     ),
   HttpApiEndpoint.post(
     "acknowledgeExpiredParticipationConfirmations",
@@ -458,7 +429,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     .annotate(OpenApi.Summary, "Confirm participation in kill tracking")
     .annotate(
       OpenApi.Description,
-      "Confirm member participation for a kill within configured confirmation window",
+      "Only within the configured confirmation window.",
     ),
   HttpApiEndpoint.get(
     "listEventRanking",
@@ -471,8 +442,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "listEventRanking")
-    .annotate(OpenApi.Summary, "Get event ranking")
-    .annotate(OpenApi.Description, "Get the ranking for an event"),
+    .annotate(OpenApi.Summary, "Get event ranking"),
   HttpApiEndpoint.patch(
     "updateRankingPoints",
     "/guilds/:guildId/events/:eventId/ranking/:rankingId",
@@ -502,11 +472,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "listEventHeroTimers")
-    .annotate(OpenApi.Summary, "Get event hero timers")
-    .annotate(
-      OpenApi.Description,
-      "Get timers for all hero NPCs in this event",
-    ),
+    .annotate(OpenApi.Summary, "Get event hero timers"),
   HttpApiEndpoint.get(
     "EventsRankingControllerGetEventHeroStats",
     "/guilds/:guildId/events/:eventId/hero-stats",
@@ -518,11 +484,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "EventsRankingController_getEventHeroStats")
-    .annotate(OpenApi.Summary, "Get event hero stats")
-    .annotate(
-      OpenApi.Description,
-      "Get kill counts and stats for all heroes in an event",
-    ),
+    .annotate(OpenApi.Summary, "Get event hero stats"),
   HttpApiEndpoint.get(
     "listEventKillHistory",
     "/guilds/:guildId/events/:eventId/kill-history",
@@ -557,7 +519,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     .annotate(OpenApi.Summary, "Get kill details")
     .annotate(
       OpenApi.Description,
-      "Get detailed information about a specific kill including participants, scoring breakdown, and matching loots",
+      "Includes participants, the scoring breakdown and matching loots.",
     ),
   HttpApiEndpoint.patch(
     "EventsRankingControllerUpdateKillPoint",
@@ -593,7 +555,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     .annotate(OpenApi.Summary, "Get kill timeline data")
     .annotate(
       OpenApi.Description,
-      "Get map timeline data with assignments and gaps for a specific kill",
+      "Includes map assignments and coverage gaps.",
     ),
   HttpApiEndpoint.get(
     "EventsMonitoringControllerGetHeroCoverageGaps",
@@ -611,7 +573,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     .annotate(OpenApi.Summary, "Get hero coverage gaps")
     .annotate(
       OpenApi.Description,
-      "Get coverage gap history for a specific hero (periods when maps were unassigned or uncovered)",
+      "Periods when the hero's maps were unassigned or uncovered.",
     ),
   HttpApiEndpoint.get(
     "EventsMonitoringControllerGetMapCoverageGaps",
@@ -629,7 +591,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     .annotate(OpenApi.Summary, "Get map coverage gaps")
     .annotate(
       OpenApi.Description,
-      "Get coverage gap history for a specific map (periods when the map was unassigned or uncovered)",
+      "Periods when the map was unassigned or uncovered.",
     ),
   HttpApiEndpoint.get(
     "EventsMonitoringControllerGetActiveGapForMap",
@@ -645,10 +607,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
       "EventsMonitoringController_getActiveGapForMap",
     )
     .annotate(OpenApi.Summary, "Get active coverage gap for map")
-    .annotate(
-      OpenApi.Description,
-      "Get the currently active (ongoing) coverage gap for a map if any exists",
-    ),
+    .annotate(OpenApi.Description, "Null when the map has no ongoing gap."),
   HttpApiEndpoint.get(
     "EventsMonitoringControllerGetActiveGapsForHero",
     "/guilds/:guildId/events/:eventId/heroes/:heroId/active-gaps",
@@ -662,11 +621,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
       OpenApi.Identifier,
       "EventsMonitoringController_getActiveGapsForHero",
     )
-    .annotate(OpenApi.Summary, "Get all active coverage gaps for hero")
-    .annotate(
-      OpenApi.Description,
-      "Get all currently active (ongoing) coverage gaps for all maps of a hero",
-    ),
+    .annotate(OpenApi.Summary, "Get all active coverage gaps for hero"),
   HttpApiEndpoint.get(
     "EventsMonitoringControllerGetHeroPresenceStats",
     "/guilds/:guildId/events/:eventId/heroes/:heroId/presence-stats",
@@ -683,7 +638,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     .annotate(OpenApi.Summary, "Get presence statistics for hero")
     .annotate(
       OpenApi.Description,
-      "Get aggregated presence statistics for all members assigned to hero maps",
+      "Aggregated over the members assigned to the hero's maps.",
     ),
   HttpApiEndpoint.get(
     "EventsMonitoringControllerGetHeroRespawnConfig",
@@ -701,7 +656,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     .annotate(OpenApi.Summary, "Get hero respawn configuration")
     .annotate(
       OpenApi.Description,
-      "Get current respawn window status and default respawn times for a hero",
+      "Includes the current respawn window and the default respawn times.",
     ),
   HttpApiEndpoint.post(
     "EventsMonitoringControllerCloseRespawnWindow",
@@ -725,7 +680,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     .annotate(OpenApi.Summary, "Close hero respawn window")
     .annotate(
       OpenApi.Description,
-      "Manually close a respawn window for a hero. Optionally creates a new window with specified or default times.",
+      "Optionally opens a new window with the given or default times.",
     ),
   HttpApiEndpoint.post(
     "EventsMonitoringControllerOpenRespawnWindow",
@@ -747,10 +702,7 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
       "EventsMonitoringController_openRespawnWindow",
     )
     .annotate(OpenApi.Summary, "Open hero respawn window")
-    .annotate(
-      OpenApi.Description,
-      "Manually open a new respawn window for a hero with specified or default times.",
-    ),
+    .annotate(OpenApi.Description, "Uses the given or default times."),
   HttpApiEndpoint.get("listPinnedEvents", "/guilds/:guildId/pinned-events", {
     params: EventOrganizationPath,
     success: PinnedEventsResponse,
