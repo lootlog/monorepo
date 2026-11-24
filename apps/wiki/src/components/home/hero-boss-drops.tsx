@@ -1,15 +1,15 @@
 import { sortBy } from "es-toolkit";
-import type { CatalogDropSourceDtoOutput } from "@lootlog/client/catalog";
+
 import { itemRarityRank } from "@lootlog/domain/item-rarity";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { TooltipProvider } from "@lootlog/ui/components/tooltip";
 import { CatalogItemTile } from "@/components/catalog/catalog-item-tile";
-import { useBossDrops } from "@/hooks/use-new-bosses";
+import { type NewBoss, useBossDrops } from "@/hooks/use-new-bosses";
 import { t } from "@/i18n/messages";
 
 const DROPS_SHOWN = 10;
 
-export function HeroBossDrops({ boss }: { boss: CatalogDropSourceDtoOutput }) {
+export function HeroBossDrops({ boss }: { boss: NewBoss }) {
   const drops = useBossDrops(boss);
 
   if (!drops) {

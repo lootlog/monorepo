@@ -697,7 +697,7 @@ const messages = {
     bossesEmpty: "Lootlog nie zna jeszcze nowych bossów.",
     newMonstersTitle: "Nowe w grze",
     newMonstersDescription:
-      "Stali herosi, tytani i kolosi, którym gra ostatnio dodała lub zmieniła przedmioty. Najedź na przedmiot, żeby zobaczyć jego statystyki.",
+      "Herosi, tytani i kolosi, którzy ostatnio na stałe doszli do gry. Najedź na przedmiot, żeby zobaczyć jego statystyki.",
     newMonstersEmpty: "Lootlog nie zna jeszcze nowych potworów.",
     eventsTitle: "Ostatnie eventy",
     eventsSectionDescription:
