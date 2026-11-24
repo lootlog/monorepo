@@ -65,7 +65,7 @@ export class KillsGroup extends HttpApiGroup.make("kills").add(
     .annotate(OpenApi.Summary, "Get guild kill statistics")
     .annotate(
       OpenApi.Description,
-      "Retrieves kill statistics for a guild including overview and member ranking.",
+      "Includes an overview and a member ranking.",
     ),
   HttpApiEndpoint.get(
     "KillsControllerGetUserKillStats",
@@ -80,7 +80,7 @@ export class KillsGroup extends HttpApiGroup.make("kills").add(
     .annotate(OpenApi.Summary, "Get personal kill statistics")
     .annotate(
       OpenApi.Description,
-      "Retrieves kill statistics for the authenticated user across all guilds, deduplicated.",
+      "Across all guilds, counting each kill once.",
     ),
   HttpApiEndpoint.get(
     "KillsControllerGetUserKillAnalytics",
@@ -127,7 +127,7 @@ export class KillsGroup extends HttpApiGroup.make("kills").add(
     .annotate(OpenApi.Summary, "Get paginated list of killed NPCs")
     .annotate(
       OpenApi.Description,
-      "Retrieves a paginated, searchable list of NPCs killed by the authenticated user.",
+      "NPCs the authenticated user killed; `search` filters them.",
     ),
   HttpApiEndpoint.get(
     "KillsControllerGetGuildTopNpcs",
@@ -143,11 +143,7 @@ export class KillsGroup extends HttpApiGroup.make("kills").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "KillsController_getGuildTopNpcs")
-    .annotate(OpenApi.Summary, "Get top killed NPCs in guild")
-    .annotate(
-      OpenApi.Description,
-      "Retrieves the most frequently killed NPCs in a guild.",
-    ),
+    .annotate(OpenApi.Summary, "Get top killed NPCs in guild"),
   HttpApiEndpoint.get(
     "KillsControllerGetGuildTopKillersByType",
     "/guilds/:guildId/stats/kills/top-killers",
@@ -165,7 +161,7 @@ export class KillsGroup extends HttpApiGroup.make("kills").add(
     .annotate(OpenApi.Summary, "Get top killers by NPC type in guild")
     .annotate(
       OpenApi.Description,
-      "Retrieves top members by kill count for specific NPC types (TITAN, HERO).",
+      "Members ranked by kill count for each of the TITAN, HERO and EVENT_HERO types.",
     ),
   HttpApiEndpoint.get(
     "KillsControllerGetNpcKillers",
@@ -182,11 +178,8 @@ export class KillsGroup extends HttpApiGroup.make("kills").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "KillsController_getNpcKillers")
-    .annotate(OpenApi.Summary, "Get killers ranking for a specific NPC")
-    .annotate(
-      OpenApi.Description,
-      "Retrieves a ranking of members who killed a specific NPC, sorted by kill count.",
-    ),
+    .annotate(OpenApi.Summary, "Get the killers ranking of an NPC")
+    .annotate(OpenApi.Description, "Members sorted by kill count."),
   HttpApiEndpoint.get(
     "KillsControllerGetMemberKills",
     "/guilds/:guildId/stats/kills/members/:memberId",
@@ -202,12 +195,9 @@ export class KillsGroup extends HttpApiGroup.make("kills").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "KillsController_getMemberKills")
-    .annotate(
-      OpenApi.Summary,
-      "Get kill statistics for a specific guild member",
-    )
+    .annotate(OpenApi.Summary, "Get a guild member's kill statistics")
     .annotate(
       OpenApi.Description,
-      "Retrieves kill statistics for a specific member including overview and list of killed NPCs.",
+      "Includes an overview and the NPCs the member killed.",
     ),
 ) {}

@@ -14,11 +14,7 @@ export class CatalogApi extends HttpApi.make("CatalogApi")
     "Margonem items and NPCs as Lootlog observed them",
   )
   .annotate(OpenApi.Servers, [])
-  .add(
-    healthGroup("Check the health status of the catalog service"),
-    CatalogGroup,
-    CatalogReportsGroup,
-  )
+  .add(healthGroup(), CatalogGroup, CatalogReportsGroup)
   .middleware(CatalogAccess)
   .middleware(ApiKeyEndpointPolicy)
   .middleware(SchemaErrorResponse) {}

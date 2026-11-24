@@ -26,11 +26,8 @@ preserveOpenApi30Contract(
     "ActivitiesController_suggestClanNames:limit": boundedInteger(1, 50, 10),
   },
   {
-    "HealthzController_check:200": "The Activity process is responding",
     "ReadyzController_check:200": "PostgreSQL is available",
     "ReadyzController_check:503": "PostgreSQL is unavailable or timed out",
-    "ActivitiesController_findOne:404": "Activity not found",
-    "ActivitiesController_deleteActivity:404": "Activity not found",
   },
 );
 

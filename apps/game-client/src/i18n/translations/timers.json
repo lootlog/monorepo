@@ -37,7 +37,7 @@
     "min": "Min:",
     "max": "Max:",
     "reset": "Timer został zresetowany",
-    "standing": "Potwór stoi — widzi go gracz Lootloga",
+    "standing": "Potwór stoi, widzi go gracz Lootloga",
     "standingOnMap": "Potwór stoi na mapie {{map}}",
     "mapOccupied_one": "{{count}} gracz Lootloga na mapie",
     "mapOccupied_few": "{{count}} graczy Lootloga na mapie",

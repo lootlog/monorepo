@@ -10,7 +10,7 @@
     "grid": "Widok siatki"
   },
   "empty": "Brak aktywnych timerów",
-  "emptyDescription": "Nowe timery pojawią się tutaj automatycznie.",
+  "emptyDescription": "Timery tworzy dodatek w grze po biciach członków tego Lootloga.",
   "noResults": "Brak pasujących timerów",
   "noResultsDescription": "Zmień kryteria albo wyczyść filtry, aby zobaczyć więcej timerów.",
   "npcType": {

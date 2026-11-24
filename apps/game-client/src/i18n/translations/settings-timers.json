@@ -1,7 +1,6 @@
 {
   "timers": {
     "title": "Ustawienia timerów",
-    "description": "Skonfiguruj ustawienia dotyczące wyświetlania i działania timerów.",
     "subTabs": {
       "general": "Ogólne",
       "catching": "Zakres zbierania",
@@ -18,12 +17,11 @@
       "compactViewDescription": "Ukrywa nagłówek i stopkę timerów, pokazując tylko zawartość.",
       "countdownTitle": "Tryb odliczania",
       "countdownLabel": "Odliczaj do",
-      "countdownDescription": "Wybierz, czy licznik ma odliczać do minimalnego czy maksymalnego czasu.",
+      "countdownDescription": "Min odlicza do początku okna respawnu, a potem do jego końca. Max od razu odlicza do końca okna.",
       "countdownMax": "Max",
       "countdownMin": "Min",
       "fadeTitle": "Wygaszanie",
-      "removeTimerAfterLabel": "Czas usunięcia timera po wyzerowaniu",
-      "removeTimerAfterDescription": "Po ilu sekundach od wyzerowania timer znika z listy."
+      "removeTimerAfterLabel": "Czas usunięcia timera po wyzerowaniu"
     },
     "appearance": {
       "visibilityTitle": "Widoczność",
@@ -41,7 +39,6 @@
       "minWidthLabel": "Minimalna szerokość pojedynczego timera",
       "showLevelDescription": "Poziom potwora obok nazwy timera.",
       "showTypeDescription": "Skrót typu potwora przed nazwą timera.",
-      "fontSizeDescription": "Wielkość tekstu w kafelkach timerów.",
       "minWidthDescription": "Najmniejsza szerokość kafelka; większa wartość oznacza mniej kolumn."
     },
     "colors": {
@@ -49,10 +46,8 @@
       "standardColorsTitle": "Standardowe",
       "standardColorsDescription": "Paleta kolorów dostępna dla każdego timera. Możesz zmienić nazwę, ramkę i tło każdego z nich.",
       "customColorsTitle": "Własne",
-      "customColorsDescription": "Dodatkowe kolory, które tworzysz sam.",
       "customColorsEmpty": "Nie dodano jeszcze własnych kolorów.",
       "resetAll": "Przywróć wszystkie",
-      "resetAllDescription": "Wraca do domyślnych nazw i kolorów wszystkich standardowych kolorów.",
       "standardColor": "Kolor standardowy",
       "customColor": "Kolor własny",
       "nameLabel": "Nazwa",
@@ -89,7 +84,6 @@
     }
   },
   "hiddenTimers": {
-    "description": "Przywracaj ukryte timery i zarządzaj listą ukrytych wpisów.",
     "scopeTitle": "Zakres listy",
     "ungroupedDescription": "Wybierz Lootlog, dla którego chcesz zobaczyć ukryte timery.",
     "listTitle": "Ukryte timery",

@@ -21,27 +21,6 @@ const formArray = (items: { type: "string" }) => ({
 preserveOpenApi30Contract(
   document,
   {
-    "NpcsController_getNpcs:ids": {
-      schema: {
-        type: "array",
-        items: integerSchema(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER),
-      },
-    },
-    "NpcsController_getNpcs:limit": numberWithDefault(10),
-    "ItemsController_getItems:limit": numberWithDefault(20),
-    "ItemsController_getItems:offset": numberWithDefault(0),
-    "ItemsController_getItems:filter": {
-      schema: {
-        anyOf: [
-          { type: "string" },
-          { type: "array", items: { type: "string" } },
-        ],
-      },
-      style: "form",
-      explode: true,
-    },
-    "ItemsController_getItems:facets": formArray({ type: "string" }),
-    "ItemsController_getItems:sort": formArray({ type: "string" }),
     "CatalogController_getItems:ids": {
       schema: {
         type: "array",
@@ -90,13 +69,7 @@ preserveOpenApi30Contract(
       schema: { ...integerSchema(0, Number.MAX_SAFE_INTEGER), default: 0 },
     },
   },
-  {
-    "HealthzController_healthCheck:200": "Catalog service is healthy",
-    "NpcsController_getNpcs:200": "List of matching NPCs",
-    "ItemsController_getItems:200": "Item search results",
-    "CatalogController_getItems:200": "Public catalog items",
-    "CatalogController_getNpcs:200": "Public catalog NPCs",
-  },
+  {},
 );
 
 await Bun.write(

@@ -9,13 +9,11 @@ import { WeaponKillsGroup } from "./contracts/weapon-kills/api.js";
 export class BattlelogApi extends HttpApi.make("BattlelogApi")
   .annotate(OpenApi.Title, "Battle Log API")
   .annotate(OpenApi.Version, "1.0")
-  .annotate(OpenApi.Description, "The Battle Log API documentation")
-  .annotate(OpenApi.Servers, [])
-  .add(
-    healthGroup("Check the health status of the API"),
-    BattlesGroup,
-    WeaponKillsGroup,
-    PublicBattlesGroup,
+  .annotate(
+    OpenApi.Description,
+    "Margonem battle logs, public battle links and battle statistics.",
   )
+  .annotate(OpenApi.Servers, [])
+  .add(healthGroup(), BattlesGroup, WeaponKillsGroup, PublicBattlesGroup)
   .middleware(ApiKeyEndpointPolicy)
   .middleware(SchemaErrorResponse) {}

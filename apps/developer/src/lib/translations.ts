@@ -1,7 +1,7 @@
 export const portalText = {
   overview: "Overview",
   developers: "Developers",
-  overviewTitle: "Build on live Lootlog data",
+  overviewTitle: "Read Lootlog data from your own tools",
   overviewDescription:
     "Read timers, loot, kills and battles of the Organizations you belong to, and react to changes in real time. An integration sees only what you can see in Lootlog.",
   createKey: "Create an API key",

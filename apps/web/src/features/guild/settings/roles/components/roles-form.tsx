@@ -60,7 +60,7 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
   const { mutate: updateGuildRole, isPending } =
     useRolesControllerUpdateGuildRole();
 
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const form = useForm<RolesFormInput>({
     resolver: standardSchemaResolver(createRolesFormSchema(t), undefined, {
@@ -179,9 +179,6 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
               key={group.groupKey}
               id={`role-permissions-${group.groupKey}`}
               title={t(`permissions.groups.${group.groupKey}.name`)}
-              description={t(
-                `permissions.groups.${group.groupKey}.description`,
-              )}
               count={`${enabledCount}/${group.permissions.length}`}
               tiled
             >
@@ -199,9 +196,13 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
                         <FormLabel className="cursor-pointer text-sm font-medium after:absolute after:inset-0">
                           {t(`permissions.${permission}`)}
                         </FormLabel>
-                        <FormDescription className="text-xs">
-                          {t(`permissions.descriptions.${permission}`)}
-                        </FormDescription>
+                        {i18n.exists(
+                          `permissions.descriptions.${permission}`,
+                        ) ? (
+                          <FormDescription className="text-xs">
+                            {t(`permissions.descriptions.${permission}`)}
+                          </FormDescription>
+                        ) : null}
                         <FormMessage />
                       </div>
                     </CheckboxListTile>

@@ -23,6 +23,6 @@ export class PublicGuildStatsCardGroup extends HttpApiGroup.make(
     .annotate(OpenApi.Summary, "Get public guild loot stats card")
     .annotate(
       OpenApi.Description,
-      "Generate a public PNG image with lightweight loot statistics for a guild.",
+      "A PNG image with lightweight loot statistics.",
     ),
 ) {}

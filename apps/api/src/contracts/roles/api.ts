@@ -26,8 +26,7 @@ export class RolesGroup extends HttpApiGroup.make("roles").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "RolesController_getGuildRoles")
-    .annotate(OpenApi.Summary, "Get guild roles")
-    .annotate(OpenApi.Description, "Retrieve all roles for a guild"),
+    .annotate(OpenApi.Summary, "Get guild roles"),
   HttpApiEndpoint.patch(
     "RolesControllerUpdateGuildRole",
     "/guilds/:guildId/roles/:roleId/permissions",
@@ -43,6 +42,5 @@ export class RolesGroup extends HttpApiGroup.make("roles").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "RolesController_updateGuildRole")
-    .annotate(OpenApi.Summary, "Update role permissions")
-    .annotate(OpenApi.Description, "Update permissions for a specific role"),
+    .annotate(OpenApi.Summary, "Update role permissions"),
 ) {}

@@ -25,7 +25,6 @@ export const NpcSettingsDetailSkeleton = () => {
         <BandSection
           id="npc-rarities-skeleton"
           title={t("settings.npcs.raritiesTitle")}
-          description={t("settings.npcs.raritiesDescription")}
           tiled
         >
           {NPC_RARITY_CONFIG.map((rarity) => (

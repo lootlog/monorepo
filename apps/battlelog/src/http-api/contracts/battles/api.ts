@@ -246,7 +246,7 @@ export class BattlesGroup extends HttpApiGroup.make("battles").add(
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "BattlesController_getBattle")
-    .annotate(OpenApi.Summary, "Get a single battle"),
+    .annotate(OpenApi.Summary, "Get a battle"),
   HttpApiEndpoint.delete(
     "BattlesControllerDeleteBattle",
     "/battles/:battleId",

@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: Activity Logger API
   version: "1.0"
-  description: The Activity Logger API documentation
+  description: Organization activity history and players' confirmed game online time.
   contact: {}
 paths:
   /healthz:
@@ -13,7 +13,7 @@ paths:
       parameters: []
       responses:
         "200":
-          description: The Activity process is responding
+          description: ""
           content:
             application/json:
               schema:
@@ -336,7 +336,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      summary: Get activities for a specific guild
+      summary: List a guild's activities
   /guilds/{guildId}/activity-logs/actor-name-suggestions:
     get:
       tags:
@@ -649,7 +649,7 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/HttpErrorResponse"
         "404":
-          description: Activity not found
+          description: ""
           content:
             application/json:
               schema:
@@ -666,7 +666,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      summary: Get a single activity by ID
+      summary: Get an activity
     delete:
       tags:
         - guilds
@@ -714,7 +714,7 @@ paths:
                   - $ref: "#/components/schemas/HttpErrorResponse"
                   - $ref: "#/components/schemas/HttpErrorResponse"
         "404":
-          description: Activity not found
+          description: ""
           content:
             application/json:
               schema:
@@ -731,7 +731,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      summary: Delete a specific activity by ID
+      summary: Delete an activity
   /users/@me/activity/online:
     get:
       tags:

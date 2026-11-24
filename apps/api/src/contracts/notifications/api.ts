@@ -47,11 +47,7 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
       OpenApi.Identifier,
       "NotificationsGuildController_getGuildTargets",
     )
-    .annotate(OpenApi.Summary, "Get guild notification targets")
-    .annotate(
-      OpenApi.Description,
-      "Retrieve configured notification targets for a guild",
-    ),
+    .annotate(OpenApi.Summary, "Get guild notification targets"),
   HttpApiEndpoint.post(
     "NotificationsGuildControllerCreateGuildTarget",
     "/guilds/:guildId/notifications/targets",
@@ -67,10 +63,9 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
       OpenApi.Identifier,
       "NotificationsGuildController_createGuildTarget",
     )
-    .annotate(OpenApi.Summary, "Create guild notification target")
     .annotate(
-      OpenApi.Description,
-      "Create or reactivate a guild notification target",
+      OpenApi.Summary,
+      "Create or reactivate guild notification target",
     ),
   HttpApiEndpoint.get(
     "NotificationsGuildControllerGetAvailableGuildTargets",
@@ -88,7 +83,7 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
     .annotate(OpenApi.Summary, "Get available guild notification targets")
     .annotate(
       OpenApi.Description,
-      "Retrieve selectable Discord channels for guild notifications",
+      "Discord channels that can be chosen as targets.",
     ),
   HttpApiEndpoint.delete(
     "NotificationsGuildControllerDeleteGuildTarget",
@@ -104,8 +99,7 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
       OpenApi.Identifier,
       "NotificationsGuildController_deleteGuildTarget",
     )
-    .annotate(OpenApi.Summary, "Delete guild notification target")
-    .annotate(OpenApi.Description, "Delete a guild notification target"),
+    .annotate(OpenApi.Summary, "Delete guild notification target"),
   HttpApiEndpoint.patch(
     "NotificationsGuildControllerUpdateGuildTarget",
     "/guilds/:guildId/notifications/targets/:targetId",
@@ -121,8 +115,7 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
       OpenApi.Identifier,
       "NotificationsGuildController_updateGuildTarget",
     )
-    .annotate(OpenApi.Summary, "Update guild notification target")
-    .annotate(OpenApi.Description, "Update a guild notification target"),
+    .annotate(OpenApi.Summary, "Update guild notification target"),
   HttpApiEndpoint.get(
     "NotificationsGuildControllerGetGuildRules",
     "/guilds/:guildId/notifications/rules",
@@ -133,11 +126,7 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "NotificationsGuildController_getGuildRules")
-    .annotate(OpenApi.Summary, "Get guild notification rules")
-    .annotate(
-      OpenApi.Description,
-      "Retrieve configured notification rules for a guild",
-    ),
+    .annotate(OpenApi.Summary, "Get guild notification rules"),
   HttpApiEndpoint.post(
     "NotificationsGuildControllerCreateGuildRule",
     "/guilds/:guildId/notifications/rules",
@@ -157,8 +146,7 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
       OpenApi.Identifier,
       "NotificationsGuildController_createGuildRule",
     )
-    .annotate(OpenApi.Summary, "Create guild notification rule")
-    .annotate(OpenApi.Description, "Create a guild notification rule"),
+    .annotate(OpenApi.Summary, "Create guild notification rule"),
   HttpApiEndpoint.delete(
     "NotificationsGuildControllerDeleteGuildRule",
     "/guilds/:guildId/notifications/rules/:ruleId",
@@ -173,8 +161,7 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
       OpenApi.Identifier,
       "NotificationsGuildController_deleteGuildRule",
     )
-    .annotate(OpenApi.Summary, "Delete guild notification rule")
-    .annotate(OpenApi.Description, "Delete a guild notification rule"),
+    .annotate(OpenApi.Summary, "Delete guild notification rule"),
   HttpApiEndpoint.patch(
     "NotificationsGuildControllerUpdateGuildRule",
     "/guilds/:guildId/notifications/rules/:ruleId",
@@ -193,8 +180,7 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
       OpenApi.Identifier,
       "NotificationsGuildController_updateGuildRule",
     )
-    .annotate(OpenApi.Summary, "Update guild notification rule")
-    .annotate(OpenApi.Description, "Update a guild notification rule"),
+    .annotate(OpenApi.Summary, "Update guild notification rule"),
   HttpApiEndpoint.post(
     "NotificationsGuildControllerRebuildGuildRuleJobs",
     "/guilds/:guildId/notifications/rules/:ruleId/rebuild-jobs",
@@ -210,10 +196,7 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
       "NotificationsGuildController_rebuildGuildRuleJobs",
     )
     .annotate(OpenApi.Summary, "Rebuild guild notification jobs")
-    .annotate(
-      OpenApi.Description,
-      "Rebuild pending jobs for a guild notification rule",
-    ),
+    .annotate(OpenApi.Description, "Rebuilds the pending jobs of one rule."),
   HttpApiEndpoint.post(
     "NotificationsGuildControllerTriggerGuildRuleTest",
     "/guilds/:guildId/notifications/rules/:ruleId/test",
@@ -232,11 +215,7 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
       OpenApi.Identifier,
       "NotificationsGuildController_triggerGuildRuleTest",
     )
-    .annotate(OpenApi.Summary, "Trigger guild notification rule test")
-    .annotate(
-      OpenApi.Description,
-      "Trigger a test notification for a guild rule",
-    ),
+    .annotate(OpenApi.Summary, "Trigger guild notification rule test"),
   HttpApiEndpoint.get(
     "NotificationsGuildControllerGetGuildJobs",
     "/guilds/:guildId/notifications/jobs",
@@ -248,10 +227,7 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "NotificationsGuildController_getGuildJobs")
     .annotate(OpenApi.Summary, "Get guild notification jobs")
-    .annotate(
-      OpenApi.Description,
-      "Retrieve pending and recent notification jobs for a guild",
-    ),
+    .annotate(OpenApi.Description, "Pending and recent jobs."),
   HttpApiEndpoint.delete(
     "NotificationsGuildControllerCancelGuildJob",
     "/guilds/:guildId/notifications/jobs/:jobId",
@@ -269,7 +245,7 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
     .annotate(OpenApi.Summary, "Cancel guild notification job")
     .annotate(
       OpenApi.Description,
-      "Cancel a pending or blocked guild notification job",
+      "Only a pending or blocked job can be cancelled.",
     ),
   HttpApiEndpoint.get(
     "NotificationsUserControllerGetUserTargets",
@@ -278,11 +254,7 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "NotificationsUserController_getUserTargets")
-    .annotate(OpenApi.Summary, "Get user notification targets")
-    .annotate(
-      OpenApi.Description,
-      "Retrieve configured notification targets for the authenticated user",
-    ),
+    .annotate(OpenApi.Summary, "Get user notification targets"),
   HttpApiEndpoint.post(
     "NotificationsUserControllerCreateUserTarget",
     "/users/@me/notifications/targets",
@@ -297,11 +269,7 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
       OpenApi.Identifier,
       "NotificationsUserController_createUserTarget",
     )
-    .annotate(OpenApi.Summary, "Create user notification target")
-    .annotate(
-      OpenApi.Description,
-      "Create or reactivate a notification target for the authenticated user",
-    ),
+    .annotate(OpenApi.Summary, "Create or reactivate user notification target"),
   HttpApiEndpoint.delete(
     "NotificationsUserControllerDeleteUserTarget",
     "/users/@me/notifications/targets/:targetId",
@@ -316,8 +284,7 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
       OpenApi.Identifier,
       "NotificationsUserController_deleteUserTarget",
     )
-    .annotate(OpenApi.Summary, "Delete user notification target")
-    .annotate(OpenApi.Description, "Delete a user notification target"),
+    .annotate(OpenApi.Summary, "Delete user notification target"),
   HttpApiEndpoint.patch(
     "NotificationsUserControllerUpdateUserTarget",
     "/users/@me/notifications/targets/:targetId",
@@ -333,8 +300,7 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
       OpenApi.Identifier,
       "NotificationsUserController_updateUserTarget",
     )
-    .annotate(OpenApi.Summary, "Update user notification target")
-    .annotate(OpenApi.Description, "Update a user notification target"),
+    .annotate(OpenApi.Summary, "Update user notification target"),
   HttpApiEndpoint.post(
     "NotificationsUserControllerTriggerUserTargetTest",
     "/users/@me/notifications/targets/:targetId/test",
@@ -353,11 +319,7 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
       OpenApi.Identifier,
       "NotificationsUserController_triggerUserTargetTest",
     )
-    .annotate(OpenApi.Summary, "Trigger user notification target test")
-    .annotate(
-      OpenApi.Description,
-      "Trigger a test notification for a user target",
-    ),
+    .annotate(OpenApi.Summary, "Trigger user notification target test"),
   HttpApiEndpoint.get(
     "NotificationsUserControllerGetUserRules",
     "/users/@me/notifications/rules",
@@ -365,11 +327,7 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "NotificationsUserController_getUserRules")
-    .annotate(OpenApi.Summary, "Get user notification rules")
-    .annotate(
-      OpenApi.Description,
-      "Retrieve configured notification rules for the authenticated user",
-    ),
+    .annotate(OpenApi.Summary, "Get user notification rules"),
   HttpApiEndpoint.post(
     "NotificationsUserControllerCreateUserRule",
     "/users/@me/notifications/rules",
@@ -384,8 +342,7 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "NotificationsUserController_createUserRule")
-    .annotate(OpenApi.Summary, "Create user notification rule")
-    .annotate(OpenApi.Description, "Create a user notification rule"),
+    .annotate(OpenApi.Summary, "Create user notification rule"),
   HttpApiEndpoint.delete(
     "NotificationsUserControllerDeleteUserRule",
     "/users/@me/notifications/rules/:ruleId",
@@ -397,8 +354,7 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "NotificationsUserController_deleteUserRule")
-    .annotate(OpenApi.Summary, "Delete user notification rule")
-    .annotate(OpenApi.Description, "Delete a user notification rule"),
+    .annotate(OpenApi.Summary, "Delete user notification rule"),
   HttpApiEndpoint.patch(
     "NotificationsUserControllerUpdateUserRule",
     "/users/@me/notifications/rules/:ruleId",
@@ -414,8 +370,7 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "NotificationsUserController_updateUserRule")
-    .annotate(OpenApi.Summary, "Update user notification rule")
-    .annotate(OpenApi.Description, "Update a user notification rule"),
+    .annotate(OpenApi.Summary, "Update user notification rule"),
   HttpApiEndpoint.get(
     "NotificationsUserControllerGetUserJobs",
     "/users/@me/notifications/jobs",
@@ -424,10 +379,7 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "NotificationsUserController_getUserJobs")
     .annotate(OpenApi.Summary, "Get user notification jobs")
-    .annotate(
-      OpenApi.Description,
-      "Retrieve pending and recent notification jobs for the authenticated user",
-    ),
+    .annotate(OpenApi.Description, "Pending and recent jobs."),
   HttpApiEndpoint.get(
     "NotificationsUserControllerGetWatchedItems",
     "/users/@me/notifications/watched-items",
@@ -435,11 +387,7 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "NotificationsUserController_getWatchedItems")
-    .annotate(OpenApi.Summary, "Get watched items")
-    .annotate(
-      OpenApi.Description,
-      "Retrieve watched items for the authenticated user",
-    ),
+    .annotate(OpenApi.Summary, "Get watched items"),
   HttpApiEndpoint.post(
     "NotificationsUserControllerCreateWatchedItem",
     "/users/@me/notifications/watched-items",
@@ -457,11 +405,7 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
       OpenApi.Identifier,
       "NotificationsUserController_createWatchedItem",
     )
-    .annotate(OpenApi.Summary, "Create watched item")
-    .annotate(
-      OpenApi.Description,
-      "Create or reactivate a watched item for the authenticated user",
-    ),
+    .annotate(OpenApi.Summary, "Create or reactivate watched item"),
   HttpApiEndpoint.post(
     "NotificationsUserControllerQuickAddWatchedItem",
     "/users/@me/notifications/watched-items/quick-add",
@@ -480,10 +424,7 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
       "NotificationsUserController_quickAddWatchedItem",
     )
     .annotate(OpenApi.Summary, "Quick add watched item")
-    .annotate(
-      OpenApi.Description,
-      "Add a guild scope to a watched item for the authenticated user",
-    ),
+    .annotate(OpenApi.Description, "Adds a guild scope to a watched item."),
   HttpApiEndpoint.delete(
     "NotificationsUserControllerDeleteWatchedItem",
     "/users/@me/notifications/watched-items/:watchedItemId",
@@ -498,9 +439,5 @@ export class NotificationsGroup extends HttpApiGroup.make("notifications").add(
       OpenApi.Identifier,
       "NotificationsUserController_deleteWatchedItem",
     )
-    .annotate(OpenApi.Summary, "Delete watched item")
-    .annotate(
-      OpenApi.Description,
-      "Delete a watched item for the authenticated user",
-    ),
+    .annotate(OpenApi.Summary, "Delete watched item"),
 ) {}

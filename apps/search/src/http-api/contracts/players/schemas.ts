@@ -13,7 +13,6 @@ export const PlayerHitDto_Output = Schema.Struct({
   accountId: FiniteNumber,
   world: Schema.String,
 }).annotate({
-  description: "Player search hit",
   identifier: "PlayerHitDto_Output",
 });
 

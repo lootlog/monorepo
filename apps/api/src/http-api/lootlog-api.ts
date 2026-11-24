@@ -32,7 +32,10 @@ import { CharacterAurasGroup } from "#src/contracts/character-auras/api";
 export class LootlogApi extends HttpApi.make("LootlogApi")
   .annotate(OpenApi.Title, "Lootlog API")
   .annotate(OpenApi.Version, "1.0")
-  .annotate(OpenApi.Description, "The Lootlog API documentation")
+  .annotate(
+    OpenApi.Description,
+    "Organizations, loots, timers, kills, events, notifications and other Lootlog records.",
+  )
   .annotate(OpenApi.Servers, [])
   .add(
     UsersGroup,
@@ -45,7 +48,7 @@ export class LootlogApi extends HttpApi.make("LootlogApi")
     PreferencesGroup,
     LootsGroup,
     LootlogConfigGroup,
-    healthGroup("Check the health status of the API"),
+    healthGroup(),
     ChatGroup,
     GlobalChatGroup,
     ReservationsGroup,

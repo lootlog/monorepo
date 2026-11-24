@@ -15,10 +15,7 @@ export const WrappedSparseSummary = ({
 
   return (
     <div className="mx-auto flex h-full w-full max-w-3xl flex-col justify-center px-6 py-16 sm:px-12">
-      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">
-        {t("events.summaryDialog.sparseEyebrow")}
-      </p>
-      <h2 className="mt-4 text-3xl font-bold tracking-[-0.035em] sm:text-5xl">
+      <h2 className="text-3xl font-bold tracking-[-0.035em] sm:text-5xl">
         {eventName}
       </h2>
       <p className="mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground">

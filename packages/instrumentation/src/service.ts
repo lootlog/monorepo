@@ -49,23 +49,14 @@ export const runService = <E, R>(options: RunServiceOptions<E, R>): void => {
   );
 };
 
-export const healthGroup = (description?: string) => {
-  const endpoint = HttpApiEndpoint.get(
-    "HealthzControllerHealthCheck",
-    "/healthz",
-    {
+export const healthGroup = () =>
+  HttpApiGroup.make("health").add(
+    HttpApiEndpoint.get("HealthzControllerHealthCheck", "/healthz", {
       success: HttpApiSchema.Empty(200),
-    },
-  )
-    .annotate(OpenApi.Identifier, "HealthzController_healthCheck")
-    .annotate(OpenApi.Summary, "Health check");
-
-  return HttpApiGroup.make("health").add(
-    description === undefined
-      ? endpoint
-      : endpoint.annotate(OpenApi.Description, description),
+    })
+      .annotate(OpenApi.Identifier, "HealthzController_healthCheck")
+      .annotate(OpenApi.Summary, "Health check"),
   );
-};
 
 export const serviceApiRoutes = <
   Id extends string,

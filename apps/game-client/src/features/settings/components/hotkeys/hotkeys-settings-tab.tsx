@@ -189,10 +189,7 @@ export const HotkeysSettingsTab = () => {
         </SettingsSection>
       ))}
       <SettingsSection title={t("settings.hotkeys.restoreDefaultsTitle")}>
-        <SettingsRow
-          label={t("settings.hotkeys.restoreDefaultsLabel")}
-          description={t("settings.hotkeys.restoreDefaultsDescription")}
-        >
+        <SettingsRow label={t("settings.hotkeys.restoreDefaultsLabel")}>
           <Button
             variant="outline"
             size="sm"

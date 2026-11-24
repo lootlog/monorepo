@@ -32,11 +32,7 @@ export class UserLootlogConfigGroup extends HttpApiGroup.make(
       OpenApi.Identifier,
       "UserLootlogConfigController_getUserLootlogConfigByAccountId",
     )
-    .annotate(OpenApi.Summary, "Get user lootlog configuration")
-    .annotate(
-      OpenApi.Description,
-      "Retrieve lootlog configuration for a specific account",
-    ),
+    .annotate(OpenApi.Summary, "Get user lootlog configuration"),
   HttpApiEndpoint.put(
     "UserLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig",
     "/users/@me/lootlog-config/accounts/:accountId",
@@ -54,10 +50,6 @@ export class UserLootlogConfigGroup extends HttpApiGroup.make(
     .annotate(
       OpenApi.Summary,
       "Create or update lootlog character configuration",
-    )
-    .annotate(
-      OpenApi.Description,
-      "Create or update lootlog configuration for a character",
     ),
   HttpApiEndpoint.post(
     "UserLootlogConfigControllerGetPlayersCatchingGuilds",

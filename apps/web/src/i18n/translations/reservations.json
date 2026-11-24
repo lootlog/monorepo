@@ -34,7 +34,6 @@
   },
   "empty": {
     "title": "Brak expowisk",
-    "description": "Brak dostępnych expowisk do wyświetlenia.",
     "noResults": "Brak pasujących expowisk",
     "noResultsDescription": "Zmień kryteria albo wyczyść filtry, aby zobaczyć więcej expowisk."
   },
@@ -68,8 +67,7 @@
           "description": "Rezerwacja musi trwać co najmniej tyle czasu, inaczej system ją odrzuci."
         },
         "maxDuration": {
-          "title": "Maksymalna długość",
-          "description": "Jedna rezerwacja nie może przekroczyć tego limitu czasu."
+          "title": "Maksymalna długość"
         },
         "granularity": {
           "title": "Krok siatki",
@@ -163,7 +161,7 @@
     "history": "Historia 30 dni",
     "emptyUpcoming": "Nie masz nadchodzących rezerwacji",
     "emptyHistory": "Brak rezerwacji w ostatnich 30 dniach",
-    "emptyDescription": "Nowe rezerwacje pojawią się tutaj automatycznie.",
+    "emptyDescription": "Expowisko zarezerwujesz w zakładce Rezerwacje wybranego Lootloga.",
     "emptyFiltered": "Brak pasujących rezerwacji",
     "emptyFilteredDescription": "Zmień kryteria albo wyczyść filtry, aby zobaczyć więcej rezerwacji.",
     "filterPlaceholder": "Filtruj po expowisku lub Lootlogu…",

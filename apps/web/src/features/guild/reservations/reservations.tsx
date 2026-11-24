@@ -154,7 +154,6 @@ export function Reservations() {
           fill
           icon={CalendarClock}
           title={t("reservations.empty.title")}
-          description={t("reservations.empty.description")}
         />
       )}
     </div>

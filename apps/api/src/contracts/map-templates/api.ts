@@ -27,8 +27,7 @@ export class MapTemplatesGroup extends HttpApiGroup.make("map-templates").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "MapTemplatesController_getTemplates")
-    .annotate(OpenApi.Summary, "Get map templates")
-    .annotate(OpenApi.Description, "Get all map templates for this guild"),
+    .annotate(OpenApi.Summary, "Get map templates"),
   HttpApiEndpoint.post(
     "MapTemplatesControllerCreateTemplate",
     "/guilds/:guildId/map-templates",
@@ -40,8 +39,7 @@ export class MapTemplatesGroup extends HttpApiGroup.make("map-templates").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "MapTemplatesController_createTemplate")
-    .annotate(OpenApi.Summary, "Create map template")
-    .annotate(OpenApi.Description, "Create a new reusable map template"),
+    .annotate(OpenApi.Summary, "Create map template"),
   HttpApiEndpoint.put(
     "MapTemplatesControllerUpdateTemplate",
     "/guilds/:guildId/map-templates/:templateId",
@@ -53,8 +51,7 @@ export class MapTemplatesGroup extends HttpApiGroup.make("map-templates").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "MapTemplatesController_updateTemplate")
-    .annotate(OpenApi.Summary, "Update map template")
-    .annotate(OpenApi.Description, "Update an existing reusable map template"),
+    .annotate(OpenApi.Summary, "Update map template"),
   HttpApiEndpoint.delete(
     "MapTemplatesControllerDeleteTemplate",
     "/guilds/:guildId/map-templates/:templateId",
@@ -65,6 +62,5 @@ export class MapTemplatesGroup extends HttpApiGroup.make("map-templates").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "MapTemplatesController_deleteTemplate")
-    .annotate(OpenApi.Summary, "Delete map template")
-    .annotate(OpenApi.Description, "Delete a map template"),
+    .annotate(OpenApi.Summary, "Delete map template"),
 ) {}

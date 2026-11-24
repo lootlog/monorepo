@@ -29,7 +29,7 @@ export class DocsGroup extends HttpApiGroup.make("docs").add(
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "DocsController_getDocuments")
     .annotate(OpenApi.Summary, "Get guild documents")
-    .annotate(OpenApi.Description, "Retrieve document summaries for a guild"),
+    .annotate(OpenApi.Description, "Summaries without document content."),
   HttpApiEndpoint.post(
     "DocsControllerCreateDocument",
     "/guilds/:guildId/docs",
@@ -43,18 +43,14 @@ export class DocsGroup extends HttpApiGroup.make("docs").add(
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "DocsController_createDocument")
     .annotate(OpenApi.Summary, "Create guild document")
-    .annotate(OpenApi.Description, "Create a new empty guild document"),
+    .annotate(OpenApi.Description, "The document starts empty."),
   HttpApiEndpoint.get("DocsControllerGetTrash", "/guilds/:guildId/docs/trash", {
     params: DocumentOrganizationPath,
     success: DocumentTrashResponse,
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "DocsController_getTrash")
-    .annotate(OpenApi.Summary, "Get deleted guild documents")
-    .annotate(
-      OpenApi.Description,
-      "Retrieve guild documents currently in trash",
-    ),
+    .annotate(OpenApi.Summary, "Get deleted guild documents"),
   HttpApiEndpoint.get(
     "DocsControllerGetHistory",
     "/guilds/:guildId/docs/:docId/history",
@@ -68,7 +64,7 @@ export class DocsGroup extends HttpApiGroup.make("docs").add(
     .annotate(OpenApi.Summary, "Get guild document history")
     .annotate(
       OpenApi.Description,
-      "Retrieve version metadata for a guild document",
+      "Version metadata only; read a snapshot for its content.",
     ),
   HttpApiEndpoint.get(
     "DocsControllerGetHistorySnapshot",
@@ -80,11 +76,7 @@ export class DocsGroup extends HttpApiGroup.make("docs").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "DocsController_getHistorySnapshot")
-    .annotate(OpenApi.Summary, "Get guild document history snapshot")
-    .annotate(
-      OpenApi.Description,
-      "Retrieve a read-only snapshot for a document history entry",
-    ),
+    .annotate(OpenApi.Summary, "Get guild document history snapshot"),
   HttpApiEndpoint.get(
     "DocsControllerGetDocument",
     "/guilds/:guildId/docs/:docId",
@@ -96,10 +88,7 @@ export class DocsGroup extends HttpApiGroup.make("docs").add(
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "DocsController_getDocument")
     .annotate(OpenApi.Summary, "Get guild document")
-    .annotate(
-      OpenApi.Description,
-      "Retrieve a guild document with its current Lexical state",
-    ),
+    .annotate(OpenApi.Description, "Includes its current Lexical state."),
   HttpApiEndpoint.put(
     "DocsControllerUpdateDocument",
     "/guilds/:guildId/docs/:docId",
@@ -128,7 +117,10 @@ export class DocsGroup extends HttpApiGroup.make("docs").add(
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "DocsController_deleteDocument")
     .annotate(OpenApi.Summary, "Move guild document to trash")
-    .annotate(OpenApi.Description, "Soft-delete a guild document"),
+    .annotate(
+      OpenApi.Description,
+      "Soft delete: the document can be restored until it is permanently deleted.",
+    ),
   HttpApiEndpoint.post(
     "DocsControllerRestoreDocument",
     "/guilds/:guildId/docs/:docId/restore",
@@ -139,8 +131,7 @@ export class DocsGroup extends HttpApiGroup.make("docs").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "DocsController_restoreDocument")
-    .annotate(OpenApi.Summary, "Restore guild document")
-    .annotate(OpenApi.Description, "Restore a guild document from trash"),
+    .annotate(OpenApi.Summary, "Restore guild document"),
   HttpApiEndpoint.delete(
     "DocsControllerPurgeDocument",
     "/guilds/:guildId/docs/:docId/purge",
@@ -154,6 +145,6 @@ export class DocsGroup extends HttpApiGroup.make("docs").add(
     .annotate(OpenApi.Summary, "Permanently delete guild document")
     .annotate(
       OpenApi.Description,
-      "Permanently delete a guild document from trash",
+      "Fails with 409 when the document is not in trash.",
     ),
 ) {}

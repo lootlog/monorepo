@@ -136,7 +136,6 @@ export const ChatAppearanceSettingsForm = () => {
         <SettingsRow
           controlId="chat-message-gap"
           label={t("settings.chat.messageGap.label")}
-          description={t("settings.chat.messageGap.description")}
           control="wide"
         >
           <SettingsSliderField
@@ -164,7 +163,11 @@ export const ChatAppearanceSettingsForm = () => {
             settingKeys={[`appearance.chat.${key}`]}
             htmlFor={`chat-metadata-${key}`}
             label={t(`settings.chat.metadata.${key}`)}
-            description={t(`settings.chat.metadata.${key}Description`)}
+            description={
+              key === "showGuildLabel"
+                ? t("settings.chat.metadata.showGuildLabelDescription")
+                : undefined
+            }
           >
             <Switch
               id={`chat-metadata-${key}`}

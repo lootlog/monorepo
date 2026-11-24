@@ -74,11 +74,7 @@ export const GuildDocCreateDialog = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <IconDialogHeader
-          icon={FilePlus2}
-          title={t("docs.list.createTitle")}
-          description={t("docs.list.createDescription")}
-        />
+        <IconDialogHeader icon={FilePlus2} title={t("docs.list.createTitle")} />
 
         <form className="space-y-4 p-5" onSubmit={handleSubmit}>
           <div className="space-y-2">

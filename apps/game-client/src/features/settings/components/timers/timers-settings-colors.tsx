@@ -264,7 +264,6 @@ export const TimersSettingsColors: FC = () => {
             variant="outline"
             size="sm"
             disabled={!anyDefaultModified}
-            title={t("settings.timers.colors.resetAllDescription")}
             onClick={() => {
               setDraft(null);
               resetAllDefaultColors();
@@ -288,7 +287,6 @@ export const TimersSettingsColors: FC = () => {
 
       <SettingsSection
         title={t("settings.timers.colors.customColorsTitle")}
-        description={t("settings.timers.colors.customColorsDescription")}
         actions={
           <Popover
             open={openPopover === "add"}

@@ -176,27 +176,22 @@ export const referenceMetadata: Record<PublicApiService, ServiceMetadata> = {
     groups: [{ name: "Battles", tags: ["battles", "public-battles"] }],
   },
   catalog: {
-    description: `Margonem items and NPCs as Lootlog observed them: search items with filters and facets, look up NPCs, and list the item and NPC catalog of each game edition.\n\n${authentication}\n\n${guides}`,
+    description: `Margonem items and NPCs as Lootlog observed them: search items and NPCs with filters, list events, and list the item and NPC catalog of each game edition.\n\n${authentication}\n\n${guides}`,
     tags: {
-      Items: {
-        name: "Items",
-        description: "Search items with filters, sorting and facets.",
-      },
-      NPCs: { name: "NPCs", description: "Search NPCs by name or ID." },
       Catalog: {
         name: "Catalog",
-        description: "Items and NPCs of each game edition.",
+        description: "Items, NPCs and events of each game edition.",
       },
     },
-    groups: [
-      { name: "Items and NPCs", tags: ["Items", "NPCs"] },
-      { name: "Catalog", tags: ["Catalog"] },
-    ],
+    groups: [{ name: "Catalog", tags: ["Catalog"] }],
   },
   search: {
-    description: `Search players by name.\n\n${authentication}\n\n${guides}`,
+    description: `Find Margonem characters by name.\n\n${authentication}\n\n${guides}`,
     tags: {
-      Players: { name: "Players", description: "Search players by name." },
+      Players: {
+        name: "Players",
+        description: "Characters whose name matches, optionally on one world.",
+      },
     },
     groups: [{ name: "Search", tags: ["Players"] }],
   },

@@ -39,8 +39,7 @@ export class GuildsGroup extends HttpApiGroup.make("guilds").add(
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "GuildsController_getGuildById")
-    .annotate(OpenApi.Summary, "Get guild by ID")
-    .annotate(OpenApi.Description, "Retrieve guild information by guild ID"),
+    .annotate(OpenApi.Summary, "Get guild by ID"),
   HttpApiEndpoint.patch(
     "GuildsControllerUpdateGuildConfig",
     "/guilds/:guildId/config",
@@ -68,11 +67,7 @@ export class GuildsGroup extends HttpApiGroup.make("guilds").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "GuildsController_getWorldsByGuildId")
-    .annotate(OpenApi.Summary, "Get guild worlds")
-    .annotate(
-      OpenApi.Description,
-      "Retrieve the list of worlds configured for a guild",
-    ),
+    .annotate(OpenApi.Summary, "Get guild worlds"),
   HttpApiEndpoint.get(
     "GuildsControllerGetGuildPermissions",
     "/guilds/:guildId/permissions",
@@ -88,10 +83,7 @@ export class GuildsGroup extends HttpApiGroup.make("guilds").add(
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "GuildsController_getGuildPermissions")
     .annotate(OpenApi.Summary, "Get guild permissions")
-    .annotate(
-      OpenApi.Description,
-      "Retrieve resolved permissions for the current member in a guild",
-    ),
+    .annotate(OpenApi.Description, "Resolved for the current member."),
   HttpApiEndpoint.get(
     "GuildsControllerGetGuildDiscordSyncStatus",
     "/guilds/:guildId/discord-sync",
@@ -105,11 +97,7 @@ export class GuildsGroup extends HttpApiGroup.make("guilds").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "GuildsController_getGuildDiscordSyncStatus")
-    .annotate(OpenApi.Summary, "Get guild Discord sync status")
-    .annotate(
-      OpenApi.Description,
-      "Retrieve the current Discord channel synchronization state for a guild",
-    ),
+    .annotate(OpenApi.Summary, "Get guild Discord sync status"),
   HttpApiEndpoint.post(
     "GuildsControllerRefreshGuildDiscordSync",
     "/guilds/:guildId/discord-sync/refresh",
@@ -123,9 +111,5 @@ export class GuildsGroup extends HttpApiGroup.make("guilds").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "GuildsController_refreshGuildDiscordSync")
-    .annotate(OpenApi.Summary, "Refresh guild Discord sync")
-    .annotate(
-      OpenApi.Description,
-      "Trigger a refresh of the guild Discord channel synchronization state",
-    ),
+    .annotate(OpenApi.Summary, "Refresh guild Discord sync"),
 ) {}

@@ -14,7 +14,6 @@ import { AddonStatusSection } from "@/features/settings/components/general/addon
 import { LocalDataSection } from "@/features/settings/components/general/local-data-section";
 import { WindowLayoutSection } from "@/features/settings/components/general/window-layout-section";
 import { useAccountEnabledFlag } from "@/lib/settings-persistence/use-account-enabled-flag";
-import { SettingsHelpPopover } from "@/features/settings/components/shared/settings-help-popover";
 import { useSettingsStore } from "@/store/settings.store";
 import {
   ItemRarityEnum,
@@ -73,14 +72,7 @@ export const GeneralSettingsTab: FC = () => {
         <SettingsRow
           controlId="animation-effects"
           htmlFor="animation-effects"
-          label={
-            <span className="ll:inline-flex ll:items-center">
-              {t("settings.general.animationEffectsLabel")}
-              <SettingsHelpPopover
-                recommendation={t("settings.help.animationsRecommendation")}
-              />
-            </span>
-          }
+          label={t("settings.general.animationEffectsLabel")}
           description={t("settings.general.animationEffectsDescription")}
         >
           <Switch

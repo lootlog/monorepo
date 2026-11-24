@@ -33,10 +33,9 @@ export class TimersGroup extends HttpApiGroup.make("timers").add(
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "TimersController_getAllTimers")
-    .annotate(OpenApi.Summary, "Get all user timers")
     .annotate(
-      OpenApi.Description,
-      "Retrieve all timers accessible to the authenticated user across all guilds",
+      OpenApi.Summary,
+      "Get the user's timers in every accessible guild",
     ),
   HttpApiEndpoint.get(
     "TimersControllerGetRecentTimerHistory",
@@ -49,10 +48,7 @@ export class TimersGroup extends HttpApiGroup.make("timers").add(
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "TimersController_getRecentTimerHistory")
     .annotate(OpenApi.Summary, "Get recent timer action history")
-    .annotate(
-      OpenApi.Description,
-      "Retrieve latest visible timer history entries for an authenticated user guild",
-    ),
+    .annotate(OpenApi.Description, "Only entries the caller can see."),
   HttpApiEndpoint.get("TimersControllerGetTimers", "/guilds/:guildId/timers", {
     params: TimerListOrganizationPath,
     query: TimersQuery,
@@ -61,8 +57,7 @@ export class TimersGroup extends HttpApiGroup.make("timers").add(
   })
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "TimersController_getTimers")
-    .annotate(OpenApi.Summary, "Get guild timers")
-    .annotate(OpenApi.Description, "Retrieve timers for a specific guild"),
+    .annotate(OpenApi.Summary, "Get guild timers"),
   HttpApiEndpoint.get(
     "TimersControllerGetHeroTimers",
     "/guilds/:guildId/timers/heroes",
@@ -129,11 +124,7 @@ export class TimersGroup extends HttpApiGroup.make("timers").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "TimersController_resetTimer")
-    .annotate(OpenApi.Summary, "Reset timer")
-    .annotate(
-      OpenApi.Description,
-      "Reset a timer for a specific NPC in a guild",
-    ),
+    .annotate(OpenApi.Summary, "Reset timer"),
   HttpApiEndpoint.delete(
     "TimersControllerDeleteTimer",
     "/guilds/:guildId/timers/:timerIdentifier",
@@ -150,11 +141,7 @@ export class TimersGroup extends HttpApiGroup.make("timers").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "TimersController_deleteTimer")
-    .annotate(OpenApi.Summary, "Delete timer")
-    .annotate(
-      OpenApi.Description,
-      "Delete a timer for a specific NPC in a guild",
-    ),
+    .annotate(OpenApi.Summary, "Delete timer"),
   HttpApiEndpoint.get(
     "TimersControllerGetTimerHistory",
     "/guilds/:guildId/timers/:timerIdentifier/history",
@@ -171,11 +158,7 @@ export class TimersGroup extends HttpApiGroup.make("timers").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "TimersController_getTimerHistory")
-    .annotate(OpenApi.Summary, "Get timer action history")
-    .annotate(
-      OpenApi.Description,
-      "Retrieve latest action history entries for a guild timer",
-    ),
+    .annotate(OpenApi.Summary, "Get timer action history"),
   HttpApiEndpoint.post(
     "TimersControllerRestoreTimerFromHistory",
     "/guilds/:guildId/timers/history/:historyEntryId/restore",
@@ -213,6 +196,5 @@ export class TimersGroup extends HttpApiGroup.make("timers").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "TimersController_createManualTimer")
-    .annotate(OpenApi.Summary, "Create manual timer")
-    .annotate(OpenApi.Description, "Manually create a timer for a guild"),
+    .annotate(OpenApi.Summary, "Create manual timer"),
 ) {}

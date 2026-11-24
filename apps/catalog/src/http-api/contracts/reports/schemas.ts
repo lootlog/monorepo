@@ -11,9 +11,7 @@ const CATALOG_REPORT_SUBJECT_TYPES = ["ITEM", "NPC"] as const;
 
 export const CatalogReportSubjectType = Schema.Literals(
   CATALOG_REPORT_SUBJECT_TYPES,
-).annotate({
-  description: "The kind of catalog page: an item or an NPC.",
-});
+);
 
 export type CatalogReportSubjectType = typeof CatalogReportSubjectType.Type;
 
@@ -135,7 +133,6 @@ export const CatalogReportsResponseDto_Output = Schema.Struct({
     description: "Pages with reports of the requested status.",
   }),
 }).annotate({
-  description: "Reported catalog pages",
   identifier: "CatalogReportsResponseDto_Output",
 });
 

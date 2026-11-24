@@ -2,7 +2,6 @@ import { Button } from "@lootlog/ui/components/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -89,9 +88,6 @@ export const LootsFiltersSidebar = ({
             <DialogTitle>
               {t("loots.filtersPanel.saveDialog.title")}
             </DialogTitle>
-            <DialogDescription>
-              {t("loots.filtersPanel.saveDialog.description")}
-            </DialogDescription>
           </DialogHeader>
           <div className="p-4">
             <Label htmlFor="filterName" className="text-sm font-medium">

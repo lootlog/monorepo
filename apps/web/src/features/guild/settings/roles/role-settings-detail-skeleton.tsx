@@ -17,7 +17,7 @@ const metaSkeleton = (
 );
 
 export const RoleSettingsDetailSkeleton = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   return (
     <DetailSkeleton
@@ -47,7 +47,6 @@ export const RoleSettingsDetailSkeleton = () => {
             key={group.groupKey}
             id={`role-permissions-${group.groupKey}-skeleton`}
             title={t(`permissions.groups.${group.groupKey}.name`)}
-            description={t(`permissions.groups.${group.groupKey}.description`)}
             tiled
           >
             {group.permissions.map((permission) => (
@@ -65,9 +64,11 @@ export const RoleSettingsDetailSkeleton = () => {
                   <span className="text-sm font-medium">
                     {t(`permissions.${permission}`)}
                   </span>
-                  <span className="text-xs text-muted-foreground">
-                    {t(`permissions.descriptions.${permission}`)}
-                  </span>
+                  {i18n.exists(`permissions.descriptions.${permission}`) ? (
+                    <span className="text-xs text-muted-foreground">
+                      {t(`permissions.descriptions.${permission}`)}
+                    </span>
+                  ) : null}
                 </div>
               </div>
             ))}

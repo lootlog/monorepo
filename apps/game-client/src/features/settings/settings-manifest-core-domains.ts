@@ -39,9 +39,6 @@ export const CORE_SETTINGS_DOMAINS = [
             descriptionKey: "settings.general.animationEffectsDescription",
             aliases: ["animacje", "wydajność", "performance"],
             settingKeys: ["device.animationEffectsEnabled"],
-            help: {
-              recommendationKey: "settings.help.animationsRecommendation",
-            },
           },
           {
             id: "map-auras",

@@ -1,4 +1,3 @@
-# Dependencies
 **/node_modules
 node_modules
 
@@ -11,17 +10,15 @@ perf
 playground
 repos
 
-# Git. Keep .gitignore: Tailwind's source detection reads it, and without it
+# Keep .gitignore: Tailwind's source detection reads it, and without it
 # the SSR build scans the client's dist output and links a stylesheet hash the
 # client build never emitted.
 **/.git
 .git
 
-# Documentation
 *.md
 !README.md
 
-# Build outputs
 **/dist
 dist
 **/build
@@ -35,13 +32,11 @@ generated
 **/.turbo
 .turbo
 
-# Environment files (CRITICAL - Security)
 .env*
 !.env.example
 **/.env*
 !**/.env.example
 
-# Tests
 **/__tests__
 **/*.test.ts
 **/*.test.tsx
@@ -49,7 +44,6 @@ generated
 coverage
 **/.nyc_output
 
-# IDE
 .vscode
 .idea
 *.swp
@@ -58,28 +52,23 @@ coverage
 .DS_Store
 Thumbs.db
 
-# Logs
 logs
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Temporary files
 tmp
 temp
 *.tmp
 
-# CI/CD
 .github
 .gitlab-ci.yml
 .travis.yml
 
-# Docker
 Dockerfile*
 docker-compose*.yml
 .dockerignore
 
-# Misc
 .cache
 .parcel-cache

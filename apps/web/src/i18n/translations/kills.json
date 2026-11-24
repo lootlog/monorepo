@@ -32,7 +32,6 @@
   },
   "ranking": {
     "title": "Ranking potworów",
-    "description": "Kompletna lista statystyk zabitych potworów",
     "search": "Szukaj potwora...",
     "noData": "Nie znaleziono potworów",
     "filteredNoData": "Brak pasujących potworów",
@@ -98,8 +97,8 @@
   },
   "records": {
     "title": "Rekordy",
-    "bestDay": "Dzień chwały",
-    "bestHour": "Godzina chwały",
+    "bestDay": "Najlepszy dzień",
+    "bestHour": "Najlepsza godzina",
     "streak": "Passa",
     "streakDays": "najdłuższa seria dni z biciami",
     "streakHours": "najdłuższa seria godzin z biciami",

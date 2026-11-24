@@ -12,7 +12,7 @@ const FORM_SECTIONS = [
 ] as const;
 
 export const ReservationsSettingsSkeleton = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   return (
     <SettingsTabSkeleton>
@@ -22,7 +22,11 @@ export const ReservationsSettingsSkeleton = () => {
             key={section}
             id={`reservation-settings-${section}-skeleton`}
             title={t(`settings.reservations.${section}.title`)}
-            description={t(`settings.reservations.${section}.description`)}
+            description={
+              i18n.exists(`settings.reservations.${section}.description`)
+                ? t(`settings.reservations.${section}.description`)
+                : undefined
+            }
           >
             <div className="grid gap-4 md:grid-cols-2">
               {fields.map((field) => (
@@ -31,9 +35,13 @@ export const ReservationsSettingsSkeleton = () => {
                     {t(`settings.reservations.fields.${field}.label`)}
                   </span>
                   <Skeleton className="h-9 w-full rounded-lg" />
-                  <p className="text-sm text-muted-foreground">
-                    {t(`settings.reservations.fields.${field}.description`)}
-                  </p>
+                  {i18n.exists(
+                    `settings.reservations.fields.${field}.description`,
+                  ) ? (
+                    <p className="text-sm text-muted-foreground">
+                      {t(`settings.reservations.fields.${field}.description`)}
+                    </p>
+                  ) : null}
                 </div>
               ))}
             </div>

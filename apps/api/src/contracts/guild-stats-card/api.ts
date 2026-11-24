@@ -32,8 +32,5 @@ export class GuildStatsCardGroup extends HttpApiGroup.make(
       "AuthenticatedGuildStatsCardController_refreshStatsCard",
     )
     .annotate(OpenApi.Summary, "Refresh public guild stats card")
-    .annotate(
-      OpenApi.Description,
-      "Regenerate the public guild stats card and update the cached PNG.",
-    ),
+    .annotate(OpenApi.Description, "Regenerates the cached PNG."),
 ) {}

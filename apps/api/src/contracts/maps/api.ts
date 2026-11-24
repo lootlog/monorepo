@@ -7,8 +7,5 @@ export class MapsGroup extends HttpApiGroup.make("maps").add(
   })
     .annotate(OpenApi.Identifier, "MapsController_getMaps")
     .annotate(OpenApi.Summary, "Get all game maps")
-    .annotate(
-      OpenApi.Description,
-      "Returns a list of all game maps from Margonem, cached for 1 hour",
-    ),
+    .annotate(OpenApi.Description, "Cached for one hour."),
 ) {}

@@ -44,7 +44,6 @@ export const MapTemplateForm = (
       <IconDialogHeader
         icon={Icon}
         title={t(`settings.mapTemplates.${dialogKey}.title`)}
-        description={t(`settings.mapTemplates.${dialogKey}.description`)}
       />
 
       <Form {...form}>

@@ -3,7 +3,7 @@
   "info": {
     "title": "Battle Log API",
     "version": "1.0",
-    "description": "The Battle Log API documentation",
+    "description": "Margonem battle logs, public battle links and battle statistics.",
     "contact": {}
   },
   "servers": [
@@ -3027,7 +3027,7 @@
             }
           },
           "404": {
-            "description": "Battle not found",
+            "description": "",
             "content": {
               "application/json": {
                 "schema": {
@@ -3127,7 +3127,7 @@
             }
           },
           "404": {
-            "description": "Battle not found",
+            "description": "",
             "content": {
               "application/json": {
                 "schema": {
@@ -3147,7 +3147,7 @@
             }
           }
         },
-        "summary": "Get a single battle",
+        "summary": "Get a battle",
         "x-lootlog-access": "read",
         "x-lootlog-data": "personal"
       },
@@ -3225,7 +3225,7 @@
             }
           },
           "404": {
-            "description": "Battle not found",
+            "description": "",
             "content": {
               "application/json": {
                 "schema": {
@@ -3333,7 +3333,7 @@
             }
           },
           "404": {
-            "description": "Battle not found",
+            "description": "",
             "content": {
               "application/json": {
                 "schema": {
@@ -3433,7 +3433,7 @@
             }
           },
           "404": {
-            "description": "Battle not found",
+            "description": "",
             "content": {
               "application/json": {
                 "schema": {
@@ -3514,7 +3514,7 @@
             }
           },
           "404": {
-            "description": "Public battle not found",
+            "description": "",
             "content": {
               "application/json": {
                 "schema": {
@@ -3596,7 +3596,7 @@
             }
           },
           "404": {
-            "description": "Public battle not found",
+            "description": "",
             "content": {
               "application/json": {
                 "schema": {
@@ -3678,7 +3678,7 @@
             }
           },
           "404": {
-            "description": "Public battle not found",
+            "description": "",
             "content": {
               "application/json": {
                 "schema": {

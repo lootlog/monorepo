@@ -159,7 +159,6 @@ export const CatalogItemsResponseDto_Output = Schema.Struct({
   hits: Schema.Array(CatalogItemDto_Output),
   estimatedTotalHits: FiniteNumber,
 }).annotate({
-  description: "Public catalog items",
   identifier: "CatalogItemsResponseDto_Output",
 });
 
@@ -262,7 +261,7 @@ const CatalogNpcDto_Output = Schema.Struct({
   gameVersion: GameVersionSchema,
   locations: Schema.Array(
     Schema.Struct({
-      map: Schema.String.annotate({ description: "The map's name." }),
+      map: Schema.String,
       share: FiniteNumber.annotate({
         description:
           "The share of the NPC's latest recorded fights on the map, from 0 to 1, rounded to a hundredth.",
@@ -283,7 +282,7 @@ const CatalogNpcDto_Output = Schema.Struct({
   }),
   formerLevels: Schema.Array(
     Schema.Struct({
-      lvl: FiniteNumber.annotate({ description: "The level it had." }),
+      lvl: FiniteNumber,
       until: Schema.String.annotate({
         description:
           "The UTC day, as `YYYY-MM-DD`, its next level was first recorded.",
@@ -309,7 +308,6 @@ export const CatalogNpcsResponseDto_Output = Schema.Struct({
   hits: Schema.Array(CatalogNpcDto_Output),
   estimatedTotalHits: FiniteNumber,
 }).annotate({
-  description: "Public catalog NPCs",
   identifier: "CatalogNpcsResponseDto_Output",
 });
 
@@ -385,9 +383,7 @@ const CatalogEventDto_Output = Schema.Struct({
   year: Schema.Union([FiniteNumber, Schema.Null]).annotate({
     description: "The year its name gives; none for an event without one.",
   }),
-  itemCount: FiniteNumber.annotate({
-    description: "How many catalog items belong to the event.",
-  }),
+  itemCount: FiniteNumber,
   boss: Schema.Union([
     Schema.Struct({
       name: Schema.String,
@@ -411,7 +407,6 @@ export const CatalogEventsResponseDto_Output = Schema.Struct({
     description: "The latest year first, then by name.",
   }),
 }).annotate({
-  description: "Public catalog events",
   identifier: "CatalogEventsResponseDto_Output",
 });
 
