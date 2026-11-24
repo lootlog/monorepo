@@ -9,6 +9,7 @@ import {
   type Item,
   type Slot,
 } from "./items.js";
+import { SIMULATION, type Simulation } from "./simulation.js";
 import { DEFAULT_OPTIONS, solveHunterLoadout } from "./solver.js";
 
 const SLOT_LABELS: Record<Slot, string> = {
@@ -179,6 +180,45 @@ const describeFighter = (fighter: Fighter) => ({
   armorDestruction: fighter.extra.acdmg ?? 0,
 });
 
+const describeSimulation = (simulation: Simulation) => ({
+  score: simulation.score,
+  duels: simulation.duels.map(({ profession, summary }) => {
+    const [me, them] = summary.fighters;
+
+    return {
+      profession: PROFESSION_NAMES[profession],
+      winRate: summary.winRate[0] ?? 0,
+      drawRate: summary.drawRate,
+      averageMoves: summary.averageMoves,
+      myMoves: me?.averageMoves ?? 0,
+      theirMoves: them?.averageMoves ?? 0,
+      myHpLeft: me?.averageHpLeft ?? 0,
+      theirHpLeft: them?.averageHpLeft ?? 0,
+      skillUses: [...(me?.skillUsesPerMove ?? [])].map(([name, perMove]) => ({
+        name,
+        perMove,
+      })),
+    };
+  }),
+  team:
+    simulation.team === null
+      ? null
+      : {
+          winRate: simulation.team.winRate[0] ?? 0,
+          drawRate: simulation.team.drawRate,
+          averageMoves: simulation.team.averageMoves,
+          survivalRate: simulation.team.fighters[0]?.survivalRate ?? 0,
+          damageShare:
+            (simulation.team.fighters[0]?.averageDamage ?? 0) /
+            Math.max(
+              1,
+              simulation.team.fighters
+                .filter((fighter) => fighter.team === 0)
+                .reduce((total, fighter) => total + fighter.averageDamage, 0),
+            ),
+        },
+});
+
 const server = Bun.serve({
   port: Number(Bun.env.PORT ?? 4317),
   idleTimeout: 120,
@@ -244,6 +284,8 @@ const server = Bun.serve({
         elapsedMs: Math.round(performance.now() - started),
         goal,
         candidateCount: solution.candidateCount,
+        simulationRuns: SIMULATION.runs,
+        referenceSimulation: describeSimulation(solution.referenceSimulation),
         opponents: solution.opponents.map(({ build, fighter }) => ({
           profession: PROFESSION_NAMES[build.profession],
           weapons: [build.gear.weapon?.name, build.gear.secondary?.name].filter(
@@ -263,6 +305,7 @@ const server = Bun.serve({
             theirTimeToKill: entry.theirTimeToKill,
             poisonShare: entry.poisonShare,
           })),
+          simulation: describeSimulation(build.simulation),
           statValues: build.statValues,
           skills: build.skills,
           skillPoints: build.skillPoints,

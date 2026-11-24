@@ -114,17 +114,18 @@ const renderStatValues = (values) => {
 };
 
 const renderSkills = (build) => {
-  const modelled = build.skills.filter((skill) => skill.modelled);
-  const filler = build.skills.filter((skill) => !skill.modelled);
+  const counted = (skill) => skill.modelled || skill.simulated;
+  const modelled = build.skills.filter(counted);
+  const filler = build.skills.filter((skill) => !counted(skill));
   const fillerPoints = filler.reduce((total, skill) => total + skill.rank, 0);
 
   return `<div class="skill-list">${modelled
     .map(
       (skill) =>
-        `<span class="skill" title="${escape(skill.effects)}">${escape(skill.name)} <b>${skill.rank}/${skill.maxRank}</b></span>`,
+        `<span class="skill" title="${escape(skill.effects)}">${escape(skill.name)} <b>${skill.rank}/${skill.maxRank}</b>${skill.active ? " · aktywna" : ""}</span>`,
     )
     .join("")}</div>
-    <p class="section-lead" style="margin-top:8px">${fillerPoints} z ${build.skillPoints} punktów idzie w umiejętności, których model nie liczy (głównie aktywne), tylko po to, żeby odblokować wyższe progi drzewka: ${filler.map((skill) => escape(skill.name)).join(", ")}.</p>`;
+    <p class="section-lead" style="margin-top:8px">${fillerPoints} z ${build.skillPoints} punktów idzie w umiejętności, których ani model, ani symulacja nie liczą, tylko po to, żeby odblokować wyższe progi drzewka: ${filler.map((skill) => escape(skill.name)).join(", ")}.</p>`;
 };
 
 const renderOpponents = (build) => {
@@ -143,6 +144,74 @@ const renderOpponents = (build) => {
   return `<div class="table-wrap"><table class="compare">
     <thead><tr><th>Przeciwnik</th><th>Ty zabijasz w</th><th>On zabija cię w</th><th>Przewaga</th><th>Udział trucizny</th></tr></thead>
     <tbody>${rows}</tbody></table></div>`;
+};
+
+const percent = (value, digits = 0) => `${number(value * 100, digits)}%`;
+
+const winClass = (rate) => (rate >= 0.5 ? "good" : "bad");
+
+const averageSkillUses = (duels) => {
+  const uses = new Map();
+
+  for (const duel of duels) {
+    for (const use of duel.skillUses) {
+      uses.set(
+        use.name,
+        (uses.get(use.name) ?? 0) + use.perMove / duels.length,
+      );
+    }
+  }
+
+  return [...uses].sort((a, b) => b[1] - a[1]);
+};
+
+const renderTeamFight = (team) =>
+  team
+    ? `<div class="kpis">
+        ${kpi("Walka 6 na 6", percent(team.winRate), "wygrane drużyny z tobą zamiast typowego łowcy")}
+        ${kpi("Przeżywasz walkę drużynową", percent(team.survivalRate))}
+        ${kpi("Twój udział w obrażeniach drużyny", percent(team.damageShare))}
+      </div>`
+    : "";
+
+const renderSimulation = (build) => {
+  const { duels, team } = build.simulation;
+  const group = lastResponse.goal === "group";
+
+  const reference = new Map(
+    lastResponse.referenceSimulation.duels.map((duel) => [
+      duel.profession,
+      duel.winRate,
+    ]),
+  );
+
+  const rows = duels
+    .map(
+      (duel) => `<tr>
+        <td>${escape(duel.profession)}</td>
+        <td class="${winClass(duel.winRate)}">${percent(duel.winRate)}</td>
+        <td>${percent(duel.drawRate)}</td>
+        <td>${number(duel.myMoves, 1)} : ${number(duel.theirMoves, 1)}</td>
+        <td>${percent(duel.myHpLeft)}</td>
+        <td>${percent(duel.theirHpLeft)}</td>
+        ${group ? `<td>${percent(reference.get(duel.profession) ?? 0)}</td>` : ""}
+      </tr>`,
+    )
+    .join("");
+
+  const uses = averageSkillUses(duels)
+    .map(
+      ([name, perMove]) =>
+        `<span class="skill">${escape(name)} <b>${percent(perMove)}</b></span>`,
+    )
+    .join("");
+
+  return `<p class="section-lead">${lastResponse.simulationRuns} losowych walk na przeciwnika, tura po turze: kolejność według czasu ataku, uniki, bloki, krytyki, przebicia, niszczenie pancerza, trucizna, głęboka rana, leczenie i umiejętności aktywne z energią, odnowieniem i punktami kombinacji. Remis to walka, która dobiła do limitu 75 tur na gracza.</p>
+    ${renderTeamFight(team)}
+    <div class="table-wrap"><table class="compare">
+      <thead><tr><th>Przeciwnik</th><th>Wygrane</th><th>Remisy</th><th>Ruchy (ty : on)</th><th>Twoje HP na koniec</th><th>Jego HP na koniec</th>${group ? "<th>Typowy łowca-heroik</th>" : ""}</tr></thead>
+      <tbody>${rows}</tbody></table></div>
+    ${uses ? `<p class="section-lead" style="margin-top:12px">Jak często symulacja używa twoich umiejętności aktywnych (na ruch):</p><div class="skill-list">${uses}</div>` : ""}`;
 };
 
 const renderOpponentBuild = () => {
@@ -168,6 +237,11 @@ const renderBuild = (build) => {
   const me = build.me;
   const group = lastResponse.goal === "group";
 
+  const duels = build.simulation.duels;
+
+  const averageWin =
+    duels.reduce((total, duel) => total + duel.winRate, 0) / duels.length;
+
   const headline = group
     ? kpi(
         "Wynik vs typowy łowca-heroik",
@@ -188,6 +262,7 @@ const renderBuild = (build) => {
     </div>
     <div class="kpis">
       <div class="kpi hero">${headline.slice('<div class="kpi">'.length)}
+      ${kpi(group ? "Średnio wygranych pojedynków" : "Wygrane w symulacji", percent(averageWin), group ? "przeciw najlepszym zestawom 6 profesji" : null)}
       ${kpi("Szybkość ataku", number(me.attackSpeed, 2))}
       ${kpi("Obrażenia za trafienie", number(me.damage))}
       ${kpi("Cios krytyczny", `${number(me.critChance, 1)}%`)}
@@ -204,8 +279,10 @@ const renderBuild = (build) => {
     ${renderStatValues(build.statValues)}
     <h2 class="section-title">Umiejętności (${build.skillPoints} punktów)</h2>
     ${renderSkills(build)}
-    <h2 class="section-title">${group ? "Przeciw każdej profesji" : "Pojedynek"}</h2>
-    <p class="section-lead">Czas w umownych jednostkach. ${group ? "W ustawkach liczą się obrażenia zadane, zanim zginiesz, a przeżywalność tylko do typowej długości walki." : ""}</p>
+    <h2 class="section-title">Symulacja walk</h2>
+    ${renderSimulation(build)}
+    <h2 class="section-title">${group ? "Model analityczny: przeciw każdej profesji" : "Model analityczny: pojedynek"}</h2>
+    <p class="section-lead">Szybka ocena, którą solver wstępnie wybiera zestaw, zanim sprawdzi go symulacją. Czas w umownych jednostkach. ${group ? "W ustawkach liczą się obrażenia zadane, zanim zginiesz, a przeżywalność tylko do typowej długości walki." : ""}</p>
     ${renderOpponents(build)}
     ${renderOpponentBuild()}
     <h2 class="section-title">Zestaw</h2>
@@ -231,7 +308,9 @@ const render = () => {
     ${renderBuild(build)}
     <ul class="footnote">
       <li>Model walki opiera się na wzorach z pomocy Margonem i na liczeniu statystyk z kreatora zestawów w wiki. To nie jest wynik z prawdziwych walk.</li>
-      <li>Umiejętności aktywne, bonusy legendarne i ulepszenia przedmiotów nie są jeszcze liczone. Przekreślone staty na przedmiotach model pomija.</li>
+      <li>Solver wybiera zestaw modelem analitycznym, a potem symulacją walk dobiera umiejętności aktywne i sprawdza najbliższe alternatywy przedmiotów.</li>
+      <li>Bonusy legendarne, ulepszenia przedmiotów i część umiejętności aktywnych (np. oczyszczanie, bandażowanie, Piętno bestii) nie są liczone. Przekreślone staty na przedmiotach model pomija.</li>
+      <li>Porównanie z battlelogiem: długość walk łowcy z każdą profesją zgadza się z prawdziwymi walkami w granicach ok. 20%, ale prawdziwe postacie mają 30–50% więcej życia (ulepszenia), więc leczenie wychodzi tu za mocne.</li>
       <li>Przeciwnicy to najlepsze zestawy każdej profesji według tego samego modelu, dobrane z wszystkich przedmiotów bez filtrów.</li>
       <li>Filtry dotyczą tylko twojego zestawu. Przedmiot przechodzi filtr źródła, jeśli wypada z przynajmniej jednego zaznaczonego źródła.</li>
     </ul>`;

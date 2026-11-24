@@ -30,6 +30,7 @@ import {
   optimizeSkills,
   pruneDominated,
 } from "./optimizer.js";
+import { createSimulator } from "./simulation.js";
 
 export const MODES = ["group", "duel"] as const;
 
@@ -439,6 +440,17 @@ export const solveHunterLoadout = (
   const referenceResult = evaluateDetailed(reference);
   const bestScore = { value: Number.NaN };
 
+  const simulator = createSimulator({
+    model,
+    level,
+    group,
+    opponents: opponentFighters,
+    references,
+    candidates,
+  });
+
+  const referenceSimulation = simulator.simulate(reference);
+
   const builds = paths.map((path) => {
     const emphasis = BUILD_PATHS[path].emphasis;
 
@@ -456,7 +468,21 @@ export const solveHunterLoadout = (
       );
     };
 
-    const build = optimizeBuild(model, start, candidates, pathScore, level, {});
+    const analytic = optimizeBuild(
+      model,
+      start,
+      candidates,
+      pathScore,
+      level,
+      {},
+    );
+
+    const { build, simulation } = simulator.refine(
+      analytic,
+      pathScore,
+      path === "free",
+    );
+
     const result = evaluateDetailed(build);
 
     if (path === "free") bestScore.value = result.score;
@@ -515,6 +541,7 @@ export const solveHunterLoadout = (
       maxRank: skill.maxRank,
       active: skill.active,
       modelled: isModelledSkill(skill),
+      simulated: simulator.isSimulated(skill.id),
       effects: skill.ranks[(build.ranks[skill.id] ?? 1) - 1] ?? "",
     }));
 
@@ -529,6 +556,7 @@ export const solveHunterLoadout = (
       statValues,
       skills,
       skillPoints: model.skillPoints,
+      simulation,
     };
   });
 
@@ -538,6 +566,7 @@ export const solveHunterLoadout = (
     candidatesPerSlot: recordOf(SLOTS, (slot) => candidates[slot]?.length ?? 0),
     reference,
     referenceResult,
+    referenceSimulation,
     opponents: opponentBuilds.map((build) => ({
       build,
       fighter: model.fighter(build),
