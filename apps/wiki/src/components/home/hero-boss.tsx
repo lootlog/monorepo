@@ -1,10 +1,9 @@
 import { Link } from "@tanstack/react-router";
-import { Pause, Play } from "lucide-react";
+import { useState } from "react";
 import { npcIconUrl } from "@lootlog/domain/npc-icon";
 import { EmberSparks } from "@lootlog/ui/components/ember-sparks";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { NpcKindLevel } from "@/components/npcs/npc-kind-level";
-import { useAutoRotation } from "@/hooks/use-auto-rotation";
 import { useNewBosses } from "@/hooks/use-new-bosses";
 import { t } from "@/i18n/messages";
 import { npcPageParams } from "@/lib/catalog-links";
@@ -12,15 +11,10 @@ import { BossPicker } from "./boss-picker";
 import { HeroBossDrops } from "./hero-boss-drops";
 import { PixelSprite } from "./pixel-sprite";
 
-const ROTATION_MS = 8000;
-
 export function HeroBoss() {
   const { bosses, isError } = useNewBosses();
 
-  const rotation = useAutoRotation(
-    bosses?.map(({ key }) => key) ?? [],
-    ROTATION_MS,
-  );
+  const [pickedKey, setPickedKey] = useState<string>();
 
   if (isError) {
     return (
@@ -39,8 +33,7 @@ export function HeroBoss() {
     );
   }
 
-  const monster =
-    bosses.find((boss) => boss.key === rotation.activeKey) ?? bosses[0];
+  const monster = bosses.find((boss) => boss.key === pickedKey) ?? bosses[0];
 
   if (!monster) {
     return (
@@ -51,17 +44,7 @@ export function HeroBoss() {
   }
 
   return (
-    <div
-      className="flex flex-col items-center gap-7"
-      onPointerEnter={rotation.hold}
-      onPointerLeave={rotation.release}
-      onFocus={rotation.hold}
-      onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget)) {
-          rotation.release();
-        }
-      }}
-    >
+    <div className="flex flex-col items-center gap-7">
       <Link
         to="/npcs/$npcSlug"
         params={npcPageParams(monster)}
@@ -102,37 +85,11 @@ export function HeroBoss() {
 
       <HeroBossDrops key={monster.key} boss={monster} />
 
-      <div className="flex max-w-full items-center gap-2">
-        <BossPicker
-          bosses={bosses}
-          pickedKey={monster.key}
-          isRotating={rotation.isRotating}
-          onPick={rotation.pick}
-        />
-        {rotation.canRotate ? (
-          <button
-            type="button"
-            onClick={rotation.toggle}
-            aria-label={
-              rotation.isStopped
-                ? t("home.resumeRotation")
-                : t("home.pauseRotation")
-            }
-            title={
-              rotation.isStopped
-                ? t("home.resumeRotation")
-                : t("home.pauseRotation")
-            }
-            className="grid size-8 shrink-0 place-items-center rounded-full text-muted-foreground outline-none transition-colors hover:bg-foreground/10 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none"
-          >
-            {rotation.isStopped ? (
-              <Play aria-hidden="true" className="size-4" />
-            ) : (
-              <Pause aria-hidden="true" className="size-4" />
-            )}
-          </button>
-        ) : null}
-      </div>
+      <BossPicker
+        bosses={bosses}
+        pickedKey={monster.key}
+        onPick={setPickedKey}
+      />
     </div>
   );
 }

@@ -7,16 +7,10 @@ import { t } from "@/i18n/messages";
 type BossPickerProps = {
   bosses: readonly NewBoss[];
   pickedKey: string;
-  isRotating: boolean;
   onPick: (key: string) => void;
 };
 
-export function BossPicker({
-  bosses,
-  pickedKey,
-  isRotating,
-  onPick,
-}: BossPickerProps) {
+export function BossPicker({ bosses, pickedKey, onPick }: BossPickerProps) {
   return (
     <ul
       aria-label={t("home.bossPickerLabel")}
@@ -32,7 +26,7 @@ export function BossPicker({
               aria-pressed={isPicked}
               onClick={() => onPick(boss.key)}
               className={cn(
-                "relative flex w-24 flex-col items-center gap-1.5 overflow-hidden rounded-lg px-1.5 pt-2 pb-2.5 outline-none transition-[background-color,opacity] duration-150 focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none",
+                "flex w-24 flex-col items-center gap-1.5 overflow-hidden rounded-lg px-1.5 pt-2 pb-2.5 outline-none transition-[background-color,opacity] duration-150 focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none",
                 isPicked
                   ? "bg-foreground/10"
                   : "opacity-60 hover:bg-foreground/5 hover:opacity-100",
@@ -53,13 +47,6 @@ export function BossPicker({
               <span className="w-full truncate text-[0.6875rem] text-muted-foreground">
                 <NpcKindLevel npc={boss} />
               </span>
-              {isPicked && isRotating ? (
-                <span
-                  key={boss.key}
-                  aria-hidden="true"
-                  className="absolute inset-x-2 bottom-1 h-0.5 origin-left rounded-full bg-primary animate-rotation-progress"
-                />
-              ) : null}
             </button>
           </li>
         );

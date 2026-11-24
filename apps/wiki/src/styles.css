@@ -8,17 +8,10 @@
 @theme {
   --animate-sprite-float: sprite-float 4.5s ease-in-out infinite;
   --animate-sprite-shadow: sprite-shadow 4.5s ease-in-out infinite;
-  --animate-rotation-progress: rotation-progress 8s linear;
 
   @keyframes sprite-float {
     50% {
       translate: 0 -8px;
-    }
-  }
-
-  @keyframes rotation-progress {
-    from {
-      scale: 0 1;
     }
   }
 

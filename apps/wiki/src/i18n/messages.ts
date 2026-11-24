@@ -694,8 +694,6 @@ const messages = {
     latestBoss: "Ostatnio w grze",
     bossDrops: "Przedmioty: {{name}}",
     bossPickerLabel: "Bossowie ostatnio w grze",
-    pauseRotation: "Zatrzymaj przełączanie bossów",
-    resumeRotation: "Wznów przełączanie bossów",
     bossesEmpty: "Lootlog nie zna jeszcze nowych bossów.",
     newMonstersTitle: "Nowe w grze",
     newMonstersDescription:
