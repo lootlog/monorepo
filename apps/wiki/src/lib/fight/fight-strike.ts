@@ -20,6 +20,15 @@ type StrikeDamage = ElementalDamage & {
 
 export type Strike = {
   readonly crit: boolean;
+  readonly veryCrit: boolean;
+  readonly curse: boolean;
+  readonly glare: boolean;
+  readonly anguish: boolean;
+  readonly holyTouch: boolean;
+  readonly cleansed: boolean;
+  readonly puncture: number;
+  readonly critred: number;
+  readonly facade: number;
   readonly evaded: boolean;
   readonly blocked: number;
   readonly pierced: boolean;
@@ -67,6 +76,16 @@ const SHIELD_BEARERS: ReadonlySet<Profession> = new Set(["w", "p"]);
 
 const UNAVOIDABLE: ReadonlySet<Profession> = new Set(["m"]);
 
+const VERY_CRIT_FACTOR = 1.75;
+
+const HOLY_TOUCH_TURNS = 3;
+
+const puncture = (attacker: FighterState) =>
+  attacker.combatant.legendary.puncture / 100;
+
+const chance = (random: () => number, percent: number) =>
+  percent > 0 && random() < percent / 100;
+
 export const armorReduced = (damage: number, armor: number) => {
   if (damage <= 0 || armor <= 0) return Math.max(0, damage);
 
@@ -92,7 +111,8 @@ const evadeChance = (
 
   const points = Math.max(
     0,
-    defender.combatant.evadePoints - attacker.combatant.evadeReduction,
+    defender.combatant.evadePoints * (1 - puncture(attacker)) -
+      attacker.combatant.evadeReduction,
   );
 
   const chance = Math.min(
@@ -113,7 +133,9 @@ const blockChance = (
 
   const chance = Math.min(
     MAX_EVADE_OR_BLOCK,
-    (defender.combatant.blockPoints * EVADE_OR_BLOCK_PER_POINT) /
+    (defender.combatant.blockPoints *
+      (1 - puncture(attacker)) *
+      EVADE_OR_BLOCK_PER_POINT) /
       Math.min(attacker.combatant.level, LEVEL_CAP_FOR_CHANCES),
   );
 
@@ -126,11 +148,25 @@ const currentArmor = (defender: FighterState) =>
     defender.combatant.armor - defender.armorLost,
   );
 
-const resistance = (defender: FighterState, base: number, buffKey: string) =>
-  clamp(base + buffTotal(defender, buffKey), 0, MAX_RESISTANCE) / 100;
+const armorAgainst = (defender: FighterState, attacker: FighterState) =>
+  currentArmor(defender) * (1 - puncture(attacker));
 
-const absorbFrom = (damage: number, share: number, pool: number) => {
-  const absorbed = Math.min(pool, damage * share);
+const resistance = (
+  defender: FighterState,
+  attacker: FighterState,
+  base: number,
+  buffKey: string,
+) =>
+  clamp(base + buffTotal(defender, buffKey), 0, MAX_RESISTANCE) / 100 -
+  puncture(attacker);
+
+const absorbFrom = (
+  damage: number,
+  share: number,
+  pool: number,
+  ignored: number,
+) => {
+  const absorbed = Math.min(pool * (1 - ignored), damage * share);
 
   return { damage: damage - absorbed, absorbed };
 };
@@ -139,7 +175,7 @@ type Hit = {
   attacker: FighterState;
   defender: FighterState;
   plan: ActionPlan;
-  crit: boolean;
+  crit: number;
   random: () => number;
 };
 
@@ -154,10 +190,12 @@ const physicalDamage = (
     roll(random, a.physical) *
     (1 + plan.effect("adddmg_physical-perw") / 100) *
     (1 + a.physicalBonus / 100) *
-    (crit ? a.critValue / 100 : 1) *
+    (crit > 0 ? (crit * a.critValue) / 100 : 1) *
     blockFactor;
 
-  const reduced = pierced ? raw : armorReduced(raw, currentArmor(defender));
+  const reduced = pierced
+    ? raw
+    : armorReduced(raw, armorAgainst(defender, attacker));
 
   if (!MELEE_ABSORBED.has(a.profession) || reduced <= 0) return reduced;
 
@@ -165,6 +203,7 @@ const physicalDamage = (
     reduced,
     PHYSICAL_ABSORB_SHARE,
     defender.absorbLeft,
+    puncture(attacker),
   );
 
   defender.absorbLeft -= absorbed.absorbed;
@@ -180,7 +219,7 @@ const magicDamage = (
 ): ElementalDamage => {
   const a = attacker.combatant;
   const d = defender.combatant;
-  const armor = currentArmor(defender);
+  const armor = armorAgainst(defender, attacker);
   const previousAttacks = attacker.lightAttacks.get(defender.index) ?? 0;
 
   const lightRamp = Math.min(
@@ -188,7 +227,7 @@ const magicDamage = (
     LIGHT_RAMP_PER_ATTACK * previousAttacks,
   );
 
-  const magicCrit = crit ? a.critMagicValue / 100 : 1;
+  const magicCrit = crit > 0 ? (crit * a.critMagicValue) / 100 : 1;
 
   attacker.lightAttacks.set(defender.index, previousAttacks + 1);
 
@@ -204,7 +243,7 @@ const magicDamage = (
 
     return (
       armorReduced(raw, MAGIC_ARMOR_FACTOR * armor) *
-      (1 - resistance(defender, base, buffKey))
+      (1 - resistance(defender, attacker, base, buffKey))
     );
   };
 
@@ -219,6 +258,7 @@ const magicDamage = (
     magic,
     MAGIC_ABSORB_SHARE,
     defender.absorbMagicLeft,
+    puncture(attacker),
   );
 
   defender.absorbMagicLeft -= absorbed.absorbed;
@@ -296,6 +336,61 @@ const MISSED = {
   wounded: false,
 };
 
+const ANGUISH_TURNS = 5;
+
+const cleanse = (defender: FighterState) => {
+  defender.poison = null;
+  defender.wound = null;
+  defender.anguish = null;
+  defender.slowBySource.clear();
+  defender.critSlowTurns = 0;
+};
+
+const hasLingeringEffects = (defender: FighterState) =>
+  defender.poison !== null ||
+  defender.wound !== null ||
+  defender.anguish !== null ||
+  defender.slowBySource.size > 0 ||
+  defender.critSlowTurns > 0;
+
+const onHitEffects = (
+  attacker: FighterState,
+  defender: FighterState,
+  random: () => number,
+) => {
+  const a = attacker.combatant.legendary;
+  const d = defender.combatant.legendary;
+
+  const cleansed = hasLingeringEffects(defender) && chance(random, d.cleanse);
+
+  if (cleansed) cleanse(defender);
+
+  const curse = chance(random, a.curse);
+  const glare = chance(random, d.glare);
+  const anguish = a.anguish.damage > 0 && chance(random, a.anguish.chance);
+
+  if (curse) defender.turnLost = true;
+
+  if (glare) attacker.turnLost = true;
+
+  if (anguish) {
+    defender.anguish = {
+      damage:
+        a.anguish.damage * (1 + defender.combatant.damageTakenBonus / 100),
+      turnsLeft: ANGUISH_TURNS,
+    };
+  }
+
+  return { cleansed, curse, glare, anguish };
+};
+
+const NO_HIT_EFFECTS = {
+  cleansed: false,
+  curse: false,
+  glare: false,
+  anguish: false,
+};
+
 export const strike = (
   attacker: FighterState,
   defender: FighterState,
@@ -311,17 +406,25 @@ export const strike = (
     (1 + a.damageBonus / 100) *
     (1 + d.damageTakenBonus / 100);
 
-  const critChance =
-    Math.max(
-      MIN_CRIT,
-      a.critChance + buffTotal(attacker, "active_crit") - d.critReduction,
-    ) / 100;
+  const ownCritChance = a.critChance + buffTotal(attacker, "active_crit");
 
-  const crit = random() < critChance;
+  const veryCrit = chance(
+    random,
+    (a.legendary.verycrit * Math.max(0, ownCritChance)) / 100,
+  );
+
+  const critChance = Math.max(MIN_CRIT, ownCritChance - d.critReduction) / 100;
+
+  const crit = veryCrit || random() < critChance;
+  const critStrength = veryCrit ? VERY_CRIT_FACTOR : crit ? 1 : 0;
 
   const evaded =
     random() <
     evadeChance(defender, attacker, plan.effect("active_decevade_per"));
+
+  const holyTouch = chance(random, a.legendary.holytouch);
+
+  if (holyTouch) attacker.holyTouchTurns = HOLY_TOUCH_TURNS;
 
   attacker.hits += 1;
 
@@ -332,21 +435,35 @@ export const strike = (
 
   if (evaded) attacker.evaded += 1;
 
+  const effects = evaded
+    ? NO_HIT_EFFECTS
+    : onHitEffects(attacker, defender, random);
+
   const armorBefore = currentArmor(defender);
 
   const main = evaded
     ? MISSED
-    : mainWeaponHit({ attacker, defender, plan, crit, random }, damageScale);
+    : mainWeaponHit(
+        { attacker, defender, plan, crit: critStrength, random },
+        damageScale,
+      );
 
-  const offhand =
+  const offhandRaw =
     a.offhand.max > 0
-      ? Math.round(
-          armorReduced(
-            roll(random, a.offhand) * (crit ? a.critValue / 100 : 1),
-            currentArmor(defender),
-          ) * damageScale,
-        )
+      ? armorReduced(
+          roll(random, a.offhand) *
+            (crit ? (critStrength * a.critValue) / 100 : 1),
+          armorAgainst(defender, attacker),
+        ) * damageScale
       : 0;
+
+  const weaponDamage =
+    main.physical + main.fire + main.frost + main.light + offhandRaw;
+
+  const critred = crit ? d.legendary.critred : 0;
+  const facade = weaponDamage > 0 ? d.legendary.facade : 0;
+  const kept = (1 - critred / 100) * (1 - facade / 100);
+  const keep = (value: number) => Math.round(value * kept);
 
   const comboDamage =
     plan.comboSpent > 0
@@ -357,8 +474,20 @@ export const strike = (
         )
       : 0;
 
-  const physical = main.physical + comboDamage;
-  const total = physical + offhand + main.fire + main.frost + main.light;
+  const damage = {
+    physical: keep(main.physical) + comboDamage,
+    offhand: keep(offhandRaw),
+    fire: keep(main.fire),
+    frost: keep(main.frost),
+    light: keep(main.light),
+  };
+
+  const total =
+    damage.physical +
+    damage.offhand +
+    damage.fire +
+    damage.frost +
+    damage.light;
 
   if (crit && a.critSlow > 0) {
     defender.critSlowValue = a.critSlow;
@@ -375,19 +504,19 @@ export const strike = (
 
   return {
     crit,
+    veryCrit,
+    ...effects,
+    holyTouch,
+    puncture: a.legendary.puncture,
+    critred,
+    facade,
     evaded,
     blocked: main.blocked,
     pierced: main.pierced,
     pierceBlocked: main.pierceBlocked,
     wounded: main.wounded,
     armorDestroyed: armorBefore - currentArmor(defender),
-    damage: {
-      physical,
-      offhand,
-      fire: main.fire,
-      frost: main.frost,
-      light: main.light,
-    },
+    damage,
   };
 };
 

@@ -4,6 +4,32 @@ export type Profession = "h" | "w" | "p" | "b" | "m" | "t";
 
 export type DamageRange = { readonly min: number; readonly max: number };
 
+export type LegendaryBonuses = {
+  readonly verycrit: number;
+  readonly holytouch: number;
+  readonly curse: number;
+  readonly glare: number;
+  readonly critred: number;
+  readonly facade: number;
+  readonly cleanse: number;
+  readonly puncture: number;
+  readonly anguish: { readonly chance: number; readonly damage: number };
+  readonly lastheal: DamageRange | null;
+};
+
+export const NO_LEGENDARY_BONUSES: LegendaryBonuses = {
+  verycrit: 0,
+  holytouch: 0,
+  curse: 0,
+  glare: 0,
+  critred: 0,
+  facade: 0,
+  cleanse: 0,
+  puncture: 0,
+  anguish: { chance: 0, damage: 0 },
+  lastheal: null,
+};
+
 export type Combatant = {
   readonly name: string;
   readonly profession: Profession;
@@ -49,6 +75,7 @@ export type Combatant = {
   readonly critSlow: number;
   readonly comboGain: ComboGain;
   readonly actives: readonly ActiveSkill[];
+  readonly legendary: LegendaryBonuses;
 };
 
 export const MAX_RESISTANCE = 90;
@@ -75,6 +102,10 @@ export type FighterState = SkillUserState & {
   healTriggers: number;
   poison: Poison | null;
   wound: Wound | null;
+  anguish: DamageOverTime | null;
+  holyTouchTurns: number;
+  lastHealUsed: boolean;
+  turnLost: boolean;
   slowBySource: Map<number, number>;
   critSlowTurns: number;
   critSlowValue: number;
@@ -111,6 +142,10 @@ export const createState = (
   buffs: [],
   poison: null,
   wound: null,
+  anguish: null,
+  holyTouchTurns: 0,
+  lastHealUsed: false,
+  turnLost: false,
   slowBySource: new Map(),
   critSlowTurns: 0,
   critSlowValue: 0,

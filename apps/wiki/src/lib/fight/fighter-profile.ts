@@ -1,5 +1,12 @@
 import { sortBy } from "es-toolkit";
 import { itemStatValue } from "@lootlog/domain/item-stat";
+import {
+  anguishDamage,
+  isCalculableLegendaryBonus,
+  LEGENDARY_BONUS_START_VALUES,
+  legendaryBonusValue,
+  wornLegendaryBonusItems,
+} from "@/lib/calculators";
 import { characterStats, type CharacterStats } from "@/lib/character-stats";
 import type { Profession } from "@/lib/equipment-set";
 import { sumSkillBonuses } from "@/lib/skills/skill-stats";
@@ -12,7 +19,11 @@ import {
   type SkillRanks,
   type SkillWeapon,
 } from "@/lib/skills/skill-tree";
-import type { Combatant } from "./fight-state";
+import {
+  NO_LEGENDARY_BONUSES,
+  type Combatant,
+  type LegendaryBonuses,
+} from "./fight-state";
 import {
   SIMULATED_ACTIVE_EFFECTS,
   isSimulatedActive,
@@ -32,6 +43,7 @@ export type FighterProfile = {
   actives: ActiveSkill[];
   ignoredActives: string[];
   comboGain: ComboGain;
+  legendary: LegendaryBonuses;
 };
 
 const EXTRA_ITEM_KEYS = [
@@ -71,6 +83,77 @@ const ACTIVE_PRIORITY = [
   "energyrestore_per",
   "red-sa",
 ] as const;
+
+const LAST_HEAL_RANGE = { min: 36, max: 44 };
+
+const legendaryBonuses = (
+  items: readonly FighterItem[],
+  stats: CharacterStats,
+  level: number,
+): LegendaryBonuses => {
+  const worn = wornLegendaryBonusItems(
+    items.map(({ item }) => item.stat),
+    level,
+  );
+
+  const strengthsOf = (name: string) =>
+    worn.flatMap((bonus) =>
+      bonus.name === name
+        ? [Number.isNaN(bonus.strength) ? 1 : bonus.strength]
+        : [],
+    );
+
+  const valueOf = (name: string) =>
+    isCalculableLegendaryBonus(name)
+      ? legendaryBonusValue(
+          LEGENDARY_BONUS_START_VALUES[name],
+          strengthsOf(name),
+        )
+      : 0;
+
+  const anguishLevel = Math.max(
+    0,
+    ...worn.flatMap((bonus) =>
+      bonus.name === "anguish" && Number.isFinite(bonus.itemLevel)
+        ? [bonus.itemLevel]
+        : [],
+    ),
+  );
+
+  const lastHeal = strengthsOf("lastheal");
+
+  return {
+    ...NO_LEGENDARY_BONUSES,
+    verycrit: valueOf("verycrit"),
+    holytouch: valueOf("holytouch"),
+    curse: valueOf("curse"),
+    glare: valueOf("glare"),
+    critred: valueOf("critred"),
+    facade: valueOf("facade"),
+    cleanse: valueOf("cleanse"),
+    puncture: valueOf("puncture"),
+    anguish: {
+      chance: valueOf("anguish"),
+      damage:
+        anguishLevel > 0
+          ? anguishDamage({
+              itemLevel: anguishLevel,
+              upgrade: 0,
+              strength: stats.strength,
+              intellect: stats.intellect,
+              agility: stats.agility,
+            })
+          : 0,
+    },
+    lastheal:
+      lastHeal.length > 0
+        ? {
+            min: legendaryBonusValue(LAST_HEAL_RANGE.min, lastHeal),
+            max: legendaryBonusValue(LAST_HEAL_RANGE.max, lastHeal),
+          }
+        : null,
+  };
+};
 
 const itemNumber = ({ item }: FighterItem, key: string) => {
   const value = itemStatValue(item.stat, key);
@@ -223,6 +306,7 @@ export const fighterProfile = ({
     actives: learned.actives,
     ignoredActives: learned.ignoredActives,
     comboGain: learned.comboGain,
+    legendary: legendaryBonuses(items, stats, level),
   };
 };
 
@@ -277,5 +361,6 @@ export const toCombatant = (
     critSlow: extra.critslow_per ?? 0,
     comboGain: profile.comboGain,
     actives: profile.actives,
+    legendary: profile.legendary,
   };
 };

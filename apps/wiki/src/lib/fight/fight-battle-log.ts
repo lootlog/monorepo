@@ -39,16 +39,25 @@ const strikeActions = (event: Strike, attacker: Combatant) => {
 
   return [
     ...(event.crit ? ["+crit"] : []),
+    ...(event.veryCrit ? ["+legbon_verycrit"] : []),
+    ...(event.puncture > 0 ? [`+legbon_puncture=${event.puncture}`] : []),
     ...(event.pierced ? ["+pierce"] : []),
     ...(event.fastArrow ? ["+fastarrow"] : []),
     ...damage.map(([key, value]) => `+${key}=${value}`),
     ...(event.wounded ? ["+wound"] : []),
+    ...(event.curse ? ["+legbon_curse"] : []),
+    ...(event.anguish ? ["+legbon_anguish"] : []),
+    ...(event.holyTouch ? ["+legbon_holytouch"] : []),
     ...(event.armorDestroyed > 0
       ? [`+acdmg=${Math.round(event.armorDestroyed)}`]
       : []),
     ...(event.evaded ? ["-evade"] : []),
     ...(event.pierceBlocked ? ["-pierceb"] : []),
     ...(event.blocked > 0 ? [`-blok=${event.blocked}`] : []),
+    ...(event.glare ? ["-legbon_glare"] : []),
+    ...(event.cleansed ? ["-legbon_cleanse"] : []),
+    ...(event.critred > 0 ? [`-legbon_critred=${event.critred}`] : []),
+    ...(event.facade > 0 ? [`-legbon_facade=${event.facade}`] : []),
     ...damage.map(([key, value]) => `-${key}=${value}`),
   ];
 };
@@ -68,7 +77,13 @@ export const fightBattlePayload = (
     return `${index + 1}=${((100 * (hp[index] ?? 0)) / maxHp).toFixed(2)}`;
   };
 
+  const nameOf = (index: number) => fighters[index]?.combatant.name ?? "";
+
   const rows = events.flatMap((event): string[] => {
+    if (event.kind === "lostTurn") {
+      return [`0;0;txt=${nameOf(event.actor)} - utrata tury`];
+    }
+
     const actor = side(event.actor, event.hp);
 
     switch (event.kind) {
@@ -76,6 +91,13 @@ export const fightBattlePayload = (
         return [
           ...(event.poison > 0 ? [`${actor};0;poison=${event.poison}`] : []),
           ...(event.wound > 0 ? [`${actor};0;wound=${event.wound}`] : []),
+          ...(event.anguish > 0 ? [`${actor};0;anguish=${event.anguish}`] : []),
+        ];
+      case "bonusHeal":
+        return [
+          event.bonus === "holytouch"
+            ? `${actor};0;legbon_holytouch_heal=${event.amount}`
+            : `${actor};0;legbon_lastheal=${event.amount},${nameOf(event.actor)}`,
         ];
       case "heal":
         return [`${actor};0;heal=${event.amount}`];

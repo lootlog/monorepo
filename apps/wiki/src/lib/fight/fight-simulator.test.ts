@@ -2,7 +2,7 @@ import { BattleProcessor } from "@lootlog/battle-processor/battle-processor";
 import { describe, expect, test } from "vitest";
 import { fightBattlePayload } from "./fight-battle-log";
 import { simulateFight, type FightEvent } from "./fight-simulator";
-import type { Combatant } from "./fight-state";
+import { NO_LEGENDARY_BONUSES, type Combatant } from "./fight-state";
 import type { ActiveSkill } from "./fight-skills";
 import { seededRandom, simulateFights } from "./fight-summary";
 
@@ -53,6 +53,7 @@ const fighter = (overrides: Partial<Combatant>): Combatant => ({
   critSlow: 0,
   comboGain: { crit: 0, pierce: 0, wound: 0, block: 0 },
   actives: [],
+  legendary: NO_LEGENDARY_BONUSES,
   ...overrides,
 });
 
@@ -130,7 +131,7 @@ describe("simulateFights", () => {
 });
 
 describe("fightBattlePayload", () => {
-  test("logs a fight that the battle processor reads back with the simulated damage and winner", () => {
+  test("logs a fight that the battle processor reads back with the simulated damage, bonuses and winner", () => {
     const doubleShot: ActiveSkill = {
       id: 97,
       name: "Podwójny strzał",
@@ -151,6 +152,14 @@ describe("fightBattlePayload", () => {
             pierce: 30,
             healing: 500,
             actives: [doubleShot],
+            legendary: {
+              ...NO_LEGENDARY_BONUSES,
+              curse: 20,
+              holytouch: 15,
+              anguish: { chance: 20, damage: 700 },
+              verycrit: 30,
+              puncture: 12,
+            },
           }),
         ],
         [
@@ -161,6 +170,13 @@ describe("fightBattlePayload", () => {
             blockPoints: 400,
             armor: 800,
             fire: { min: 300, max: 500 },
+            legendary: {
+              ...NO_LEGENDARY_BONUSES,
+              glare: 20,
+              facade: 13,
+              critred: 25,
+              lastheal: { min: 36, max: 44 },
+            },
           }),
         ],
       ],
@@ -180,7 +196,7 @@ describe("fightBattlePayload", () => {
       events.reduce(
         (total, event) =>
           event.kind === "damageOverTime" && event.actor === actor
-            ? total + event.poison + event.wound
+            ? total + event.poison + event.wound + event.anguish
             : total,
         0,
       );
@@ -194,6 +210,36 @@ describe("fightBattlePayload", () => {
     ]);
     expect(battle.warriors[0]?.spellsUsedMap).toEqual(
       Object.fromEntries(hunter?.skillUses ?? []),
+    );
+
+    const countOf = (actor: number, matches: (event: FightEvent) => boolean) =>
+      events.filter((event) => event.actor === actor && matches(event)).length;
+
+    const bonusHealed = (actor: number, bonus: string) =>
+      events.reduce(
+        (total, event) =>
+          event.kind === "bonusHeal" &&
+          event.actor === actor &&
+          event.bonus === bonus
+            ? total + event.amount
+            : total,
+        0,
+      );
+
+    expect(
+      battle.warriors.map((entry) => [
+        entry.turnsLost,
+        entry.legbonCurse,
+        entry.legbonHolytouchValue,
+        entry.legbonLasthealValue,
+      ]),
+    ).toEqual(
+      [0, 1].map((actor) => [
+        countOf(actor, (event) => event.kind === "lostTurn"),
+        countOf(actor, (event) => event.kind === "strike" && event.curse),
+        bonusHealed(actor, "holytouch"),
+        bonusHealed(actor, "lastheal"),
+      ]),
     );
   });
 });

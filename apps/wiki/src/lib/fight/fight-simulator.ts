@@ -44,8 +44,17 @@ export type FightEvent =
       readonly actor: number;
       readonly poison: number;
       readonly wound: number;
+      readonly anguish: number;
       readonly hp: readonly number[];
     }
+  | {
+      readonly kind: "bonusHeal";
+      readonly bonus: "holytouch" | "lastheal";
+      readonly actor: number;
+      readonly amount: number;
+      readonly hp: readonly number[];
+    }
+  | { readonly kind: "lostTurn"; readonly actor: number }
   | {
       readonly kind: "heal";
       readonly actor: number;
@@ -138,7 +147,58 @@ const tickDamageOverTime = (state: FighterState) => {
     if (state.wound.turnsLeft <= 0) state.wound = null;
   }
 
-  return { poison, wound };
+  let anguish = 0;
+
+  if (state.anguish) {
+    anguish = Math.round(state.anguish.damage);
+    state.anguish.turnsLeft -= 1;
+
+    if (state.anguish.turnsLeft <= 0) state.anguish = null;
+  }
+
+  return { poison, wound, anguish };
+};
+
+const LAST_HEAL_THRESHOLD = 0.18;
+
+const HOLY_TOUCH_HEAL = 0.06;
+
+const healBy = (state: FighterState, amount: number) => {
+  const healed = Math.min(state.combatant.hp - state.hp, Math.round(amount));
+
+  state.hp += healed;
+  state.healed += healed;
+
+  return healed;
+};
+
+const tryLastHeal = (
+  state: FighterState,
+  { random, record, hpOf }: Pick<Turn, "random" | "record" | "hpOf">,
+) => {
+  const range = state.combatant.legendary.lastheal;
+
+  if (
+    !range ||
+    !state.alive ||
+    state.lastHealUsed ||
+    state.hp >= LAST_HEAL_THRESHOLD * state.combatant.hp
+  ) {
+    return;
+  }
+
+  state.lastHealUsed = true;
+
+  const share = range.min + random() * (range.max - range.min);
+  const amount = healBy(state, (share / 100) * state.combatant.hp);
+
+  record?.({
+    kind: "bonusHeal",
+    bonus: "lastheal",
+    actor: state.index,
+    amount,
+    hp: hpOf(),
+  });
 };
 
 const applyHealing = (
@@ -226,17 +286,19 @@ const nextActor = (states: readonly FighterState[]) => {
   return actor;
 };
 
-const startTurn = ({ actor, enemies, record, hpOf }: Turn) => {
+const startTurn = (turn: Turn) => {
+  const { actor, enemies, record, hpOf } = turn;
   const overTime = tickDamageOverTime(actor);
+  const overTimeDamage = overTime.poison + overTime.wound + overTime.anguish;
 
-  actor.hp -= overTime.poison + overTime.wound;
+  actor.hp -= overTimeDamage;
 
   if (actor.hp < 1) {
     actor.alive = false;
     actor.hp = 0;
   }
 
-  if (record && overTime.poison + overTime.wound > 0) {
+  if (record && overTimeDamage > 0) {
     record({
       kind: "damageOverTime",
       actor: actor.index,
@@ -246,6 +308,22 @@ const startTurn = ({ actor, enemies, record, hpOf }: Turn) => {
   }
 
   if (!actor.alive) return;
+
+  tryLastHeal(actor, turn);
+
+  if (actor.holyTouchTurns > 0) {
+    actor.holyTouchTurns -= 1;
+
+    const amount = healBy(actor, HOLY_TOUCH_HEAL * actor.combatant.hp);
+
+    record?.({
+      kind: "bonusHeal",
+      bonus: "holytouch",
+      actor: actor.index,
+      amount,
+      hp: hpOf(),
+    });
+  }
 
   const healed = applyHealing(actor, enemies);
 
@@ -279,10 +357,8 @@ const castSkill = (
   return 1 - plan.effect("red-sa") / 100;
 };
 
-const attack = (
-  { actor, enemies, targeting, random, record, hpOf }: Turn,
-  plan: ActionPlan,
-) => {
+const attack = (turn: Turn, plan: ActionPlan) => {
+  const { actor, enemies, targeting, random, record, hpOf } = turn;
   const attacks = 1 + plan.effect("add_attacks");
   const fastArrow = random() < actor.combatant.fastArrowChance / 100;
 
@@ -301,6 +377,8 @@ const attack = (
       ...hit,
       hp: hpOf(),
     });
+
+    tryLastHeal(target, turn);
   }
 
   return fastArrow ? FAST_ARROW_TIME_FACTOR : 1;
@@ -359,7 +437,13 @@ export const simulateFight = (
 
     if (!actor.alive) continue;
 
-    const timeFactor = act(turn);
+    const lost = actor.turnLost;
+
+    actor.turnLost = false;
+
+    if (lost) record?.({ kind: "lostTurn", actor: actor.index });
+
+    const timeFactor = lost ? 1 : act(turn);
 
     actor.clock += attackTime(actor) * timeFactor;
     time = actor.clock;
