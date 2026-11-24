@@ -1,5 +1,5 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
+import { BATTLE_TEXT_COLORS } from "@lootlog/battle-ui/lib/battle-color-palette";
 import { SortableColumnHeader } from "@/components/ui/sortable-column-header";
 import { BattlePanelH2hOpponentSummary } from "@/features/user/battle-panel/components/battle-panel-h2h-opponent-summary";
 import { BattleResultStatus } from "@/components/battle/battle-result-status";

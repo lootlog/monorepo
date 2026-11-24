@@ -1,8 +1,8 @@
-import { formatSignedBattleMetric } from "@/components/battle/utils/value-utils";
+import { formatSignedBattleMetric } from "@lootlog/battle-ui/lib/value-utils";
 import type { ColumnDef } from "@tanstack/react-table";
 import { SortableColumnHeader } from "@/components/ui/sortable-column-header";
 import { cn } from "cn";
-import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
+import { BATTLE_TEXT_COLORS } from "@lootlog/battle-ui/lib/battle-color-palette";
 import i18n from "@/i18n/config";
 import type { HeadToHeadRecord } from "@/lib/api/battlelog-types";
 import {

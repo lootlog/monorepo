@@ -1,5 +1,5 @@
 import { DetailBar } from "@/components/common/detail-bar";
-import { LIST_TILE_RULE_CLASS } from "@/components/common/list-tile";
+import { LIST_TILE_RULE_CLASS } from "@lootlog/ui/lib/list-tile";
 import { QueryErrorNotice } from "@/components/common/query-error-notice";
 import { EventRulesDialog } from "../dialogs/event-rules-dialog";
 import { EventSummaryDialog } from "../dialogs/event-summary-dialog";

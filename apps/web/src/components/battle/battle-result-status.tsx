@@ -3,7 +3,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import { BATTLE_BADGE_COLORS } from "@/components/battle/utils/battle-color-palette";
+import { BATTLE_BADGE_COLORS } from "@lootlog/battle-ui/lib/battle-color-palette";
 import { cn } from "cn";
 import {
   CircleDashed,

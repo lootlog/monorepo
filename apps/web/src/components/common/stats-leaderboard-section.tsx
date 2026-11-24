@@ -1,9 +1,9 @@
-import { BandSection } from "@/components/common/band-section";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import { EmptyState } from "@lootlog/ui/components/empty-state";
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 import { Inbox } from "lucide-react";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { cn } from "cn";

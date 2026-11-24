@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { upperFirst } from "es-toolkit";
 import { Calendar, Globe, MapPin, Users, Package } from "lucide-react";
 import { cn } from "cn";
-import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
+import { LIST_TILE_INSET_CLASS } from "@lootlog/ui/lib/list-tile";
 import { MetaItem } from "@/components/common/meta-item";
 
 export const LootFooter = ({

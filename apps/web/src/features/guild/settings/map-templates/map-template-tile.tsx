@@ -5,7 +5,7 @@ import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
   LIST_TILE_HOVER_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 import type { MapTemplateResponseDto } from "@lootlog/client/main";
 import { Button } from "@lootlog/ui/components/button";
 import {

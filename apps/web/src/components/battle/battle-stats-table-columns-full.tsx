@@ -7,7 +7,7 @@ import { EmergencyExitIcon } from "@/components/battle/emergency-exit-icon";
 import type { TFunction } from "i18next";
 import type { sortedTableFeatures } from "@/lib/tanstack-table-features";
 import { BattleStatsExpandButton } from "./battle-stats-expand-button";
-import { BATTLE_TEXT_COLORS } from "./utils/battle-color-palette";
+import { BATTLE_TEXT_COLORS } from "@lootlog/battle-ui/lib/battle-color-palette";
 import { formatNumber } from "@lootlog/domain/locale";
 
 export type BattleStatsExpansionType =

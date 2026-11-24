@@ -1,7 +1,7 @@
-import { formatSignedBattleMetric } from "@/components/battle/utils/value-utils";
+import { formatSignedBattleMetric } from "@lootlog/battle-ui/lib/value-utils";
 import { useTranslation } from "react-i18next";
 import { formatStatisticsInstantDay } from "@/components/common/kill-analytics/format-statistics-date";
-import { BATTLE_HEX_COLORS } from "@/components/battle/utils/battle-color-palette";
+import { BATTLE_HEX_COLORS } from "@lootlog/battle-ui/lib/battle-color-palette";
 import { GrowthChartSection } from "./growth-chart-section";
 
 interface RatingGrowthDataPoint {

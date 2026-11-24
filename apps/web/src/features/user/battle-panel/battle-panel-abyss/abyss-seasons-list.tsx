@@ -2,13 +2,13 @@ import { TileChevron } from "@/components/common/tile-chevron";
 import {
   formatBattleMetric,
   formatSignedBattleMetric,
-} from "@/components/battle/utils/value-utils";
-import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
+} from "@lootlog/battle-ui/lib/value-utils";
+import { BATTLE_TEXT_COLORS } from "@lootlog/battle-ui/lib/battle-color-palette";
 import {
   getListTileLinkClassName,
   LIST_TILE_RULE_CLASS,
   LIST_TILE_HOVER_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 import {
   FILTERED_TABLE_HEADER_CLASS,
   RESULTS_TABLE_MEDIA_QUERY,

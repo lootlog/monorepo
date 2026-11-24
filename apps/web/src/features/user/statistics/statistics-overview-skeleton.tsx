@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
-import { BandSection } from "@/components/common/band-section";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import { KillStatsOverview } from "@/components/common/kill-analytics/kill-stats-overview";
 import { KillAnalyticsTrendSkeleton } from "@/components/common/kill-analytics/kill-analytics-trend-skeleton";
 import { StatsTile } from "@lootlog/ui/components/stats-tile";

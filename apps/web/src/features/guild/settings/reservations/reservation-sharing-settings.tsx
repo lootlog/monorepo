@@ -1,9 +1,9 @@
 import { CopyLinkField } from "@/components/common/copy-link-field";
-import { BandSection } from "@/components/common/band-section";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 import { useState } from "react";
 import { Ban, CircleAlert, Hourglass, Link2, Plus, Unlink } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";

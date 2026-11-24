@@ -2,7 +2,7 @@ import {
   LIST_BAND_HEADING_CLASS,
   LIST_GROUP_HEADING_CLASS,
   LIST_TILE_INSET_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { cn } from "cn";
 

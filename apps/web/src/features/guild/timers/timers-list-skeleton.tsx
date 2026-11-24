@@ -5,7 +5,7 @@ import { getTimerCellClassName, getTimerGroupClassName } from "./timers-layout";
 import {
   LIST_GROUP_HEADING_CLASS,
   LIST_TILE_INSET_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 
 const GROUP_SIZES = [3, 5];
 

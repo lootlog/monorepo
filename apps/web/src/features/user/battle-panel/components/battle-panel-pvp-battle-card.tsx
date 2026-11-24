@@ -1,10 +1,10 @@
-import { formatSignedBattleMetric } from "@/components/battle/utils/value-utils";
+import { formatSignedBattleMetric } from "@lootlog/battle-ui/lib/value-utils";
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
   LIST_TILE_HOVER_CLASS,
-} from "@/components/common/list-tile";
-import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
+} from "@lootlog/ui/lib/list-tile";
+import { BATTLE_TEXT_COLORS } from "@lootlog/battle-ui/lib/battle-color-palette";
 import type { PlayerVsPlayerBattle } from "@/lib/api/battlelog-types";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
 import { Link, type LinkOptions } from "@tanstack/react-router";

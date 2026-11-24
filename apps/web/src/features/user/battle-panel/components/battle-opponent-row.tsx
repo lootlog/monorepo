@@ -1,13 +1,13 @@
-import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
+import { BATTLE_TEXT_COLORS } from "@lootlog/battle-ui/lib/battle-color-palette";
 import {
   formatBattleMetric,
   formatSignedBattleMetric,
-} from "@/components/battle/utils/value-utils";
+} from "@lootlog/battle-ui/lib/value-utils";
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
   LIST_TILE_HOVER_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 import { BattlePanelH2hOpponentSummary } from "@/features/user/battle-panel/components/battle-panel-h2h-opponent-summary";
 import type { HeadToHeadRecord } from "@/lib/api/battlelog-types";
 import { getRelativeTime } from "@/utils/date/get-relative-time";

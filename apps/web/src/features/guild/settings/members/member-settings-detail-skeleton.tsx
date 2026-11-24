@@ -1,4 +1,4 @@
-import { BandSection } from "@/components/common/band-section";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import { DetailField } from "@/components/common/detail-field";
 import { ListTileSkeleton } from "@/components/common/list-tile-skeleton";
 import { SkeletonLine } from "@/components/common/skeleton-line";

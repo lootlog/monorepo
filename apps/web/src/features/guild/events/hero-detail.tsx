@@ -1,7 +1,7 @@
 import { QueryErrorNotice } from "@/components/common/query-error-notice";
-import { LIST_TILE_RULE_CLASS } from "@/components/common/list-tile";
+import { LIST_TILE_RULE_CLASS } from "@lootlog/ui/lib/list-tile";
 import { OrganizationPresenceStatus } from "@/components/common/organization-presence-status";
-import { BandSection } from "@/components/common/band-section";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {

@@ -475,6 +475,7 @@
         "@lexical/rich-text": "catalog:",
         "@lexical/selection": "catalog:",
         "@lexical/table": "catalog:",
+        "@lootlog/battle-ui": "workspace:*",
         "@lootlog/changelog": "workspace:*",
         "@lootlog/client": "workspace:*",
         "@lootlog/datetime": "workspace:*",
@@ -571,6 +572,35 @@
         "@lootlog/typescript-config": "workspace:*",
         "@types/bun": "catalog:",
         "typescript": "catalog:",
+      },
+    },
+    "packages/battle-ui": {
+      "name": "@lootlog/battle-ui",
+      "version": "1.0.0",
+      "dependencies": {
+        "@lootlog/battle-processor": "workspace:*",
+        "@lootlog/domain": "workspace:*",
+        "@lootlog/ui": "workspace:*",
+        "@tanstack/react-virtual": "^3.14.18",
+        "cn": "catalog:",
+        "i18next": "^26.4.4",
+        "lucide-react": "^1.56.0",
+        "react-i18next": "^17.0.16",
+      },
+      "devDependencies": {
+        "@lootlog/typescript-config": "workspace:*",
+        "@testing-library/react": "^16.3.3",
+        "@types/react": "catalog:",
+        "@types/react-dom": "catalog:",
+        "happy-dom": "^21.0.4",
+        "react": "catalog:",
+        "react-dom": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:",
+      },
+      "peerDependencies": {
+        "react": "^19.3.0",
+        "react-dom": "^19.3.0",
       },
     },
     "packages/changelog": {
@@ -835,6 +865,7 @@
         "@lootlog/domain": "workspace:*",
         "@lootlog/schema": "workspace:*",
         "@tailwindcss/postcss": "catalog:",
+        "@tanstack/react-virtual": "^3.14.18",
         "class-variance-authority": "^0.7.1",
         "cmdk": "1.1.1",
         "cn": "catalog:",
@@ -1521,6 +1552,8 @@
     "@lootlog/auth": ["@lootlog/auth@workspace:apps/auth"],
 
     "@lootlog/battle-processor": ["@lootlog/battle-processor@workspace:packages/battle-processor"],
+
+    "@lootlog/battle-ui": ["@lootlog/battle-ui@workspace:packages/battle-ui"],
 
     "@lootlog/battlelog": ["@lootlog/battlelog@workspace:apps/battlelog"],
 

@@ -6,7 +6,7 @@ import { NpcTile } from "@/components/tiles/npc-tile";
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_HOVER_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 import { LOOT_RARITY_SURFACE_CLASS } from "@lootlog/ui/lib/item-rarity-colors";
 import { npcCategoryAppearance } from "../npc-category-appearance";
 import { LiveFeedEventLoot } from "./live-feed-event-loot";

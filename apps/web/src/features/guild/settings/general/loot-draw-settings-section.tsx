@@ -1,4 +1,4 @@
-import { BandSection } from "@/components/common/band-section";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import { CheckboxListTile } from "@/components/common/checkbox-list-tile";
 import { NPC_TYPES_STRONGEST_FIRST } from "@lootlog/domain/npc-type";
 import { FormField, FormLabel } from "@lootlog/ui/components/form";

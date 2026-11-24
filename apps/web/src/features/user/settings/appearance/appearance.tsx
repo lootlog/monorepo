@@ -1,4 +1,4 @@
-import { BandSection } from "@/components/common/band-section";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import { ListTileEmpty } from "@/components/common/list-tile-empty";
 import { SettingsTabPage } from "@/components/common/settings-tab-page";
 import { ROUTES } from "@/config/routes";

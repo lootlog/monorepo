@@ -5,7 +5,7 @@ import type { Loot, Item } from "@/lib/loots/loot-types";
 import type { WatchedItemScope } from "@/lib/user-notifications/watched-item-scope";
 import type { DecorateLootItem } from "./item-stack";
 import { cn } from "cn";
-import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
+import { LIST_TILE_INSET_CLASS } from "@lootlog/ui/lib/list-tile";
 import { LOOT_PLAYERS_ROW_CLASS } from "./loot-players-row";
 
 export const LootContent = ({

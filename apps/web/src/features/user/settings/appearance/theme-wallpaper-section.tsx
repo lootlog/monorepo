@@ -1,4 +1,4 @@
-import { BandSection } from "@/components/common/band-section";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import { getBuiltInThemePreview } from "@/themes/theme-preview";
 import { WALLPAPERS, type Wallpaper } from "@lootlog/ui/themes/wallpapers";
 import { cn } from "cn";

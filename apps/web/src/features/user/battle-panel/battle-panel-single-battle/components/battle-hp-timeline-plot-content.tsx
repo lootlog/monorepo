@@ -1,5 +1,5 @@
 import type { BattleTimelineResponseDtoOutput } from "@lootlog/client/battlelog";
-import { BATTLE_HEX_COLORS } from "@/components/battle/utils/battle-color-palette";
+import { BATTLE_HEX_COLORS } from "@lootlog/battle-ui/lib/battle-color-palette";
 import { BattleHpTimelineEventMarker } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-event-marker";
 import {
   buildBattleHpTimelineEventMarkerGroups,

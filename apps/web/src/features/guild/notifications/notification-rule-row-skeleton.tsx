@@ -2,7 +2,7 @@ import {
   getListTileLinkClassName,
   LIST_TILE_ACTIONS_CLASS,
   LIST_TILE_RULE_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 
 export const NotificationRuleRowSkeleton = () => (

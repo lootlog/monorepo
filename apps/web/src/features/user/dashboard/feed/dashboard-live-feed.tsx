@@ -13,7 +13,7 @@ import { Button } from "@lootlog/ui/components/button";
 import { getPrefersReducedMotion } from "@lootlog/ui/hooks/use-prefers-reduced-motion";
 import { LiveFeedSkeleton } from "./live-feed-skeleton";
 import { EmptyState } from "@lootlog/ui/components/empty-state";
-import { BandSection } from "@/components/common/band-section";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import { FilterCount } from "@/components/common/filter-count";
 import { FiltersOverlay } from "@/components/filters/filters-overlay";
 import { RESULTS_TABLE_MEDIA_QUERY } from "@/components/common/page-sticky-table-header";

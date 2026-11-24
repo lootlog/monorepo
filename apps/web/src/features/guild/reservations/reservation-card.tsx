@@ -10,7 +10,7 @@ import { cn } from "cn";
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_HOVER_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 import { MemberIdentity } from "@/components/common/member-identity";
 import { MetaItem } from "@/components/common/meta-item";
 import { NpcSearchTile } from "@/components/tiles/npc-search-tile";

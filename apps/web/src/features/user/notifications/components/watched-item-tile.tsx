@@ -17,7 +17,7 @@ import {
   getListTileLinkClassName,
   LIST_TILE_ACTIONS_CLASS,
   LIST_TILE_RULE_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 import { MetaItem } from "@/components/common/meta-item";
 import { ItemTile } from "@/components/tiles/item-tile";
 import type { WatchedItemResponseDto } from "@lootlog/client/main";

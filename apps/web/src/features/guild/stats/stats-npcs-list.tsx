@@ -29,7 +29,7 @@ import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
   LIST_TILE_HOVER_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 import { useStatsNpcsListModel } from "./use-stats-npcs-list-model";
 import { formatNumber } from "@lootlog/domain/locale";
 import { Skull } from "lucide-react";

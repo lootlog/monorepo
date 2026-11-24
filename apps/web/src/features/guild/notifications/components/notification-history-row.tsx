@@ -3,7 +3,7 @@ import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
   LIST_TILE_HOVER_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 import type { NotificationJobsResponseDto } from "@lootlog/client/main";
 import { Badge } from "@lootlog/ui/components/badge";
 import { cn } from "cn";

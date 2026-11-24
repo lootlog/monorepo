@@ -2,7 +2,7 @@ import type { BattleWarrior as Warrior } from "@/lib/api/battlelog-types";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { BattleBreakdownTable } from "./battle-breakdown-table";
-import { BATTLE_TEXT_COLORS } from "./utils/battle-color-palette";
+import { BATTLE_TEXT_COLORS } from "@lootlog/battle-ui/lib/battle-color-palette";
 import { BreakdownEmptyMessage } from "./breakdown-empty-message";
 
 interface DamageBreakdownProps {

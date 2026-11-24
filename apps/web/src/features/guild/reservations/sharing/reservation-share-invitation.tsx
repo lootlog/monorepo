@@ -1,4 +1,4 @@
-import { BandSection } from "@/components/common/band-section";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import { SettingsListEmpty } from "@/components/common/settings-list-empty";
 import { useState } from "react";
 import { ArrowRight, CheckCircle2, Link2, TriangleAlert } from "lucide-react";

@@ -1,13 +1,13 @@
-import { formatBattleMetric } from "@/components/battle/utils/value-utils";
+import { formatBattleMetric } from "@lootlog/battle-ui/lib/value-utils";
 import { clamp } from "es-toolkit";
-import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
+import { BATTLE_TEXT_COLORS } from "@lootlog/battle-ui/lib/battle-color-palette";
 import { getProfessionColor } from "@/lib/utils/professions";
 import { useTranslation } from "react-i18next";
 import { StatsLeaderboardSection } from "@/components/common/stats-leaderboard-section";
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 import { cn } from "cn";
 
 interface ProfessionWinRate {

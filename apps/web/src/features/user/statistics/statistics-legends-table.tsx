@@ -20,7 +20,7 @@ import {
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { StatisticsSortableHeader } from "./statistics-sortable-header";
 import { StatisticsLegendCharacters } from "./statistics-legend-characters";

@@ -1,7 +1,7 @@
 import { getRankingSelection } from "./components/ranking/event-ranking-selection";
 import { EventLoadError } from "./components/event-load-error";
 import { EventRankingSkeleton } from "./event-ranking-skeleton";
-import { LIST_TILE_RULE_CLASS } from "@/components/common/list-tile";
+import { LIST_TILE_RULE_CLASS } from "@lootlog/ui/lib/list-tile";
 import { QueryErrorNotice } from "@/components/common/query-error-notice";
 import { useTranslation } from "react-i18next";
 import { useParams } from "@tanstack/react-router";

@@ -5,11 +5,11 @@ import { DashboardRecentBattleActions } from "./dashboard-recent-battle-actions"
 import { useBattlesControllerGetDashboardBattles } from "@lootlog/client/battlelog";
 import { Link } from "@tanstack/react-router";
 import { Swords } from "lucide-react";
-import { BandSection } from "@/components/common/band-section";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 import { cn } from "cn";
 import { useTranslation } from "react-i18next";
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";

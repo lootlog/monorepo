@@ -3,7 +3,7 @@ import { cn } from "cn";
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 import { ItemSilhouetteSkeleton } from "./item-silhouette-skeleton";
 import { PlayerSilhouetteSkeleton } from "./player-silhouette-skeleton";
 import { LOOT_PLAYERS_ROW_CLASS } from "./loot-players-row";

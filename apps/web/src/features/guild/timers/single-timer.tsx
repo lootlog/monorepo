@@ -27,7 +27,7 @@ import { MetaItem } from "@/components/common/meta-item";
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_HOVER_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 import { TimerCountdown } from "./timer-countdown";
 import { TimerDetails } from "./timer-details";
 import { HeroSightingTimerLocation } from "@/features/guild/hero-sightings/hero-sighting-timer-location";

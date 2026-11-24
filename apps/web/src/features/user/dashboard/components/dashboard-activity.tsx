@@ -6,8 +6,8 @@ import { useTranslation } from "react-i18next";
 import { useKillsControllerGetUserKillActivity } from "@lootlog/client/main";
 import { useUsersActivityControllerGetOnline } from "@lootlog/client/activity";
 import { AnimatedToggleGroup } from "@/components/ui/animated-toggle-group";
-import { BandSection } from "@/components/common/band-section";
-import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
+import { BandSection } from "@lootlog/ui/components/band-section";
+import { LIST_TILE_INSET_CLASS } from "@lootlog/ui/lib/list-tile";
 import { cn } from "cn";
 import { ActivityHeatmap } from "@/components/common/activity-heatmap/activity-heatmap";
 import {

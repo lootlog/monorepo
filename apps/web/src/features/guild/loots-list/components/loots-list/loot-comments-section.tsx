@@ -3,7 +3,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@lootlog/ui/components/collapsible";
-import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
+import { LIST_TILE_INSET_CLASS } from "@lootlog/ui/lib/list-tile";
 import { cn } from "cn";
 import { ChevronDown, MessageSquare } from "lucide-react";
 import { useId, useState } from "react";

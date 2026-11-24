@@ -1,4 +1,4 @@
-import { BattleLog } from "@/components/battle/battle-log";
+import { BattleLog } from "@lootlog/battle-ui/components/battle-log";
 import { BattleMetadata } from "@/components/battle/battle-metadata";
 import { BattleTeamsOverview } from "@/components/battle/battle-teams-overview";
 import { DetailBar } from "@/components/common/detail-bar";
@@ -160,10 +160,8 @@ export function BattleDetailView({
               {visiblePanel === "log" && isTimelineUnavailable ? (
                 <EmptyState
                   icon={History}
-                  title={t("battlePanel.single.log.unavailable")}
-                  description={t(
-                    "battlePanel.single.log.unavailableDescription",
-                  )}
+                  title={t("battleUi.log.unavailable")}
+                  description={t("battleUi.log.unavailableDescription")}
                   compact
                 />
               ) : null}

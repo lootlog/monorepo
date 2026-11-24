@@ -4,7 +4,7 @@ import {
   LIST_TILE_ACTIONS_CLASS,
   LIST_TILE_RULE_CLASS,
   LIST_TILE_HOVER_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 import type {
   GuildNotificationRulesResponseDto,
   NotificationJobsResponseDto,

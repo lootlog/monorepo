@@ -6,7 +6,7 @@ import type { coreTableFeatures } from "@/lib/tanstack-table-features";
 import type { BattleStatValue } from "@/types/stats-customization.types";
 import { OneVsOneStatValueCell } from "./one-vs-one-stat-value-cell";
 import type { OneVsOneStatsRow } from "./one-vs-one-stats-rows";
-import { BATTLE_SURFACE_COLORS } from "./utils/battle-color-palette";
+import { BATTLE_SURFACE_COLORS } from "@lootlog/battle-ui/lib/battle-color-palette";
 import { formatNumber } from "@lootlog/domain/locale";
 
 type BattleWarrior = Battle["warriors"][number];

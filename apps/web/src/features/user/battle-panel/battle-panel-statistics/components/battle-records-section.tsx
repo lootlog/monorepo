@@ -1,5 +1,5 @@
-import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
-import { BandSection } from "@/components/common/band-section";
+import { BATTLE_TEXT_COLORS } from "@lootlog/battle-ui/lib/battle-color-palette";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import { StatsTile } from "@lootlog/ui/components/stats-tile";
 import { StatsTileGrid } from "@lootlog/ui/components/stats-tile-grid";
 import type { BattleDurationStats, Streak } from "@/lib/api/battlelog-types";

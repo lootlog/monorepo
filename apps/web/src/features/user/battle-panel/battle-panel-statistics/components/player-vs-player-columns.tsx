@@ -1,6 +1,6 @@
-import { formatSignedBattleMetric } from "@/components/battle/utils/value-utils";
+import { formatSignedBattleMetric } from "@lootlog/battle-ui/lib/value-utils";
 import i18n from "@/i18n/config";
-import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
+import { BATTLE_TEXT_COLORS } from "@lootlog/battle-ui/lib/battle-color-palette";
 import { getPlayerVsPlayerBattleResult } from "@/components/battle/utils/battle-result-presentation";
 import { BattlePanelPvpWarriorSummary } from "@/features/user/battle-panel/components/battle-panel-pvp-warrior-summary";
 import { BattleResultStatus } from "@/components/battle/battle-result-status";

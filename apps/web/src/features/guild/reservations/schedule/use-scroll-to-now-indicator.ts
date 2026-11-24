@@ -2,7 +2,7 @@ import { useEffect, useEffectEvent, type RefObject } from "react";
 import {
   getPageScroller,
   usePageScrollsDocument,
-} from "@/hooks/utils/use-page-scroll";
+} from "@lootlog/ui/hooks/use-page-scroll";
 
 export const useScrollToNowIndicator = (
   nowRef: RefObject<HTMLElement | null>,

@@ -21,7 +21,7 @@ import {
 import {
   LIST_GROUP_HEADING_CLASS,
   LIST_TILE_INSET_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 import {
   LootSearchHitContent,
   type LootSearchHit,

@@ -15,7 +15,7 @@ import {
   getPageScroller,
   useDocumentScrollListener,
   usePageScrollsDocument,
-} from "@/hooks/utils/use-page-scroll";
+} from "@lootlog/ui/hooks/use-page-scroll";
 import type { Battle, RawBattle } from "@/lib/api/battlelog-types";
 import type { BattleTimelineResponseDtoOutput } from "@lootlog/client/battlelog";
 import { useQueryStates } from "nuqs";

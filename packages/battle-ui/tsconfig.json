@@ -1,0 +1,10 @@
+{
+  "extends": "@lootlog/typescript-config/react-library.json",
+  "compilerOptions": {
+    "paths": {
+      "@lootlog/battle-ui/*": ["./src/*"]
+    }
+  },
+  "include": ["."],
+  "exclude": ["node_modules", "dist"]
+}

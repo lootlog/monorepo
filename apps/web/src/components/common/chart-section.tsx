@@ -1,4 +1,4 @@
-import { BandSection } from "@/components/common/band-section";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { Inbox } from "lucide-react";

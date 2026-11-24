@@ -1,5 +1,5 @@
-import { ListGroupHeading } from "@/components/common/list-group-heading";
-import { LIST_BAND_HEADING_CLASS } from "@/components/common/list-tile";
+import { ListGroupHeading } from "@lootlog/ui/components/list-group-heading";
+import { LIST_BAND_HEADING_CLASS } from "@lootlog/ui/lib/list-tile";
 import { CreateNotificationRuleDtoTriggerType as NotificationTriggerType } from "@lootlog/client/main";
 import { groupBy } from "es-toolkit";
 import type { ReactNode } from "react";

@@ -2,7 +2,7 @@ import { CardListSkeleton } from "@/components/common/card-list-skeleton";
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 import { SkeletonLine } from "@/components/common/skeleton-line";
 import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 import { Skeleton } from "@lootlog/ui/components/skeleton";

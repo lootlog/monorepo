@@ -1,7 +1,7 @@
 import { formatLevel } from "@lootlog/domain/profession";
 import { cn } from "cn";
 import type { FC } from "react";
-import { BATTLE_TEXT_COLORS } from "./utils/battle-color-palette";
+import { BATTLE_TEXT_COLORS } from "@lootlog/battle-ui/lib/battle-color-palette";
 import type { BattlePlayerRankingEntry } from "./utils/battle-player-ranking";
 import { formatNumber } from "@lootlog/domain/locale";
 

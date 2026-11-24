@@ -3,7 +3,7 @@ import {
   getListTileLinkClassName,
   LIST_TILE_RULE_CLASS,
   LIST_TILE_HOVER_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 import { PermissionCategoryTooltip } from "@/features/guild/settings/components/permission-category-tooltip";
 import { discordRoleColorHex } from "@lootlog/domain/member-display-role";
 import type { RoleResponseDtoOutput as GuildRole } from "@lootlog/client/main";

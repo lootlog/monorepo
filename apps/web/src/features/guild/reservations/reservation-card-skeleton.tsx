@@ -1,7 +1,7 @@
 import type { FC } from "react";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { cn } from "cn";
-import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
+import { LIST_TILE_INSET_CLASS } from "@lootlog/ui/lib/list-tile";
 import type { ViewMode } from "@/hooks/use-view-mode";
 import {
   getReservationCellClassName,

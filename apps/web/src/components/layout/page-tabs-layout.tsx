@@ -1,7 +1,7 @@
 import {
   getPageScroller,
   usePageScrollsDocument,
-} from "@/hooks/utils/use-page-scroll";
+} from "@lootlog/ui/hooks/use-page-scroll";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useLocation, type LinkProps } from "@tanstack/react-router";
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";

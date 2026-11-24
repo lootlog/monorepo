@@ -8,7 +8,7 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { cn } from "cn";
-import { BATTLE_SURFACE_COLORS } from "@/components/battle/utils/battle-color-palette";
+import { BATTLE_SURFACE_COLORS } from "@lootlog/battle-ui/lib/battle-color-palette";
 import { formatBattleTeamNames } from "@/components/battle/utils/battle-result-presentation";
 
 type BattlePanelTeamSummaryProps = {

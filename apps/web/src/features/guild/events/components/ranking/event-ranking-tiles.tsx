@@ -3,7 +3,7 @@ import {
   LIST_TILE_ACTIONS_CLASS,
   LIST_TILE_HOVER_CLASS,
   LIST_TILE_RULE_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 import { RankBadge } from "@/components/common/rank-badge";
 import { VIEWER_ROW_CLASS } from "@/components/common/viewer-row";
 import { Link } from "@tanstack/react-router";

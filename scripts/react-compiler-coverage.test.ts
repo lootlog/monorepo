@@ -10,7 +10,7 @@ const compiledByVitePluginReact = /forwardRef|memo|\b(?:[A-Z]|use[A-Z0-9])/;
 const notCompiled = /\.(?:test|spec|bench)\.tsx?$|\.d\.ts$|routeTree\.gen\.ts$/;
 
 const knownBailouts = {
-  "apps/web/src/hooks/utils/use-page-scroll.ts":
+  "packages/ui/src/hooks/use-page-scroll.ts":
     "TanStack Virtual returns a mutable virtualizer instance, which React Compiler marks as an incompatible library, so usePageVirtualizer stays unmemoized.",
   "apps/developer/src/components/key-session.tsx":
     "The portal creates its better-auth client per request hostname, so useSession hangs off a prop instead of a module-level client.",

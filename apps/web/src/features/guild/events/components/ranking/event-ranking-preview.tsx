@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { Trophy } from "lucide-react";
 import type { EventRanking, EventHeroNpc } from "@/lib/api/event-types";
-import { BandSection } from "@/components/common/band-section";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import { useState } from "react";
 import { EventRankingHeroSelect } from "./event-ranking-hero-select";
 import { EventRankingLeaderboard } from "./event-ranking-leaderboard";

@@ -2,7 +2,7 @@ import { EmptyState } from "@lootlog/ui/components/empty-state";
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 import { MemberIdentity } from "@/components/common/member-identity";
 import { MetaItem } from "@/components/common/meta-item";
 import { HeaderSlotPortal } from "@/components/layout/header-slot-portal";

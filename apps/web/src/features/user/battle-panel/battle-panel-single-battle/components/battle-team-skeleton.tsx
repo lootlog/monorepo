@@ -1,4 +1,4 @@
-import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
+import { LIST_TILE_INSET_CLASS } from "@lootlog/ui/lib/list-tile";
 import { SkeletonLine } from "@/components/common/skeleton-line";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { cn } from "cn";

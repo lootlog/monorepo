@@ -5,7 +5,7 @@ import {
   LIST_GROUP_HEADING_CLASS,
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 
 export function LiveFeedSkeleton() {
   const { t } = useTranslation();

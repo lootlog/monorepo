@@ -1,4 +1,4 @@
-import { BandSection } from "@/components/common/band-section";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import type { TFunction } from "i18next";
 import { useParams } from "@tanstack/react-router";
 import { Skeleton } from "@lootlog/ui/components/skeleton";

@@ -1,6 +1,6 @@
-import { BandSection } from "@/components/common/band-section";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import { EmptyState } from "@lootlog/ui/components/empty-state";
-import { LIST_TILE_RULE_CLASS } from "@/components/common/list-tile";
+import { LIST_TILE_RULE_CLASS } from "@lootlog/ui/lib/list-tile";
 import { QueryErrorNotice } from "@/components/common/query-error-notice";
 import { CircleAlert } from "lucide-react";
 import { useId, type ReactNode } from "react";

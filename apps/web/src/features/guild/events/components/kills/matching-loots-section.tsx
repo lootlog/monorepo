@@ -1,5 +1,5 @@
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
-import { BandSection } from "@/components/common/band-section";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { Package } from "lucide-react";

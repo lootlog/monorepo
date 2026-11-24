@@ -6,7 +6,7 @@ import type { TimerCountdownMode } from "@lootlog/domain/timers";
 import { MapPin } from "lucide-react";
 import { cn } from "cn";
 import { useTranslation } from "react-i18next";
-import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
+import { LIST_TILE_INSET_CLASS } from "@lootlog/ui/lib/list-tile";
 import { MemberIdentity } from "@/components/common/member-identity";
 import { RelativeTime } from "@/components/common/relative-time";
 import { HeroSightingClaimButton } from "./hero-sighting-claim-button";

@@ -2,7 +2,7 @@ import { cn } from "cn";
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 import { formatLevel } from "@lootlog/domain/profession";
 import { Badge } from "@lootlog/ui/components/badge";
 import { NpcTile } from "@/components/tiles/npc-tile";

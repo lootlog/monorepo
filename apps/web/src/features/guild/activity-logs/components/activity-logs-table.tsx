@@ -16,7 +16,7 @@ import { FILTERED_TABLE_HEADER_CLASS } from "@/components/common/page-sticky-tab
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 import { useTranslation } from "react-i18next";
 import { MemberIdentity } from "@/components/common/member-identity";
 import { ActivityLogDetailsPopover } from "./activity-log-details-popover";

@@ -4,7 +4,7 @@ import { cn } from "cn";
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 
 type ActivityLogsMobileListSkeletonProps = {
   rows: number;

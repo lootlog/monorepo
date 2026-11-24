@@ -1,7 +1,7 @@
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 import { SkeletonLine } from "@/components/common/skeleton-line";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";

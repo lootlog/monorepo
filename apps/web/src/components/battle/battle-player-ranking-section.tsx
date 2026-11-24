@@ -1,4 +1,4 @@
-import { BandSection } from "@/components/common/band-section";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import { AnimatedToggleGroup } from "@/components/ui/animated-toggle-group";
 import type { Battle } from "@/lib/api/battlelog-types";
 import { useId, useState, type FC } from "react";

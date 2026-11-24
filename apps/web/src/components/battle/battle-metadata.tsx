@@ -21,7 +21,7 @@ import type { FC, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import type { Battle } from "@/lib/api/battlelog-types";
 import { upperFirst } from "es-toolkit";
-import { BATTLE_TEXT_COLORS } from "./utils/battle-color-palette";
+import { BATTLE_TEXT_COLORS } from "@lootlog/battle-ui/lib/battle-color-palette";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import { isBattleDraw } from "@/components/battle/utils/battle-result-presentation";
 import { formatDuration } from "@/utils/date/format-duration";

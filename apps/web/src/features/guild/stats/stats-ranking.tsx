@@ -28,7 +28,7 @@ import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
   LIST_TILE_HOVER_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 import { useStatsRankingModel } from "./use-stats-ranking-model";
 import { VIEWER_ROW_CLASS } from "@/components/common/viewer-row";
 import { useIsViewer } from "@/hooks/auth/use-is-viewer";

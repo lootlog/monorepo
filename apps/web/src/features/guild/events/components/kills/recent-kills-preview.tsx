@@ -2,7 +2,7 @@ import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
-import { BandSection } from "@/components/common/band-section";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import { useRecentHeroKills } from "../../hooks/queries/use-recent-hero-kills";
 import type { EventHeroNpc } from "@/lib/api/event-types";
 import { HeroTabs } from "../shared/hero-tabs";
