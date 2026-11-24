@@ -11,7 +11,6 @@ const t = docsTranslations.header;
 export function DocsHeader() {
   return (
     <PortalHeader
-      site="docs"
       title={docsTranslations.metadata.title}
       section={t.section}
       home={<Link to="/docs/$" params={{ _splat: "" }} />}
@@ -24,8 +23,6 @@ export function DocsHeader() {
         navigation: t.navigation,
         menu: t.menu,
         closeNavigation: t.closeNavigation,
-        sites: t.sites,
-        siteNames: docsTranslations.siteNames,
       }}
     />
   );

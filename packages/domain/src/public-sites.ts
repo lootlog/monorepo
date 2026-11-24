@@ -9,7 +9,6 @@ export const COMMUNITY_LINKS = {
   github: "https://github.com/lootlog/monorepo",
   latestRelease: "https://github.com/lootlog/monorepo/releases/latest",
   discord: "https://discord.gg/mPcczaeYMu",
-  sdkPackage: "https://www.npmjs.com/package/@lootlog/sdk",
 } as const;
 
 export const WEB_SIGN_IN_PATH = "/signin";
