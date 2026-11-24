@@ -58,12 +58,16 @@ export function EventBento() {
 
   return (
     <ul className={GRID_CLASS}>
-      {events.map((event, index) => {
+      {events.map(({ event, equipment }, index) => {
         const tile = tiles[index] ?? SMALL_TILE;
 
         return (
           <li key={event.slug} className={cn("min-w-0", tile.span)}>
-            <EventBentoTile event={event} itemLimit={tile.itemLimit} />
+            <EventBentoTile
+              event={event}
+              equipment={equipment}
+              itemLimit={tile.itemLimit}
+            />
           </li>
         );
       })}

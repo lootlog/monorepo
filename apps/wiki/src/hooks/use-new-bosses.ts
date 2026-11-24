@@ -15,7 +15,7 @@ import {
 import { npcKindOf } from "@/lib/npc-types";
 
 const NEW_BOSS_ITEMS_FILTER = {
-  dropSourceTypes: ["HERO", "EVENT_HERO", "TITAN", "COLOSSUS"],
+  dropSourceTypes: ["HERO", "TITAN", "COLOSSUS"],
   excludedStatKeys: ["etiquette"],
   minLevel: 1,
   sort: "id:desc",
@@ -29,16 +29,13 @@ const NEW_BOSS_ITEMS = {
   excludedStatKeys: [...NEW_BOSS_ITEMS_FILTER.excludedStatKeys],
 } satisfies CatalogControllerGetItemsParams;
 
-const BOSS_TYPES = new Set<string>(NEW_BOSS_ITEMS.dropSourceTypes);
+const PERMANENT_BOSS_KINDS = new Set<string>(NEW_BOSS_ITEMS.dropSourceTypes);
 
 const NEW_BOSSES_SHOWN = 6;
 
 const newBossesOf = (items: readonly CatalogItemDtoOutput[]) =>
-  groupItemsByMonster(
-    items,
-    (source) =>
-      BOSS_TYPES.has(source.type ?? "") &&
-      npcKindOf(source) !== "HERO_TRACKERS",
+  groupItemsByMonster(items, (source) =>
+    PERMANENT_BOSS_KINDS.has(npcKindOf(source) ?? ""),
   )
     .flatMap(({ monster }) => (monster ? [monster] : []))
     .slice(0, NEW_BOSSES_SHOWN);
