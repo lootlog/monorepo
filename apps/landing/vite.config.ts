@@ -3,9 +3,15 @@ import tailwindcss from "@tailwindcss/vite";
 import viteReact from "@vitejs/plugin-react";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import { defineConfig } from "vite";
+import { fetchDiscordMemberCount } from "./src/config/discord-community.ts";
 import { landingDocumentPaths } from "./src/config/links.ts";
 
-export default defineConfig(({ command, isPreview }) => ({
+export default defineConfig(async ({ command, isPreview }) => ({
+  define: {
+    "import.meta.env.LANDING_DISCORD_MEMBER_COUNT": JSON.stringify(
+      await fetchDiscordMemberCount(),
+    ),
+  },
   base: command === "serve" && !isPreview ? "/landing-dev/" : "/",
   build: {
     assetsDir: "landing-assets",

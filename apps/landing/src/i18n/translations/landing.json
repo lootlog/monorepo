@@ -33,7 +33,10 @@
     "title": "Lootlog do <mark>Margonem</mark>",
     "description": "Wspólne timery, historia dropów i zapis walk. Korzystasz z dodatku w grze i z panelu Lootloga.",
     "installAddon": "Zainstaluj dodatek",
-    "openDashboard": "Otwórz Lootloga"
+    "openDashboard": "Otwórz Lootloga",
+    "discordMembers_few": "{{formattedCount}}+ osoby na Discordzie",
+    "discordMembers_many": "{{formattedCount}}+ osób na Discordzie",
+    "discordMembers_other": "{{formattedCount}}+ osób na Discordzie"
   },
   "faq": {
     "title": "Częste pytania",
@@ -122,11 +125,6 @@
     "description": "Lootlog jest darmowym projektem open source rozwijanym przez graczy Margonem. Kod źródłowy i dokumentacja są publiczne.",
     "github": "Zobacz kod na GitHubie",
     "docs": "Przeczytaj dokumentację",
-    "support": {
-      "title": "Wesprzyj rozwój Lootloga",
-      "description": "Lootlog zostaje darmowy dla wszystkich graczy. Wpłaty na buycoffee.to pomagają utrzymać serwery i\u00a0rozwijać nowe funkcje.",
-      "action": "Postaw kawę"
-    },
     "items": {
       "free": {
         "title": "Darmowy dodatek",
@@ -145,6 +143,11 @@
         "description": "Wszystkie postacie z\u00a0różnych światów pod jednym kontem."
       }
     }
+  },
+  "support": {
+    "title": "Wesprzyj rozwój Lootloga",
+    "description": "Lootlog zostaje darmowy dla wszystkich graczy. Wpłaty na buycoffee.to pomagają utrzymać serwery i\u00a0rozwijać nowe funkcje.",
+    "action": "Postaw kawę"
   },
   "closingCta": {
     "title": "Instalacja dodatku",
@@ -168,9 +171,7 @@
   },
   "illustrations": {
     "example": "Przykładowe dane",
-    "timer": "Wspólny timer",
     "opponent": "Piekielny Kościej",
-    "shared": "Timer klanowy",
     "loot": "Nowy drop w\u00a0lootlogu",
     "items": {
       "gem": "Legendarny łup"

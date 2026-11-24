@@ -1,7 +1,7 @@
 import { PageHeader } from "@lootlog/ui/components/page-header";
 import { SectionCardContent } from "@lootlog/ui/components/section-card-content";
 import { SectionCardFooter } from "@lootlog/ui/components/section-card-footer";
-import { DiscordIcon } from "@/features/signin/discord-icon";
+import { DiscordIcon } from "@lootlog/ui/components/discord-icon";
 import { signInErrorKind } from "@/features/signin/sign-in-error-kind";
 import { signInRetryUrl } from "@/features/signin/sign-in-retry-url";
 import { authClient } from "@/lib/auth-client";

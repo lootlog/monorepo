@@ -1,6 +1,7 @@
-export const DiscordIcon = () => (
+export const DiscordIcon = ({ className }: { className?: string }) => (
   <svg
     aria-hidden="true"
+    className={className}
     fill="currentColor"
     viewBox="0 0 24 24"
     xmlns="http://www.w3.org/2000/svg"

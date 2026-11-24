@@ -1,4 +1,4 @@
-import { Check, Gem, Swords, UsersRound } from "lucide-react";
+import { Check, Gem, Swords } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -22,50 +22,36 @@ export function TimerIllustration() {
   const seconds = String(remaining % 60).padStart(2, "0");
 
   return (
-    <figure className="landing-timer relative mx-auto w-full max-w-xl px-1 py-3 sm:px-6 sm:py-8">
-      <div className="landing-sticker landing-timer-card relative rounded-[var(--broadcast-radius-panel)] bg-[var(--broadcast-lime)] p-4 text-[var(--broadcast-ink)] sm:p-8">
-        <div className="flex items-center justify-between gap-4">
-          <p className="text-xs font-bold uppercase tracking-widest">
-            {t("landing.illustrations.timer")}
+    <figure className="landing-timer">
+      <div className="landing-sticker landing-timer-card">
+        <div className="landing-timer-head">
+          <p className="landing-timer-name">
+            {t("landing.illustrations.opponent")}
           </p>
-          <Swords className="size-7" aria-hidden="true" />
+          <Swords className="landing-timer-icon" aria-hidden="true" />
         </div>
-        <p className="mt-4 text-lg font-bold sm:mt-9 sm:text-2xl">
-          {t("landing.illustrations.opponent")}
-        </p>
-        <p
-          role="timer"
-          aria-live="off"
-          className="mt-2 font-mono text-[clamp(2.75rem,6.8vw,5rem)] font-bold leading-none tracking-[-0.07em] tabular-nums"
-        >
+        <p role="timer" aria-live="off" className="landing-timer-clock">
           {`00:${minutes}:${seconds.slice(0, 1)}`}
           <span key={remaining} className="landing-timer-second">
             {seconds.slice(1)}
           </span>
         </p>
-        <div
-          aria-hidden="true"
-          className="mt-4 h-2 overflow-hidden sm:mt-7 rounded-full bg-[var(--broadcast-ink)]/15"
-        >
+        <div aria-hidden="true" className="landing-timer-bar">
           <div
-            className="h-full rounded-full bg-[var(--broadcast-ink)] transition-[width] duration-1000 ease-linear motion-reduce:transition-none"
+            className="landing-timer-bar-fill"
             style={{ width: `${(remaining / (60 * 60)) * 100}%` }}
           />
         </div>
-        <p className="mt-3 flex items-center gap-2 text-sm font-semibold sm:mt-5">
-          <UsersRound className="size-4" aria-hidden="true" />
-          {t("landing.illustrations.shared")}
-        </p>
       </div>
-      <div className="landing-sticker landing-timer-toast relative -mt-1 ml-5 flex items-center gap-3 rounded-[var(--broadcast-radius-card)] sm:-mt-2 sm:ml-8 sm:gap-4 bg-[var(--broadcast-paper)] p-3 text-[var(--broadcast-ink)] sm:p-5">
-        <span className="grid size-10 shrink-0 place-items-center sm:size-14 rounded-[var(--broadcast-radius-card)] bg-[var(--broadcast-amber)]">
-          <Gem className="size-6 sm:size-8" aria-hidden="true" />
+      <div className="landing-sticker landing-timer-toast">
+        <span className="landing-timer-toast-icon">
+          <Gem aria-hidden="true" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-xs text-[var(--broadcast-paper-muted)]">
+          <p className="landing-timer-toast-label">
             {t("landing.illustrations.loot")}
           </p>
-          <p className="mt-1 text-base font-bold sm:text-lg">
+          <p className="landing-timer-toast-title">
             {t("landing.illustrations.items.gem")}
           </p>
         </div>
@@ -74,7 +60,7 @@ export function TimerIllustration() {
           aria-hidden="true"
         />
       </div>
-      <figcaption className="landing-caption text-[var(--broadcast-text-subtle)]">
+      <figcaption className="landing-caption">
         {t("landing.illustrations.example")}
       </figcaption>
     </figure>

@@ -12,6 +12,7 @@ import { SkipLink } from "@lootlog/ui/components/skip-link";
 import { HeroSection } from "@/components/landing/hero-section";
 import { HowItWorks } from "@/components/landing/how-it-works";
 import { ProductProof } from "@/components/landing/product-proof";
+import { SupportSection } from "@/components/landing/support-section";
 import { TrustRecord } from "@/components/landing/trust-record";
 import { links } from "@/config/links";
 
@@ -30,6 +31,7 @@ export function HomeContent() {
         <GuidesShowcase />
         <EcosystemShowcase />
         <TrustRecord />
+        <SupportSection />
 
         <section
           id="faq"
