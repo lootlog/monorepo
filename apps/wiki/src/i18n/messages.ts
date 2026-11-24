@@ -193,7 +193,7 @@ const messages = {
       light: "Atak błyskawicami",
       frost: "Atak zimnem",
       poison: "Obrażenia trucizny",
-      poisonChance: "Szansa na otrucie",
+      poisonSlow: "Spowolnienie od trucizny",
       wound: "Obrażenia głębokiej rany",
       woundChance: "Szansa na głęboką ranę",
       attackSpeed: "Szybkość ataku",

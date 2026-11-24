@@ -43,6 +43,21 @@ describe("character stats", () => {
     expect(stats.critChance).toBe(5);
   });
 
+  it("adds a quiver's attack to the bow and reads poison as slow and damage", () => {
+    const stats = characterStats(
+      "h",
+      100,
+      [
+        worn("DISTANCE_WEAPON", "dmg=100,120;poison=120,50"),
+        worn("QUIVER", "pdmg=10"),
+      ],
+      new Map(),
+    );
+
+    expect(stats.physical).toEqual({ min: 110, max: 130 });
+    expect(stats.poison).toEqual({ slow: 1.2, damage: 50 });
+  });
+
   it("caps absorption at seven times intellect", () => {
     const stats = characterStats(
       "m",

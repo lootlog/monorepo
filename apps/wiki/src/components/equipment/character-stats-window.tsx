@@ -49,7 +49,7 @@ const CHARACTER_SECTIONS: ReadonlyArray<{
         max: (stats) => stats.frost.max,
       },
       { id: "poison", value: (stats) => stats.poison.damage },
-      { id: "poisonChance", unit: "%", value: (stats) => stats.poison.chance },
+      { id: "poisonSlow", value: (stats) => stats.poison.slow },
       { id: "wound", value: (stats) => stats.wound.damage },
       { id: "woundChance", unit: "%", value: (stats) => stats.wound.chance },
       { id: "attackSpeed", value: (stats) => stats.attackSpeed, always: true },
