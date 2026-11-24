@@ -1,9 +1,17 @@
+import type { QueryClient } from "@tanstack/react-query";
 import {
   type CatalogControllerGetItemsParams,
+  type CatalogDropSourceDtoOutput,
+  type CatalogItemDtoOutput,
+  getCatalogControllerGetItemsQueryOptions,
   useCatalogControllerGetItems,
 } from "@lootlog/client/catalog";
 import { WIKI_GAME_VERSION } from "@/lib/catalog-links";
-import { groupItemsByMonster } from "@/lib/group-items-by-monster";
+import { npcDropsQuery } from "@/lib/catalog-page-queries";
+import {
+  groupItemsByMonster,
+  isRetiredDropOf,
+} from "@/lib/group-items-by-monster";
 import { npcKindOf } from "@/lib/npc-types";
 
 const NEW_BOSS_ITEMS_FILTER = {
@@ -14,7 +22,7 @@ const NEW_BOSS_ITEMS_FILTER = {
   limit: 96,
 } as const;
 
-export const NEW_BOSS_ITEMS = {
+const NEW_BOSS_ITEMS = {
   ...NEW_BOSS_ITEMS_FILTER,
   gameVersion: WIKI_GAME_VERSION,
   dropSourceTypes: [...NEW_BOSS_ITEMS_FILTER.dropSourceTypes],
@@ -23,17 +31,40 @@ export const NEW_BOSS_ITEMS = {
 
 const BOSS_TYPES = new Set<string>(NEW_BOSS_ITEMS.dropSourceTypes);
 
+const NEW_BOSSES_SHOWN = 6;
+
+const newBossesOf = (items: readonly CatalogItemDtoOutput[]) =>
+  groupItemsByMonster(
+    items,
+    (source) =>
+      BOSS_TYPES.has(source.type ?? "") &&
+      npcKindOf(source) !== "HERO_TRACKERS",
+  )
+    .flatMap(({ monster }) => (monster ? [monster] : []))
+    .slice(0, NEW_BOSSES_SHOWN);
+
+export const prefetchNewBosses = async (queryClient: QueryClient) => {
+  const { hits } = await queryClient.ensureQueryData(
+    getCatalogControllerGetItemsQueryOptions(NEW_BOSS_ITEMS),
+  );
+
+  await Promise.all(
+    newBossesOf(hits).map(({ key }) =>
+      queryClient.prefetchQuery(
+        getCatalogControllerGetItemsQueryOptions(npcDropsQuery(key)),
+      ),
+    ),
+  );
+};
+
 export const useNewBosses = () => {
   const { data, isError } = useCatalogControllerGetItems(NEW_BOSS_ITEMS);
 
-  const bosses = data
-    ? groupItemsByMonster(
-        data.hits,
-        (source) =>
-          BOSS_TYPES.has(source.type ?? "") &&
-          npcKindOf(source) !== "HERO_TRACKERS",
-      ).flatMap(({ monster, items }) => (monster ? [{ monster, items }] : []))
-    : undefined;
+  return { bosses: data ? newBossesOf(data.hits) : undefined, isError };
+};
 
-  return { bosses, isError };
+export const useBossDrops = (boss: CatalogDropSourceDtoOutput) => {
+  const { data } = useCatalogControllerGetItems(npcDropsQuery(boss.key));
+
+  return data?.hits.filter((item) => !isRetiredDropOf(item, boss));
 };

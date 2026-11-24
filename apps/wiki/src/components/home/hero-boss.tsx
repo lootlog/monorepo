@@ -1,22 +1,15 @@
 import { Link } from "@tanstack/react-router";
-import { sortBy } from "es-toolkit";
 import { useState } from "react";
-import { itemRarityRank } from "@lootlog/domain/item-rarity";
 import { npcIconUrl } from "@lootlog/domain/npc-icon";
 import { EmberSparks } from "@lootlog/ui/components/ember-sparks";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
-import { TooltipProvider } from "@lootlog/ui/components/tooltip";
-import { CatalogItemTile } from "@/components/catalog/catalog-item-tile";
 import { NpcKindLevel } from "@/components/npcs/npc-kind-level";
 import { useNewBosses } from "@/hooks/use-new-bosses";
 import { t } from "@/i18n/messages";
 import { npcPageParams } from "@/lib/catalog-links";
 import { BossPicker } from "./boss-picker";
+import { HeroBossDrops } from "./hero-boss-drops";
 import { PixelSprite } from "./pixel-sprite";
-
-const BOSSES_SHOWN = 6;
-
-const DROPS_SHOWN = 10;
 
 export function HeroBoss() {
   const { bosses, isError } = useNewBosses();
@@ -39,20 +32,15 @@ export function HeroBoss() {
     );
   }
 
-  const shown = bosses.slice(0, BOSSES_SHOWN);
+  const monster = bosses.find((boss) => boss.key === pickedKey) ?? bosses[0];
 
-  const featured =
-    shown.find(({ monster }) => monster.key === pickedKey) ?? shown[0];
-
-  if (!featured) {
+  if (!monster) {
     return (
       <p className="text-center text-sm text-muted-foreground">
         {t("home.bossesEmpty")}
       </p>
     );
   }
-
-  const { monster, items } = featured;
 
   return (
     <div className="flex flex-col items-center gap-7">
@@ -94,24 +82,10 @@ export function HeroBoss() {
         </span>
       </Link>
 
-      <TooltipProvider delay={100}>
-        <ul
-          key={monster.key}
-          aria-label={t("home.bossDrops", { name: monster.name })}
-          className="flex max-w-md flex-wrap justify-center gap-2 animate-rise-in"
-        >
-          {sortBy(items, [({ rarity }) => itemRarityRank(rarity)])
-            .slice(0, DROPS_SHOWN)
-            .map((item) => (
-              <li key={item.id}>
-                <CatalogItemTile item={item} />
-              </li>
-            ))}
-        </ul>
-      </TooltipProvider>
+      <HeroBossDrops key={monster.key} boss={monster} />
 
       <BossPicker
-        bosses={shown.map((boss) => boss.monster)}
+        bosses={bosses}
         pickedKey={monster.key}
         onPick={setPickedKey}
       />

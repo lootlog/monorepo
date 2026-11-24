@@ -14,6 +14,15 @@ export const monsterIdentity = ({
   type,
 }: Pick<CatalogDropSourceDtoOutput, "name" | "type">) => `${name}|${type}`;
 
+export const isRetiredDropOf = (
+  item: Pick<CatalogItemDtoOutput, "droppedBy">,
+  monster: Pick<CatalogDropSourceDtoOutput, "name" | "type">,
+) =>
+  item.droppedBy.some(
+    (source) =>
+      source.retired && monsterIdentity(source) === monsterIdentity(monster),
+  );
+
 export const groupItemsByMonster = (
   items: readonly CatalogItemDtoOutput[],
   isMonster: (source: CatalogDropSourceDtoOutput) => boolean = () => true,

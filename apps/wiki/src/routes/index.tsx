@@ -1,5 +1,4 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { getCatalogControllerGetItemsQueryOptions } from "@lootlog/client/catalog";
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { AboutWiki } from "@/components/home/about-wiki";
 import { EventBento } from "@/components/home/event-bento";
@@ -10,7 +9,7 @@ import { RecentItemChanges } from "@/components/home/recent-item-changes";
 import { SlotBrowser } from "@/components/home/slot-browser";
 import { prefetchCatalogSize } from "@/hooks/use-catalog-size";
 import { prefetchHomeEvents } from "@/hooks/use-home-events";
-import { NEW_BOSS_ITEMS } from "@/hooks/use-new-bosses";
+import { prefetchNewBosses } from "@/hooks/use-new-bosses";
 import { t } from "@/i18n/messages";
 import { prefetchPageQueries } from "@/lib/catalog-page-queries";
 import { canonicalLink } from "@/lib/link-preview";
@@ -19,9 +18,7 @@ export const Route = createFileRoute("/")({
   component: HomeRoute,
   loader: ({ context: { queryClient } }) =>
     prefetchPageQueries(
-      queryClient.prefetchQuery(
-        getCatalogControllerGetItemsQueryOptions(NEW_BOSS_ITEMS),
-      ),
+      prefetchNewBosses(queryClient),
       prefetchHomeEvents(queryClient),
       ...prefetchCatalogSize(queryClient),
     ),

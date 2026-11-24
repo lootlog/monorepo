@@ -1,10 +1,7 @@
-import { NpcPortrait } from "@/components/common/npc-portrait";
 import { t } from "@/i18n/messages";
-import { NpcKindLevel } from "@/components/npcs/npc-kind-level";
 import { useNewBosses } from "@/hooks/use-new-bosses";
-import { npcPageParams } from "@/lib/catalog-links";
-import { NewItemsCard } from "./new-items-card";
 import { NewItemsCardsSkeleton } from "./new-items-cards-skeleton";
+import { NewMonsterCard } from "./new-monster-card";
 
 const MONSTERS_SHOWN = 4;
 
@@ -33,16 +30,9 @@ export function NewMonsters() {
 
   return (
     <ul className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      {monsters.map(({ monster, items }) => (
+      {monsters.map((monster) => (
         <li key={monster.key}>
-          <NewItemsCard
-            title={monster.name}
-            eyebrow={<NpcKindLevel npc={monster} />}
-            media={<NpcPortrait icon={monster.icon} size="md" />}
-            link={{ to: "/npcs/$npcSlug", params: npcPageParams(monster) }}
-            items={items}
-            itemCount={items.length}
-          />
+          <NewMonsterCard monster={monster} />
         </li>
       ))}
     </ul>
