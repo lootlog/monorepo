@@ -48,6 +48,7 @@ export function CatalogItemTile({
                 type: worn.item.type,
               },
               label: t("equipment.comparedWith"),
+              lostLabel: t("equipment.lostStats"),
             }
           : undefined
       }

@@ -42,6 +42,7 @@ const renderStatRows = (
   ));
 
 type ItemTileDetailsProps = {
+  children?: ReactNode;
   color: string;
   labels: ItemTileLabels;
   renderStat?: (displayValue: ItemDisplayValue) => ReactNode;
@@ -54,6 +55,7 @@ type ItemTileDetailsProps = {
 };
 
 export const ItemTileDetails: FC<ItemTileDetailsProps> = ({
+  children,
   color,
   icon,
   labels,
@@ -136,6 +138,7 @@ export const ItemTileDetails: FC<ItemTileDetailsProps> = ({
           ))}
         </div>
       ) : null}
+      {children}
       {footerValues.length > 0 || showObtainedBy ? (
         <div className="flex flex-col gap-0.5 border-t border-border bg-muted/30 px-3 py-2 text-xs leading-5 text-muted-foreground">
           {renderStatRows(footerValues, renderStat)}

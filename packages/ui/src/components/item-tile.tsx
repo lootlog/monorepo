@@ -3,6 +3,10 @@ import { ItemImage } from "@lootlog/ui/components/item-image";
 import { DisplayItemRarity } from "@lootlog/domain/item-rarity";
 import type { ItemDisplayValue } from "@lootlog/ui/components/item-stat-utils";
 import { ItemTileDetails } from "@lootlog/ui/components/item-tile-details";
+import { ItemStatDiffValue } from "@lootlog/ui/components/item-stat-diff-value";
+import { ItemStatLine } from "@lootlog/ui/components/item-stat-line";
+import { ItemStatLostSection } from "@lootlog/ui/components/item-stat-lost-section";
+import { diffItemStats } from "@lootlog/ui/lib/item-stat-diff";
 import { ITEM_RARITY_STYLES } from "@lootlog/ui/lib/item-rarity-colors";
 import { useSharedTooltip } from "@lootlog/ui/components/shared-tooltip-provider";
 import {
@@ -39,6 +43,7 @@ export type ItemTileLabels = {
 type ItemTileComparison = {
   item: GameItem;
   label: string;
+  lostLabel: string;
 };
 
 export type ItemTileProps = {
@@ -57,13 +62,17 @@ const TOOLTIP_FRAME_CLASS_NAME =
 
 const DEFAULT_RENDER = <button type="button" />;
 
+const renderItemStatLine = (displayValue: ItemDisplayValue) => (
+  <ItemStatLine displayValue={displayValue} />
+);
+
 export const ItemTile: FC<ItemTileProps> = ({
   color = "",
   comparison,
   item: { icon, name, rarity, stat, type },
   labels,
   render = DEFAULT_RENDER,
-  renderStat,
+  renderStat = renderItemStatLine,
   shareIndex,
   shareNickname,
 }) => {
@@ -89,6 +98,22 @@ export const ItemTile: FC<ItemTileProps> = ({
     />
   );
 
+  const statDiff = comparison
+    ? diffItemStats(stat, comparison.item.stat)
+    : undefined;
+
+  const renderComparedStat = (displayValue: ItemDisplayValue) => {
+    const diff = statDiff?.changes.get(displayValue.key ?? "");
+
+    return diff ? (
+      <>
+        {renderStat(displayValue)} <ItemStatDiffValue diff={diff} />
+      </>
+    ) : (
+      renderStat(displayValue)
+    );
+  };
+
   const details = (
     <ItemTileDetails
       color={color}
@@ -96,11 +121,18 @@ export const ItemTile: FC<ItemTileProps> = ({
       labels={labels}
       name={name}
       rarity={normalizedRarity}
-      renderStat={renderStat}
+      renderStat={renderComparedStat}
       shareNickname={shareNickname}
       stat={stat}
       type={type ?? ""}
-    />
+    >
+      {comparison && statDiff ? (
+        <ItemStatLostSection
+          label={comparison.lostLabel}
+          values={statDiff.lost}
+        />
+      ) : null}
+    </ItemTileDetails>
   );
 
   const comparedRarity = comparison?.item.rarity ?? DisplayItemRarity.COMMON;
@@ -134,7 +166,6 @@ export const ItemTile: FC<ItemTileProps> = ({
           labels={labels}
           name={comparison.item.name}
           rarity={comparedRarity}
-          renderStat={renderStat}
           stat={comparison.item.stat}
           type={comparison.item.type ?? ""}
         />
