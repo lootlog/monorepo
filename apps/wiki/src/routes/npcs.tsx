@@ -25,7 +25,7 @@ import {
   prefetchPageQueries,
 } from "@/lib/catalog-page-queries";
 import { formatCatalogMonth } from "@/lib/catalog-days";
-import { canonicalLink } from "@/lib/link-preview";
+import { wikiPageHead } from "@/lib/link-preview";
 import {
   hasEventMonsters,
   isNpcFilterType,
@@ -95,10 +95,12 @@ export const Route = createFileRoute("/npcs")({
     prefetchPageQueries(
       queryClient.prefetchInfiniteQuery(npcResultsQueryOptions(deps.params)),
     ),
-  head: () => ({
-    meta: [{ title: `${t("meta.npcsTitle")} | ${t("meta.title")}` }],
-    links: [canonicalLink("/npcs")],
-  }),
+  head: () =>
+    wikiPageHead({
+      path: "/npcs",
+      title: t("meta.npcsTitle"),
+      description: t("meta.npcsDescription"),
+    }),
   validateSearch: validateNpcsSearch,
   search: { middlewares: [stripSearchParams(EMPTY_NPCS_SEARCH)] },
 });

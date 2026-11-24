@@ -4,3 +4,4 @@ Allow: /
 Sitemap: https://lootlog.pl/sitemap.xml
 Sitemap: https://docs.lootlog.pl/sitemap.xml
 Sitemap: https://developer.lootlog.pl/sitemap.xml
+Sitemap: https://wiki.lootlog.pl/sitemap.xml

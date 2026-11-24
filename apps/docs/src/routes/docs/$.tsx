@@ -18,7 +18,9 @@ import { PageMarkdownActions } from "@lootlog/ui/components/page-markdown-action
 import { useScrollToTop } from "@lootlog/ui/hooks/use-scroll-to-top";
 import {
   COMMUNITY_LINKS,
+  LOOTLOG_SOCIAL_IMAGE,
   PUBLIC_SITE_ORIGINS,
+  publicPageHead,
 } from "@lootlog/domain/public-sites";
 import { ProductScreenshot } from "@/components/product-screenshot";
 import { docsSite } from "@/lib/llms";
@@ -74,23 +76,25 @@ export const Route = createFileRoute("/docs/$")({
       return {};
     }
 
+    const head = publicPageHead({
+      url: `${PUBLIC_SITE_ORIGINS.docs}${loaderData.url}`,
+      siteName: docsTranslations.metadata.title,
+      title: loaderData.title,
+      documentTitle: `${loaderData.title} | ${docsTranslations.metadata.title}`,
+      description: loaderData.description,
+      image: LOOTLOG_SOCIAL_IMAGE,
+      type: "article",
+    });
+
     return {
+      ...head,
       links: [
-        {
-          rel: "canonical",
-          href: `${PUBLIC_SITE_ORIGINS.docs}${loaderData.url}`,
-        },
+        ...head.links,
         {
           rel: "alternate",
           type: "text/markdown",
           href: loaderData.markdownPath,
         },
-      ],
-      meta: [
-        {
-          title: `${loaderData.title} | ${docsTranslations.metadata.title}`,
-        },
-        { name: "description", content: loaderData.description },
       ],
     };
   },

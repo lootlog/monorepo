@@ -13,11 +13,11 @@ function readDocument(relativePath) {
 
 const homeDocument = await readDocument("index.html");
 
-const privacyDocument = await readDocument("privacy-policy/index.html");
+const privacyDocument = await readDocument("privacy-policy.html");
 
-const termsDocument = await readDocument("terms-of-service/index.html");
+const termsDocument = await readDocument("terms-of-service.html");
 
-const blogDocument = await readDocument("blog/index.html");
+const blogDocument = await readDocument("blog.html");
 
 const notFoundDocument = await readDocument("404.html");
 
@@ -31,7 +31,7 @@ verifyGeneratedAssetReferences(notFoundDocument, "landing", "not found");
 
 const articleDocuments = await Promise.all(
   blogPosts.map(async ({ slug }) => {
-    const document = await readDocument(`blog/${slug}/index.html`);
+    const document = await readDocument(`blog/${slug}.html`);
 
     return [slug, document, `https://lootlog.pl/blog/${slug}`];
   }),
@@ -129,6 +129,7 @@ for (const origin of [
   "https://lootlog.pl",
   "https://docs.lootlog.pl",
   "https://developer.lootlog.pl",
+  "https://wiki.lootlog.pl",
 ]) {
   assert.ok(robots.includes(`Sitemap: ${origin}/sitemap.xml`));
 }
@@ -136,7 +137,9 @@ for (const origin of [
 await assertRoutedTo(
   (await readdir(clientDirectory))
     .filter((entry) => entry !== "404.html")
-    .map((entry) => (entry === "index.html" ? "/" : `/${entry}`)),
+    .map((entry) =>
+      entry === "index.html" ? "/" : `/${entry.replace(/\.html$/u, "")}`,
+    ),
   "landing",
 );
 

@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { HomeContent } from "@/components/landing/home-content";
+import { landingPageHead } from "@/config/page-head";
 import landingTranslations from "@/i18n/translations/landing.json";
 
 const { seo } = landingTranslations;
@@ -24,14 +25,12 @@ const jsonLd = {
 };
 
 export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: seo.title },
-      { name: "description", content: seo.description },
-      { name: "keywords", content: seo.keywords.join(", ") },
-    ],
-    links: [{ rel: "canonical", href: "https://lootlog.pl" }],
-  }),
+  head: () =>
+    landingPageHead({
+      path: "/",
+      title: seo.title,
+      description: seo.description,
+    }),
   component: HomePage,
 });
 

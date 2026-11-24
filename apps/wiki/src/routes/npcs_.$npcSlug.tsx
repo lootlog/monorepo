@@ -1,8 +1,8 @@
 import {
-  Link,
   Navigate,
   createFileRoute,
   linkOptions,
+  notFound,
   redirect,
 } from "@tanstack/react-router";
 import {
@@ -11,12 +11,10 @@ import {
   useCatalogControllerGetNpcs,
 } from "@lootlog/client/catalog";
 import { PortalPageHeader } from "@lootlog/ui/components/portal-page-header";
-import { PageState } from "@lootlog/ui/components/page-state";
-import { Button } from "@lootlog/ui/components/button";
-import { SearchXIcon } from "lucide-react";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { CatalogItemGrid } from "@/components/catalog/catalog-item-grid";
 import { NpcDrops } from "@/components/npcs/npc-drops";
+import { NpcNotFound } from "@/components/npcs/npc-not-found";
 import { ArticleSection } from "@/components/article/article-section";
 import { PageBreadcrumbs } from "@/components/article/page-breadcrumbs";
 import { NpcPortrait } from "@/components/common/npc-portrait";
@@ -34,26 +32,24 @@ import {
   npcDropsQuery,
   npcPageQuery,
 } from "@/lib/catalog-page-queries";
-import {
-  canonicalLink,
-  linkPreviewMeta,
-  npcLinkPreview,
-} from "@/lib/link-preview";
+import { linkPreviewHead, npcLinkPreview } from "@/lib/link-preview";
 
 export const Route = createFileRoute("/npcs_/$npcSlug")({
   component: NpcRoute,
   loader: async ({ params, context: { queryClient } }) => {
     const query = npcPageQuery(params.npcSlug);
 
-    if (!query) return { npc: undefined, drops: [] };
+    if (!query) throw notFound();
 
     const npcs = await queryClient
       .ensureQueryData(getCatalogControllerGetNpcsQueryOptions(query))
       .catch(() => undefined);
 
-    const npc = npcs && findPageNpc(npcs.hits, params.npcSlug);
+    if (!npcs) return { npc: undefined, drops: [] };
 
-    if (!npc) return { npc: undefined, drops: [] };
+    const npc = findPageNpc(npcs.hits, params.npcSlug);
+
+    if (!npc) throw notFound();
 
     if (npcPageParams(npc).npcSlug !== params.npcSlug) {
       throw redirect({
@@ -71,14 +67,14 @@ export const Route = createFileRoute("/npcs_/$npcSlug")({
 
     return { npc, drops: drops?.hits ?? [] };
   },
-  head: ({ loaderData }) => ({
-    links: loaderData?.npc
-      ? [canonicalLink(`/npcs/${npcPageParams(loaderData.npc).npcSlug}`)]
-      : [],
-    meta: loaderData?.npc
-      ? linkPreviewMeta(npcLinkPreview(loaderData.npc, loaderData.drops))
-      : [{ title: `${t("meta.npcTitle")} | ${t("meta.title")}` }],
-  }),
+  head: ({ loaderData }) =>
+    loaderData?.npc
+      ? linkPreviewHead(npcLinkPreview(loaderData.npc, loaderData.drops), {
+          path: `/npcs/${npcPageParams(loaderData.npc).npcSlug}`,
+          section: { name: t("navigation.npcs"), path: "/npcs" },
+        })
+      : { meta: [{ title: `${t("meta.npcTitle")} | ${t("meta.title")}` }] },
+  notFoundComponent: NpcNotFound,
 });
 
 function NpcRoute() {
@@ -107,21 +103,7 @@ function NpcRoute() {
   }
 
   if (!query || (npcQuery.data && !npc)) {
-    return (
-      <PageState
-        className="my-6"
-        icon={<SearchXIcon />}
-        title={t("catalog.npcNotFound")}
-        description={t("catalog.notFoundDescription")}
-      >
-        <Button
-          nativeButton={false}
-          render={<Link to="/npcs" search={EMPTY_NPCS_SEARCH} />}
-        >
-          {t("catalog.backToNpcs")}
-        </Button>
-      </PageState>
-    );
+    return <NpcNotFound />;
   }
 
   return (

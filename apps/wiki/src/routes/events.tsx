@@ -13,7 +13,7 @@ import { t } from "@/i18n/messages";
 import { isHeroTrackersEvent } from "@/lib/hero-trackers";
 import { prefetchPageQueries } from "@/lib/catalog-page-queries";
 import { WIKI_EVENTS_QUERY, eventSubtitle } from "@/lib/item-events";
-import { canonicalLink } from "@/lib/link-preview";
+import { wikiPageHead } from "@/lib/link-preview";
 import { formatNumber } from "@lootlog/domain/locale";
 import { Card } from "@lootlog/ui/components/card";
 
@@ -25,10 +25,12 @@ export const Route = createFileRoute("/events")({
         getCatalogControllerGetEventsQueryOptions(WIKI_EVENTS_QUERY),
       ),
     ),
-  head: () => ({
-    meta: [{ title: `${t("meta.eventsTitle")} | ${t("meta.title")}` }],
-    links: [canonicalLink("/events")],
-  }),
+  head: () =>
+    wikiPageHead({
+      path: "/events",
+      title: t("meta.eventsTitle"),
+      description: t("meta.eventsDescription"),
+    }),
 });
 
 const HERO_TRACKERS_SECTION = "hero-trackers";
