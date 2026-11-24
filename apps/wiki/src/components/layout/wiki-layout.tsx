@@ -13,6 +13,7 @@ export function WikiLayout({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   const docksSet = !PAGES_WITHOUT_DOCK.has(pathname);
   const isFullWidth = FULL_WIDTH_PAGES.has(pathname);
+  const isHome = pathname === "/";
 
   const containerClassName = cn(
     "px-4 md:px-6",
@@ -42,7 +43,7 @@ export function WikiLayout({ children }: { children: ReactNode }) {
           {children}
         </main>
       </div>
-      <WikiFooter containerClassName={containerClassName} />
+      {isHome ? <WikiFooter containerClassName={containerClassName} /> : null}
       {docksSet ? <EquipmentSetDock /> : null}
     </div>
   );
