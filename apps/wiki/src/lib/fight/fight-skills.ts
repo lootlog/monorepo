@@ -1,6 +1,7 @@
-export type ActiveEffect = { readonly value: number; readonly turns: number };
+type ActiveEffect = { readonly value: number; readonly turns: number };
 
 export type ActiveSkill = {
+  readonly id: number;
   readonly name: string;
   readonly resource: "energy" | "mana";
   readonly cost: number;

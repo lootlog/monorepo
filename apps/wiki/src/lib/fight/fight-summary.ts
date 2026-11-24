@@ -1,4 +1,4 @@
-import { simulateFight, type FightSetup } from "./fight-simulator.js";
+import { simulateFight, type FightSetup } from "./fight-simulator";
 
 export type FightSummary = {
   readonly runs: number;

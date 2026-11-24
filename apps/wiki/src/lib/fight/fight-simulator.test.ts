@@ -1,6 +1,10 @@
-import { describe, expect, test } from "bun:test";
-import type { Combatant } from "./fight-simulator.js";
-import { simulateFights } from "./fight-summary.js";
+import { BattleProcessor } from "@lootlog/battle-processor/battle-processor";
+import { describe, expect, test } from "vitest";
+import { fightBattlePayload } from "./fight-battle-log";
+import { simulateFight, type FightEvent } from "./fight-simulator";
+import type { Combatant } from "./fight-state";
+import type { ActiveSkill } from "./fight-skills";
+import { seededRandom, simulateFights } from "./fight-summary";
 
 const NO_DAMAGE = { min: 0, max: 0 };
 
@@ -122,5 +126,74 @@ describe("simulateFights", () => {
     };
 
     expect(simulateFights(setup, RUNS)).toEqual(simulateFights(setup, RUNS));
+  });
+});
+
+describe("fightBattlePayload", () => {
+  test("logs a fight that the battle processor reads back with the simulated damage and winner", () => {
+    const doubleShot: ActiveSkill = {
+      id: 97,
+      name: "Podwójny strzał",
+      resource: "energy",
+      cost: 10,
+      cooldown: 2,
+      effects: new Map([["add_attacks", { value: 1, turns: 1 }]]),
+    };
+
+    const setup = {
+      teams: [
+        [
+          fighter({
+            name: "Łowca",
+            poison: { damage: 300, slow: 0.1 },
+            wound: { chance: 30, damage: 400 },
+            critChance: 40,
+            pierce: 30,
+            healing: 500,
+            actives: [doubleShot],
+          }),
+        ],
+        [
+          fighter({
+            name: "Wojownik",
+            profession: "w",
+            hp: 60_000,
+            blockPoints: 400,
+            armor: 800,
+            fire: { min: 300, max: 500 },
+          }),
+        ],
+      ],
+    };
+
+    const events: FightEvent[] = [];
+
+    const result = simulateFight(setup, seededRandom(11), (event) => {
+      events.push(event);
+    });
+
+    const battle = new BattleProcessor("full").processBattle(
+      fightBattlePayload(setup, events, result),
+    );
+
+    const overTimeTaken = (actor: number) =>
+      events.reduce(
+        (total, event) =>
+          event.kind === "damageOverTime" && event.actor === actor
+            ? total + event.poison + event.wound
+            : total,
+        0,
+      );
+
+    const [hunter, warrior] = result.fighters;
+
+    expect(battle.outcome.winningTeam).toBe((result.winner ?? -1) + 1);
+    expect(battle.warriors.map((entry) => entry.damageTaken)).toEqual([
+      (warrior?.damageDealt ?? 0) + overTimeTaken(0),
+      (hunter?.damageDealt ?? 0) + overTimeTaken(1),
+    ]);
+    expect(battle.warriors[0]?.spellsUsedMap).toEqual(
+      Object.fromEntries(hunter?.skillUses ?? []),
+    );
   });
 });

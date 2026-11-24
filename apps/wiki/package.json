@@ -19,6 +19,8 @@
     "test": "vitest run --config ./vitest.config.ts"
   },
   "dependencies": {
+    "@lootlog/battle-processor": "workspace:*",
+    "@lootlog/battle-ui": "workspace:*",
     "@lootlog/client": "workspace:*",
     "@lootlog/domain": "workspace:*",
     "@lootlog/protocol": "workspace:*",
@@ -31,9 +33,11 @@
     "@tanstack/react-start": "^1.169.1",
     "cn": "catalog:",
     "es-toolkit": "catalog:",
+    "i18next": "^26.4.4",
     "lucide-react": "^1.56.0",
     "react": "catalog:",
-    "react-dom": "catalog:"
+    "react-dom": "catalog:",
+    "react-i18next": "^17.0.16"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.63.2",

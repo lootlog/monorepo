@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as CalculatorsRouteImport } from './routes/calculators'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as EventsRouteImport } from './routes/events'
+import { Route as FightRouteImport } from './routes/fight'
 import { Route as ItemsRouteImport } from './routes/items'
 import { Route as ModerationRouteImport } from './routes/moderation'
 import { Route as NpcsRouteImport } from './routes/npcs'
@@ -43,6 +44,11 @@ const CompareRoute = CompareRouteImport.update({
 const EventsRoute = EventsRouteImport.update({
   id: '/events',
   path: '/events',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FightRoute = FightRouteImport.update({
+  id: '/fight',
+  path: '/fight',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ItemsRoute = ItemsRouteImport.update({
@@ -106,6 +112,7 @@ export interface FileRoutesByFullPath {
   '/calculators': typeof CalculatorsRoute
   '/compare': typeof CompareRoute
   '/events': typeof EventsRoute
+  '/fight': typeof FightRoute
   '/items': typeof ItemsRoute
   '/moderation': typeof ModerationRoute
   '/npcs': typeof NpcsRoute
@@ -123,6 +130,7 @@ export interface FileRoutesByTo {
   '/calculators': typeof CalculatorsRoute
   '/compare': typeof CompareRoute
   '/events': typeof EventsRoute
+  '/fight': typeof FightRoute
   '/items': typeof ItemsRoute
   '/moderation': typeof ModerationRoute
   '/npcs': typeof NpcsRoute
@@ -141,6 +149,7 @@ export interface FileRoutesById {
   '/calculators': typeof CalculatorsRoute
   '/compare': typeof CompareRoute
   '/events': typeof EventsRoute
+  '/fight': typeof FightRoute
   '/items': typeof ItemsRoute
   '/moderation': typeof ModerationRoute
   '/npcs': typeof NpcsRoute
@@ -160,6 +169,7 @@ export interface FileRouteTypes {
     | '/calculators'
     | '/compare'
     | '/events'
+    | '/fight'
     | '/items'
     | '/moderation'
     | '/npcs'
@@ -177,6 +187,7 @@ export interface FileRouteTypes {
     | '/calculators'
     | '/compare'
     | '/events'
+    | '/fight'
     | '/items'
     | '/moderation'
     | '/npcs'
@@ -194,6 +205,7 @@ export interface FileRouteTypes {
     | '/calculators'
     | '/compare'
     | '/events'
+    | '/fight'
     | '/items'
     | '/moderation'
     | '/npcs'
@@ -212,6 +224,7 @@ export interface RootRouteChildren {
   CalculatorsRoute: typeof CalculatorsRoute
   CompareRoute: typeof CompareRoute
   EventsRoute: typeof EventsRoute
+  FightRoute: typeof FightRoute
   ItemsRoute: typeof ItemsRoute
   ModerationRoute: typeof ModerationRoute
   NpcsRoute: typeof NpcsRoute
@@ -253,6 +266,13 @@ declare module '@tanstack/react-router' {
       path: '/events'
       fullPath: '/events'
       preLoaderRoute: typeof EventsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/fight': {
+      id: '/fight'
+      path: '/fight'
+      fullPath: '/fight'
+      preLoaderRoute: typeof FightRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/items': {
@@ -340,6 +360,7 @@ const rootRouteChildren: RootRouteChildren = {
   CalculatorsRoute: CalculatorsRoute,
   CompareRoute: CompareRoute,
   EventsRoute: EventsRoute,
+  FightRoute: FightRoute,
   ItemsRoute: ItemsRoute,
   ModerationRoute: ModerationRoute,
   NpcsRoute: NpcsRoute,

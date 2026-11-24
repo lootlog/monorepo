@@ -1,15 +1,13 @@
 import { sortBy } from "es-toolkit";
 import type { Profession } from "../../../wiki/src/lib/equipment-set.ts";
 import type { SkillRanks } from "../../../wiki/src/lib/skills/skill-tree.ts";
+import { TREES, sum, type Fighter, type Model } from "./combat-model.js";
+import { activeSkill } from "../../../wiki/src/lib/fight/fighter-profile.ts";
+import { isSimulatedActive } from "../../../wiki/src/lib/fight/fight-skills.ts";
 import {
-  TREES,
-  activeSkill,
-  sum,
-  type Fighter,
-  type Model,
-} from "./combat-model.js";
-import { isSimulatedActive } from "./fight-skills.js";
-import { simulateFights, type FightSummary } from "./fight-summary.js";
+  simulateFights,
+  type FightSummary,
+} from "../../../wiki/src/lib/fight/fight-summary.ts";
 import {
   PROFESSION_NAMES,
   PROFESSIONS,

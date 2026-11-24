@@ -32,9 +32,9 @@ import {
 } from "./optimizer.js";
 import { createSimulator } from "./simulation.js";
 
-export const MODES = ["group", "duel"] as const;
+const MODES = ["group", "duel"] as const;
 
-export type Mode = (typeof MODES)[number];
+type Mode = (typeof MODES)[number];
 
 export type SolveOptions = {
   mode: Mode;
@@ -58,7 +58,7 @@ export const DEFAULT_OPTIONS: SolveOptions = {
   },
 };
 
-export const BUILD_PATHS = {
+const BUILD_PATHS = {
   free: { label: "Najlepszy według modelu", emphasis: null },
   speed: { label: "Szybkość (SA)", emphasis: "speed" },
   crit: { label: "Krytyk (zręczność + SKF)", emphasis: "hit" },
@@ -69,7 +69,7 @@ export const BUILD_PATHS = {
 
 const EMPHASIS_WEIGHT = 3;
 
-export type BuildPath = keyof typeof BUILD_PATHS;
+type BuildPath = keyof typeof BUILD_PATHS;
 
 const typicalBonuses = (level: number) => {
   const levelPower = 0.02 * level ** 2 + 2.6 * level;
@@ -574,5 +574,3 @@ export const solveHunterLoadout = (
     builds,
   };
 };
-
-export type HunterLoadoutSolution = ReturnType<typeof solveHunterLoadout>;

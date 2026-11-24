@@ -1,19 +1,16 @@
-import { sortBy } from "es-toolkit";
-import {
-  characterStats,
-  type CharacterStats,
-} from "../../../wiki/src/lib/character-stats.ts";
 import type { Profession } from "../../../wiki/src/lib/equipment-set.ts";
 import type { EquipmentSlotId } from "../../../wiki/src/lib/equipment-slots.ts";
-import { sumSkillBonuses } from "../../../wiki/src/lib/skills/skill-stats.ts";
+import type { Combatant } from "../../../wiki/src/lib/fight/fight-state.ts";
+import { armorReduced } from "../../../wiki/src/lib/fight/fight-strike.ts";
+import {
+  fighterProfile,
+  toCombatant,
+  type FighterProfile,
+} from "../../../wiki/src/lib/fight/fighter-profile.ts";
 import {
   skillPointsAt,
-  skillRankStats,
-  skillState,
-  skillValueAt,
   wornSkillWeapons,
   type SkillDefinition,
-  type SkillRanks,
 } from "../../../wiki/src/lib/skills/skill-tree.ts";
 import { SKILL_TREE as TREE_B } from "../../../wiki/src/lib/skills/trees/b.ts";
 import { SKILL_TREE as TREE_H } from "../../../wiki/src/lib/skills/trees/h.ts";
@@ -21,13 +18,6 @@ import { SKILL_TREE as TREE_M } from "../../../wiki/src/lib/skills/trees/m.ts";
 import { SKILL_TREE as TREE_P } from "../../../wiki/src/lib/skills/trees/p.ts";
 import { SKILL_TREE as TREE_T } from "../../../wiki/src/lib/skills/trees/t.ts";
 import { SKILL_TREE as TREE_W } from "../../../wiki/src/lib/skills/trees/w.ts";
-import {
-  SIMULATED_ACTIVE_EFFECTS,
-  isSimulatedActive,
-  type ActiveSkill,
-  type ComboGain,
-} from "./fight-skills.js";
-import { armorReduced, type Combatant } from "./fight-simulator.js";
 import { SLOTS, type Build, type Item } from "./items.js";
 
 export const TREES: Record<Profession, readonly SkillDefinition[]> = {
@@ -45,15 +35,7 @@ const UNAVOIDABLE: ReadonlySet<Profession> = new Set(["m"]);
 
 const FAST_ARROW_TIME_SAVED = 0.75;
 
-export type Fighter = {
-  profession: Profession;
-  stats: CharacterStats;
-  extra: Record<string, number>;
-  skillSlow: number;
-  slowMax: number;
-  actives: ActiveSkill[];
-  comboGain: ComboGain;
-};
+export type Fighter = FighterProfile;
 
 export const sum = (values: Iterable<number>) => {
   let total = 0;
@@ -68,124 +50,6 @@ const clamp = (value: number, min: number, max: number) =>
 
 export const average = ({ min, max }: { min: number; max: number }) =>
   (min + max) / 2;
-
-const EXTRA_ITEM_KEYS = [
-  "lowevade",
-  "acdmg",
-  "lowcrit",
-  "dmgmulphysical",
-  "pierceb",
-  "act",
-  "woundred",
-  "adest",
-];
-
-const EXTRA_SKILL_KEYS = [
-  "pierceb",
-  "act",
-  "woundred",
-  "redslow",
-  "fastarrow",
-  "critslow_per",
-  "decevade_per",
-  "dmg_from_player_per",
-  "dmgmulabsolute",
-  "energygain",
-];
-
-const durationOf = (raw: string) => {
-  const turns = Number(raw.split("@")[1]);
-
-  return Number.isFinite(turns) && turns > 0 ? turns : 0;
-};
-
-export const activeSkill = (
-  skill: SkillDefinition,
-  rank: number,
-  level: number,
-): ActiveSkill => {
-  const stats = skillRankStats(skill, rank);
-  const resource = stats.has("mana") ? "mana" : "energy";
-  const longest = Math.max(1, ...[...stats.values()].map(durationOf));
-
-  const effects = new Map(
-    [...stats].flatMap(([key, raw]) => {
-      const value = SIMULATED_ACTIVE_EFFECTS.has(key)
-        ? skillValueAt(raw, level)
-        : undefined;
-
-      return value === undefined
-        ? []
-        : [[key, { value, turns: durationOf(raw) || longest }] as const];
-    }),
-  );
-
-  return {
-    name: skill.name,
-    resource,
-    cost: skillValueAt(stats.get(resource) ?? "0", level) ?? 0,
-    cooldown: skillValueAt(stats.get("cooldown") ?? "0", level) ?? 0,
-    effects,
-  };
-};
-
-const COMBO_EVENTS = ["crit", "pierce", "wound", "block"] as const;
-
-const ACTIVE_PRIORITY = [
-  "combo_dmg_hpp-target",
-  "combo-max",
-  "sa_per",
-  "add_attacks",
-  "adddmg_physical-perw",
-  "active_crit",
-  "perdmg",
-  "energyrestore_per",
-  "red-sa",
-] as const;
-
-const activePriority = (skill: ActiveSkill) => {
-  const index = ACTIVE_PRIORITY.findIndex((key) => skill.effects.has(key));
-
-  return index === -1 ? ACTIVE_PRIORITY.length : index;
-};
-
-const learnedSkillEffects = (
-  tree: readonly SkillDefinition[],
-  ranks: SkillRanks,
-  level: number,
-  weapons: ReturnType<typeof wornSkillWeapons>,
-) => {
-  let skillSlow = 0;
-  const actives: ActiveSkill[] = [];
-  const comboGain = { crit: 0, pierce: 0, wound: 0, block: 0 };
-
-  for (const skill of tree) {
-    const state = skillState(skill, ranks, level, weapons);
-
-    if (state.rank === 0 || state.inactive) continue;
-
-    const rankStats = skillRankStats(skill, state.rank);
-
-    for (const event of COMBO_EVENTS) {
-      comboGain[event] +=
-        skillValueAt(rankStats.get(`combo-${event}`) ?? "0", level) ?? 0;
-    }
-
-    if (skill.active) {
-      const active = activeSkill(skill, state.rank, level);
-
-      if (isSimulatedActive(active)) actives.push(active);
-
-      continue;
-    }
-
-    const slow = rankStats.get("slow");
-
-    if (slow !== undefined) skillSlow += skillValueAt(slow, level) ?? 0;
-  }
-
-  return { skillSlow, actives: sortBy(actives, [activePriority]), comboGain };
-};
 
 const ARMOR_DESTRUCTION_HITS = 10;
 
@@ -230,48 +94,14 @@ export const createModel = (level: number) => {
       worn.set(slot as EquipmentSlotId, { item });
     }
 
-    const tree = TREES[build.profession];
-    const weapons = wornSkillWeapons(worn);
-    const bonuses = sumSkillBonuses(tree, build.ranks, level, weapons);
-
-    const stats = characterStats(
-      build.profession,
-      level,
-      items.map((item) => ({ item })),
-      bonuses,
-    );
-
-    const { skillSlow, actives, comboGain } = learnedSkillEffects(
-      tree,
-      build.ranks,
-      level,
-      weapons,
-    );
-
-    const extra: Record<string, number> = {};
-
-    for (const key of EXTRA_ITEM_KEYS) {
-      extra[key] = sum(items.map((item) => item.stats[key] ?? 0));
-    }
-
-    for (const key of EXTRA_SKILL_KEYS) {
-      extra[key] = (extra[key] ?? 0) + (bonuses.get(key) ?? 0);
-    }
-
-    extra.lowevade =
-      (extra.lowevade ?? 0) +
-      Math.round(((extra.decevade_per ?? 0) * cappedLevel) / 20);
-    extra.slowSum = sum(items.map((item) => item.stats.slow ?? 0));
-
-    const result: Fighter = {
+    const result = fighterProfile({
       profession: build.profession,
-      stats,
-      extra,
-      skillSlow,
-      slowMax: Math.max(0, ...items.map((item) => item.stats.slow ?? 0)),
-      actives,
-      comboGain,
-    };
+      level,
+      items: items.map((item) => ({ item })),
+      tree: TREES[build.profession],
+      ranks: build.ranks,
+      weapons: wornSkillWeapons(worn),
+    });
 
     if (key !== undefined) fighterCache.set(key, result);
 
@@ -417,56 +247,8 @@ export const createModel = (level: number) => {
     };
   };
 
-  const combatant = (fighter: Fighter, name: string): Combatant => {
-    const { stats, extra } = fighter;
-
-    return {
-      name,
-      profession: fighter.profession,
-      level,
-      hp: stats.hp,
-      physical: stats.physical,
-      offhand: stats.offhand,
-      fire: stats.fire,
-      frost: stats.frost,
-      light: stats.light,
-      poison: stats.poison,
-      wound: stats.wound,
-      attackSpeed: stats.attackSpeed,
-      critChance: stats.critChance,
-      critValue: stats.critValue,
-      critMagicValue: stats.critMagicValue,
-      critReduction: extra.lowcrit ?? 0,
-      pierce: stats.pierce,
-      pierceBlock: extra.pierceb ?? 0,
-      armor: stats.armor,
-      armorDestruction: extra.acdmg ?? 0,
-      evadePoints: stats.evadePoints,
-      evadeReduction: extra.lowevade ?? 0,
-      blockPoints: stats.blockPoints,
-      absorb: stats.absorb,
-      absorbMagic: stats.absorbMagic,
-      resistFire: stats.resFire,
-      resistFrost: stats.resFrost,
-      resistLight: stats.resLight,
-      resistPoison: extra.act ?? 0,
-      resistWound: extra.woundred ?? 0,
-      healing: stats.healing,
-      healingReduction: extra.adest ?? 0,
-      energy: stats.energy,
-      energyGain: extra.energygain ?? 0,
-      mana: stats.mana,
-      physicalBonus: extra.dmgmulphysical ?? 0,
-      damageBonus: extra.dmgmulabsolute ?? 0,
-      damageTakenBonus: extra.dmg_from_player_per ?? 0,
-      enemySlow: ((extra.slowSum ?? 0) + fighter.skillSlow) / 100,
-      slowReduction: extra.redslow ?? 0,
-      fastArrowChance: extra.fastarrow ?? 0,
-      critSlow: extra.critslow_per ?? 0,
-      comboGain: fighter.comboGain,
-      actives: fighter.actives,
-    };
-  };
+  const combatant = (fighter: Fighter, name: string): Combatant =>
+    toCombatant(fighter, name);
 
   return { cappedLevel, skillPoints, fighter, duelSide, combatant };
 };

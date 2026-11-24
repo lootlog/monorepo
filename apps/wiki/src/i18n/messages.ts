@@ -30,6 +30,7 @@ const messages = {
     calculators: "Kalkulatory",
     sockets: "Gniazda",
     set: "Mój zestaw",
+    fight: "Symulator walki",
     breadcrumbs: "Ścieżka strony",
     menu: "Menu",
     closeMenu: "Zamknij menu",
@@ -169,6 +170,42 @@ const messages = {
     statSourceItems: "Sam ekwipunek",
     statSourceSkills: "Ekwipunek + umiejętności",
     statSourceCharacter: "Cała postać",
+  },
+  fightPage: {
+    title: "Symulator walki",
+    description:
+      "Twoja postać to zestaw z kreatora, przeciwnik ma własny zestaw. Symulacja rozgrywa {{runs}} szybkich walk według wzorów z pomocy Margonem i pokazuje przebieg jednej z nich.",
+    sections: "Części symulatora",
+    myTab: "Twoja postać",
+    opponentTab: "Przeciwnik",
+    fightTab: "Walka",
+    myName: "Ty",
+    opponentName: "Przeciwnik",
+    simulate: "Symuluj walkę",
+    resimulate: "Symuluj ponownie",
+    simulating: "Liczę…",
+    missingProfession: "Wybierz profesję obu postaci, żeby zasymulować walkę.",
+    notSimulated:
+      "Ustaw obie postacie i kliknij „Symuluj walkę”. Zmiany w zestawach wymagają ponownej symulacji.",
+    stale: "Zestawy zmieniły się od ostatniej symulacji.",
+    winRate: "Twoje wygrane",
+    winRateDetail: "w {{runs}} walkach",
+    lossRate: "Przegrane",
+    drawRate: "Remisy",
+    drawRateDetail: "limit tur bez zwycięzcy",
+    averageMoves: "Średnio ruchów",
+    averageMovesDetail: "Ty {{mine}} : {{theirs}} przeciwnik",
+    hpLeft: "Twoje życie na koniec",
+    hpLeftDetail: "przeciwnikowi zostaje {{theirs}}",
+    sampleTitle: "Przykładowa walka",
+    sampleWon: "Tę walkę wygrywasz.",
+    sampleLost: "Tę walkę przegrywasz.",
+    sampleDraw: "Ta walka kończy się remisem.",
+    anotherSample: "Inna przykładowa walka",
+    ignoredSkills:
+      "Symulacja pomija umiejętności: {{skills}}. Ich efekty nie są jeszcze modelowane.",
+    limits:
+      "Nie liczymy bonusów legendarnych, kontry, ogłuszeń, oczyszczania ani bandażowania. Wynik to oszacowanie, nie zapis prawdziwej walki.",
   },
   character: {
     hint: "Statystyki postaci z jej poziomu i profesji, ekwipunku i działających umiejętności pasywnych. Szanse na unik i blok liczone wobec przeciwnika z tego samego poziomu.",
@@ -740,6 +777,8 @@ const messages = {
       "Policz unik, blok, bonusy legendarne i koszty usług według wzorów z gry.",
     socketsDescription:
       "Sprawdź, jak powstają symbole i które bonusy legendarne pasują do gniazd.",
+    fightDescription:
+      "Ustaw swoją postać i przeciwnika, a potem sprawdź szanse w szybkiej walce i jej przebieg tura po turze.",
     open: "Otwórz",
     about: {
       title: "O wiki",

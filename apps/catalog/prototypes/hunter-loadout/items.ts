@@ -71,7 +71,7 @@ const EQUIPMENT_TYPES = new Set<string>([
   ]),
 ]);
 
-export const SOURCE_GROUPS = {
+const SOURCE_GROUPS = {
   titan: ["TITAN"],
   colossus: ["COLOSSUS"],
   hero: ["HERO", "EVENT_HERO"],
@@ -99,7 +99,7 @@ export const RARITIES = [
   "common",
 ] as const;
 
-export type Rarity = (typeof RARITIES)[number];
+type Rarity = (typeof RARITIES)[number];
 
 export type ItemFilters = {
   sources: ReadonlyArray<SourceGroup>;
@@ -141,13 +141,7 @@ export type Item = {
 
 const TEMPORARY_KEYS = ["expire_duration", "timelimit", "ttl", "expires"];
 
-export const NON_PHYSICAL_DAMAGE_KEYS = [
-  "poison",
-  "wound",
-  "fire",
-  "frost",
-  "light",
-];
+const NON_PHYSICAL_DAMAGE_KEYS = ["poison", "wound", "fire", "frost", "light"];
 
 export const loadItems = async (databaseUrl: string | undefined) => {
   const sql = databaseUrl === undefined ? new SQL() : new SQL(databaseUrl);
