@@ -44,6 +44,19 @@
         "dev"
       ],
       "port": 3012
+    },
+    {
+      "name": "hunter-loadout-prototype-hot",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": [
+        "--hot",
+        "--env-file=apps/catalog/.env.example",
+        "apps/catalog/prototypes/hunter-loadout/server.ts"
+      ],
+      "env": {
+        "PORT": "4318"
+      },
+      "port": 4318
     }
   ]
 }
