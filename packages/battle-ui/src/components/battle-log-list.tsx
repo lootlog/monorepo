@@ -25,7 +25,6 @@ export type BattleLogListProps = {
   events?: RawBattleParsedEvent[];
   characterId?: string;
   warriors: Warrior[];
-  userTeam?: number;
   selectedTurn?: number | null;
   scrollToSelectedTurnRequestId?: number;
   scrollViewportRef: RefObject<HTMLDivElement | null>;
@@ -42,7 +41,6 @@ export const BattleLogList: FC<BattleLogListProps> = ({
   events,
   warriors,
   characterId,
-  userTeam,
   selectedTurn,
   scrollToSelectedTurnRequestId = 0,
   scrollViewportRef,
@@ -272,7 +270,6 @@ export const BattleLogList: FC<BattleLogListProps> = ({
               }
               eventIndex={item.index}
               turn={turn}
-              userTeam={userTeam}
               selected={selectedTurn === turn}
               searchMatched={searchMatchedTurnsSet.has(turn)}
               activeSearchMatch={activeSearchTurn === turn}

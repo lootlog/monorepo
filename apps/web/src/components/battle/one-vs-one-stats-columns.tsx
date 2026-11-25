@@ -3,7 +3,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { cn } from "cn";
 import type { Battle } from "@/lib/api/battlelog-types";
 import type { coreTableFeatures } from "@/lib/tanstack-table-features";
-import type { BattleStatValue } from "@/types/stats-customization.types";
+import type { BattleStatValue } from "@lootlog/battle-ui/lib/battle-stat-definitions";
 import { OneVsOneStatValueCell } from "./one-vs-one-stat-value-cell";
 import type { OneVsOneStatsRow } from "./one-vs-one-stats-rows";
 import { BATTLE_SURFACE_COLORS } from "@lootlog/battle-ui/lib/battle-color-palette";

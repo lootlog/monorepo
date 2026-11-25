@@ -65,8 +65,9 @@ function CompareRoute() {
             <>
               <ShareLinkButton
                 path="/compare"
-                param={ITEM_COMPARISON_PARAM}
-                value={encodeItemComparison(items)}
+                params={{
+                  [ITEM_COMPARISON_PARAM]: encodeItemComparison(items),
+                }}
               />
               <Button
                 type="button"

@@ -7,7 +7,7 @@ import { WikiHeader } from "./wiki-header";
 
 const PAGES_WITHOUT_DOCK = new Set(["/", "/set", "/fight"]);
 
-const FULL_WIDTH_PAGES = new Set(["/items", "/npcs"]);
+const FULL_WIDTH_PAGES = new Set(["/items", "/npcs", "/fight"]);
 
 export function WikiLayout({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();

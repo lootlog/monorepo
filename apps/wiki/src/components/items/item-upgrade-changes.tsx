@@ -3,6 +3,7 @@ import { ItemStatLine } from "@lootlog/ui/components/item-stat-line";
 import { t } from "@/i18n/messages";
 import type { StatChange } from "@/lib/stat-changes";
 import { PRODUCT_LOCALE } from "@lootlog/domain/locale";
+import { EmptyNotice } from "@/components/common/empty-notice";
 
 const percent = new Intl.NumberFormat(PRODUCT_LOCALE, {
   style: "percent",
@@ -16,11 +17,7 @@ export function ItemUpgradeChanges({
   changes: ReadonlyArray<StatChange>;
 }) {
   if (changes.length === 0) {
-    return (
-      <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
-        {t("upgrade.noChanges")}
-      </p>
-    );
+    return <EmptyNotice>{t("upgrade.noChanges")}</EmptyNotice>;
   }
 
   return (

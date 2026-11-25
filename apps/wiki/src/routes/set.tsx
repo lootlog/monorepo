@@ -11,6 +11,7 @@ import { EquipmentSetLayout } from "@/components/equipment/equipment-set-layout"
 import { EquipmentSetStats } from "@/components/equipment/equipment-set-stats";
 import { SetUpgradeCost } from "@/components/equipment/set-upgrade-cost";
 import { SetSocketComponents } from "@/components/equipment/set-socket-components";
+import { SetBattleMastery } from "@/components/skills/set-battle-mastery";
 import { SetSkillTree } from "@/components/skills/set-skill-tree";
 import { t } from "@/i18n/messages";
 import { wikiPageHead } from "@/lib/link-preview";
@@ -48,7 +49,10 @@ function SetRoute() {
             <EquipmentSetStats />
           </TabsContent>
           <TabsContent value="skills">
-            <SetSkillTree />
+            <div className="flex flex-col gap-10">
+              <SetSkillTree />
+              <SetBattleMastery />
+            </div>
           </TabsContent>
           <TabsContent value="cost">
             <SetUpgradeCost />

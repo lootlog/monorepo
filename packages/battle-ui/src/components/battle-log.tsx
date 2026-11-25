@@ -31,6 +31,7 @@ export type BattleLogProps = {
   onSelectedTurnScrollCancel?: (turn: number) => void;
   onTurnSelect?: (turn: number) => void;
   onTurnFocus?: (turn: number) => void;
+  hideHeading?: boolean;
 };
 
 export const BattleLog: FC<BattleLogProps> = ({
@@ -44,6 +45,7 @@ export const BattleLog: FC<BattleLogProps> = ({
   onSelectedTurnScrollCancel,
   onTurnSelect,
   onTurnFocus,
+  hideHeading = false,
 }) => {
   const { t } = useTranslation();
   const headingId = useId();
@@ -52,10 +54,6 @@ export const BattleLog: FC<BattleLogProps> = ({
   const [activeSearchMatchIndex, setActiveSearchMatchIndex] = useState(-1);
   const toolbarRef = useRef<HTMLDivElement>(null);
   const turnFocusHandlerRef = useRef(onTurnFocus ?? onTurnSelect);
-
-  const userTeam = warriors.find(
-    (warrior) => warrior.originalId === rawBattle.characterId,
-  )?.team;
 
   const { events } = rawBattle;
 
@@ -157,7 +155,6 @@ export const BattleLog: FC<BattleLogProps> = ({
     <BattleLogList
       events={events}
       characterId={rawBattle.characterId}
-      userTeam={userTeam}
       warriors={warriors}
       selectedTurn={selectedTurn}
       scrollToSelectedTurnRequestId={scrollToSelectedTurnRequestId}
@@ -174,22 +171,28 @@ export const BattleLog: FC<BattleLogProps> = ({
 
   return (
     <section aria-labelledby={headingId}>
-      <ListGroupHeading
-        id={headingId}
-        className={LIST_BAND_HEADING_CLASS}
-        trailing={
-          selectedTurn === null || selectedTurn === undefined ? undefined : (
-            <span className="font-normal tabular-nums text-muted-foreground">
-              {t("battleUi.log.turnPosition", {
-                current: selectedTurn,
-                total: events.length,
-              })}
-            </span>
-          )
-        }
-      >
-        {t("battleUi.log.title")}
-      </ListGroupHeading>
+      {hideHeading ? (
+        <h2 id={headingId} className="sr-only">
+          {t("battleUi.log.title")}
+        </h2>
+      ) : (
+        <ListGroupHeading
+          id={headingId}
+          className={LIST_BAND_HEADING_CLASS}
+          trailing={
+            selectedTurn === null || selectedTurn === undefined ? undefined : (
+              <span className="font-normal tabular-nums text-muted-foreground">
+                {t("battleUi.log.turnPosition", {
+                  current: selectedTurn,
+                  total: events.length,
+                })}
+              </span>
+            )
+          }
+        >
+          {t("battleUi.log.title")}
+        </ListGroupHeading>
+      )}
       <BattleLogSearchToolbar
         ref={toolbarRef}
         query={searchQuery}

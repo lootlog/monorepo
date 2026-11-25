@@ -1,5 +1,6 @@
 import { parseItemStatEntries } from "@lootlog/domain/item-stat";
 import type { Profession } from "@/lib/equipment-set";
+import { findEquipmentSlot } from "@/lib/equipment-slots";
 import type { SkillBonuses } from "@/lib/skills/skill-stats";
 import { SKILL_LEVEL_CAP } from "@/lib/skills/skill-tree";
 
@@ -45,6 +46,10 @@ const ATTRIBUTE_GAINS: Record<
 
 const MATURE_FROM_LEVEL = 21;
 
+const ATTRIBUTE_CRIT_FROM_LEVEL = 21;
+
+const ATTRIBUTE_CRIT_LEVEL_CAP = 300;
+
 const cappedLevel = (level: number) =>
   Math.min(SKILL_LEVEL_CAP, Math.max(1, Math.floor(level)));
 
@@ -73,6 +78,8 @@ type ChanceDamage = { chance: number; damage: number };
 
 type SlowingDamage = { slow: number; damage: number };
 
+type ResourcePair = { mana: number; energy: number };
+
 export type CharacterStats = {
   hp: number;
   strength: number;
@@ -82,13 +89,18 @@ export type CharacterStats = {
   offhand: DamageRange;
   fire: DamageRange;
   frost: DamageRange;
+  frostSlow: number;
   light: DamageRange;
   poison: SlowingDamage;
   wound: ChanceDamage;
+  offhandPoison: SlowingDamage;
+  offhandWound: ChanceDamage;
   attackSpeed: number;
   critChance: number;
   critValue: number;
   critMagicValue: number;
+  offhandCritChance: number;
+  offhandCritValue: number;
   pierce: number;
   armor: number;
   evadePoints: number;
@@ -104,6 +116,21 @@ export type CharacterStats = {
   healing: number;
   mana: number;
   energy: number;
+  physicalBonus: number;
+  evadeReduction: number;
+  critReduction: number;
+  critValueReduction: number;
+  armorDestruction: number;
+  armorDestructionResist: number;
+  absorbDestruction: number;
+  resistanceDestruction: number;
+  pierceBlock: number;
+  resistPoison: number;
+  resistWound: number;
+  counterChance: number;
+  parryChance: number;
+  enemyHealingCut: number;
+  drainResist: ResourcePair;
 };
 
 type WornItem = { item: { type: string | null; stat: string } };
@@ -121,10 +148,13 @@ type ItemSums = {
   offhandCrit: number;
   mainCritValue: number;
   fire: DamageRange;
-  frost: DamageRange;
+  frost: SlowingDamage;
   light: DamageRange;
   poison: SlowingDamage;
   wound: ChanceDamage;
+  offhandPoison: SlowingDamage;
+  offhandWound: ChanceDamage;
+  drainResist: ResourcePair;
 };
 
 const range = (numbers: readonly number[]): DamageRange =>
@@ -170,28 +200,35 @@ const DAMAGE_ENTRIES = new Map(
       sums.light = addRange(sums.light, range(numbers));
     },
     frost: (sums, numbers) => {
-      const { damage } = slowingDamage(numbers);
-
-      sums.frost = addRange(sums.frost, { min: damage, max: damage });
-    },
-    poison: (sums, numbers, isOffhand) => {
-      if (isOffhand) return;
-
       const effect = slowingDamage(numbers);
 
-      sums.poison = {
-        slow: sums.poison.slow + effect.slow,
-        damage: sums.poison.damage + effect.damage,
+      sums.frost = {
+        slow: Math.max(sums.frost.slow, effect.slow),
+        damage: sums.frost.damage + effect.damage,
+      };
+    },
+    poison: (sums, numbers, isOffhand) => {
+      const effect = slowingDamage(numbers);
+      const weapon = isOffhand ? "offhandPoison" : "poison";
+
+      sums[weapon] = {
+        slow: Math.max(sums[weapon].slow, effect.slow),
+        damage: sums[weapon].damage + effect.damage,
       };
     },
     wound: (sums, numbers, isOffhand) => {
-      if (isOffhand) return;
-
       const effect = chanceDamage(numbers);
+      const weapon = isOffhand ? "offhandWound" : "wound";
 
-      sums.wound = {
-        chance: sums.wound.chance + effect.chance,
-        damage: sums.wound.damage + effect.damage,
+      sums[weapon] = {
+        chance: sums[weapon].chance + effect.chance,
+        damage: sums[weapon].damage + effect.damage,
+      };
+    },
+    resmanaendest: (sums, [mana = 0, energy = 0]) => {
+      sums.drainResist = {
+        mana: sums.drainResist.mana + mana,
+        energy: sums.drainResist.energy + energy,
       };
     },
   } satisfies Record<string, AddEntry>),
@@ -222,10 +259,13 @@ const sumItems = (wornItems: readonly WornItem[]): ItemSums => {
     offhandCrit: 0,
     mainCritValue: 0,
     fire: { min: 0, max: 0 },
-    frost: { min: 0, max: 0 },
+    frost: { slow: 0, damage: 0 },
     light: { min: 0, max: 0 },
     poison: { slow: 0, damage: 0 },
     wound: { chance: 0, damage: 0 },
+    offhandPoison: { slow: 0, damage: 0 },
+    offhandWound: { chance: 0, damage: 0 },
+    drainResist: { mana: 0, energy: 0 },
   };
 
   for (const { item } of wornItems) {
@@ -257,11 +297,14 @@ const BASE_ENERGY = 50;
 
 const ELEMENT_SPREAD = 0.2;
 
+const LIGHT_MIN_BONUS_SHARE = 0.67;
+
 const elementalDamage = (
   { min, max }: DamageRange,
   attributeBonus: number,
   multiplier: number,
   spread: number,
+  minBonusShare = 1,
 ): DamageRange => {
   if (max <= 0) return { min: 0, max: 0 };
 
@@ -275,7 +318,7 @@ const elementalDamage = (
   }
 
   return {
-    min: Math.round((min + attributeBonus) * multiplier),
+    min: Math.round((min + minBonusShare * attributeBonus) * multiplier),
     max: Math.round((max + attributeBonus) * multiplier),
   };
 };
@@ -313,6 +356,10 @@ export const characterStats = (
     (item("sa") / 100) * (1 + skill("sa-clothes") / 100);
 
   const multiplier = 1 + item("dmgmul") / 100;
+
+  const elementMultiplier = (element: string) =>
+    multiplier * (1 + item(`dmgmul${element}`) / 100);
+
   const round = profession === "b" ? Math.floor : Math.round;
 
   const attributeDamage =
@@ -330,9 +377,39 @@ export const characterStats = (
     (items.mainDamage.max + physicalAttack) * multiplier,
   );
 
+  const isArmed = wornItems.some(
+    ({ item }) => findEquipmentSlot(item.type)?.id === "weapon",
+  );
+
+  const physical =
+    physicalMin > 0
+      ? { min: physicalMin, max: physicalMax }
+      : isArmed
+        ? { min: 0, max: 0 }
+        : { min: unarmed, max: unarmed };
+
   const offhandBonus = strength * skill("of-str");
 
-  const critDenominator = 0.5 * lvl;
+  const poisonOf = (weapon: SlowingDamage): SlowingDamage => ({
+    slow: weapon.slow / 100,
+    damage: Math.round(weapon.damage * elementMultiplier("poison")),
+  });
+
+  const woundOf = (weapon: ChanceDamage, skillChance: number) => ({
+    chance: weapon.chance + skillChance,
+    damage: Math.round(
+      weapon.damage *
+        elementMultiplier("wound") *
+        (1 + skill("wounddmgbon_perw") / 100),
+    ),
+  });
+
+  const attributeCrit = (points: number) =>
+    lvl >= ATTRIBUTE_CRIT_FROM_LEVEL
+      ? points / (0.5 * Math.min(lvl, ATTRIBUTE_CRIT_LEVEL_CAP)) / 100
+      : 0;
+
+  const baseCrit = 1 + 0.02 * lvl;
   const absorbLimit = intellect * 7;
 
   const evadePoints =
@@ -350,10 +427,7 @@ export const characterStats = (
     strength,
     agility,
     intellect,
-    physical:
-      physicalMin > 0
-        ? { min: physicalMin, max: physicalMax }
-        : { min: unarmed, max: unarmed },
+    physical,
     offhand: {
       min: round((items.offhandDamage.min + offhandBonus) * multiplier),
       max: round((items.offhandDamage.max + offhandBonus) * multiplier),
@@ -361,42 +435,44 @@ export const characterStats = (
     fire: elementalDamage(
       items.fire,
       intellect * skill("firebon"),
-      multiplier,
+      elementMultiplier("fire"),
       ELEMENT_SPREAD,
     ),
     frost: elementalDamage(
-      items.frost,
+      { min: items.frost.damage, max: items.frost.damage },
       intellect * skill("frostbon"),
-      multiplier,
+      elementMultiplier("frost"),
       0,
     ),
+    frostSlow: items.frost.slow / 100,
     light: elementalDamage(
       items.light,
       intellect * skill("lightbon"),
-      multiplier,
+      elementMultiplier("light"),
       ELEMENT_SPREAD,
+      LIGHT_MIN_BONUS_SHARE,
     ),
-    poison: {
-      slow: items.poison.slow / 100,
-      damage: Math.round(items.poison.damage * multiplier),
-    },
-    wound: {
-      chance: items.wound.chance + skill("woundchance"),
-      damage: Math.round(
-        items.wound.damage * (1 + skill("wounddmgbon_perw") / 100),
-      ),
-    },
+    poison: poisonOf(items.poison),
+    wound: woundOf(items.wound, skill("woundchance")),
+    offhandPoison: poisonOf(items.offhandPoison),
+    offhandWound: woundOf(items.offhandWound, 0),
     attackSpeed,
-    critChance: 1 + 0.02 * lvl + items.mainCrit + skill("crit"),
+    critChance: baseCrit + items.mainCrit + skill("crit"),
     critValue:
       (BASE_CRIT_MULTIPLIER +
-        strength / critDenominator / 100 +
+        attributeCrit(strength) +
         items.mainCritValue / 100 +
         skill("critval") / 100) *
       100,
+    offhandCritChance: baseCrit + items.offhandCrit + skill("of-crit"),
+    offhandCritValue:
+      (BASE_CRIT_MULTIPLIER +
+        attributeCrit(strength) +
+        skill("of-critval") / 100) *
+      100,
     critMagicValue:
       (BASE_CRIT_MULTIPLIER +
-        intellect / critDenominator / 100 +
+        attributeCrit(intellect) +
         item("critmval") / 100) *
       100,
     pierce: item("pierce") + skill("pierce"),
@@ -420,10 +496,29 @@ export const characterStats = (
     resFire: resistance("resfire"),
     resFrost: resistance("resfrost"),
     resLight: resistance("reslight"),
-    healing: Math.round(item("heal") * (1 + skill("heal1_per") / 100)),
+    healing: Math.round(
+      Math.max(0, item("heal") - item("adest")) *
+        (1 + skill("heal1_per") / 100),
+    ),
     mana: Math.floor(
       item("manabon") + skill("manabon") + skill("manastr") * intellect,
     ),
     energy: Math.floor(BASE_ENERGY + item("energybon") + skill("energybon")),
+    physicalBonus: item("dmgmulphysical"),
+    evadeReduction:
+      item("lowevade") + Math.round((skill("decevade_per") * lvl) / 20),
+    critReduction: item("lowcrit"),
+    critValueReduction: item("lowcritallval"),
+    armorDestruction: item("acdmg"),
+    armorDestructionResist: item("resacdmg"),
+    absorbDestruction: item("abdest"),
+    resistanceDestruction: item("resdmg") + skill("resdmg"),
+    pierceBlock: item("pierceb") + skill("pierceb"),
+    resistPoison: item("act") + skill("act"),
+    resistWound: item("woundred") + skill("woundred"),
+    counterChance: item("contra") + skill("contra"),
+    parryChance: item("parry") + skill("parry"),
+    enemyHealingCut: item("lowheal2turns"),
+    drainResist: items.drainResist,
   };
 };

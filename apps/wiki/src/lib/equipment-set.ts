@@ -1,4 +1,10 @@
 import { PROFESSION_OPTIONS } from "@/lib/item-options";
+import {
+  type BattleMastery,
+  decodeBattleMastery,
+  EMPTY_BATTLE_MASTERY,
+  encodeBattleMastery,
+} from "@/lib/skills/battle-mastery";
 import type { SkillRanks } from "@/lib/skills/skill-tree";
 import {
   EQUIPMENT_SLOTS,
@@ -22,6 +28,7 @@ export type EquipmentSet = {
   items: Partial<Record<EquipmentSlotId, number>>;
   upgrades: Partial<Record<EquipmentSlotId, ItemUpgrade>>;
   skills: SkillRanks;
+  mastery: BattleMastery;
 };
 
 export const EMPTY_EQUIPMENT_SET: EquipmentSet = {
@@ -30,6 +37,7 @@ export const EMPTY_EQUIPMENT_SET: EquipmentSet = {
   items: {},
   upgrades: {},
   skills: {},
+  mastery: EMPTY_BATTLE_MASTERY,
 };
 
 const without = <Key extends PropertyKey, Value>(
@@ -150,6 +158,7 @@ export const encodeEquipmentSet = (set: EquipmentSet) =>
     ...Object.entries(set.skills)
       .filter(([, rank = 0]) => rank > 0)
       .map(([id, rank]) => `${id}x${rank}`),
+    ...encodeBattleMastery(set.mastery),
   ].join("_");
 
 export const decodeEquipmentSet = (value: string): EquipmentSet => {
@@ -161,8 +170,16 @@ export const decodeEquipmentSet = (value: string): EquipmentSet => {
   const items: EquipmentSet["items"] = {};
   const upgrades: EquipmentSet["upgrades"] = {};
   const skills: SkillRanks = {};
+  let mastery = EMPTY_BATTLE_MASTERY;
 
   for (const part of parts) {
+    const decodedMastery = decodeBattleMastery(part);
+
+    if (decodedMastery) {
+      mastery = decodedMastery;
+      continue;
+    }
+
     const skill = SKILL_PART.exec(part);
 
     if (skill && Number(skill[2]) > 0) {
@@ -188,5 +205,6 @@ export const decodeEquipmentSet = (value: string): EquipmentSet => {
     items,
     upgrades,
     skills,
+    mastery,
   };
 };

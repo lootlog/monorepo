@@ -15,6 +15,7 @@ import { useSocketItems } from "@/hooks/use-socket-items";
 import { useWornItems } from "@/hooks/use-worn-items";
 import { t } from "@/i18n/messages";
 import { formatGold } from "@/lib/upgrade-cost-format";
+import { EmptyNotice } from "@/components/common/empty-notice";
 
 const findChosenSymbol = (
   options: ReadonlyArray<{ bonus: string; symbolId: number }>,
@@ -24,9 +25,6 @@ const findChosenSymbol = (
 
   return symbolId === undefined ? undefined : findSymbol(symbolId);
 };
-
-const EMPTY_STATE =
-  "rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground";
 
 export function SetSocketComponents() {
   const wornItems = useWornItems();
@@ -71,11 +69,11 @@ export function SetSocketComponents() {
       description={t("socket.set.description")}
     >
       {rows.length === 0 ? (
-        <p className={EMPTY_STATE}>{t("socket.set.noSockets")}</p>
+        <EmptyNotice>{t("socket.set.noSockets")}</EmptyNotice>
       ) : (
         <>
           {symbols.length === 0 ? (
-            <p className={EMPTY_STATE}>{t("socket.set.none")}</p>
+            <EmptyNotice>{t("socket.set.none")}</EmptyNotice>
           ) : (
             <>
               <StatsTileGrid

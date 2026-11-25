@@ -8,7 +8,7 @@ import {
 import { useTranslation } from "react-i18next";
 import type { useStatsCustomization } from "@/hooks/use-stats-customization";
 import { StatsCustomizationModal } from "./stats-customization/stats-customization-modal";
-import { STAT_CATEGORIES } from "./one-vs-one-stats-definitions";
+import { STAT_CATEGORIES } from "@lootlog/battle-ui/lib/battle-stat-definitions";
 
 type Props = {
   customization: ReturnType<typeof useStatsCustomization>;

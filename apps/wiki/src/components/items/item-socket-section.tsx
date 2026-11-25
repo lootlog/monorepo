@@ -16,6 +16,7 @@ import { useSocketOptions } from "@/hooks/use-socket-items";
 import { t } from "@/i18n/messages";
 import { legendaryBonusIcon } from "@/lib/legendary-bonuses";
 import { formatGold } from "@/lib/upgrade-cost-format";
+import { EmptyNotice } from "@/components/common/empty-notice";
 
 type ItemSocketSectionProps = {
   item: CatalogItemDtoOutput;
@@ -60,9 +61,7 @@ export function ItemSocketSection({
       {!isLoaded ? (
         <Skeleton className="h-28 w-full rounded-lg" />
       ) : options.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
-          {t("socket.noOptions")}
-        </p>
+        <EmptyNotice>{t("socket.noOptions")}</EmptyNotice>
       ) : (
         <fieldset className="grid grid-cols-[repeat(auto-fill,minmax(11rem,1fr))] gap-2">
           <legend className="sr-only">{t("socket.title")}</legend>

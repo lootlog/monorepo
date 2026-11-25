@@ -1,4 +1,4 @@
-import { STAT_CATEGORIES } from "@/components/battle/one-vs-one-stats-definitions";
+import { STAT_CATEGORIES } from "@lootlog/battle-ui/lib/battle-stat-definitions";
 import { battlePanelSingleBattleSearchParsers } from "@/features/user/battle-panel/battle-panel-search";
 import {
   useBattleDetailPanelStore,

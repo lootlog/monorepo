@@ -1,8 +1,32 @@
-import type {
-  BattleStatCategoryDefinition,
-  BattleStatDefinition,
-} from "@/types/stats-customization.types";
-import { BATTLE_TEXT_COLORS } from "@lootlog/battle-ui/lib/battle-color-palette";
+import { BATTLE_TEXT_COLORS } from "./battle-color-palette";
+import type { NumericWarriorStat } from "@lootlog/battle-processor/warrior";
+import type { BattleWarrior } from "./battle-types";
+
+export type BattleStatValue = BattleWarrior[keyof BattleWarrior];
+
+export type BattleStatDefinition = {
+  key: NumericWarriorStat;
+  labelKey: string;
+  color?: string;
+  format?: (value: BattleStatValue) => string;
+};
+
+type BattleStatCategoryId =
+  | "turnStats"
+  | "damageDealt"
+  | "damageTaken"
+  | "turns"
+  | "legendaryBonuses"
+  | "defenseDestroy"
+  | "defense"
+  | "healing"
+  | "resources";
+
+export type BattleStatCategoryDefinition = {
+  id: BattleStatCategoryId;
+  labelKey: string;
+  stats: BattleStatDefinition[];
+};
 
 const createStatDefinition = (
   key: BattleStatDefinition["key"],

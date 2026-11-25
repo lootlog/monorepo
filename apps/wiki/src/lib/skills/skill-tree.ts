@@ -24,6 +24,8 @@ export type SkillDefinition = {
   level: number;
   maxRank: number;
   active: boolean;
+  selfCast?: boolean;
+  spell?: boolean;
   row: number;
   column: number;
   element: "fire" | "frost" | "heal" | "light" | "physical" | "support";
@@ -117,15 +119,18 @@ export const wornSkillWeapons = (
     ),
   );
 
+  const oneAndHalf = weaponType === "ONE_AND_HALF_HAND_WEAPON";
+  const shield = secondaryType === "SHIELD";
+
   return new Set<SkillWeapon>([
-    ...has("1h", weaponType === "ONE_HAND_WEAPON"),
-    ...has("2h", weaponType === "TWO_HAND_WEAPON"),
-    ...has("bs", weaponType === "ONE_AND_HALF_HAND_WEAPON"),
+    ...has("1h", weaponType === "ONE_HAND_WEAPON" || (oneAndHalf && shield)),
+    ...has("2h", weaponType === "TWO_HAND_WEAPON" || (oneAndHalf && !shield)),
+    ...has("bs", oneAndHalf),
     ...has(
       "sw",
       weaponType === "ONE_HAND_WEAPON" ||
         weaponType === "TWO_HAND_WEAPON" ||
-        weaponType === "ONE_AND_HALF_HAND_WEAPON" ||
+        oneAndHalf ||
         secondaryType === "HELP_WEAPON",
     ),
     ...has(
@@ -133,7 +138,7 @@ export const wornSkillWeapons = (
       weaponType === "DISTANCE_WEAPON" && secondaryType === "QUIVER",
     ),
     ...has("orb", secondaryType === "ORB_WEAPON"),
-    ...has("sh", secondaryType === "SHIELD"),
+    ...has("sh", shield),
     ...has("h", secondaryType === "HELP_WEAPON"),
     ...has("fire", wornStats.has("fire")),
     ...has("frost", wornStats.has("frost")),
