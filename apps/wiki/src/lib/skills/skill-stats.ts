@@ -52,6 +52,7 @@ const PASSIVE_STATS = new Set([
   "combo-crit",
   "parry",
   "engback",
+  "rage",
   "rage_3turns",
   "absorb_per",
   "absorbm_per",

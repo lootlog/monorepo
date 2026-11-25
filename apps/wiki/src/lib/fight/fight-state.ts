@@ -1,4 +1,9 @@
-import type { ComboGain, MasteryQueue, SkillUserState } from "./fight-skills";
+import {
+  hasBuff,
+  type ComboGain,
+  type MasteryQueue,
+  type SkillUserState,
+} from "./fight-skills";
 
 export type Profession = "h" | "w" | "p" | "b" | "m" | "t";
 
@@ -39,6 +44,7 @@ export type Combatant = {
   readonly offhand: DamageRange;
   readonly fire: DamageRange;
   readonly frost: DamageRange;
+  readonly frostSlow: number;
   readonly light: DamageRange;
   readonly poison: { readonly damage: number; readonly slow: number };
   readonly wound: { readonly chance: number; readonly damage: number };
@@ -50,6 +56,7 @@ export type Combatant = {
   readonly pierce: number;
   readonly pierceBlock: number;
   readonly armor: number;
+  readonly shieldArmor: number;
   readonly armorDestruction: number;
   readonly evadePoints: number;
   readonly evadeReduction: number;
@@ -71,6 +78,13 @@ export type Combatant = {
   readonly damageTakenBonus: number;
   readonly enemySlow: number;
   readonly slowReduction: number;
+  readonly stunReduction: number;
+  readonly counterChance: number;
+  readonly parryChance: number;
+  readonly parryCounterChance: number;
+  readonly rageTurns: number;
+  readonly rageBonus: number;
+  readonly armorDestructionReduction: number;
   readonly fastArrowChance: number;
   readonly critSlow: number;
   readonly comboGain: ComboGain;
@@ -89,6 +103,10 @@ type Wound = DamageOverTime & { cap: number };
 
 type Poison = DamageOverTime & { slow: number };
 
+type FrostSlow = { slow: number; boost: number; turnsLeft: number };
+
+type SkillDamageOverTime = "fire" | "light" | "absolute";
+
 export type FighterState = SkillUserState & {
   index: number;
   team: number;
@@ -103,6 +121,9 @@ export type FighterState = SkillUserState & {
   poison: Poison | null;
   wound: Wound | null;
   anguish: DamageOverTime | null;
+  skillDots: Map<SkillDamageOverTime, DamageOverTime>;
+  frostSlow: FrostSlow | null;
+  stunned: boolean;
   holyTouchTurns: number;
   lastHealUsed: boolean;
   turnLost: boolean;
@@ -137,6 +158,9 @@ export const createState = (
   absorbMagicLeft: combatant.absorbMagic,
   healTriggers: 0,
   energyRestores: 0,
+  healUses: new Map(),
+  previousSkill: null,
+  castThisTurn: null,
   comboPoints: 0,
   masteryCursor: 0,
   cooldowns: new Map(),
@@ -144,6 +168,9 @@ export const createState = (
   poison: null,
   wound: null,
   anguish: null,
+  skillDots: new Map(),
+  frostSlow: null,
+  stunned: false,
   holyTouchTurns: 0,
   lastHealUsed: false,
   turnLost: false,
@@ -160,3 +187,31 @@ export const createState = (
   healed: 0,
   skillUses: new Map(),
 });
+
+export const MELEE: ReadonlySet<Profession> = new Set(["w", "p", "b"]);
+
+export const isImmune = (state: FighterState) =>
+  hasBuff(state, "immunity_to_dmg");
+
+export const takeDamage = (state: FighterState, amount: number) => {
+  state.hp -= amount;
+
+  if (state.hp < 1) {
+    state.alive = false;
+    state.hp = 0;
+  }
+};
+
+export const healBy = (state: FighterState, amount: number) => {
+  if (!state.alive) return 0;
+
+  const healed = Math.max(
+    0,
+    Math.min(state.combatant.hp - state.hp, Math.round(amount)),
+  );
+
+  state.hp += healed;
+  state.healed += healed;
+
+  return healed;
+};

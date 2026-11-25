@@ -9,7 +9,7 @@ import {
   type MasteryQueue,
 } from "./fight-skills";
 import { seededRandom, simulateFights } from "./fight-summary";
-import { activeSkill } from "./fighter-profile";
+import { activeSkill, fighterProfile, toCombatant } from "./fighter-profile";
 import { SKILL_TREE as WARRIOR_SKILLS } from "@/lib/skills/trees/w";
 
 const NO_DAMAGE = { min: 0, max: 0 };
@@ -23,6 +23,7 @@ const fighter = (overrides: Partial<Combatant>): Combatant => ({
   offhand: NO_DAMAGE,
   fire: NO_DAMAGE,
   frost: NO_DAMAGE,
+  frostSlow: 0,
   light: NO_DAMAGE,
   poison: { damage: 0, slow: 0 },
   wound: { chance: 0, damage: 0 },
@@ -34,6 +35,7 @@ const fighter = (overrides: Partial<Combatant>): Combatant => ({
   pierce: 0,
   pierceBlock: 0,
   armor: 0,
+  shieldArmor: 0,
   armorDestruction: 0,
   evadePoints: 0,
   evadeReduction: 0,
@@ -55,6 +57,13 @@ const fighter = (overrides: Partial<Combatant>): Combatant => ({
   damageTakenBonus: 0,
   enemySlow: 0,
   slowReduction: 0,
+  stunReduction: 0,
+  counterChance: 0,
+  parryChance: 0,
+  parryCounterChance: 0,
+  rageTurns: 0,
+  rageBonus: 0,
+  armorDestructionReduction: 0,
   fastArrowChance: 0,
   critSlow: 0,
   comboGain: { crit: 0, pierce: 0, wound: 0, block: 0 },
@@ -102,6 +111,7 @@ describe("simulateFights", () => {
       cost: 0,
       cooldown: 0,
       selfCast: false,
+      attacks: true,
       logged: [],
       effects: new Map([["active_decevade_per", { value: 20, turns: 1 }]]),
     };
@@ -200,6 +210,7 @@ describe("battle mastery", () => {
     cost: 0,
     cooldown,
     selfCast: false,
+    attacks: true,
     logged: [],
     effects: new Map([["adddmg_physical-perw", { value: 0, turns: 1 }]]),
   });
@@ -329,6 +340,193 @@ describe("battle mastery", () => {
   });
 });
 
+describe("skill effects", () => {
+  const skill = (
+    name: string,
+    effects: Record<string, readonly [value: number, turns: number]>,
+    attacks = true,
+  ): ActiveSkill => ({
+    id: 1,
+    name,
+    resource: "energy",
+    cost: 0,
+    cooldown: 0,
+    selfCast: false,
+    attacks,
+    logged: [],
+    effects: new Map(
+      Object.entries(effects).map(([key, [value, turns]]) => [
+        key,
+        { value, turns },
+      ]),
+    ),
+  });
+
+  const fightOf = (mine: Partial<Combatant>, theirs: Partial<Combatant>) => {
+    const events: FightEvent[] = [];
+    const tough = { hp: 10_000_000, physical: { min: 1000, max: 1000 } };
+
+    simulateFight(
+      {
+        teams: [
+          [fighter({ ...tough, ...mine })],
+          [fighter({ ...tough, attackSpeed: 1, ...theirs })],
+        ],
+      },
+      seededRandom(5),
+      (event) => {
+        events.push(event);
+      },
+    );
+
+    return events;
+  };
+
+  const strikesBy = (events: readonly FightEvent[], actor: number) =>
+    events.flatMap((event) =>
+      event.kind === "strike" && event.actor === actor ? [event] : [],
+    );
+
+  test("casts a spell skill without attacking in the same turn", () => {
+    const barrier = skill("bariera", { lightshield_per: [15, 8] }, false);
+
+    const events = fightOf(
+      { mastery: { steps: [barrier, "attack"], repeat: true } },
+      {},
+    );
+
+    const mine = events.filter((event) => event.actor === 0).slice(0, 3);
+
+    expect(mine.map((event) => event.kind)).toEqual([
+      "skill",
+      "strike",
+      "skill",
+    ]);
+  });
+
+  test("adds the taken-damage bonus from the damage done before armor", () => {
+    const mark = skill("piętno", { "taken_dmg_per-all": [15, 8] }, false);
+
+    const events = fightOf(
+      { mastery: { steps: [mark, "attack"], repeat: false } },
+      { armor: 600 },
+    );
+
+    const [hit] = strikesBy(events, 0);
+
+    expect(hit?.damage.physical).toBeLessThan(1000);
+    expect(hit?.takenBonus).toBe(150);
+  });
+
+  test("heals a quarter of the base share less with every further use", () => {
+    const bandage = skill("bandaż", { bandage_per: [10, 1] }, false);
+
+    const events = fightOf(
+      {
+        hp: 1_000_000,
+        attackSpeed: 10,
+        mastery: { steps: [bandage], repeat: true },
+      },
+      { physical: { min: 100_000, max: 100_000 }, attackSpeed: 20 },
+    );
+
+    const bandaged = events.flatMap((event) =>
+      event.kind === "skill" && event.bandaged > 0 ? [event.bandaged] : [],
+    );
+
+    expect(bandaged.slice(0, 3)).toEqual([100_000, 75_000, 50_000]);
+  });
+
+  test("takes the next turn from a stunned fighter, who cannot evade meanwhile", () => {
+    const blow = skill("ogłuszenie", { stun: [100, 1] });
+
+    const events = fightOf(
+      {
+        attackSpeed: 2,
+        mastery: { steps: [blow, "attack", "attack"], repeat: true },
+      },
+      { attackSpeed: 1, evadePoints: 10_000 },
+    );
+
+    const stunIndex = events.findIndex(
+      (event) => event.kind === "strike" && event.actor === 0 && event.stun,
+    );
+
+    const nextOfTarget = events
+      .slice(stunIndex + 1)
+      .find((event) => event.actor === 1 && event.kind !== "skill");
+
+    expect(stunIndex).toBeGreaterThanOrEqual(0);
+    expect(nextOfTarget?.kind).toBe("lostTurn");
+  });
+
+  test("counters a critical hit with an immediate strike of the defender", () => {
+    const events = fightOf(
+      { critChance: 100 },
+      { counterChance: 100, attackSpeed: 1 },
+    );
+
+    const mine = events.flatMap((event, index) =>
+      event.kind === "strike" && event.actor === 0 ? [index] : [],
+    );
+
+    expect(mine.length).toBeGreaterThan(2);
+
+    for (const index of mine.slice(0, 3)) {
+      const hit = events[index];
+      const reply = events[index + 1];
+
+      expect(hit?.kind === "strike" && hit.countered).toBe(true);
+      expect(reply?.kind === "strike" && reply.actor).toBe(1);
+    }
+  });
+
+  test("parries a melee strike to no damage but never a ranged one", () => {
+    const parried = (profession: Combatant["profession"]) =>
+      strikesBy(fightOf({ profession }, { parryChance: 100 }), 0).every(
+        (hit) => hit.parried && hit.damage.physical === 0,
+      );
+
+    expect(parried("w")).toBe(true);
+    expect(parried("h")).toBe(false);
+  });
+
+  test("gives a warrior the counter, rage and armor protection of learned passives", () => {
+    const warrior = toCombatant(
+      fighterProfile({
+        profession: "w",
+        level: 300,
+        items: [],
+        tree: WARRIOR_SKILLS,
+        ranks: { 20: 10, 120: 10 },
+        weapons: new Set(["2h"]),
+        mastery: { actions: [], repeat: false },
+      }),
+      "wojownik",
+    );
+
+    expect([
+      warrior.counterChance,
+      warrior.rageTurns,
+      warrior.armorDestructionReduction,
+    ]).toEqual([40, 1, 30]);
+  });
+
+  test("lets armor destruction reduction cut the armor an enemy destroys", () => {
+    const destroyed = (armorDestructionReduction: number) =>
+      strikesBy(
+        fightOf(
+          { armorDestruction: 100 },
+          { armor: 5000, armorDestructionReduction },
+        ),
+        0,
+      )[0]?.armorDestroyed;
+
+    expect(destroyed(0)).toBe(100);
+    expect(destroyed(30)).toBe(70);
+  });
+});
+
 describe("fightBattlePayload", () => {
   test("logs a fight that the battle processor reads back with the simulated damage, bonuses and winner", () => {
     const doubleShot: ActiveSkill = {
@@ -338,8 +536,33 @@ describe("fightBattlePayload", () => {
       cost: 10,
       cooldown: 2,
       selfCast: false,
+      attacks: true,
       logged: [],
       effects: new Map([["add_attacks", { value: 1, turns: 1 }]]),
+    };
+
+    const treacherousArrowhead: ActiveSkill = {
+      id: 8,
+      name: "Zdradziecki grot",
+      resource: "energy",
+      cost: 0,
+      cooldown: 4,
+      selfCast: false,
+      attacks: false,
+      logged: [],
+      effects: new Map([["dmg-target_absolute", { value: 2900, turns: 1 }]]),
+    };
+
+    const barrier: ActiveSkill = {
+      id: 53,
+      name: "Elektryczna bariera",
+      resource: "energy",
+      cost: 0,
+      cooldown: 8,
+      selfCast: true,
+      attacks: false,
+      logged: [["lightshield", null]],
+      effects: new Map([["lightshield_per", { value: 15, turns: 8 }]]),
     };
 
     const setup = {
@@ -352,7 +575,10 @@ describe("fightBattlePayload", () => {
             critChance: 40,
             pierce: 30,
             healing: 500,
-            mastery: { steps: [doubleShot], repeat: true },
+            mastery: {
+              steps: [doubleShot, treacherousArrowhead],
+              repeat: true,
+            },
             legendary: {
               ...NO_LEGENDARY_BONUSES,
               curse: 20,
@@ -371,6 +597,7 @@ describe("fightBattlePayload", () => {
             blockPoints: 400,
             armor: 800,
             fire: { min: 300, max: 500 },
+            mastery: { steps: [barrier, "attack"], repeat: true },
             legendary: {
               ...NO_LEGENDARY_BONUSES,
               glare: 20,
@@ -405,9 +632,10 @@ describe("fightBattlePayload", () => {
     const [hunter, warrior] = result.fighters;
 
     expect(battle.outcome.winningTeam).toBe((result.winner ?? -1) + 1);
-    expect(battle.warriors[0]?.damageDealtAfterDefensive).toBe(
-      hunter?.damageDealt,
-    );
+    expect(
+      (battle.warriors[0]?.damageDealtAfterDefensive ?? 0) +
+        (battle.warriors[0]?.trueDamageDealt ?? 0),
+    ).toBe(hunter?.damageDealt);
     expect(battle.warriors[0]?.damageDealt).toBeGreaterThan(
       hunter?.damageDealt ?? 0,
     );

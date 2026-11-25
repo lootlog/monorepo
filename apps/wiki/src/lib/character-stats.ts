@@ -82,6 +82,7 @@ export type CharacterStats = {
   offhand: DamageRange;
   fire: DamageRange;
   frost: DamageRange;
+  frostSlow: number;
   light: DamageRange;
   poison: SlowingDamage;
   wound: ChanceDamage;
@@ -121,7 +122,7 @@ type ItemSums = {
   offhandCrit: number;
   mainCritValue: number;
   fire: DamageRange;
-  frost: DamageRange;
+  frost: SlowingDamage;
   light: DamageRange;
   poison: SlowingDamage;
   wound: ChanceDamage;
@@ -170,9 +171,12 @@ const DAMAGE_ENTRIES = new Map(
       sums.light = addRange(sums.light, range(numbers));
     },
     frost: (sums, numbers) => {
-      const { damage } = slowingDamage(numbers);
+      const effect = slowingDamage(numbers);
 
-      sums.frost = addRange(sums.frost, { min: damage, max: damage });
+      sums.frost = {
+        slow: sums.frost.slow + effect.slow,
+        damage: sums.frost.damage + effect.damage,
+      };
     },
     poison: (sums, numbers, isOffhand) => {
       if (isOffhand) return;
@@ -222,7 +226,7 @@ const sumItems = (wornItems: readonly WornItem[]): ItemSums => {
     offhandCrit: 0,
     mainCritValue: 0,
     fire: { min: 0, max: 0 },
-    frost: { min: 0, max: 0 },
+    frost: { slow: 0, damage: 0 },
     light: { min: 0, max: 0 },
     poison: { slow: 0, damage: 0 },
     wound: { chance: 0, damage: 0 },
@@ -365,11 +369,12 @@ export const characterStats = (
       ELEMENT_SPREAD,
     ),
     frost: elementalDamage(
-      items.frost,
+      { min: items.frost.damage, max: items.frost.damage },
       intellect * skill("frostbon"),
       multiplier,
       0,
     ),
+    frostSlow: items.frost.slow / 100,
     light: elementalDamage(
       items.light,
       intellect * skill("lightbon"),

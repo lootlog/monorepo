@@ -56,6 +56,8 @@ const EXTRA_ITEM_KEYS = [
   "act",
   "woundred",
   "adest",
+  "contra",
+  "parry",
 ];
 
 const EXTRA_SKILL_KEYS = [
@@ -69,6 +71,13 @@ const EXTRA_SKILL_KEYS = [
   "dmg_from_player_per",
   "dmgmulabsolute",
   "energygain",
+  "redstun",
+  "contra",
+  "pcontra",
+  "parry",
+  "rage",
+  "rage_3turns",
+  "redacdmg_per",
 ];
 
 const COMBO_EVENTS = ["crit", "pierce", "wound", "block"] as const;
@@ -160,19 +169,44 @@ const durationOf = (raw: string) => {
   return Number.isFinite(turns) && turns > 0 ? turns : 0;
 };
 
-const LOGGED_SKILL_VALUES: ReadonlySet<string> = new Set([
-  "resfire_per",
-  "resfrost_per",
-  "reslight_per",
-  "antidote",
-  "achpp_per",
-  "active_decblock_per",
-  "active_absorbdest_per",
-]);
+const LOGGED_SKILL_VALUES: ReadonlyMap<string, string> = new Map(
+  [
+    "resfire_per",
+    "resfrost_per",
+    "reslight_per",
+    "antidote",
+    "achpp_per",
+    "active_decblock_per",
+    "active_absorbdest_per",
+    "active_decblock_per-enemies",
+    "alllowdmg",
+    "active_block_per",
+    "allslow_per",
+    "aura-sa_per",
+    "aura-ac_per",
+    "aura-resall",
+    "healall_per",
+    "critval-allies",
+    "critmval-allies",
+    "critval-enemies",
+    "critmval-enemies",
+    "lowheal_per-enemies",
+    "energyout",
+  ]
+    .map((key): [string, string] => [key, key])
+    .concat([["aura-adddmg2_per-meele_physical", "aura-adddmg2_per-meele"]]),
+);
 
 const LOGGED_SKILL_FLAGS = new Map([
   ["sunshield_per", "sunshield_per"],
   ["en-regen", "en-regen-cast"],
+  ["lightshield_per", "lightshield"],
+  ["taken_dmg_per-all", "+spell-taken_dmg-all"],
+  ["taken_dmg_per", "spell-taken_dmg"],
+  ["stinkbomb_crit", "stinkbomb_crit"],
+  ["stinkbomb_pierce", "stinkbomb_pierce"],
+  ["removestun-allies", "removestun-allies"],
+  ["removedot-allies", "removedot-allies"],
 ]);
 
 export const activeSkill = (
@@ -203,6 +237,7 @@ export const activeSkill = (
     cost: skillValueAt(stats.get(resource) ?? "0", level) ?? 0,
     cooldown: skillValueAt(stats.get("cooldown") ?? "0", level) ?? 0,
     selfCast: skill.selfCast ?? false,
+    attacks: !skill.selfCast && !skill.spell,
     effects,
     logged: [...stats].flatMap(
       ([key, raw]): (readonly [string, number | null])[] => {
@@ -210,11 +245,12 @@ export const activeSkill = (
 
         if (flag) return [[flag, null]];
 
-        const value = LOGGED_SKILL_VALUES.has(key)
-          ? skillValueAt(raw, level)
-          : undefined;
+        const logged = LOGGED_SKILL_VALUES.get(key);
+        const value = logged ? skillValueAt(raw, level) : undefined;
 
-        return value === undefined ? [] : [[key, value]];
+        return logged === undefined || value === undefined
+          ? []
+          : [[logged, value]];
       },
     ),
   };
@@ -320,6 +356,12 @@ export const fighterProfile = ({
 
   const slows = items.map((item) => itemNumber(item, "slow"));
 
+  extra.shieldArmor = totalOf(
+    items.flatMap((item) =>
+      item.item.type === "SHIELD" ? [itemNumber(item, "ac")] : [],
+    ),
+  );
+
   extra.slowSum = totalOf(slows);
 
   return {
@@ -341,6 +383,7 @@ export const toCombatant = (
   name: string,
 ): Combatant => {
   const { stats, extra } = profile;
+  const extraOf = (key: string) => extra[key] ?? 0;
 
   return {
     name,
@@ -351,6 +394,7 @@ export const toCombatant = (
     offhand: stats.offhand,
     fire: stats.fire,
     frost: stats.frost,
+    frostSlow: stats.frostSlow,
     light: stats.light,
     poison: stats.poison,
     wound: stats.wound,
@@ -358,33 +402,41 @@ export const toCombatant = (
     critChance: stats.critChance,
     critValue: stats.critValue,
     critMagicValue: stats.critMagicValue,
-    critReduction: extra.lowcrit ?? 0,
+    critReduction: extraOf("lowcrit"),
     pierce: stats.pierce,
-    pierceBlock: extra.pierceb ?? 0,
+    pierceBlock: extraOf("pierceb"),
     armor: stats.armor,
-    armorDestruction: extra.acdmg ?? 0,
+    shieldArmor: extraOf("shieldArmor"),
+    armorDestruction: extraOf("acdmg"),
     evadePoints: stats.evadePoints,
-    evadeReduction: extra.lowevade ?? 0,
+    evadeReduction: extraOf("lowevade"),
     blockPoints: stats.blockPoints,
     absorb: stats.absorb,
     absorbMagic: stats.absorbMagic,
     resistFire: stats.resFire,
     resistFrost: stats.resFrost,
     resistLight: stats.resLight,
-    resistPoison: extra.act ?? 0,
-    resistWound: extra.woundred ?? 0,
+    resistPoison: extraOf("act"),
+    resistWound: extraOf("woundred"),
     healing: stats.healing,
-    healingReduction: extra.adest ?? 0,
+    healingReduction: extraOf("adest"),
     energy: stats.energy,
-    energyGain: extra.energygain ?? 0,
+    energyGain: extraOf("energygain"),
     mana: stats.mana,
-    physicalBonus: extra.dmgmulphysical ?? 0,
-    damageBonus: extra.dmgmulabsolute ?? 0,
-    damageTakenBonus: extra.dmg_from_player_per ?? 0,
-    enemySlow: ((extra.slowSum ?? 0) + profile.skillSlow) / 100,
-    slowReduction: extra.redslow ?? 0,
-    fastArrowChance: extra.fastarrow ?? 0,
-    critSlow: extra.critslow_per ?? 0,
+    physicalBonus: extraOf("dmgmulphysical"),
+    damageBonus: extraOf("dmgmulabsolute"),
+    damageTakenBonus: extraOf("dmg_from_player_per"),
+    enemySlow: (extraOf("slowSum") + profile.skillSlow) / 100,
+    slowReduction: extraOf("redslow"),
+    stunReduction: extraOf("redstun"),
+    counterChance: extraOf("contra"),
+    parryChance: extraOf("parry"),
+    parryCounterChance: extraOf("pcontra"),
+    rageTurns: extraOf("rage"),
+    rageBonus: extraOf("rage_3turns"),
+    armorDestructionReduction: extraOf("redacdmg_per"),
+    fastArrowChance: extraOf("fastarrow"),
+    critSlow: extraOf("critslow_per"),
     comboGain: profile.comboGain,
     mastery: profile.mastery,
     legendary: profile.legendary,
