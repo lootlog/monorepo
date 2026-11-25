@@ -218,7 +218,6 @@ export const makeCatalogModule = (
     ];
 
     const params: SearchParams = {
-      attributesToSearchOn: ["name"],
       attributesToRetrieve: [
         "id",
         "name",
