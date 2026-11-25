@@ -17,6 +17,7 @@ import { useEquipmentSet } from "@/contexts/equipment-set-context";
 import { useFighterProfile } from "@/hooks/use-fighter-profile";
 import { useSharedStoredState } from "@/hooks/use-shared-stored-state";
 import { t } from "@/i18n/messages";
+import { wikiPageHead } from "@/lib/link-preview";
 import {
   decodeEquipmentSet,
   EMPTY_EQUIPMENT_SET,
@@ -32,9 +33,13 @@ import type { FighterProfile } from "@/lib/fight/fighter-profile";
 
 export const Route = createFileRoute("/fight")({
   component: FightRoute,
-  head: () => ({
-    meta: [{ title: `${t("fightPage.title")} | ${t("meta.title")}` }],
-  }),
+  head: () =>
+    wikiPageHead({
+      path: "/fight",
+      title: t("fightPage.title"),
+      description: t("fightPage.description", { runs: SIMULATED_FIGHTS }),
+      noindex: true,
+    }),
 });
 
 const STORED_OPPONENT = {

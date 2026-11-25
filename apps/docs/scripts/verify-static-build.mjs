@@ -72,7 +72,7 @@ await Promise.all(
 
     const [source, document] = await Promise.all([
       readFile(path.join(contentDirectory, fileName), "utf8"),
-      readFile(path.join(clientDirectory, routePath, "index.html"), "utf8"),
+      readFile(path.join(clientDirectory, `${routePath}.html`), "utf8"),
     ]);
 
     const title = source.match(/^title: (.+)$/mu)?.[1];

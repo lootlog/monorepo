@@ -42,7 +42,7 @@ import {
   itemResultsQueryOptions,
   prefetchPageQueries,
 } from "@/lib/catalog-page-queries";
-import { canonicalLink } from "@/lib/link-preview";
+import { wikiPageHead } from "@/lib/link-preview";
 import { findMargonemWorld } from "@lootlog/domain/margonem-worlds";
 import { EMPTY_ITEMS_SEARCH } from "@/navigation/wiki-navigation";
 
@@ -130,10 +130,12 @@ export const Route = createFileRoute("/items")({
     prefetchPageQueries(
       queryClient.prefetchInfiniteQuery(itemResultsQueryOptions(deps.params)),
     ),
-  head: () => ({
-    meta: [{ title: `${t("meta.itemsTitle")} | ${t("meta.title")}` }],
-    links: [canonicalLink("/items")],
-  }),
+  head: () =>
+    wikiPageHead({
+      path: "/items",
+      title: t("meta.itemsTitle"),
+      description: t("meta.itemsDescription"),
+    }),
   validateSearch: validateItemsSearch,
   search: { middlewares: [stripSearchParams(EMPTY_ITEMS_SEARCH)] },
 });

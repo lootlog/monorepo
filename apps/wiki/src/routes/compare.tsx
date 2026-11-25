@@ -13,6 +13,7 @@ import { ItemComparisonTable } from "@/components/comparison/item-comparison-tab
 import { useItemComparison } from "@/contexts/item-comparison-context";
 import { PortalPageHeader } from "@lootlog/ui/components/portal-page-header";
 import { t } from "@/i18n/messages";
+import { wikiPageHead } from "@/lib/link-preview";
 import { WIKI_GAME_VERSION } from "@/lib/catalog-links";
 import {
   encodeItemComparison,
@@ -23,9 +24,13 @@ import { EMPTY_ITEMS_SEARCH } from "@/navigation/wiki-navigation";
 
 export const Route = createFileRoute("/compare")({
   component: CompareRoute,
-  head: () => ({
-    meta: [{ title: `${t("comparison.metaTitle")} | ${t("meta.title")}` }],
-  }),
+  head: () =>
+    wikiPageHead({
+      path: "/compare",
+      title: t("comparison.metaTitle"),
+      description: t("meta.description"),
+      noindex: true,
+    }),
 });
 
 function CompareRoute() {

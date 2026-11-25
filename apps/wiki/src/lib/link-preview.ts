@@ -10,7 +10,11 @@ import {
   upgradeItemStat,
 } from "@lootlog/domain/item-upgrade";
 import { npcIconUrl } from "@lootlog/domain/npc-icon";
-import { PUBLIC_SITE_ORIGINS } from "@lootlog/domain/public-sites";
+import {
+  LOOTLOG_SOCIAL_IMAGE,
+  PUBLIC_SITE_ORIGINS,
+  publicPageHead,
+} from "@lootlog/domain/public-sites";
 import { itemIconUrl } from "@lootlog/domain/margonem-cdn";
 import {
   ITEM_STAT_FOOTER_SECTIONS,
@@ -29,9 +33,51 @@ import { itemStatText } from "@lootlog/ui/lib/item-stat-text";
 import { isRetiredDropOf } from "@/lib/group-items-by-monster";
 import { npcSummary } from "@/lib/npc-summary";
 
-export const canonicalLink = (path: string) => ({
-  rel: "canonical",
-  href: `${PUBLIC_SITE_ORIGINS.wiki}${path}`,
+type Breadcrumb = { name: string; path: string };
+
+const wikiUrl = (path: string) => `${PUBLIC_SITE_ORIGINS.wiki}${path}`;
+
+const breadcrumbScript = (trail: readonly Breadcrumb[]) => ({
+  type: "application/ld+json",
+  children: JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [{ name: t("navigation.home"), path: "/" }, ...trail].map(
+      ({ name, path }, index) => ({
+        "@type": "ListItem",
+        position: index + 1,
+        name,
+        item: wikiUrl(path),
+      }),
+    ),
+  }),
+});
+
+export const wikiPageHead = ({
+  path,
+  title,
+  documentTitle = title,
+  description,
+  noindex,
+  breadcrumbs,
+}: {
+  path: string;
+  title: string;
+  documentTitle?: string;
+  description: string;
+  noindex?: boolean;
+  breadcrumbs?: readonly Breadcrumb[];
+}) => ({
+  ...publicPageHead({
+    url: wikiUrl(path),
+    siteName: t("meta.title"),
+    title,
+    documentTitle: `${documentTitle} | ${t("meta.title")}`,
+    description,
+    image: { ...LOOTLOG_SOCIAL_IMAGE, alt: t("meta.title") },
+    noindex,
+  }),
+  scripts: breadcrumbs ? [breadcrumbScript(breadcrumbs)] : [],
 });
 
 const RARITY_COLORS: Partial<Record<DisplayItemRarity, string>> =
@@ -54,32 +100,34 @@ const listNames = (names: readonly string[]) => {
   return hidden > 0 ? `${listed} +${hidden}` : listed;
 };
 
-export const linkPreviewMeta = ({
-  title,
-  lines,
-  image,
-  color,
-}: LinkPreview) => {
+export const linkPreviewHead = (
+  { title, lines, image, color }: LinkPreview,
+  { path, section }: { path: string; section: Breadcrumb },
+) => {
   const description = lines
     .map((line) => line.trim())
     .filter(Boolean)
     .join("\n");
 
-  return [
-    { title: `${title} | ${t("meta.title")}` },
-    { name: "description", content: description },
-    { property: "og:site_name", content: t("meta.title") },
-    { property: "og:type", content: "website" },
-    { property: "og:title", content: title },
-    { property: "og:description", content: description },
-    ...(image
-      ? [
-          { property: "og:image", content: image },
-          { name: "twitter:card", content: "summary" },
-        ]
-      : []),
-    ...(color ? [{ name: "theme-color", content: color }] : []),
-  ];
+  const head = publicPageHead({
+    url: wikiUrl(path),
+    siteName: t("meta.title"),
+    title,
+    documentTitle: `${t("meta.gameTitle", { name: title })} | ${t("meta.title")}`,
+    description,
+    image: image
+      ? { url: image, alt: title }
+      : { ...LOOTLOG_SOCIAL_IMAGE, alt: t("meta.title") },
+  });
+
+  return {
+    ...head,
+    meta: [
+      ...head.meta,
+      ...(color ? [{ name: "theme-color", content: color }] : []),
+    ],
+    scripts: [breadcrumbScript([section, { name: title, path }])],
+  };
 };
 
 export const itemLinkPreview = (

@@ -1,8 +1,8 @@
 import {
-  Link,
   Navigate,
   createFileRoute,
   linkOptions,
+  notFound,
   redirect,
 } from "@tanstack/react-router";
 import {
@@ -10,14 +10,12 @@ import {
   useCatalogControllerGetItems,
 } from "@lootlog/client/catalog";
 import { PortalPageHeader } from "@lootlog/ui/components/portal-page-header";
-import { PageState } from "@lootlog/ui/components/page-state";
-import { Button } from "@lootlog/ui/components/button";
-import { SearchXIcon } from "lucide-react";
 import { itemIconUrl } from "@lootlog/domain/margonem-cdn";
 import { ITEM_RARITY_STYLES } from "@lootlog/ui/lib/item-rarity-colors";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { resolveItemRarity } from "@lootlog/domain/item-rarity";
 import { cn } from "cn";
+import { ItemNotFound } from "@/components/items/item-not-found";
 import { CompareButton } from "@/components/comparison/compare-button";
 import { EquipButton } from "@/components/equipment/equip-button";
 import { PageBreadcrumbs } from "@/components/article/page-breadcrumbs";
@@ -51,11 +49,7 @@ import {
   relatedDropsQuery,
   relatedDropsSource,
 } from "@/lib/catalog-page-queries";
-import {
-  canonicalLink,
-  itemLinkPreview,
-  linkPreviewMeta,
-} from "@/lib/link-preview";
+import { itemLinkPreview, linkPreviewHead } from "@/lib/link-preview";
 import { itemForCharacter } from "@lootlog/domain/elastic-level";
 import { isCharacterLevel } from "@/lib/equipment-set";
 import { findEquipmentSlot } from "@/lib/equipment-slots";
@@ -81,7 +75,7 @@ export const Route = createFileRoute("/items_/$itemSlug")({
   loader: async ({ params, location, context: { queryClient } }) => {
     const id = readPageSegment(params.itemSlug)?.id;
 
-    if (id === undefined) return { item: undefined };
+    if (id === undefined) throw notFound();
 
     const data = await queryClient
       .ensureQueryData(
@@ -89,9 +83,11 @@ export const Route = createFileRoute("/items_/$itemSlug")({
       )
       .catch(() => undefined);
 
-    const item = data?.hits[0];
+    if (!data) return { item: undefined };
 
-    if (!item) return { item };
+    const item = data.hits[0];
+
+    if (!item) throw notFound();
 
     if (itemPageParams(item).itemSlug !== params.itemSlug) {
       throw redirect({
@@ -127,19 +123,20 @@ export const Route = createFileRoute("/items_/$itemSlug")({
 
     return { item };
   },
-  head: ({ loaderData, match }) => ({
-    links: loaderData?.item
-      ? [canonicalLink(`/items/${itemPageParams(loaderData.item).itemSlug}`)]
-      : [],
-    meta: loaderData?.item
-      ? linkPreviewMeta(
+  head: ({ loaderData, match }) =>
+    loaderData?.item
+      ? linkPreviewHead(
           itemLinkPreview(loaderData.item, {
             characterLevel: match.search.level,
             upgrade: searchedUpgrade(match.search),
           }),
+          {
+            path: `/items/${itemPageParams(loaderData.item).itemSlug}`,
+            section: { name: t("navigation.items"), path: "/items" },
+          },
         )
-      : [{ title: `${t("meta.itemTitle")} | ${t("meta.title")}` }],
-  }),
+      : { meta: [{ title: `${t("meta.itemTitle")} | ${t("meta.title")}` }] },
+  notFoundComponent: ItemNotFound,
   validateSearch: (search: {
     upgrade?: unknown;
     bonus?: unknown;
@@ -193,21 +190,7 @@ function ItemRoute() {
   }
 
   if (id === undefined || (data && !item)) {
-    return (
-      <PageState
-        className="my-6"
-        icon={<SearchXIcon />}
-        title={t("catalog.itemNotFound")}
-        description={t("catalog.notFoundDescription")}
-      >
-        <Button
-          nativeButton={false}
-          render={<Link to="/items" search={EMPTY_ITEMS_SEARCH} />}
-        >
-          {t("catalog.backToItems")}
-        </Button>
-      </PageState>
-    );
+    return <ItemNotFound />;
   }
 
   if (!item) {

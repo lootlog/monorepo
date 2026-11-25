@@ -15,7 +15,7 @@ const CATALOG_TIMEOUT_MS = 10_000;
 
 const CACHE_CONTROL = "public, max-age=3600";
 
-const PAGES = ["/", "/items", "/npcs", "/events", "/calculators"];
+const PAGES = ["/", "/items", "/npcs", "/events", "/calculators", "/sockets"];
 
 export const Route = createFileRoute("/sitemap.xml")({
   server: {

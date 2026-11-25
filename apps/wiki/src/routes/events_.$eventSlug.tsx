@@ -1,21 +1,19 @@
-import { Link, createFileRoute, linkOptions } from "@tanstack/react-router";
+import { createFileRoute, linkOptions, notFound } from "@tanstack/react-router";
 import { orderBy } from "es-toolkit";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { PortalPageHeader } from "@lootlog/ui/components/portal-page-header";
-import { PageState } from "@lootlog/ui/components/page-state";
-import { Button } from "@lootlog/ui/components/button";
-import { SearchXIcon } from "lucide-react";
 import { PageBreadcrumbs } from "@/components/article/page-breadcrumbs";
 import { CatalogItemGrid } from "@/components/catalog/catalog-item-grid";
 import { NpcPortrait } from "@/components/common/npc-portrait";
 import { EventMonsterItems } from "@/components/events/event-monster-items";
+import { EventNotFound } from "@/components/events/event-not-found";
 import { eventItemsQueryOptions, useEventItems } from "@/hooks/use-event-items";
 import { t } from "@/i18n/messages";
 import { groupItemsByMonster } from "@/lib/group-items-by-monster";
 import { isHeroTrackersEvent } from "@/lib/hero-trackers";
 import { prefetchPageQueries } from "@/lib/catalog-page-queries";
 import { eventNameOf } from "@/lib/item-events";
-import { canonicalLink } from "@/lib/link-preview";
+import { wikiPageHead } from "@/lib/link-preview";
 import { formatNumber } from "@lootlog/domain/locale";
 
 export const Route = createFileRoute("/events_/$eventSlug")({
@@ -27,26 +25,28 @@ export const Route = createFileRoute("/events_/$eventSlug")({
 
     const items = queryClient.getQueryData(query.queryKey);
 
-    return { name: items && eventNameOf(items, params.eventSlug) };
+    const name = items && eventNameOf(items, params.eventSlug);
+
+    if (items && !name) throw notFound();
+
+    return { name };
   },
-  head: ({ loaderData, params }) => ({
-    meta: [
-      {
-        title: `${loaderData?.name ?? t("meta.eventTitle")} | ${t("meta.title")}`,
-      },
-      ...(loaderData?.name
-        ? [
-            {
-              name: "description",
-              content: t("linkPreview.eventDescription", {
-                name: loaderData.name,
-              }),
-            },
-          ]
-        : []),
-    ],
-    links: [canonicalLink(`/events/${params.eventSlug}`)],
-  }),
+  head: ({ loaderData, params }) =>
+    loaderData?.name
+      ? wikiPageHead({
+          path: `/events/${params.eventSlug}`,
+          title: loaderData.name,
+          documentTitle: t("meta.gameTitle", { name: loaderData.name }),
+          description: t("linkPreview.eventDescription", {
+            name: loaderData.name,
+          }),
+          breadcrumbs: [
+            { name: t("meta.eventsTitle"), path: "/events" },
+            { name: loaderData.name, path: `/events/${params.eventSlug}` },
+          ],
+        })
+      : { meta: [{ title: `${t("meta.eventTitle")} | ${t("meta.title")}` }] },
+  notFoundComponent: EventNotFound,
 });
 
 function EventRoute() {
@@ -65,18 +65,7 @@ function EventRoute() {
   }
 
   if (items && !name) {
-    return (
-      <PageState
-        className="my-6"
-        icon={<SearchXIcon />}
-        title={t("catalog.eventNotFound")}
-        description={t("catalog.notFoundDescription")}
-      >
-        <Button nativeButton={false} render={<Link to="/events" />}>
-          {t("catalog.backToEvents")}
-        </Button>
-      </PageState>
-    );
+    return <EventNotFound />;
   }
 
   const monsters = orderBy(

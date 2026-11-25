@@ -52,3 +52,72 @@ export const sitemapXml = (urls: readonly string[]): string => {
 ${entries}</urlset>
 `;
 };
+
+export type SocialImage = {
+  url: string;
+  width?: number;
+  height?: number;
+  alt: string;
+};
+
+export const LOOTLOG_SOCIAL_IMAGE: SocialImage = {
+  url: `${PUBLIC_SITE_ORIGINS.web}/brand/lootlog-social.png`,
+  width: 1200,
+  height: 630,
+  alt: "Lootlog",
+};
+
+const LARGE_CARD_MIN_WIDTH = 600;
+
+export const publicPageHead = ({
+  url,
+  siteName,
+  title,
+  documentTitle = title,
+  description,
+  image,
+  type = "website",
+  locale = "pl_PL",
+  noindex = false,
+}: {
+  url: string;
+  siteName: string;
+  title: string;
+  documentTitle?: string;
+  description: string;
+  image: SocialImage;
+  type?: "website" | "article";
+  locale?: "pl_PL" | "en_US";
+  noindex?: boolean;
+}) => ({
+  meta: [
+    { title: documentTitle },
+    { name: "description", content: description },
+    ...(noindex ? [{ name: "robots", content: "noindex, follow" }] : []),
+    { property: "og:type", content: type },
+    { property: "og:locale", content: locale },
+    { property: "og:site_name", content: siteName },
+    { property: "og:title", content: title },
+    { property: "og:description", content: description },
+    { property: "og:url", content: url },
+    { property: "og:image", content: image.url },
+    ...(image.width && image.height
+      ? [
+          { property: "og:image:width", content: String(image.width) },
+          { property: "og:image:height", content: String(image.height) },
+        ]
+      : []),
+    { property: "og:image:alt", content: image.alt },
+    {
+      name: "twitter:card",
+      content:
+        (image.width ?? 0) >= LARGE_CARD_MIN_WIDTH
+          ? "summary_large_image"
+          : "summary",
+    },
+    { name: "twitter:title", content: title },
+    { name: "twitter:description", content: description },
+    { name: "twitter:image", content: image.url },
+  ],
+  links: [{ rel: "canonical", href: url }],
+});

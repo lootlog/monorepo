@@ -13,12 +13,17 @@ import { SetUpgradeCost } from "@/components/equipment/set-upgrade-cost";
 import { SetSocketComponents } from "@/components/equipment/set-socket-components";
 import { SetSkillTree } from "@/components/skills/set-skill-tree";
 import { t } from "@/i18n/messages";
+import { wikiPageHead } from "@/lib/link-preview";
 
 export const Route = createFileRoute("/set")({
   component: SetRoute,
-  head: () => ({
-    meta: [{ title: `${t("equipment.title")} | ${t("meta.title")}` }],
-  }),
+  head: () =>
+    wikiPageHead({
+      path: "/set",
+      title: t("equipment.title"),
+      description: t("setPage.description"),
+      noindex: true,
+    }),
 });
 
 function SetRoute() {

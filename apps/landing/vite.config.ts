@@ -40,6 +40,8 @@ export default defineConfig(async ({ command, isPreview }) => ({
         enabled: true,
         crawlLinks: false,
         failOnError: true,
+        autoSubfolderIndex: false,
+        autoStaticPathsDiscovery: false,
       },
       sitemap: {
         enabled: false,

@@ -19,6 +19,17 @@ const messages = {
     npcTitle: "Potwór",
     eventTitle: "Event",
     eventsTitle: "Eventy",
+    gameTitle: "{{name}} – Margonem",
+    homeDescription:
+      "Wiki Margonem tworzone z łupów graczy: statystyki przedmiotów, potwory, dropy z elit, herosów i tytanów oraz kalkulatory.",
+    itemsDescription:
+      "Wyszukiwarka przedmiotów z Margonem: statystyki, wymagania, rzadkość i potwory, z których wypadają. Filtruj po typie, profesji i poziomie.",
+    npcsDescription:
+      "Potwory i NPC z Margonem: elity, herosi i tytani z lokacjami, poziomami i łupami zapisanymi przez graczy.",
+    eventsDescription:
+      "Eventy w Margonem: przedmioty z każdego eventu według potworów i rzadkości, ze statystykami i źródłami dropu.",
+    calculatorsDescription:
+      "Kalkulatory do Margonem: statystyki z atrybutów, krwawienie, leczenie, koszty w smoczych łuskach i nagrody z questów.",
   },
   navigation: {
     ariaLabel: "Wiki",

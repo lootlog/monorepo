@@ -12,7 +12,7 @@ import { prefetchHomeEvents } from "@/hooks/use-home-events";
 import { prefetchNewBosses } from "@/hooks/use-new-bosses";
 import { t } from "@/i18n/messages";
 import { prefetchPageQueries } from "@/lib/catalog-page-queries";
-import { canonicalLink } from "@/lib/link-preview";
+import { wikiPageHead } from "@/lib/link-preview";
 
 export const Route = createFileRoute("/")({
   component: HomeRoute,
@@ -22,14 +22,12 @@ export const Route = createFileRoute("/")({
       prefetchHomeEvents(queryClient),
       ...prefetchCatalogSize(queryClient),
     ),
-  head: () => ({
-    meta: [
-      {
-        title: `${t("meta.homeTitle")} | ${t("meta.title")}`,
-      },
-    ],
-    links: [canonicalLink("/")],
-  }),
+  head: () =>
+    wikiPageHead({
+      path: "/",
+      title: t("meta.homeTitle"),
+      description: t("meta.homeDescription"),
+    }),
 });
 
 function HomeRoute() {
