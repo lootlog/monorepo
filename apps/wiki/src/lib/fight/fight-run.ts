@@ -7,13 +7,17 @@ import {
   type FightResult,
 } from "./fight-simulator";
 import {
+  createFightTally,
   seededRandom,
-  simulateFights,
   type FightSummary,
 } from "./fight-summary";
 import { toCombatant, type FighterProfile } from "./fighter-profile";
 
-export const SIMULATED_FIGHTS = 400;
+export const SIMULATION_RUN_OPTIONS = [100, 500, 1000, 2500, 5000] as const;
+
+export const DEFAULT_SIMULATION_RUNS = 1000;
+
+const SLICE_MS = 12;
 
 export type FightSample = {
   result: FightResult;
@@ -26,7 +30,7 @@ export type FightRun = {
   sample: FightSample;
 };
 
-type Fighters = {
+export type Fighters = {
   mine: FighterProfile;
   opponent: FighterProfile;
   names: { mine: string; opponent: string };
@@ -38,6 +42,11 @@ const setupOf = ({ mine, opponent, names }: Fighters) => ({
     [toCombatant(opponent, names.opponent)],
   ],
 });
+
+const nextTask = () =>
+  new Promise<void>((resolve) => {
+    setTimeout(resolve, 0);
+  });
 
 export const sampleFight = (fighters: Fighters, seed: number): FightSample => {
   const setup = setupOf(fighters);
@@ -64,10 +73,36 @@ export const sampleFight = (fighters: Fighters, seed: number): FightSample => {
   };
 };
 
-export const runFight = (fighters: Fighters, seed: number): FightRun => ({
-  summary: simulateFights(setupOf(fighters), {
-    runs: SIMULATED_FIGHTS,
-    seed,
-  }),
-  sample: sampleFight(fighters, seed + 1),
-});
+export const runFight = async (
+  fighters: Fighters,
+  options: {
+    readonly runs: number;
+    readonly seed: number;
+    readonly signal: AbortSignal;
+    readonly onProgress: (share: number) => void;
+  },
+): Promise<FightRun | null> => {
+  const setup = setupOf(fighters);
+  const tally = createFightTally(setup);
+  const random = seededRandom(options.seed);
+  let done = 0;
+
+  while (done < options.runs) {
+    const sliceEnd = performance.now() + SLICE_MS;
+
+    do {
+      tally.add(simulateFight(setup, random, tally.record));
+      done += 1;
+    } while (done < options.runs && performance.now() < sliceEnd);
+
+    options.onProgress(done / options.runs);
+    await nextTask();
+
+    if (options.signal.aborted) return null;
+  }
+
+  return {
+    summary: tally.summary(),
+    sample: sampleFight(fighters, options.seed + 1),
+  };
+};

@@ -228,10 +228,6 @@ export type FighterState = SkillUserState & {
   lightAttacks: Map<number, number>;
   moves: number;
   damageDealt: number;
-  hits: number;
-  crits: number;
-  evaded: number;
-  pierced: number;
   healed: number;
 };
 
@@ -284,10 +280,6 @@ export const createState = (
   lightAttacks: new Map(),
   moves: 0,
   damageDealt: 0,
-  hits: 0,
-  crits: 0,
-  evaded: 0,
-  pierced: 0,
   healed: 0,
   skillUses: new Map(),
 });

@@ -151,10 +151,7 @@ const mainWeaponHit = (hit: Hit, scale: DamageScale) => {
 
   if (blocked) gainCombo(defender, d.comboGain.block);
 
-  if (pierced) {
-    attacker.pierced += 1;
-    gainCombo(attacker, a.comboGain.pierce);
-  }
+  if (pierced) gainCombo(attacker, a.comboGain.pierce);
 
   destroyArmor(
     defender,
@@ -351,25 +348,17 @@ const offhandHit = (hit: Hit, scale: DamageScale, mainParried: boolean) => {
   };
 };
 
-const countAttempt = (
+const rollAttemptEffects = (
   attacker: FighterState,
   random: () => number,
   crit: boolean,
-  evaded: boolean,
 ) => {
   const a = attacker.combatant;
   const holyTouch = chance(random, a.legendary.holytouch);
 
   if (holyTouch) attacker.holyTouchTurns = HOLY_TOUCH_TURNS;
 
-  attacker.hits += 1;
-
-  if (crit) {
-    attacker.crits += 1;
-    gainCombo(attacker, a.comboGain.crit);
-  }
-
-  if (evaded) attacker.evaded += 1;
+  if (crit) gainCombo(attacker, a.comboGain.crit);
 
   return holyTouch;
 };
@@ -580,7 +569,7 @@ export const strike = (
     random,
   );
 
-  const holyTouch = countAttempt(attacker, random, crit, evaded);
+  const holyTouch = rollAttemptEffects(attacker, random, crit);
 
   const effects = missed
     ? NO_HIT_EFFECTS

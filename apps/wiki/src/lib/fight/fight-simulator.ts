@@ -42,10 +42,6 @@ type FighterOutcome = {
   readonly hpLeft: number;
   readonly moves: number;
   readonly damageDealt: number;
-  readonly hits: number;
-  readonly crits: number;
-  readonly evaded: number;
-  readonly pierced: number;
   readonly healed: number;
   readonly skillUses: ReadonlyMap<string, number>;
 };
@@ -118,7 +114,6 @@ export type FightRecorder = (event: FightEvent) => void;
 
 export type FightResult = {
   readonly winner: number | null;
-  readonly time: number;
   readonly moves: number;
   readonly fighters: readonly FighterOutcome[];
 };
@@ -761,7 +756,6 @@ export const simulateFight = (
   const hpOf = () => states.map((state) => state.hp);
   const maxMoves = MOVES_PER_PLAYER * states.length;
   let moves = 0;
-  let time = 0;
 
   while (moves < maxMoves && livingTeams(states).size > 1) {
     const actor = nextActor(states);
@@ -794,7 +788,6 @@ export const simulateFight = (
     const timeFactor = lost ? lostTime : act(turn);
 
     actor.clock += attackTime(actor) * timeFactor;
-    time = actor.clock;
     actor.moves += 1;
     moves += 1;
     endTurn(actor);
@@ -804,7 +797,6 @@ export const simulateFight = (
 
   return {
     winner: alive.size === 1 ? ([...alive][0] ?? null) : null,
-    time,
     moves,
     fighters: states.map((state) => ({
       name: state.combatant.name,
@@ -813,10 +805,6 @@ export const simulateFight = (
       hpLeft: state.hp,
       moves: state.moves,
       damageDealt: state.damageDealt,
-      hits: state.hits,
-      crits: state.crits,
-      evaded: state.evaded,
-      pierced: state.pierced,
       healed: state.healed,
       skillUses: state.skillUses,
     })),
