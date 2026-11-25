@@ -283,6 +283,8 @@ const messages = {
     nextFight: "Następna walka na liście",
     replayLog: "Przebieg",
     replaySummary: "Podsumowanie",
+    battleStatsCaption: "Szczegółowe statystyki walki",
+    skillUsesTitle: "Użyte umiejętności",
     ignoredSkills:
       "Symulacja pomija umiejętności: {{skills}}. Ich efekty nie są jeszcze modelowane.",
     limits: "Wynik to oszacowanie, nie zapis prawdziwej walki.",

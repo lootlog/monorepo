@@ -1,11 +1,11 @@
 import { normalizeSearchText } from "@lootlog/domain/text-fold";
 import type { Battle } from "@/lib/api/battlelog-types";
-import type {
-  BattleStatCategoryDefinition,
-  BattleStatDefinition,
-  StatsCustomizationConfig,
-} from "@/types/stats-customization.types";
-import { STAT_CATEGORIES } from "./one-vs-one-stats-definitions";
+import type { StatsCustomizationConfig } from "@/types/stats-customization.types";
+import {
+  STAT_CATEGORIES,
+  type BattleStatCategoryDefinition,
+  type BattleStatDefinition,
+} from "@lootlog/battle-ui/lib/battle-stat-definitions";
 
 type VisibleStatDefinition = BattleStatDefinition & {
   label: string;

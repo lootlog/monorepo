@@ -3,7 +3,7 @@ import { X, Plus } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useTranslation } from "react-i18next";
-import type { BattleStatDefinition } from "@/types/stats-customization.types";
+import type { BattleStatDefinition } from "@lootlog/battle-ui/lib/battle-stat-definitions";
 import { SearchInput } from "@/components/ui/search-input";
 import { normalizeSearchText } from "@lootlog/domain/text-fold";
 

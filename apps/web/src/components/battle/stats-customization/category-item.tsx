@@ -5,10 +5,8 @@ import { Input } from "@lootlog/ui/components/input";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { cn } from "cn";
 import { useTranslation } from "react-i18next";
-import type {
-  BattleStatDefinition,
-  CategoryCustomization,
-} from "@/types/stats-customization.types";
+import type { CategoryCustomization } from "@/types/stats-customization.types";
+import type { BattleStatDefinition } from "@lootlog/battle-ui/lib/battle-stat-definitions";
 import { CategoryStatsSection } from "./category-stats-section";
 import { AvailableStatsSection } from "./available-stats-section";
 

@@ -17,11 +17,11 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { useTranslation } from "react-i18next";
+import type { StatsCustomizationConfig } from "@/types/stats-customization.types";
 import type {
   BattleStatCategoryDefinition,
   BattleStatDefinition,
-  StatsCustomizationConfig,
-} from "@/types/stats-customization.types";
+} from "@lootlog/battle-ui/lib/battle-stat-definitions";
 import { CategoryItem } from "./category-item";
 import { AddCategoryForm } from "./add-category-form";
 import { cn } from "cn";

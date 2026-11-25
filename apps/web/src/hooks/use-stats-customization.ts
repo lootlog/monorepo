@@ -1,9 +1,9 @@
 import { useLocalStorage } from "usehooks-ts";
 import type {
   CategoryCustomization,
-  BattleStatCategoryDefinition,
   StatsCustomizationConfig,
 } from "@/types/stats-customization.types";
+import type { BattleStatCategoryDefinition } from "@lootlog/battle-ui/lib/battle-stat-definitions";
 
 const STORAGE_KEY = "lootlog-battle-stats-customization-v2";
 

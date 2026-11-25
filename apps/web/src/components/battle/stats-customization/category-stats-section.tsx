@@ -3,7 +3,7 @@ import { Reorder } from "framer-motion";
 import { GripVertical, X } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import { useTranslation } from "react-i18next";
-import type { BattleStatDefinition } from "@/types/stats-customization.types";
+import type { BattleStatDefinition } from "@lootlog/battle-ui/lib/battle-stat-definitions";
 
 interface CategoryStatsSectionProps {
   statOrder: string[];

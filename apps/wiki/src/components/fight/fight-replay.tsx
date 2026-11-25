@@ -20,6 +20,7 @@ import { t } from "@/i18n/messages";
 import { battleI18n } from "@/lib/battle-i18n";
 import { fightOutcome } from "@/lib/fight/fight-list";
 import type { FightSample } from "@/lib/fight/fight-run";
+import { FightBattleStats } from "./fight-battle-stats";
 import { FightTurnDialog } from "./fight-turn-dialog";
 
 const OUTCOME_CLASS = {
@@ -48,6 +49,10 @@ export function FightReplay({
   const [scrollRequest, setScrollRequest] = useState(0);
   const { turns } = sample;
   const turn = selectedTurn === null ? undefined : turns[selectedTurn - 1];
+
+  const [mineWarrior, theirWarrior] = [1, 2].map((id) =>
+    sample.battle.warriors.find((warrior) => warrior.originalId === String(id)),
+  );
 
   const nameOf = (fighter: number) =>
     sample.result.fighters[fighter]?.name ?? "";
@@ -131,8 +136,11 @@ export function FightReplay({
           </TabsContent>
           <TabsContent value="summary" className="min-h-0">
             <ScrollArea className="md:h-full">
-              <div className="p-3">
+              <div className="flex flex-col gap-4 p-3">
                 <BattleSummarySection battle={sample.battle} />
+                {mineWarrior && theirWarrior ? (
+                  <FightBattleStats mine={mineWarrior} theirs={theirWarrior} />
+                ) : null}
               </div>
             </ScrollArea>
           </TabsContent>
