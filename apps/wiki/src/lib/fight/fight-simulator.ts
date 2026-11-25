@@ -6,6 +6,7 @@ import {
   NO_SKILL,
   paySkill,
   takeAction,
+  tickBuffs,
   type ActionPlan,
   type ActiveSkill,
 } from "./fight-skills";
@@ -601,51 +602,63 @@ const forcedTurnOf = (turn: Turn, actor: FighterState): Turn =>
     ? { ...turn, actor }
     : { ...turn, actor, allies: turn.enemies, enemies: turn.allies };
 
+const takeForcedTurn = (
+  turn: Turn,
+  attacker: FighterState,
+  defender: FighterState,
+): Strike | null => {
+  const { random, record, hpOf } = turn;
+  const forcedTurn = forcedTurnOf(turn, attacker);
+
+  startTurn(forcedTurn);
+
+  if (!attacker.alive) return null;
+
+  if (attacker.cursed) {
+    attacker.cursed = false;
+    record?.({ kind: "lostTurn", actor: attacker.index });
+
+    return null;
+  }
+
+  if (!reaches(attacker, defender)) {
+    if (canStepForward(attacker)) stepForward(forcedTurn);
+
+    return null;
+  }
+
+  const hit = strike(attacker, defender, NO_SKILL, random);
+  const lastHeal = tryLastHeal(defender, random);
+
+  record?.({
+    kind: "strike",
+    actor: attacker.index,
+    target: defender.index,
+    fastArrow: false,
+    ...hit,
+    lastHeal,
+    hp: hpOf(),
+  });
+
+  return hit;
+};
+
 const counterAttack = (
   turn: Turn,
   countering: FighterState,
   target: FighterState,
 ) => {
-  const { random, record, hpOf } = turn;
   let attacker = countering;
   let defender = target;
 
   for (let chain = 0; chain < MAX_COUNTER_CHAIN; chain += 1) {
     if (!attacker.alive || !defender.alive) return;
 
-    const forcedTurn = forcedTurnOf(turn, attacker);
+    const hit = takeForcedTurn(turn, attacker, defender);
 
-    startTurn(forcedTurn);
+    tickBuffs(attacker);
 
-    if (!attacker.alive) return;
-
-    if (attacker.cursed) {
-      attacker.cursed = false;
-      record?.({ kind: "lostTurn", actor: attacker.index });
-
-      return;
-    }
-
-    if (!reaches(attacker, defender)) {
-      if (canStepForward(attacker)) stepForward(forcedTurn);
-
-      return;
-    }
-
-    const hit = strike(attacker, defender, NO_SKILL, random);
-    const lastHeal = tryLastHeal(defender, random);
-
-    record?.({
-      kind: "strike",
-      actor: attacker.index,
-      target: defender.index,
-      fastArrow: false,
-      ...hit,
-      lastHeal,
-      hp: hpOf(),
-    });
-
-    if (!hit.countered) return;
+    if (!hit?.countered) return;
 
     [attacker, defender] = [defender, attacker];
   }

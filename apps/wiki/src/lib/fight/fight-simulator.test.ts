@@ -355,6 +355,24 @@ describe("skill effects", () => {
     expect(hit?.takenBonus).toBe(150);
   });
 
+  test("counts the forced turns of a counter towards the defender's debuffs", () => {
+    const mark = skill("piętno", { "taken_dmg_per-all": [15, 3] }, false);
+
+    const events = fightOf(
+      {
+        critChance: 100,
+        mastery: { steps: [mark, "attack"], repeat: false },
+      },
+      { counterChance: 100 },
+    );
+
+    const marked = strikesBy(events, 0)
+      .slice(0, 6)
+      .map((hit) => hit.takenBonus > 0);
+
+    expect(marked).toEqual([true, true, true, false, false, false]);
+  });
+
   test("heals a quarter of the base share less with every further use", () => {
     const bandage = skill("bandaż", { bandage_per: [10, 1] }, false);
 

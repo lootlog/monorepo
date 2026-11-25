@@ -333,6 +333,10 @@ export const endSkillTurn = (state: SkillUserState) => {
   state.previousSkill = state.castThisTurn;
   state.castThisTurn = null;
 
+  tickBuffs(state);
+};
+
+export const tickBuffs = (state: SkillUserState) => {
   for (const buff of state.buffs) {
     buff.turnsLeft -= 1;
     buff.age += 1;
