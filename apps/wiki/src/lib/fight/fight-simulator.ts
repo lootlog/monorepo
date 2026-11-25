@@ -163,9 +163,11 @@ const healingModifier = (
   enemies: readonly FighterState[],
 ) =>
   1 +
-  (buffTotal(state, "sunshield_per") +
+  (state.combatant.healingBonus +
+    buffTotal(state, "sunshield_per") +
     teamTotal(allies, (passives) => passives.allyHealing) -
-    teamTotal(enemies, (passives) => passives.enemyHealing)) /
+    teamTotal(enemies, (passives) => passives.enemyHealing) -
+    state.healCut) /
     100;
 
 const applyHealing = (
@@ -177,9 +179,7 @@ const applyHealing = (
     Math.max(
       0,
       state.combatant.healing - (state.enemyHealingCut?.amount ?? 0),
-    ) *
-    Math.max(0, healingModifier(state, allies, enemies)) *
-    (1 - state.healCut / 100);
+    ) * Math.max(0, healingModifier(state, allies, enemies));
 
   if (base <= 0 || state.hp >= state.combatant.hp) return 0;
 

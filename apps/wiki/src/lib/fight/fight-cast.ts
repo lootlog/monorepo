@@ -162,6 +162,8 @@ const tauntedBy = ({ target, enemies, plan, random }: Cast) => {
   return [target, ...randomPick(others, plan.effect(TAUNT), random)];
 };
 
+const FLOORED_CASTER_TEAM_BUFFS: ReadonlySet<string> = new Set(["aura-resall"]);
+
 const applyBuffs = (cast: Cast) => {
   const { caster, target, allies, enemies, skill } = cast;
   let armorBonus = 0;
@@ -180,6 +182,10 @@ const applyBuffs = (cast: Cast) => {
     const casterShare = TEAM_BUFF_CASTER_SHARE.get(key);
 
     if (casterShare !== undefined) {
+      const casterValue = FLOORED_CASTER_TEAM_BUFFS.has(key)
+        ? Math.floor(value * casterShare)
+        : value * casterShare;
+
       for (const ally of allies) {
         if (!ally.alive) continue;
 
@@ -193,7 +199,7 @@ const applyBuffs = (cast: Cast) => {
         addBuff(
           ally,
           key,
-          ally === caster ? value * casterShare : value,
+          ally === caster ? casterValue : value,
           turns,
           caster.index,
         );

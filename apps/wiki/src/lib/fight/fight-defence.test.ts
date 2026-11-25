@@ -226,6 +226,36 @@ describe("damage and defence", () => {
     expect(defender.wound).toMatchObject({ damage: 300, cap: 1200 });
   });
 
+  test("caps a refreshed wound's remaining duration at five turns", () => {
+    const attacker = createState(
+      fighter({
+        hp: 10_000_000,
+        physical: { min: 500, max: 500 },
+        wound: { chance: 100, damage: 400 },
+      }),
+      0,
+      0,
+    );
+
+    const defender = createState(fighter({ hp: 10_000_000 }), 1, 1);
+
+    strike(attacker, defender, NO_SKILL, seededRandom(5));
+    expect(defender.wound?.turnsLeft).toBe(5);
+
+    strike(attacker, defender, NO_SKILL, seededRandom(5));
+    expect(defender.wound?.turnsLeft).toBe(5);
+
+    if (defender.wound) defender.wound.turnsLeft = 4;
+
+    strike(attacker, defender, NO_SKILL, seededRandom(5));
+    expect(defender.wound?.turnsLeft).toBe(5);
+
+    if (defender.wound) defender.wound.turnsLeft = 2;
+
+    strike(attacker, defender, NO_SKILL, seededRandom(5));
+    expect(defender.wound?.turnsLeft).toBe(4);
+  });
+
   test("cuts the struck enemy's item healing for its next two turns", () => {
     const healsOf = (enemyHealingCut: number) =>
       eventsOf(
