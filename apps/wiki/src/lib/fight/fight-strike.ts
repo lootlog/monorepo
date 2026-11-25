@@ -35,6 +35,7 @@ export type Strike = {
   readonly pierceBlocked: boolean;
   readonly wounded: boolean;
   readonly armorDestroyed: number;
+  readonly strength: StrikeDamage;
   readonly damage: StrikeDamage;
 };
 
@@ -186,18 +187,21 @@ const physicalDamage = (
 ) => {
   const a = attacker.combatant;
 
-  const raw =
+  const strength =
     roll(random, a.physical) *
     (1 + plan.effect("adddmg_physical-perw") / 100) *
     (1 + a.physicalBonus / 100) *
-    (crit > 0 ? (crit * a.critValue) / 100 : 1) *
-    blockFactor;
+    (crit > 0 ? (crit * a.critValue) / 100 : 1);
+
+  const raw = strength * blockFactor;
 
   const reduced = pierced
     ? raw
     : armorReduced(raw, armorAgainst(defender, attacker));
 
-  if (!MELEE_ABSORBED.has(a.profession) || reduced <= 0) return reduced;
+  if (!MELEE_ABSORBED.has(a.profession) || reduced <= 0) {
+    return { strength, taken: reduced };
+  }
 
   const absorbed = absorbFrom(
     reduced,
@@ -208,7 +212,7 @@ const physicalDamage = (
 
   defender.absorbLeft -= absorbed.absorbed;
 
-  return absorbed.damage;
+  return { strength, taken: absorbed.damage };
 };
 
 const NO_ELEMENTAL_DAMAGE: ElementalDamage = { fire: 0, frost: 0, light: 0 };
@@ -216,7 +220,7 @@ const NO_ELEMENTAL_DAMAGE: ElementalDamage = { fire: 0, frost: 0, light: 0 };
 const magicDamage = (
   { attacker, defender, crit, random }: Hit,
   blockFactor: number,
-): ElementalDamage => {
+) => {
   const a = attacker.combatant;
   const d = defender.combatant;
   const armor = armorAgainst(defender, attacker);
@@ -237,22 +241,34 @@ const magicDamage = (
     base: number,
     buffKey: string,
   ) => {
-    if (range.max <= 0) return 0;
+    if (range.max <= 0) return { strength: 0, taken: 0 };
 
-    const raw = roll(random, range) * (1 + ramp) * magicCrit * blockFactor;
+    const strength = roll(random, range) * (1 + ramp) * magicCrit;
 
-    return (
-      armorReduced(raw, MAGIC_ARMOR_FACTOR * armor) *
-      (1 - resistance(defender, attacker, base, buffKey))
-    );
+    return {
+      strength,
+      taken:
+        armorReduced(strength * blockFactor, MAGIC_ARMOR_FACTOR * armor) *
+        (1 - resistance(defender, attacker, base, buffKey)),
+    };
   };
 
-  const fire = element(a.fire, 0, d.resistFire, "resfire_per");
-  const frost = element(a.frost, 0, d.resistFrost, "resfrost_per");
-  const light = element(a.light, lightRamp, d.resistLight, "reslight_per");
+  const fireHit = element(a.fire, 0, d.resistFire, "resfire_per");
+  const frostHit = element(a.frost, 0, d.resistFrost, "resfrost_per");
+  const lightHit = element(a.light, lightRamp, d.resistLight, "reslight_per");
+
+  const strength = {
+    fire: fireHit.strength,
+    frost: frostHit.strength,
+    light: lightHit.strength,
+  };
+
+  const fire = fireHit.taken;
+  const frost = frostHit.taken;
+  const light = lightHit.taken;
   const magic = fire + frost + light;
 
-  if (magic <= 0) return NO_ELEMENTAL_DAMAGE;
+  if (magic <= 0) return { strength, taken: NO_ELEMENTAL_DAMAGE };
 
   const absorbed = absorbFrom(
     magic,
@@ -265,10 +281,18 @@ const magicDamage = (
 
   const kept = absorbed.damage / magic;
 
-  return { fire: fire * kept, frost: frost * kept, light: light * kept };
+  return {
+    strength,
+    taken: { fire: fire * kept, frost: frost * kept, light: light * kept },
+  };
 };
 
-const mainWeaponHit = (hit: Hit, damageScale: number) => {
+type DamageScale = {
+  readonly dealt: number;
+  readonly taken: number;
+};
+
+const mainWeaponHit = (hit: Hit, scale: DamageScale) => {
   const { attacker, defender, plan, random } = hit;
   const a = attacker.combatant;
   const d = defender.combatant;
@@ -291,14 +315,22 @@ const mainWeaponHit = (hit: Hit, damageScale: number) => {
 
   defender.armorLost += a.armorDestruction;
 
-  const physical = Math.round(
-    physicalDamage(hit, pierced, blockFactor) * damageScale,
-  );
-
+  const physicalHit = physicalDamage(hit, pierced, blockFactor);
   const magic = magicDamage(hit, blockFactor);
-  const fire = Math.round(magic.fire * damageScale);
-  const frost = Math.round(magic.frost * damageScale);
-  const light = Math.round(magic.light * damageScale);
+  const dealt = (value: number) => Math.round(value * scale.dealt);
+  const taken = (value: number) => Math.round(value * scale.taken);
+
+  const strength = {
+    physical: dealt(physicalHit.strength),
+    fire: dealt(magic.strength.fire),
+    frost: dealt(magic.strength.frost),
+    light: dealt(magic.strength.light),
+  };
+
+  const physical = taken(physicalHit.taken);
+  const fire = taken(magic.taken.fire);
+  const frost = taken(magic.taken.frost);
+  const light = taken(magic.taken.light);
   let wounded = false;
 
   if (physical + fire + frost + light > 0) {
@@ -312,12 +344,19 @@ const mainWeaponHit = (hit: Hit, damageScale: number) => {
   }
 
   return {
+    strength,
     physical,
     fire,
     frost,
     light,
     blocked: blocked
-      ? Math.round(physical * (BLOCK_REDUCTION / (1 - BLOCK_REDUCTION)))
+      ? Math.round(
+          BLOCK_REDUCTION *
+            (strength.physical +
+              strength.fire +
+              strength.frost +
+              strength.light),
+        )
       : 0,
     pierced,
     pierceBlocked,
@@ -325,7 +364,10 @@ const mainWeaponHit = (hit: Hit, damageScale: number) => {
   };
 };
 
+const NO_DAMAGE = { physical: 0, fire: 0, frost: 0, light: 0 };
+
 const MISSED = {
+  strength: NO_DAMAGE,
   physical: 0,
   fire: 0,
   frost: 0,
@@ -400,11 +442,15 @@ export const strike = (
   const a = attacker.combatant;
   const d = defender.combatant;
 
-  const damageScale =
+  const dealtScale =
     (1 - plan.effect("lowdmg_self") / 100) *
     (1 + buffTotal(attacker, "perdmg") / 100) *
-    (1 + a.damageBonus / 100) *
-    (1 + d.damageTakenBonus / 100);
+    (1 + a.damageBonus / 100);
+
+  const scale = {
+    dealt: dealtScale,
+    taken: dealtScale * (1 + d.damageTakenBonus / 100),
+  };
 
   const ownCritChance = a.critChance + buffTotal(attacker, "active_crit");
 
@@ -445,17 +491,18 @@ export const strike = (
     ? MISSED
     : mainWeaponHit(
         { attacker, defender, plan, crit: critStrength, random },
-        damageScale,
+        scale,
       );
 
-  const offhandRaw =
+  const offhandStrength =
     a.offhand.max > 0
-      ? armorReduced(
-          roll(random, a.offhand) *
-            (crit ? (critStrength * a.critValue) / 100 : 1),
-          armorAgainst(defender, attacker),
-        ) * damageScale
+      ? roll(random, a.offhand) *
+        (crit ? (critStrength * a.critValue) / 100 : 1)
       : 0;
+
+  const offhandRaw =
+    armorReduced(offhandStrength, armorAgainst(defender, attacker)) *
+    scale.taken;
 
   const weaponDamage =
     main.physical + main.fire + main.frost + main.light + offhandRaw;
@@ -516,6 +563,11 @@ export const strike = (
     pierceBlocked: main.pierceBlocked,
     wounded: main.wounded,
     armorDestroyed: armorBefore - currentArmor(defender),
+    strength: {
+      ...main.strength,
+      physical: main.strength.physical + comboDamage,
+      offhand: Math.round(offhandStrength * scale.dealt),
+    },
     damage,
   };
 };

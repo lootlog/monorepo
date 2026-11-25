@@ -277,9 +277,9 @@ describe("fightBattlePayload", () => {
       events.push(event);
     });
 
-    const battle = new BattleProcessor("full").processBattle(
-      fightBattlePayload(setup, events, result),
-    );
+    const payload = fightBattlePayload(setup, events, result);
+
+    const battle = new BattleProcessor("full").processBattle(payload);
 
     const overTimeTaken = (actor: number) =>
       events.reduce(
@@ -293,6 +293,27 @@ describe("fightBattlePayload", () => {
     const [hunter, warrior] = result.fighters;
 
     expect(battle.outcome.winningTeam).toBe((result.winner ?? -1) + 1);
+    expect(battle.warriors[0]?.damageDealtAfterDefensive).toBe(
+      hunter?.damageDealt,
+    );
+    expect(battle.warriors[0]?.damageDealt).toBeGreaterThan(
+      hunter?.damageDealt ?? 0,
+    );
+
+    const blockedRows = payload.events
+      .flatMap((event) => event.f?.m ?? [])
+      .filter((row) => row.includes("-blok="))
+      .map((row) => ({
+        strength: Number(/;\+dmgd=(\d+)/.exec(row)?.[1]),
+        blocked: Number(/;-blok=(\d+)/.exec(row)?.[1]),
+      }));
+
+    expect(blockedRows.length).toBeGreaterThan(0);
+    expect(
+      blockedRows.every(
+        ({ strength, blocked }) => blocked === Math.round(0.3 * strength),
+      ),
+    ).toBe(true);
     expect(battle.warriors.map((entry) => entry.damageTaken)).toEqual([
       (warrior?.damageDealt ?? 0) + overTimeTaken(0),
       (hunter?.damageDealt ?? 0) + overTimeTaken(1),

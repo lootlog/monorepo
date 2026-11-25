@@ -10,9 +10,9 @@ const RANGED: ReadonlySet<Profession> = new Set(["h", "t"]);
 export const SIMULATED_CHARACTER_ID = "1";
 
 const ELEMENT_KEYS = [
-  ["fire", "dmgf"],
-  ["frost", "dmgc"],
-  ["light", "dmgl"],
+  ["dmgf", "fire"],
+  ["dmgc", "frost"],
+  ["dmgl", "light"],
 ] as const;
 
 const physicalKey = (combatant: Combatant) =>
@@ -20,22 +20,17 @@ const physicalKey = (combatant: Combatant) =>
 
 type Strike = Extract<FightEvent, { kind: "strike" }>;
 
-const damageEntries = (event: Strike, attacker: Combatant) => {
-  const entries: (readonly [string, number])[] = [
-    [physicalKey(attacker), event.damage.physical],
-    ...ELEMENT_KEYS.map(
-      ([element, key]) => [key, event.damage[element]] as const,
-    ),
-    ["dmgo", event.damage.offhand],
-  ];
-
-  const dealt = entries.filter(([, value]) => value > 0);
-
-  return dealt.length > 0 ? dealt : [[physicalKey(attacker), 0] as const];
-};
+const damageKeys = (event: Strike, attacker: Combatant) =>
+  (
+    [
+      [physicalKey(attacker), "physical"],
+      ...ELEMENT_KEYS,
+      ["dmgo", "offhand"],
+    ] as const
+  ).filter(([, part]) => event.strength[part] > 0);
 
 const strikeActions = (event: Strike, attacker: Combatant) => {
-  const damage = damageEntries(event, attacker);
+  const damage = damageKeys(event, attacker);
 
   return [
     ...(event.crit ? ["+crit"] : []),
@@ -43,7 +38,7 @@ const strikeActions = (event: Strike, attacker: Combatant) => {
     ...(event.puncture > 0 ? [`+legbon_puncture=${event.puncture}`] : []),
     ...(event.pierced ? ["+pierce"] : []),
     ...(event.fastArrow ? ["+fastarrow"] : []),
-    ...damage.map(([key, value]) => `+${key}=${value}`),
+    ...damage.map(([key, part]) => `+${key}=${event.strength[part]}`),
     ...(event.wounded ? ["+wound"] : []),
     ...(event.curse ? ["+legbon_curse"] : []),
     ...(event.anguish ? ["+legbon_anguish"] : []),
@@ -58,7 +53,7 @@ const strikeActions = (event: Strike, attacker: Combatant) => {
     ...(event.cleansed ? ["-legbon_cleanse"] : []),
     ...(event.critred > 0 ? [`-legbon_critred=${event.critred}`] : []),
     ...(event.facade > 0 ? [`-legbon_facade=${event.facade}`] : []),
-    ...damage.map(([key, value]) => `-${key}=${value}`),
+    ...damage.map(([key, part]) => `-${key}=${event.damage[part]}`),
   ];
 };
 
