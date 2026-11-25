@@ -25,6 +25,7 @@ import {
   upgradeCurrencyName,
 } from "@/lib/upgrade-cost-format";
 import { formatNumber } from "@lootlog/domain/locale";
+import { EmptyNotice } from "@/components/common/empty-notice";
 
 const TARGETS = ["set", "max"] as const;
 
@@ -89,13 +90,9 @@ export function SetUpgradeCost() {
       </ToggleGroup>
 
       {rows.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
-          {t("setPage.noItems")}
-        </p>
+        <EmptyNotice>{t("setPage.noItems")}</EmptyNotice>
       ) : points === 0 ? (
-        <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
-          {t("setPage.upgradeCostNone")}
-        </p>
+        <EmptyNotice>{t("setPage.upgradeCostNone")}</EmptyNotice>
       ) : (
         <>
           <StatsTileGrid

@@ -30,6 +30,7 @@ import {
   type FightRun,
 } from "@/lib/fight/fight-run";
 import type { FighterProfile } from "@/lib/fight/fighter-profile";
+import { EmptyNotice } from "@/components/common/empty-notice";
 
 export const Route = createFileRoute("/fight")({
   component: FightRoute,
@@ -155,11 +156,11 @@ function FightRoute() {
               onAnotherSample={showAnotherSample}
             />
           ) : (
-            <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
+            <EmptyNotice>
               {fighters
                 ? t("fightPage.notSimulated")
                 : t("fightPage.missingProfession")}
-            </p>
+            </EmptyNotice>
           )}
         </TabsContent>
       </Tabs>

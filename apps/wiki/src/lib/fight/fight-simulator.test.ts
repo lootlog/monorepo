@@ -3,7 +3,11 @@ import { describe, expect, test } from "vitest";
 import { fightBattlePayload } from "./fight-battle-log";
 import { simulateFight, type FightEvent } from "./fight-simulator";
 import { NO_LEGENDARY_BONUSES, type Combatant } from "./fight-state";
-import type { ActiveSkill } from "./fight-skills";
+import {
+  NO_MASTERY,
+  type ActiveSkill,
+  type MasteryQueue,
+} from "./fight-skills";
 import { seededRandom, simulateFights } from "./fight-summary";
 
 const NO_DAMAGE = { min: 0, max: 0 };
@@ -53,6 +57,7 @@ const fighter = (overrides: Partial<Combatant>): Combatant => ({
   critSlow: 0,
   comboGain: { crit: 0, pierce: 0, wound: 0, block: 0 },
   actives: [],
+  mastery: NO_MASTERY,
   legendary: NO_LEGENDARY_BONUSES,
   ...overrides,
 });
@@ -127,6 +132,83 @@ describe("simulateFights", () => {
     };
 
     expect(simulateFights(setup, RUNS)).toEqual(simulateFights(setup, RUNS));
+  });
+});
+
+describe("battle mastery", () => {
+  const skill = (id: number, name: string, cooldown: number): ActiveSkill => ({
+    id,
+    name,
+    resource: "energy",
+    cost: 0,
+    cooldown,
+    effects: new Map([["adddmg_physical-perw", { value: 0, turns: 1 }]]),
+  });
+
+  const actionsOf = (queue: MasteryQueue, turns: number) => {
+    const events: FightEvent[] = [];
+    const tough = { hp: 10_000_000, physical: { min: 1, max: 1 } };
+
+    simulateFight(
+      {
+        teams: [
+          [fighter({ ...tough, mastery: queue })],
+          [fighter({ ...tough, attackSpeed: 1 })],
+        ],
+      },
+      seededRandom(3),
+      (event) => {
+        events.push(event);
+      },
+    );
+
+    const actions: string[] = [];
+    let cast: string | null = null;
+
+    for (const event of events) {
+      if (event.actor !== 0) continue;
+
+      if (event.kind === "skill") cast = event.skill.name;
+
+      if (event.kind === "strike") {
+        actions.push(cast ?? "atak");
+        cast = null;
+      }
+    }
+
+    return actions.slice(0, turns);
+  };
+
+  const swing = skill(1, "cios", 0);
+  const slam = skill(2, "uderzenie", 2);
+
+  test("takes the queued actions turn by turn and starts over when repeating", () => {
+    expect(
+      actionsOf({ steps: [swing, "attack", slam], repeat: true }, 7),
+    ).toEqual([
+      "cios",
+      "atak",
+      "uderzenie",
+      "cios",
+      "atak",
+      "uderzenie",
+      "cios",
+    ]);
+  });
+
+  test("skips a slot whose skill is cooling down or not learned", () => {
+    expect(
+      actionsOf({ steps: [slam, null, slam, "attack"], repeat: true }, 5),
+    ).toEqual(["uderzenie", "atak", "atak", "uderzenie", "atak"]);
+  });
+
+  test("attacks once a list that does not repeat runs out", () => {
+    expect(actionsOf({ steps: [swing, swing], repeat: false }, 4)).toEqual([
+      "cios",
+      "cios",
+      "atak",
+      "atak",
+    ]);
   });
 });
 

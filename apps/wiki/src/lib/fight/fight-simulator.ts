@@ -1,9 +1,9 @@
 import {
   buffTotal,
-  chooseAction,
   endSkillTurn,
   isAttackSkill,
   payAndActivate,
+  takeAction,
   type ActionPlan,
   type ActiveSkill,
 } from "./fight-skills";
@@ -385,7 +385,7 @@ const attack = (turn: Turn, plan: ActionPlan) => {
 };
 
 const act = (turn: Turn) => {
-  const plan = chooseAction(turn.actor);
+  const plan = takeAction(turn.actor);
   const skillFactor = plan.skill ? castSkill(turn, plan.skill, plan) : 1;
 
   const attackFactor =

@@ -1,4 +1,9 @@
-import type { ActiveSkill, ComboGain, SkillUserState } from "./fight-skills";
+import type {
+  ActiveSkill,
+  ComboGain,
+  MasteryQueue,
+  SkillUserState,
+} from "./fight-skills";
 
 export type Profession = "h" | "w" | "p" | "b" | "m" | "t";
 
@@ -75,6 +80,7 @@ export type Combatant = {
   readonly critSlow: number;
   readonly comboGain: ComboGain;
   readonly actives: readonly ActiveSkill[];
+  readonly mastery: MasteryQueue;
   readonly legendary: LegendaryBonuses;
 };
 
@@ -138,6 +144,7 @@ export const createState = (
   healTriggers: 0,
   energyRestores: 0,
   comboPoints: 0,
+  masteryCursor: 0,
   cooldowns: new Map(),
   buffs: [],
   poison: null,

@@ -12,6 +12,7 @@ import {
   upgradeSlot,
 } from "@/lib/equipment-set";
 import { findEquipmentSlot } from "@/lib/equipment-slots";
+import { EMPTY_BATTLE_MASTERY } from "@/lib/skills/battle-mastery";
 import { useSetCatalogItems } from "@/hooks/use-worn-items";
 
 type EquipmentSetEditorProps = {
@@ -57,15 +58,24 @@ export function EquipmentSetEditor({
         unequip: (slotId) => update((current) => unequipSlot(current, slotId)),
         clear: () => update(() => EMPTY_EQUIPMENT_SET),
         setCharacter: (character) =>
-          update((current) => ({
-            ...current,
-            ...character,
-            skills:
-              character.profession === current.profession ? current.skills : {},
-          })),
+          update((current) =>
+            character.profession === current.profession
+              ? { ...current, ...character }
+              : {
+                  ...current,
+                  ...character,
+                  skills: {},
+                  mastery: EMPTY_BATTLE_MASTERY,
+                },
+          ),
         setSkillRank: (skillId, rank) =>
           update((current) => rankSkill(current, skillId, rank)),
         resetSkills: () => update((current) => ({ ...current, skills: {} })),
+        changeMastery: (change) =>
+          update((current) => ({
+            ...current,
+            mastery: change(current.mastery),
+          })),
       }}
     >
       {children}

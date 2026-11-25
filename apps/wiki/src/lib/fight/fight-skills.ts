@@ -18,11 +18,22 @@ export type ComboGain = {
 
 type Buff = { key: string; value: number; turnsLeft: number };
 
+type MasteryStep = ActiveSkill | "attack" | null;
+
+export type MasteryQueue = {
+  readonly steps: readonly MasteryStep[];
+  readonly repeat: boolean;
+};
+
+export const NO_MASTERY: MasteryQueue = { steps: [], repeat: false };
+
 export type SkillUserState = {
   combatant: {
     readonly energy: number;
     readonly actives: readonly ActiveSkill[];
+    readonly mastery: MasteryQueue;
   };
+  masteryCursor: number;
   energy: number;
   mana: number;
   energyRestores: number;
@@ -132,22 +143,44 @@ const wantsToUse = (state: SkillUserState, skill: ActiveSkill) => {
   return true;
 };
 
-export const chooseAction = (state: SkillUserState): ActionPlan => {
-  for (const skill of state.combatant.actives) {
-    if (!canUse(state, skill) || !wantsToUse(state, skill)) continue;
+const planFor = (state: SkillUserState, skill: ActiveSkill): ActionPlan => ({
+  skill,
+  comboSpent: isComboFinisher(skill)
+    ? Math.min(state.comboPoints, skill.effects.get("combo-max")?.value ?? 0)
+    : 0,
+  effect: (key) => skill.effects.get(key)?.value ?? 0,
+});
 
-    const comboSpent = isComboFinisher(skill)
-      ? Math.min(state.comboPoints, skill.effects.get("combo-max")?.value ?? 0)
-      : 0;
+const takeQueuedAction = (
+  state: SkillUserState,
+  { steps, repeat }: MasteryQueue,
+): ActionPlan => {
+  const span = repeat ? steps.length : steps.length - state.masteryCursor;
 
-    return {
-      skill,
-      comboSpent,
-      effect: (key) => skill.effects.get(key)?.value ?? 0,
-    };
+  for (let offset = 0; offset < span; offset += 1) {
+    const index = (state.masteryCursor + offset) % steps.length;
+    const step = steps[index] ?? null;
+
+    if (step === null || (step !== "attack" && !canUse(state, step))) continue;
+
+    state.masteryCursor = repeat ? (index + 1) % steps.length : index + 1;
+
+    return step === "attack" ? NO_SKILL : planFor(state, step);
   }
 
   return NO_SKILL;
+};
+
+export const takeAction = (state: SkillUserState): ActionPlan => {
+  const { mastery, actives } = state.combatant;
+
+  if (mastery.steps.length > 0) return takeQueuedAction(state, mastery);
+
+  const skill = actives.find(
+    (active) => canUse(state, active) && wantsToUse(state, active),
+  );
+
+  return skill ? planFor(state, skill) : NO_SKILL;
 };
 
 export const gainCombo = (state: SkillUserState, points: number) => {

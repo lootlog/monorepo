@@ -2,6 +2,7 @@ import { createContext, useContext } from "react";
 import type { CatalogItemDtoOutput } from "@lootlog/client/catalog";
 import type { EquipmentSet } from "@/lib/equipment-set";
 import type { EquipmentSlotId } from "@/lib/equipment-slots";
+import type { BattleMastery } from "@/lib/skills/battle-mastery";
 import type { ItemUpgrade } from "@lootlog/domain/item-upgrade";
 
 export type EquipEvent = {
@@ -19,6 +20,7 @@ type EquipmentSetContextValue = {
   setCharacter: (character: Pick<EquipmentSet, "profession" | "level">) => void;
   setSkillRank: (skillId: number, rank: number) => void;
   resetSkills: () => void;
+  changeMastery: (change: (mastery: BattleMastery) => BattleMastery) => void;
 };
 
 export const EquipmentSetContext =

@@ -20,6 +20,7 @@ export const useFighterProfile = (set: EquipmentSet) => {
       tree: tree ?? [],
       ranks: set.skills,
       weapons: wornSkillWeapons(wornItems),
+      mastery: set.mastery,
     }),
     isLoaded: isLoaded && !isPending,
   };

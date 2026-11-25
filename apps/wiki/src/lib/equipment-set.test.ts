@@ -37,6 +37,7 @@ describe("equipment set link", () => {
         gloves: { level: 0 as const, symbol: "curse" as const },
       },
       skills: { 41: 10, 168: 3 },
+      mastery: { actions: [41, -1, 168, 41], repeat: true },
     };
 
     expect(decodeEquipmentSet(encodeEquipmentSet(set))).toEqual(set);
@@ -45,7 +46,7 @@ describe("equipment set link", () => {
   it("keeps the readable parts of a mangled link", () => {
     expect(
       decodeEquipmentSet(
-        "x999_h12u9_zz_q5_b7u3ds_g4u5xyz_n3-nothing_168x4_7x0_9xx",
+        "x999_h12u9_zz_q5_b7u3ds_g4u5xyz_n3-nothing_168x4_7x0_9xx_mbx1_mb1..2",
       ),
     ).toEqual({
       profession: null,
@@ -53,6 +54,7 @@ describe("equipment set link", () => {
       items: { helmet: 12, boots: 7, gloves: 4, necklace: 3 },
       upgrades: { boots: { level: 3 }, gloves: { level: 5 } },
       skills: { 168: 4 },
+      mastery: { actions: [], repeat: false },
     });
   });
 });

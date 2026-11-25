@@ -8,6 +8,7 @@ import { useSetSummary } from "@/hooks/use-set-summary";
 import { t } from "@/i18n/messages";
 import { CharacterStatsWindow } from "./character-stats-window";
 import { EquipmentSetTotals } from "./equipment-set-totals";
+import { EmptyNotice } from "@/components/common/empty-notice";
 
 const STAT_SOURCES = ["character", "skills", "items"] as const;
 
@@ -54,9 +55,7 @@ export function EquipmentSetStats() {
           isLoaded={isLoaded}
         />
       ) : set.profession === null ? (
-        <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
-          {t("character.noProfession")}
-        </p>
+        <EmptyNotice>{t("character.noProfession")}</EmptyNotice>
       ) : (
         <CharacterStatsWindow
           profession={set.profession}

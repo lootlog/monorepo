@@ -9,6 +9,7 @@ import {
 } from "@/lib/calculators";
 import { characterStats, type CharacterStats } from "@/lib/character-stats";
 import type { Profession } from "@/lib/equipment-set";
+import { type BattleMastery, NORMAL_ATTACK } from "@/lib/skills/battle-mastery";
 import { sumSkillBonuses } from "@/lib/skills/skill-stats";
 import {
   skillPlanLevel,
@@ -29,6 +30,7 @@ import {
   isSimulatedActive,
   type ActiveSkill,
   type ComboGain,
+  type MasteryQueue,
 } from "./fight-skills";
 
 export type FighterItem = { item: { type: string | null; stat: string } };
@@ -42,6 +44,7 @@ export type FighterProfile = {
   slowMax: number;
   actives: ActiveSkill[];
   ignoredActives: string[];
+  mastery: MasteryQueue;
   comboGain: ComboGain;
   legendary: LegendaryBonuses;
 };
@@ -253,6 +256,18 @@ const learnedSkillEffects = (
   };
 };
 
+const masteryQueue = (
+  { actions, repeat }: BattleMastery,
+  actives: readonly ActiveSkill[],
+): MasteryQueue => ({
+  repeat,
+  steps: actions.map((action) =>
+    action === NORMAL_ATTACK
+      ? "attack"
+      : (actives.find((active) => active.id === action) ?? null),
+  ),
+});
+
 export const fighterProfile = ({
   profession,
   level,
@@ -260,6 +275,7 @@ export const fighterProfile = ({
   tree,
   ranks,
   weapons,
+  mastery,
 }: {
   profession: Profession;
   level: number;
@@ -267,6 +283,7 @@ export const fighterProfile = ({
   tree: readonly SkillDefinition[];
   ranks: SkillRanks;
   weapons: ReadonlySet<SkillWeapon>;
+  mastery: BattleMastery;
 }): FighterProfile => {
   const bonuses = sumSkillBonuses(tree, ranks, level, weapons);
   const learned = learnedSkillEffects(tree, ranks, level, weapons);
@@ -305,6 +322,7 @@ export const fighterProfile = ({
     slowMax: Math.max(0, ...slows),
     actives: learned.actives,
     ignoredActives: learned.ignoredActives,
+    mastery: masteryQueue(mastery, learned.actives),
     comboGain: learned.comboGain,
     legendary: legendaryBonuses(items, stats, level),
   };
@@ -361,6 +379,7 @@ export const toCombatant = (
     critSlow: extra.critslow_per ?? 0,
     comboGain: profile.comboGain,
     actives: profile.actives,
+    mastery: profile.mastery,
     legendary: profile.legendary,
   };
 };

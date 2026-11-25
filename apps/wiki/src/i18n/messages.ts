@@ -291,6 +291,31 @@ const messages = {
     learnedRank: "Rozdane: poziom {{rank}}",
     kindsHint:
       "Kliknij umiejętność, żeby zobaczyć opis i rozdać punkty. Pasywne zmieniają statystyki zestawu, aktywne dodają akcję w walce.",
+    mastery: {
+      title: "Mistrzostwo walk",
+      description:
+        "Kolejka do 20 akcji, które postać wykonuje po kolei w walce szybkiej i automatycznej, tak jak w grze. Akcja, której nie da się wtedy użyć, bo trwa odnowienie albo brakuje energii lub many, jest pomijana.",
+      available: "Dostępne akcje",
+      availableHint: "Kliknij akcję, żeby dodać ją na koniec kolejki.",
+      queue: "Kolejka",
+      slots: "{{used}}/{{max}}",
+      add: "Dodaj do kolejki: {{action}}",
+      moveUp: "Przesuń wyżej: {{action}}",
+      moveDown: "Przesuń niżej: {{action}}",
+      remove: "Usuń z kolejki: {{action}}",
+      clear: "Wyczyść",
+      repeat: "Powtarzaj listę",
+      repeatOn: "Po ostatniej akcji kolejka zaczyna się od początku.",
+      repeatOff: "Po ostatniej akcji postać już tylko atakuje.",
+      normalAttack: "Zwykły atak",
+      empty:
+        "Kolejka jest pusta. W grze postać wtedy tylko atakuje, a symulator walk sam dobiera umiejętności.",
+      noActives:
+        "Rozdaj punkty w umiejętności aktywne, żeby dodać je do kolejki.",
+      unknown: "Nieznana umiejętność",
+      notLearned: "Nierozdana, pomijana",
+      inactive: "Nie działa z ekwipunkiem, pomijana",
+    },
     requiresLevel: "Wymaga {{level}} poziomu",
     requiresWeapons: "Wymaga: {{weapons}}",
     inactiveLevel: "Postać ma za niski poziom, więc umiejętność nie działa.",

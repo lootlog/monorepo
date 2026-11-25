@@ -18,12 +18,7 @@ import {
 } from "@/lib/skills/skill-tree";
 import { SkillPanel } from "./skill-panel";
 import { SkillTier } from "./skill-tier";
-
-const Notice = ({ children }: { children: string }) => (
-  <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
-    {children}
-  </p>
-);
+import { EmptyNotice } from "@/components/common/empty-notice";
 
 export function SetSkillTree() {
   const { set, setSkillRank, resetSkills } = useEquipmentSet();
@@ -69,9 +64,9 @@ export function SetSkillTree() {
       }
     >
       {set.profession === null ? (
-        <Notice>{t("skills.noProfession")}</Notice>
+        <EmptyNotice>{t("skills.noProfession")}</EmptyNotice>
       ) : isPending || !tree ? (
-        <Notice>{t("skills.loading")}</Notice>
+        <EmptyNotice>{t("skills.loading")}</EmptyNotice>
       ) : (
         <>
           <div className="flex flex-col gap-2">
