@@ -29,7 +29,7 @@ const proofOptions = () => {
       characterId,
       token,
       ts,
-      validatedString: `${accountId}+${token}+${ts}`,
+      validatedString: `${accountId}+${token}+${ts}+0+`,
       signatureBase64: "invalid-signature",
     },
   };
@@ -56,6 +56,44 @@ describe("Margonem proof verifier", () => {
     ).resolves.toEqual({ valid: false, reason: "missing or malformed proof" });
     expect(get).not.toHaveBeenCalled();
   });
+
+  test.each([
+    ["1+", "guest session proof"],
+    ["0+sub", "sub-account session proof"],
+    ["", "validated string mismatch"],
+    ["0", "validated string mismatch"],
+  ])(
+    "rejects proof whose session flags are %p without an outbound request",
+    async (sessionFlags, reason) => {
+      const get = mock(() => Effect.die("HTTP must not run"));
+
+      const verifier = makeMargonemProofVerifier(
+        config,
+        httpClientFromResponses(get),
+      );
+
+      const options = proofOptions();
+      const { userId, token, ts } = options.proof;
+
+      const signedFields = `${userId}+${token}+${ts}`;
+
+      await expect(
+        Effect.runPromise(
+          verifier.verify({
+            ...options,
+            proof: {
+              ...options.proof,
+              validatedString:
+                sessionFlags === ""
+                  ? signedFields
+                  : `${signedFields}+${sessionFlags}`,
+            },
+          }),
+        ),
+      ).resolves.toEqual({ valid: false, reason });
+      expect(get).not.toHaveBeenCalled();
+    },
+  );
 
   test("rejects oversized key responses and bounds the refresh attempts", async () => {
     const get = mock(() =>
@@ -139,7 +177,7 @@ describe("Margonem proof verifier", () => {
     const options = proofOptions();
 
     const signedAt = (ts: number) => {
-      const validatedString = `${options.accountId}+${options.proof.token}+${ts}`;
+      const validatedString = `${options.accountId}+${options.proof.token}+${ts}+0+`;
 
       return {
         ...options,
