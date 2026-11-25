@@ -31,9 +31,7 @@ export const swingAt = (
       ? 0
       : Math.round(
           armorReduced(
-            roll(random, a.physical) *
-              (1 + a.physicalBonus / 100) *
-              weakeningFactor(attacker, other),
+            roll(random, a.physical) * weakeningFactor(attacker, other),
             armorAgainst(other, attacker),
           ),
         );

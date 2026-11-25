@@ -608,6 +608,32 @@ describe("skill effects", () => {
     expect(cast?.kind === "skill" && cast.flatDamage).toBe(4228);
   });
 
+  test("adds all damage to the light bonus on light health damage over time and to the unavoidable bonus on unavoidable", () => {
+    const shock = skill("porazenie", {
+      "dmg_evade_hpp-target_light": [1, 3],
+      "dmg_evade_hpp-target": [1, 3],
+    });
+
+    const events = fightOf(
+      {
+        allDamageBonus: 3,
+        lightDamageBonus: 10,
+        unavoidableBonus: 50,
+        mastery: { steps: [shock], repeat: false },
+      },
+      {},
+    );
+
+    const ticks = events.find(
+      (event) => event.kind === "damageOverTime" && event.actor === 1,
+    );
+
+    expect(
+      ticks?.kind === "damageOverTime" &&
+        Object.fromEntries(ticks.ticks.map((tick) => [tick.kind, tick.damage])),
+    ).toEqual({ light: 113_000, absolute: 153_000 });
+  });
+
   test("destroys the same armor with a crushing skill whether or not the strike crits", () => {
     const crusher = skill("niszczyciel", {
       "active_acdmg_physical-perw": [4, 1],

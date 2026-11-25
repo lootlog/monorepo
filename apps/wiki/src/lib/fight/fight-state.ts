@@ -167,8 +167,9 @@ export type Combatant = {
   readonly energy: number;
   readonly energyGain: number;
   readonly mana: number;
-  readonly physicalBonus: number;
   readonly allDamageBonus: number;
+  readonly physicalBonus: number;
+  readonly lightDamageBonus: number;
   readonly unavoidableBonus: number;
   readonly damageTakenBonus: number;
   readonly enemySlow: number;

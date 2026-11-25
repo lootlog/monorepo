@@ -72,7 +72,6 @@ export const physicalStrength = (hit: Hit) => {
       rolled *
       (crit > 0 ? (crit * critValue(hit)) / 100 + added : 1 + added) *
       (1 + buffTotal(attacker, "aura-adddmg2_per-meele_physical") / 100) *
-      (1 + attacker.combatant.physicalBonus / 100) *
       (1 + rage) *
       scale *
       (1 + vulture),
@@ -127,13 +126,12 @@ export const physicalDamage = (
   const { attacker, defender, plan } = hit;
   const { rolled, strength } = physicalStrength(hit);
 
-  const { physical, physicalBonus } = attacker.combatant;
+  const { physical } = attacker.combatant;
 
   const armorDestruction = destroyArmor(
     defender,
     (plan.effect("active_acdmg_physical-perw") / 100) *
-      ((physical.min + physical.max) / 2) *
-      (1 + physicalBonus / 100),
+      ((physical.min + physical.max) / 2),
   );
 
   const raw = strength * blockFactor;

@@ -469,6 +469,10 @@ export const fighterProfile = ({
 
   extra.itemDamage = totalOf(items.map((item) => itemNumber(item, "dmgmul")));
 
+  extra.itemLightDamage = totalOf(
+    items.map((item) => itemNumber(item, "dmgmullight")),
+  );
+
   extra.itemUnavoidable = totalOf(
     items.map((item) => itemNumber(item, "dmgmulabsolute")),
   );
@@ -562,8 +566,9 @@ export const toCombatant = (
     energy: stats.energy,
     energyGain: extraOf("energygain"),
     mana: stats.mana,
-    physicalBonus: stats.physicalBonus,
     allDamageBonus: extraOf("itemDamage"),
+    physicalBonus: stats.physicalBonus,
+    lightDamageBonus: extraOf("itemLightDamage"),
     unavoidableBonus: extraOf("dmgmulabsolute") + extraOf("itemUnavoidable"),
     damageTakenBonus: extraOf("dmg_from_player_per"),
     enemySlow: (extraOf("slowSum") + profile.skillSlow) / 100,

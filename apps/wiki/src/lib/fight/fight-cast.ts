@@ -1,8 +1,4 @@
-import {
-  clearDamageOverTime,
-  skillDamageFactor,
-  weakeningFactor,
-} from "./fight-hit-effects";
+import { clearDamageOverTime, weakeningFactor } from "./fight-hit-effects";
 import { destroyResource, NO_DRAIN, type Drained } from "./fight-defence";
 import {
   addBuff,
@@ -217,6 +213,13 @@ const applyBuffs = (cast: Cast) => {
   return armorBonus;
 };
 
+const flatDamageFactor = ({ combatant }: FighterState) =>
+  1 +
+  (combatant.allDamageBonus +
+    combatant.physicalBonus +
+    combatant.unavoidableBonus) /
+    100;
+
 const averageFire = (caster: FighterState) =>
   (caster.combatant.fire.min + caster.combatant.fire.max) / 2;
 
@@ -263,7 +266,7 @@ const strikeTarget = ({ caster, target, plan, skill }: Cast) => {
     ? 0
     : Math.floor(
         plan.effect("dmg-target_absolute") *
-          skillDamageFactor(caster) *
+          flatDamageFactor(caster) *
           weakeningFactor(caster, target),
       );
 
@@ -280,12 +283,12 @@ const swingAround = ({ caster, target, enemies, plan, random }: Cast) => {
 
   if (share <= 0) return [];
 
-  const { physical, physicalBonus } = caster.combatant;
+  const { physical } = caster.combatant;
 
   const rolled =
     physical.min + Math.floor(random() * (physical.max - physical.min + 1));
 
-  const damage = rolled * share * (1 + physicalBonus / 100);
+  const damage = rolled * share;
 
   const candidates = enemies.filter(
     (enemy) => enemy.alive && enemy !== target && reaches(caster, enemy),

@@ -370,11 +370,7 @@ const offhandHit = (hit: Hit, mainParried: boolean) => {
         100
       : 1;
 
-  const strength =
-    roll(random, a.offhand) *
-    (1 + a.physicalBonus / 100) *
-    critFactor *
-    hit.scale;
+  const strength = roll(random, a.offhand) * critFactor * hit.scale;
 
   const parried = !mainParried && parries(attacker, defender, random);
 

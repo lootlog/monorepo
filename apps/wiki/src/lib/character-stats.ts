@@ -375,10 +375,10 @@ export const characterStats = (
     skill("sa1") / 100 +
     (item("sa") / 100) * (1 + skill("sa-clothes") / 100);
 
-  const multiplier = 1 + item("dmgmul") / 100;
+  const damageMultiplier = (kind: string) =>
+    1 + (item("dmgmul") + item(`dmgmul${kind}`)) / 100;
 
-  const elementMultiplier = (element: string) =>
-    multiplier * (1 + item(`dmgmul${element}`) / 100);
+  const physicalMultiplier = damageMultiplier("physical");
 
   const round = profession === "b" ? Math.floor : Math.round;
 
@@ -390,11 +390,11 @@ export const characterStats = (
   const physicalAttack = attributeDamage + item("pdmg");
 
   const physicalMin = round(
-    (items.mainDamage.min + physicalAttack) * multiplier,
+    (items.mainDamage.min + physicalAttack) * physicalMultiplier,
   );
 
   const physicalMax = round(
-    (items.mainDamage.max + physicalAttack) * multiplier,
+    (items.mainDamage.max + physicalAttack) * physicalMultiplier,
   );
 
   const isArmed = wornItems.some(
@@ -412,13 +412,13 @@ export const characterStats = (
 
   const poisonOf = (weapon: SlowingDamage): SlowingDamage => ({
     slow: weapon.slow / 100,
-    damage: Math.round(weapon.damage * elementMultiplier("poison")),
+    damage: Math.round(weapon.damage * damageMultiplier("poison")),
   });
 
   const woundOf = (weapon: ChanceDamage, bonusKey: string) => ({
     chance: weapon.chance + skill("woundchance"),
     damage: Math.round(
-      weapon.damage * elementMultiplier("wound") * (1 + skill(bonusKey) / 100),
+      weapon.damage * damageMultiplier("wound") * (1 + skill(bonusKey) / 100),
     ),
   });
 
@@ -446,26 +446,26 @@ export const characterStats = (
     intellect,
     physical,
     offhand: {
-      min: round((items.offhandDamage.min + offhandBonus) * multiplier),
-      max: round((items.offhandDamage.max + offhandBonus) * multiplier),
+      min: round((items.offhandDamage.min + offhandBonus) * physicalMultiplier),
+      max: round((items.offhandDamage.max + offhandBonus) * physicalMultiplier),
     },
     fire: elementalDamage(
       items.fire,
       intellect * skill("firebon"),
-      elementMultiplier("fire"),
+      damageMultiplier("fire"),
       ELEMENT_SPREAD,
     ),
     frost: elementalDamage(
       { min: items.frost.damage, max: items.frost.damage },
       intellect * skill("frostbon"),
-      elementMultiplier("frost"),
+      damageMultiplier("frost"),
       0,
     ),
     frostSlow: items.frost.slow / 100,
     light: elementalDamage(
       items.light,
       intellect * skill("lightbon"),
-      elementMultiplier("light"),
+      damageMultiplier("light"),
       ELEMENT_SPREAD,
       LIGHT_MIN_BONUS_SHARE,
     ),

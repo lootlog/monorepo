@@ -102,15 +102,11 @@ export const cleanseOnHit = (defender: FighterState, random: () => number) => {
 export const unavoidableFactor = (state: FighterState) =>
   1 + state.combatant.unavoidableBonus / 100;
 
-export const weaponlessUnavoidableFactor = (state: FighterState) =>
-  unavoidableFactor(state) * (1 + state.combatant.allDamageBonus / 100);
+export const weaponlessUnavoidableFactor = ({ combatant }: FighterState) =>
+  1 + (combatant.allDamageBonus + combatant.unavoidableBonus) / 100;
 
-export const skillDamageFactor = ({ combatant }: FighterState) =>
-  1 +
-  (combatant.allDamageBonus +
-    combatant.physicalBonus +
-    combatant.unavoidableBonus) /
-    100;
+const weaponlessLightFactor = ({ combatant }: FighterState) =>
+  1 + (combatant.allDamageBonus + combatant.lightDamageBonus) / 100;
 
 const WEAKENING_SOURCES = 2;
 
@@ -177,16 +173,15 @@ export const debuffOnHit = (
   if (comboLowered > 0)
     addBuff(defender, "combo_lowdmg_enemy", comboLowered, 1, attacker.index);
 
-  for (const [key, dot] of [
-    ["dmg_evade_hpp-target_light", "light"],
-    ["dmg_evade_hpp-target", "absolute"],
+  for (const [key, dot, factor] of [
+    ["dmg_evade_hpp-target_light", "light", weaponlessLightFactor],
+    ["dmg_evade_hpp-target", "absolute", weaponlessUnavoidableFactor],
   ] as const) {
     const share = plan.effect(key);
 
     if (share > 0) {
       defender.skillDots.set(dot, {
-        damage:
-          (share / 100) * defender.combatant.hp * skillDamageFactor(attacker),
+        damage: (share / 100) * defender.combatant.hp * factor(attacker),
         turnsLeft: plan.turns(key),
         source: attacker.index,
       });
