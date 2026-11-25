@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { EquipmentSlotId } from "@/lib/equipment-slots";
 import {
   SET_STAT_SECTIONS,
   type SetStatDefinition,
@@ -10,6 +11,7 @@ import {
   skillPointsAt,
   skillRankRange,
   type SkillWeapon,
+  wornSkillWeapons,
 } from "./skill-tree";
 
 const skill = (
@@ -113,6 +115,30 @@ describe("skill stats", () => {
     expect(
       setStatValueWithSkills({ evade: 10 }, statById("evade"), bonuses, 300),
     ).toBe(70);
+  });
+});
+
+describe("worn skill weapons", () => {
+  const worn = (weapon: string, secondary?: string) =>
+    new Map<EquipmentSlotId, { item: { type: string; stat: string } }>([
+      ["weapon", { item: { type: weapon, stat: "" } }],
+      ...(secondary
+        ? [["secondary", { item: { type: secondary, stat: "" } }] as const]
+        : []),
+    ]);
+
+  it("count a one-and-a-half-handed weapon as one-handed beside a shield", () => {
+    const weapons = wornSkillWeapons(
+      worn("ONE_AND_HALF_HAND_WEAPON", "SHIELD"),
+    );
+
+    expect([...weapons].sort()).toEqual(["1h", "bs", "sh", "sw"]);
+  });
+
+  it("count a one-and-a-half-handed weapon as two-handed without a shield", () => {
+    const weapons = wornSkillWeapons(worn("ONE_AND_HALF_HAND_WEAPON"));
+
+    expect([...weapons].sort()).toEqual(["2h", "bs", "sw"]);
   });
 });
 
