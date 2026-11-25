@@ -56,7 +56,6 @@ const fighter = (overrides: Partial<Combatant>): Combatant => ({
   fastArrowChance: 0,
   critSlow: 0,
   comboGain: { crit: 0, pierce: 0, wound: 0, block: 0 },
-  actives: [],
   mastery: NO_MASTERY,
   legendary: NO_LEGENDARY_BONUSES,
   ...overrides,
@@ -202,6 +201,14 @@ describe("battle mastery", () => {
     ).toEqual(["uderzenie", "atak", "atak", "uderzenie", "atak"]);
   });
 
+  test("only attacks with an empty queue", () => {
+    expect(actionsOf({ steps: [], repeat: true }, 3)).toEqual([
+      "atak",
+      "atak",
+      "atak",
+    ]);
+  });
+
   test("attacks once a list that does not repeat runs out", () => {
     expect(actionsOf({ steps: [swing, swing], repeat: false }, 4)).toEqual([
       "cios",
@@ -233,7 +240,7 @@ describe("fightBattlePayload", () => {
             critChance: 40,
             pierce: 30,
             healing: 500,
-            actives: [doubleShot],
+            mastery: { steps: [doubleShot], repeat: true },
             legendary: {
               ...NO_LEGENDARY_BONUSES,
               curse: 20,

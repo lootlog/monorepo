@@ -308,8 +308,7 @@ const messages = {
       repeatOn: "Po ostatniej akcji kolejka zaczyna się od początku.",
       repeatOff: "Po ostatniej akcji postać już tylko atakuje.",
       normalAttack: "Zwykły atak",
-      empty:
-        "Kolejka jest pusta. W grze postać wtedy tylko atakuje, a symulator walk sam dobiera umiejętności.",
+      empty: "Kolejka jest pusta, więc postać w walce tylko atakuje.",
       noActives:
         "Rozdaj punkty w umiejętności aktywne, żeby dodać je do kolejki.",
       unknown: "Nieznana umiejętność",

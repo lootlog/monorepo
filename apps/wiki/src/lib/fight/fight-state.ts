@@ -1,9 +1,4 @@
-import type {
-  ActiveSkill,
-  ComboGain,
-  MasteryQueue,
-  SkillUserState,
-} from "./fight-skills";
+import type { ComboGain, MasteryQueue, SkillUserState } from "./fight-skills";
 
 export type Profession = "h" | "w" | "p" | "b" | "m" | "t";
 
@@ -79,7 +74,6 @@ export type Combatant = {
   readonly fastArrowChance: number;
   readonly critSlow: number;
   readonly comboGain: ComboGain;
-  readonly actives: readonly ActiveSkill[];
   readonly mastery: MasteryQueue;
   readonly legendary: LegendaryBonuses;
 };

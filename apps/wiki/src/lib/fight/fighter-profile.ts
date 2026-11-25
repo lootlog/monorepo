@@ -1,4 +1,3 @@
-import { sortBy } from "es-toolkit";
 import { itemStatValue } from "@lootlog/domain/item-stat";
 import {
   anguishDamage,
@@ -42,7 +41,6 @@ export type FighterProfile = {
   extra: Record<string, number>;
   skillSlow: number;
   slowMax: number;
-  actives: ActiveSkill[];
   ignoredActives: string[];
   mastery: MasteryQueue;
   comboGain: ComboGain;
@@ -74,18 +72,6 @@ const EXTRA_SKILL_KEYS = [
 ];
 
 const COMBO_EVENTS = ["crit", "pierce", "wound", "block"] as const;
-
-const ACTIVE_PRIORITY = [
-  "combo_dmg_hpp-target",
-  "combo-max",
-  "sa_per",
-  "add_attacks",
-  "adddmg_physical-perw",
-  "active_crit",
-  "perdmg",
-  "energyrestore_per",
-  "red-sa",
-] as const;
 
 const LAST_HEAL_RANGE = { min: 36, max: 44 };
 
@@ -205,12 +191,6 @@ export const activeSkill = (
   };
 };
 
-const activePriority = (skill: ActiveSkill) => {
-  const index = ACTIVE_PRIORITY.findIndex((key) => skill.effects.has(key));
-
-  return index === -1 ? ACTIVE_PRIORITY.length : index;
-};
-
 const learnedSkillEffects = (
   tree: readonly SkillDefinition[],
   ranks: SkillRanks,
@@ -250,7 +230,7 @@ const learnedSkillEffects = (
 
   return {
     skillSlow,
-    actives: sortBy(actives, [activePriority]),
+    actives,
     ignoredActives,
     comboGain,
   };
@@ -320,7 +300,6 @@ export const fighterProfile = ({
     extra,
     skillSlow: learned.skillSlow,
     slowMax: Math.max(0, ...slows),
-    actives: learned.actives,
     ignoredActives: learned.ignoredActives,
     mastery: masteryQueue(mastery, learned.actives),
     comboGain: learned.comboGain,
@@ -378,7 +357,6 @@ export const toCombatant = (
     fastArrowChance: extra.fastarrow ?? 0,
     critSlow: extra.critslow_per ?? 0,
     comboGain: profile.comboGain,
-    actives: profile.actives,
     mastery: profile.mastery,
     legendary: profile.legendary,
   };
