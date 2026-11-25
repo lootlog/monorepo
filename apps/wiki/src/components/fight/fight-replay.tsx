@@ -71,7 +71,7 @@ export function FightReplay({
   return (
     <SectionCard
       aria-labelledby="fight-replay"
-      className="flex min-h-0 flex-col md:h-[40rem]"
+      className="flex min-h-0 flex-col md:h-[40rem] 2xl:h-auto 2xl:flex-1"
     >
       <SectionCardHeader
         id="fight-replay"

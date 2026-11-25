@@ -181,7 +181,7 @@ function FightRoute() {
       onValueChange={(value) => {
         if (isFightTab(value)) setTab(value);
       }}
-      className="gap-0 pb-10"
+      className="gap-0 pb-10 2xl:pb-0"
     >
       <h1 className="sr-only">{t("fightPage.title")}</h1>
       <FightToolbar
