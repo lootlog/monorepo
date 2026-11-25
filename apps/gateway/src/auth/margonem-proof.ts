@@ -30,6 +30,8 @@ const ENCODED_ID_HEX_LENGTH = 16;
 
 const NONCE_PATTERN = /^[a-f0-9]{32}$/;
 
+const OWNER_GUEST_FLAG = "0";
+
 const Proof = Schema.Struct({
   userId: Schema.String,
   characterId: Schema.String,
@@ -110,6 +112,26 @@ const parseToken = (
       clanHex === NO_CLAN_HEX ? undefined : BigInt(`0x${clanHex}`).toString(10),
     nonce,
   };
+};
+
+const checkOwnerSession = (proof: typeof Proof.Type): ProofVerification => {
+  const signedFields = `${proof.userId}+${proof.token}+${proof.ts}+`;
+
+  if (!proof.validatedString.startsWith(signedFields))
+    return invalid("validated string mismatch");
+
+  const [guest, subAccount, ...unexpected] = proof.validatedString
+    .slice(signedFields.length)
+    .split("+");
+
+  if (subAccount === undefined || unexpected.length > 0)
+    return invalid("validated string mismatch");
+
+  if (guest !== OWNER_GUEST_FLAG) return invalid("guest session proof");
+
+  if (subAccount !== "") return invalid("sub-account session proof");
+
+  return { valid: true };
 };
 
 export const makeMargonemProofVerifier = (
@@ -253,11 +275,9 @@ export const makeMargonemProofVerifier = (
       return invalid("proof clan mismatch");
     }
 
-    if (
-      proof.validatedString !== `${proof.userId}+${proof.token}+${proof.ts}`
-    ) {
-      return invalid("validated string mismatch");
-    }
+    const ownerSession = checkOwnerSession(proof);
+
+    if (!ownerSession.valid) return ownerSession;
 
     const prefix = `${TOKEN_PREFIX}:${options.socketId}:${options.accountId}:`;
 
@@ -300,6 +320,14 @@ export const makeMargonemProofVerifier = (
   return {
     verify: (options) =>
       verifyProof(options).pipe(
+        Effect.tap((verification) =>
+          verification.valid
+            ? Effect.void
+            : Effect.annotateCurrentSpan(
+                "margonem_proof.rejection",
+                verification.reason,
+              ),
+        ),
         withAdapterSpan("MargonemProofVerifier_verify", "margonem-proof"),
       ),
   };
