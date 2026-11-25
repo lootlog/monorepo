@@ -147,7 +147,8 @@ const currentArmor = (defender: FighterState) =>
   Math.max(
     ARMOR_FLOOR * defender.combatant.armor,
     defender.combatant.armor - defender.armorLost,
-  );
+  ) +
+  (defender.combatant.armor * buffTotal(defender, "achpp_per")) / 100;
 
 const armorAgainst = (defender: FighterState, attacker: FighterState) =>
   currentArmor(defender) * (1 - puncture(attacker));
@@ -512,17 +513,8 @@ export const strike = (
   const kept = (1 - critred / 100) * (1 - facade / 100);
   const keep = (value: number) => Math.round(value * kept);
 
-  const comboDamage =
-    plan.comboSpent > 0
-      ? Math.round(
-          ((plan.effect("combo_dmg_hpp-target") * plan.comboSpent) / 100) *
-            d.hp *
-            (1 + d.damageTakenBonus / 100),
-        )
-      : 0;
-
   const damage = {
-    physical: keep(main.physical) + comboDamage,
+    physical: keep(main.physical),
     offhand: keep(offhandRaw),
     fire: keep(main.fire),
     frost: keep(main.frost),
@@ -565,7 +557,6 @@ export const strike = (
     armorDestroyed: armorBefore - currentArmor(defender),
     strength: {
       ...main.strength,
-      physical: main.strength.physical + comboDamage,
       offhand: Math.round(offhandStrength * scale.dealt),
     },
     damage,

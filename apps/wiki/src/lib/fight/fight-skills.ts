@@ -8,6 +8,7 @@ export type ActiveSkill = {
   readonly cooldown: number;
   readonly selfCast: boolean;
   readonly effects: ReadonlyMap<string, ActiveEffect>;
+  readonly logged: readonly (readonly [string, number | null])[];
 };
 
 export type ComboGain = {
@@ -30,9 +31,12 @@ export const NO_MASTERY: MasteryQueue = { steps: [], repeat: false };
 
 export type SkillUserState = {
   combatant: {
+    readonly hp: number;
     readonly energy: number;
+    readonly mana: number;
     readonly mastery: MasteryQueue;
   };
+  hp: number;
   masteryCursor: number;
   energy: number;
   mana: number;
@@ -70,8 +74,11 @@ const BUFF_EFFECTS = new Set([
 
 const RESOURCE_EFFECTS = new Set([
   "energyrestore_per",
+  "manarestore_per",
   "combo_energyrestore_per",
 ]);
+
+const ARMOR_BONUS = "achpp_per";
 
 const COMBO_EFFECTS = new Set(["combo-skill", "combo-max"]);
 
@@ -86,6 +93,7 @@ export const SIMULATED_ACTIVE_EFFECTS: ReadonlySet<string> = new Set([
   ...BUFF_EFFECTS,
   ...RESOURCE_EFFECTS,
   ...COMBO_EFFECTS,
+  ARMOR_BONUS,
 ]);
 
 export const isSimulatedActive = (skill: ActiveSkill) =>
@@ -148,20 +156,52 @@ export const gainCombo = (state: SkillUserState, points: number) => {
   state.comboPoints = Math.min(COMBO_POINT_CAP, state.comboPoints + points);
 };
 
+const restoreEnergy = (state: SkillUserState, share: number) => {
+  const before = state.energy;
+
+  state.energy = Math.min(
+    state.combatant.energy,
+    state.energy + share * state.combatant.energy,
+  );
+
+  return state.energy - before;
+};
+
+const restoreMana = (state: SkillUserState, share: number) => {
+  const before = state.mana;
+
+  state.mana = Math.min(
+    state.combatant.mana,
+    state.mana + share * state.combatant.mana,
+  );
+
+  return state.mana - before;
+};
+
+const lostHpArmorBonus = (state: SkillUserState, lostPerPercent: number) =>
+  lostPerPercent > 0
+    ? Math.floor(
+        (100 - Math.floor((100 * state.hp) / state.combatant.hp)) /
+          lostPerPercent,
+      )
+    : 0;
+
 export const payAndActivate = (
   state: SkillUserState,
   skill: ActiveSkill,
   plan: ActionPlan,
 ) => {
+  let energyRestored = 0;
+  let manaRestored = 0;
+
   if (skill.resource === "energy") state.energy -= skill.cost;
   else state.mana -= skill.cost;
 
   if (plan.comboSpent > 0) {
     state.comboPoints -= plan.comboSpent;
-    const restore = plan.effect("combo_energyrestore_per") * plan.comboSpent;
-    state.energy = Math.min(
-      state.combatant.energy,
-      state.energy + (restore / 100) * state.combatant.energy,
+    energyRestored += restoreEnergy(
+      state,
+      (plan.effect("combo_energyrestore_per") * plan.comboSpent) / 100,
     );
   }
 
@@ -181,19 +221,40 @@ export const payAndActivate = (
     }
   }
 
-  const restore = skill.effects.get("energyrestore_per");
+  const decay = Math.max(0, 1 - ENERGY_RESTORE_DECAY * state.energyRestores);
+  const manaRestore = skill.effects.get("manarestore_per");
+  const energyRestore = skill.effects.get("energyrestore_per");
 
-  if (restore) {
-    const share =
-      (restore.value / 100) *
-      Math.max(0, 1 - ENERGY_RESTORE_DECAY * state.energyRestores);
-
-    state.energyRestores += 1;
-    state.energy = Math.min(
-      state.combatant.energy,
-      state.energy + share * state.combatant.energy,
-    );
+  if (manaRestore) {
+    manaRestored += restoreMana(state, (manaRestore.value / 100) * decay);
   }
+
+  if (energyRestore) {
+    energyRestored += restoreEnergy(state, (energyRestore.value / 100) * decay);
+  }
+
+  if (manaRestore || energyRestore) state.energyRestores += 1;
+
+  const armorBonus = skill.effects.get(ARMOR_BONUS);
+
+  const armorBonusValue = armorBonus
+    ? lostHpArmorBonus(state, armorBonus.value)
+    : 0;
+
+  if (armorBonus) {
+    state.buffs = state.buffs.filter((buff) => buff.key !== ARMOR_BONUS);
+    state.buffs.push({
+      key: ARMOR_BONUS,
+      value: armorBonusValue,
+      turnsLeft: Math.max(1, armorBonus.turns),
+    });
+  }
+
+  return {
+    energyRestored: Math.round(energyRestored),
+    manaRestored: Math.round(manaRestored),
+    armorBonus: armorBonusValue,
+  };
 };
 
 export const endSkillTurn = (state: SkillUserState) => {

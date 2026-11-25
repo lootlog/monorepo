@@ -53,10 +53,6 @@ export const BattleLog: FC<BattleLogProps> = ({
   const toolbarRef = useRef<HTMLDivElement>(null);
   const turnFocusHandlerRef = useRef(onTurnFocus ?? onTurnSelect);
 
-  const userTeam = warriors.find(
-    (warrior) => warrior.originalId === rawBattle.characterId,
-  )?.team;
-
   const { events } = rawBattle;
 
   const warriorsMap = new Map(
@@ -157,7 +153,6 @@ export const BattleLog: FC<BattleLogProps> = ({
     <BattleLogList
       events={events}
       characterId={rawBattle.characterId}
-      userTeam={userTeam}
       warriors={warriors}
       selectedTurn={selectedTurn}
       scrollToSelectedTurnRequestId={scrollToSelectedTurnRequestId}

@@ -1,10 +1,10 @@
-import { BATTLE_TEXT_COLORS } from "../lib/battle-color-palette";
-import { BattleActionList } from "./actions/battle-action-list";
-import { BattleLogAttackActions } from "./actions/battle-log-attack-action";
+import {
+  BATTLE_MESSAGE_COLORS,
+  BATTLE_MESSAGE_KIND_COLORS,
+} from "../lib/battle-color-palette";
+import { buildBattleEventMessage } from "../lib/battle-message";
 import type { KeyboardEvent, FC, CSSProperties, Ref } from "react";
-import { parseActions } from "../lib/battle-actions-parser";
-import { BattlePassiveActions } from "./actions/battle-passive-actions";
-import { BattleSpellActions } from "./actions/battle-spell-actions";
+import { useTranslation } from "react-i18next";
 import { cn } from "cn";
 import type {
   BattleWarrior as Warrior,
@@ -21,7 +21,6 @@ export type BattleEventEntryProps = {
   defender?: Warrior;
   eventIndex: number;
   turn: number;
-  userTeam?: number;
   selected?: boolean;
   searchMatched?: boolean;
   activeSearchMatch?: boolean;
@@ -38,13 +37,19 @@ export const BattleEventEntry: FC<BattleEventEntryProps> = ({
   defender,
   eventIndex,
   turn,
-  userTeam,
   selected,
   searchMatched,
   activeSearchMatch,
   onSelect,
 }) => {
-  const parsedActions = parseActions(event.actions);
+  const { t } = useTranslation();
+
+  const message = buildBattleEventMessage({
+    event,
+    attacker,
+    defender,
+    translate: t,
+  });
 
   const handleKeyDown = (keyboardEvent: KeyboardEvent<HTMLLIElement>) => {
     if (!onSelect) {
@@ -82,6 +87,7 @@ export const BattleEventEntry: FC<BattleEventEntryProps> = ({
       onBlur={onBlur}
       className={cn(
         "flex border-b border-background outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+        BATTLE_MESSAGE_KIND_COLORS[message.kind],
         onSelect && "cursor-pointer hover:bg-muted/40",
         searchMatched && "bg-amber-400/5",
         selected && "bg-primary/10",
@@ -102,53 +108,25 @@ export const BattleEventEntry: FC<BattleEventEntryProps> = ({
         #{turn}
       </span>
 
-      <div className="min-w-0 flex-1">
-        <BattleActionList
-          valueClassName={cn("font-bold", BATTLE_TEXT_COLORS.damage.auxiliary)}
-          actions={parsedActions.buffActions}
-          attacker={attacker}
-          event={event}
-          eventIndex={eventIndex}
-        />
-
-        <BattleActionList
-          actions={parsedActions.systemActions}
-          attacker={attacker}
-          event={event}
-          eventIndex={eventIndex}
-        />
-
-        <BattleSpellActions
-          actions={parsedActions.spellActions}
-          attacker={attacker}
-          defender={defender}
-          event={event}
-          eventIndex={eventIndex}
-          userTeam={userTeam}
-        />
-
-        <BattleLogAttackActions
-          attacker={attacker}
-          defender={defender}
-          actions={parsedActions.attackActions}
-          event={event}
-          userTeam={userTeam}
-        />
-
-        <BattlePassiveActions
-          actions={parsedActions.passiveActions}
-          attacker={attacker}
-          event={event}
-          eventIndex={eventIndex}
-          userTeam={userTeam}
-        />
-
-        <BattleActionList
-          actions={parsedActions.outcomeActions}
-          attacker={attacker}
-          event={event}
-          eventIndex={eventIndex}
-        />
+      <div className="min-w-0 flex-1 px-3 py-0.5">
+        {message.lines.map((spans, lineIndex) => (
+          // oxlint-disable-next-line react/no-array-index-key -- a message line has no identity beyond its position in the fixed log row
+          <div key={lineIndex}>
+            {spans.map((span, spanIndex) => (
+              <span
+                // oxlint-disable-next-line react/no-array-index-key -- a span has no identity beyond its position in the fixed line
+                key={spanIndex}
+                className={cn(
+                  span.color && BATTLE_MESSAGE_COLORS[span.color],
+                  span.bold && "font-bold",
+                  span.italic && "italic",
+                )}
+              >
+                {span.text}
+              </span>
+            ))}
+          </div>
+        ))}
       </div>
     </li>
   );

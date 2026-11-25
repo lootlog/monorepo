@@ -149,6 +149,51 @@ export const BATTLE_SEGMENT_COLORS = {
   },
 } as const;
 
+export const BATTLE_MESSAGE_COLORS = {
+  white: "text-foreground",
+  wound: "text-sky-300",
+  critWound: "text-orange-500",
+  poison: "text-green-400",
+  heal: "text-cyan-300",
+  absolute: "text-yellow-300",
+  light: "text-yellow-300",
+  shout: "text-lime-400",
+  lastHeal: "text-cyan-300",
+  third: "text-amber-400",
+  crit: "text-pink-300",
+  veryCrit: "text-pink-500",
+  offhandCrit: "text-pink-400",
+  offhandWound: "text-orange-400",
+  critSlow: "text-orange-500",
+  pierce: "text-green-300",
+  freeze: "text-cyan-300",
+  fastArrow: "text-yellow-200",
+  injure: "text-rose-300",
+  legendaryVeryCrit: "text-pink-500",
+  cleanse: "text-red-300",
+  glare: "text-yellow-300",
+  facade: "text-indigo-200",
+  anguish: "text-amber-500",
+  block: "text-lime-300",
+  evade: "text-sky-400",
+  parry: "text-muted-foreground",
+  friendly: "text-green-500",
+  enemy: "text-red-400",
+  crushFire: "text-red-400",
+  crushFrost: "text-cyan-300",
+  crushLight: "text-yellow-200",
+  crushPhysical: "text-foreground",
+  crushDistance: "text-green-300",
+  dmg: "text-foreground",
+  dmga: "text-sky-100",
+  dmgm: "text-green-500",
+  dmgf: "text-red-400",
+  dmgc: "text-cyan-300",
+  dmgl: "text-yellow-200",
+  dmgo: "text-orange-300",
+  dmgd: "text-green-300",
+} as const;
+
 export const BATTLE_SURFACE_COLORS = {
   log: {
     neutral: "bg-foreground/10",
@@ -164,4 +209,16 @@ export const BATTLE_SURFACE_COLORS = {
     friendlyHeader: "bg-green-950 text-green-50",
     enemyHeader: "bg-red-950 text-red-50",
   },
+} as const;
+
+export const BATTLE_MESSAGE_KIND_COLORS = {
+  attack: BATTLE_SURFACE_COLORS.log.friendly,
+  attack2: BATTLE_SURFACE_COLORS.log.enemy,
+  neu: "bg-amber-400/10",
+  txt: BATTLE_SURFACE_COLORS.log.neutral,
+  win: `font-bold ${BATTLE_TEXT_COLORS.result.won}`,
+  lose: `font-bold ${BATTLE_TEXT_COLORS.result.lost}`,
+  exp: "font-bold text-yellow-300",
+  loot: "",
+  plain: "",
 } as const;

@@ -160,6 +160,21 @@ const durationOf = (raw: string) => {
   return Number.isFinite(turns) && turns > 0 ? turns : 0;
 };
 
+const LOGGED_SKILL_VALUES: ReadonlySet<string> = new Set([
+  "resfire_per",
+  "resfrost_per",
+  "reslight_per",
+  "antidote",
+  "achpp_per",
+  "active_decblock_per",
+  "active_absorbdest_per",
+]);
+
+const LOGGED_SKILL_FLAGS = new Map([
+  ["sunshield_per", "sunshield_per"],
+  ["en-regen", "en-regen-cast"],
+]);
+
 export const activeSkill = (
   skill: SkillDefinition,
   rank: number,
@@ -189,6 +204,19 @@ export const activeSkill = (
     cooldown: skillValueAt(stats.get("cooldown") ?? "0", level) ?? 0,
     selfCast: skill.selfCast ?? false,
     effects,
+    logged: [...stats].flatMap(
+      ([key, raw]): (readonly [string, number | null])[] => {
+        const flag = LOGGED_SKILL_FLAGS.get(key);
+
+        if (flag) return [[flag, null]];
+
+        const value = LOGGED_SKILL_VALUES.has(key)
+          ? skillValueAt(raw, level)
+          : undefined;
+
+        return value === undefined ? [] : [[key, value]];
+      },
+    ),
   };
 };
 

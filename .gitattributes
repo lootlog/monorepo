@@ -56,3 +56,7 @@ apps/api/src/contracts/events/api.ts size-limit-exempt
 # Each profession skill tree is one data table copied from the game, so it
 # stays whole
 apps/wiki/src/lib/skills/trees/*.ts size-limit-exempt
+
+# The battle message builder ports the game battle log function as one
+# table of row keys, so it stays whole
+packages/battle-ui/src/lib/battle-message.ts size-limit-exempt

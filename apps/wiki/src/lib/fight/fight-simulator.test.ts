@@ -144,6 +144,7 @@ describe("battle mastery", () => {
     cost: 0,
     cooldown,
     selfCast: false,
+    logged: [],
     effects: new Map([["adddmg_physical-perw", { value: 0, turns: 1 }]]),
   });
 
@@ -223,27 +224,33 @@ describe("battle mastery", () => {
 
     const events: FightEvent[] = [];
 
-    simulateFight(
-      {
-        teams: [
-          [
-            fighter({
-              profession: "w",
-              hp: 10_000_000,
-              energy: 500,
-              mastery: {
-                steps: [learned("Kamienna skóra"), learned("Okrzyk bojowy")],
-                repeat: false,
-              },
-            }),
-          ],
-          [fighter({ hp: 10_000_000, attackSpeed: 1 })],
+    const setup = {
+      teams: [
+        [
+          fighter({
+            profession: "w",
+            hp: 10_000_000,
+            energy: 500,
+            mastery: {
+              steps: [learned("Kamienna skóra"), learned("Okrzyk bojowy")],
+              repeat: false,
+            },
+          }),
         ],
-      },
-      seededRandom(3),
-      (event) => {
-        events.push(event);
-      },
+        [fighter({ hp: 10_000_000, attackSpeed: 1 })],
+      ],
+    };
+
+    const result = simulateFight(setup, seededRandom(3), (event) => {
+      events.push(event);
+    });
+
+    expect(
+      fightBattlePayload(setup, events, result).events[0]?.f?.m?.find((row) =>
+        row.includes("tspell=Kamienna skóra"),
+      ),
+    ).toBe(
+      "1=100.00;1=100.00;tspell=Kamienna skóra;skillId=34;resfire_per=30;resfrost_per=30;reslight_per=40;antidote=15;achpp_per=0",
     );
 
     expect(
@@ -275,6 +282,7 @@ describe("fightBattlePayload", () => {
       cost: 10,
       cooldown: 2,
       selfCast: false,
+      logged: [],
       effects: new Map([["add_attacks", { value: 1, turns: 1 }]]),
     };
 
@@ -373,16 +381,26 @@ describe("fightBattlePayload", () => {
     const countOf = (actor: number, matches: (event: FightEvent) => boolean) =>
       events.filter((event) => event.actor === actor && matches(event)).length;
 
-    const bonusHealed = (actor: number, bonus: string) =>
+    const holyTouchHealed = (actor: number) =>
       events.reduce(
         (total, event) =>
-          event.kind === "bonusHeal" &&
-          event.actor === actor &&
-          event.bonus === bonus
+          event.kind === "holyTouchHeal" && event.actor === actor
             ? total + event.amount
             : total,
         0,
       );
+
+    const lastHealed = (actor: number) =>
+      events.reduce((total, event) => {
+        if (event.kind === "damageOverTime") {
+          return event.actor === actor ? total + event.lastHeal : total;
+        }
+
+        return (event.kind === "strike" || event.kind === "skill") &&
+          event.target === actor
+          ? total + event.lastHeal
+          : total;
+      }, 0);
 
     expect(
       battle.warriors.map((entry) => [
@@ -395,8 +413,8 @@ describe("fightBattlePayload", () => {
       [0, 1].map((actor) => [
         countOf(actor, (event) => event.kind === "lostTurn"),
         countOf(actor, (event) => event.kind === "strike" && event.curse),
-        bonusHealed(actor, "holytouch"),
-        bonusHealed(actor, "lastheal"),
+        holyTouchHealed(actor),
+        lastHealed(actor),
       ]),
     );
   });

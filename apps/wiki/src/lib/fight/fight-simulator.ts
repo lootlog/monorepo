@@ -43,13 +43,15 @@ export type FightEvent =
       readonly kind: "damageOverTime";
       readonly actor: number;
       readonly poison: number;
+      readonly poisonReduction: number;
       readonly wound: number;
+      readonly woundReduction: number;
       readonly anguish: number;
+      readonly lastHeal: number;
       readonly hp: readonly number[];
     }
   | {
-      readonly kind: "bonusHeal";
-      readonly bonus: "holytouch" | "lastheal";
+      readonly kind: "holyTouchHeal";
       readonly actor: number;
       readonly amount: number;
       readonly hp: readonly number[];
@@ -66,6 +68,12 @@ export type FightEvent =
       readonly actor: number;
       readonly target: number;
       readonly skill: ActiveSkill;
+      readonly armorBonus: number;
+      readonly energyRestored: number;
+      readonly manaRestored: number;
+      readonly comboSpent: number;
+      readonly comboDamage: number;
+      readonly lastHeal: number;
       readonly hp: readonly number[];
     }
   | (Strike & {
@@ -73,6 +81,7 @@ export type FightEvent =
       readonly actor: number;
       readonly target: number;
       readonly fastArrow: boolean;
+      readonly lastHeal: number;
       readonly hp: readonly number[];
     });
 
@@ -124,24 +133,25 @@ const attackTime = (state: FighterState) => {
 };
 
 const tickDamageOverTime = (state: FighterState) => {
+  const poisonReduction = clamp(
+    state.combatant.resistPoison,
+    0,
+    MAX_RESISTANCE,
+  );
+
+  const woundReduction = clamp(state.combatant.resistWound, 0, MAX_RESISTANCE);
   let poison = 0;
   let wound = 0;
 
   if (state.poison) {
-    poison = Math.round(
-      state.poison.damage *
-        (1 - clamp(state.combatant.resistPoison, 0, MAX_RESISTANCE) / 100),
-    );
+    poison = Math.round(state.poison.damage * (1 - poisonReduction / 100));
     state.poison.turnsLeft -= 1;
 
     if (state.poison.turnsLeft <= 0) state.poison = null;
   }
 
   if (state.wound) {
-    wound = Math.round(
-      state.wound.damage *
-        (1 - clamp(state.combatant.resistWound, 0, MAX_RESISTANCE) / 100),
-    );
+    wound = Math.round(state.wound.damage * (1 - woundReduction / 100));
     state.wound.turnsLeft -= 1;
 
     if (state.wound.turnsLeft <= 0) state.wound = null;
@@ -156,7 +166,13 @@ const tickDamageOverTime = (state: FighterState) => {
     if (state.anguish.turnsLeft <= 0) state.anguish = null;
   }
 
-  return { poison, wound, anguish };
+  return {
+    poison,
+    poisonReduction: poison > 0 ? poisonReduction : 0,
+    wound,
+    woundReduction: wound > 0 ? woundReduction : 0,
+    anguish,
+  };
 };
 
 const LAST_HEAL_THRESHOLD = 0.18;
@@ -172,10 +188,7 @@ const healBy = (state: FighterState, amount: number) => {
   return healed;
 };
 
-const tryLastHeal = (
-  state: FighterState,
-  { random, record, hpOf }: Pick<Turn, "random" | "record" | "hpOf">,
-) => {
+const tryLastHeal = (state: FighterState, random: () => number) => {
   const range = state.combatant.legendary.lastheal;
 
   if (
@@ -184,21 +197,23 @@ const tryLastHeal = (
     state.lastHealUsed ||
     state.hp >= LAST_HEAL_THRESHOLD * state.combatant.hp
   ) {
-    return;
+    return 0;
   }
 
   state.lastHealUsed = true;
 
   const share = range.min + random() * (range.max - range.min);
-  const amount = healBy(state, (share / 100) * state.combatant.hp);
 
-  record?.({
-    kind: "bonusHeal",
-    bonus: "lastheal",
-    actor: state.index,
-    amount,
-    hp: hpOf(),
-  });
+  return healBy(state, (share / 100) * state.combatant.hp);
+};
+
+const takeDamage = (state: FighterState, damage: number) => {
+  state.hp -= damage;
+
+  if (state.hp < 1) {
+    state.alive = false;
+    state.hp = 0;
+  }
 };
 
 const applyHealing = (
@@ -287,29 +302,31 @@ const nextActor = (states: readonly FighterState[]) => {
 };
 
 const startTurn = (turn: Turn) => {
-  const { actor, enemies, record, hpOf } = turn;
+  const { actor, enemies, random, record, hpOf } = turn;
+  const healed = applyHealing(actor, enemies);
+
+  if (record && healed > 0) {
+    record({ kind: "heal", actor: actor.index, amount: healed, hp: hpOf() });
+  }
+
   const overTime = tickDamageOverTime(actor);
   const overTimeDamage = overTime.poison + overTime.wound + overTime.anguish;
 
-  actor.hp -= overTimeDamage;
+  takeDamage(actor, overTimeDamage);
 
-  if (actor.hp < 1) {
-    actor.alive = false;
-    actor.hp = 0;
-  }
+  const lastHeal = tryLastHeal(actor, random);
 
-  if (record && overTimeDamage > 0) {
+  if (record && (overTimeDamage > 0 || lastHeal > 0)) {
     record({
       kind: "damageOverTime",
       actor: actor.index,
       ...overTime,
+      lastHeal,
       hp: hpOf(),
     });
   }
 
   if (!actor.alive) return;
-
-  tryLastHeal(actor, turn);
 
   if (actor.holyTouchTurns > 0) {
     actor.holyTouchTurns -= 1;
@@ -317,18 +334,11 @@ const startTurn = (turn: Turn) => {
     const amount = healBy(actor, HOLY_TOUCH_HEAL * actor.combatant.hp);
 
     record?.({
-      kind: "bonusHeal",
-      bonus: "holytouch",
+      kind: "holyTouchHeal",
       actor: actor.index,
       amount,
       hp: hpOf(),
     });
-  }
-
-  const healed = applyHealing(actor, enemies);
-
-  if (record && healed > 0) {
-    record({ kind: "heal", actor: actor.index, amount: healed, hp: hpOf() });
   }
 
   actor.energy = Math.min(
@@ -337,20 +347,42 @@ const startTurn = (turn: Turn) => {
   );
 };
 
+const comboDamageTo = (target: FighterState, plan: ActionPlan) =>
+  plan.comboSpent > 0
+    ? Math.round(
+        ((plan.effect("combo_dmg_hpp-target") * plan.comboSpent) / 100) *
+          target.combatant.hp *
+          (1 + target.combatant.damageTakenBonus / 100),
+      )
+    : 0;
+
 const castSkill = (
-  { actor, enemies, targeting, record, hpOf }: Turn,
+  { actor, enemies, targeting, random, record, hpOf }: Turn,
   skill: ActiveSkill,
   plan: ActionPlan,
 ) => {
-  payAndActivate(actor, skill, plan);
+  const restored = payAndActivate(actor, skill, plan);
+
+  const target = isAttackSkill(skill)
+    ? (pickTarget(enemies, targeting, () => 0) ?? actor)
+    : actor;
+
+  const comboDamage = target === actor ? 0 : comboDamageTo(target, plan);
+
+  takeDamage(target, comboDamage);
+  actor.damageDealt += comboDamage;
+
+  const lastHeal = comboDamage > 0 ? tryLastHeal(target, random) : 0;
 
   record?.({
     kind: "skill",
     actor: actor.index,
-    target: isAttackSkill(skill)
-      ? (pickTarget(enemies, targeting, () => 0)?.index ?? actor.index)
-      : actor.index,
+    target: target.index,
     skill,
+    ...restored,
+    comboSpent: plan.comboSpent,
+    comboDamage,
+    lastHeal,
     hp: hpOf(),
   });
 
@@ -368,6 +400,7 @@ const attack = (turn: Turn, plan: ActionPlan) => {
     if (target === null) break;
 
     const hit = strike(actor, target, plan, random);
+    const lastHeal = tryLastHeal(target, random);
 
     record?.({
       kind: "strike",
@@ -375,10 +408,9 @@ const attack = (turn: Turn, plan: ActionPlan) => {
       target: target.index,
       fastArrow: fastArrow && index === 0,
       ...hit,
+      lastHeal,
       hp: hpOf(),
     });
-
-    tryLastHeal(target, turn);
   }
 
   return fastArrow ? FAST_ARROW_TIME_FACTOR : 1;
