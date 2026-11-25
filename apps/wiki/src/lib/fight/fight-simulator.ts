@@ -596,16 +596,41 @@ const castSkill = (
 
 const MAX_COUNTER_CHAIN = 10;
 
+const forcedTurnOf = (turn: Turn, actor: FighterState): Turn =>
+  actor.team === turn.actor.team
+    ? { ...turn, actor }
+    : { ...turn, actor, allies: turn.enemies, enemies: turn.allies };
+
 const counterAttack = (
-  { random, record, hpOf }: Turn,
+  turn: Turn,
   countering: FighterState,
   target: FighterState,
 ) => {
+  const { random, record, hpOf } = turn;
   let attacker = countering;
   let defender = target;
 
   for (let chain = 0; chain < MAX_COUNTER_CHAIN; chain += 1) {
     if (!attacker.alive || !defender.alive) return;
+
+    const forcedTurn = forcedTurnOf(turn, attacker);
+
+    startTurn(forcedTurn);
+
+    if (!attacker.alive) return;
+
+    if (attacker.cursed) {
+      attacker.cursed = false;
+      record?.({ kind: "lostTurn", actor: attacker.index });
+
+      return;
+    }
+
+    if (!reaches(attacker, defender)) {
+      if (canStepForward(attacker)) stepForward(forcedTurn);
+
+      return;
+    }
 
     const hit = strike(attacker, defender, NO_SKILL, random);
     const lastHeal = tryLastHeal(defender, random);

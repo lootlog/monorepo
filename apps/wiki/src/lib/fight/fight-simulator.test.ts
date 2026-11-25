@@ -397,25 +397,53 @@ describe("skill effects", () => {
     expect(nextOfTarget?.kind).toBe("lostTurn");
   });
 
-  test("counters a critical hit with an immediate strike of the defender", () => {
+  test.each([
+    { curse: 0, reply: "strike" },
+    { curse: 100, reply: "lostTurn" },
+  ])(
+    "answers a countered critical hit with a forced turn of the defender ($reply)",
+    ({ curse, reply }) => {
+      const events = fightOf(
+        {
+          critChance: 100,
+          legendary: { ...NO_LEGENDARY_BONUSES, curse },
+        },
+        { counterChance: 100, attackSpeed: 1, healing: 100 },
+      );
+
+      const mine = events.flatMap((event, index) =>
+        event.kind === "strike" && event.actor === 0 ? [index] : [],
+      );
+
+      expect(mine.length).toBeGreaterThan(2);
+
+      for (const index of mine.slice(0, 3)) {
+        const hit = events[index];
+        const forcedTurn = events.slice(index + 1, index + 3);
+
+        expect(hit?.kind === "strike" && hit.countered).toBe(true);
+
+        expect(forcedTurn.map(({ kind, actor }) => ({ kind, actor }))).toEqual([
+          { kind: "heal", actor: 1 },
+          { kind: reply, actor: 1 },
+        ]);
+      }
+    },
+  );
+
+  test("steps forward in the forced turn of a counter until the striker is in reach", () => {
     const events = fightOf(
-      { critChance: 100 },
-      { counterChance: 100, attackSpeed: 1 },
+      { critChance: 100, position: 3 },
+      { profession: "w", position: 1, counterChance: 100 },
     );
 
-    const mine = events.flatMap((event, index) =>
-      event.kind === "strike" && event.actor === 0 ? [index] : [],
+    const forcedTurns = events.flatMap((event, index) =>
+      event.kind === "strike" && event.actor === 0
+        ? [events[index + 1]?.kind]
+        : [],
     );
 
-    expect(mine.length).toBeGreaterThan(2);
-
-    for (const index of mine.slice(0, 3)) {
-      const hit = events[index];
-      const reply = events[index + 1];
-
-      expect(hit?.kind === "strike" && hit.countered).toBe(true);
-      expect(reply?.kind === "strike" && reply.actor).toBe(1);
-    }
+    expect(forcedTurns.slice(0, 3)).toEqual(["step", "step", "strike"]);
   });
 
   test("parries a melee strike to no damage but never a ranged one", () => {
