@@ -63,6 +63,7 @@ export const fighter = (overrides: Partial<Combatant>): Combatant => ({
   resistPoison: 0,
   resistWound: 0,
   healing: 0,
+  healingBonus: 0,
   enemyHealingCut: 0,
   energy: 50,
   energyGain: 0,

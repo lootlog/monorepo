@@ -222,6 +222,18 @@ describe("passive skill effects", () => {
 
     expect(hit?.triggers.critPoison).toBe(50);
     expect(rows.some((row) => row.endsWith(";0;heal=500,-50"))).toBe(true);
+
+    const additive = fightOf(
+      {
+        critChance: 100,
+        ...withPassives({ critPoison: { value: 50, bound: 100 } }),
+      },
+      { healing: 1000, healingBonus: 20 },
+    );
+
+    expect(additive.rows.some((row) => row.endsWith(";0;heal=700,-50"))).toBe(
+      true,
+    );
   });
 
   test("weakens the strikes of an enemy who is poisoned", () => {
