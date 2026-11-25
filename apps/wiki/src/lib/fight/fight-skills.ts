@@ -6,6 +6,7 @@ export type ActiveSkill = {
   readonly resource: "energy" | "mana";
   readonly cost: number;
   readonly cooldown: number;
+  readonly selfCast: boolean;
   readonly effects: ReadonlyMap<string, ActiveEffect>;
 };
 
@@ -94,8 +95,7 @@ export const isSimulatedActive = (skill: ActiveSkill) =>
 
 const isComboFinisher = (skill: ActiveSkill) => skill.effects.has("combo-max");
 
-export const isAttackSkill = (skill: ActiveSkill) =>
-  !skill.effects.has("energyrestore_per");
+export const isAttackSkill = (skill: ActiveSkill) => !skill.selfCast;
 
 export const buffTotal = (state: SkillUserState, key: string) => {
   let total = 0;

@@ -187,6 +187,7 @@ export const activeSkill = (
     resource,
     cost: skillValueAt(stats.get(resource) ?? "0", level) ?? 0,
     cooldown: skillValueAt(stats.get("cooldown") ?? "0", level) ?? 0,
+    selfCast: skill.selfCast ?? false,
     effects,
   };
 };

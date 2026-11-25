@@ -24,6 +24,7 @@ export type SkillDefinition = {
   level: number;
   maxRank: number;
   active: boolean;
+  selfCast?: boolean;
   row: number;
   column: number;
   element: "fire" | "frost" | "heal" | "light" | "physical" | "support";

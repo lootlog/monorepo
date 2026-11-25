@@ -9,6 +9,8 @@ import {
   type MasteryQueue,
 } from "./fight-skills";
 import { seededRandom, simulateFights } from "./fight-summary";
+import { activeSkill } from "./fighter-profile";
+import { SKILL_TREE as WARRIOR_SKILLS } from "@/lib/skills/trees/w";
 
 const NO_DAMAGE = { min: 0, max: 0 };
 
@@ -141,6 +143,7 @@ describe("battle mastery", () => {
     resource: "energy",
     cost: 0,
     cooldown,
+    selfCast: false,
     effects: new Map([["adddmg_physical-perw", { value: 0, turns: 1 }]]),
   });
 
@@ -209,6 +212,50 @@ describe("battle mastery", () => {
     ]);
   });
 
+  test("spends the whole turn on a skill cast on oneself but strikes after an attack skill", () => {
+    const learned = (name: string) => {
+      const definition = WARRIOR_SKILLS.find((entry) => entry.name === name);
+
+      if (!definition) throw new Error(`missing skill ${name}`);
+
+      return activeSkill(definition, 1, 300);
+    };
+
+    const events: FightEvent[] = [];
+
+    simulateFight(
+      {
+        teams: [
+          [
+            fighter({
+              profession: "w",
+              hp: 10_000_000,
+              energy: 500,
+              mastery: {
+                steps: [learned("Kamienna skóra"), learned("Okrzyk bojowy")],
+                repeat: false,
+              },
+            }),
+          ],
+          [fighter({ hp: 10_000_000, attackSpeed: 1 })],
+        ],
+      },
+      seededRandom(3),
+      (event) => {
+        events.push(event);
+      },
+    );
+
+    expect(
+      events
+        .filter((event) => event.actor === 0)
+        .slice(0, 4)
+        .map((event) =>
+          event.kind === "skill" ? event.skill.name : event.kind,
+        ),
+    ).toEqual(["Kamienna skóra", "Okrzyk bojowy", "strike", "strike"]);
+  });
+
   test("attacks once a list that does not repeat runs out", () => {
     expect(actionsOf({ steps: [swing, swing], repeat: false }, 4)).toEqual([
       "cios",
@@ -227,6 +274,7 @@ describe("fightBattlePayload", () => {
       resource: "energy",
       cost: 10,
       cooldown: 2,
+      selfCast: false,
       effects: new Map([["add_attacks", { value: 1, turns: 1 }]]),
     };
 
