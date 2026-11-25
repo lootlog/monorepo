@@ -94,6 +94,62 @@ describe("simulateFights", () => {
     expect(mage.fighters[0]?.evadedRate).toBe(0);
   });
 
+  test("takes a skill's evade reduction from the points above the 50% cap first", () => {
+    const feint: ActiveSkill = {
+      id: 1,
+      name: "zmyłka",
+      resource: "energy",
+      cost: 0,
+      cooldown: 0,
+      selfCast: false,
+      logged: [],
+      effects: new Map([["active_decevade_per", { value: 20, turns: 1 }]]),
+    };
+
+    const summary = simulateFights(
+      {
+        teams: [
+          [
+            fighter({
+              profession: "h",
+              hp: 10_000_000,
+              mastery: { steps: [feint], repeat: true },
+            }),
+          ],
+          [fighter({ name: "unik", hp: 10_000_000, evadePoints: 2000 })],
+        ],
+      },
+      RUNS,
+    );
+
+    expect(summary.fighters[0]?.evadedRate).toBeGreaterThan(0.45);
+  });
+
+  test("logs an evaded strike with its strength and no damage taken", () => {
+    const setup = {
+      teams: [
+        [fighter({ profession: "h" })],
+        [fighter({ name: "unik", evadePoints: 10_000 })],
+      ],
+    };
+
+    const events: FightEvent[] = [];
+
+    const result = simulateFight(setup, seededRandom(5), (event) => {
+      events.push(event);
+    });
+
+    const evadedRows =
+      fightBattlePayload(setup, events, result).events[0]?.f?.m?.filter((row) =>
+        row.includes("-evade"),
+      ) ?? [];
+
+    expect(evadedRows.length).toBeGreaterThan(0);
+    expect(
+      evadedRows.every((row) => /;\+dmgd=[1-9]\d*;.*-evade;-dmgd=0$/.test(row)),
+    ).toBe(true);
+  });
+
   test("keeps a heavily slowed fighter acting at a third of its attack speed", () => {
     const summary = simulateFights(
       {

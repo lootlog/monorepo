@@ -103,6 +103,9 @@ const roll = (random: () => number, range: DamageRange) =>
     ? range.min
     : range.min + Math.floor(random() * (range.max - range.min + 1));
 
+const cappedChance = (percent: number) =>
+  clamp(percent, 0, MAX_EVADE_OR_BLOCK) / 100;
+
 const evadeChance = (
   defender: FighterState,
   attacker: FighterState,
@@ -116,13 +119,11 @@ const evadeChance = (
       attacker.combatant.evadeReduction,
   );
 
-  const chance = Math.min(
-    MAX_EVADE_OR_BLOCK,
+  const chance =
     (points * EVADE_OR_BLOCK_PER_POINT) /
-      Math.min(attacker.combatant.level, LEVEL_CAP_FOR_CHANCES),
-  );
+    Math.min(attacker.combatant.level, LEVEL_CAP_FOR_CHANCES);
 
-  return Math.max(0, chance - activeReduction) / 100;
+  return cappedChance(chance - activeReduction);
 };
 
 const blockChance = (
@@ -132,15 +133,13 @@ const blockChance = (
 ) => {
   if (!SHIELD_BEARERS.has(defender.combatant.profession)) return 0;
 
-  const chance = Math.min(
-    MAX_EVADE_OR_BLOCK,
+  const chance =
     (defender.combatant.blockPoints *
       (1 - puncture(attacker)) *
       EVADE_OR_BLOCK_PER_POINT) /
-      Math.min(attacker.combatant.level, LEVEL_CAP_FOR_CHANCES),
-  );
+    Math.min(attacker.combatant.level, LEVEL_CAP_FOR_CHANCES);
 
-  return Math.max(0, chance - activeReduction) / 100;
+  return cappedChance(chance - activeReduction);
 };
 
 const currentArmor = (defender: FighterState) =>
@@ -181,18 +180,36 @@ type Hit = {
   random: () => number;
 };
 
-const physicalDamage = (
-  { attacker, defender, plan, crit, random }: Hit,
-  pierced: boolean,
-  blockFactor: number,
-) => {
+const physicalStrength = ({ attacker, plan, crit, random }: Hit) =>
+  roll(random, attacker.combatant.physical) *
+  (1 + plan.effect("adddmg_physical-perw") / 100) *
+  (1 + attacker.combatant.physicalBonus / 100) *
+  (crit > 0 ? (crit * attacker.combatant.critValue) / 100 : 1);
+
+const magicStrength = ({ attacker, defender, crit, random }: Hit) => {
   const a = attacker.combatant;
 
-  const strength =
-    roll(random, a.physical) *
-    (1 + plan.effect("adddmg_physical-perw") / 100) *
-    (1 + a.physicalBonus / 100) *
-    (crit > 0 ? (crit * a.critValue) / 100 : 1);
+  const lightRamp = Math.min(
+    LIGHT_RAMP_MAX,
+    LIGHT_RAMP_PER_ATTACK * (attacker.lightAttacks.get(defender.index) ?? 0),
+  );
+
+  const magicCrit = crit > 0 ? (crit * a.critMagicValue) / 100 : 1;
+
+  const rolled = (range: DamageRange, ramp: number) =>
+    range.max <= 0 ? 0 : roll(random, range) * (1 + ramp) * magicCrit;
+
+  return {
+    fire: rolled(a.fire, 0),
+    frost: rolled(a.frost, 0),
+    light: rolled(a.light, lightRamp),
+  };
+};
+
+const physicalDamage = (hit: Hit, pierced: boolean, blockFactor: number) => {
+  const { attacker, defender } = hit;
+  const a = attacker.combatant;
+  const strength = physicalStrength(hit);
 
   const raw = strength * blockFactor;
 
@@ -218,55 +235,26 @@ const physicalDamage = (
 
 const NO_ELEMENTAL_DAMAGE: ElementalDamage = { fire: 0, frost: 0, light: 0 };
 
-const magicDamage = (
-  { attacker, defender, crit, random }: Hit,
-  blockFactor: number,
-) => {
-  const a = attacker.combatant;
+const magicDamage = (hit: Hit, blockFactor: number) => {
+  const { attacker, defender } = hit;
   const d = defender.combatant;
   const armor = armorAgainst(defender, attacker);
-  const previousAttacks = attacker.lightAttacks.get(defender.index) ?? 0;
+  const strength = magicStrength(hit);
 
-  const lightRamp = Math.min(
-    LIGHT_RAMP_MAX,
-    LIGHT_RAMP_PER_ATTACK * previousAttacks,
+  attacker.lightAttacks.set(
+    defender.index,
+    (attacker.lightAttacks.get(defender.index) ?? 0) + 1,
   );
 
-  const magicCrit = crit > 0 ? (crit * a.critMagicValue) / 100 : 1;
+  const taken = (value: number, base: number, buffKey: string) =>
+    value <= 0
+      ? 0
+      : armorReduced(value * blockFactor, MAGIC_ARMOR_FACTOR * armor) *
+        (1 - resistance(defender, attacker, base, buffKey));
 
-  attacker.lightAttacks.set(defender.index, previousAttacks + 1);
-
-  const element = (
-    range: DamageRange,
-    ramp: number,
-    base: number,
-    buffKey: string,
-  ) => {
-    if (range.max <= 0) return { strength: 0, taken: 0 };
-
-    const strength = roll(random, range) * (1 + ramp) * magicCrit;
-
-    return {
-      strength,
-      taken:
-        armorReduced(strength * blockFactor, MAGIC_ARMOR_FACTOR * armor) *
-        (1 - resistance(defender, attacker, base, buffKey)),
-    };
-  };
-
-  const fireHit = element(a.fire, 0, d.resistFire, "resfire_per");
-  const frostHit = element(a.frost, 0, d.resistFrost, "resfrost_per");
-  const lightHit = element(a.light, lightRamp, d.resistLight, "reslight_per");
-
-  const strength = {
-    fire: fireHit.strength,
-    frost: frostHit.strength,
-    light: lightHit.strength,
-  };
-
-  const fire = fireHit.taken;
-  const frost = frostHit.taken;
-  const light = lightHit.taken;
+  const fire = taken(strength.fire, d.resistFire, "resfire_per");
+  const frost = taken(strength.frost, d.resistFrost, "resfrost_per");
+  const light = taken(strength.light, d.resistLight, "reslight_per");
   const magic = fire + frost + light;
 
   if (magic <= 0) return { strength, taken: NO_ELEMENTAL_DAMAGE };
@@ -365,10 +353,23 @@ const mainWeaponHit = (hit: Hit, scale: DamageScale) => {
   };
 };
 
-const NO_DAMAGE = { physical: 0, fire: 0, frost: 0, light: 0 };
+const evadedHit = (hit: Hit, scale: DamageScale) => {
+  const dealt = (value: number) => Math.round(value * scale.dealt);
+  const physical = physicalStrength(hit);
+  const magic = magicStrength(hit);
+
+  return {
+    ...MISSED,
+    strength: {
+      physical: dealt(physical),
+      fire: dealt(magic.fire),
+      frost: dealt(magic.frost),
+      light: dealt(magic.light),
+    },
+  };
+};
 
 const MISSED = {
-  strength: NO_DAMAGE,
   physical: 0,
   fire: 0,
   frost: 0,
@@ -488,12 +489,8 @@ export const strike = (
 
   const armorBefore = currentArmor(defender);
 
-  const main = evaded
-    ? MISSED
-    : mainWeaponHit(
-        { attacker, defender, plan, crit: critStrength, random },
-        scale,
-      );
+  const hit = { attacker, defender, plan, crit: critStrength, random };
+  const main = evaded ? evadedHit(hit, scale) : mainWeaponHit(hit, scale);
 
   const offhandStrength =
     a.offhand.max > 0
