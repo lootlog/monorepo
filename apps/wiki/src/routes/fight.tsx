@@ -47,6 +47,10 @@ export const Route = createFileRoute("/fight")({
       description: t("fightPage.description"),
       noindex: true,
     }),
+  validateSearch: (search: { tab?: unknown }): { tab?: FightTab } =>
+    isFightTab(search.tab) && search.tab !== "analysis"
+      ? { tab: search.tab }
+      : {},
 });
 
 const OPPONENT_PARAM = "przeciwnik";
@@ -82,12 +86,26 @@ const randomSeed = () => crypto.getRandomValues(new Uint32Array(1))[0] ?? 0;
 const isFightTab = (value: unknown): value is FightTab =>
   value === "analysis" || value === "mine" || value === "opponent";
 
+const useFightTab = () => {
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const tab = search.tab ?? "analysis";
+
+  const setTab = (next: FightTab) =>
+    void navigate({
+      search: next === "analysis" ? {} : { tab: next },
+      replace: true,
+    });
+
+  return [tab, setTab] as const;
+};
+
 function FightRoute() {
   const { set: mySet } = useEquipmentSet();
   const [opponentSet, updateOpponent] = useSharedStoredState(STORED_OPPONENT);
   const mine = useFighterProfile(mySet);
   const opponent = useFighterProfile(opponentSet);
-  const [tab, setTab] = useState<FightTab>("analysis");
+  const [tab, setTab] = useFightTab();
   const [runs, setRuns] = useState(DEFAULT_SIMULATION_RUNS);
   const [progress, setProgress] = useState<number | null>(null);
   const [simulated, setSimulated] = useState<SimulatedFight | null>(null);
