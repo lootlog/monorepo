@@ -19,12 +19,20 @@ export function FightAnalysis({
         <div className="order-1 lg:order-none">{fighters}</div>
         <div className="order-4 lg:order-none">{characterStats}</div>
       </div>
-      <div className="order-2 min-w-0 lg:order-none">{results}</div>
       {fights ? (
-        <div className="order-3 flex min-w-0 flex-col gap-4 lg:order-none lg:col-start-2 2xl:sticky 2xl:top-[7rem] 2xl:col-start-3 2xl:row-start-1 2xl:h-[calc(100dvh-8rem)]">
+        <div className="order-2 flex min-w-0 flex-col gap-4 lg:order-none lg:col-start-2 lg:row-start-1 2xl:sticky 2xl:top-[7rem] 2xl:h-[calc(100dvh-8rem)]">
           {fights}
         </div>
       ) : null}
+      <div
+        className={
+          fights
+            ? "order-3 min-w-0 lg:order-none lg:col-start-2 2xl:col-start-3 2xl:row-start-1"
+            : "order-2 min-w-0 lg:order-none"
+        }
+      >
+        {results}
+      </div>
     </div>
   );
 }
