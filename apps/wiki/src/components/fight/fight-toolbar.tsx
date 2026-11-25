@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Square, Swords } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import { Progress } from "@lootlog/ui/components/progress";
@@ -12,6 +13,7 @@ type FightToolbarProps = {
   canSimulate: boolean;
   onSimulate: () => void;
   onCancel: () => void;
+  share: ReactNode;
 };
 
 export function FightToolbar({
@@ -21,6 +23,7 @@ export function FightToolbar({
   canSimulate,
   onSimulate,
   onCancel,
+  share,
 }: FightToolbarProps) {
   const isRunning = progress !== null;
 
@@ -36,6 +39,7 @@ export function FightToolbar({
         <TabsTrigger value="opponent">{t("fightPage.opponentTab")}</TabsTrigger>
       </TabsList>
       <div className="ml-auto flex items-center gap-2">
+        {share}
         {isRunning ? (
           <Progress
             value={Math.round(progress * 100)}

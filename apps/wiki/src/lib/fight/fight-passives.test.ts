@@ -149,22 +149,24 @@ describe("passive skill effects", () => {
     expect(hit?.hp[0]).toBe(11_000);
   });
 
-  test("evades beyond the 50% cap with adrenaline at low health", () => {
+  test("adds adrenaline evade at low health within the 50% cap and before a skill's reduction", () => {
     const attacker = createState(fighter({ profession: "h" }), 0, 0);
 
     const defender = createState(
       fighter({
-        evadePoints: 10_000,
+        evadePoints: 200,
         ...withPassives({ adrenalinEvade: { value: 40, bound: 30 } }),
       }),
       1,
       1,
     );
 
-    expect(evadeChance(defender, attacker, 0)).toBe(0.5);
+    expect(evadeChance(defender, attacker, 0)).toBeCloseTo(0.2);
 
     defender.hp = 0.2 * defender.combatant.hp;
 
-    expect(evadeChance(defender, attacker, 0)).toBeCloseTo(0.9);
+    expect(evadeChance(defender, attacker, 0)).toBe(0.5);
+    expect(evadeChance(defender, attacker, 30)).toBeCloseTo(0.3);
+    expect(evadeChance(defender, attacker, 100)).toBe(0);
   });
 });

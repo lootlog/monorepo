@@ -7,16 +7,14 @@ import { t } from "@/i18n/messages";
 
 type ShareLinkButtonProps = {
   path: string;
-  param: string;
-  value: string;
+  params: Readonly<Record<string, string>>;
   compact?: boolean;
   className?: string;
 };
 
 export function ShareLinkButton({
   path,
-  param,
-  value,
+  params,
   compact = false,
   className,
 }: ShareLinkButtonProps) {
@@ -25,7 +23,9 @@ export function ShareLinkButton({
   const share = () => {
     const url = new URL(path, window.location.origin);
 
-    url.searchParams.set(param, value);
+    for (const [param, value] of Object.entries(params)) {
+      url.searchParams.set(param, value);
+    }
 
     return copy(url.toString());
   };

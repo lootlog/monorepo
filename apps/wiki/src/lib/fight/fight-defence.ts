@@ -60,16 +60,14 @@ export const evadeChance = (
       attacker.combatant.evadeReduction,
   );
 
-  const chance =
-    (points * EVADE_OR_BLOCK_PER_POINT) /
-    Math.min(attacker.combatant.level, LEVEL_CAP_FOR_CHANCES);
-
   const { adrenalinEvade } = defender.combatant.passives;
 
-  return (
-    cappedChance(chance - activeReduction) +
-    (isBelow(defender, adrenalinEvade) ? adrenalinEvade.value / 100 : 0)
-  );
+  const chance =
+    (points * EVADE_OR_BLOCK_PER_POINT) /
+      Math.min(attacker.combatant.level, LEVEL_CAP_FOR_CHANCES) +
+    (isBelow(defender, adrenalinEvade) ? adrenalinEvade.value : 0);
+
+  return cappedChance(chance - activeReduction);
 };
 
 export const blockChance = (

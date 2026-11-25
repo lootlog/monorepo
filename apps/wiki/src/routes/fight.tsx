@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Tabs, TabsContent } from "@lootlog/ui/components/tabs";
 import { EmptyNotice } from "@/components/common/empty-notice";
+import { ShareLinkButton } from "@/components/common/share-link-button";
 import { EquipmentSetEditor } from "@/components/equipment/equipment-set-editor";
 import { SetItemPickerProvider } from "@/components/equipment/set-item-picker-provider";
 import { FightAnalysis } from "@/components/fight/fight-analysis";
@@ -21,6 +22,7 @@ import {
   decodeEquipmentSet,
   EMPTY_EQUIPMENT_SET,
   encodeEquipmentSet,
+  EQUIPMENT_SET_PARAM,
 } from "@/lib/equipment-set";
 import {
   DEFAULT_FIGHT_LIST_VIEW,
@@ -47,9 +49,11 @@ export const Route = createFileRoute("/fight")({
     }),
 });
 
+const OPPONENT_PARAM = "przeciwnik";
+
 const STORED_OPPONENT = {
   storageKey: "lootlog-wiki-fight-opponent",
-  params: ["przeciwnik"],
+  params: [OPPONENT_PARAM],
   encode: encodeEquipmentSet,
   decode: decodeEquipmentSet,
   empty: EMPTY_EQUIPMENT_SET,
@@ -90,7 +94,13 @@ function FightRoute() {
   const [view, setView] = useState<FightListView>(DEFAULT_FIGHT_LIST_VIEW);
   const [replay, setReplay] = useState<Replay | null>(null);
   const running = useRef<AbortController | null>(null);
-  const sets = `${encodeEquipmentSet(mySet)}|${encodeEquipmentSet(opponentSet)}`;
+
+  const encodedSets = {
+    [EQUIPMENT_SET_PARAM]: encodeEquipmentSet(mySet),
+    [OPPONENT_PARAM]: encodeEquipmentSet(opponentSet),
+  };
+
+  const sets = Object.values(encodedSets).join("|");
 
   // oxlint-disable-next-line lootlog/no-unreasoned-state-sync -- stops the running simulation loop when the page unmounts
   useEffect(() => () => running.current?.abort(), []);
@@ -181,6 +191,7 @@ function FightRoute() {
         canSimulate={fighters !== null}
         onSimulate={simulate}
         onCancel={() => running.current?.abort()}
+        share={<ShareLinkButton path="/fight" params={encodedSets} />}
       />
       <TabsContent value="analysis">
         <FightAnalysis

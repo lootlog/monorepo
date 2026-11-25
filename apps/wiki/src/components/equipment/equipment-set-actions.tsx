@@ -22,8 +22,7 @@ export function EquipmentSetActions({
     <>
       <ShareLinkButton
         path="/set"
-        param={EQUIPMENT_SET_PARAM}
-        value={encodeEquipmentSet(set)}
+        params={{ [EQUIPMENT_SET_PARAM]: encodeEquipmentSet(set) }}
         compact={compact}
       />
       <Button
