@@ -1,4 +1,4 @@
-import { Sword } from "lucide-react";
+import { type LucideIcon, Sword } from "lucide-react";
 import { cn } from "cn";
 import type { SkillDefinition } from "@/lib/skills/skill-tree";
 import { SkillIcon } from "./skill-icon";
@@ -6,6 +6,7 @@ import { SkillIcon } from "./skill-icon";
 type MasteryActionLabelProps = {
   name: string;
   skill: SkillDefinition | undefined;
+  icon?: LucideIcon;
   note?: string;
   isMuted: boolean;
 };
@@ -13,6 +14,7 @@ type MasteryActionLabelProps = {
 export function MasteryActionLabel({
   name,
   skill,
+  icon: Icon = Sword,
   note,
   isMuted,
 }: MasteryActionLabelProps) {
@@ -28,7 +30,7 @@ export function MasteryActionLabel({
             isMuted && "opacity-60",
           )}
         >
-          <Sword className="size-4" />
+          <Icon className="size-4" />
         </span>
       )}
       <span className="flex min-w-0 flex-col gap-0.5">

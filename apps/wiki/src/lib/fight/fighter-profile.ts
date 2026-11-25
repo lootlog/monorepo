@@ -8,7 +8,11 @@ import {
 } from "@/lib/calculators";
 import { characterStats, type CharacterStats } from "@/lib/character-stats";
 import type { Profession } from "@/lib/equipment-set";
-import { type BattleMastery, NORMAL_ATTACK } from "@/lib/skills/battle-mastery";
+import {
+  type BattleMastery,
+  NORMAL_ATTACK,
+  STEP_FORWARD,
+} from "@/lib/skills/battle-mastery";
 import { sumSkillBonuses } from "@/lib/skills/skill-stats";
 import {
   skillPlanLevel,
@@ -21,8 +25,11 @@ import {
 } from "@/lib/skills/skill-tree";
 import {
   NO_LEGENDARY_BONUSES,
+  type BattlePosition,
   type Combatant,
   type LegendaryBonuses,
+  type PassiveEffects,
+  type ResourceDrain,
 } from "./fight-state";
 import {
   SIMULATED_ACTIVE_EFFECTS,
@@ -37,6 +44,7 @@ export type FighterItem = { item: { type: string | null; stat: string } };
 export type FighterProfile = {
   profession: Profession;
   level: number;
+  position: BattlePosition;
   stats: CharacterStats;
   extra: Record<string, number>;
   skillSlow: number;
@@ -45,6 +53,9 @@ export type FighterProfile = {
   mastery: MasteryQueue;
   comboGain: ComboGain;
   legendary: LegendaryBonuses;
+  energyDrain: ResourceDrain;
+  manaDrain: ResourceDrain;
+  passives: PassiveEffects;
 };
 
 const EXTRA_ITEM_KEYS = [
@@ -58,6 +69,8 @@ const EXTRA_ITEM_KEYS = [
   "adest",
   "contra",
   "parry",
+  "abdest",
+  "resdmg",
 ];
 
 const EXTRA_SKILL_KEYS = [
@@ -78,7 +91,51 @@ const EXTRA_SKILL_KEYS = [
   "rage",
   "rage_3turns",
   "redacdmg_per",
+  "absorbd",
+  "absagain_per",
+  "redabdest_per",
+  "reddest_per",
+  "resdmg",
+  "swing",
+  "critmval_f",
+  "critmval_c",
+  "critmval_l",
 ];
+
+const RESOURCE_DRAINS = { energy: "enfatig", mana: "manafatig" } as const;
+
+const MAX_DRAIN_CHANCE = 100;
+
+const resourceDrain = (items: readonly FighterItem[], key: string) => {
+  const drains = items.flatMap(({ item }) => {
+    const [chance = 0, amount = 0] = (itemStatValue(item.stat, key) ?? "")
+      .split(",")
+      .map(Number);
+
+    return Number.isFinite(chance) && Number.isFinite(amount)
+      ? [{ chance, amount }]
+      : [];
+  });
+
+  return {
+    chance: Math.min(
+      MAX_DRAIN_CHANCE,
+      totalOf(drains.map((drain) => drain.chance)),
+    ),
+    amount: Math.max(0, ...drains.map((drain) => drain.amount)),
+  };
+};
+
+const POSITION_BY_WEAPON: ReadonlyMap<string, BattlePosition> = new Map([
+  ["WAND_WEAPON", 2],
+  ["DISTANCE_WEAPON", 3],
+]);
+
+const battlePosition = (items: readonly FighterItem[]): BattlePosition =>
+  items.reduce<BattlePosition>(
+    (position, { item }) => POSITION_BY_WEAPON.get(item.type ?? "") ?? position,
+    1,
+  );
 
 const COMBO_EVENTS = ["crit", "pierce", "wound", "block"] as const;
 
@@ -169,6 +226,11 @@ const durationOf = (raw: string) => {
   return Number.isFinite(turns) && turns > 0 ? turns : 0;
 };
 
+const SINGLE_TURN_EFFECTS: ReadonlySet<string> = new Set([
+  "disturb_crit",
+  "disturb_pierce",
+]);
+
 const LOGGED_SKILL_VALUES: ReadonlyMap<string, string> = new Map(
   [
     "resfire_per",
@@ -226,7 +288,17 @@ export const activeSkill = (
 
       return value === undefined
         ? []
-        : [[key, { value, turns: durationOf(raw) || longest }] as const];
+        : [
+            [
+              key,
+              {
+                value,
+                turns:
+                  durationOf(raw) ||
+                  (SINGLE_TURN_EFFECTS.has(key) ? 1 : longest),
+              },
+            ] as const,
+          ];
     }),
   );
 
@@ -266,6 +338,7 @@ const learnedSkillEffects = (
   const actives: ActiveSkill[] = [];
   const ignoredActives: string[] = [];
   const comboGain = { crit: 0, pierce: 0, wound: 0, block: 0 };
+  const bounds = new Map<string, number>();
 
   for (const skill of tree) {
     const state = skillState(skill, ranks, level, weapons);
@@ -273,6 +346,12 @@ const learnedSkillEffects = (
     if (state.rank === 0 || state.inactive) continue;
 
     const rankStats = skillRankStats(skill, state.rank);
+
+    for (const [key, raw] of rankStats) {
+      const bound = Number(raw.split("@")[0]?.split("/")[1]);
+
+      if (Number.isFinite(bound)) bounds.set(key, bound);
+    }
 
     for (const event of COMBO_EVENTS) {
       comboGain[event] +=
@@ -298,6 +377,45 @@ const learnedSkillEffects = (
     actives,
     ignoredActives,
     comboGain,
+    bounds,
+  };
+};
+
+const passiveEffects = (
+  bonuses: ReadonlyMap<string, number>,
+  bounds: ReadonlyMap<string, number>,
+): PassiveEffects => {
+  const valueOf = (key: string) => bonuses.get(key) ?? 0;
+
+  const bounded = (key: string) => ({
+    value: valueOf(key),
+    bound: bounds.get(key) ?? 0,
+  });
+
+  return {
+    energyBack: valueOf("engback"),
+    injureChance: valueOf("injure"),
+    critWoundChance: valueOf("critwound"),
+    poisonWeakening: valueOf("poison_lowdmg_per-enemies"),
+    poisonResistanceDestruction: valueOf("actdmg"),
+    thirdAttackChance: valueOf("of-thirdatt"),
+    crush: bounded("crush_dmg_physical"),
+    critSpeed: bounded("critsa"),
+    critPoison: bounded("critpoison"),
+    enemyHealing: valueOf("heal_per-enemies"),
+    allyHealing: valueOf("heal_per-allies"),
+    allyHealth: valueOf("hp_per-allies"),
+    vulture: valueOf("vulture_perw"),
+    arrowBlockChance: valueOf("arrowblock"),
+    critRage: valueOf("critrage_perw"),
+    critPierce: valueOf("critpierce_per"),
+    distractChance: valueOf("distract"),
+    lastCrit: bounded("lastcrit"),
+    adrenalinEvade: bounded("adrenalin_evade"),
+    adrenalinSpeed: bounded("adrenalin_sa"),
+    adrenalinDrainReduction: bounded("adrenalin_reddest"),
+    blockReduction: valueOf("decblock_per"),
+    manaGain: valueOf("managain"),
   };
 };
 
@@ -306,11 +424,13 @@ const masteryQueue = (
   actives: readonly ActiveSkill[],
 ): MasteryQueue => ({
   repeat,
-  steps: actions.map((action) =>
-    action === NORMAL_ATTACK
-      ? "attack"
-      : (actives.find((active) => active.id === action) ?? null),
-  ),
+  steps: actions.map((action) => {
+    if (action === NORMAL_ATTACK) return "attack";
+
+    if (action === STEP_FORWARD) return "step";
+
+    return actives.find((active) => active.id === action) ?? null;
+  }),
 });
 
 export const fighterProfile = ({
@@ -367,6 +487,7 @@ export const fighterProfile = ({
   return {
     profession,
     level,
+    position: battlePosition(items),
     stats,
     extra,
     skillSlow: learned.skillSlow,
@@ -375,6 +496,9 @@ export const fighterProfile = ({
     mastery: masteryQueue(mastery, learned.actives),
     comboGain: learned.comboGain,
     legendary: legendaryBonuses(items, stats, level),
+    energyDrain: resourceDrain(items, RESOURCE_DRAINS.energy),
+    manaDrain: resourceDrain(items, RESOURCE_DRAINS.mana),
+    passives: passiveEffects(bonuses, learned.bounds),
   };
 };
 
@@ -389,6 +513,7 @@ export const toCombatant = (
     name,
     profession: profile.profession,
     level: profile.level,
+    position: profile.position,
     hp: stats.hp,
     physical: stats.physical,
     offhand: stats.offhand,
@@ -402,6 +527,13 @@ export const toCombatant = (
     critChance: stats.critChance,
     critValue: stats.critValue,
     critMagicValue: stats.critMagicValue,
+    critMagicBonus: {
+      fire: extraOf("critmval_f"),
+      frost: extraOf("critmval_c"),
+      light: extraOf("critmval_l"),
+    },
+    offhandCritChance: stats.offhandCritChance,
+    offhandCritValue: stats.offhandCritValue,
     critReduction: extraOf("lowcrit"),
     pierce: stats.pierce,
     pierceBlock: extraOf("pierceb"),
@@ -413,6 +545,15 @@ export const toCombatant = (
     blockPoints: stats.blockPoints,
     absorb: stats.absorb,
     absorbMagic: stats.absorbMagic,
+    absorbDistance: extraOf("absorbd"),
+    absorbRenewal: extraOf("absagain_per"),
+    absorbDestruction: extraOf("abdest"),
+    absorbDestructionReduction: extraOf("redabdest_per"),
+    resistanceDestruction: extraOf("resdmg"),
+    energyDrain: profile.energyDrain,
+    manaDrain: profile.manaDrain,
+    drainReduction: extraOf("reddest_per"),
+    swingChance: extraOf("swing"),
     resistFire: stats.resFire,
     resistFrost: stats.resFrost,
     resistLight: stats.resLight,
@@ -440,5 +581,6 @@ export const toCombatant = (
     comboGain: profile.comboGain,
     mastery: profile.mastery,
     legendary: profile.legendary,
+    passives: profile.passives,
   };
 };

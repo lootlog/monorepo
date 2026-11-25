@@ -26,6 +26,10 @@ export type CastOutcome = {
   readonly manaStolen: number;
   readonly manaDestroyed: number;
   readonly energyDestroyed: number;
+  readonly swings: readonly {
+    readonly target: number;
+    readonly damage: number;
+  }[];
 };
 
 const RESTORE_DECAY = 0.1;
@@ -43,7 +47,10 @@ type Cast = {
   enemies: readonly FighterState[];
   skill: ActiveSkill;
   plan: ActionPlan;
+  random: () => number;
 };
+
+const SWING_TARGETS = 3;
 
 const restoredShare = (share: number, uses: number, decay: number) =>
   (share / 100) * Math.max(0, 1 - decay * uses);
@@ -129,7 +136,6 @@ const cleanseAllies = ({ allies, plan }: Cast) => {
   for (const ally of allies) {
     if (plan.effect("removestun-allies") > 0 && ally.stunned) {
       ally.stunned = false;
-      ally.turnLost = false;
     }
 
     if (plan.effect("removedot-allies") > 0) {
@@ -249,6 +255,31 @@ const strikeTarget = ({ caster, target, plan, skill }: Cast) => {
   return { flatDamage, manaStolen, manaDestroyed, energyDestroyed };
 };
 
+const swingAround = ({ caster, target, enemies, plan, random }: Cast) => {
+  const share = plan.effect("dmg-swing_absolute-perw") / 100;
+
+  if (share <= 0) return [];
+
+  const { physical, physicalBonus } = caster.combatant;
+
+  const rolled =
+    physical.min + Math.floor(random() * (physical.max - physical.min + 1));
+
+  const damage = Math.round(rolled * share * (1 + physicalBonus / 100));
+
+  return enemies
+    .filter((enemy) => enemy.alive && enemy !== target)
+    .slice(0, SWING_TARGETS)
+    .map((enemy) => {
+      const dealt = isImmune(enemy) ? 0 : damage;
+
+      takeDamage(enemy, dealt);
+      caster.damageDealt += dealt;
+
+      return { target: enemy.index, damage: dealt };
+    });
+};
+
 export const applyCast = (cast: Cast): CastOutcome => {
   const armorBonus = applyBuffs(cast);
 
@@ -259,5 +290,6 @@ export const applyCast = (cast: Cast): CastOutcome => {
     ...heal(cast),
     ...restoreResources(cast),
     ...strikeTarget(cast),
+    swings: swingAround(cast),
   };
 };

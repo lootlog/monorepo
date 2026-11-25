@@ -37,7 +37,7 @@ describe("equipment set link", () => {
         gloves: { level: 0 as const, symbol: "curse" as const },
       },
       skills: { 41: 10, 168: 3 },
-      mastery: { actions: [41, -1, 168, 41], repeat: true },
+      mastery: { actions: [-2, 41, -1, 168, 41], repeat: true },
     };
 
     expect(decodeEquipmentSet(encodeEquipmentSet(set))).toEqual(set);

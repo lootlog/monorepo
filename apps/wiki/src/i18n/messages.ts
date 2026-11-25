@@ -293,7 +293,7 @@ const messages = {
     mastery: {
       title: "Mistrzostwo walk",
       description:
-        "Kolejka do 20 akcji, które postać wykonuje po kolei w walce szybkiej i automatycznej, tak jak w grze. Akcja, której nie da się wtedy użyć, bo trwa odnowienie albo brakuje energii lub many, jest pomijana.",
+        "Kolejka do 20 akcji, które postać wykonuje po kolei w walce szybkiej i automatycznej, tak jak w grze. Akcja, której nie da się wtedy użyć, bo trwa odnowienie, brakuje energii lub many albo przeciwnik stoi za daleko, jest pomijana. Gdy żadnej nie da się użyć, postać atakuje albo robi krok do przodu.",
       available: "Dostępne akcje",
       availableHint: "Kliknij akcję, żeby dodać ją na koniec kolejki.",
       queue: "Kolejka",
@@ -307,6 +307,7 @@ const messages = {
       repeatOn: "Po ostatniej akcji kolejka zaczyna się od początku.",
       repeatOff: "Po ostatniej akcji postać już tylko atakuje.",
       normalAttack: "Zwykły atak",
+      stepForward: "Krok do przodu",
       empty: "Kolejka jest pusta, więc postać w walce tylko atakuje.",
       noActives:
         "Rozdaj punkty w umiejętności aktywne, żeby dodać je do kolejki.",

@@ -43,6 +43,17 @@ describe("character stats", () => {
     expect(stats.critChance).toBe(5);
   });
 
+  it("gives a mage holding a wand and an orb no physical damage", () => {
+    const stats = characterStats(
+      "m",
+      300,
+      [worn("WAND_WEAPON", "frost=300,5723"), worn("ORB_WEAPON", "fire=3198")],
+      new Map(),
+    );
+
+    expect(stats.physical).toEqual({ min: 0, max: 0 });
+  });
+
   it("adds a quiver's attack to the bow and reads poison as slow and damage", () => {
     const stats = characterStats(
       "h",

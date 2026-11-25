@@ -27,7 +27,7 @@ type Buff = {
   age: number;
 };
 
-type MasteryStep = ActiveSkill | "attack" | null;
+type MasteryStep = ActiveSkill | "attack" | "step" | null;
 
 export type MasteryQueue = {
   readonly steps: readonly MasteryStep[];
@@ -84,7 +84,6 @@ const ATTACK_EFFECTS = [
   "dmg_evade_hpp-target_light",
   "dmg_evade_hpp-target",
   "dmg-swing_absolute-perw",
-  "swing",
 ];
 
 export const SELF_BUFFS: ReadonlySet<string> = new Set([
@@ -106,6 +105,7 @@ export const SELF_BUFFS: ReadonlySet<string> = new Set([
   "en-regen",
   "lightshield_per",
   "sunshield_per",
+  "energyout",
 ]);
 
 export const TEAM_BUFF_CASTER_SHARE: ReadonlyMap<string, number> = new Map([
@@ -125,7 +125,6 @@ export const TARGET_DEBUFFS: ReadonlySet<string> = new Set([
   "stinkbomb_crit",
   "stinkbomb_pierce",
   "taken_dmg_per",
-  "energyout",
 ]);
 
 export const ENEMY_TEAM_DEBUFFS: ReadonlySet<string> = new Set([
@@ -191,16 +190,18 @@ const buffValue = (buff: Buff) =>
 
 const MAX_SOURCES = 2;
 
-export const buffTotal = (
-  state: Pick<SkillUserState, "buffs">,
-  ...keys: readonly string[]
-) =>
+const strongestSources = (state: Pick<SkillUserState, "buffs">, key: string) =>
   state.buffs
-    .filter((buff) => keys.includes(buff.key))
+    .filter((buff) => buff.key === key)
     .map(buffValue)
     .sort((left, right) => Math.abs(right) - Math.abs(left))
     .slice(0, MAX_SOURCES)
     .reduce((total, value) => total + value, 0);
+
+export const buffTotal = (
+  state: Pick<SkillUserState, "buffs">,
+  ...keys: readonly string[]
+) => keys.reduce((total, key) => total + strongestSources(state, key), 0);
 
 export const hasBuff = (state: Pick<SkillUserState, "buffs">, key: string) =>
   state.buffs.some((buff) => buff.key === key);
@@ -249,8 +250,7 @@ const skillCost = (state: SkillUserState, skill: ActiveSkill) =>
 const canUse = (state: SkillUserState, skill: ActiveSkill) =>
   (state.cooldowns.get(skill) ?? 0) <= 0 &&
   (skill.resource === "energy" ? state.energy : state.mana) >=
-    skillCost(state, skill) &&
-  (!isComboFinisher(skill) || state.comboPoints >= 1);
+    skillCost(state, skill);
 
 const planFor = (state: SkillUserState, skill: ActiveSkill): ActionPlan => ({
   skill,
@@ -261,7 +261,29 @@ const planFor = (state: SkillUserState, skill: ActiveSkill): ActionPlan => ({
   turns: (key) => skill.effects.get(key)?.turns ?? 1,
 });
 
-export const takeAction = (state: SkillUserState): ActionPlan => {
+export type Reach = {
+  readonly reachesEnemy: boolean;
+  readonly canStep: boolean;
+};
+
+const canTake = (
+  state: SkillUserState,
+  step: MasteryStep,
+  { reachesEnemy, canStep }: Reach,
+) => {
+  if (step === null) return false;
+
+  if (step === "attack") return reachesEnemy;
+
+  if (step === "step") return canStep;
+
+  return canUse(state, step) && (step.selfCast || reachesEnemy);
+};
+
+export const takeAction = (
+  state: SkillUserState,
+  reach: Reach,
+): ActionPlan | "step" => {
   const { steps, repeat } = state.combatant.mastery;
   const span = repeat ? steps.length : steps.length - state.masteryCursor;
 
@@ -269,14 +291,16 @@ export const takeAction = (state: SkillUserState): ActionPlan => {
     const index = (state.masteryCursor + offset) % steps.length;
     const step = steps[index] ?? null;
 
-    if (step === null || (step !== "attack" && !canUse(state, step))) continue;
+    if (step === null || !canTake(state, step, reach)) continue;
 
     state.masteryCursor = repeat ? (index + 1) % steps.length : index + 1;
 
-    return step === "attack" ? NO_SKILL : planFor(state, step);
+    if (step === "attack") return NO_SKILL;
+
+    return step === "step" ? step : planFor(state, step);
   }
 
-  return NO_SKILL;
+  return reach.reachesEnemy || !reach.canStep ? NO_SKILL : "step";
 };
 
 export const gainCombo = (state: SkillUserState, points: number) => {

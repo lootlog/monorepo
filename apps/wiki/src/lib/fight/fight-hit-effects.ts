@@ -1,6 +1,7 @@
 import { addBuff, buffTotal, type ActionPlan } from "./fight-skills";
 import {
   healBy,
+  healthShare,
   isImmune,
   MELEE,
   takeDamage,
@@ -34,6 +35,7 @@ const cleanse = (defender: FighterState) => {
   defender.frostSlow = null;
   defender.slowBySource.clear();
   defender.critSlowTurns = 0;
+  defender.stunned = false;
 };
 
 const hasLingeringEffects = (defender: FighterState) =>
@@ -43,7 +45,8 @@ const hasLingeringEffects = (defender: FighterState) =>
   defender.skillDots.size > 0 ||
   defender.frostSlow !== null ||
   defender.slowBySource.size > 0 ||
-  defender.critSlowTurns > 0;
+  defender.critSlowTurns > 0 ||
+  defender.stunned;
 
 export const onHitEffects = (
   attacker: FighterState,
@@ -61,9 +64,9 @@ export const onHitEffects = (
   const glare = chance(random, d.glare);
   const anguish = a.anguish.damage > 0 && chance(random, a.anguish.chance);
 
-  if (curse) defender.turnLost = true;
+  if (curse) defender.cursed = true;
 
-  if (glare) attacker.turnLost = true;
+  if (glare) attacker.cursed = true;
 
   if (anguish) {
     defender.anguish = {
@@ -76,11 +79,26 @@ export const onHitEffects = (
   return { cleansed, curse, glare, anguish };
 };
 
+export const damageLoweredBy = (state: FighterState) =>
+  Math.max(
+    0,
+    1 -
+      buffTotal(state, "lowdmg_enemy", "combo_lowdmg_enemy", "alllowdmg") / 100,
+  );
+
 export const NO_HIT_EFFECTS = {
   cleansed: false,
   curse: false,
   glare: false,
   anguish: false,
+};
+
+const burnEnergy = (attacker: FighterState, defender: FighterState) => {
+  const burned = Math.min(defender.energy, buffTotal(attacker, "energyout"));
+
+  defender.energy -= burned;
+
+  return burned;
 };
 
 export const debuffOnHit = (
@@ -118,6 +136,8 @@ export const debuffOnHit = (
       });
     }
   }
+
+  return burnEnergy(attacker, defender);
 };
 
 export const stunOnHit = (
@@ -129,10 +149,7 @@ export const stunOnHit = (
   const stun = chance(random, plan.effect("stun"));
   const freeze = frost > 0 && chance(random, plan.effect("freeze"));
 
-  if (stun || freeze) {
-    defender.turnLost = true;
-    defender.stunned = true;
-  }
+  if (stun || freeze) defender.stunned = true;
 
   return { stun, freeze };
 };
@@ -165,7 +182,8 @@ export const reflectFrom = (
   const reflected = Math.round(
     done *
       (REFLECT_MIN + random() * REFLECT_SPREAD) *
-      (sources > 1 ? 1 + SECOND_REFLECT_SHARE : 1),
+      (sources > 1 ? 1 + SECOND_REFLECT_SHARE : 1) *
+      damageLoweredBy(defender),
   );
 
   takeDamage(attacker, reflected);
@@ -262,13 +280,31 @@ export const parries = (
   !defender.stunned &&
   chance(random, defender.combatant.parryChance);
 
-export const enrage = (defender: FighterState) => {
-  const { rageTurns, rageBonus } = defender.combatant;
+const CRIT_RAGE_HEALTH = 25;
 
-  if (rageTurns > 0)
-    addBuff(defender, "rage", RAGE_BONUS, rageTurns, defender.index);
-  else if (rageBonus > 0)
-    addBuff(defender, "rage", rageBonus, RAGE_3TURNS_TURNS, defender.index);
+export const enrage = (defender: FighterState) => {
+  const { rageTurns, rageBonus, passives } = defender.combatant;
+
+  const desperate =
+    healthShare(defender) < CRIT_RAGE_HEALTH ? passives.critRage : 0;
+
+  if (rageTurns > 0) {
+    addBuff(
+      defender,
+      "rage",
+      RAGE_BONUS + desperate,
+      rageTurns,
+      defender.index,
+    );
+  } else if (rageBonus + desperate > 0) {
+    addBuff(
+      defender,
+      "rage",
+      rageBonus + desperate,
+      RAGE_3TURNS_TURNS,
+      defender.index,
+    );
+  }
 };
 
 export const counters = (

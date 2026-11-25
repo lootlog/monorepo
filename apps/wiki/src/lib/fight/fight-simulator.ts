@@ -1,5 +1,6 @@
 import { applyCast, type CastOutcome } from "./fight-cast";
 import {
+  addBuff,
   buffTotal,
   endSkillTurn,
   NO_SKILL,
@@ -9,18 +10,24 @@ import {
   type ActiveSkill,
 } from "./fight-skills";
 import {
+  canStepForward,
   clamp,
   createState,
+  isBelow,
+  withAllyHealth,
+  type PassiveEffects,
   healBy,
   isImmune,
   MAX_RESISTANCE,
+  reaches,
   takeDamage,
   type Combatant,
   type FighterState,
 } from "./fight-state";
-import { elementResistance, strike, type Strike } from "./fight-strike";
+import { elementResistance } from "./fight-defence";
+import { strike, type Strike } from "./fight-strike";
 
-type Targeting = "weakest" | "random";
+type Targeting = "lowestLevel" | "random";
 
 export type FightSetup = {
   readonly teams: readonly (readonly Combatant[])[];
@@ -50,9 +57,14 @@ export type FightEvent =
       readonly poisonReduction: number;
       readonly wound: number;
       readonly woundReduction: number;
+      readonly injure: number;
+      readonly critWound: number;
+      readonly lingeringReduction: number;
       readonly anguish: number;
       readonly fire: number;
+      readonly fireReduction: number;
       readonly light: number;
+      readonly lightReduction: number;
       readonly absolute: number;
       readonly lastHeal: number;
       readonly hp: readonly number[];
@@ -71,9 +83,15 @@ export type FightEvent =
     }
   | { readonly kind: "lostTurn"; readonly actor: number }
   | {
+      readonly kind: "step";
+      readonly actor: number;
+      readonly hp: readonly number[];
+    }
+  | {
       readonly kind: "heal";
       readonly actor: number;
       readonly amount: number;
+      readonly cut: number;
       readonly hp: readonly number[];
     }
   | (CastOutcome & {
@@ -127,7 +145,11 @@ const attackTime = (state: FighterState) => {
   const additive =
     (buffTotal(state, "sa_per") +
       buffTotal(state, "sa2_per") +
-      buffTotal(state, "aura-sa_per") -
+      buffTotal(state, "aura-sa_per") +
+      buffTotal(state, "critsa") +
+      (isBelow(state, state.combatant.passives.adrenalinSpeed)
+        ? state.combatant.passives.adrenalinSpeed.value
+        : 0) -
       buffTotal(state, "allslow_per") -
       buffTotal(state, "lightshield_slow")) /
       100 -
@@ -160,19 +182,26 @@ const SKILL_DOT_RESISTANCE = {
   absolute: () => 0,
 };
 
+const NO_TICK = { damage: 0, reduction: 0 };
+
 const tickSkillDot = (
   state: FighterState,
   kind: keyof typeof SKILL_DOT_RESISTANCE,
 ) => {
   const dot = state.skillDots.get(kind);
 
-  if (!dot) return 0;
+  if (!dot) return NO_TICK;
 
   dot.turnsLeft -= 1;
 
   if (dot.turnsLeft <= 0) state.skillDots.delete(kind);
 
-  return Math.round(dot.damage * (1 - SKILL_DOT_RESISTANCE[kind](state)));
+  const resistance = SKILL_DOT_RESISTANCE[kind](state);
+
+  return {
+    damage: Math.round(dot.damage * (1 - resistance)),
+    reduction: Math.round(100 * resistance),
+  };
 };
 
 const NO_DAMAGE_OVER_TIME = {
@@ -180,15 +209,38 @@ const NO_DAMAGE_OVER_TIME = {
   poisonReduction: 0,
   wound: 0,
   woundReduction: 0,
+  injure: 0,
+  critWound: 0,
+  lingeringReduction: 0,
   anguish: 0,
   fire: 0,
+  fireReduction: 0,
   light: 0,
+  lightReduction: 0,
   absolute: 0,
+};
+
+const tickLingering = (
+  state: FighterState,
+  kind: "injure" | "critWound",
+  reduction: number,
+) => {
+  const lingering = state[kind];
+
+  if (!lingering) return 0;
+
+  lingering.turnsLeft -= 1;
+
+  if (lingering.turnsLeft <= 0) state[kind] = null;
+
+  return Math.round(lingering.damage * (1 - reduction / 100));
 };
 
 const tickDamageOverTime = (state: FighterState) => {
   const poisonReduction = clamp(
-    state.combatant.resistPoison + buffTotal(state, "antidote"),
+    state.combatant.resistPoison -
+      state.poisonResistanceLost +
+      buffTotal(state, "antidote"),
     0,
     MAX_RESISTANCE,
   );
@@ -211,6 +263,8 @@ const tickDamageOverTime = (state: FighterState) => {
     if (state.wound.turnsLeft <= 0) state.wound = null;
   }
 
+  const injure = tickLingering(state, "injure", woundReduction);
+  const critWound = tickLingering(state, "critWound", woundReduction);
   let anguish = 0;
 
   if (state.anguish) {
@@ -220,15 +274,23 @@ const tickDamageOverTime = (state: FighterState) => {
     if (state.anguish.turnsLeft <= 0) state.anguish = null;
   }
 
+  const fire = tickSkillDot(state, "fire");
+  const light = tickSkillDot(state, "light");
+
   const ticks = {
     poison,
     poisonReduction: poison > 0 ? poisonReduction : 0,
     wound,
     woundReduction: wound > 0 ? woundReduction : 0,
+    injure,
+    critWound,
+    lingeringReduction: injure + critWound > 0 ? woundReduction : 0,
     anguish,
-    fire: tickSkillDot(state, "fire"),
-    light: tickSkillDot(state, "light"),
-    absolute: tickSkillDot(state, "absolute"),
+    fire: fire.damage,
+    fireReduction: fire.damage > 0 ? fire.reduction : 0,
+    light: light.damage,
+    lightReduction: light.damage > 0 ? light.reduction : 0,
+    absolute: tickSkillDot(state, "absolute").damage,
   };
 
   return isImmune(state) ? NO_DAMAGE_OVER_TIME : ticks;
@@ -252,17 +314,43 @@ const tryLastHeal = (state: FighterState, random: () => number) => {
 
   state.lastHealUsed = true;
 
-  const share = range.min + random() * (range.max - range.min);
+  const share =
+    Math.round(range.min) +
+    Math.floor(random() * (Math.round(range.max) - Math.round(range.min) + 1));
 
-  return healBy(state, (share / 100) * state.combatant.hp);
+  return healBy(state, (share / 100) * state.combatant.hp - state.hp);
 };
+
+const teamTotal = (
+  team: readonly FighterState[],
+  effect: (passives: PassiveEffects) => number,
+) =>
+  team.reduce(
+    (total, member) =>
+      member.alive ? total + effect(member.combatant.passives) : total,
+    0,
+  );
+
+const healingModifier = (
+  state: FighterState,
+  allies: readonly FighterState[],
+  enemies: readonly FighterState[],
+) =>
+  1 +
+  (buffTotal(state, "sunshield_per") +
+    teamTotal(allies, (passives) => passives.allyHealing) -
+    teamTotal(enemies, (passives) => passives.enemyHealing) -
+    state.healCut) /
+    100;
 
 const applyHealing = (
   state: FighterState,
+  allies: readonly FighterState[],
   enemies: readonly FighterState[],
 ) => {
   const base =
-    state.combatant.healing * (1 + buffTotal(state, "sunshield_per") / 100);
+    state.combatant.healing *
+    Math.max(0, healingModifier(state, allies, enemies));
 
   if (base <= 0 || state.hp >= state.combatant.hp) return 0;
 
@@ -278,6 +366,7 @@ const applyHealing = (
   }
 
   state.healTriggers += 1;
+  state.healCut = 0;
 
   const healed = Math.min(
     state.combatant.hp - state.hp,
@@ -298,23 +387,28 @@ const pickTarget = (
 ) => {
   const alive = enemies.filter((enemy) => enemy.alive);
 
-  if (alive.length === 0) return null;
-
   const taunting = alive.find((enemy) =>
     actor.buffs.some(
       (buff) => buff.key === "shout" && buff.source === enemy.index,
     ),
   );
 
-  if (taunting) return taunting;
+  const reachable = (taunting ? [taunting] : alive).filter((enemy) =>
+    reaches(actor, enemy),
+  );
+
+  if (reachable.length === 0) return null;
 
   if (targeting === "random")
-    return alive[Math.floor(random() * alive.length)] ?? null;
+    return reachable[Math.floor(random() * reachable.length)] ?? null;
 
-  return alive.reduce((target, enemy) =>
-    enemy.hp < target.hp ? enemy : target,
+  return reachable.reduce((target, enemy) =>
+    enemy.combatant.level <= target.combatant.level ? enemy : target,
   );
 };
+
+const reachesEnemy = (actor: FighterState, enemies: readonly FighterState[]) =>
+  pickTarget(actor, enemies, "lowestLevel", () => 0) !== null;
 
 const endTurn = (state: FighterState) => {
   endSkillTurn(state);
@@ -326,6 +420,11 @@ const endTurn = (state: FighterState) => {
   }
 
   if (state.critSlowTurns > 0) state.critSlowTurns -= 1;
+
+  state.mana = Math.min(
+    state.combatant.mana,
+    state.mana + state.combatant.passives.manaGain,
+  );
 };
 
 const livingTeams = (states: readonly FighterState[]) =>
@@ -367,11 +466,18 @@ const nextActor = (states: readonly FighterState[]) => {
 };
 
 const startTurn = (turn: Turn) => {
-  const { actor, enemies, random, record, hpOf } = turn;
-  const healed = applyHealing(actor, enemies);
+  const { actor, allies, enemies, random, record, hpOf } = turn;
+  const healCut = actor.healCut;
+  const healed = applyHealing(actor, allies, enemies);
 
   if (record && healed > 0) {
-    record({ kind: "heal", actor: actor.index, amount: healed, hp: hpOf() });
+    record({
+      kind: "heal",
+      actor: actor.index,
+      amount: healed,
+      cut: healCut,
+      hp: hpOf(),
+    });
   }
 
   const overTime = tickDamageOverTime(actor);
@@ -379,6 +485,8 @@ const startTurn = (turn: Turn) => {
   const overTimeDamage =
     overTime.poison +
     overTime.wound +
+    overTime.injure +
+    overTime.critWound +
     overTime.anguish +
     overTime.fire +
     overTime.light +
@@ -415,12 +523,9 @@ const startTurn = (turn: Turn) => {
 
   const regenerated = buffTotal(actor, "en-regen");
 
-  actor.energy = Math.max(
-    0,
-    Math.min(
-      actor.combatant.energy,
-      actor.energy + actor.combatant.energyGain + regenerated,
-    ) - buffTotal(actor, "energyout"),
+  actor.energy = Math.min(
+    actor.combatant.energy,
+    actor.energy + actor.combatant.energyGain + regenerated,
   );
 
   if (record && regenerated > 0) {
@@ -460,6 +565,7 @@ const castSkill = (
     enemies,
     skill,
     plan,
+    random,
   });
 
   const target = enemy ?? actor;
@@ -536,6 +642,7 @@ const attack = (turn: Turn, plan: ActionPlan) => {
       plan,
       random,
       enemies.filter((enemy) => enemy !== target),
+      index === attacks - 1,
     );
 
     const lastHeal = tryLastHeal(target, random);
@@ -556,8 +663,21 @@ const attack = (turn: Turn, plan: ActionPlan) => {
   return fastArrow ? FAST_ARROW_TIME_FACTOR : 1;
 };
 
+const stepForward = ({ actor, record, hpOf }: Turn) => {
+  actor.stepsForward += 1;
+  record?.({ kind: "step", actor: actor.index, hp: hpOf() });
+
+  return 1;
+};
+
 const act = (turn: Turn) => {
-  const plan = takeAction(turn.actor);
+  const plan = takeAction(turn.actor, {
+    reachesEnemy: reachesEnemy(turn.actor, turn.enemies),
+    canStep: canStepForward(turn.actor),
+  });
+
+  if (plan === "step") return stepForward(turn);
+
   const skillFactor = plan.skill ? castSkill(turn, plan.skill, plan) : 1;
 
   const attackFactor =
@@ -571,9 +691,9 @@ export const simulateFight = (
   random: () => number,
   record?: FightRecorder,
 ): FightResult => {
-  const targeting = setup.targeting ?? "weakest";
+  const targeting = setup.targeting ?? "lowestLevel";
 
-  const states = setup.teams.flatMap((team, teamIndex) =>
+  const states = withAllyHealth(setup.teams).flatMap((team, teamIndex) =>
     team.map((combatant) => createState(combatant, teamIndex, 0)),
   );
 
@@ -589,6 +709,16 @@ export const simulateFight = (
   const alliesOf = states.map((state) =>
     states.filter((other) => other.team === state.team),
   );
+
+  for (const state of states) {
+    const weakening = state.combatant.passives.poisonWeakening;
+
+    if (weakening <= 0) continue;
+
+    for (const enemy of enemiesOf[state.index] ?? []) {
+      addBuff(enemy, "poison_lowdmg_per", weakening, Infinity, state.index);
+    }
+  }
 
   const hpOf = () => states.map((state) => state.hp);
   const maxMoves = MOVES_PER_PLAYER * states.length;
@@ -614,11 +744,12 @@ export const simulateFight = (
 
     if (!actor.alive) continue;
 
-    const lost = actor.turnLost;
-    const lostTime = actor.stunned ? 1 - stunReduction(actor) : 1;
+    const stunned = actor.stunned;
+    const lost = stunned || actor.cursed;
+    const lostTime = stunned ? 1 - stunReduction(actor) : 1;
 
-    actor.turnLost = false;
-    actor.stunned = false;
+    if (stunned) actor.stunned = false;
+    else actor.cursed = false;
 
     if (lost) record?.({ kind: "lostTurn", actor: actor.index });
 

@@ -3,74 +3,11 @@ import { describe, expect, test } from "vitest";
 import { fightBattlePayload } from "./fight-battle-log";
 import { simulateFight, type FightEvent } from "./fight-simulator";
 import { NO_LEGENDARY_BONUSES, type Combatant } from "./fight-state";
-import {
-  NO_MASTERY,
-  type ActiveSkill,
-  type MasteryQueue,
-} from "./fight-skills";
+import { fighter, NO_DAMAGE } from "./fight.fixtures";
+import type { ActiveSkill, MasteryQueue } from "./fight-skills";
 import { seededRandom, simulateFights } from "./fight-summary";
 import { activeSkill, fighterProfile, toCombatant } from "./fighter-profile";
 import { SKILL_TREE as WARRIOR_SKILLS } from "@/lib/skills/trees/w";
-
-const NO_DAMAGE = { min: 0, max: 0 };
-
-const fighter = (overrides: Partial<Combatant>): Combatant => ({
-  name: "postać",
-  profession: "h",
-  level: 200,
-  hp: 50_000,
-  physical: { min: 1000, max: 1000 },
-  offhand: NO_DAMAGE,
-  fire: NO_DAMAGE,
-  frost: NO_DAMAGE,
-  frostSlow: 0,
-  light: NO_DAMAGE,
-  poison: { damage: 0, slow: 0 },
-  wound: { chance: 0, damage: 0 },
-  attackSpeed: 20,
-  critChance: 1,
-  critValue: 120,
-  critMagicValue: 120,
-  critReduction: 0,
-  pierce: 0,
-  pierceBlock: 0,
-  armor: 0,
-  shieldArmor: 0,
-  armorDestruction: 0,
-  evadePoints: 0,
-  evadeReduction: 0,
-  blockPoints: 0,
-  absorb: 0,
-  absorbMagic: 0,
-  resistFire: 0,
-  resistFrost: 0,
-  resistLight: 0,
-  resistPoison: 0,
-  resistWound: 0,
-  healing: 0,
-  healingReduction: 0,
-  energy: 50,
-  energyGain: 0,
-  mana: 0,
-  physicalBonus: 0,
-  damageBonus: 0,
-  damageTakenBonus: 0,
-  enemySlow: 0,
-  slowReduction: 0,
-  stunReduction: 0,
-  counterChance: 0,
-  parryChance: 0,
-  parryCounterChance: 0,
-  rageTurns: 0,
-  rageBonus: 0,
-  armorDestructionReduction: 0,
-  fastArrowChance: 0,
-  critSlow: 0,
-  comboGain: { crit: 0, pierce: 0, wound: 0, block: 0 },
-  mastery: NO_MASTERY,
-  legendary: NO_LEGENDARY_BONUSES,
-  ...overrides,
-});
 
 const RUNS = { runs: 200, seed: 7 };
 
@@ -528,6 +465,46 @@ describe("skill effects", () => {
 });
 
 describe("fightBattlePayload", () => {
+  test("shows piercing efficiency once, on the attacker's first strike", () => {
+    const piercing = fighter({
+      name: "przeszywający",
+      hp: 10_000_000,
+      physical: { min: 1, max: 1 },
+      legendary: { ...NO_LEGENDARY_BONUSES, puncture: 12 },
+    });
+
+    const target = (name: string) =>
+      fighter({ name, hp: 10_000_000, attackSpeed: 1, physical: NO_DAMAGE });
+
+    const setup = {
+      teams: [[piercing], [target("pierwszy"), target("drugi")]],
+      targeting: "random" as const,
+    };
+
+    const events: FightEvent[] = [];
+
+    const result = simulateFight(setup, seededRandom(3), (event) => {
+      events.push(event);
+    });
+
+    const strikes = events.filter(
+      (event) => event.kind === "strike" && event.actor === 0,
+    );
+
+    const rows = fightBattlePayload(setup, events, result).events[0]?.f?.m;
+
+    expect(
+      new Set(strikes.map((event) => event.kind === "strike" && event.target))
+        .size,
+    ).toBe(2);
+    expect(
+      rows?.filter((row) => row.includes("+legbon_puncture=12")),
+    ).toHaveLength(1);
+    expect(
+      rows?.find((row) => row.startsWith("1=") && row.includes("+dmg")),
+    ).toContain("+legbon_puncture=12");
+  });
+
   test("logs a fight that the battle processor reads back with the simulated damage, bonuses and winner", () => {
     const doubleShot: ActiveSkill = {
       id: 97,

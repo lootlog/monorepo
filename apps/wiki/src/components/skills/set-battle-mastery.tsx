@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Footprints, Trash2, X } from "lucide-react";
 import { useId } from "react";
 import { Button } from "@lootlog/ui/components/button";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
@@ -13,6 +13,7 @@ import {
   moveMasteryAction,
   NORMAL_ATTACK,
   queueMasteryAction,
+  STEP_FORWARD,
   removeMasteryAction,
 } from "@/lib/skills/battle-mastery";
 import { skillState, wornSkillWeapons } from "@/lib/skills/skill-tree";
@@ -39,6 +40,14 @@ export function SetBattleMastery() {
       return { name: t("skills.mastery.normalAttack"), skill: undefined };
     }
 
+    if (action === STEP_FORWARD) {
+      return {
+        name: t("skills.mastery.stepForward"),
+        skill: undefined,
+        icon: Footprints,
+      };
+    }
+
     const skill = tree.find((candidate) => candidate.id === action);
 
     if (!skill) return { name: t("skills.mastery.unknown"), skill: undefined };
@@ -57,7 +66,11 @@ export function SetBattleMastery() {
     };
   };
 
-  const available = [NORMAL_ATTACK, ...learnedActives.map((skill) => skill.id)];
+  const available = [
+    NORMAL_ATTACK,
+    STEP_FORWARD,
+    ...learnedActives.map((skill) => skill.id),
+  ];
 
   return (
     <ArticleSection
@@ -92,7 +105,7 @@ export function SetBattleMastery() {
             </div>
             <ul className="grid gap-2 @md/mastery:grid-cols-2 @3xl/mastery:grid-cols-1 @5xl/mastery:grid-cols-2">
               {available.map((action) => {
-                const { name, skill } = describe(action);
+                const { name, skill, icon } = describe(action);
 
                 return (
                   <li key={action} className="min-w-0">
@@ -110,6 +123,7 @@ export function SetBattleMastery() {
                       <MasteryActionLabel
                         name={name}
                         skill={skill}
+                        icon={icon}
                         isMuted={false}
                       />
                     </button>
@@ -140,7 +154,7 @@ export function SetBattleMastery() {
             ) : (
               <ol className="flex flex-col gap-2">
                 {actions.map((action, index) => {
-                  const { name, skill, note } = describe(action);
+                  const { name, skill, icon, note } = describe(action);
 
                   return (
                     <li
@@ -153,6 +167,7 @@ export function SetBattleMastery() {
                       <MasteryActionLabel
                         name={name}
                         skill={skill}
+                        icon={icon}
                         note={note}
                         isMuted={note !== undefined}
                       />

@@ -3,7 +3,8 @@ import type {
   BattleWarriorSnapshot,
 } from "@lootlog/battle-processor/battle-log";
 import type { FightEvent, FightResult, FightSetup } from "./fight-simulator";
-import type { Combatant, Profession } from "./fight-state";
+import { crushKey } from "./fight-passives";
+import { withAllyHealth, type Combatant, type Profession } from "./fight-state";
 
 const RANGED: ReadonlySet<Profession> = new Set(["h", "t"]);
 
@@ -30,6 +31,7 @@ const damageKeys = (event: Strike, attacker: Combatant) =>
       [physicalKey(attacker), "physical"],
       ...ELEMENT_KEYS,
       ["dmgo", "offhand"],
+      ["thirdatt", "third"],
     ] as const
   ).filter(([, part]) => event.strength[part] > 0);
 
@@ -46,14 +48,44 @@ const valued = (key: string, value: number): Entry => [
 const present = (entries: readonly Entry[]) =>
   entries.flatMap(([shown, entry]) => (shown ? [entry] : []));
 
-const SKILL_DAMAGE_OVER_TIME = ["fire", "light", "absolute"] as const;
+const triggerEntries = ({ triggers }: Strike): Entry[] => [
+  valued("+engback", triggers.energyBack),
+  valued("+injure", triggers.injure),
+  [triggers.critWound, "+critwound"],
+  valued("+actdmg", triggers.poisonResistanceDestroyed),
+  valued("+critsa", triggers.critSpeed),
+  valued("+critpoison_per", triggers.critPoison),
+  valued("+critpierce", triggers.critPierce),
+  [triggers.distracted, "+distract"],
+];
+
+const AURA_KEYS = [
+  [
+    "poison_lowdmg_per-enemies",
+    (combatant: Combatant) => combatant.passives.poisonWeakening,
+  ],
+  [
+    "heal_per-enemies",
+    (combatant: Combatant) => -combatant.passives.enemyHealing,
+  ],
+  ["heal_per-allies", (combatant: Combatant) => combatant.passives.allyHealing],
+  ["hp_per-allies", (combatant: Combatant) => combatant.passives.allyHealth],
+] as const;
+
+const drained = (
+  key: string,
+  { amount, reduced }: { amount: number; reduced: number },
+): Entry => [
+  amount > 0,
+  reduced > 0 ? `${key}=${amount},${reduced}` : `${key}=${amount}`,
+];
 
 export const fightBattlePayload = (
   setup: FightSetup,
   events: readonly FightEvent[],
   result: FightResult,
 ): BattlePayload => {
-  const fighters = setup.teams.flatMap((team, teamIndex) =>
+  const fighters = withAllyHealth(setup.teams).flatMap((team, teamIndex) =>
     team.map((combatant) => ({ combatant, team: teamIndex + 1 })),
   );
 
@@ -87,11 +119,24 @@ export const fightBattlePayload = (
         damage: event.wound,
         action: `wound=${reduced(event.wound, event.woundReduction)}`,
       },
+      {
+        damage: event.injure,
+        action: `injure=${reduced(event.injure, event.lingeringReduction)}`,
+      },
+      {
+        damage: event.critWound,
+        action: `critwound=${reduced(event.critWound, event.lingeringReduction)}`,
+      },
       { damage: event.anguish, action: `anguish=${event.anguish}` },
-      ...SKILL_DAMAGE_OVER_TIME.map((key) => ({
-        damage: event[key],
-        action: `${key}=${event[key]}`,
-      })),
+      {
+        damage: event.fire,
+        action: `fire=${reduced(event.fire, event.fireReduction)}`,
+      },
+      {
+        damage: event.light,
+        action: `light=${reduced(event.light, event.lightReduction)}`,
+      },
+      { damage: event.absolute, action: `absolute=${event.absolute}` },
     ].filter((tick) => tick.damage > 0);
 
     const healTag = lastHeal(event.lastHeal, event.actor, event.hp);
@@ -160,6 +205,9 @@ export const fightBattlePayload = (
       ],
       valued("combo-max", event.comboSpent),
     ]),
+    ...event.swings.map((swing) =>
+      otherDamage(swing.damage, "a", swing.target, event.hp),
+    ),
   ];
 
   const strikeActions = (event: Strike, attacker: Combatant) => {
@@ -168,8 +216,9 @@ export const fightBattlePayload = (
     return [
       ...present([
         [event.crit, "+crit"],
+        [event.offhandCrit, "+of_crit"],
         [event.veryCrit, "+legbon_verycrit"],
-        [event.pierced, "+pierce"],
+        [event.pierceShown, "+pierce"],
         [event.fastArrow, "+fastarrow"],
       ]),
       ...damage.map(([key, part]) => `+${key}=${event.strength[part]}`),
@@ -177,12 +226,20 @@ export const fightBattlePayload = (
         [event.glare, "-legbon_glare"],
         [event.curse, "+legbon_curse"],
         valued("+acdmg", Math.round(event.armorDestroyed)),
+        valued("+resdmg", event.resistanceDestroyed),
+        valued("+abdest", event.absorbDestroyed),
+        valued("+absorb", event.absorbRenewed),
+        valued("+absorbm", event.absorbMagicRenewed),
+        valued("+energy", event.energyBurned),
+        drained("-endest", event.energyDrained),
+        drained("-manadest", event.manaDrained),
         [
           event.armorDestructionReduction > 0,
           `-redacdmg_per=-${event.armorDestructionReduction}`,
         ],
         [event.evaded, "-evade"],
         [event.parried, "-parry"],
+        [event.arrowBlocked, "-arrowblock"],
         valued("-blok", event.blocked),
         [event.pierceBlocked, "-pierceb"],
         [event.wounded, "+wound"],
@@ -190,6 +247,8 @@ export const fightBattlePayload = (
         [event.freeze, "+freeze"],
         [event.anguish, "+legbon_anguish"],
         [event.holyTouch, "+legbon_holytouch"],
+        valued("-absorb", event.absorbed),
+        valued("-absorbm", event.absorbedMagic),
         valued("+legbon_puncture", event.puncture),
         valued("-legbon_critred", event.critred),
         valued("-legbon_facade", event.facade),
@@ -198,6 +257,11 @@ export const fightBattlePayload = (
         [event.countered, "-contra"],
         valued("+taken_dmg", event.takenBonus),
         valued("vamp_time", event.vamp),
+        [event.swung, "+swing"],
+        ...triggerEntries(event),
+        valued(crushKey(attacker), event.crush),
+        valued("+vulture", event.vulture),
+        valued("-poison_lowdmg_per", event.poisonWeakened),
         [
           event.reflected > 0,
           otherDamage(event.reflected, "a", event.actor, event.hp),
@@ -208,12 +272,24 @@ export const fightBattlePayload = (
       ),
       ...lastHeal(event.lastHeal, event.target, event.hp),
       ...damage.map(([key, part]) => `-${key}=${event.damage[part]}`),
-      ...present([valued("-dmga", event.takenBonus)]),
+      ...present([valued("-dmga", event.takenBonus + event.crushDamage)]),
     ];
   };
 
+  const auraRows = fighters.flatMap(({ combatant }, index) =>
+    AURA_KEYS.flatMap(([key, valueOf]) => {
+      const value = valueOf(combatant);
+
+      return value === 0
+        ? []
+        : [`${side(index, combatant.hp)};0;${key}=${value}`];
+    }),
+  );
+
   const rows = events.flatMap((event): string[] => {
     switch (event.kind) {
+      case "step":
+        return [`${sideAt(event.actor, event.hp)};0;step`];
       case "lostTurn":
         return [`0;0;txt=${nameOf(event.actor)} - utrata tury`];
       case "damageOverTime":
@@ -225,7 +301,9 @@ export const fightBattlePayload = (
           `${sideAt(event.actor, event.hp)};0;legbon_holytouch_heal=${event.amount}`,
         ];
       case "heal":
-        return [`${sideAt(event.actor, event.hp)};0;heal=${event.amount}`];
+        return [
+          `${sideAt(event.actor, event.hp)};0;heal=${event.cut > 0 ? `${event.amount},-${event.cut}` : event.amount}`,
+        ];
       case "skill":
         return [
           [
@@ -285,7 +363,10 @@ export const fightBattlePayload = (
     characterId: SIMULATED_CHARACTER_ID,
     world: "simulation",
     events: [
-      { ev: 0, f: { w: warriors, m: [...rows, ...outcome], endBattle: 1 } },
+      {
+        ev: 0,
+        f: { w: warriors, m: [...auraRows, ...rows, ...outcome], endBattle: 1 },
+      },
     ],
   };
 };

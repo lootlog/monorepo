@@ -1,5 +1,6 @@
 import { parseItemStatEntries } from "@lootlog/domain/item-stat";
 import type { Profession } from "@/lib/equipment-set";
+import { findEquipmentSlot } from "@/lib/equipment-slots";
 import type { SkillBonuses } from "@/lib/skills/skill-stats";
 import { SKILL_LEVEL_CAP } from "@/lib/skills/skill-tree";
 
@@ -90,6 +91,8 @@ export type CharacterStats = {
   critChance: number;
   critValue: number;
   critMagicValue: number;
+  offhandCritChance: number;
+  offhandCritValue: number;
   pierce: number;
   armor: number;
   evadePoints: number;
@@ -174,7 +177,7 @@ const DAMAGE_ENTRIES = new Map(
       const effect = slowingDamage(numbers);
 
       sums.frost = {
-        slow: sums.frost.slow + effect.slow,
+        slow: Math.max(sums.frost.slow, effect.slow),
         damage: sums.frost.damage + effect.damage,
       };
     },
@@ -184,7 +187,7 @@ const DAMAGE_ENTRIES = new Map(
       const effect = slowingDamage(numbers);
 
       sums.poison = {
-        slow: sums.poison.slow + effect.slow,
+        slow: Math.max(sums.poison.slow, effect.slow),
         damage: sums.poison.damage + effect.damage,
       };
     },
@@ -261,11 +264,14 @@ const BASE_ENERGY = 50;
 
 const ELEMENT_SPREAD = 0.2;
 
+const LIGHT_MIN_BONUS_SHARE = 0.67;
+
 const elementalDamage = (
   { min, max }: DamageRange,
   attributeBonus: number,
   multiplier: number,
   spread: number,
+  minBonusShare = 1,
 ): DamageRange => {
   if (max <= 0) return { min: 0, max: 0 };
 
@@ -279,7 +285,7 @@ const elementalDamage = (
   }
 
   return {
-    min: Math.round((min + attributeBonus) * multiplier),
+    min: Math.round((min + minBonusShare * attributeBonus) * multiplier),
     max: Math.round((max + attributeBonus) * multiplier),
   };
 };
@@ -334,9 +340,21 @@ export const characterStats = (
     (items.mainDamage.max + physicalAttack) * multiplier,
   );
 
+  const isArmed = wornItems.some(
+    ({ item }) => findEquipmentSlot(item.type)?.id === "weapon",
+  );
+
+  const physical =
+    physicalMin > 0
+      ? { min: physicalMin, max: physicalMax }
+      : isArmed
+        ? { min: 0, max: 0 }
+        : { min: unarmed, max: unarmed };
+
   const offhandBonus = strength * skill("of-str");
 
   const critDenominator = 0.5 * lvl;
+  const baseCrit = 1 + 0.02 * lvl;
   const absorbLimit = intellect * 7;
 
   const evadePoints =
@@ -354,10 +372,7 @@ export const characterStats = (
     strength,
     agility,
     intellect,
-    physical:
-      physicalMin > 0
-        ? { min: physicalMin, max: physicalMax }
-        : { min: unarmed, max: unarmed },
+    physical,
     offhand: {
       min: round((items.offhandDamage.min + offhandBonus) * multiplier),
       max: round((items.offhandDamage.max + offhandBonus) * multiplier),
@@ -380,6 +395,7 @@ export const characterStats = (
       intellect * skill("lightbon"),
       multiplier,
       ELEMENT_SPREAD,
+      LIGHT_MIN_BONUS_SHARE,
     ),
     poison: {
       slow: items.poison.slow / 100,
@@ -392,12 +408,18 @@ export const characterStats = (
       ),
     },
     attackSpeed,
-    critChance: 1 + 0.02 * lvl + items.mainCrit + skill("crit"),
+    critChance: baseCrit + items.mainCrit + skill("crit"),
     critValue:
       (BASE_CRIT_MULTIPLIER +
         strength / critDenominator / 100 +
         items.mainCritValue / 100 +
         skill("critval") / 100) *
+      100,
+    offhandCritChance: baseCrit + items.offhandCrit + skill("of-crit"),
+    offhandCritValue:
+      (BASE_CRIT_MULTIPLIER +
+        strength / critDenominator / 100 +
+        skill("of-critval") / 100) *
       100,
     critMagicValue:
       (BASE_CRIT_MULTIPLIER +

@@ -1,5 +1,7 @@
 export const NORMAL_ATTACK = -1;
 
+export const STEP_FORWARD = -2;
+
 export const BATTLE_MASTERY_SLOTS = 20;
 
 export type BattleMastery = {
@@ -47,16 +49,23 @@ export const moveMasteryAction = (
   return { ...mastery, actions };
 };
 
-const MASTERY_PART = /^mb(r?)((?:a|\d{1,5})(?:\.(?:a|\d{1,5})){0,19})?$/;
+const MASTERY_PART = /^mb(r?)((?:a|s|\d{1,5})(?:\.(?:a|s|\d{1,5})){0,19})?$/;
 
-const ATTACK_CODE = "a";
+const ACTION_CODES: ReadonlyMap<number, string> = new Map([
+  [NORMAL_ATTACK, "a"],
+  [STEP_FORWARD, "s"],
+]);
+
+const CODED_ACTIONS: ReadonlyMap<string, number> = new Map(
+  [...ACTION_CODES].map(([action, code]) => [code, action]),
+);
 
 export const encodeBattleMastery = ({ actions, repeat }: BattleMastery) =>
   actions.length === 0 && !repeat
     ? []
     : [
         `mb${repeat ? "r" : ""}${actions
-          .map((action) => (action === NORMAL_ATTACK ? ATTACK_CODE : action))
+          .map((action) => ACTION_CODES.get(action) ?? action)
           .join(".")}`,
       ];
 
@@ -67,8 +76,8 @@ export const decodeBattleMastery = (part: string): BattleMastery | null => {
 
   return {
     repeat: match[1] === "r",
-    actions: (match[2]?.split(".") ?? []).map((code) =>
-      code === ATTACK_CODE ? NORMAL_ATTACK : Number(code),
+    actions: (match[2]?.split(".") ?? []).map(
+      (code) => CODED_ACTIONS.get(code) ?? Number(code),
     ),
   };
 };
