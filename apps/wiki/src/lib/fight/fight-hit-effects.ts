@@ -1,4 +1,4 @@
-import { addBuff, buffTotal, type ActionPlan } from "./fight-skills";
+import { addBuff, buffTotal, hasBuff, type ActionPlan } from "./fight-skills";
 import {
   healBy,
   healthShare,
@@ -27,26 +27,39 @@ const SECOND_REFLECT_SHARE = 0.5;
 
 const ANGUISH_TURNS = 5;
 
+const SKILL_SLOWS: ReadonlySet<string> = new Set([
+  "allslow_per",
+  "lightshield_slow",
+]);
+
+export const clearDamageOverTime = (state: FighterState) => {
+  state.poison = null;
+  state.wound = null;
+  state.injure = null;
+  state.critWound = null;
+  state.anguish = null;
+  state.skillDots.clear();
+};
+
 const cleanse = (defender: FighterState) => {
-  defender.poison = null;
-  defender.wound = null;
-  defender.anguish = null;
-  defender.skillDots.clear();
+  clearDamageOverTime(defender);
   defender.frostSlow = null;
   defender.slowBySource.clear();
   defender.critSlowTurns = 0;
-  defender.stunned = false;
+  defender.buffs = defender.buffs.filter((buff) => !SKILL_SLOWS.has(buff.key));
 };
 
 const hasLingeringEffects = (defender: FighterState) =>
   defender.poison !== null ||
   defender.wound !== null ||
+  defender.injure !== null ||
+  defender.critWound !== null ||
   defender.anguish !== null ||
   defender.skillDots.size > 0 ||
   defender.frostSlow !== null ||
   defender.slowBySource.size > 0 ||
   defender.critSlowTurns > 0 ||
-  defender.stunned;
+  defender.buffs.some((buff) => SKILL_SLOWS.has(buff.key));
 
 export const onHitEffects = (
   attacker: FighterState,
@@ -56,7 +69,10 @@ export const onHitEffects = (
   const a = attacker.combatant.legendary;
   const d = defender.combatant.legendary;
 
-  const cleansed = hasLingeringEffects(defender) && chance(random, d.cleanse);
+  const cleansed =
+    !defender.stunned &&
+    hasLingeringEffects(defender) &&
+    chance(random, d.cleanse);
 
   if (cleansed) cleanse(defender);
 
@@ -70,21 +86,52 @@ export const onHitEffects = (
 
   if (anguish) {
     defender.anguish = {
-      damage:
-        a.anguish.damage * (1 + defender.combatant.damageTakenBonus / 100),
+      damage: a.anguish.damage * weaponlessUnavoidableFactor(attacker),
       turnsLeft: ANGUISH_TURNS,
+      source: attacker.index,
     };
   }
 
   return { cleansed, curse, glare, anguish };
 };
 
-export const damageLoweredBy = (state: FighterState) =>
-  Math.max(
+export const unavoidableFactor = (state: FighterState) =>
+  1 + state.combatant.unavoidableBonus / 100;
+
+export const weaponlessUnavoidableFactor = (state: FighterState) =>
+  unavoidableFactor(state) * (1 + state.combatant.allDamageBonus / 100);
+
+const WEAKENING_SOURCES = 2;
+
+const ATTACK_WEAKENINGS: ReadonlySet<string> = new Set([
+  "lowdmg_enemy",
+  "combo_lowdmg_enemy",
+]);
+
+export const poisonWeakeningOf = (attacker: FighterState) =>
+  attacker.poison ? buffTotal(attacker, "poison_lowdmg_per") : 0;
+
+export const weakeningFactor = (
+  attacker: FighterState,
+  defender: FighterState,
+) => {
+  const lowered = [
+    ...attacker.buffs
+      .filter((buff) => ATTACK_WEAKENINGS.has(buff.key))
+      .map((buff) => buff.value),
+    poisonWeakeningOf(attacker),
+    -defender.combatant.damageTakenBonus,
+  ]
+    .filter((value) => value > 0)
+    .sort((left, right) => right - left)
+    .slice(0, WEAKENING_SOURCES)
+    .reduce((total, value) => total + value, 0);
+
+  return Math.max(
     0,
-    1 -
-      buffTotal(state, "lowdmg_enemy", "combo_lowdmg_enemy", "alllowdmg") / 100,
+    (1 - lowered / 100) * (1 - buffTotal(attacker, "alllowdmg") / 100),
   );
+};
 
 export const NO_HIT_EFFECTS = {
   cleansed: false,
@@ -133,6 +180,7 @@ export const debuffOnHit = (
       defender.skillDots.set(dot, {
         damage: (share / 100) * defender.combatant.hp,
         turnsLeft: plan.turns(key),
+        source: attacker.index,
       });
     }
   }
@@ -162,17 +210,19 @@ export const reflectFrom = (
   done: number,
   random: () => number,
 ) => {
-  const sources = Math.min(
-    2,
-    defender.buffs.filter((buff) => buff.key === "lightshield_per").length,
-  );
+  const [strongest = 0, second = 0] = defender.buffs
+    .filter((buff) => buff.key === "lightshield_per")
+    .map((buff) => buff.value)
+    .sort((left, right) => right - left);
 
-  if (sources === 0 || done <= 0) return 0;
+  const sources = (strongest > 0 ? 1 : 0) + (second > 0 ? 1 : 0);
+
+  if (sources === 0 || done <= 0 || !defender.alive) return 0;
 
   addBuff(
     attacker,
     "lightshield_slow",
-    buffTotal(defender, "lightshield_per"),
+    strongest + SECOND_REFLECT_SHARE * second,
     1,
     defender.index,
   );
@@ -183,7 +233,8 @@ export const reflectFrom = (
     done *
       (REFLECT_MIN + random() * REFLECT_SPREAD) *
       (sources > 1 ? 1 + SECOND_REFLECT_SHARE : 1) *
-      damageLoweredBy(defender),
+      weakeningFactor(defender, attacker) *
+      weaponlessUnavoidableFactor(defender),
   );
 
   takeDamage(attacker, reflected);
@@ -193,12 +244,14 @@ export const reflectFrom = (
 };
 
 export const vampire = (attacker: FighterState, dealt: number) =>
-  healBy(
-    attacker,
-    dealt *
-      (buffTotal(attacker, "vamp_time_per") / 100) *
-      (1 - buffTotal(attacker, "lowheal_per-enemies") / 100),
-  );
+  hasBuff(attacker, "vamp_time_per")
+    ? healBy(
+        attacker,
+        dealt *
+          (buffTotal(attacker, "vamp_time_per") / 100) *
+          (1 - buffTotal(attacker, "lowheal_per-enemies") / 100),
+      )
+    : null;
 
 type WeaponsLanded = { readonly main: boolean; readonly offhand: boolean };
 
@@ -217,21 +270,27 @@ const applyPoison = (
 
   if (applied.length === 0) return false;
 
+  const boost = plan.effect("poisonbon_poison-perw");
+
   const damage =
     applied.reduce((total, weapon) => total + weapon.damage, 0) *
-    (1 + plan.effect("poisonbon_poison-perw") / 100);
+    (1 + boost / 100);
 
   const slow = Math.max(...applied.map((weapon) => weapon.slow));
+  const current = defender.poison;
 
-  if (!defender.poison || damage >= defender.poison.damage) {
+  if (!current || damage >= current.damage) {
     defender.poison = {
       damage,
-      slow: Math.max(slow, defender.poison?.slow ?? 0),
+      slow: Math.max(slow, current?.slow ?? 0),
       turnsLeft: DOT_TURNS,
+      source: attacker.index,
+      boosted: boost > 0,
     };
   } else {
-    defender.poison.turnsLeft = DOT_TURNS;
-    defender.poison.slow = Math.max(defender.poison.slow, slow);
+    if (boost > 0 || !current.boosted) current.turnsLeft = DOT_TURNS;
+
+    current.slow = Math.max(current.slow, slow);
   }
 
   return true;
@@ -264,23 +323,23 @@ const applyWound = (
   if (damage <= 0) return { main, offhand, halved: false };
 
   const cap = WOUND_CAP_FACTOR * damage;
+  const applied = damage / (poisonApplied ? 2 : 1);
 
   if (defender.wound === null) {
-    defender.wound = { damage, cap, turnsLeft: DOT_TURNS };
-
-    return { main, offhand, halved: false };
+    defender.wound = {
+      damage: applied,
+      cap,
+      turnsLeft: DOT_TURNS,
+      source: attacker.index,
+    };
+  } else {
+    defender.wound.cap = Math.max(defender.wound.cap, cap);
+    defender.wound.damage = Math.min(
+      defender.wound.cap,
+      defender.wound.damage + WOUND_GROWTH * applied,
+    );
+    defender.wound.turnsLeft += WOUND_EXTENSION_TURNS;
   }
-
-  const growth = (WOUND_GROWTH * damage) / (poisonApplied ? 2 : 1);
-  defender.wound.cap = Math.max(defender.wound.cap, cap);
-  defender.wound.damage = Math.min(
-    defender.wound.cap,
-    defender.wound.damage + growth,
-  );
-  defender.wound.turnsLeft = Math.min(
-    DOT_TURNS,
-    defender.wound.turnsLeft + WOUND_EXTENSION_TURNS,
-  );
 
   return { main, offhand, halved: poisonApplied };
 };
@@ -317,29 +376,22 @@ export const parries = (
 const CRIT_RAGE_HEALTH = 25;
 
 export const enrage = (defender: FighterState) => {
-  const { rageTurns, rageBonus, passives } = defender.combatant;
-
-  const desperate =
-    healthShare(defender) < CRIT_RAGE_HEALTH ? passives.critRage : 0;
+  const { rageTurns, rageBonus } = defender.combatant;
 
   if (rageTurns > 0) {
-    addBuff(
-      defender,
-      "rage",
-      RAGE_BONUS + desperate,
-      rageTurns,
-      defender.index,
-    );
-  } else if (rageBonus + desperate > 0) {
-    addBuff(
-      defender,
-      "rage",
-      rageBonus + desperate,
-      RAGE_3TURNS_TURNS,
-      defender.index,
-    );
+    addBuff(defender, "rage", RAGE_BONUS, rageTurns, defender.index);
+  } else if (rageBonus > 0) {
+    addBuff(defender, "rage", rageBonus, RAGE_3TURNS_TURNS, defender.index);
   }
 };
+
+export const ragePercent = (attacker: FighterState) =>
+  hasBuff(attacker, "rage")
+    ? buffTotal(attacker, "rage") +
+      (healthShare(attacker) < CRIT_RAGE_HEALTH
+        ? attacker.combatant.passives.critRage
+        : 0)
+    : 0;
 
 export const counters = (
   defender: FighterState,

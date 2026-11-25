@@ -7,6 +7,7 @@ import {
   elementResistance,
   PHYSICAL_ABSORB_SHARE,
   puncture,
+  resistanceReduction,
 } from "./fight-defence";
 import { isDistance } from "./fight-passives";
 import { buffTotal, type ActionPlan } from "./fight-skills";
@@ -14,6 +15,7 @@ import {
   MELEE,
   roll,
   type DamageRange,
+  type Element,
   type ElementalBonus,
   type FighterState,
 } from "./fight-state";
@@ -37,13 +39,21 @@ export type Hit = {
   defender: FighterState;
   plan: ActionPlan;
   crit: number;
+  scale: number;
+  vulture: number;
+  rage: number;
   random: () => number;
 };
 
-const critValue = ({ attacker, defender }: Hit) =>
-  attacker.combatant.critValue +
+export const critValueBonus = (
+  attacker: FighterState,
+  defender: FighterState,
+) =>
   buffTotal(attacker, "critval-allies", "critval-enemies") +
   critValueShift(attacker, defender);
+
+const critValue = ({ attacker, defender }: Hit) =>
+  attacker.combatant.critValue + critValueBonus(attacker, defender);
 
 const critMagicValue = ({ attacker, defender }: Hit, element: number) =>
   attacker.combatant.critMagicValue +
@@ -52,19 +62,25 @@ const critMagicValue = ({ attacker, defender }: Hit, element: number) =>
   critValueShift(attacker, defender);
 
 export const physicalStrength = (hit: Hit) => {
-  const { attacker, plan, crit, random } = hit;
+  const { attacker, plan, crit, scale, vulture, rage, random } = hit;
   const added = plan.effect("adddmg_physical-perw") / 100;
+  const rolled = roll(random, attacker.combatant.physical);
 
-  return (
-    roll(random, attacker.combatant.physical) *
-    (crit > 0 ? (crit * critValue(hit)) / 100 + added : 1 + added) *
-    (1 + buffTotal(attacker, "aura-adddmg2_per-meele_physical") / 100) *
-    (1 + attacker.combatant.physicalBonus / 100)
-  );
+  return {
+    rolled,
+    strength:
+      rolled *
+      (crit > 0 ? (crit * critValue(hit)) / 100 + added : 1 + added) *
+      (1 + buffTotal(attacker, "aura-adddmg2_per-meele_physical") / 100) *
+      (1 + attacker.combatant.physicalBonus / 100) *
+      (1 + rage) *
+      scale *
+      (1 + vulture),
+  };
 };
 
 export const magicStrength = (hit: Hit) => {
-  const { attacker, defender, plan, crit, random } = hit;
+  const { attacker, defender, plan, crit, scale, random } = hit;
   const a = attacker.combatant;
 
   const lightRamp = Math.min(
@@ -78,7 +94,7 @@ export const magicStrength = (hit: Hit) => {
       : 1 + added;
 
   const rolled = (range: DamageRange, factor: number) =>
-    range.max <= 0 ? 0 : roll(random, range) * factor;
+    range.max <= 0 ? 0 : roll(random, range) * factor * scale;
 
   return {
     fire: rolled(
@@ -109,9 +125,9 @@ export const physicalDamage = (
   blockFactor: number,
 ) => {
   const { attacker, defender, plan } = hit;
-  const strength = physicalStrength(hit);
+  const { rolled, strength } = physicalStrength(hit);
 
-  destroyArmor(
+  const armorDestruction = destroyArmor(
     defender,
     (plan.effect("active_acdmg_physical-perw") / 100) * strength,
   );
@@ -125,7 +141,7 @@ export const physicalDamage = (
   const share = physicalAbsorbShare(attacker, defender);
 
   if (share <= 0 || reduced <= 0) {
-    return { strength, taken: reduced, absorbed: 0 };
+    return { rolled, strength, armorDestruction, taken: reduced, absorbed: 0 };
   }
 
   const absorbed = absorbFrom(
@@ -137,7 +153,13 @@ export const physicalDamage = (
 
   defender.absorbLeft -= absorbed.absorbed;
 
-  return { strength, taken: absorbed.damage, absorbed: absorbed.absorbed };
+  return {
+    rolled,
+    strength,
+    armorDestruction,
+    taken: absorbed.damage,
+    absorbed: absorbed.absorbed,
+  };
 };
 
 const NO_ELEMENTAL_DAMAGE: ElementalDamage = { fire: 0, frost: 0, light: 0 };
@@ -148,7 +170,6 @@ export const magicDamage = (
   blockFactor: number,
 ) => {
   const { attacker, defender, plan } = hit;
-  const d = defender.combatant;
   const armor = MAGIC_ARMOR_FACTOR * armorAgainst(defender, attacker);
   const strength = magicStrength(hit);
 
@@ -188,18 +209,21 @@ export const magicDamage = (
 
   const kept = absorbed.damage / magic;
 
-  const resisted = (value: number, base: number, buffKey: string) =>
+  const resisted = (value: number, element: Element) =>
     value *
     kept *
-    (1 - (elementResistance(defender, base, buffKey) - puncture(attacker)));
+    (1 -
+      resistanceReduction(
+        elementResistance(defender, element) - puncture(attacker),
+      ));
 
   return {
     strength,
     absorbed: absorbed.absorbed,
     taken: {
-      fire: resisted(fire, d.resistFire, "resfire_per"),
-      frost: resisted(frost, d.resistFrost, "resfrost_per"),
-      light: resisted(light, d.resistLight, "reslight_per"),
+      fire: resisted(fire, "fire"),
+      frost: resisted(frost, "frost"),
+      light: resisted(light, "light"),
     },
   };
 };

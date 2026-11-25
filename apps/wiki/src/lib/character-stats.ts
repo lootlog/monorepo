@@ -147,6 +147,7 @@ type ItemSums = {
   mainCrit: number;
   offhandCrit: number;
   mainCritValue: number;
+  offhandCritValue: number;
   fire: DamageRange;
   frost: SlowingDamage;
   light: DamageRange;
@@ -244,7 +245,8 @@ const addSingleValue = (
     if (isOffhand) sums.offhandCrit += value;
     else sums.mainCrit += value;
   } else if (key === "critval") {
-    if (!isOffhand) sums.mainCritValue += value;
+    if (isOffhand) sums.offhandCritValue += value;
+    else sums.mainCritValue += value;
   } else {
     sums.flat.set(key, (sums.flat.get(key) ?? 0) + value);
   }
@@ -258,6 +260,7 @@ const sumItems = (wornItems: readonly WornItem[]): ItemSums => {
     mainCrit: 0,
     offhandCrit: 0,
     mainCritValue: 0,
+    offhandCritValue: 0,
     fire: { min: 0, max: 0 },
     frost: { slow: 0, damage: 0 },
     light: { min: 0, max: 0 },
@@ -287,7 +290,7 @@ const sumItems = (wornItems: readonly WornItem[]): ItemSums => {
   return sums;
 };
 
-const MAX_RESISTANCE = 90;
+export const MAX_RESISTANCE = 90;
 
 const MAX_EVADE_OR_BLOCK_CHANCE = 50;
 
@@ -395,12 +398,10 @@ export const characterStats = (
     damage: Math.round(weapon.damage * elementMultiplier("poison")),
   });
 
-  const woundOf = (weapon: ChanceDamage, skillChance: number) => ({
-    chance: weapon.chance + skillChance,
+  const woundOf = (weapon: ChanceDamage, bonusKey: string) => ({
+    chance: weapon.chance + skill("woundchance"),
     damage: Math.round(
-      weapon.damage *
-        elementMultiplier("wound") *
-        (1 + skill("wounddmgbon_perw") / 100),
+      weapon.damage * elementMultiplier("wound") * (1 + skill(bonusKey) / 100),
     ),
   });
 
@@ -419,8 +420,7 @@ export const characterStats = (
 
   const blockItems = Math.floor(item("blok"));
 
-  const resistance = (key: string) =>
-    Math.max(0, Math.min(MAX_RESISTANCE, item(key) + skill(key)));
+  const resistance = (key: string) => Math.max(0, item(key) + skill(key));
 
   return {
     hp,
@@ -453,9 +453,9 @@ export const characterStats = (
       LIGHT_MIN_BONUS_SHARE,
     ),
     poison: poisonOf(items.poison),
-    wound: woundOf(items.wound, skill("woundchance")),
+    wound: woundOf(items.wound, "wounddmgbon_perw"),
     offhandPoison: poisonOf(items.offhandPoison),
-    offhandWound: woundOf(items.offhandWound, 0),
+    offhandWound: woundOf(items.offhandWound, "of-wounddmgbon_perw"),
     attackSpeed,
     critChance: baseCrit + items.mainCrit + skill("crit"),
     critValue:
@@ -468,6 +468,7 @@ export const characterStats = (
     offhandCritValue:
       (BASE_CRIT_MULTIPLIER +
         attributeCrit(strength) +
+        items.offhandCritValue / 100 +
         skill("of-critval") / 100) *
       100,
     critMagicValue:
@@ -509,7 +510,7 @@ export const characterStats = (
       item("lowevade") + Math.round((skill("decevade_per") * lvl) / 20),
     critReduction: item("lowcrit"),
     critValueReduction: item("lowcritallval"),
-    armorDestruction: item("acdmg"),
+    armorDestruction: item("acdmg") + skill("acdmg"),
     armorDestructionResist: item("resacdmg"),
     absorbDestruction: item("abdest"),
     resistanceDestruction: item("resdmg") + skill("resdmg"),

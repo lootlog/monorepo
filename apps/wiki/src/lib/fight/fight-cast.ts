@@ -1,3 +1,5 @@
+import { clearDamageOverTime, weakeningFactor } from "./fight-hit-effects";
+import { NO_DRAIN, type Drained } from "./fight-defence";
 import {
   addBuff,
   buffTotal,
@@ -12,6 +14,8 @@ import {
   healBy,
   isImmune,
   MELEE,
+  randomPick,
+  reaches,
   takeDamage,
   type FighterState,
 } from "./fight-state";
@@ -24,8 +28,8 @@ export type CastOutcome = {
   readonly manaRestored: number;
   readonly flatDamage: number;
   readonly manaStolen: number;
-  readonly manaDestroyed: number;
-  readonly energyDestroyed: number;
+  readonly manaDestroyed: Drained;
+  readonly energyDestroyed: Drained;
   readonly swings: readonly {
     readonly target: number;
     readonly damage: number;
@@ -38,7 +42,7 @@ const HEAL_DECAY = 0.25;
 
 const SOLO_HEAL_ALL_SHARE = 0.5;
 
-const ENERGY_PER_DESTROYED_MANA = 1 / 3;
+const ENERGY_PER_DESTROYED_MANA = 0.44;
 
 type Cast = {
   caster: FighterState;
@@ -138,12 +142,7 @@ const cleanseAllies = ({ allies, plan }: Cast) => {
       ally.stunned = false;
     }
 
-    if (plan.effect("removedot-allies") > 0) {
-      ally.poison = null;
-      ally.wound = null;
-      ally.anguish = null;
-      ally.skillDots.clear();
-    }
+    if (plan.effect("removedot-allies") > 0) clearDamageOverTime(ally);
   }
 };
 
@@ -207,12 +206,15 @@ const strikeTarget = ({ caster, target, plan, skill }: Cast) => {
     return {
       flatDamage: 0,
       manaStolen: 0,
-      manaDestroyed: 0,
-      energyDestroyed: 0,
+      manaDestroyed: NO_DRAIN,
+      energyDestroyed: NO_DRAIN,
     };
   }
 
-  const absorbDestroyed = 1 - plan.effect("active_absorbdest_per") / 100;
+  const absorbDestroyed =
+    1 -
+    (plan.effect("active_absorbdest_per") / 100) *
+      (1 - target.combatant.absorbDestructionReduction / 100);
 
   target.absorbLeft *= absorbDestroyed;
   target.absorbMagicLeft *= absorbDestroyed;
@@ -223,18 +225,21 @@ const strikeTarget = ({ caster, target, plan, skill }: Cast) => {
     target.skillDots.set("fire", {
       damage: (fireShare / 100) * averageFire(caster),
       turnsLeft: skill.effects.get("dmg-target_fire-perw")?.turns ?? 1,
+      source: caster.index,
     });
   }
 
-  const manaDestroyed = Math.min(target.mana, plan.effect("manaendest"));
-
-  const energyDestroyed = Math.min(
-    target.energy,
-    Math.round(plan.effect("manaendest") * ENERGY_PER_DESTROYED_MANA),
+  const manaDestroyed = destroyResource(
+    target,
+    "mana",
+    plan.effect("manaendest"),
   );
 
-  target.mana -= manaDestroyed;
-  target.energy -= energyDestroyed;
+  const energyDestroyed = destroyResource(
+    target,
+    "energy",
+    Math.floor(plan.effect("manaendest") * ENERGY_PER_DESTROYED_MANA),
+  );
 
   const manaStolen = Math.floor(
     (target.mana * plan.effect("stealmana_per")) / 100,
@@ -245,7 +250,12 @@ const strikeTarget = ({ caster, target, plan, skill }: Cast) => {
 
   const flatDamage = isImmune(target)
     ? 0
-    : Math.round(plan.effect("dmg-target_absolute"));
+    : Math.round(
+        plan.effect("dmg-target_absolute") *
+          (1 + caster.combatant.allDamageBonus / 100) *
+          (1 + caster.combatant.physicalBonus / 100) *
+          weakeningFactor(caster, target),
+      );
 
   if (flatDamage > 0) {
     takeDamage(target, flatDamage);
@@ -253,6 +263,24 @@ const strikeTarget = ({ caster, target, plan, skill }: Cast) => {
   }
 
   return { flatDamage, manaStolen, manaDestroyed, energyDestroyed };
+};
+
+const destroyResource = (
+  target: FighterState,
+  pool: "energy" | "mana",
+  amount: number,
+): Drained => {
+  if (amount <= 0) return NO_DRAIN;
+
+  const reduced = Math.round(
+    (amount * Math.min(100, target.combatant.drainReduction)) / 100,
+  );
+
+  const destroyed = Math.min(target[pool], amount - reduced);
+
+  target[pool] -= destroyed;
+
+  return { amount: destroyed, reduced };
 };
 
 const swingAround = ({ caster, target, enemies, plan, random }: Cast) => {
@@ -265,19 +293,22 @@ const swingAround = ({ caster, target, enemies, plan, random }: Cast) => {
   const rolled =
     physical.min + Math.floor(random() * (physical.max - physical.min + 1));
 
-  const damage = Math.round(rolled * share * (1 + physicalBonus / 100));
+  const damage = rolled * share * (1 + physicalBonus / 100);
 
-  return enemies
-    .filter((enemy) => enemy.alive && enemy !== target)
-    .slice(0, SWING_TARGETS)
-    .map((enemy) => {
-      const dealt = isImmune(enemy) ? 0 : damage;
+  const candidates = enemies.filter(
+    (enemy) => enemy.alive && enemy !== target && reaches(caster, enemy),
+  );
 
-      takeDamage(enemy, dealt);
-      caster.damageDealt += dealt;
+  return randomPick(candidates, SWING_TARGETS, random).map((enemy) => {
+    const dealt = isImmune(enemy)
+      ? 0
+      : Math.round(damage * weakeningFactor(caster, enemy));
 
-      return { target: enemy.index, damage: dealt };
-    });
+    takeDamage(enemy, dealt);
+    caster.damageDealt += dealt;
+
+    return { target: enemy.index, damage: dealt };
+  });
 };
 
 export const applyCast = (cast: Cast): CastOutcome => {

@@ -22,23 +22,29 @@ type FighterOutcome = {
   readonly skillUses: ReadonlyMap<string, number>;
 };
 
+export type DamageOverTimeKind =
+  | "wound"
+  | "anguish"
+  | "injure"
+  | "critwound"
+  | "poison"
+  | "fire"
+  | "light"
+  | "absolute";
+
+export type DamageTick = {
+  readonly kind: DamageOverTimeKind;
+  readonly damage: number;
+  readonly reduction: number;
+  readonly poisonWeakening: number;
+};
+
 export type FightEvent =
   | {
       readonly kind: "damageOverTime";
       readonly actor: number;
-      readonly poison: number;
-      readonly poisonReduction: number;
-      readonly wound: number;
-      readonly woundReduction: number;
-      readonly injure: number;
-      readonly critWound: number;
-      readonly lingeringReduction: number;
-      readonly anguish: number;
-      readonly fire: number;
-      readonly fireReduction: number;
-      readonly light: number;
-      readonly lightReduction: number;
-      readonly absolute: number;
+      readonly ticks: readonly DamageTick[];
+      readonly immune: boolean;
       readonly lastHeal: number;
       readonly hp: readonly number[];
     }
@@ -54,7 +60,11 @@ export type FightEvent =
       readonly amount: number;
       readonly hp: readonly number[];
     }
-  | { readonly kind: "lostTurn"; readonly actor: number }
+  | {
+      readonly kind: "lostTurn";
+      readonly actor: number;
+      readonly stunReduction: number;
+    }
   | {
       readonly kind: "step";
       readonly actor: number;

@@ -947,6 +947,7 @@ export const SKILL_TREE: readonly SkillDefinition[] = [
     maxRank: 10,
     active: true,
     spell: true,
+    melee: true,
     row: 6,
     column: 1,
     element: "physical",

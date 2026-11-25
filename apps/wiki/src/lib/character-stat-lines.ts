@@ -1,4 +1,4 @@
-import type { CharacterStats } from "@/lib/character-stats";
+import { MAX_RESISTANCE, type CharacterStats } from "@/lib/character-stats";
 
 type CharacterStatLine = {
   id: string;
@@ -111,9 +111,21 @@ export const CHARACTER_STAT_SECTIONS: ReadonlyArray<{
       { id: "absorb", value: (stats) => stats.absorb },
       { id: "absorbMagic", value: (stats) => stats.absorbMagic },
       { id: "absorbLimit", value: (stats) => stats.absorbLimit },
-      { id: "resFire", unit: "%", value: (stats) => stats.resFire },
-      { id: "resLight", unit: "%", value: (stats) => stats.resLight },
-      { id: "resFrost", unit: "%", value: (stats) => stats.resFrost },
+      {
+        id: "resFire",
+        unit: "%",
+        value: (stats) => Math.min(MAX_RESISTANCE, stats.resFire),
+      },
+      {
+        id: "resLight",
+        unit: "%",
+        value: (stats) => Math.min(MAX_RESISTANCE, stats.resLight),
+      },
+      {
+        id: "resFrost",
+        unit: "%",
+        value: (stats) => Math.min(MAX_RESISTANCE, stats.resFrost),
+      },
       { id: "resistPoison", unit: "%", value: (stats) => stats.resistPoison },
       { id: "resistWound", unit: "%", value: (stats) => stats.resistWound },
       { id: "pierceBlock", unit: "%", value: (stats) => stats.pierceBlock },

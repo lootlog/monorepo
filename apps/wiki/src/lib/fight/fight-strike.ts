@@ -3,9 +3,11 @@ import {
   NO_WEAPON_WOUNDS,
   chance,
   counters,
-  damageLoweredBy,
+  poisonWeakeningOf,
+  weakeningFactor,
   debuffOnHit,
   enrage,
+  ragePercent,
   NO_HIT_EFFECTS,
   NO_STUN,
   onHitEffects,
@@ -14,8 +16,10 @@ import {
   stunOnHit,
   vampire,
 } from "./fight-hit-effects";
-import { critValueShift, rollCrit } from "./fight-crit";
+import { rollCrit } from "./fight-crit";
+import { takenDamageBonus, unavoidableDamage } from "./fight-unavoidable";
 import {
+  critValueBonus,
   magicDamage,
   magicStrength,
   physicalDamage,
@@ -33,6 +37,7 @@ import {
   destroyResistance,
   drain,
   evadeChance,
+  isArmorBroken,
   NO_DRAIN,
   renewAbsorb,
   type Drained,
@@ -44,12 +49,13 @@ import {
   NO_THIRD_ATTACK,
   passiveTriggers,
   thirdAttack,
-  vultureOf,
+  vultureShare,
   type PassiveTriggers,
 } from "./fight-passives";
 import {
   isImmune,
   MELEE,
+  randomPick,
   roll,
   takeDamage,
   type FighterState,
@@ -64,9 +70,11 @@ type StrikeDamage = ElementalDamage & {
 type SwingHit = { readonly target: number; readonly damage: number };
 
 export type Strike = {
+  readonly rage: number;
   readonly crit: boolean;
   readonly offhandCrit: boolean;
   readonly veryCrit: boolean;
+  readonly critSlow: number;
   readonly curse: boolean;
   readonly glare: boolean;
   readonly anguish: boolean;
@@ -92,6 +100,7 @@ export type Strike = {
   readonly freeze: boolean;
   readonly immune: boolean;
   readonly armorDestroyed: number;
+  readonly armorBroken: boolean;
   readonly armorDestructionReduction: number;
   readonly armorDestructionResisted: number;
   readonly critValueReduced: number;
@@ -107,12 +116,12 @@ export type Strike = {
   readonly energyBurned: number;
   readonly takenBonus: number;
   readonly crush: number;
-  readonly crushDamage: number;
+  readonly unavoidable: number;
   readonly vulture: number;
   readonly poisonWeakened: number;
   readonly triggers: PassiveTriggers;
   readonly reflected: number;
-  readonly vamp: number;
+  readonly vamp: number | null;
   readonly swung: boolean;
   readonly swings: readonly SwingHit[];
   readonly strength: StrikeDamage;
@@ -127,17 +136,16 @@ const SWING_TARGETS = 3;
 
 const HOLY_TOUCH_TURNS = 3;
 
-type DamageScale = {
-  readonly dealt: number;
-  readonly taken: number;
-};
+const LOWERED_PIERCE_FLOOR = 1;
 
-export const pierceChance = (attacker: FighterState) =>
-  Math.max(
-    0,
-    attacker.combatant.pierce -
-      buffTotal(attacker, "disturb_pierce", "stinkbomb_pierce"),
-  );
+export const pierceChance = (attacker: FighterState) => {
+  const { pierce } = attacker.combatant;
+  const lowered = buffTotal(attacker, "disturb_pierce", "stinkbomb_pierce");
+
+  return lowered > 0
+    ? Math.max(Math.min(pierce, LOWERED_PIERCE_FLOOR), pierce - lowered)
+    : pierce;
+};
 
 const ENEMY_HEALING_CUT_TURNS = 2;
 
@@ -191,7 +199,26 @@ const cursedStatEffects = (
   enemyHealingCut: outcome.struck ? cutEnemyHealing(attacker, defender) : 0,
 });
 
-const mainWeaponHit = (hit: Hit, scale: DamageScale) => {
+const slowWithFrost = (
+  defender: FighterState,
+  slow: number,
+  plan: ActionPlan,
+) => {
+  const current = defender.frostSlow;
+  const boost = plan.effect("slowfreeze_per") / 100;
+
+  const replaced = current === null || slow >= current.slow;
+
+  defender.frostSlow = {
+    slow: replaced ? slow : current.slow,
+    turnsLeft: replaced ? FROST_SLOW_TURNS : current.turnsLeft,
+    boost: boost > 0 ? boost : (current?.boost ?? 0),
+    boostTurnsLeft:
+      boost > 0 ? plan.turns("slowfreeze_per") : (current?.boostTurnsLeft ?? 0),
+  };
+};
+
+const mainWeaponHit = (hit: Hit) => {
   const { attacker, defender, plan, random } = hit;
   const a = attacker.combatant;
   const d = defender.combatant;
@@ -203,7 +230,7 @@ const mainWeaponHit = (hit: Hit, scale: DamageScale) => {
   const pierceRolled = random() < pierceChance(attacker) / 100;
 
   const pierceBlocked =
-    pierceRolled && !blocked && random() < d.pierceBlock / 100;
+    pierceRolled && !defender.stunned && random() < d.pierceBlock / 100;
 
   const pierced = pierceRolled && !blocked && !pierceBlocked;
   const blockFactor = blocked ? 1 - BLOCK_REDUCTION : 1;
@@ -212,33 +239,28 @@ const mainWeaponHit = (hit: Hit, scale: DamageScale) => {
 
   if (pierced) gainCombo(attacker, a.comboGain.pierce);
 
-  destroyArmor(
+  const itemArmorDestruction = destroyArmor(
     defender,
     Math.max(0, a.armorDestruction - d.armorDestructionResist) +
-      attacker.pendingArmorDestruction +
       (plan.effect("active_acdmg_per") / 100) * currentArmor(defender),
   );
-
-  attacker.pendingArmorDestruction = 0;
 
   const resistanceDestroyed = destroyResistance(attacker, defender);
   const absorbDestroyed = destroyAbsorb(attacker, defender);
   const physicalHit = physicalDamage(hit, pierced, blockFactor);
   const magic = magicDamage(hit, pierced, blockFactor);
-  const dealt = (value: number) => Math.round(value * scale.dealt);
-  const taken = (value: number) => Math.round(value * scale.taken);
 
   const strength = {
-    physical: dealt(physicalHit.strength),
-    fire: dealt(magic.strength.fire),
-    frost: dealt(magic.strength.frost),
-    light: dealt(magic.strength.light),
+    physical: Math.round(physicalHit.strength),
+    fire: Math.round(magic.strength.fire),
+    frost: Math.round(magic.strength.frost),
+    light: Math.round(magic.strength.light),
   };
 
-  const physical = taken(physicalHit.taken);
-  const fire = taken(magic.taken.fire);
-  const frost = taken(magic.taken.frost);
-  const light = taken(magic.taken.light);
+  const physical = Math.round(physicalHit.taken);
+  const fire = Math.round(magic.taken.fire);
+  const frost = Math.round(magic.taken.frost);
+  const light = Math.round(magic.taken.light);
   const damaging = physical + fire + frost + light > 0;
 
   if (damaging && a.enemySlow > 0) {
@@ -246,14 +268,14 @@ const mainWeaponHit = (hit: Hit, scale: DamageScale) => {
   }
 
   if (magic.strength.frost > 0 && a.frostSlow > 0) {
-    defender.frostSlow = {
-      slow: a.frostSlow,
-      boost: plan.effect("slowfreeze_per") / 100,
-      turnsLeft: Math.max(FROST_SLOW_TURNS, plan.turns("slowfreeze_per")),
-    };
+    slowWithFrost(defender, a.frostSlow, plan);
   }
 
   return {
+    rolled: physicalHit.rolled,
+    armorDestruction: Math.round(
+      itemArmorDestruction + physicalHit.armorDestruction,
+    ),
     strength,
     physical,
     fire,
@@ -273,13 +295,14 @@ const mainWeaponHit = (hit: Hit, scale: DamageScale) => {
     pierceBlocked,
     damaging,
     resistanceDestroyed,
-    absorbed: taken(physicalHit.absorbed),
-    absorbedMagic: taken(magic.absorbed),
+    absorbed: Math.round(physicalHit.absorbed),
+    absorbedMagic: Math.round(magic.absorbed),
     absorbDestroyed,
   };
 };
 
 const MISSED = {
+  armorDestruction: 0,
   physical: 0,
   fire: 0,
   frost: 0,
@@ -295,19 +318,19 @@ const MISSED = {
   absorbedMagic: 0,
 };
 
-const missedHit = (hit: Hit, scale: DamageScale) => {
-  const dealt = (value: number) => Math.round(value * scale.dealt);
+const missedHit = (hit: Hit) => {
   const physical = physicalStrength(hit);
   const magic = magicStrength(hit);
 
   return {
     ...MISSED,
+    rolled: physical.rolled,
     pierceShown: hit.random() < pierceChance(hit.attacker) / 100,
     strength: {
-      physical: dealt(physical),
-      fire: dealt(magic.fire),
-      frost: dealt(magic.frost),
-      light: dealt(magic.light),
+      physical: Math.round(physical.strength),
+      fire: Math.round(magic.fire),
+      frost: Math.round(magic.frost),
+      light: Math.round(magic.light),
     },
   };
 };
@@ -318,24 +341,23 @@ const swingAt = (
   random: () => number,
 ) => {
   const a = attacker.combatant;
-  const candidates = others.filter((other) => other.alive);
-  const targets: FighterState[] = [];
 
-  while (targets.length < SWING_TARGETS && candidates.length > 0) {
-    targets.push(
-      ...candidates.splice(Math.floor(random() * candidates.length), 1),
-    );
-  }
+  const targets = randomPick(
+    others.filter((other) => other.alive),
+    SWING_TARGETS,
+    random,
+  );
 
   return targets.map((other) => {
     const damage = isImmune(other)
       ? 0
       : Math.round(
           armorReduced(
-            roll(random, a.physical),
+            roll(random, a.physical) *
+              (1 + a.physicalBonus / 100) *
+              weakeningFactor(attacker, other),
             armorAgainst(other, attacker),
-          ) *
-            (1 + a.physicalBonus / 100),
+          ),
         );
 
     takeDamage(other, damage);
@@ -349,22 +371,10 @@ const damageScaleOf = (
   attacker: FighterState,
   defender: FighterState,
   plan: ActionPlan,
-): DamageScale => {
-  const dealt =
-    (1 - plan.effect("lowdmg_self") / 100) *
-    (1 +
-      (buffTotal(attacker, "perdmg", "perdmg-allies") +
-        buffTotal(attacker, "rage")) /
-        100) *
-    (1 + attacker.combatant.damageBonus / 100) *
-    damageLoweredBy(attacker) *
-    (1 - poisonWeakeningOf(attacker) / 100);
-
-  return {
-    dealt,
-    taken: dealt * (1 + defender.combatant.damageTakenBonus / 100),
-  };
-};
+) =>
+  (1 - plan.effect("lowdmg_self") / 100) *
+  (1 + buffTotal(attacker, "perdmg", "perdmg-allies") / 100) *
+  weakeningFactor(attacker, defender);
 
 const NO_OFFHAND = {
   crit: false,
@@ -373,7 +383,7 @@ const NO_OFFHAND = {
   taken: 0,
 };
 
-const offhandHit = (hit: Hit, scale: DamageScale, mainParried: boolean) => {
+const offhandHit = (hit: Hit, mainParried: boolean) => {
   const { attacker, defender, random } = hit;
   const a = attacker.combatant;
 
@@ -384,20 +394,25 @@ const offhandHit = (hit: Hit, scale: DamageScale, mainParried: boolean) => {
   const critFactor =
     crit.strength > 0
       ? (crit.strength *
-          (a.offhandCritValue + critValueShift(attacker, defender))) /
+          (a.offhandCritValue + critValueBonus(attacker, defender))) /
         100
       : 1;
 
-  const rolled = roll(random, a.offhand) * critFactor;
+  const strength =
+    roll(random, a.offhand) *
+    (1 + a.physicalBonus / 100) *
+    critFactor *
+    hit.scale;
+
   const parried = !mainParried && parries(attacker, defender, random);
 
   return {
     crit: crit.crit,
     veryCrit: crit.veryCrit,
-    strength: rolled * scale.dealt,
+    strength,
     taken: parried
       ? 0
-      : armorReduced(rolled, armorAgainst(defender, attacker)) * scale.taken,
+      : armorReduced(strength, armorAgainst(defender, attacker)),
   };
 };
 
@@ -432,9 +447,9 @@ const land = (
   random: () => number,
   { crit, struck, dealt, extra, blocked, frost }: Landing,
 ) => {
-  const { critSlow } = attacker.combatant;
+  const critSlow = crit ? attacker.combatant.critSlow : 0;
 
-  if (crit && critSlow > 0) {
+  if (critSlow > 0) {
     defender.critSlowValue = critSlow;
     defender.critSlowTurns = 1;
   }
@@ -451,7 +466,7 @@ const land = (
   takeDamage(defender, dealt + extra);
   attacker.damageDealt += dealt + extra;
 
-  return { ...stunned, energyBurned };
+  return { ...stunned, energyBurned, critSlow };
 };
 
 const NOT_LANDED = {
@@ -487,18 +502,26 @@ const swingsAround = (
 const showOnce = (
   attacker: FighterState,
   defender: FighterState,
-  facade: number,
+  { facade, armorDestroyed }: { facade: number; armorDestroyed: boolean },
 ) => {
+  const armorProtected =
+    armorDestroyed && !defender.armorProtectionShownTo.has(attacker.index);
+
   const shown = {
     puncture: attacker.punctureShown
       ? 0
       : attacker.combatant.legendary.puncture,
     facade: defender.facadeShown ? 0 : facade,
+    armorDestructionReduction: armorProtected
+      ? defender.combatant.armorDestructionReduction
+      : 0,
   };
 
   attacker.punctureShown = true;
 
   if (facade > 0) defender.facadeShown = true;
+
+  if (armorProtected) defender.armorProtectionShownTo.add(attacker.index);
 
   return shown;
 };
@@ -535,14 +558,10 @@ type WeaponHits = {
 const defendedDamage = (
   defender: FighterState,
   { main, offhand, third }: WeaponHits,
-  {
-    anyCrit,
-    immune,
-    scale,
-  }: { anyCrit: boolean; immune: boolean; scale: DamageScale },
+  { anyCrit, immune }: { anyCrit: boolean; immune: boolean },
 ) => {
   const { legendary } = defender.combatant;
-  const thirdTaken = third.taken * scale.taken;
+  const thirdTaken = third.taken;
 
   const weaponDamage =
     main.physical +
@@ -555,9 +574,9 @@ const defendedDamage = (
   const critred = anyCrit ? legendary.critred : 0;
   const facade = weaponDamage > 0 ? legendary.facade : 0;
   const kept = (1 - critred / 100) * (1 - facade / 100);
-  const keep = (value: number) => (immune ? 0 : Math.round(value * kept));
+  const keep = (value: number) => Math.round(value * kept);
 
-  const damage = {
+  const unshielded = {
     physical: keep(main.physical),
     offhand: keep(offhand.taken),
     fire: keep(main.fire),
@@ -566,35 +585,38 @@ const defendedDamage = (
     third: keep(thirdTaken),
   };
 
+  const total = (parts: StrikeDamage) =>
+    Object.values(parts).reduce((sum, value) => sum + value, 0);
+
+  const damage = immune ? NO_STRIKE_DAMAGE : unshielded;
+
   return {
     critred,
     facade,
     damage,
-    dealt: Object.values(damage).reduce((total, value) => total + value, 0),
+    unshielded,
+    dealt: total(damage),
+    unshieldedDealt: total(unshielded),
     done:
       main.strength.physical +
       main.strength.fire +
       main.strength.frost +
       main.strength.light +
       offhand.strength +
-      third.strength * scale.dealt,
+      third.strength,
   };
 };
 
-const NO_BONUS_DAMAGE = { crush: { value: 0, damage: 0 }, vulture: 0 };
+const NO_CRUSH = { value: 0, damage: 0 };
 
-const bonusDamage = (
-  attacker: FighterState,
-  defender: FighterState,
-  unscaledStrength: number,
-  main: { strength: number; taken: number },
-) => ({
-  crush: crushOf(attacker, main.strength, main.taken),
-  vulture: vultureOf(attacker, defender, unscaledStrength),
-});
-
-const poisonWeakeningOf = (attacker: FighterState) =>
-  attacker.poison ? buffTotal(attacker, "poison_lowdmg_per") : 0;
+const NO_STRIKE_DAMAGE: StrikeDamage = {
+  physical: 0,
+  offhand: 0,
+  fire: 0,
+  frost: 0,
+  light: 0,
+  third: 0,
+};
 
 export const strike = (
   attacker: FighterState,
@@ -605,7 +627,6 @@ export const strike = (
   counterable = true,
 ): Strike => {
   const a = attacker.combatant;
-  const d = defender.combatant;
   const scale = damageScaleOf(attacker, defender, plan);
 
   const { crit, veryCrit, strength } = rollCrit(
@@ -628,15 +649,28 @@ export const strike = (
     ? NO_HIT_EFFECTS
     : onHitEffects(attacker, defender, random);
 
-  const armorBefore = currentArmor(defender);
   const lostBefore = defender.armorLost;
-  const hit = { attacker, defender, plan, crit: strength, random };
-  const main = missed ? missedHit(hit, scale) : mainWeaponHit(hit, scale);
-  const offhand = offhandHit(hit, scale, parried);
+  const brokenBefore = isArmorBroken(defender);
+  const vulture = vultureShare(attacker, defender);
+  const rage = ragePercent(attacker) / 100;
+
+  const hit = {
+    attacker,
+    defender,
+    plan,
+    crit: strength,
+    scale,
+    vulture,
+    rage,
+    random,
+  };
+
+  const main = missed ? missedHit(hit) : mainWeaponHit(hit);
+  const offhand = offhandHit(hit, parried);
 
   const third = arrowBlocked
     ? NO_THIRD_ATTACK
-    : thirdAttack(attacker, defender, random, main.pierced);
+    : thirdAttack(attacker, defender, random, scale);
 
   const wounds = weaponWounds(hit, missed, {
     main: main.damaging,
@@ -653,27 +687,29 @@ export const strike = (
     anyCrit,
   });
 
-  const { critred, facade, damage, dealt, done } = defendedDamage(
-    defender,
-    { main, offhand, third },
-    { anyCrit, immune, scale },
-  );
+  const { critred, facade, damage, unshielded, dealt, unshieldedDealt, done } =
+    defendedDamage(defender, { main, offhand, third }, { anyCrit, immune });
 
-  const takenBonus = struck
-    ? Math.round(
-        (done * buffTotal(defender, "taken_dmg_per", "taken_dmg_per-all")) /
-          100,
-      )
-    : 0;
+  const takenBonus =
+    immune || arrowBlocked
+      ? 0
+      : takenDamageBonus(
+          defender,
+          main.strength.physical +
+            main.strength.fire +
+            main.strength.frost +
+            main.strength.light,
+          [offhand, third],
+          missed,
+        );
 
-  const bonus = struck
-    ? bonusDamage(attacker, defender, main.strength.physical / scale.dealt, {
-        strength: main.strength.physical,
-        taken: damage.physical,
-      })
-    : NO_BONUS_DAMAGE;
+  const crush = struck
+    ? crushOf(attacker, main.strength.physical, damage.physical)
+    : NO_CRUSH;
 
-  const { stun, freeze, energyBurned } = land(
+  const unavoidable = unavoidableDamage(attacker, takenBonus + crush.damage);
+
+  const { stun, freeze, energyBurned, critSlow } = land(
     attacker,
     defender,
     plan,
@@ -682,36 +718,41 @@ export const strike = (
       crit: anyCrit,
       struck,
       dealt,
-      extra: takenBonus + bonus.crush.damage + bonus.vulture,
+      extra: unavoidable,
       blocked: main.blocked > 0,
       frost: main.frost,
     },
   );
 
   const landed = struck ? afterLanding(attacker, defender, random) : NOT_LANDED;
-  const armorDestroyed = armorBefore - currentArmor(defender);
+  const armorDestroyed = brokenBefore ? 0 : main.armorDestruction;
 
   const triggers = passiveTriggers(attacker, defender, random, {
     crit: anyCrit,
     struck,
-    mainTaken: damage.physical,
+    landed: !missed,
+    mainTaken: unshielded.physical,
     dealt,
     pierced: main.pierced,
-    armorDestroyed: Math.round(armorDestroyed),
+    armorDestroyed,
   });
 
   const reflected = reflectFrom(attacker, defender, done, random);
-  const vamp = vampire(attacker, dealt);
-  const swung = !evaded && swingsAround(attacker, defender, random);
+  const vamp = vampire(attacker, unshieldedDealt);
+  const swung = swingsAround(attacker, defender, random);
   const swings = swung ? swingAt(attacker, others, random) : [];
-  const shown = showOnce(attacker, defender, facade);
-  const destroyed = defender.armorLost - lostBefore;
-  const reduction = d.armorDestructionReduction;
+
+  const shown = showOnce(attacker, defender, {
+    facade,
+    armorDestroyed: defender.armorLost > lostBefore,
+  });
 
   return {
+    rage: Math.round(rage * main.rolled),
     crit,
     offhandCrit: offhand.crit,
     veryCrit: veryCrit || offhand.veryCrit,
+    critSlow,
     ...effects,
     holyTouch,
     puncture: shown.puncture,
@@ -730,10 +771,11 @@ export const strike = (
     freeze,
     immune: immune && !missed,
     armorDestroyed,
-    armorDestructionReduction: destroyed > 0 ? reduction : 0,
+    armorBroken: !brokenBefore && isArmorBroken(defender),
+    armorDestructionReduction: shown.armorDestructionReduction,
     ...cursed,
     resistanceDestroyed: main.resistanceDestroyed,
-    absorbed: main.absorbed + Math.round(third.absorbed * scale.taken),
+    absorbed: main.absorbed,
     absorbedMagic: main.absorbedMagic,
     absorbDestroyed: main.absorbDestroyed,
     absorbRenewed: landed.renewed.absorb,
@@ -742,9 +784,9 @@ export const strike = (
     manaDrained: landed.manaDrained,
     energyBurned,
     takenBonus,
-    crush: bonus.crush.value,
-    crushDamage: bonus.crush.damage,
-    vulture: bonus.vulture,
+    crush: crush.value,
+    unavoidable,
+    vulture: Math.round(main.strength.physical * (vulture / (1 + vulture))),
     poisonWeakened: poisonWeakeningOf(attacker),
     triggers,
     reflected,
@@ -754,7 +796,7 @@ export const strike = (
     strength: {
       ...main.strength,
       offhand: Math.round(offhand.strength),
-      third: Math.round(third.strength * scale.dealt),
+      third: Math.round(third.strength),
     },
     damage,
   };

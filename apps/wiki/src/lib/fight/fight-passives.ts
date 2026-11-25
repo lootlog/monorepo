@@ -1,13 +1,8 @@
-import {
-  absorbFrom,
-  armorAgainst,
-  armorReduced,
-  PHYSICAL_ABSORB_SHARE,
-  puncture,
-} from "./fight-defence";
+import { armorAgainst, armorReduced } from "./fight-defence";
 import { chance } from "./fight-hit-effects";
-import { addBuff } from "./fight-skills";
+import { addBuff, buffTotal } from "./fight-skills";
 import {
+  clamp,
   healthShare,
   isImmune,
   MELEE,
@@ -46,13 +41,13 @@ export const arrowBlocks = (
   random: () => number,
 ) => chance(random, arrowBlockChance(attacker, defender));
 
-export const NO_THIRD_ATTACK = { strength: 0, taken: 0, absorbed: 0 };
+export const NO_THIRD_ATTACK = { strength: 0, taken: 0 };
 
 export const thirdAttack = (
   attacker: FighterState,
   defender: FighterState,
   random: () => number,
-  pierced: boolean,
+  scale: number,
 ) => {
   const a = attacker.combatant;
 
@@ -60,22 +55,13 @@ export const thirdAttack = (
     return NO_THIRD_ATTACK;
   }
 
-  const strength = roll(random, a.physical);
+  const strength =
+    roll(random, a.physical) * (1 + a.physicalBonus / 100) * scale;
 
-  const reduced = pierced
-    ? strength
-    : armorReduced(strength, armorAgainst(defender, attacker));
-
-  const absorbed = absorbFrom(
-    reduced,
-    PHYSICAL_ABSORB_SHARE,
-    defender.absorbLeft,
-    puncture(attacker),
-  );
-
-  defender.absorbLeft -= absorbed.absorbed;
-
-  return { strength, taken: absorbed.damage, absorbed: absorbed.absorbed };
+  return {
+    strength,
+    taken: armorReduced(strength, armorAgainst(defender, attacker)),
+  };
 };
 
 export const crushOf = (
@@ -95,15 +81,11 @@ export const crushOf = (
 export const crushKey = (combatant: Combatant) =>
   DISTANCE.has(combatant.profession) ? "+crush_distance" : "+crush_physical";
 
-export const vultureOf = (
-  attacker: FighterState,
-  defender: FighterState,
-  strength: number,
-) =>
+export const vultureShare = (attacker: FighterState, defender: FighterState) =>
   !isImmune(defender) &&
   healthShare(defender) < VULTURE_HEALTH &&
   (MELEE.has(attacker.combatant.profession) || isDistance(attacker))
-    ? Math.round((attacker.combatant.passives.vulture * strength) / 100)
+    ? attacker.combatant.passives.vulture / 100
     : 0;
 
 export type PassiveTriggers = {
@@ -131,6 +113,7 @@ const NO_PASSIVE_TRIGGERS: PassiveTriggers = {
 type Landed = {
   readonly crit: boolean;
   readonly struck: boolean;
+  readonly landed: boolean;
   readonly mainTaken: number;
   readonly dealt: number;
   readonly pierced: boolean;
@@ -153,9 +136,10 @@ const restoreEnergy = (attacker: FighterState) => {
   return restored;
 };
 
-const lingering = (damage: number) => ({
+const lingering = (damage: number, source: FighterState) => ({
   damage,
   turnsLeft: LINGERING_TURNS,
+  source: source.index,
 });
 
 const onCrit = (
@@ -165,10 +149,10 @@ const onCrit = (
   { struck, dealt, pierced, armorDestroyed }: Landed,
 ) => {
   const p = attacker.combatant.passives;
-  const critWound = dealt > 0 && chance(random, p.critWoundChance);
+  const critWound = struck && dealt > 0 && chance(random, p.critWoundChance);
 
   if (critWound) {
-    defender.critWound = lingering(Math.round(CRIT_WOUND_SHARE * dealt));
+    defender.critWound = lingering(CRIT_WOUND_SHARE * dealt, attacker);
   }
 
   const critSpeed = chance(random, p.critSpeed.bound) ? p.critSpeed.value : 0;
@@ -187,7 +171,7 @@ const onCrit = (
       ? Math.round((p.critPierce * armorDestroyed) / 100)
       : 0;
 
-  attacker.pendingArmorDestruction += critPierce;
+  defender.armorLost += critPierce;
 
   const distracted = struck && chance(random, p.distractChance);
 
@@ -195,7 +179,13 @@ const onCrit = (
 
   const poisonResistanceDestroyed = struck ? p.poisonResistanceDestruction : 0;
 
-  defender.poisonResistanceLost += poisonResistanceDestroyed;
+  defender.poisonResistanceLost += clamp(
+    defender.combatant.resistPoison +
+      buffTotal(defender, "antidote") -
+      defender.poisonResistanceLost,
+    0,
+    poisonResistanceDestroyed,
+  );
 
   return {
     energyBack: attacker.alive ? restoreEnergy(attacker) : 0,
@@ -215,13 +205,13 @@ export const passiveTriggers = (
   landed: Landed,
 ): PassiveTriggers => {
   const injured =
-    landed.struck &&
+    landed.landed &&
     landed.mainTaken > 0 &&
     chance(random, attacker.combatant.passives.injureChance);
 
   const injure = injured ? Math.floor(INJURE_SHARE * landed.mainTaken) : 0;
 
-  if (injure > 0) defender.injure = lingering(injure);
+  if (injure > 0) defender.injure = lingering(injure, attacker);
 
   return landed.crit
     ? { ...onCrit(attacker, defender, random, landed), injure }

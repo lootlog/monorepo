@@ -92,6 +92,20 @@ describe("damage and defence", () => {
     expect(taken.slice(0, 4)).toEqual([8500, 9500, 10_000, 10_000]);
   });
 
+  test("blocks only with a shield worn", () => {
+    const blocks = (hasShield: boolean) =>
+      strikesBy(
+        eventsOf(
+          { profession: "w", physical: { min: 1000, max: 1000 } },
+          { profession: "w", blockPoints: 10_000, hasShield },
+        ),
+        0,
+      ).some((hit) => hit.blocked > 0);
+
+    expect(blocks(true)).toBe(true);
+    expect(blocks(false)).toBe(false);
+  });
+
   test("adds crit chance for a level lead beyond five levels", () => {
     const critRate = (level: number) => {
       const hits = strikesBy(
@@ -151,7 +165,7 @@ describe("damage and defence", () => {
     },
   );
 
-  test("adds the auxiliary weapon's poison and wound to the main weapon's on one hit", () => {
+  test("adds the auxiliary weapon's poison and wound to the main weapon's on one hit, halving a wound that lands with poison", () => {
     const attacker = createState(
       fighter({
         profession: "b",
@@ -169,9 +183,13 @@ describe("damage and defence", () => {
     const defender = createState(fighter({ hp: 10_000_000 }), 1, 1);
     const hit = strike(attacker, defender, NO_SKILL, seededRandom(5));
 
-    expect(hit.wounds).toMatchObject({ main: true, offhand: true });
+    expect(hit.wounds).toMatchObject({
+      main: true,
+      offhand: true,
+      halved: true,
+    });
     expect(defender.poison).toMatchObject({ damage: 500, slow: 0.8 });
-    expect(defender.wound).toMatchObject({ damage: 600, cap: 1200 });
+    expect(defender.wound).toMatchObject({ damage: 300, cap: 1200 });
   });
 
   test("cuts the struck enemy's item healing for its next two turns", () => {
@@ -222,6 +240,7 @@ describe("damage and defence", () => {
       cost: 0,
       cooldown: 50,
       selfCast: false,
+      melee: false,
       attacks: true,
       logged: [],
       effects: new Map([["stun", { value: 100, turns: 1 }]]),
@@ -294,6 +313,7 @@ describe("damage and defence", () => {
       cost: 0,
       cooldown: 0,
       selfCast: false,
+      melee: false,
       attacks: true,
       logged: [],
       effects: new Map([["add_attacks", { value: 1, turns: 1 }]]),
