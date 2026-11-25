@@ -733,6 +733,31 @@ describe("skill effects", () => {
     expect(attacker.alive).toBe(true);
   });
 
+  test("adds the poison and frost weapon slows of one attacker, each reduced by slow reduction and only frost boosted", () => {
+    const state = createState(
+      fighter({ attackSpeed: 5, slowReduction: 20 }),
+      0,
+      0,
+    );
+
+    state.poison = {
+      damage: 0,
+      turnsLeft: 5,
+      source: 1,
+      slow: 0.5,
+      boosted: false,
+    };
+    state.frostSlow = {
+      source: 1,
+      slow: 0.4,
+      turnsLeft: 3,
+      boost: 0.5,
+      boostTurnsLeft: 2,
+    };
+
+    expect(attackTime(state)).toBeCloseTo(1 / (5 - 0.5 * 0.8 - 0.4 * 1.3));
+  });
+
   test("speeds up a fighter from its next turn on after a critical speed-up, not in the turn that earned it", () => {
     const state = createState(fighter({}), 0, 0);
     const before = attackTime(state);
