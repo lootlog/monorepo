@@ -1,5 +1,9 @@
-import { clearDamageOverTime, weakeningFactor } from "./fight-hit-effects";
-import { NO_DRAIN, type Drained } from "./fight-defence";
+import {
+  clearDamageOverTime,
+  skillDamageFactor,
+  weakeningFactor,
+} from "./fight-hit-effects";
+import { destroyResource, NO_DRAIN, type Drained } from "./fight-defence";
 import {
   addBuff,
   buffTotal,
@@ -148,7 +152,18 @@ const cleanseAllies = ({ allies, plan }: Cast) => {
 
 const ARMOR_BONUS = "achpp_per";
 
-const applyBuffs = ({ caster, target, allies, enemies, skill }: Cast) => {
+const TAUNT = "shout";
+
+const tauntedBy = ({ target, enemies, plan, random }: Cast) => {
+  if (target === null) return [];
+
+  const others = enemies.filter((enemy) => enemy.alive && enemy !== target);
+
+  return [target, ...randomPick(others, plan.effect(TAUNT), random)];
+};
+
+const applyBuffs = (cast: Cast) => {
+  const { caster, target, allies, enemies, skill } = cast;
   let armorBonus = 0;
 
   for (const [key, effect] of skill.effects) {
@@ -188,7 +203,11 @@ const applyBuffs = ({ caster, target, allies, enemies, skill }: Cast) => {
     if (target && TARGET_DEBUFFS.has(key))
       addBuff(target, key, value, turns, caster.index);
 
-    if (ENEMY_TEAM_DEBUFFS.has(key)) {
+    if (key === TAUNT) {
+      for (const enemy of tauntedBy(cast)) {
+        addBuff(enemy, key, value, turns, caster.index);
+      }
+    } else if (ENEMY_TEAM_DEBUFFS.has(key)) {
       for (const enemy of enemies) {
         if (enemy.alive) addBuff(enemy, key, value, turns, caster.index);
       }
@@ -210,14 +229,6 @@ const strikeTarget = ({ caster, target, plan, skill }: Cast) => {
       energyDestroyed: NO_DRAIN,
     };
   }
-
-  const absorbDestroyed =
-    1 -
-    (plan.effect("active_absorbdest_per") / 100) *
-      (1 - target.combatant.absorbDestructionReduction / 100);
-
-  target.absorbLeft *= absorbDestroyed;
-  target.absorbMagicLeft *= absorbDestroyed;
 
   const fireShare = plan.effect("dmg-target_fire-perw");
 
@@ -250,10 +261,9 @@ const strikeTarget = ({ caster, target, plan, skill }: Cast) => {
 
   const flatDamage = isImmune(target)
     ? 0
-    : Math.round(
+    : Math.floor(
         plan.effect("dmg-target_absolute") *
-          (1 + caster.combatant.allDamageBonus / 100) *
-          (1 + caster.combatant.physicalBonus / 100) *
+          skillDamageFactor(caster) *
           weakeningFactor(caster, target),
       );
 
@@ -263,24 +273,6 @@ const strikeTarget = ({ caster, target, plan, skill }: Cast) => {
   }
 
   return { flatDamage, manaStolen, manaDestroyed, energyDestroyed };
-};
-
-const destroyResource = (
-  target: FighterState,
-  pool: "energy" | "mana",
-  amount: number,
-): Drained => {
-  if (amount <= 0) return NO_DRAIN;
-
-  const reduced = Math.round(
-    (amount * Math.min(100, target.combatant.drainReduction)) / 100,
-  );
-
-  const destroyed = Math.min(target[pool], amount - reduced);
-
-  target[pool] -= destroyed;
-
-  return { amount: destroyed, reduced };
 };
 
 const swingAround = ({ caster, target, enemies, plan, random }: Cast) => {

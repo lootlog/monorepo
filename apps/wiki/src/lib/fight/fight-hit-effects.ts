@@ -46,10 +46,12 @@ const cleanse = (defender: FighterState) => {
   defender.frostSlow = null;
   defender.slowBySource.clear();
   defender.critSlowTurns = 0;
+  defender.stunned = false;
   defender.buffs = defender.buffs.filter((buff) => !SKILL_SLOWS.has(buff.key));
 };
 
 const hasLingeringEffects = (defender: FighterState) =>
+  defender.stunned ||
   defender.poison !== null ||
   defender.wound !== null ||
   defender.injure !== null ||
@@ -68,14 +70,6 @@ export const onHitEffects = (
 ) => {
   const a = attacker.combatant.legendary;
   const d = defender.combatant.legendary;
-
-  const cleansed =
-    !defender.stunned &&
-    hasLingeringEffects(defender) &&
-    chance(random, d.cleanse);
-
-  if (cleansed) cleanse(defender);
-
   const curse = chance(random, a.curse);
   const glare = chance(random, d.glare);
   const anguish = a.anguish.damage > 0 && chance(random, a.anguish.chance);
@@ -92,7 +86,17 @@ export const onHitEffects = (
     };
   }
 
-  return { cleansed, curse, glare, anguish };
+  return { curse, glare, anguish };
+};
+
+export const cleanseOnHit = (defender: FighterState, random: () => number) => {
+  const cleansed =
+    hasLingeringEffects(defender) &&
+    chance(random, defender.combatant.legendary.cleanse);
+
+  if (cleansed) cleanse(defender);
+
+  return cleansed;
 };
 
 export const unavoidableFactor = (state: FighterState) =>
@@ -100,6 +104,13 @@ export const unavoidableFactor = (state: FighterState) =>
 
 export const weaponlessUnavoidableFactor = (state: FighterState) =>
   unavoidableFactor(state) * (1 + state.combatant.allDamageBonus / 100);
+
+export const skillDamageFactor = ({ combatant }: FighterState) =>
+  1 +
+  (combatant.allDamageBonus +
+    combatant.physicalBonus +
+    combatant.unavoidableBonus) /
+    100;
 
 const WEAKENING_SOURCES = 2;
 
@@ -127,14 +138,10 @@ export const weakeningFactor = (
     .slice(0, WEAKENING_SOURCES)
     .reduce((total, value) => total + value, 0);
 
-  return Math.max(
-    0,
-    (1 - lowered / 100) * (1 - buffTotal(attacker, "alllowdmg") / 100),
-  );
+  return Math.max(0, 1 - (lowered + buffTotal(attacker, "alllowdmg")) / 100);
 };
 
 export const NO_HIT_EFFECTS = {
-  cleansed: false,
   curse: false,
   glare: false,
   anguish: false,
@@ -178,7 +185,8 @@ export const debuffOnHit = (
 
     if (share > 0) {
       defender.skillDots.set(dot, {
-        damage: (share / 100) * defender.combatant.hp,
+        damage:
+          (share / 100) * defender.combatant.hp * skillDamageFactor(attacker),
         turnsLeft: plan.turns(key),
         source: attacker.index,
       });
@@ -192,10 +200,10 @@ export const stunOnHit = (
   defender: FighterState,
   plan: ActionPlan,
   random: () => number,
-  frost: number,
+  hit: { readonly damaging: boolean; readonly frost: boolean },
 ) => {
-  const stun = chance(random, plan.effect("stun"));
-  const freeze = frost > 0 && chance(random, plan.effect("freeze"));
+  const stun = hit.damaging && chance(random, plan.effect("stun"));
+  const freeze = hit.frost && chance(random, plan.effect("freeze"));
 
   if (stun || freeze) defender.stunned = true;
 
@@ -393,13 +401,26 @@ export const ragePercent = (attacker: FighterState) =>
         : 0)
     : 0;
 
+const isTauntedAwayFrom = (defender: FighterState, attacker: FighterState) =>
+  hasBuff(defender, "shout") &&
+  !defender.buffs.some(
+    (buff) => buff.key === "shout" && buff.source === attacker.index,
+  );
+
 export const counters = (
   defender: FighterState,
+  attacker: FighterState,
   random: () => number,
   crit: boolean,
   parried: boolean,
 ) => {
-  if (!defender.alive || defender.stunned) return false;
+  if (
+    !defender.alive ||
+    defender.stunned ||
+    isTauntedAwayFrom(defender, attacker)
+  ) {
+    return false;
+  }
 
   const { counterChance, parryCounterChance } = defender.combatant;
 

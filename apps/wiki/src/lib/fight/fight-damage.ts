@@ -127,9 +127,13 @@ export const physicalDamage = (
   const { attacker, defender, plan } = hit;
   const { rolled, strength } = physicalStrength(hit);
 
+  const { physical, physicalBonus } = attacker.combatant;
+
   const armorDestruction = destroyArmor(
     defender,
-    (plan.effect("active_acdmg_physical-perw") / 100) * strength,
+    (plan.effect("active_acdmg_physical-perw") / 100) *
+      ((physical.min + physical.max) / 2) *
+      (1 + physicalBonus / 100),
   );
 
   const raw = strength * blockFactor;

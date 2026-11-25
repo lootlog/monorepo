@@ -107,6 +107,7 @@ function FightRoute() {
   const opponent = useFighterProfile(opponentSet);
   const [tab, setTab] = useFightTab();
   const [runs, setRuns] = useState(DEFAULT_SIMULATION_RUNS);
+  const [levelAdvantage, setLevelAdvantage] = useState(true);
   const [progress, setProgress] = useState<number | null>(null);
   const [simulated, setSimulated] = useState<SimulatedFight | null>(null);
   const [view, setView] = useState<FightListView>(DEFAULT_FIGHT_LIST_VIEW);
@@ -118,7 +119,7 @@ function FightRoute() {
     [OPPONENT_PARAM]: encodeEquipmentSet(opponentSet),
   };
 
-  const sets = Object.values(encodedSets).join("|");
+  const sets = [...Object.values(encodedSets), levelAdvantage].join("|");
 
   // oxlint-disable-next-line lootlog/no-unreasoned-state-sync -- stops the running simulation loop when the page unmounts
   useEffect(() => () => running.current?.abort(), []);
@@ -132,6 +133,7 @@ function FightRoute() {
             mine: t("fightPage.myName"),
             opponent: t("fightPage.opponentName"),
           },
+          levelAdvantage,
         }
       : null;
 
@@ -205,6 +207,8 @@ function FightRoute() {
       <FightToolbar
         runs={runs}
         onRunsChange={setRuns}
+        levelAdvantage={levelAdvantage}
+        onLevelAdvantageChange={setLevelAdvantage}
         progress={progress}
         canSimulate={fighters !== null}
         onSimulate={simulate}

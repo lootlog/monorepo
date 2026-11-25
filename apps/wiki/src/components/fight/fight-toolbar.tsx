@@ -4,11 +4,14 @@ import { Button } from "@lootlog/ui/components/button";
 import { Progress } from "@lootlog/ui/components/progress";
 import { TabsList, TabsTrigger } from "@lootlog/ui/components/tabs";
 import { t } from "@/i18n/messages";
+import { FightLevelAdvantageSwitch } from "./fight-level-advantage-switch";
 import { FightRunsSelect } from "./fight-runs-select";
 
 type FightToolbarProps = {
   runs: number;
   onRunsChange: (runs: number) => void;
+  levelAdvantage: boolean;
+  onLevelAdvantageChange: (levelAdvantage: boolean) => void;
   progress: number | null;
   canSimulate: boolean;
   onSimulate: () => void;
@@ -19,6 +22,8 @@ type FightToolbarProps = {
 export function FightToolbar({
   runs,
   onRunsChange,
+  levelAdvantage,
+  onLevelAdvantageChange,
   progress,
   canSimulate,
   onSimulate,
@@ -38,7 +43,12 @@ export function FightToolbar({
         <TabsTrigger value="mine">{t("fightPage.myTab")}</TabsTrigger>
         <TabsTrigger value="opponent">{t("fightPage.opponentTab")}</TabsTrigger>
       </TabsList>
-      <div className="ml-auto flex items-center gap-2">
+      <div className="ml-auto flex flex-wrap items-center gap-2">
+        <FightLevelAdvantageSwitch
+          checked={levelAdvantage}
+          onChange={onLevelAdvantageChange}
+          disabled={isRunning}
+        />
         {share}
         {isRunning ? (
           <Progress

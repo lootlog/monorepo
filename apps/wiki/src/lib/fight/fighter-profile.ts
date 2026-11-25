@@ -59,6 +59,9 @@ export type FighterProfile = {
 };
 
 const EXTRA_SKILL_KEYS = [
+  "evade_per",
+  "blok_per",
+  "decevade_per",
   "redslow",
   "fastarrow",
   "critslow_per",
@@ -531,9 +534,12 @@ export const toCombatant = (
     hasShield: extraOf("shields") > 0,
     armorDestruction: stats.armorDestruction,
     armorDestructionResist: stats.armorDestructionResist,
-    evadePoints: stats.evadePoints,
-    evadeReduction: stats.evadeReduction,
-    blockPoints: stats.blockPoints,
+    evadePoints: stats.evadeItemPoints,
+    evadePercent: extraOf("evade_per"),
+    evadeReduction: stats.evadeItemReduction,
+    evadeReductionPercent: extraOf("decevade_per"),
+    blockPoints: stats.blockItemPoints,
+    blockPercent: extraOf("blok_per"),
     absorb: stats.absorb,
     absorbMagic: stats.absorbMagic,
     absorbDistance: extraOf("absorbd"),

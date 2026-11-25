@@ -9,6 +9,7 @@ export type Targeting = "lowestLevel" | "random";
 export type FightSetup = {
   readonly teams: readonly (readonly Combatant[])[];
   readonly targeting?: Targeting;
+  readonly levelAdvantage?: boolean;
 };
 
 type FighterOutcome = {
@@ -85,6 +86,7 @@ export type FightEvent =
       readonly comboSpent: number;
       readonly comboDamage: number;
       readonly lastHeal: number;
+      readonly swingLastHeals: readonly number[];
       readonly hp: readonly number[];
     })
   | (Strike & {
@@ -94,6 +96,8 @@ export type FightEvent =
       readonly target: number;
       readonly fastArrow: boolean;
       readonly lastHeal: number;
+      readonly reflectLastHeal: number;
+      readonly swingLastHeals: readonly number[];
       readonly hp: readonly number[];
     });
 

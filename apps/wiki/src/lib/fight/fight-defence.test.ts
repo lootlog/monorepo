@@ -123,6 +123,40 @@ describe("damage and defence", () => {
     expect(critRate(225)).toBeGreaterThan(0.6);
   });
 
+  test("keeps crit chance unchanged by a level lead when the level advantage is off", () => {
+    const hits: boolean[] = [];
+
+    simulateFight(
+      {
+        teams: [
+          [
+            fighter({
+              hp: 10_000_000,
+              physical: { min: 1, max: 1 },
+              critChance: 10,
+              level: 225,
+            }),
+          ],
+          [
+            fighter({
+              hp: 10_000_000,
+              physical: NO_DAMAGE,
+              attackSpeed: 1,
+              level: 200,
+            }),
+          ],
+        ],
+        levelAdvantage: false,
+      },
+      seededRandom(5),
+      (event) => {
+        if (event.kind === "strike" && event.actor === 0) hits.push(event.crit);
+      },
+    );
+
+    expect(hits.filter(Boolean).length / hits.length).toBeLessThan(0.2);
+  });
+
   test.each([
     { drainResist: 0, drained: 13 },
     { drainResist: 4, drained: 9 },

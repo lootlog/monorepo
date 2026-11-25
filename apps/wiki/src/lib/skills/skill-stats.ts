@@ -185,7 +185,7 @@ const COMBINED_STATS = new Map<string, Combine>(
     lowevade: (item, bonus, level) =>
       add(item, levelPoints(bonus("decevade_per"), level)),
     ac: (item, bonus) =>
-      add(scaled(item, bonus("ac2_per"), Math.round), bonus("ac")),
+      scaled(add(item, bonus("ac")), bonus("ac2_per"), Math.round),
     evade: (item, bonus, level) =>
       add(item, levelPoints(bonus("evade_per"), level)),
     blok: (item, bonus, level) =>

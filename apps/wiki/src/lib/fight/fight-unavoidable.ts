@@ -5,6 +5,9 @@ const TAKEN_DAMAGE_SOURCES = 2;
 
 type ExtraHit = { readonly strength: number; readonly taken: number };
 
+const shareOf = (strength: number, percent: number) =>
+  Math.round((strength * percent) / 100);
+
 const strongestTakenDamage = (defender: FighterState) =>
   defender.buffs
     .filter(
@@ -18,7 +21,7 @@ const strongestTakenDamage = (defender: FighterState) =>
 
 export const takenDamageBonus = (
   defender: FighterState,
-  mainStrength: number,
+  mainStrengths: readonly number[],
   extraHits: readonly ExtraHit[],
   missed: boolean,
 ) => {
@@ -27,12 +30,10 @@ export const takenDamageBonus = (
 
   if (percent <= 0 || (missed && landed.length === 0)) return 0;
 
-  const strength = landed.reduce(
-    (total, hit) => total + hit.strength,
-    mainStrength,
+  return [...mainStrengths, ...landed.map((hit) => hit.strength)].reduce(
+    (total, strength) => total + shareOf(strength, percent),
+    0,
   );
-
-  return Math.floor((strength * percent) / 100);
 };
 
 export const unavoidableDamage = (attacker: FighterState, damage: number) =>

@@ -140,8 +140,11 @@ export type Combatant = {
   readonly armorDestruction: number;
   readonly armorDestructionResist: number;
   readonly evadePoints: number;
+  readonly evadePercent: number;
   readonly evadeReduction: number;
+  readonly evadeReductionPercent: number;
   readonly blockPoints: number;
+  readonly blockPercent: number;
   readonly absorb: number;
   readonly absorbMagic: number;
   readonly absorbDistance: number;
@@ -201,6 +204,7 @@ type Wound = DamageOverTime & { cap: number };
 type Poison = DamageOverTime & { slow: number; boosted: boolean };
 
 type FrostSlow = {
+  source: number;
   slow: number;
   turnsLeft: number;
   boost: number;
@@ -213,6 +217,7 @@ export type FighterState = SkillUserState & {
   index: number;
   team: number;
   combatant: Combatant;
+  levelAdvantage: boolean;
   hp: number;
   alive: boolean;
   clock: number;
@@ -256,6 +261,7 @@ export const createState = (
   index,
   team,
   combatant,
+  levelAdvantage: true,
   hp: combatant.hp,
   alive: true,
   clock: 0,

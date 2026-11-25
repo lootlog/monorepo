@@ -188,9 +188,10 @@ export const fightBattleLog = (
       ],
       valued("combo-max", event.comboSpent),
     ]),
-    ...event.swings.map((swing) =>
+    ...event.swings.flatMap((swing, index) => [
+      ...lastHeal(event.swingLastHeals[index] ?? 0, swing.target, event.hp),
       otherDamage(swing.damage, "a", swing.target, event.hp),
-    ),
+    ]),
     ...present([valued("stealmana", event.manaStolen)]),
   ];
 
@@ -210,9 +211,10 @@ export const fightBattleLog = (
         valued("+actdmg", triggers.poisonResistanceDestroyed),
         [event.swung, "+swing"],
       ]),
-      ...event.swings.map((swing) =>
+      ...event.swings.flatMap((swing, index) => [
+        ...lastHeal(event.swingLastHeals[index] ?? 0, swing.target, event.hp),
         otherDamage(swing.damage, " ", swing.target, event.hp),
-      ),
+      ]),
       ...present([
         [event.pierceShown, "+pierce"],
         [event.fastArrow, "+fastarrow"],
@@ -244,6 +246,14 @@ export const fightBattleLog = (
         valued("+energy", event.energyBurned),
         [event.evaded, "-evade"],
         valued("+abdest", event.absorbDestroyed),
+        ...(event.absorbShareDestroyed.absorb +
+          event.absorbShareDestroyed.absorbMagic >
+        0
+          ? ([
+              [true, `+abdest_per=${event.absorbShareDestroyed.absorb}`],
+              [true, `+abmdest_per=${event.absorbShareDestroyed.absorbMagic}`],
+            ] as const)
+          : []),
         [event.stun, "+stun"],
         valued("+absorb", event.absorbRenewed),
         valued("+absorbm", event.absorbMagicRenewed),
@@ -276,8 +286,9 @@ export const fightBattleLog = (
       ...takenDamageKeys(event, attacker).map(
         ([key, part]) => `-${key}=${event.damage[part]}`,
       ),
+      ...present([valued("-dmga", event.unavoidable)]),
+      ...lastHeal(event.reflectLastHeal, event.actor, event.hp),
       ...present([
-        valued("-dmga", event.unavoidable),
         [
           event.reflected > 0,
           otherDamage(event.reflected, "a", event.actor, event.hp),

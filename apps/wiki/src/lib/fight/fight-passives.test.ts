@@ -91,6 +91,46 @@ describe("passive skill effects", () => {
     expect(hits.every((hit) => hit.damage.third === 1000)).toBe(true);
   });
 
+  test("wounds with the auxiliary weapon when the main weapon is evaded", () => {
+    const hits = strikesBy(
+      fightOf(
+        {
+          profession: "b",
+          offhand: { min: 100, max: 100 },
+          wound: { chance: 100, damage: 100 },
+          offhandWound: { chance: 100, damage: 100 },
+        },
+        { evadePoints: 10_000 },
+      ).events,
+      0,
+    );
+
+    const evaded = hits.filter((hit) => hit.evaded);
+
+    expect(evaded.length).toBeGreaterThan(0);
+    expect(evaded.every((hit) => hit.wounds.offhand && !hit.wounds.main)).toBe(
+      true,
+    );
+  });
+
+  test("counters a parried auxiliary weapon while the main weapon still lands", () => {
+    const hits = strikesBy(
+      fightOf(
+        { profession: "b", offhand: { min: 100, max: 100 } },
+        { parryChance: 50, parryCounterChance: 100 },
+      ).events,
+      0,
+    );
+
+    const offhandParried = hits.filter(
+      (hit) => hit.parried && hit.damage.physical > 0,
+    );
+
+    expect(offhandParried.length).toBeGreaterThan(0);
+    expect(offhandParried.every((hit) => hit.countered)).toBe(true);
+    expect(offhandParried.every((hit) => hit.damage.offhand === 0)).toBe(true);
+  });
+
   test("keeps the third attack out of absorption and under armor even on a pierce", () => {
     const [hit] = strikesBy(
       fightOf(
@@ -233,5 +273,36 @@ describe("passive skill effects", () => {
     expect(evadeChance(defender, attacker, 0)).toBe(0.5);
     expect(evadeChance(defender, attacker, 30)).toBeCloseTo(0.3);
     expect(evadeChance(defender, attacker, 100)).toBe(0);
+  });
+
+  test("lets an enemy's evade reduction eat into adrenaline evade and counts skill evade in percent points at any level", () => {
+    const accurate = createState(
+      fighter({ profession: "h", evadeReduction: 400 }),
+      0,
+      0,
+    );
+
+    const defender = createState(
+      fighter({
+        evadePoints: 200,
+        ...withPassives({ adrenalinEvade: { value: 40, bound: 30 } }),
+      }),
+      1,
+      1,
+    );
+
+    defender.hp = 0.2 * defender.combatant.hp;
+
+    expect(evadeChance(defender, accurate, 0)).toBeCloseTo(0.2);
+
+    const highLevel = createState(
+      fighter({ profession: "h", level: 300 }),
+      0,
+      0,
+    );
+
+    const nimble = createState(fighter({ level: 100, evadePercent: 10 }), 1, 1);
+
+    expect(evadeChance(nimble, highLevel, 0)).toBeCloseTo(0.1);
   });
 });

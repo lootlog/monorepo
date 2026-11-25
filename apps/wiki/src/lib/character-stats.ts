@@ -104,8 +104,10 @@ export type CharacterStats = {
   pierce: number;
   armor: number;
   evadePoints: number;
+  evadeItemPoints: number;
   evadeChance: number;
   blockPoints: number;
+  blockItemPoints: number;
   blockChance: number;
   absorb: number;
   absorbMagic: number;
@@ -118,6 +120,7 @@ export type CharacterStats = {
   energy: number;
   physicalBonus: number;
   evadeReduction: number;
+  evadeItemReduction: number;
   critReduction: number;
   critValueReduction: number;
   armorDestruction: number;
@@ -146,8 +149,10 @@ type ItemSums = {
   offhandDamage: DamageRange;
   mainCrit: number;
   offhandCrit: number;
+  sharedCrit: number;
   mainCritValue: number;
   offhandCritValue: number;
+  sharedCritValue: number;
   fire: DamageRange;
   frost: SlowingDamage;
   light: DamageRange;
@@ -235,18 +240,22 @@ const DAMAGE_ENTRIES = new Map(
   } satisfies Record<string, AddEntry>),
 );
 
+type CritOwner = "main" | "offhand" | "shared";
+
+const CRIT_SUMS = {
+  main: { crit: "mainCrit", critval: "mainCritValue" },
+  offhand: { crit: "offhandCrit", critval: "offhandCritValue" },
+  shared: { crit: "sharedCrit", critval: "sharedCritValue" },
+} as const;
+
 const addSingleValue = (
   sums: ItemSums,
   key: string,
   value: number,
-  isOffhand: boolean,
+  owner: CritOwner,
 ) => {
-  if (key === "crit") {
-    if (isOffhand) sums.offhandCrit += value;
-    else sums.mainCrit += value;
-  } else if (key === "critval") {
-    if (isOffhand) sums.offhandCritValue += value;
-    else sums.mainCritValue += value;
+  if (key === "crit" || key === "critval") {
+    sums[CRIT_SUMS[owner][key]] += value;
   } else {
     sums.flat.set(key, (sums.flat.get(key) ?? 0) + value);
   }
@@ -259,8 +268,10 @@ const sumItems = (wornItems: readonly WornItem[]): ItemSums => {
     offhandDamage: { min: 0, max: 0 },
     mainCrit: 0,
     offhandCrit: 0,
+    sharedCrit: 0,
     mainCritValue: 0,
     offhandCritValue: 0,
+    sharedCritValue: 0,
     fire: { min: 0, max: 0 },
     frost: { slow: 0, damage: 0 },
     light: { min: 0, max: 0 },
@@ -274,6 +285,12 @@ const sumItems = (wornItems: readonly WornItem[]): ItemSums => {
   for (const { item } of wornItems) {
     const isOffhand = item.type === "HELP_WEAPON";
 
+    const critOwner = isOffhand
+      ? "offhand"
+      : findEquipmentSlot(item.type)?.id === "weapon"
+        ? "main"
+        : "shared";
+
     for (const { key, value } of parseItemStatEntries(item.stat)) {
       const numbers = statNumbers(value);
       const addDamage = DAMAGE_ENTRIES.get(key);
@@ -282,7 +299,7 @@ const sumItems = (wornItems: readonly WornItem[]): ItemSums => {
       if (addDamage && numbers.length > 0) {
         addDamage(sums, numbers, isOffhand);
       } else if (numbers.length === 1 && single !== undefined) {
-        addSingleValue(sums, key, single, isOffhand);
+        addSingleValue(sums, key, single, critOwner);
       }
     }
   }
@@ -413,10 +430,10 @@ export const characterStats = (
   const baseCrit = 1 + 0.02 * lvl;
   const absorbLimit = intellect * 7;
 
+  const evadeItemPoints = Math.round(agility / 30) + Math.floor(item("evade"));
+
   const evadePoints =
-    Math.round(agility / 30) +
-    Math.floor(item("evade")) +
-    Math.round((skill("evade_per") * lvl) / 20);
+    evadeItemPoints + Math.round((skill("evade_per") * lvl) / 20);
 
   const blockItems = Math.floor(item("blok"));
 
@@ -457,18 +474,23 @@ export const characterStats = (
     offhandPoison: poisonOf(items.offhandPoison),
     offhandWound: woundOf(items.offhandWound, "of-wounddmgbon_perw"),
     attackSpeed,
-    critChance: baseCrit + items.mainCrit + skill("crit"),
+    critChance: baseCrit + items.mainCrit + items.sharedCrit + skill("crit"),
     critValue:
       (BASE_CRIT_MULTIPLIER +
         attributeCrit(strength) +
-        items.mainCritValue / 100 +
+        (items.mainCritValue + items.sharedCritValue) / 100 +
         skill("critval") / 100) *
       100,
-    offhandCritChance: baseCrit + items.offhandCrit + skill("of-crit"),
+    offhandCritChance:
+      baseCrit +
+      items.offhandCrit +
+      items.sharedCrit +
+      skill("crit") +
+      skill("of-crit"),
     offhandCritValue:
       (BASE_CRIT_MULTIPLIER +
         attributeCrit(strength) +
-        items.offhandCritValue / 100 +
+        (items.offhandCritValue + items.sharedCritValue) / 100 +
         skill("of-critval") / 100) *
       100,
     critMagicValue:
@@ -477,10 +499,14 @@ export const characterStats = (
         item("critmval") / 100) *
       100,
     pierce: item("pierce") + skill("pierce"),
-    armor: Math.round(item("ac") * (1 + skill("ac2_per") / 100)) + skill("ac"),
+    armor: Math.round(
+      (item("ac") + skill("ac")) * (1 + skill("ac2_per") / 100),
+    ),
     evadePoints,
+    evadeItemPoints,
     evadeChance: Math.min(MAX_EVADE_OR_BLOCK_CHANCE, (evadePoints * 20) / lvl),
     blockPoints: blockItems + Math.round((skill("blok_per") * lvl) / 20),
+    blockItemPoints: blockItems,
     blockChance: Math.min(
       MAX_EVADE_OR_BLOCK_CHANCE,
       (blockItems * 20) / lvl + skill("blok_per"),
@@ -508,6 +534,7 @@ export const characterStats = (
     physicalBonus: item("dmgmulphysical"),
     evadeReduction:
       item("lowevade") + Math.round((skill("decevade_per") * lvl) / 20),
+    evadeItemReduction: item("lowevade"),
     critReduction: item("lowcrit"),
     critValueReduction: item("lowcritallval"),
     armorDestruction: item("acdmg") + skill("acdmg"),
