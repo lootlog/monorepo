@@ -1,32 +1,54 @@
-import { ArrowDown, ArrowUp, Footprints, Trash2, X } from "lucide-react";
-import { useId } from "react";
+import { Footprints, type LucideIcon, Sword, Trash2 } from "lucide-react";
+import { useId, useState } from "react";
 import { Button } from "@lootlog/ui/components/button";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { Label } from "@lootlog/ui/components/label";
-import { ArticleSection } from "@/components/article/article-section";
+import { SectionCard } from "@lootlog/ui/components/section-card";
+import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { useEquipmentSet } from "@/contexts/equipment-set-context";
-import { useSkillTree } from "@/hooks/use-skill-tree";
-import { useWornItems } from "@/hooks/use-worn-items";
 import { t } from "@/i18n/messages";
 import {
   BATTLE_MASTERY_SLOTS,
   moveMasteryAction,
   NORMAL_ATTACK,
   queueMasteryAction,
-  STEP_FORWARD,
   removeMasteryAction,
+  STEP_FORWARD,
 } from "@/lib/skills/battle-mastery";
-import { skillState, wornSkillWeapons } from "@/lib/skills/skill-tree";
-import { MasteryActionLabel } from "./mastery-action-label";
-import { EmptyNotice } from "@/components/common/empty-notice";
+import {
+  type SkillDefinition,
+  skillState,
+  type SkillWeapon,
+} from "@/lib/skills/skill-tree";
+import { MasterySlot } from "./mastery-slot";
+import { SkillIcon } from "./skill-icon";
 
-export function SetBattleMastery() {
+type SetBattleMasteryProps = {
+  tree: readonly SkillDefinition[];
+  weapons: ReadonlySet<SkillWeapon>;
+};
+
+type DescribedAction = {
+  name: string;
+  skill?: SkillDefinition;
+  icon?: LucideIcon;
+  note?: string;
+};
+
+const DEFAULT_ACTIONS = [
+  { action: NORMAL_ATTACK, name: "skills.mastery.normalAttack", icon: Sword },
+  {
+    action: STEP_FORWARD,
+    name: "skills.mastery.stepForward",
+    icon: Footprints,
+  },
+] as const;
+
+export function SetBattleMastery({ tree, weapons }: SetBattleMasteryProps) {
   const { set, changeMastery } = useEquipmentSet();
-  const { data: tree } = useSkillTree(set.profession);
-  const weapons = wornSkillWeapons(useWornItems());
+  const [dragged, setDragged] = useState<number | null>(null);
+  const titleId = useId();
   const repeatId = useId();
-
-  if (set.profession === null || !tree) return null;
 
   const { actions, repeat } = set.mastery;
   const isFull = actions.length >= BATTLE_MASTERY_SLOTS;
@@ -35,22 +57,16 @@ export function SetBattleMastery() {
     (skill) => skill.active && (set.skills[skill.id] ?? 0) > 0,
   );
 
-  const describe = (action: number) => {
-    if (action === NORMAL_ATTACK) {
-      return { name: t("skills.mastery.normalAttack"), skill: undefined };
-    }
+  const describe = (action: number): DescribedAction => {
+    const base = DEFAULT_ACTIONS.find(
+      (candidate) => candidate.action === action,
+    );
 
-    if (action === STEP_FORWARD) {
-      return {
-        name: t("skills.mastery.stepForward"),
-        skill: undefined,
-        icon: Footprints,
-      };
-    }
+    if (base) return { name: t(base.name), icon: base.icon };
 
     const skill = tree.find((candidate) => candidate.id === action);
 
-    if (!skill) return { name: t("skills.mastery.unknown"), skill: undefined };
+    if (!skill) return { name: t("skills.mastery.unknown") };
 
     const state = skillState(skill, set.skills, set.level, weapons);
 
@@ -66,190 +82,144 @@ export function SetBattleMastery() {
     };
   };
 
-  const available = [
-    NORMAL_ATTACK,
-    STEP_FORWARD,
-    ...learnedActives.map((skill) => skill.id),
-  ];
+  const queue = (action: number) =>
+    changeMastery((mastery) => queueMasteryAction(mastery, action));
+
+  const move = (from: number, to: number) =>
+    changeMastery((mastery) => moveMasteryAction(mastery, from, to));
 
   return (
-    <ArticleSection
-      id="set-page-mastery"
-      title={t("skills.mastery.title")}
-      description={t("skills.mastery.description")}
-      action={
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          disabled={actions.length === 0}
-          onClick={() =>
-            changeMastery((mastery) => ({ ...mastery, actions: [] }))
-          }
-        >
-          <Trash2 aria-hidden="true" />
-          {t("skills.mastery.clear")}
-        </Button>
-      }
-    >
-      <div className="@container/mastery">
-        <div className="grid items-start gap-6 @3xl/mastery:grid-cols-2">
-          <div className="flex flex-col gap-3">
-            <div className="flex flex-col gap-1">
-              <h3 className="text-sm font-semibold text-foreground">
-                {t("skills.mastery.available")}
-              </h3>
-              <p className="text-xs text-muted-foreground">
-                {t("skills.mastery.availableHint")}
-              </p>
-            </div>
-            <ul className="grid gap-2 @md/mastery:grid-cols-2 @3xl/mastery:grid-cols-1 @5xl/mastery:grid-cols-2">
-              {available.map((action) => {
-                const { name, skill, icon } = describe(action);
-
-                return (
-                  <li key={action} className="min-w-0">
-                    <button
-                      type="button"
-                      aria-label={t("skills.mastery.add", { action: name })}
-                      disabled={isFull}
-                      onClick={() =>
-                        changeMastery((mastery) =>
-                          queueMasteryAction(mastery, action),
-                        )
-                      }
-                      className="flex size-full min-w-0 cursor-pointer items-center gap-2.5 rounded-lg border border-border/60 bg-card p-2 text-left outline-none transition-colors duration-150 hover:border-border focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 motion-reduce:transition-none"
-                    >
-                      <MasteryActionLabel
-                        name={name}
-                        skill={skill}
-                        icon={icon}
-                        isMuted={false}
-                      />
-                    </button>
-                  </li>
-                );
+    <SectionCard aria-labelledby={titleId}>
+      <SectionCardHeader
+        id={titleId}
+        title={t("skills.mastery.title")}
+        description={t("skills.mastery.description")}
+        actions={
+          <>
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {t("skills.mastery.slots", {
+                used: actions.length,
+                max: BATTLE_MASTERY_SLOTS,
               })}
-            </ul>
-            {learnedActives.length === 0 ? (
-              <p className="text-xs text-muted-foreground">
-                {t("skills.mastery.noActives")}
-              </p>
-            ) : null}
-          </div>
-          <div className="flex flex-col gap-3">
-            <div className="flex min-h-8 items-center justify-between gap-4">
-              <h3 className="text-sm font-semibold text-foreground">
-                {t("skills.mastery.queue")}
-              </h3>
-              <span className="text-sm font-medium text-muted-foreground tabular-nums">
-                {t("skills.mastery.slots", {
-                  used: actions.length,
-                  max: BATTLE_MASTERY_SLOTS,
-                })}
-              </span>
-            </div>
-            {actions.length === 0 ? (
-              <EmptyNotice>{t("skills.mastery.empty")}</EmptyNotice>
-            ) : (
-              <ol className="flex flex-col gap-2">
-                {actions.map((action, index) => {
-                  const { name, skill, icon, note } = describe(action);
-
-                  return (
-                    <li
-                      key={`${index}-${action}`}
-                      className="flex min-w-0 items-center gap-2 rounded-lg border border-border/60 bg-card p-2"
-                    >
-                      <span className="w-6 shrink-0 text-right text-sm font-semibold text-muted-foreground tabular-nums">
-                        {index + 1}.
-                      </span>
-                      <MasteryActionLabel
-                        name={name}
-                        skill={skill}
-                        icon={icon}
-                        note={note}
-                        isMuted={note !== undefined}
-                      />
-                      <div className="flex shrink-0 items-center gap-1">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label={t("skills.mastery.moveUp", {
-                            action: name,
-                          })}
-                          disabled={index === 0}
-                          onClick={() =>
-                            changeMastery((mastery) =>
-                              moveMasteryAction(mastery, index, -1),
-                            )
-                          }
-                        >
-                          <ArrowUp aria-hidden="true" />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label={t("skills.mastery.moveDown", {
-                            action: name,
-                          })}
-                          disabled={index === actions.length - 1}
-                          onClick={() =>
-                            changeMastery((mastery) =>
-                              moveMasteryAction(mastery, index, 1),
-                            )
-                          }
-                        >
-                          <ArrowDown aria-hidden="true" />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label={t("skills.mastery.remove", {
-                            action: name,
-                          })}
-                          onClick={() =>
-                            changeMastery((mastery) =>
-                              removeMasteryAction(mastery, index),
-                            )
-                          }
-                        >
-                          <X aria-hidden="true" />
-                        </Button>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ol>
-            )}
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id={repeatId}
-                  checked={repeat}
-                  onCheckedChange={(checked) =>
-                    changeMastery((mastery) => ({
-                      ...mastery,
-                      repeat: checked === true,
-                    }))
-                  }
-                />
-                <Label htmlFor={repeatId} className="cursor-pointer text-sm">
-                  {t("skills.mastery.repeat")}
-                </Label>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {repeat
-                  ? t("skills.mastery.repeatOn")
-                  : t("skills.mastery.repeatOff")}
-              </p>
-            </div>
-          </div>
+            </span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="xs"
+              disabled={actions.length === 0}
+              onClick={() =>
+                changeMastery((mastery) => ({ ...mastery, actions: [] }))
+              }
+            >
+              <Trash2 aria-hidden="true" />
+              {t("skills.mastery.clear")}
+            </Button>
+          </>
+        }
+      />
+      <div className="flex flex-col gap-1.5 border-b border-border/70 p-3">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-xs text-muted-foreground">
+            {t("skills.mastery.available")}
+          </span>
+          {DEFAULT_ACTIONS.map(({ action, name, icon: Icon }) => (
+            <Button
+              key={action}
+              type="button"
+              size="xs"
+              variant="outline"
+              disabled={isFull}
+              aria-label={t("skills.mastery.add", { action: t(name) })}
+              onClick={() => queue(action)}
+            >
+              <Icon aria-hidden="true" />
+              {t(name)}
+            </Button>
+          ))}
+          {learnedActives.map((skill) => (
+            <button
+              key={skill.id}
+              type="button"
+              title={skill.name}
+              aria-label={t("skills.mastery.add", { action: skill.name })}
+              disabled={isFull}
+              onClick={() => queue(skill.id)}
+              className="flex cursor-pointer rounded-md outline-none hover:brightness-125 focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <SkillIcon skill={skill} isMuted={false} />
+            </button>
+          ))}
         </div>
+        {learnedActives.length === 0 ? (
+          <p className="text-xs text-muted-foreground">
+            {t("skills.mastery.noActives")}
+          </p>
+        ) : null}
       </div>
-    </ArticleSection>
+      <ol aria-label={t("skills.mastery.queue")} className="flex flex-col">
+        {actions.map((action, index) => {
+          const described = describe(action);
+
+          return (
+            <MasterySlot
+              key={`${index}-${action}`}
+              position={index + 1}
+              name={described.name}
+              skill={described.skill}
+              icon={described.icon}
+              note={described.note}
+              isDragged={dragged === index}
+              onDragStart={() => setDragged(index)}
+              onDrop={() => {
+                if (dragged !== null) move(dragged, index);
+
+                setDragged(null);
+              }}
+              onMoveUp={index === 0 ? null : () => move(index, index - 1)}
+              onMoveDown={
+                index === actions.length - 1
+                  ? null
+                  : () => move(index, index + 1)
+              }
+              onRemove={() =>
+                changeMastery((mastery) => removeMasteryAction(mastery, index))
+              }
+            />
+          );
+        })}
+        {isFull ? null : (
+          <li className="flex min-h-9 items-center gap-2 border-b border-border/40 px-3 text-xs text-muted-foreground">
+            <span className="w-5 shrink-0 text-right tabular-nums">
+              {actions.length + 1}
+            </span>
+            {actions.length === 0
+              ? t("skills.mastery.empty")
+              : t("skills.mastery.freeSlot")}
+          </li>
+        )}
+      </ol>
+      <div className="flex flex-col gap-1 p-3">
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id={repeatId}
+            checked={repeat}
+            onCheckedChange={(checked) =>
+              changeMastery((mastery) => ({
+                ...mastery,
+                repeat: checked === true,
+              }))
+            }
+          />
+          <Label htmlFor={repeatId} className="cursor-pointer text-sm">
+            {t("skills.mastery.repeat")}
+          </Label>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {repeat
+            ? t("skills.mastery.repeatOn")
+            : t("skills.mastery.repeatOff")}
+        </p>
+      </div>
+    </SectionCard>
   );
 }

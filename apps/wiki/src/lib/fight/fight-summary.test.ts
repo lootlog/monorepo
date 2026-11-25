@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { fighter } from "./fight.fixtures";
+import { fighter, NO_DAMAGE } from "./fight.fixtures";
 import { simulateFight } from "./fight-simulator";
 import { seededRandom, simulateFights } from "./fight-summary";
 
@@ -54,5 +54,26 @@ describe("simulateFights", () => {
         hpLeft: fight.hpLeft,
       });
     }
+  });
+
+  test("tracks life after every move and holds a finished fight at its final state", () => {
+    const summary = simulateFights(
+      {
+        teams: [
+          [fighter({ name: "napastnik" })],
+          [fighter({ name: "bezbronny", physical: NO_DAMAGE })],
+        ],
+      },
+      { runs: 40, seed: 5 },
+    );
+
+    const attacker = summary.hpAfterMove.map((bands) => bands[0]);
+    const victim = summary.hpAfterMove.map((bands) => bands[1]?.median ?? 1);
+
+    expect(summary.hpAfterMove).toHaveLength(summary.moves.longest);
+    expect(attacker.every((band) => band?.low === 1)).toBe(true);
+    expect(victim).toEqual([...victim].sort((left, right) => right - left));
+    expect(victim.at(-1)).toBe(0);
+    expect(summary.hpAfterMove.at(-1)?.[1]?.high).toBe(0);
   });
 });

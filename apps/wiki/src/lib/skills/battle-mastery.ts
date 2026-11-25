@@ -32,19 +32,18 @@ export const removeMasteryAction = (
 
 export const moveMasteryAction = (
   mastery: BattleMastery,
-  index: number,
-  offset: -1 | 1,
+  from: number,
+  to: number,
 ): BattleMastery => {
-  const target = index + offset;
-  const moved = mastery.actions[index];
-  const displaced = mastery.actions[target];
+  const moved = mastery.actions[from];
 
-  if (moved === undefined || displaced === undefined) return mastery;
+  if (moved === undefined || to < 0 || to >= mastery.actions.length) {
+    return mastery;
+  }
 
-  const actions = [...mastery.actions];
+  const actions = mastery.actions.filter((_, index) => index !== from);
 
-  actions[index] = displaced;
-  actions[target] = moved;
+  actions.splice(to, 0, moved);
 
   return { ...mastery, actions };
 };

@@ -21,18 +21,18 @@ export function FightFighters({
   onEdit,
 }: FightFightersProps) {
   return (
-    <SectionCard aria-labelledby="fight-fighters">
+    <SectionCard aria-labelledby="fight-fighters" className="@container">
       <SectionCardHeader
         id="fight-fighters"
         title={t("fightPage.fightersTitle")}
       />
-      <SectionCardContent className="flex flex-col gap-3">
+      <SectionCardContent className="flex flex-col gap-3 @3xl:flex-row @3xl:gap-8 @3xl:*:flex-1">
         <FightFighter
           name={t("fightPage.myName")}
           nameClassName={BATTLE_TEXT_COLORS.team.friendly}
           onEdit={() => onEdit("mine")}
         />
-        <Separator />
+        <Separator className="@3xl:hidden" />
         <EquipmentSetEditor set={opponentSet} update={updateOpponent}>
           <SetItemPickerProvider>
             <FightFighter

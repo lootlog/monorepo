@@ -1,5 +1,10 @@
 import { simulateFight } from "./fight-simulator";
-import type { FightEvent, FightResult, FightSetup } from "./fight-events";
+import type {
+  FightEvent,
+  FightRecorder,
+  FightResult,
+  FightSetup,
+} from "./fight-events";
 import { withAllyHealth } from "./fight-state";
 
 type DamageSource = "strike" | "skill" | "overTime";
@@ -43,6 +48,12 @@ export type FightRecord = {
   readonly hpLeft: readonly number[];
 };
 
+export type HpBand = {
+  readonly low: number;
+  readonly median: number;
+  readonly high: number;
+};
+
 export type FightSummary = {
   readonly runs: number;
   readonly fights: readonly FightRecord[];
@@ -58,6 +69,7 @@ export type FightSummary = {
     readonly longest: number;
   };
   readonly lengths: readonly FightLengthBucket[];
+  readonly hpAfterMove: readonly (readonly HpBand[])[];
   readonly fighters: readonly FighterSummary[];
 };
 
@@ -82,6 +94,34 @@ const fightSeed = (seed: number, run: number) =>
 
 const quantile = (sorted: readonly number[], share: number) =>
   sorted[Math.floor(share * (sorted.length - 1))] ?? 0;
+
+const hpBand = (shares: readonly number[]): HpBand => {
+  const sorted = [...shares].sort((left, right) => left - right);
+
+  return {
+    low: quantile(sorted, 0.1),
+    median: quantile(sorted, 0.5),
+    high: quantile(sorted, 0.9),
+  };
+};
+
+const hpBands = (
+  outcomes: readonly FightRecord[],
+  hpByMove: readonly (readonly (readonly number[])[])[],
+  maxHp: readonly number[],
+  longest: number,
+): HpBand[][] =>
+  Array.from({ length: longest }, (_, move) =>
+    maxHp.map((max, fighter) =>
+      hpBand(
+        outcomes.map((outcome, fight) =>
+          move < outcome.moves
+            ? (hpByMove[fight]?.[move]?.[fighter] ?? 0) / Math.max(1, max)
+            : (outcome.hpLeft[fighter] ?? 0),
+        ),
+      ),
+    ),
+  );
 
 const lengthBuckets = (
   outcomes: readonly FightRecord[],
@@ -149,6 +189,8 @@ export const createFightTally = (setup: FightSetup, seed: number) => {
   );
 
   const outcomes: FightRecord[] = [];
+  const hpByMove: (readonly number[])[][] = [];
+  let fightHp: (readonly number[])[] = [];
   const wins = setup.teams.map(() => 0);
   let draws = 0;
   let hp = [...maxHp];
@@ -172,7 +214,10 @@ export const createFightTally = (setup: FightSetup, seed: number) => {
     hp = [...next];
   };
 
-  const record = (event: FightEvent) => {
+  const sharesOf = (values: readonly number[]) =>
+    values.map((value, index) => value / Math.max(1, maxHp[index] ?? 0));
+
+  const tallyEvent = (event: FightEvent) => {
     const actor = fighters[event.actor];
 
     if (!actor) return;
@@ -220,15 +265,27 @@ export const createFightTally = (setup: FightSetup, seed: number) => {
     }
   };
 
+  const record: FightRecorder = (event, states) => {
+    tallyEvent(event);
+
+    const move = states.reduce((total, state) => total + state.moves, 0);
+
+    for (let missing = fightHp.length; missing < move; missing += 1) {
+      fightHp.push(fightHp.at(-1) ?? hp);
+    }
+
+    fightHp[move] = hp;
+  };
+
   const add = (result: FightResult, seed: number) => {
     outcomes.push({
       seed,
       winner: result.winner,
       moves: result.moves,
-      hpLeft: result.fighters.map(
-        (outcome, index) => outcome.hpLeft / Math.max(1, maxHp[index] ?? 0),
-      ),
+      hpLeft: sharesOf(result.fighters.map((outcome) => outcome.hpLeft)),
     });
+    hpByMove.push(fightHp);
+    fightHp = [];
 
     if (result.winner === null) draws += 1;
     else wins[result.winner] = (wins[result.winner] ?? 0) + 1;
@@ -287,6 +344,7 @@ export const createFightTally = (setup: FightSetup, seed: number) => {
         longest: sortedMoves.at(-1) ?? 0,
       },
       lengths: lengthBuckets(outcomes, setup.teams.length, sortedMoves),
+      hpAfterMove: hpBands(outcomes, hpByMove, maxHp, sortedMoves.at(-1) ?? 0),
       fighters: fighters.map((totals, index) => ({
         name: totals.name,
         team: totals.team,

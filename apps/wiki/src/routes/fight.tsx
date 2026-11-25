@@ -8,9 +8,12 @@ import { FightAnalysis } from "@/components/fight/fight-analysis";
 import { FightCharacterStats } from "@/components/fight/fight-character-stats";
 import { FightEmptyState } from "@/components/fight/fight-empty-state";
 import { FightFighters } from "@/components/fight/fight-fighters";
+import { FightHighlights } from "@/components/fight/fight-highlights";
 import { FightList } from "@/components/fight/fight-list";
+import { FightOutcome } from "@/components/fight/fight-outcome";
 import { FightReplay } from "@/components/fight/fight-replay";
 import { FightResults } from "@/components/fight/fight-results";
+import { FightSetup } from "@/components/fight/fight-setup";
 import { FightSide } from "@/components/fight/fight-side";
 import { FightToolbar } from "@/components/fight/fight-toolbar";
 import { useEquipmentSet } from "@/contexts/equipment-set-context";
@@ -24,6 +27,7 @@ import {
   encodeEquipmentSet,
   EQUIPMENT_SET_PARAM,
 } from "@/lib/equipment-set";
+import { fightHighlights } from "@/lib/fight/fight-highlights";
 import {
   DEFAULT_FIGHT_LIST_VIEW,
   listFights,
@@ -195,6 +199,18 @@ function FightRoute() {
     t("fightPage.limits"),
   ];
 
+  const fightersCard = (
+    <FightFighters
+      opponentSet={opponentSet}
+      updateOpponent={updateOpponent}
+      onEdit={setTab}
+    />
+  );
+
+  const characterStats = (
+    <FightCharacterStats mine={mine.profile} opponent={opponent.profile} />
+  );
+
   return (
     <Tabs
       value={tab}
@@ -216,25 +232,14 @@ function FightRoute() {
         share={<ShareLinkButton path="/fight" params={encodedSets} />}
       />
       <TabsContent value="analysis">
-        <FightAnalysis
-          fighters={
-            <FightFighters
-              opponentSet={opponentSet}
-              updateOpponent={updateOpponent}
-              onEdit={setTab}
-            />
-          }
-          characterStats={
-            <FightCharacterStats
-              mine={mine.profile}
-              opponent={opponent.profile}
-            />
-          }
-          results={
-            simulated ? (
+        {simulated ? (
+          <FightAnalysis
+            fighters={fightersCard}
+            characterStats={characterStats}
+            outcome={<FightOutcome summary={simulated.summary} notes={notes} />}
+            results={
               <FightResults
                 summary={simulated.summary}
-                notes={notes}
                 selectedLengths={view.lengths}
                 onSelectLengths={(lengths) =>
                   setView({
@@ -247,17 +252,15 @@ function FightRoute() {
                   })
                 }
               />
-            ) : (
-              <FightEmptyState
-                canSimulate={fighters !== null}
-                onSimulate={simulate}
-              />
-            )
-          }
-          fights={
-            simulated ? (
+            }
+            fights={
               <>
-                <div className="flex h-[18rem] shrink-0 flex-col">
+                <FightHighlights
+                  highlights={fightHighlights(simulated.summary.fights)}
+                  selected={replay?.index ?? null}
+                  onSelect={selectFight}
+                />
+                <div className="min-h-0 flex-1">
                   <FightList
                     fights={simulated.summary.fights}
                     order={order}
@@ -267,19 +270,32 @@ function FightRoute() {
                     onSelect={selectFight}
                   />
                 </div>
-                {replay ? (
-                  <FightReplay
-                    key={replay.index}
-                    index={replay.index}
-                    sample={replay.sample}
-                    onPrevious={stepTo(-1)}
-                    onNext={stepTo(1)}
-                  />
-                ) : null}
               </>
-            ) : null
-          }
-        />
+            }
+            replay={
+              replay ? (
+                <FightReplay
+                  key={replay.index}
+                  index={replay.index}
+                  sample={replay.sample}
+                  onPrevious={stepTo(-1)}
+                  onNext={stepTo(1)}
+                />
+              ) : null
+            }
+          />
+        ) : (
+          <FightSetup
+            fighters={fightersCard}
+            characterStats={characterStats}
+            emptyState={
+              <FightEmptyState
+                canSimulate={fighters !== null}
+                onSimulate={simulate}
+              />
+            }
+          />
+        )}
       </TabsContent>
       <TabsContent value="mine" className="pt-4">
         <FightSide />
