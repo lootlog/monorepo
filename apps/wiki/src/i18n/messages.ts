@@ -288,10 +288,8 @@ const messages = {
     limits: "Wynik to oszacowanie, nie zapis prawdziwej walki.",
     turn: {
       title: "Tura #{{number}}",
-      pick: "Kliknij wiersz przebiegu, żeby zobaczyć stan obu postaci, szanse ciosu i działające efekty.",
       previous: "Poprzednia tura",
       next: "Następna tura",
-      close: "Zamknij szczegóły tury",
       start: "Początek walki",
       end: "Koniec walki",
       kinds: {
