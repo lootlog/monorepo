@@ -1,3 +1,4 @@
+import { cn } from "cn";
 import { formatNumber } from "@lootlog/domain/locale";
 import {
   Tooltip,
@@ -5,7 +6,10 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { t } from "@/i18n/messages";
-import type { FightSummary } from "@/lib/fight/fight-summary";
+import type {
+  FightLengthBucket,
+  FightSummary,
+} from "@/lib/fight/fight-summary";
 
 const OUTCOMES = [
   { id: "won", className: "bg-signal-ready" },
@@ -13,13 +17,13 @@ const OUTCOMES = [
   { id: "drawn", className: "bg-muted-foreground/40" },
 ] as const;
 
-const countsOf = (bucket: FightSummary["lengths"][number]) => ({
+const countsOf = (bucket: FightLengthBucket) => ({
   won: bucket.wins[0] ?? 0,
   lost: bucket.wins[1] ?? 0,
   drawn: bucket.draws,
 });
 
-const bucketLabel = (bucket: FightSummary["lengths"][number]) =>
+const bucketLabel = (bucket: FightLengthBucket) =>
   bucket.from === bucket.to
     ? `${formatNumber(bucket.from)} ${t("fightPage.lengthMoves")}`
     : t("fightPage.lengthBucket", {
@@ -27,7 +31,17 @@ const bucketLabel = (bucket: FightSummary["lengths"][number]) =>
         to: formatNumber(bucket.to),
       });
 
-export function FightLengthChart({ summary }: { summary: FightSummary }) {
+type FightLengthChartProps = {
+  summary: FightSummary;
+  selected: { from: number; to: number } | null;
+  onSelect: (lengths: { from: number; to: number }) => void;
+};
+
+export function FightLengthChart({
+  summary,
+  selected,
+  onSelect,
+}: FightLengthChartProps) {
   const { lengths, moves } = summary;
 
   const tallest = Math.max(
@@ -39,23 +53,30 @@ export function FightLengthChart({ summary }: { summary: FightSummary }) {
 
   return (
     <figure className="flex flex-col gap-2">
-      <div
-        role="img"
-        aria-label={t("fightPage.averageMovesDetail", {
-          median: formatNumber(moves.median),
-          p10: formatNumber(moves.p10),
-          p90: formatNumber(moves.p90),
-        })}
-        className="flex h-36 items-end gap-0.5 border-b border-border"
-      >
+      <div className="flex h-40 items-end gap-0.5 border-b border-border">
         {lengths.map((bucket) => {
           const counts = countsOf(bucket);
+
+          const isSelected =
+            selected?.from === bucket.from && selected.to === bucket.to;
 
           return (
             <Tooltip key={bucket.from}>
               <TooltipTrigger
-                render={<div />}
-                className="flex h-full min-w-0 flex-1 flex-col-reverse hover:opacity-80"
+                render={<button type="button" />}
+                aria-pressed={isSelected}
+                aria-label={t("fightPage.lengthBarLabel", {
+                  bucket: bucketLabel(bucket),
+                  won: formatNumber(counts.won),
+                  lost: formatNumber(counts.lost),
+                  drawn: formatNumber(counts.drawn),
+                })}
+                onClick={() => onSelect({ from: bucket.from, to: bucket.to })}
+                className={cn(
+                  "flex h-full min-w-0 flex-1 cursor-pointer flex-col-reverse rounded-t-xs outline-none hover:bg-accent/50 focus-visible:ring-2 focus-visible:ring-ring",
+                  isSelected && "bg-accent",
+                  selected && !isSelected && "opacity-45",
+                )}
               >
                 {OUTCOMES.map((outcome) => (
                   <span
@@ -92,7 +113,7 @@ export function FightLengthChart({ summary }: { summary: FightSummary }) {
             <span key={outcome.id} className="flex items-center gap-1.5">
               <span
                 aria-hidden="true"
-                className={`size-2 rounded-xs ${outcome.className}`}
+                className={cn("size-2 rounded-xs", outcome.className)}
               />
               {t(`fightPage.${outcome.id}`)}
             </span>

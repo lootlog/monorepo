@@ -1,28 +1,28 @@
 import type { ReactNode } from "react";
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 
 type FightAnalysisProps = {
-  matchup: ReactNode;
+  fighters: ReactNode;
+  characterStats: ReactNode;
   results: ReactNode;
-  sample: ReactNode;
+  fights: ReactNode;
 };
 
 export function FightAnalysis({
-  matchup,
+  fighters,
+  characterStats,
   results,
-  sample,
+  fights,
 }: FightAnalysisProps) {
   return (
-    <div className="grid items-start gap-4 pt-4 lg:grid-cols-[20rem_minmax(0,1fr)] 2xl:grid-cols-[22rem_minmax(0,1fr)_30rem]">
-      <div className="lg:sticky lg:top-[7rem] lg:row-span-2 lg:flex lg:max-h-[calc(100dvh-8rem)] lg:flex-col 2xl:row-span-1">
-        <ScrollArea orientation="vertical" className="min-h-0">
-          {matchup}
-        </ScrollArea>
+    <div className="flex flex-col gap-4 pt-4 lg:grid lg:grid-cols-[23rem_minmax(0,1fr)] lg:items-start 2xl:grid-cols-[23rem_minmax(0,1fr)_34rem]">
+      <div className="contents lg:sticky lg:top-[7rem] lg:row-span-2 lg:flex lg:max-h-[calc(100dvh-8rem)] lg:flex-col lg:gap-4 lg:overflow-y-auto lg:[scrollbar-width:thin] 2xl:row-span-1">
+        <div className="order-1 lg:order-none">{fighters}</div>
+        <div className="order-4 lg:order-none">{characterStats}</div>
       </div>
-      <div className="min-w-0">{results}</div>
-      {sample ? (
-        <div className="min-w-0 lg:col-start-2 2xl:sticky 2xl:top-[7rem] 2xl:col-start-3 2xl:row-start-1 2xl:h-[calc(100dvh-8rem)]">
-          {sample}
+      <div className="order-2 min-w-0 lg:order-none">{results}</div>
+      {fights ? (
+        <div className="order-3 flex min-w-0 flex-col gap-4 lg:order-none lg:col-start-2 2xl:sticky 2xl:top-[7rem] 2xl:col-start-3 2xl:row-start-1 2xl:h-[calc(100dvh-8rem)]">
+          {fights}
         </div>
       ) : null}
     </div>

@@ -25,11 +25,6 @@ export type FightSample = {
   rawBattle: RawBattle;
 };
 
-export type FightRun = {
-  summary: FightSummary;
-  sample: FightSample;
-};
-
 export type Fighters = {
   mine: FighterProfile;
   opponent: FighterProfile;
@@ -81,17 +76,16 @@ export const runFight = async (
     readonly signal: AbortSignal;
     readonly onProgress: (share: number) => void;
   },
-): Promise<FightRun | null> => {
+): Promise<FightSummary | null> => {
   const setup = setupOf(fighters);
-  const tally = createFightTally(setup);
-  const random = seededRandom(options.seed);
+  const tally = createFightTally(setup, options.seed);
   let done = 0;
 
   while (done < options.runs) {
     const sliceEnd = performance.now() + SLICE_MS;
 
     do {
-      tally.add(simulateFight(setup, random, tally.record));
+      tally.simulateNext();
       done += 1;
     } while (done < options.runs && performance.now() < sliceEnd);
 
@@ -101,8 +95,5 @@ export const runFight = async (
     if (options.signal.aborted) return null;
   }
 
-  return {
-    summary: tally.summary(),
-    sample: sampleFight(fighters, options.seed + 1),
-  };
+  return tally.summary();
 };

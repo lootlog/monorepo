@@ -1,7 +1,9 @@
 import { StatsTile } from "@lootlog/ui/components/stats-tile";
 import { StatsTileGrid } from "@lootlog/ui/components/stats-tile-grid";
 import { formatDecimal, formatNumber } from "@lootlog/domain/locale";
-import { ArticleSection } from "@/components/article/article-section";
+import { SectionCard } from "@lootlog/ui/components/section-card";
+import { SectionCardContent } from "@lootlog/ui/components/section-card-content";
+import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { t } from "@/i18n/messages";
 import { formatPercent } from "@/lib/calculator-format";
 import type { FighterSummary, FightSummary } from "@/lib/fight/fight-summary";
@@ -15,6 +17,8 @@ import {
 type FightResultsProps = {
   summary: FightSummary;
   notes: readonly string[];
+  selectedLengths: { from: number; to: number } | null;
+  onSelectLengths: (lengths: { from: number; to: number }) => void;
 };
 
 const share = (rate: number) => formatPercent(Math.round(rate * 1000) / 10);
@@ -238,11 +242,16 @@ const hpOnWin = (fighter: FighterSummary | undefined) =>
     ? t("fightPage.noWins")
     : share(fighter.averageHpLeftOnWin);
 
-export function FightResults({ summary, notes }: FightResultsProps) {
+export function FightResults({
+  summary,
+  notes,
+  selectedLengths,
+  onSelectLengths,
+}: FightResultsProps) {
   const [mine, theirs] = summary.fighters;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       <div className="@container">
         <StatsTileGrid
           framed
@@ -290,32 +299,42 @@ export function FightResults({ summary, notes }: FightResultsProps) {
           />
         </StatsTileGrid>
       </div>
-      <ul className="flex flex-col gap-0.5 text-xs text-muted-foreground">
+      <ul className="-mt-2 flex flex-col gap-0.5 text-xs text-muted-foreground">
         {notes.map((note) => (
           <li key={note}>{note}</li>
         ))}
       </ul>
       <div className="@container">
-        <div className="grid items-start gap-6 @3xl:grid-cols-2">
+        <div className="grid items-start gap-4 @3xl:grid-cols-2">
           {mine && theirs ? (
-            <ArticleSection
-              id="fight-stats"
-              title={t("fightPage.statsTitle")}
-              description={t("fightPage.statsDescription")}
-            >
-              <FightVersusTable
-                caption={t("fightPage.statsTitle")}
-                sections={statSections(mine, theirs)}
+            <SectionCard aria-labelledby="fight-stats">
+              <SectionCardHeader
+                id="fight-stats"
+                title={t("fightPage.statsTitle")}
+                description={t("fightPage.statsDescription")}
               />
-            </ArticleSection>
+              <SectionCardContent>
+                <FightVersusTable
+                  caption={t("fightPage.statsTitle")}
+                  sections={statSections(mine, theirs)}
+                />
+              </SectionCardContent>
+            </SectionCard>
           ) : null}
-          <ArticleSection
-            id="fight-lengths"
-            title={t("fightPage.lengthTitle")}
-            description={t("fightPage.lengthDescription")}
-          >
-            <FightLengthChart summary={summary} />
-          </ArticleSection>
+          <SectionCard aria-labelledby="fight-lengths">
+            <SectionCardHeader
+              id="fight-lengths"
+              title={t("fightPage.lengthTitle")}
+              description={t("fightPage.lengthDescription")}
+            />
+            <SectionCardContent>
+              <FightLengthChart
+                summary={summary}
+                selected={selectedLengths}
+                onSelect={onSelectLengths}
+              />
+            </SectionCardContent>
+          </SectionCard>
         </div>
       </div>
     </div>

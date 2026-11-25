@@ -40,8 +40,16 @@ export type FightLengthBucket = {
   readonly draws: number;
 };
 
+export type FightRecord = {
+  readonly seed: number;
+  readonly winner: number | null;
+  readonly moves: number;
+  readonly hpLeft: readonly number[];
+};
+
 export type FightSummary = {
   readonly runs: number;
+  readonly fights: readonly FightRecord[];
   readonly winRate: readonly number[];
   readonly winRateMargin: readonly number[];
   readonly drawRate: number;
@@ -73,11 +81,14 @@ export const seededRandom = (seed: number) => {
   };
 };
 
+const fightSeed = (seed: number, run: number) =>
+  (seed + Math.imul(run, 0x9e3779b9)) >>> 0;
+
 const quantile = (sorted: readonly number[], share: number) =>
   sorted[Math.floor(share * (sorted.length - 1))] ?? 0;
 
 const lengthBuckets = (
-  outcomes: readonly { moves: number; winner: number | null }[],
+  outcomes: readonly FightRecord[],
   teams: number,
   sortedMoves: readonly number[],
 ): FightLengthBucket[] => {
@@ -111,7 +122,7 @@ const lengthBuckets = (
   return buckets;
 };
 
-export const createFightTally = (setup: FightSetup) => {
+export const createFightTally = (setup: FightSetup, seed: number) => {
   const maxHp = withAllyHealth(setup.teams).flatMap((team) =>
     team.map((combatant) => combatant.hp),
   );
@@ -141,7 +152,7 @@ export const createFightTally = (setup: FightSetup) => {
     })),
   );
 
-  const outcomes: { moves: number; winner: number | null }[] = [];
+  const outcomes: FightRecord[] = [];
   const wins = setup.teams.map(() => 0);
   let draws = 0;
   let hp = [...maxHp];
@@ -213,8 +224,15 @@ export const createFightTally = (setup: FightSetup) => {
     }
   };
 
-  const add = (result: FightResult) => {
-    outcomes.push({ moves: result.moves, winner: result.winner });
+  const add = (result: FightResult, seed: number) => {
+    outcomes.push({
+      seed,
+      winner: result.winner,
+      moves: result.moves,
+      hpLeft: result.fighters.map(
+        (outcome, index) => outcome.hpLeft / Math.max(1, maxHp[index] ?? 0),
+      ),
+    });
 
     if (result.winner === null) draws += 1;
     else wins[result.winner] = (wins[result.winner] ?? 0) + 1;
@@ -256,6 +274,7 @@ export const createFightTally = (setup: FightSetup) => {
 
     return {
       runs: outcomes.length,
+      fights: outcomes,
       winRate: wins.map(per),
       winRateMargin: wins.map((count) => {
         const share = per(count);
@@ -307,19 +326,25 @@ export const createFightTally = (setup: FightSetup) => {
     };
   };
 
-  return { record, add, summary };
+  const simulateNext = () => {
+    const fightSeedValue = fightSeed(seed, outcomes.length);
+
+    add(
+      simulateFight(setup, seededRandom(fightSeedValue), record),
+      fightSeedValue,
+    );
+  };
+
+  return { simulateNext, summary };
 };
 
 export const simulateFights = (
   setup: FightSetup,
   options: { readonly runs: number; readonly seed: number },
 ): FightSummary => {
-  const random = seededRandom(options.seed);
-  const tally = createFightTally(setup);
+  const tally = createFightTally(setup, options.seed);
 
-  for (let run = 0; run < options.runs; run += 1) {
-    tally.add(simulateFight(setup, random, tally.record));
-  }
+  for (let run = 0; run < options.runs; run += 1) tally.simulateNext();
 
   return tally.summary();
 };

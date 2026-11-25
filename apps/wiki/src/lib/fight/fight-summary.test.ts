@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { fighter } from "./fight.fixtures";
-import { simulateFights } from "./fight-summary";
+import { simulateFight } from "./fight-simulator";
+import { seededRandom, simulateFights } from "./fight-summary";
 
 describe("simulateFights", () => {
   test("splits the damage each fighter takes by source into the life they lose", () => {
@@ -28,5 +29,30 @@ describe("simulateFights", () => {
 
     expect(counter?.averageTaken.overTime).toBeGreaterThan(0);
     expect(poisoner?.averageTaken.overTime).toBe(0);
+  });
+
+  test("replays every listed fight from its seed with the outcome it recorded", () => {
+    const setup = {
+      teams: [
+        [fighter({ name: "krytyk", critChance: 40 })],
+        [fighter({ name: "kontra", counterChance: 25, evadePoints: 200 })],
+      ],
+    };
+
+    const { fights } = simulateFights(setup, { runs: 30, seed: 11 });
+
+    for (const fight of fights) {
+      const replay = simulateFight(setup, seededRandom(fight.seed), () => {});
+
+      expect({
+        winner: replay.winner,
+        moves: replay.moves,
+        hpLeft: replay.fighters.map(({ hpLeft }) => hpLeft / 50_000),
+      }).toEqual({
+        winner: fight.winner,
+        moves: fight.moves,
+        hpLeft: fight.hpLeft,
+      });
+    }
   });
 });
