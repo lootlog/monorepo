@@ -85,12 +85,8 @@ export const attackTime = (state: FighterState) => {
         reduction)
     : 0;
 
-  const weaponSlow =
-    state.poison?.source === state.frostSlow?.source
-      ? Math.max(poisonSlow, frostSlow)
-      : poisonSlow + frostSlow;
-
-  const constantSlow = weaponSlow + strongestEnemySlow(state) * (1 - reduction);
+  const constantSlow =
+    poisonSlow + frostSlow + strongestEnemySlow(state) * (1 - reduction);
 
   const modified = attackSpeed * (1 + additive) - constantSlow;
 
