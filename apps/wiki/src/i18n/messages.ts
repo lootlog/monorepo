@@ -215,8 +215,7 @@ const messages = {
     anotherSample: "Inna przykładowa walka",
     ignoredSkills:
       "Symulacja pomija umiejętności: {{skills}}. Ich efekty nie są jeszcze modelowane.",
-    limits:
-      "Nie liczymy kontry, ogłuszeń, płonięcia ani bandażowania. Wynik to oszacowanie, nie zapis prawdziwej walki.",
+    limits: "Wynik to oszacowanie, nie zapis prawdziwej walki.",
   },
   character: {
     hint: "Statystyki postaci z jej poziomu i profesji, ekwipunku i działających umiejętności pasywnych. Szanse na unik i blok liczone wobec przeciwnika z tego samego poziomu.",
