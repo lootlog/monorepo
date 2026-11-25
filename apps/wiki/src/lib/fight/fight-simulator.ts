@@ -6,7 +6,7 @@ import {
   NO_SKILL,
   paySkill,
   takeAction,
-  tickBuffs,
+  tickCooldowns,
   type ActionPlan,
   type ActiveSkill,
 } from "./fight-skills";
@@ -651,7 +651,7 @@ const counterAttack = (
 
     const hit = takeForcedTurn(turn, attacker, defender);
 
-    tickBuffs(attacker);
+    endTurn(attacker);
 
     if (!hit?.countered) return;
 
@@ -790,6 +790,7 @@ export const simulateFight = (
     actor.clock += attackTime(actor) * timeFactor;
     actor.moves += 1;
     moves += 1;
+    tickCooldowns(actor);
     endTurn(actor);
   }
 

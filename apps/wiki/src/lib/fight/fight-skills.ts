@@ -325,18 +325,16 @@ export const paySkill = (
   state.skillUses.set(skill.name, (state.skillUses.get(skill.name) ?? 0) + 1);
 };
 
-export const endSkillTurn = (state: SkillUserState) => {
+export const tickCooldowns = (state: SkillUserState) => {
   for (const [skill, turns] of state.cooldowns) {
     state.cooldowns.set(skill, turns - 1);
   }
+};
 
+export const endSkillTurn = (state: SkillUserState) => {
   state.previousSkill = state.castThisTurn;
   state.castThisTurn = null;
 
-  tickBuffs(state);
-};
-
-export const tickBuffs = (state: SkillUserState) => {
   for (const buff of state.buffs) {
     buff.turnsLeft -= 1;
     buff.age += 1;

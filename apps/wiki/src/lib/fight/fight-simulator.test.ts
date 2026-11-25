@@ -373,6 +373,43 @@ describe("skill effects", () => {
     expect(marked).toEqual([true, true, true, false, false, false]);
   });
 
+  test("keeps the forced turns of a counter out of the defender's cooldowns", () => {
+    const bash = { ...skill("cios", {}), cooldown: 2 };
+
+    const events = fightOf(
+      { critChance: 100 },
+      {
+        counterChance: 100,
+        mastery: { steps: [bash], repeat: true },
+      },
+    );
+
+    const regularTurns = events.flatMap((event, index) => {
+      const previous = events[index - 1];
+
+      if (event.actor !== 1) return [];
+
+      if (event.kind === "skill") return ["skill"];
+
+      if (event.kind !== "strike") return [];
+
+      if (previous?.kind === "skill" && previous.actor === 1) return [];
+
+      if (previous?.kind === "strike" && previous.countered) return [];
+
+      return ["attack"];
+    });
+
+    expect(regularTurns.slice(0, 6)).toEqual([
+      "skill",
+      "attack",
+      "attack",
+      "skill",
+      "attack",
+      "attack",
+    ]);
+  });
+
   test("heals a quarter of the base share less with every further use", () => {
     const bandage = skill("bandaż", { bandage_per: [10, 1] }, false);
 
