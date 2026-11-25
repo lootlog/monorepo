@@ -1,6 +1,7 @@
 import type { IndexSettings } from "@lootlog/meilisearch/index-settings";
 import { classifyItemCategory } from "@lootlog/domain/item-type";
 import { npcIconDirectory } from "@lootlog/domain/npc-type";
+import { foldText } from "@lootlog/domain/text-fold";
 import { catalogItemTable, catalogNpcTable } from "#src/database/schema";
 
 export const ITEMS_INDEX = "catalog_items";
@@ -8,6 +9,7 @@ export const ITEMS_INDEX = "catalog_items";
 export const NPCS_INDEX = "catalog_npcs";
 
 type CatalogEntry = {
+  readonly name?: unknown;
   readonly icon?: unknown;
   readonly monsterKey?: unknown;
   readonly firstSeenAt?: unknown;
@@ -43,12 +45,16 @@ export const earliestSeenByMonster = (
   return earliest;
 };
 
+const foldedNameOf = (entry: CatalogEntry) =>
+  foldText(String(entry.name ?? ""));
+
 const toNpcIndexDocuments = (
   entries: ReadonlyArray<CatalogEntry>,
   monsterFirstSeen: MonsterFirstSeen,
 ) =>
   entries.map((entry) => ({
     ...entry,
+    foldedName: foldedNameOf(entry),
     iconDirectory: npcIconDirectory(String(entry.icon ?? "")),
     monsterFirstSeenAt:
       monsterFirstSeen.get(String(entry.monsterKey ?? "")) ?? null,
@@ -57,6 +63,7 @@ const toNpcIndexDocuments = (
 const toItemIndexDocuments = (entries: ReadonlyArray<CatalogEntry>) =>
   entries.map((entry) => ({
     ...entry,
+    foldedName: foldedNameOf(entry),
     category: classifyItemCategory({
       type:
         entry.type === null || entry.type === undefined
@@ -84,7 +91,7 @@ export const catalogIndexes: Record<
         "gameVersion",
         "current",
       ],
-      searchableAttributes: ["name"],
+      searchableAttributes: ["foldedName", "name"],
       sortableAttributes: ["lvl", "name", "monsterFirstSeenAt"],
     },
   },
@@ -108,7 +115,7 @@ export const catalogIndexes: Record<
         "droppedByMonsterKeys",
         "droppedByTypes",
       ],
-      searchableAttributes: ["name"],
+      searchableAttributes: ["foldedName", "name"],
       sortableAttributes: [
         "id",
         "name",

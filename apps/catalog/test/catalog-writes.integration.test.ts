@@ -205,6 +205,7 @@ test("keeps an item's worlds, earliest sighting and every NPC of its edition acr
   expect(projected.get(ITEMS_INDEX)?.get(uid)).toEqual({
     ...entry,
     category: "other",
+    foldedName: "Item 1",
   });
 });
 
@@ -313,6 +314,7 @@ test("a new loot of an item keeps its drop rates, retirements and changes", asyn
   expect(projected.get(ITEMS_INDEX)?.get(uid)).toEqual({
     ...(await storedItem(uid)),
     category: "other",
+    foldedName: "Item 1",
   });
 });
 
