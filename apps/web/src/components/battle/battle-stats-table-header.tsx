@@ -1,9 +1,9 @@
-import { ListGroupHeading } from "@/components/common/list-group-heading";
+import { ListGroupHeading } from "@lootlog/ui/components/list-group-heading";
 import {
   LIST_BAND_HEADING_CLASS,
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 import type { ReactNode, Ref } from "react";
 import { cn } from "cn";
 

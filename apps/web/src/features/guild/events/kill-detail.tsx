@@ -14,7 +14,7 @@ import { useKillDetail } from "./hooks/queries/use-kill-detail";
 import { useMatchingLoots } from "./hooks/queries/use-matching-loots";
 import { useEventHeroProfession } from "./hooks/queries/use-event-hero-profession";
 import { normalizeBonusBreakdown } from "./utils/normalize-bonus-breakdown";
-import { LIST_TILE_RULE_CLASS } from "@/components/common/list-tile";
+import { LIST_TILE_RULE_CLASS } from "@lootlog/ui/lib/list-tile";
 import { KillDetailColumns } from "./components/kills/kill-detail-columns";
 import { QueryErrorNotice } from "@/components/common/query-error-notice";
 import { EventLoadError } from "./components/event-load-error";

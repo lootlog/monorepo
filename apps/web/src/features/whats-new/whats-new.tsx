@@ -10,7 +10,7 @@ import { CHANGELOG } from "@lootlog/changelog/entries";
 import { cn } from "cn";
 import { SearchX } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { BandSection } from "@/components/common/band-section";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import { ClearFiltersButton } from "@/components/common/clear-filters-button";
 import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { FilterBar } from "@/components/common/filter-bar";
@@ -18,7 +18,7 @@ import type { FilterChip } from "@/components/common/filter-chip-list";
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 import { useWhatsNew } from "@/components/whats-new/use-whats-new";
 import { useWhatsNewFilters } from "@/components/whats-new/use-whats-new-filters";
 import { WhatsNewEntry } from "@/components/whats-new/whats-new-entry";

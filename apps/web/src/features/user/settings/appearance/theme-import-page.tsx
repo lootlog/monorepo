@@ -1,5 +1,5 @@
 import { DetailPage } from "@/components/common/detail-page";
-import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
+import { LIST_TILE_INSET_CLASS } from "@lootlog/ui/lib/list-tile";
 import { cn } from "cn";
 import { MetaItem } from "@/components/common/meta-item";
 import { DetailNotFound } from "@/components/common/detail-not-found";

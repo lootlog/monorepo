@@ -1,4 +1,4 @@
-import { BandSection } from "@/components/common/band-section";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import { useQueryClient } from "@tanstack/react-query";
 import { useId } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";

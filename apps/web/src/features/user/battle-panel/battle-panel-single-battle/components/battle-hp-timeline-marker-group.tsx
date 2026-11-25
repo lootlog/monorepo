@@ -1,5 +1,5 @@
 import type { KeyboardEvent, MouseEvent } from "react";
-import { BATTLE_HEX_COLORS } from "@/components/battle/utils/battle-color-palette";
+import { BATTLE_HEX_COLORS } from "@lootlog/battle-ui/lib/battle-color-palette";
 import type { LucideIcon } from "lucide-react";
 
 type BattleHpTimelineMarkerGroupProps = {

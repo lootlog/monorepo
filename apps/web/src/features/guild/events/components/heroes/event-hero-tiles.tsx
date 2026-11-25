@@ -7,7 +7,7 @@ import {
   LIST_TILE_ACTIONS_CLASS,
   LIST_TILE_HOVER_CLASS,
   LIST_TILE_RULE_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 import type { EventHeroNpc } from "@/lib/api/event-types";
 import { HeroAvatar } from "../shared/hero-avatar";
 import { EventHeroActionsMenu } from "./event-hero-actions-menu";

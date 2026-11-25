@@ -5,7 +5,7 @@ import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import type { Battle } from "@/lib/api/battlelog-types";
 import { BattleCompactTeam } from "./battle-compact-team";
-import { getBattleTeamPresentation } from "./utils/battle-team-presentation";
+import { getBattleTeamPresentation } from "@lootlog/battle-ui/lib/battle-team-presentation";
 
 export type BattleTeamsOverviewProps = {
   battle: Battle;

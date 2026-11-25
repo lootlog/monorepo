@@ -2,7 +2,7 @@ import {
   LIST_TILE_GRID_CELL_CLASS,
   LIST_TILE_GRID_CLASS,
   LIST_TILE_RULE_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 import type { ViewMode } from "@/hooks/use-view-mode";
 import { cn } from "cn";
 

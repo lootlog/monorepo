@@ -1,7 +1,7 @@
 import * as m from "framer-motion/m";
 import type { ComponentProps } from "react";
 import { cn } from "cn";
-import { LIST_TILE_RULE_CLASS } from "@/components/common/list-tile";
+import { LIST_TILE_RULE_CLASS } from "@lootlog/ui/lib/list-tile";
 import { EASE_EMPHASIZED, MOTION_DURATION } from "@/lib/motion";
 import { LiveFeedEventRow } from "./live-feed-event-row";
 

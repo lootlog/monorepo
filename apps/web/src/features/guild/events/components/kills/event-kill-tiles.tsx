@@ -2,7 +2,7 @@ import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
   LIST_TILE_HOVER_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 import type { KillHistoryEntry } from "@lootlog/client/main";
 import { cn } from "cn";
 import { useTranslation } from "react-i18next";

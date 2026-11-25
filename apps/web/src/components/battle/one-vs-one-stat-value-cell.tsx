@@ -2,7 +2,7 @@ import { TableCell } from "@lootlog/ui/components/table";
 import type { BattleStatValue } from "@/types/stats-customization.types";
 import { cn } from "cn";
 import type { FC } from "react";
-import { BATTLE_SURFACE_COLORS } from "./utils/battle-color-palette";
+import { BATTLE_SURFACE_COLORS } from "@lootlog/battle-ui/lib/battle-color-palette";
 
 export type OneVsOneStatValueCellProps = {
   compact?: boolean;

@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Solver zestawów (prototyp)</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main>
+      <span class="badge">Prototyp</span>
+      <h1>Solver zestawów</h1>
+      <p class="lead">
+        Wybierz postać i cel. Solver bierze itemy z katalogu Lootloga i wybiera
+        zestaw i rozkład umiejętności pod wybrany cel. Przeciwnicy też dobierają
+        swoje zestawy, więc wynik uwzględnia ich odpowiedź.
+      </p>
+
+      <form id="form">
+        <label class="field">
+          <span>Profesja</span>
+          <select name="profession">
+            <option value="h" selected>Łowca</option>
+            <option value="w" disabled>Wojownik (wkrótce)</option>
+            <option value="p" disabled>Paladyn (wkrótce)</option>
+            <option value="m" disabled>Mag (wkrótce)</option>
+            <option value="b" disabled>Tancerz ostrzy (wkrótce)</option>
+            <option value="t" disabled>Tropiciel (wkrótce)</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Poziom postaci</span>
+          <input
+            name="level"
+            type="number"
+            inputmode="numeric"
+            min="25"
+            max="500"
+            step="1"
+            value="271"
+            required
+          />
+        </label>
+        <label class="field">
+          <span>Cel</span>
+          <select name="goal" id="goal">
+            <option value="group" selected>Ustawki (walki grupowe)</option>
+            <option value="duel">Walka 1 na 1</option>
+          </select>
+        </label>
+        <label class="field" id="opponent-field" hidden>
+          <span>Przeciwnik</span>
+          <select name="opponent">
+            <option value="h" selected>Łowca</option>
+            <option value="w">Wojownik</option>
+            <option value="p">Paladyn</option>
+            <option value="b">Tancerz ostrzy</option>
+            <option value="m">Mag</option>
+            <option value="t">Tropiciel</option>
+          </select>
+        </label>
+        <button id="submit" type="submit">Policz zestaw</button>
+        <fieldset class="groups">
+          <legend>Skąd mogą pochodzić przedmioty</legend>
+          <label class="check"
+            ><input type="checkbox" name="source" value="titan" checked />
+            Tytani</label
+          >
+          <label class="check"
+            ><input type="checkbox" name="source" value="colossus" checked />
+            Kolosy</label
+          >
+          <label class="check"
+            ><input type="checkbox" name="source" value="hero" checked />
+            Herosi</label
+          >
+          <label class="check"
+            ><input type="checkbox" name="source" value="elite" checked /> Elity
+            II i III</label
+          >
+          <label class="check"
+            ><input type="checkbox" name="source" value="common" checked />
+            Zwykłe potwory i elity</label
+          >
+          <label class="check"
+            ><input type="checkbox" name="source" value="none" checked /> Bez
+            znanego dropu
+            <small
+              >(rzemiosło, zadania, sklepy albo drop, którego Lootlog jeszcze
+              nie widział)</small
+            ></label
+          >
+        </fieldset>
+        <fieldset class="groups">
+          <legend>Rzadkość i eventy</legend>
+          <label class="check"
+            ><input type="checkbox" name="rarity" value="legendary" checked />
+            <span class="rarity-legendary">Legendarne</span></label
+          >
+          <label class="check"
+            ><input type="checkbox" name="rarity" value="upgraded" checked />
+            <span class="rarity-upgraded">Ulepszone</span></label
+          >
+          <label class="check"
+            ><input type="checkbox" name="rarity" value="heroic" checked />
+            <span class="rarity-heroic">Heroiczne</span></label
+          >
+          <label class="check"
+            ><input type="checkbox" name="rarity" value="unique" checked />
+            <span class="rarity-unique">Unikatowe</span></label
+          >
+          <label class="check"
+            ><input type="checkbox" name="rarity" value="common" checked />
+            Zwykłe</label
+          >
+          <label class="check"
+            ><input type="checkbox" name="events" checked /> Przedmioty
+            eventowe</label
+          >
+        </fieldset>
+      </form>
+
+      <div id="result" aria-live="polite"></div>
+    </main>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

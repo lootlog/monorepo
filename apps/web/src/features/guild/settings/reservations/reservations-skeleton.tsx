@@ -1,4 +1,4 @@
-import { BandSection } from "@/components/common/band-section";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { Hourglass, Link2 } from "lucide-react";
 import { useTranslation } from "react-i18next";

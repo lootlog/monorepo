@@ -1,6 +1,6 @@
 import { formatLevel } from "@lootlog/domain/profession";
 import { PlayerTile } from "@/components/battle/player-tile";
-import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
+import { BATTLE_TEXT_COLORS } from "@lootlog/battle-ui/lib/battle-color-palette";
 import { BattleDamageTags } from "@/components/battle/battle-damage-tags";
 import type { BattleWarrior as Warrior } from "@/lib/api/battlelog-types";
 import { EmergencyExitIcon } from "@/components/battle/emergency-exit-icon";

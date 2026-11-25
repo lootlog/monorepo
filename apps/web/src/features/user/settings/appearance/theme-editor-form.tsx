@@ -1,4 +1,4 @@
-import { BandSection } from "@/components/common/band-section";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import { DetailPage } from "@/components/common/detail-page";
 import { PillToggleGroup } from "@/components/common/pill-toggle-group";
 import { WALLPAPERS } from "@lootlog/ui/themes/wallpapers";

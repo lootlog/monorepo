@@ -1,7 +1,10 @@
 import { cn } from "cn";
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
-import { LIST_TILE_INSET_CLASS, LIST_TILE_RULE_CLASS } from "./list-tile";
+import {
+  LIST_TILE_INSET_CLASS,
+  LIST_TILE_RULE_CLASS,
+} from "@lootlog/ui/lib/list-tile";
 
 type ListTileEmptyProps = {
   icon: LucideIcon;

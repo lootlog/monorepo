@@ -3,7 +3,7 @@ import {
   LIST_TILE_GRID_CELL_CLASS,
   LIST_TILE_GRID_CLASS,
   LIST_TILE_RULE_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 import { cn } from "cn";
 
 export const TIMERS_VIEW_MODE_KEY = "timers-view-mode";

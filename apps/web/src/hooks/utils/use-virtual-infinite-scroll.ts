@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import {
   getPageScroller,
   usePageScrollsDocument,
-} from "@/hooks/utils/use-page-scroll";
+} from "@lootlog/ui/hooks/use-page-scroll";
 
 type VirtualItemLike = {
   index: number;

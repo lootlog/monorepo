@@ -2,7 +2,7 @@ import { maxBy, upperFirst } from "es-toolkit";
 import { Crown, Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { KillStatsOverview } from "@/components/common/kill-analytics/kill-stats-overview";
-import { BandSection } from "@/components/common/band-section";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import { StatsTile } from "@lootlog/ui/components/stats-tile";
 import { StatsTileGrid } from "@lootlog/ui/components/stats-tile-grid";
 import { getKillShift } from "@/components/common/kill-analytics/kill-shift";

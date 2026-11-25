@@ -10,7 +10,7 @@ import {
 import { Copy, Lock, Share2, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "cn";
-import { LIST_TILE_ACTIONS_CLASS } from "@/components/common/list-tile";
+import { LIST_TILE_ACTIONS_CLASS } from "@lootlog/ui/lib/list-tile";
 
 export function DashboardRecentBattleActions({
   battle,

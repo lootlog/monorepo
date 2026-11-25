@@ -1,7 +1,6 @@
 import type {
   BattleDurationStatsResponseDtoOutput,
   BattleRawResponseDtoOutputRawData,
-  BattleRawResponseDtoOutputRawDataEventsItem,
   BattleResponseDtoOutput,
   BattleResponseDtoOutputWarriorsItem,
   BattleWarriorsSearchResponseDtoOutputWarriorsItem,
@@ -39,8 +38,6 @@ export type PlayerVsPlayerBattle =
   PlayerVsPlayerPaginatedResponseDtoOutputBattlesItem;
 
 export type RawBattle = BattleRawResponseDtoOutputRawData;
-
-export type RawBattleParsedEvent = BattleRawResponseDtoOutputRawDataEventsItem;
 
 export type SearchWarrior = BattleWarriorsSearchResponseDtoOutputWarriorsItem;
 

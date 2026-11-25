@@ -12,7 +12,7 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {
   getVirtualListPadding,
   usePageVirtualizer,
-} from "@/hooks/utils/use-page-scroll";
+} from "@lootlog/ui/hooks/use-page-scroll";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
 import { useGuildWorld } from "@/hooks/context/use-guild-world";

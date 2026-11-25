@@ -1,6 +1,6 @@
 import { Alert, AlertDescription } from "@lootlog/ui/components/alert";
 import type { TOptions } from "i18next";
-import { BandSection } from "@/components/common/band-section";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import { DetailField } from "@/components/common/detail-field";
 import { ListTileEmpty } from "@/components/common/list-tile-empty";
 import type { MemberResponseDto as GuildMember } from "@lootlog/client/main";

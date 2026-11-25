@@ -9,11 +9,11 @@ import { Blocks, ExternalLink, ListChecks, PlusCircle, X } from "lucide-react";
 import { useLocalStorage } from "usehooks-ts";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { BandSection } from "@/components/common/band-section";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 import { cn } from "cn";
 import { GETTING_STARTED_DOCS_URL } from "@/config/addon";
 import { MARGONEM_URL } from "@/constants/margonem";

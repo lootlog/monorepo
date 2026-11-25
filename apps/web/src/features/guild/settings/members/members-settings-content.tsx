@@ -21,7 +21,7 @@ import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
   getPageScroller,
   usePageScrollsDocument,
-} from "@/hooks/utils/use-page-scroll";
+} from "@lootlog/ui/hooks/use-page-scroll";
 import {
   useGuildsControllerGetGuildById,
   useMembersControllerGetGuildMembers,

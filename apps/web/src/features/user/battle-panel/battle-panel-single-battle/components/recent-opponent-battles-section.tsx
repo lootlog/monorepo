@@ -1,6 +1,6 @@
 import type { Battle } from "@/lib/api/battlelog-types";
 import { ROUTES } from "@/config/routes";
-import { BandSection } from "@/components/common/band-section";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { useId } from "react";
 import { useTranslation } from "react-i18next";

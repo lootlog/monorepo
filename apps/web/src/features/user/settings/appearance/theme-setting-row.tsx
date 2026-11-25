@@ -1,7 +1,7 @@
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 import { Button } from "@lootlog/ui/components/button";
 import { cn } from "cn";
 import { RotateCcw } from "lucide-react";

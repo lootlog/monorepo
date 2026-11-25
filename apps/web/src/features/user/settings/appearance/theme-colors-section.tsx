@@ -1,9 +1,9 @@
-import { BandSection } from "@/components/common/band-section";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import { ColorHexField } from "@/components/common/color-hex-field";
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 import { surfaceFromColor } from "@lootlog/ui/themes/custom-theme";
 import { useRootColors } from "@/themes/root-colors";
 import { withAccent, withSurface } from "@lootlog/domain/custom-theme";

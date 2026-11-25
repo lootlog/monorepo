@@ -1,4 +1,4 @@
-import { BandSection } from "@/components/common/band-section";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import type { TFunction } from "i18next";
 import type { EventConfig } from "../../hooks/queries/use-kill-detail";
 import { ScoringRulesOverview } from "./scoring-rules-overview";

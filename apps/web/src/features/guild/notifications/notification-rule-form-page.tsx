@@ -1,4 +1,4 @@
-import { BandSection } from "@/components/common/band-section";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import { DetailNotFound } from "@/components/common/detail-not-found";
 import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { RetryButton } from "@/components/common/retry-button";

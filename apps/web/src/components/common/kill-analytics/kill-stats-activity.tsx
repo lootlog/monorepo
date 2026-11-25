@@ -1,7 +1,7 @@
 import { WeeklyActivityHeatmap } from "@/components/common/activity-heatmap/weekly-activity-heatmap";
 import { formatIsoWeekday } from "@/components/common/kill-analytics/format-statistics-date";
 import { summarizeActivityDistributions } from "@/components/common/kill-analytics/summarize-activity-distributions";
-import { BandSection } from "@/components/common/band-section";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import type { GuildKillStatsResponseDtoOutputHourlyWeekdayItem } from "@lootlog/client/main";
 import { maxBy } from "es-toolkit";
 import { useId } from "react";

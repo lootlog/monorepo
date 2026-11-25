@@ -5,7 +5,7 @@ import { Kbd, KbdGroup } from "@lootlog/ui/components/kbd";
 import { cn } from "cn";
 import { useEffect, useRef, type FC } from "react";
 import { useTranslation } from "react-i18next";
-import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
+import { LIST_TILE_INSET_CLASS } from "@lootlog/ui/lib/list-tile";
 import { getPrimaryModifierKeyLabel } from "@lootlog/ui/lib/primary-modifier-key";
 
 export type UnsavedChangesBarProps = {

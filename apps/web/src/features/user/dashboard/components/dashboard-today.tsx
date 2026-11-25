@@ -13,7 +13,7 @@ import {
   useUsersActivityControllerGetOnline,
   type UserOnlineResponseDto,
 } from "@lootlog/client/activity";
-import { BandSection } from "@/components/common/band-section";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import { StatsTile } from "@lootlog/ui/components/stats-tile";
 import { StatsTileGrid } from "@lootlog/ui/components/stats-tile-grid";
 import { StatsTileNumber } from "@lootlog/ui/components/stats-tile-number";
@@ -21,7 +21,7 @@ import { calendarRange } from "@/components/common/activity-heatmap/activity-cal
 import { NpcTile } from "@/components/tiles/npc-tile";
 import { EMPTY_VALUE } from "@/constants/empty-value";
 import { QueryErrorNotice } from "@/components/common/query-error-notice";
-import { LIST_TILE_RULE_CLASS } from "@/components/common/list-tile";
+import { LIST_TILE_RULE_CLASS } from "@lootlog/ui/lib/list-tile";
 import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
 import { StatisticsDelta } from "@/features/user/statistics/statistics-delta";
 

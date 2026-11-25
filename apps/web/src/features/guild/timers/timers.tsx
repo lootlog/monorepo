@@ -18,7 +18,7 @@ import {
   TIMERS_GRID_MEDIA_QUERY,
   TIMERS_VIEW_MODE_KEY,
 } from "./timers-layout";
-import { ListGroupHeading } from "@/components/common/list-group-heading";
+import { ListGroupHeading } from "@lootlog/ui/components/list-group-heading";
 import { cn } from "cn";
 import { TimersFilters } from "./timers-filters";
 import { KillStatsSearch } from "@/components/common/kill-stats-search";

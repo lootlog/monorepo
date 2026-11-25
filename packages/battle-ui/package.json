@@ -1,0 +1,44 @@
+{
+  "name": "@lootlog/battle-ui",
+  "version": "1.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    "./components/*": "./src/components/*.tsx",
+    "./lib/*": "./src/lib/*.ts",
+    "./i18n/translations/*.json": "./src/i18n/translations/*.json"
+  },
+  "scripts": {
+    "lint": "oxlint .",
+    "typecheck": "bun check",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@lootlog/battle-processor": "workspace:*",
+    "@lootlog/domain": "workspace:*",
+    "@lootlog/ui": "workspace:*",
+    "@tanstack/react-virtual": "^3.14.18",
+    "cn": "catalog:",
+    "i18next": "^26.4.4",
+    "lucide-react": "^1.56.0",
+    "react-i18next": "^17.0.16"
+  },
+  "devDependencies": {
+    "@lootlog/typescript-config": "workspace:*",
+    "@testing-library/react": "^16.3.3",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "happy-dom": "^21.0.4",
+    "oxc-transform-react": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "peerDependencies": {
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  }
+}

@@ -1,4 +1,4 @@
-import { BATTLE_HEX_COLORS } from "@/components/battle/utils/battle-color-palette";
+import { BATTLE_HEX_COLORS } from "@lootlog/battle-ui/lib/battle-color-palette";
 
 export const BATTLE_HP_TIMELINE_COLORS = {
   friendly: BATTLE_HEX_COLORS.team.friendly,

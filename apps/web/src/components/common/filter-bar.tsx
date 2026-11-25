@@ -4,7 +4,10 @@ import { cn } from "cn";
 import { useState, type ReactNode } from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { FilterChipList, type FilterChip } from "./filter-chip-list";
-import { LIST_TILE_INSET_CLASS, LIST_TILE_RULE_CLASS } from "./list-tile";
+import {
+  LIST_TILE_INSET_CLASS,
+  LIST_TILE_RULE_CLASS,
+} from "@lootlog/ui/lib/list-tile";
 import { RESULTS_TABLE_MEDIA_QUERY } from "./page-sticky-table-header";
 import { FilterBarContext } from "@lootlog/ui/components/filter-bar-context";
 import { observeTopBarGlass } from "@/components/layout/observe-top-bar-glass";

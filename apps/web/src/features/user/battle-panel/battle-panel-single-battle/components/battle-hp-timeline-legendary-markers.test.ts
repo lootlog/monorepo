@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BATTLE_HEX_COLORS } from "@/components/battle/utils/battle-color-palette";
+import { BATTLE_HEX_COLORS } from "@lootlog/battle-ui/lib/battle-color-palette";
 import {
   buildLegendaryBonusMarkerGroups,
   getLegendaryBonusLegendItems,

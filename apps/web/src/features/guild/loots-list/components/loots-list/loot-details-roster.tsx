@@ -1,5 +1,5 @@
 import type { WatchedItemScope } from "@/lib/user-notifications/watched-item-scope";
-import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
+import { LIST_TILE_INSET_CLASS } from "@lootlog/ui/lib/list-tile";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { cn } from "cn";
 import { PackageOpen } from "lucide-react";

@@ -9,7 +9,7 @@ import {
 } from "@lootlog/client/main";
 
 import { EmptyState } from "@lootlog/ui/components/empty-state";
-import { BandSection } from "@/components/common/band-section";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import { ListTileSkeleton } from "@/components/common/list-tile-skeleton";
 import { ROUTES } from "@/config/routes";
 import { StatisticsQueryState } from "@/components/common/statistics-query-state";

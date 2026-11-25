@@ -112,13 +112,13 @@ export type WornLegendaryBonus = {
   isWeakened: boolean;
 };
 
-export const wornLegendaryBonuses = (
+export const wornLegendaryBonusItems = (
   stats: ReadonlyArray<string>,
   characterLevel: number,
-): WornLegendaryBonus[] => {
+) => {
   const level = Math.min(characterLevel, OPERATIONAL_LEVEL_CAP);
 
-  const worn = stats.flatMap((stat) =>
+  return stats.flatMap((stat) =>
     parseItemStatEntries(stat).flatMap(({ key, value }) => {
       if (!LEGENDARY_BONUS_STATS.has(key) || value === true) {
         return [];
@@ -127,10 +127,23 @@ export const wornLegendaryBonuses = (
       const [name, itemLevel] = value.split(",");
 
       return name
-        ? [{ name, strength: legendaryBonusStrength(level, Number(itemLevel)) }]
+        ? [
+            {
+              name,
+              itemLevel: Number(itemLevel),
+              strength: legendaryBonusStrength(level, Number(itemLevel)),
+            },
+          ]
         : [];
     }),
   );
+};
+
+export const wornLegendaryBonuses = (
+  stats: ReadonlyArray<string>,
+  characterLevel: number,
+): WornLegendaryBonus[] => {
+  const worn = wornLegendaryBonusItems(stats, characterLevel);
 
   return Object.entries(groupBy(worn, ({ name }) => name)).map(
     ([name, items]) => {

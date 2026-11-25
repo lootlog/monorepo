@@ -15,7 +15,7 @@ import { useEventDetail } from "./use-event-detail";
 import { useCurrentMember } from "./hooks/queries/use-current-member";
 import { getMyHeroScores } from "./utils/my-hero-scores";
 import { QueryErrorNotice } from "@/components/common/query-error-notice";
-import { LIST_TILE_RULE_CLASS } from "@/components/common/list-tile";
+import { LIST_TILE_RULE_CLASS } from "@lootlog/ui/lib/list-tile";
 import { EventOverviewRail } from "./event-overview-rail";
 import { useMediaQuery } from "usehooks-ts";
 import { RESULTS_TABLE_MEDIA_QUERY } from "@/components/common/page-sticky-table-header";

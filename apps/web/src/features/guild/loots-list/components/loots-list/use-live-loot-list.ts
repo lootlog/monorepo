@@ -38,7 +38,7 @@ import {
   useDocumentScrollListener,
   usePageScrollsDocument,
   usePageVirtualizer,
-} from "@/hooks/utils/use-page-scroll";
+} from "@lootlog/ui/hooks/use-page-scroll";
 import { useThemedKey } from "@/themes/adapters";
 import { findGuildByRouteId } from "@/lib/current-user-guilds";
 import type {

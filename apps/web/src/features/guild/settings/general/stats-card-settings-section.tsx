@@ -1,4 +1,4 @@
-import { BandSection } from "@/components/common/band-section";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import { CooldownAnnouncement } from "@/components/common/cooldown-announcement";
 import { RefreshCooldown } from "@/components/common/refresh-cooldown";
 import { useCountdown } from "@/hooks/utils/use-countdown";

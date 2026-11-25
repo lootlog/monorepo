@@ -18,7 +18,7 @@ import { ThemeRootEffects, ThemeSpinnerProvider } from "@/themes/adapters";
 import { Toaster } from "@lootlog/ui/components/sonner";
 import { useTranslation } from "react-i18next";
 
-import "@lootlog/ui/globals.css";
+import "../styles.css";
 import "@lootlog/ui/themes/muted.css";
 import "@lootlog/ui/themes/backgrounds.css";
 import "@lootlog/ui/scrollbars.css";

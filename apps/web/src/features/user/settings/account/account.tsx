@@ -1,4 +1,4 @@
-import { BandSection } from "@/components/common/band-section";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import { SettingsTabPage } from "@/components/common/settings-tab-page";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";

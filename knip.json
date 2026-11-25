@@ -23,8 +23,8 @@
       "project": ["src/**/*.ts!", "test/**/*.ts"]
     },
     "apps/catalog": {
-      "entry": ["src/main.ts!"],
-      "project": ["src/**/*.ts!", "test/**/*.ts"]
+      "entry": ["src/main.ts!", "prototypes/*/server.ts"],
+      "project": ["src/**/*.ts!", "test/**/*.ts", "prototypes/**/*.ts"]
     },
     "apps/admin": {
       "project": ["src/**/*.{ts,tsx,css}!", "*.{ts,mts,js,mjs}"]

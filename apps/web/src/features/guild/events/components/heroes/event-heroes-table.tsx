@@ -1,4 +1,4 @@
-import { BandSection } from "@/components/common/band-section";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";

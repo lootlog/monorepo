@@ -1,8 +1,8 @@
-import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
+import { BATTLE_TEXT_COLORS } from "@lootlog/battle-ui/lib/battle-color-palette";
 import {
   formatBattleMetric,
   formatSignedBattleMetric,
-} from "@/components/battle/utils/value-utils";
+} from "@lootlog/battle-ui/lib/value-utils";
 import { DetailBar } from "@/components/common/detail-bar";
 import { DetailBarFact } from "@/components/common/detail-bar-fact";
 import { DetailBarFacts } from "@/components/common/detail-bar-facts";

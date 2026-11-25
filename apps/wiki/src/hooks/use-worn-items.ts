@@ -50,9 +50,7 @@ export const useSetCatalogItems = (set: EquipmentSet) => {
   };
 };
 
-const useSetItems = () => {
-  const { set } = useEquipmentSet();
-
+const useSetItems = (set: EquipmentSet) => {
   const hasSymbol = Object.values(set.upgrades).some(
     (upgrade) => upgrade?.symbol !== undefined,
   );
@@ -106,17 +104,19 @@ const wornItemsOf = (setItems: ReturnType<typeof useSetItems>) =>
     }),
   );
 
-export const useWornItems = (): Map<EquipmentSlotId, WornItem> =>
-  wornItemsOf(useSetItems());
-
-export const useLoadedWornItems = () => {
-  const setItems = useSetItems();
+export const useSetWornItems = (set: EquipmentSet) => {
+  const setItems = useSetItems(set);
 
   return { wornItems: wornItemsOf(setItems), isLoaded: setItems.isLoaded };
 };
 
+export const useWornItems = (): Map<EquipmentSlotId, WornItem> =>
+  wornItemsOf(useSetItems(useEquipmentSet().set));
+
+export const useLoadedWornItems = () => useSetWornItems(useEquipmentSet().set);
+
 export const useWornItem = (slotId: EquipmentSlotId | undefined) => {
-  const setItems = useSetItems();
+  const setItems = useSetItems(useEquipmentSet().set);
 
   return slotId === undefined ? undefined : wornIn(setItems, slotId);
 };

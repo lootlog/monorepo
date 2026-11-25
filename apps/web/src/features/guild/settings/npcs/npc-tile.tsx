@@ -3,7 +3,7 @@ import {
   getListTileLinkClassName,
   LIST_TILE_RULE_CLASS,
   LIST_TILE_HOVER_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 import type { LootlogConfigNpcResponseDtoOutput as LootlogConfigNpc } from "@lootlog/client/main";
 import { Link } from "@tanstack/react-router";
 import { cn } from "cn";

@@ -1,8 +1,8 @@
 import {
   formatBattleMetric,
   formatSignedBattleMetric,
-} from "@/components/battle/utils/value-utils";
-import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
+} from "@lootlog/battle-ui/lib/value-utils";
+import { BATTLE_TEXT_COLORS } from "@lootlog/battle-ui/lib/battle-color-palette";
 import { StatsTile } from "@lootlog/ui/components/stats-tile";
 import { StatsTileGrid } from "@lootlog/ui/components/stats-tile-grid";
 import type { CombatProfileResponseDtoOutput } from "@lootlog/client/battlelog";

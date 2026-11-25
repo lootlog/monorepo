@@ -2,7 +2,7 @@ import type { GuildMember } from "@/features/guild/settings/members/members.type
 import {
   getVirtualListPadding,
   usePageVirtualizer,
-} from "@/hooks/utils/use-page-scroll";
+} from "@lootlog/ui/hooks/use-page-scroll";
 import { useRef, useState } from "react";
 import { MemberDeactivationDialog } from "./components/member-deactivation-dialog";
 import {

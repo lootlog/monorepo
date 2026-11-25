@@ -2,7 +2,7 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { Clock, Crown, Swords, Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { BandSection } from "@/components/common/band-section";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import { ListTileSkeleton } from "@/components/common/list-tile-skeleton";
 import { StatsTile } from "@lootlog/ui/components/stats-tile";
 import { StatsTileGrid } from "@lootlog/ui/components/stats-tile-grid";

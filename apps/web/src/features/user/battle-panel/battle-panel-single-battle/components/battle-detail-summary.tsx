@@ -1,5 +1,5 @@
 import { BattlePlayerRankingSection } from "@/components/battle/battle-player-ranking-section";
-import { BattleSummarySection } from "@/components/battle/battle-summary-section";
+import { BattleSummarySection } from "@lootlog/battle-ui/components/battle-summary-section";
 import type { Battle } from "@/lib/api/battlelog-types";
 
 type BattleDetailSummaryProps = {

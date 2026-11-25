@@ -2,7 +2,7 @@ import { FILTER_PILL_CLASS } from "@lootlog/ui/lib/filter-pill";
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 import { Button } from "@lootlog/ui/components/button";
 import {
   DropdownMenu,

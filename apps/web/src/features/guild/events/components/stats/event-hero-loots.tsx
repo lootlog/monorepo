@@ -3,7 +3,7 @@ import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
-import { BandSection } from "@/components/common/band-section";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import { Package } from "lucide-react";
 import { useEventLoots } from "../../hooks/queries/use-event-loots";
 import type { EventHeroNpc } from "@/lib/api/event-types";

@@ -46,6 +46,7 @@
     "@lootlog/domain": "workspace:*",
     "@lootlog/schema": "workspace:*",
     "@tailwindcss/postcss": "catalog:",
+    "@tanstack/react-virtual": "^3.14.18",
     "class-variance-authority": "^0.7.1",
     "cmdk": "1.1.1",
     "cn": "catalog:",

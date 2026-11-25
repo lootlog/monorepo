@@ -1,4 +1,4 @@
-import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
+import { LIST_TILE_INSET_CLASS } from "@lootlog/ui/lib/list-tile";
 import type { ReactNode } from "react";
 import { Button } from "@lootlog/ui/components/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";

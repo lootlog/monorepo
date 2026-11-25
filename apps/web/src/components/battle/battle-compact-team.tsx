@@ -1,6 +1,6 @@
 import { BattleCompactTeamMember } from "@/components/battle/battle-compact-team-member";
-import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
-import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
+import { LIST_TILE_INSET_CLASS } from "@lootlog/ui/lib/list-tile";
+import { BATTLE_TEXT_COLORS } from "@lootlog/battle-ui/lib/battle-color-palette";
 import type { BattleWarrior as Warrior } from "@/lib/api/battlelog-types";
 import { cn } from "cn";
 import { Shield, Sword } from "lucide-react";

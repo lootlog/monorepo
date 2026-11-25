@@ -5,8 +5,8 @@ import type {
 import type { TimerCountdownMode } from "@lootlog/domain/timers";
 import { groupBy } from "es-toolkit";
 import { useTranslation } from "react-i18next";
-import { BandSection } from "@/components/common/band-section";
-import { LIST_TILE_RULE_CLASS } from "@/components/common/list-tile";
+import { BandSection } from "@lootlog/ui/components/band-section";
+import { LIST_TILE_RULE_CLASS } from "@lootlog/ui/lib/list-tile";
 import { findHeroSightingTimer } from "./find-timer-hero-sighting";
 import { HeroSightingRow } from "./hero-sighting-row";
 import {

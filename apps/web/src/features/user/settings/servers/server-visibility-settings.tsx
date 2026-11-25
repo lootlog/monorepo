@@ -1,7 +1,7 @@
 import {
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 import { ListTileSkeleton } from "@/components/common/list-tile-skeleton";
 import { ResultsSurface } from "@/components/common/results-surface";
 import { KillStatsSearch } from "@/components/common/kill-stats-search";

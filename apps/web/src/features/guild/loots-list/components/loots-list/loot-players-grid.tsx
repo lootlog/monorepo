@@ -1,6 +1,6 @@
 import { PlayerTile } from "@/components/tiles/player-tile";
 import type { WatchedItemScope } from "@/lib/user-notifications/watched-item-scope";
-import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
+import { LIST_TILE_INSET_CLASS } from "@lootlog/ui/lib/list-tile";
 import { cn } from "cn";
 import { useTranslation } from "react-i18next";
 import type { LootRosterPlayer } from "./build-loot-roster";

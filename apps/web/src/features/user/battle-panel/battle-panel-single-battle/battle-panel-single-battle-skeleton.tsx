@@ -1,11 +1,11 @@
-import { BandSection } from "@/components/common/band-section";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import { DetailBar } from "@/components/common/detail-bar";
-import { ListGroupHeading } from "@/components/common/list-group-heading";
+import { ListGroupHeading } from "@lootlog/ui/components/list-group-heading";
 import {
   LIST_BAND_HEADING_CLASS,
   LIST_TILE_INSET_CLASS,
   LIST_TILE_RULE_CLASS,
-} from "@/components/common/list-tile";
+} from "@lootlog/ui/lib/list-tile";
 import { SkeletonLine } from "@/components/common/skeleton-line";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
@@ -19,7 +19,7 @@ import {
 } from "./components/battle-detail-layout";
 import { BattleHpTimelineChartSkeleton } from "./components/battle-hp-timeline-chart-skeleton";
 import { BattleTeamSkeleton } from "./components/battle-team-skeleton";
-import { BATTLE_SURFACE_COLORS } from "@/components/battle/utils/battle-color-palette";
+import { BATTLE_SURFACE_COLORS } from "@lootlog/battle-ui/lib/battle-color-palette";
 
 const metadataItems = ["w-28", "w-14", "w-10", "w-14", "w-16"];
 
@@ -90,7 +90,7 @@ export const BattlePanelSingleBattleSkeleton = () => {
               id="battle-log-skeleton"
               className={LIST_BAND_HEADING_CLASS}
             >
-              {t("battlePanel.single.log.title")}
+              {t("battleUi.log.title")}
             </ListGroupHeading>
             <div
               className={cn(

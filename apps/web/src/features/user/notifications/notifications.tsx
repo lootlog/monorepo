@@ -2,7 +2,7 @@ import { UserNotificationsPageSkeleton } from "./notifications-page-skeleton";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { BandSection } from "@/components/common/band-section";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import { InfoButton } from "@/components/common/info-button";
 import { SettingsListError } from "@/components/common/settings-list-error";
 import { DmTargetTile } from "@/features/user/notifications/components/dm-target-tile";

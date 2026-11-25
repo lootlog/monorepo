@@ -4,6 +4,7 @@
 @import "@lootlog/ui/scrollbars.css";
 @import "@lootlog/ui/portal.css";
 @import "@lootlog/ui/ember-sparks.css";
+@source "../../../packages/battle-ui/src/**/*.{ts,tsx}";
 
 @theme {
   --animate-sprite-float: sprite-float 4.5s ease-in-out infinite;

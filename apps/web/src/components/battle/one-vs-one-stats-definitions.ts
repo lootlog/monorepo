@@ -2,7 +2,7 @@ import type {
   BattleStatCategoryDefinition,
   BattleStatDefinition,
 } from "@/types/stats-customization.types";
-import { BATTLE_TEXT_COLORS } from "./utils/battle-color-palette";
+import { BATTLE_TEXT_COLORS } from "@lootlog/battle-ui/lib/battle-color-palette";
 
 const createStatDefinition = (
   key: BattleStatDefinition["key"],

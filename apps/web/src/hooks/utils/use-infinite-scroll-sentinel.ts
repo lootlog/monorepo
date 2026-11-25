@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { usePageScrollsDocument } from "@/hooks/utils/use-page-scroll";
+import { usePageScrollsDocument } from "@lootlog/ui/hooks/use-page-scroll";
 
 type UseInfiniteScrollSentinelOptions = {
   enabled?: boolean;

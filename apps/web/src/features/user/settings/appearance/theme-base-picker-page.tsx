@@ -1,4 +1,4 @@
-import { BandSection } from "@/components/common/band-section";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import { DetailPage } from "@/components/common/detail-page";
 import { MetaItem } from "@/components/common/meta-item";
 import { useUserThemes } from "@/hooks/api/user/use-user-themes";

@@ -5,7 +5,7 @@ import { EquipmentSetDock } from "@/components/equipment/equipment-set-dock";
 import { WikiFooter } from "./wiki-footer";
 import { WikiHeader } from "./wiki-header";
 
-const PAGES_WITHOUT_DOCK = new Set(["/", "/set"]);
+const PAGES_WITHOUT_DOCK = new Set(["/", "/set", "/fight"]);
 
 const FULL_WIDTH_PAGES = new Set(["/items", "/npcs"]);
 

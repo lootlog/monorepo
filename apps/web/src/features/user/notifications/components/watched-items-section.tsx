@@ -1,4 +1,4 @@
-import { BandSection } from "@/components/common/band-section";
+import { BandSection } from "@lootlog/ui/components/band-section";
 import { ListTileEmpty } from "@/components/common/list-tile-empty";
 import { Package, Plus } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";

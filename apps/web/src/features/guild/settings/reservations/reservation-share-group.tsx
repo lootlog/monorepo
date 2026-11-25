@@ -1,4 +1,4 @@
-import { ListGroupHeading } from "@/components/common/list-group-heading";
+import { ListGroupHeading } from "@lootlog/ui/components/list-group-heading";
 import { ListTileEmpty } from "@/components/common/list-tile-empty";
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";

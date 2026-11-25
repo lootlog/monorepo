@@ -1,4 +1,4 @@
-import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
+import { LIST_TILE_INSET_CLASS } from "@lootlog/ui/lib/list-tile";
 import { cn } from "cn";
 import { Button } from "@lootlog/ui/components/button";
 import { Share2, Trash2, X } from "lucide-react";

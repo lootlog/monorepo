@@ -1,4 +1,4 @@
-import { BATTLE_BADGE_COLORS } from "@/components/battle/utils/battle-color-palette";
+import { BATTLE_BADGE_COLORS } from "@lootlog/battle-ui/lib/battle-color-palette";
 import {
   Biohazard,
   Flame,

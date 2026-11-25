@@ -6,7 +6,7 @@ import {
   getListTileLinkClassName,
   LIST_TILE_ACTIONS_CLASS,
   LIST_TILE_RULE_CLASS,
-} from "./list-tile";
+} from "@lootlog/ui/lib/list-tile";
 
 type ListTileSkeletonProps = {
   media?: "box" | "none";

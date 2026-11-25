@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { DecorateLootItem } from "./item-stack";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
-import { LIST_TILE_INSET_CLASS } from "@/components/common/list-tile";
+import { LIST_TILE_INSET_CLASS } from "@lootlog/ui/lib/list-tile";
 import { cn } from "cn";
 import {
   buildLootData,

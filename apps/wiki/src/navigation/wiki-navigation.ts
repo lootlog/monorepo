@@ -9,6 +9,7 @@ import {
   Package,
   Scale,
   Skull,
+  Swords,
 } from "lucide-react";
 import type { ItemsSearch } from "@/lib/items-search";
 
@@ -75,6 +76,13 @@ export const WIKI_NAVIGATION = [
     group: "tools",
     descriptionKey: "home.setDescription",
     icon: Backpack,
+  },
+  {
+    link: linkOptions({ to: "/fight" }),
+    labelKey: "navigation.fight",
+    group: "tools",
+    descriptionKey: "home.fightDescription",
+    icon: Swords,
   },
   {
     link: linkOptions({ to: "/compare" }),
