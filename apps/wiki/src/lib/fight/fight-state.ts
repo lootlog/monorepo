@@ -237,6 +237,7 @@ export type FighterState = SkillUserState & {
   lastHealUsed: boolean;
   punctureShown: boolean;
   facadeShown: boolean;
+  armorProtectionShownTo: Set<number>;
   cursed: boolean;
   slowBySource: Map<number, number>;
   critSlowTurns: number;
@@ -289,6 +290,7 @@ export const createState = (
   lastHealUsed: false,
   punctureShown: false,
   facadeShown: false,
+  armorProtectionShownTo: new Set(),
   cursed: false,
   slowBySource: new Map(),
   critSlowTurns: 0,

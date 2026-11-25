@@ -872,6 +872,49 @@ describe("fightBattleLog", () => {
     ).toContain("+legbon_puncture=12");
   });
 
+  test("shows a defender's armor destruction reduction once to each attacker that destroys its armor", () => {
+    const destroyer = (name: string) =>
+      fighter({
+        name,
+        hp: 10_000_000,
+        physical: { min: 1, max: 1 },
+        armorDestruction: 50,
+      });
+
+    const setup = {
+      teams: [
+        [destroyer("pierwszy"), destroyer("drugi")],
+        [
+          fighter({
+            name: "chroniony",
+            hp: 10_000_000,
+            armor: 100_000,
+            attackSpeed: 1,
+            physical: NO_DAMAGE,
+            armorDestructionReduction: 3,
+          }),
+        ],
+      ],
+    };
+
+    const events: FightEvent[] = [];
+
+    const result = simulateFight(setup, seededRandom(3), (event) => {
+      events.push(event);
+    });
+
+    const rows = fightBattleLog(setup, events, result).payload.events[0]?.f?.m;
+
+    const shownTo = (attacker: string) =>
+      rows?.filter(
+        (row) =>
+          row.startsWith(`${attacker}=`) && row.includes("-redacdmg_per=-3"),
+      ).length;
+
+    expect(shownTo("1")).toBe(1);
+    expect(shownTo("2")).toBe(1);
+  });
+
   test("logs a fight that the battle processor reads back with the simulated damage, bonuses and winner", () => {
     const doubleShot: ActiveSkill = {
       id: 97,

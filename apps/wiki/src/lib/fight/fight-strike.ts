@@ -502,18 +502,26 @@ const swingsAround = (
 const showOnce = (
   attacker: FighterState,
   defender: FighterState,
-  facade: number,
+  { facade, armorDestroyed }: { facade: number; armorDestroyed: boolean },
 ) => {
+  const armorProtected =
+    armorDestroyed && !defender.armorProtectionShownTo.has(attacker.index);
+
   const shown = {
     puncture: attacker.punctureShown
       ? 0
       : attacker.combatant.legendary.puncture,
     facade: defender.facadeShown ? 0 : facade,
+    armorDestructionReduction: armorProtected
+      ? defender.combatant.armorDestructionReduction
+      : 0,
   };
 
   attacker.punctureShown = true;
 
   if (facade > 0) defender.facadeShown = true;
+
+  if (armorProtected) defender.armorProtectionShownTo.add(attacker.index);
 
   return shown;
 };
@@ -619,7 +627,6 @@ export const strike = (
   counterable = true,
 ): Strike => {
   const a = attacker.combatant;
-  const d = defender.combatant;
   const scale = damageScaleOf(attacker, defender, plan);
 
   const { crit, veryCrit, strength } = rollCrit(
@@ -734,9 +741,11 @@ export const strike = (
   const vamp = vampire(attacker, unshieldedDealt);
   const swung = swingsAround(attacker, defender, random);
   const swings = swung ? swingAt(attacker, others, random) : [];
-  const shown = showOnce(attacker, defender, facade);
-  const destroyed = defender.armorLost - lostBefore;
-  const reduction = d.armorDestructionReduction;
+
+  const shown = showOnce(attacker, defender, {
+    facade,
+    armorDestroyed: defender.armorLost > lostBefore,
+  });
 
   return {
     rage: Math.round(rage * main.rolled),
@@ -763,7 +772,7 @@ export const strike = (
     immune: immune && !missed,
     armorDestroyed,
     armorBroken: !brokenBefore && isArmorBroken(defender),
-    armorDestructionReduction: destroyed > 0 ? reduction : 0,
+    armorDestructionReduction: shown.armorDestructionReduction,
     ...cursed,
     resistanceDestroyed: main.resistanceDestroyed,
     absorbed: main.absorbed,
