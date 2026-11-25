@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import { fightBattleLog } from "./fight-battle-log";
 import { simulateFight } from "./fight-simulator";
 import type { FightEvent } from "./fight-events";
-import { evadeChance } from "./fight-defence";
+import { armorReduced, evadeChance } from "./fight-defence";
 import {
   createState,
   NO_PASSIVE_EFFECTS,
@@ -10,6 +10,8 @@ import {
   type PassiveEffects,
 } from "./fight-state";
 import { seededRandom } from "./fight-summary";
+import { NO_SKILL } from "./fight-skills";
+import { strike } from "./fight-strike";
 import { fighter, NO_DAMAGE } from "./fight.fixtures";
 
 const tough = { hp: 10_000_000, physical: { min: 1000, max: 1000 } };
@@ -89,16 +91,78 @@ describe("passive skill effects", () => {
     expect(hits.every((hit) => hit.damage.third === 1000)).toBe(true);
   });
 
-  test("crushes for its share of the main damage once enough of the strike gets through", () => {
-    const crushed = (armor: number) =>
+  test("keeps the third attack out of absorption and under armor even on a pierce", () => {
+    const [hit] = strikesBy(
+      fightOf(
+        {
+          profession: "b",
+          pierce: 100,
+          offhand: { min: 100, max: 100 },
+          ...withPassives({ thirdAttackChance: 100 }),
+        },
+        { armor: 500, absorb: 100_000 },
+      ).events,
+      0,
+    );
+
+    expect(hit?.pierced).toBe(true);
+    expect(hit?.damage.third).toBe(Math.round(armorReduced(1000, 500)));
+  });
+
+  test("crushes for its share of the main damage once enough of the strike gets through, raised by unavoidable damage", () => {
+    const crushed = (armor: number, unavoidableBonus = 0) =>
       strikesBy(
-        fightOf(withPassives({ crush: { value: 10, bound: 40 } }), { armor })
-          .events,
+        fightOf(
+          withPassives(
+            { crush: { value: 10, bound: 40 } },
+            { unavoidableBonus },
+          ),
+          { armor },
+        ).events,
         0,
-      )[0]?.crushDamage;
+      )[0]?.unavoidable;
 
     expect(crushed(0)).toBe(100);
+    expect(crushed(0, 3)).toBe(103);
     expect(crushed(1500)).toBe(0);
+  });
+
+  test("enrages a critically hit fighter, raising only its physical damage and logging the share first", () => {
+    const { events, rows } = fightOf(
+      { critChance: 100, critValue: 100 },
+      {
+        rageTurns: 3,
+        physical: { min: 1000, max: 1000 },
+        fire: { min: 1000, max: 1000 },
+      },
+    );
+
+    const [enraged] = strikesBy(events, 1);
+
+    expect(enraged?.rage).toBe(100);
+    expect(enraged?.strength).toMatchObject({ physical: 1100, fire: 1000 });
+    expect(rows.some((row) => /^2=[\d.]+;1=[\d.]+;\+rage=100;/.test(row))).toBe(
+      true,
+    );
+  });
+
+  test("destroys extra armor in the same strike when a crit pierces", () => {
+    const attacker = createState(
+      fighter({
+        critChance: 100,
+        pierce: 100,
+        armorDestruction: 100,
+        ...withPassives({ critPierce: 80 }),
+      }),
+      0,
+      0,
+    );
+
+    const defender = createState(fighter({ armor: 10_000 }), 1, 1);
+    const hit = strike(attacker, defender, NO_SKILL, seededRandom(5));
+
+    expect(hit.triggers.critPierce).toBe(80);
+    expect(defender.armorLost).toBe(180);
   });
 
   test("restores energy on a crit and cuts the target's next item heal after a poisoned crit", () => {

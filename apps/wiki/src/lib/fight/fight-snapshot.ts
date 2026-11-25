@@ -1,7 +1,12 @@
-import { currentArmor, elementResistance } from "./fight-defence";
+import {
+  currentArmor,
+  elementResistance,
+  resistanceReduction,
+} from "./fight-defence";
 import { attackTime } from "./fight-simulator";
 import { buffTotal } from "./fight-skills";
-import { clamp, MAX_RESISTANCE, type FighterState } from "./fight-state";
+import { MAX_RESISTANCE } from "@/lib/character-stats";
+import { clamp, type FighterState } from "./fight-state";
 
 type ConditionId =
   | "stunned"
@@ -186,9 +191,9 @@ export const snapshotFighter = (state: FighterState): FighterSnapshot => {
     armor: Math.round(currentArmor(state)),
     baseArmor: c.armor,
     resistances: {
-      fire: percentOf(elementResistance(state, c.resistFire, "resfire_per")),
-      frost: percentOf(elementResistance(state, c.resistFrost, "resfrost_per")),
-      light: percentOf(elementResistance(state, c.resistLight, "reslight_per")),
+      fire: percentOf(resistanceReduction(elementResistance(state, "fire"))),
+      frost: percentOf(resistanceReduction(elementResistance(state, "frost"))),
+      light: percentOf(resistanceReduction(elementResistance(state, "light"))),
       poison: clamp(
         c.resistPoison -
           state.poisonResistanceLost +

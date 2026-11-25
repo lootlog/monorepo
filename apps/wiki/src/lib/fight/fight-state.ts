@@ -136,6 +136,7 @@ export type Combatant = {
   readonly pierceBlock: number;
   readonly armor: number;
   readonly shieldArmor: number;
+  readonly hasShield: boolean;
   readonly armorDestruction: number;
   readonly armorDestructionResist: number;
   readonly evadePoints: number;
@@ -164,7 +165,8 @@ export type Combatant = {
   readonly energyGain: number;
   readonly mana: number;
   readonly physicalBonus: number;
-  readonly damageBonus: number;
+  readonly allDamageBonus: number;
+  readonly unavoidableBonus: number;
   readonly damageTakenBonus: number;
   readonly enemySlow: number;
   readonly slowReduction: number;
@@ -183,20 +185,29 @@ export type Combatant = {
   readonly passives: PassiveEffects;
 };
 
-export const MAX_RESISTANCE = 90;
-
 export const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
 
-type DamageOverTime = { damage: number; turnsLeft: number };
+export type Element = "fire" | "frost" | "light";
+
+export type DamageOverTime = {
+  damage: number;
+  turnsLeft: number;
+  source: number;
+};
 
 type Wound = DamageOverTime & { cap: number };
 
-type Poison = DamageOverTime & { slow: number };
+type Poison = DamageOverTime & { slow: number; boosted: boolean };
 
-type FrostSlow = { slow: number; boost: number; turnsLeft: number };
+type FrostSlow = {
+  slow: number;
+  turnsLeft: number;
+  boost: number;
+  boostTurnsLeft: number;
+};
 
-type SkillDamageOverTime = "fire" | "light" | "absolute";
+export type SkillDamageOverTime = "fire" | "light" | "absolute";
 
 export type FighterState = SkillUserState & {
   index: number;
@@ -207,7 +218,7 @@ export type FighterState = SkillUserState & {
   clock: number;
   stepsForward: number;
   armorLost: number;
-  resistanceLost: number;
+  resistanceLost: Record<Element, number>;
   absorbLeft: number;
   absorbMagicLeft: number;
   healTriggers: number;
@@ -218,7 +229,6 @@ export type FighterState = SkillUserState & {
   poisonResistanceLost: number;
   healCut: number;
   enemyHealingCut: { amount: number; turnsLeft: number } | null;
-  pendingArmorDestruction: number;
   anguish: DamageOverTime | null;
   skillDots: Map<SkillDamageOverTime, DamageOverTime>;
   frostSlow: FrostSlow | null;
@@ -252,7 +262,7 @@ export const createState = (
   energy: combatant.energy,
   mana: combatant.mana,
   armorLost: 0,
-  resistanceLost: 0,
+  resistanceLost: { fire: 0, frost: 0, light: 0 },
   absorbLeft: combatant.absorb,
   absorbMagicLeft: combatant.absorbMagic,
   healTriggers: 0,
@@ -271,7 +281,6 @@ export const createState = (
   poisonResistanceLost: 0,
   healCut: 0,
   enemyHealingCut: null,
-  pendingArmorDestruction: 0,
   anguish: null,
   skillDots: new Map(),
   frostSlow: null,
@@ -298,6 +307,17 @@ const FARTHEST_POSITION: BattlePosition = 3;
 export const canStepForward = (state: FighterState) =>
   state.combatant.position === 1 && state.stepsForward < FARTHEST_POSITION - 1;
 
+const MELEE_CONTACT_GAP = 0;
+
+export const inMeleeContact = (left: FighterState, right: FighterState) =>
+  left.combatant.position -
+    1 -
+    left.stepsForward +
+    right.combatant.position -
+    1 -
+    right.stepsForward <=
+  MELEE_CONTACT_GAP;
+
 export const reaches = (attacker: FighterState, target: FighterState) =>
   attacker.combatant.position > 1 ||
   target.combatant.position - 1 <= attacker.stepsForward;
@@ -318,6 +338,23 @@ export const withAllyHealth = (
         }))
       : team;
   });
+
+export const randomPick = <Item>(
+  items: readonly Item[],
+  count: number,
+  random: () => number,
+) => {
+  const candidates = [...items];
+  const picked: Item[] = [];
+
+  while (picked.length < count && candidates.length > 0) {
+    picked.push(
+      ...candidates.splice(Math.floor(random() * candidates.length), 1),
+    );
+  }
+
+  return picked;
+};
 
 export const roll = (random: () => number, range: DamageRange) =>
   range.max <= range.min

@@ -81,6 +81,7 @@ const PASSIVE_STATS = new Set([
   "woundred",
   "absagain_per",
   "resdmg",
+  "acdmg",
   "swing",
   "injure",
   "critwound",

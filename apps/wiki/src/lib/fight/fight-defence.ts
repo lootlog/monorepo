@@ -1,9 +1,10 @@
+import { MAX_RESISTANCE } from "@/lib/character-stats";
 import { chance } from "./fight-hit-effects";
 import { buffTotal } from "./fight-skills";
 import {
   clamp,
+  type Element,
   isBelow,
-  MAX_RESISTANCE,
   type FighterState,
   type Profession,
   type ResourceDrain,
@@ -20,8 +21,6 @@ const EVADE_OR_BLOCK_PER_POINT = 20;
 const ARMOR_FLOOR = 0.5;
 
 const ARMOR_FORMULA_VERTEX = 1.13 / 0.62;
-
-const SHIELD_BEARERS: ReadonlySet<Profession> = new Set(["w", "p"]);
 
 const UNAVOIDABLE: ReadonlySet<Profession> = new Set(["m"]);
 
@@ -83,8 +82,7 @@ export const blockChance = (
   attacker: FighterState,
   activeReduction: number,
 ) => {
-  if (!SHIELD_BEARERS.has(defender.combatant.profession) || defender.stunned)
-    return 0;
+  if (!defender.combatant.hasShield || defender.stunned) return 0;
 
   const chance =
     (defender.combatant.blockPoints *
@@ -113,6 +111,10 @@ const bonusArmor = (defender: FighterState) =>
     100 +
   (defender.combatant.shieldArmor * buffTotal(defender, "acshield_per")) / 100;
 
+export const isArmorBroken = (defender: FighterState) =>
+  defender.combatant.armor - defender.armorLost <=
+  ARMOR_FLOOR * defender.combatant.armor;
+
 export const currentArmor = (defender: FighterState) =>
   Math.max(
     ARMOR_FLOOR * defender.combatant.armor,
@@ -125,31 +127,40 @@ export const armorAgainst = (defender: FighterState, attacker: FighterState) =>
 export const destroyArmor = (defender: FighterState, amount: number) => {
   defender.armorLost +=
     amount * (1 - defender.combatant.armorDestructionReduction / 100);
+
+  return amount;
 };
 
-export const elementResistance = (
-  defender: FighterState,
-  base: number,
-  buffKey: string,
-) =>
-  clamp(
-    base +
-      buffTotal(defender, buffKey) +
-      buffTotal(defender, "aura-resall") -
-      defender.resistanceLost,
-    0,
-    MAX_RESISTANCE,
-  ) / 100;
+const ELEMENT_RESISTANCES: Record<
+  Element,
+  {
+    readonly stat: "resistFire" | "resistFrost" | "resistLight";
+    readonly buff: string;
+  }
+> = {
+  fire: { stat: "resistFire", buff: "resfire_per" },
+  frost: { stat: "resistFrost", buff: "resfrost_per" },
+  light: { stat: "resistLight", buff: "reslight_per" },
+};
 
-const highestResistance = (defender: FighterState) => {
-  const d = defender.combatant;
+const ELEMENTS: readonly Element[] = ["fire", "frost", "light"];
 
-  return Math.max(
-    elementResistance(defender, d.resistFire, "resfire_per"),
-    elementResistance(defender, d.resistFrost, "resfrost_per"),
-    elementResistance(defender, d.resistLight, "reslight_per"),
+const heldResistance = (defender: FighterState, element: Element) => {
+  const { stat, buff } = ELEMENT_RESISTANCES[element];
+
+  return (
+    defender.combatant[stat] +
+    buffTotal(defender, buff) +
+    buffTotal(defender, "aura-resall") -
+    defender.resistanceLost[element]
   );
 };
+
+export const elementResistance = (defender: FighterState, element: Element) =>
+  Math.max(0, heldResistance(defender, element)) / 100;
+
+export const resistanceReduction = (resistance: number) =>
+  Math.min(MAX_RESISTANCE / 100, resistance);
 
 export const destroyResistance = (
   attacker: FighterState,
@@ -157,9 +168,20 @@ export const destroyResistance = (
 ) => {
   const amount = attacker.combatant.resistanceDestruction;
 
-  if (amount <= 0 || highestResistance(defender) <= 0) return 0;
+  if (
+    amount <= 0 ||
+    ELEMENTS.every((element) => heldResistance(defender, element) <= 0)
+  ) {
+    return 0;
+  }
 
-  defender.resistanceLost += amount;
+  for (const element of ELEMENTS) {
+    defender.resistanceLost[element] += clamp(
+      heldResistance(defender, element),
+      0,
+      amount,
+    );
+  }
 
   return amount;
 };

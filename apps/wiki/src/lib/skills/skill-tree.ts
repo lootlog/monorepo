@@ -26,6 +26,7 @@ export type SkillDefinition = {
   active: boolean;
   selfCast?: boolean;
   spell?: boolean;
+  melee?: boolean;
   row: number;
   column: number;
   element: "fire" | "frost" | "heal" | "light" | "physical" | "support";

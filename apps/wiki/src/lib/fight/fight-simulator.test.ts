@@ -1,13 +1,24 @@
 import { BattleProcessor } from "@lootlog/battle-processor/battle-processor";
 import { describe, expect, test } from "vitest";
 import { fightBattleLog } from "./fight-battle-log";
-import { simulateFight } from "./fight-simulator";
+import { attackTime, simulateFight } from "./fight-simulator";
+import { strike } from "./fight-strike";
 import type { FightEvent } from "./fight-events";
 import { snapshotFighter, type FighterSnapshot } from "./fight-snapshot";
 import { groupFightTurns, type RecordedEvent } from "./fight-turns";
-import { NO_LEGENDARY_BONUSES, type Combatant } from "./fight-state";
+import {
+  createState,
+  NO_LEGENDARY_BONUSES,
+  type Combatant,
+} from "./fight-state";
 import { fighter, NO_DAMAGE } from "./fight.fixtures";
-import type { ActiveSkill, MasteryQueue } from "./fight-skills";
+import {
+  addBuff,
+  endSkillTurn,
+  NO_SKILL,
+  type ActiveSkill,
+  type MasteryQueue,
+} from "./fight-skills";
 import { seededRandom, simulateFights } from "./fight-summary";
 import { activeSkill, fighterProfile, toCombatant } from "./fighter-profile";
 import { SKILL_TREE as WARRIOR_SKILLS } from "@/lib/skills/trees/w";
@@ -51,6 +62,7 @@ describe("simulateFights", () => {
       cost: 0,
       cooldown: 0,
       selfCast: false,
+      melee: false,
       attacks: true,
       logged: [],
       effects: new Map([["active_decevade_per", { value: 20, turns: 1 }]]),
@@ -155,6 +167,7 @@ describe("battle mastery", () => {
     cost: 0,
     cooldown,
     selfCast: false,
+    melee: false,
     attacks: true,
     logged: [],
     effects: new Map([["adddmg_physical-perw", { value: 0, turns: 1 }]]),
@@ -297,6 +310,7 @@ describe("skill effects", () => {
     cost: 0,
     cooldown: 0,
     selfCast: false,
+    melee: false,
     attacks,
     logged: [],
     effects: new Map(
@@ -460,6 +474,35 @@ describe("skill effects", () => {
     expect(nextOfTarget?.kind).toBe("lostTurn");
   });
 
+  test("lets stun reduction bring the lost turn forward instead of the turn after it", () => {
+    const blow = skill("ogłuszenie", { stun: [100, 1] });
+
+    const strikesBeforeLostTurn = (stunReduction: number) => {
+      const events = fightOf(
+        {
+          attackSpeed: 2,
+          mastery: { steps: [blow, "attack", "attack"], repeat: true },
+        },
+        { attackSpeed: 1, stunReduction },
+      );
+
+      const stunIndex = events.findIndex(
+        (event) => event.kind === "strike" && event.actor === 0 && event.stun,
+      );
+
+      const lostIndex = events.findIndex(
+        (event, index) => index > stunIndex && event.kind === "lostTurn",
+      );
+
+      return events
+        .slice(stunIndex + 1, lostIndex)
+        .filter((event) => event.kind === "strike" && event.actor === 0).length;
+    };
+
+    expect(strikesBeforeLostTurn(0)).toBeGreaterThan(0);
+    expect(strikesBeforeLostTurn(75)).toBe(0);
+  });
+
   test.each([
     { curse: 0, reply: "strike" },
     { curse: 100, reply: "lostTurn" },
@@ -493,6 +536,52 @@ describe("skill effects", () => {
       }
     },
   );
+
+  test("lets a barrier reflect nothing from the blow that kills its holder", () => {
+    const attacker = createState(
+      fighter({ hp: 1, physical: { min: 100_000, max: 100_000 } }),
+      0,
+      0,
+    );
+
+    const holder = createState(fighter({ hp: 1000 }), 1, 1);
+
+    addBuff(holder, "lightshield_per", 15, 8, 1);
+
+    const hit = strike(attacker, holder, NO_SKILL, seededRandom(5));
+
+    expect(holder.alive).toBe(false);
+    expect(hit.reflected).toBe(0);
+    expect(attacker.alive).toBe(true);
+  });
+
+  test("speeds up a fighter from its next turn on after a critical speed-up, not in the turn that earned it", () => {
+    const state = createState(fighter({}), 0, 0);
+    const before = attackTime(state);
+
+    addBuff(state, "critsa", 20, 3, 0);
+    const earned = attackTime(state);
+
+    endSkillTurn(state);
+
+    expect(earned).toBe(before);
+    expect(attackTime(state)).toBeCloseTo(before / 1.2);
+  });
+
+  test("lets the forced turn of a counter use up the critical slow that triggered it", () => {
+    const defenderMoves = (critSlow: number) =>
+      simulateFight(
+        {
+          teams: [
+            [fighter({ hp: 10_000_000, critChance: 100, critSlow })],
+            [fighter({ hp: 10_000_000, counterChance: 100 })],
+          ],
+        },
+        seededRandom(5),
+      ).fighters[1]?.moves ?? 0;
+
+    expect(defenderMoves(50)).toBe(defenderMoves(0));
+  });
 
   test("steps forward in the forced turn of a counter until the striker is in reach", () => {
     const events = fightOf(
@@ -540,22 +629,65 @@ describe("skill effects", () => {
     ]).toEqual([40, 1, 30]);
   });
 
-  test("lets armor destruction reduction cut the armor an enemy destroys", () => {
-    const destroyed = (armorDestructionReduction: number) =>
-      strikesBy(
-        fightOf(
-          { armorDestruction: 100 },
-          { armor: 5000, armorDestructionReduction },
-        ),
-        0,
-      )[0]?.armorDestroyed;
+  test("lets armor destruction reduction cut the armor an enemy destroys, while the log keeps the full amount", () => {
+    const strikeOn = (armorDestructionReduction: number) => {
+      const defender = createState(
+        fighter({ armor: 5000, armorDestructionReduction }),
+        1,
+        1,
+      );
 
-    expect(destroyed(0)).toBe(100);
-    expect(destroyed(30)).toBe(70);
+      const hit = strike(
+        createState(fighter({ armorDestruction: 100 }), 0, 0),
+        defender,
+        NO_SKILL,
+        seededRandom(5),
+      );
+
+      return { logged: hit.armorDestroyed, lost: defender.armorLost };
+    };
+
+    expect(strikeOn(0)).toEqual({ logged: 100, lost: 100 });
+    expect(strikeOn(30)).toEqual({ logged: 100, lost: 70 });
   });
 });
 
 describe("fightBattleLog", () => {
+  test("logs the critical slow on every critical strike, evaded ones included", () => {
+    const setup = {
+      teams: [
+        [fighter({ name: "krytyk", critChance: 50, critSlow: 15 })],
+        [fighter({ name: "unik", evadePoints: 400 })],
+      ],
+    };
+
+    const events: FightEvent[] = [];
+
+    const result = simulateFight(
+      setup,
+      seededRandom(3),
+      (event) => {
+        events.push(event);
+      },
+      true,
+    );
+
+    const strikeRows =
+      fightBattleLog(setup, events, result).payload.events[0]?.f?.m?.filter(
+        (row) => row.startsWith("1=") && row.includes("+dmgd="),
+      ) ?? [];
+
+    const critRows = strikeRows.filter((row) => row.includes(";+crit;"));
+
+    expect(critRows.some((row) => row.includes("-evade"))).toBe(true);
+    expect(
+      strikeRows.every(
+        (row) =>
+          row.includes(";+crit;+critslow_per=15;") === row.includes(";+crit;"),
+      ),
+    ).toBe(true);
+  });
+
   test("ties every processed log move to the simulated event that wrote it", () => {
     const setup = {
       teams: [
@@ -615,6 +747,7 @@ describe("fightBattleLog", () => {
       cost: 0,
       cooldown: 0,
       selfCast: false,
+      melee: false,
       attacks: true,
       logged: [],
       effects: new Map([["add_attacks", { value: 1, turns: 1 }]]),
@@ -667,6 +800,7 @@ describe("fightBattleLog", () => {
       cost: 0,
       cooldown: 5,
       selfCast: false,
+      melee: false,
       attacks: true,
       logged: [],
       effects: new Map(),
@@ -746,6 +880,7 @@ describe("fightBattleLog", () => {
       cost: 10,
       cooldown: 2,
       selfCast: false,
+      melee: false,
       attacks: true,
       logged: [],
       effects: new Map([["add_attacks", { value: 1, turns: 1 }]]),
@@ -758,6 +893,7 @@ describe("fightBattleLog", () => {
       cost: 0,
       cooldown: 4,
       selfCast: false,
+      melee: false,
       attacks: false,
       logged: [],
       effects: new Map([["dmg-target_absolute", { value: 2900, turns: 1 }]]),
@@ -770,6 +906,7 @@ describe("fightBattleLog", () => {
       cost: 0,
       cooldown: 8,
       selfCast: true,
+      melee: false,
       attacks: false,
       logged: [["lightshield", null]],
       effects: new Map([["lightshield_per", { value: 15, turns: 8 }]]),
@@ -805,6 +942,7 @@ describe("fightBattleLog", () => {
             profession: "w",
             hp: 60_000,
             blockPoints: 400,
+            hasShield: true,
             armor: 800,
             fire: { min: 300, max: 500 },
             mastery: { steps: [barrier, "attack"], repeat: true },
@@ -834,7 +972,13 @@ describe("fightBattleLog", () => {
       events.reduce(
         (total, event) =>
           event.kind === "damageOverTime" && event.actor === actor
-            ? total + event.poison + event.wound + event.anguish
+            ? event.ticks.reduce(
+                (sum, tick) =>
+                  ["poison", "wound", "anguish"].includes(tick.kind)
+                    ? sum + tick.damage
+                    : sum,
+                total,
+              )
             : total,
         0,
       );

@@ -207,6 +207,9 @@ const durationOf = (raw: string) => {
 const SINGLE_TURN_EFFECTS: ReadonlySet<string> = new Set([
   "disturb_crit",
   "disturb_pierce",
+  "sa_per",
+  "acshield_per",
+  "active_block_per",
 ]);
 
 const LOGGED_SKILL_VALUES: ReadonlyMap<string, string> = new Map(
@@ -287,6 +290,7 @@ export const activeSkill = (
     cost: skillValueAt(stats.get(resource) ?? "0", level) ?? 0,
     cooldown: skillValueAt(stats.get("cooldown") ?? "0", level) ?? 0,
     selfCast: skill.selfCast ?? false,
+    melee: skill.melee ?? false,
     attacks: !skill.selfCast && !skill.spell,
     effects,
     logged: [...stats].flatMap(
@@ -446,6 +450,8 @@ export const fighterProfile = ({
 
   const slows = items.map((item) => itemNumber(item, "slow"));
 
+  extra.shields = items.filter((item) => item.item.type === "SHIELD").length;
+
   extra.shieldArmor = totalOf(
     items.flatMap((item) =>
       item.item.type === "SHIELD" ? [itemNumber(item, "ac")] : [],
@@ -453,6 +459,16 @@ export const fighterProfile = ({
   );
 
   extra.slowSum = totalOf(slows);
+
+  extra.redstun =
+    (bonuses.get("redstun") ?? 0) +
+    totalOf(items.map((item) => itemNumber(item, "redstun")));
+
+  extra.itemDamage = totalOf(items.map((item) => itemNumber(item, "dmgmul")));
+
+  extra.itemUnavoidable = totalOf(
+    items.map((item) => itemNumber(item, "dmgmulabsolute")),
+  );
 
   return {
     profession,
@@ -512,6 +528,7 @@ export const toCombatant = (
     pierceBlock: stats.pierceBlock,
     armor: stats.armor,
     shieldArmor: extraOf("shieldArmor"),
+    hasShield: extraOf("shields") > 0,
     armorDestruction: stats.armorDestruction,
     armorDestructionResist: stats.armorDestructionResist,
     evadePoints: stats.evadePoints,
@@ -540,7 +557,8 @@ export const toCombatant = (
     energyGain: extraOf("energygain"),
     mana: stats.mana,
     physicalBonus: stats.physicalBonus,
-    damageBonus: extraOf("dmgmulabsolute"),
+    allDamageBonus: extraOf("itemDamage"),
+    unavoidableBonus: extraOf("dmgmulabsolute") + extraOf("itemUnavoidable"),
     damageTakenBonus: extraOf("dmg_from_player_per"),
     enemySlow: (extraOf("slowSum") + profile.skillSlow) / 100,
     slowReduction: extraOf("redslow"),

@@ -7,6 +7,7 @@ export type ActiveSkill = {
   readonly cost: number;
   readonly cooldown: number;
   readonly selfCast: boolean;
+  readonly melee: boolean;
   readonly attacks: boolean;
   readonly effects: ReadonlyMap<string, ActiveEffect>;
   readonly logged: readonly (readonly [string, number | null])[];
@@ -25,6 +26,7 @@ type Buff = {
   turnsLeft: number;
   source: number;
   age: number;
+  pending: boolean;
 };
 
 type MasteryStep = ActiveSkill | "attack" | "step" | null;
@@ -158,7 +160,6 @@ const CAST_EFFECTS = [
 const COMBO_EFFECTS = ["combo-skill", "combo-max"];
 
 const TIMING_ONLY_EFFECTS = new Set([
-  "red-sa",
   "lowdmg_self",
   "doublecastcost_per",
   ...COMBO_EFFECTS,
@@ -190,9 +191,15 @@ const buffValue = (buff: Buff) =>
 
 const MAX_SOURCES = 2;
 
+const NEXT_TURN_BUFFS: ReadonlySet<string> = new Set([
+  "critsa",
+  "sa_per",
+  "sa2_per",
+]);
+
 const strongestSources = (state: Pick<SkillUserState, "buffs">, key: string) =>
   state.buffs
-    .filter((buff) => buff.key === key)
+    .filter((buff) => buff.key === key && !buff.pending)
     .map(buffValue)
     .sort((left, right) => Math.abs(right) - Math.abs(left))
     .slice(0, MAX_SOURCES)
@@ -222,6 +229,7 @@ export const addBuff = (
     turnsLeft: Math.max(1, turns),
     source,
     age: 0,
+    pending: NEXT_TURN_BUFFS.has(key),
   });
 };
 
@@ -263,13 +271,14 @@ const planFor = (state: SkillUserState, skill: ActiveSkill): ActionPlan => ({
 
 export type Reach = {
   readonly reachesEnemy: boolean;
+  readonly meleeContact: boolean;
   readonly canStep: boolean;
 };
 
 const canTake = (
   state: SkillUserState,
   step: MasteryStep,
-  { reachesEnemy, canStep }: Reach,
+  { reachesEnemy, meleeContact, canStep }: Reach,
 ) => {
   if (step === null) return false;
 
@@ -277,7 +286,11 @@ const canTake = (
 
   if (step === "step") return canStep;
 
-  return canUse(state, step) && (step.selfCast || reachesEnemy);
+  if (!canUse(state, step)) return false;
+
+  if (step.melee) return meleeContact;
+
+  return step.selfCast || !step.attacks || reachesEnemy;
 };
 
 export const takeAction = (
@@ -336,8 +349,12 @@ export const endSkillTurn = (state: SkillUserState) => {
   state.castThisTurn = null;
 
   for (const buff of state.buffs) {
-    buff.turnsLeft -= 1;
-    buff.age += 1;
+    if (buff.pending) {
+      buff.pending = false;
+    } else {
+      buff.turnsLeft -= 1;
+      buff.age += 1;
+    }
   }
 
   state.buffs = state.buffs.filter((buff) => buff.turnsLeft > 0);

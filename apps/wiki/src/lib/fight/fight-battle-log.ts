@@ -25,7 +25,17 @@ type Skill = Extract<FightEvent, { kind: "skill" }>;
 
 type DamageOverTime = Extract<FightEvent, { kind: "damageOverTime" }>;
 
-const damageKeys = (event: Strike, attacker: Combatant) =>
+const dealtDamageKeys = (event: Strike, attacker: Combatant) =>
+  (
+    [
+      [physicalKey(attacker), "physical"],
+      ["dmgo", "offhand"],
+      ["thirdatt", "third"],
+      ...ELEMENT_KEYS,
+    ] as const
+  ).filter(([, part]) => event.strength[part] > 0);
+
+const takenDamageKeys = (event: Strike, attacker: Combatant) =>
   (
     [
       [physicalKey(attacker), "physical"],
@@ -47,17 +57,6 @@ const valued = (key: string, value: number): Entry => [
 
 const present = (entries: readonly Entry[]) =>
   entries.flatMap(([shown, entry]) => (shown ? [entry] : []));
-
-const triggerEntries = ({ triggers }: Strike): Entry[] => [
-  valued("+engback", triggers.energyBack),
-  valued("+injure", triggers.injure),
-  [triggers.critWound, "+critwound"],
-  valued("+actdmg", triggers.poisonResistanceDestroyed),
-  valued("+critsa", triggers.critSpeed),
-  valued("+critpoison_per", triggers.critPoison),
-  valued("+critpierce", triggers.critPierce),
-  [triggers.distracted, "+distract"],
-];
 
 const AURA_KEYS = [
   [
@@ -120,49 +119,20 @@ export const fightBattleLog = (
     reduction > 0 ? `${value},${reduction}` : `${value}`;
 
   const damageOverTimeRows = (event: DamageOverTime) => {
-    const ticks = [
-      {
-        damage: event.poison,
-        action: `poison=${reduced(event.poison, event.poisonReduction)}`,
-      },
-      {
-        damage: event.wound,
-        action: `wound=${reduced(event.wound, event.woundReduction)}`,
-      },
-      {
-        damage: event.injure,
-        action: `injure=${reduced(event.injure, event.lingeringReduction)}`,
-      },
-      {
-        damage: event.critWound,
-        action: `critwound=${reduced(event.critWound, event.lingeringReduction)}`,
-      },
-      { damage: event.anguish, action: `anguish=${event.anguish}` },
-      {
-        damage: event.fire,
-        action: `fire=${reduced(event.fire, event.fireReduction)}`,
-      },
-      {
-        damage: event.light,
-        action: `light=${reduced(event.light, event.lightReduction)}`,
-      },
-      { damage: event.absolute, action: `absolute=${event.absolute}` },
-    ].filter((tick) => tick.damage > 0);
-
     const healTag = lastHeal(event.lastHeal, event.actor, event.hp);
     const finalHp = event.hp[event.actor] ?? 0;
 
-    if (ticks.length === 0) {
+    if (event.ticks.length === 0) {
       return [[side(event.actor, finalHp), "0", ...healTag].join(";")];
     }
 
     let hp =
       finalHp -
       event.lastHeal +
-      ticks.reduce((total, tick) => total + tick.damage, 0);
+      event.ticks.reduce((total, tick) => total + tick.damage, 0);
 
-    return ticks.map((tick, index) => {
-      const isLast = index === ticks.length - 1;
+    return event.ticks.map((tick, index) => {
+      const isLast = index === event.ticks.length - 1;
 
       hp -= tick.damage;
 
@@ -170,7 +140,11 @@ export const fightBattleLog = (
         side(event.actor, isLast ? finalHp : Math.max(0, hp)),
         "0",
         ...(isLast ? healTag : []),
-        tick.action,
+        ...present([
+          [event.immune, "-immunity_to_dmg"],
+          valued("-poison_lowdmg_per", tick.poisonWeakening),
+        ]),
+        `${tick.kind}=${reduced(tick.damage, tick.reduction)}`,
       ].join(";");
     });
   };
@@ -194,13 +168,12 @@ export const fightBattleLog = (
           : `${key}=${value}`,
     ),
     ...present([
-      valued("heal_target", event.healed),
-      valued("bandage", event.bandaged),
       [event.manaRestored > 0, `mana=-${event.manaRestored}`],
       [event.energyRestored > 0, `energy=-${event.energyRestored}`],
-      valued("stealmana", event.manaStolen),
-      valued("+manadest", event.manaDestroyed),
-      valued("+endest", event.energyDestroyed),
+      valued("bandage", event.bandaged),
+      valued("heal_target", event.healed),
+      drained("+manadest", event.manaDestroyed),
+      drained("+endest", event.energyDestroyed),
     ]),
     ...lastHeal(event.lastHeal, event.target, event.hp),
     ...present([
@@ -218,77 +191,98 @@ export const fightBattleLog = (
     ...event.swings.map((swing) =>
       otherDamage(swing.damage, "a", swing.target, event.hp),
     ),
+    ...present([valued("stealmana", event.manaStolen)]),
   ];
 
   const strikeActions = (event: Strike, attacker: Combatant) => {
-    const damage = damageKeys(event, attacker);
+    const { triggers } = event;
 
     return [
       ...present([
+        valued("+rage", event.rage),
         [event.crit, "+crit"],
         [event.offhandCrit, "+of_crit"],
         [event.veryCrit, "+legbon_verycrit"],
+        valued("+critslow_per", event.critSlow),
+        [triggers.distracted, "+distract"],
+        valued("+engback", triggers.energyBack),
+        valued("+critsa", triggers.critSpeed),
+        valued("+actdmg", triggers.poisonResistanceDestroyed),
+        [event.swung, "+swing"],
+      ]),
+      ...event.swings.map((swing) =>
+        otherDamage(swing.damage, " ", swing.target, event.hp),
+      ),
+      ...present([
         [event.pierceShown, "+pierce"],
         [event.fastArrow, "+fastarrow"],
+        valued("+vulture", event.vulture),
+        valued("-poison_lowdmg_per", event.poisonWeakened),
       ]),
-      ...damage.map(([key, part]) => `+${key}=${event.strength[part]}`),
+      ...dealtDamageKeys(event, attacker).map(
+        ([key, part]) => `+${key}=${event.strength[part]}`,
+      ),
       ...present([
+        [event.arrowBlocked, "-arrowblock"],
+        [event.parried, "-parry"],
+        valued("+critpoison_per", triggers.critPoison),
         [event.glare, "-legbon_glare"],
         [event.curse, "+legbon_curse"],
-        valued("+acdmg", Math.round(event.armorDestroyed)),
-        valued("+resdmg", event.resistanceDestroyed),
-        valued("+abdest", event.absorbDestroyed),
-        valued("+absorb", event.absorbRenewed),
-        valued("+absorbm", event.absorbMagicRenewed),
-        valued("+energy", event.energyBurned),
-        drained("-endest", event.energyDrained),
-        drained("-manadest", event.manaDrained),
         valued("-redacdmg", event.armorDestructionResisted),
         [
           event.armorDestructionReduction > 0,
           `-redacdmg_per=-${event.armorDestructionReduction}`,
         ],
+        valued("+acdmg", Math.round(event.armorDestroyed)),
+        valued("+critpierce", triggers.critPierce),
+        [event.armorBroken, "+acdmg_destroyed"],
+        valued("+resdmg", event.resistanceDestroyed),
         valued("+lowheal2turns", event.enemyHealingCut),
         valued("-lowcritallval", event.critValueReduced),
+        drained("-manadest", event.manaDrained),
+        drained("-endest", event.energyDrained),
+        valued("+energy", event.energyBurned),
         [event.evaded, "-evade"],
-        [event.parried, "-parry"],
-        [event.arrowBlocked, "-arrowblock"],
+        valued("+abdest", event.absorbDestroyed),
+        [event.stun, "+stun"],
+        valued("+absorb", event.absorbRenewed),
+        valued("+absorbm", event.absorbMagicRenewed),
         valued("-blok", event.blocked),
         [event.pierceBlocked, "-pierceb"],
-        [event.wounds.main && !event.wounds.halved, "+wound"],
+        [event.freeze, "+freeze"],
+        valued("-absorb", event.absorbed),
         [event.wounds.main && event.wounds.halved, "+woundpoison=50"],
+        valued("-absorbm", event.absorbedMagic),
+        [event.wounds.main && !event.wounds.halved, "+wound"],
         [event.wounds.offhand && !event.wounds.halved, "+of_wound"],
         [event.wounds.offhand && event.wounds.halved, "+of_woundpoison=50"],
-        [event.stun, "+stun"],
-        [event.freeze, "+freeze"],
         [event.anguish, "+legbon_anguish"],
         [event.holyTouch, "+legbon_holytouch"],
-        valued("-absorb", event.absorbed),
-        valued("-absorbm", event.absorbedMagic),
         valued("+legbon_puncture", event.puncture),
         valued("-legbon_critred", event.critred),
         valued("-legbon_facade", event.facade),
+        [triggers.critWound, "+critwound"],
+        valued("+injure", triggers.injure),
+        valued("+taken_dmg", event.takenBonus),
         [event.cleansed, "-legbon_cleanse"],
+        valued(crushKey(attacker), event.crush),
+        [event.vamp !== null, `vamp_time=${event.vamp}`],
+      ]),
+      ...lastHeal(event.lastHeal, event.target, event.hp),
+      ...present([
         [event.immune, "-immunity_to_dmg"],
         [event.countered, "-contra"],
-        valued("+taken_dmg", event.takenBonus),
-        valued("vamp_time", event.vamp),
-        [event.swung, "+swing"],
-        ...triggerEntries(event),
-        valued(crushKey(attacker), event.crush),
-        valued("+vulture", event.vulture),
-        valued("-poison_lowdmg_per", event.poisonWeakened),
+      ]),
+      ...takenDamageKeys(event, attacker).map(
+        ([key, part]) => `-${key}=${event.damage[part]}`,
+      ),
+      ...present([
+        valued("-dmga", event.unavoidable),
         [
           event.reflected > 0,
           otherDamage(event.reflected, "a", event.actor, event.hp),
         ],
       ]),
-      ...event.swings.map((swing) =>
-        otherDamage(swing.damage, " ", swing.target, event.hp),
-      ),
-      ...lastHeal(event.lastHeal, event.target, event.hp),
-      ...damage.map(([key, part]) => `-${key}=${event.damage[part]}`),
-      ...present([valued("-dmga", event.takenBonus + event.crushDamage)]),
     ];
   };
 
@@ -307,7 +301,9 @@ export const fightBattleLog = (
       case "step":
         return [`${sideAt(event.actor, event.hp)};0;step`];
       case "lostTurn":
-        return [`0;0;txt=${nameOf(event.actor)} - utrata tury`];
+        return [
+          `0;0;txt=${nameOf(event.actor)} - utrata tury${event.stunReduction > 0 ? ` (redukcja ogłuszenia ${event.stunReduction}%)` : ""}`,
+        ];
       case "damageOverTime":
         return damageOverTimeRows(event);
       case "energyRegen":
