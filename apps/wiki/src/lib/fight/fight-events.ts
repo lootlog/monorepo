@@ -90,6 +90,7 @@ export type FightEvent =
 export type FightRecorder = (
   event: FightEvent,
   states: readonly FighterState[],
+  turn: number,
 ) => void;
 
 export type FightResult = {

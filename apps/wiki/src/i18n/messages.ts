@@ -289,9 +289,12 @@ const messages = {
       "Symulacja pomija umiejętności: {{skills}}. Ich efekty nie są jeszcze modelowane.",
     limits: "Wynik to oszacowanie, nie zapis prawdziwej walki.",
     turn: {
-      title: "Tura #{{number}}",
+      title: "Tura {{number}}",
+      start: "Początek walki",
+      end: "Koniec walki",
       previous: "Poprzednia tura",
       next: "Następna tura",
+      close: "Zamknij szczegóły tury",
       changes: "Stan przed ruchem → po ruchu.",
       stateCaption: "Stan obu postaci w tej turze",
       sections: {
@@ -319,7 +322,7 @@ const messages = {
         attack: "Zwykły atak",
         step: "Krok naprzód",
       },
-      chancesTitle: "Szanse ciosu: {{attacker}} → {{defender}}",
+      chancesTitle: "Szanse ciosu #{{row}}: {{attacker}} → {{defender}}",
       happened: "wypadło",
       unavoidable: "nie do uniknięcia",
       chances: {

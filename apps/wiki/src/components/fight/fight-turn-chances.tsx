@@ -1,5 +1,5 @@
 import { cn } from "cn";
-import { formatDecimal } from "@lootlog/domain/locale";
+import { formatDecimal, formatNumber } from "@lootlog/domain/locale";
 import { t } from "@/i18n/messages";
 import { MAX_EVADE_OR_BLOCK } from "@/lib/fight/fight-defence";
 import type { EvadeChance } from "@/lib/fight/fight-chances";
@@ -106,9 +106,11 @@ const chanceRows = (event: StrikeEvent): ChanceRow[] => {
 };
 
 export function FightTurnChances({
+  row,
   event,
   nameOf,
 }: {
+  row: number;
   event: StrikeEvent;
   nameOf: (index: number) => string;
 }) {
@@ -118,14 +120,15 @@ export function FightTurnChances({
 
   return (
     <section
-      aria-labelledby="fight-turn-chances"
+      aria-labelledby={`fight-turn-chances-${row}`}
       className="flex flex-col gap-1"
     >
       <h3
-        id="fight-turn-chances"
+        id={`fight-turn-chances-${row}`}
         className="border-b border-border/50 pb-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase"
       >
         {t("fightPage.turn.chancesTitle", {
+          row: formatNumber(row),
           attacker: nameOf(event.actor),
           defender: nameOf(event.target),
         })}

@@ -1,4 +1,3 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRef, useState } from "react";
 import { I18nextProvider } from "react-i18next";
 import { cn } from "cn";
@@ -6,7 +5,6 @@ import { BattleLog } from "@lootlog/battle-ui/components/battle-log";
 import { BattleSummarySection } from "@lootlog/battle-ui/components/battle-summary-section";
 import { BATTLE_TEXT_COLORS } from "@lootlog/battle-ui/lib/battle-color-palette";
 import { formatNumber } from "@lootlog/domain/locale";
-import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { SectionCard } from "@lootlog/ui/components/section-card";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
@@ -21,6 +19,7 @@ import { battleI18n } from "@/lib/battle-i18n";
 import { fightOutcome } from "@/lib/fight/fight-list";
 import type { FightSample } from "@/lib/fight/fight-run";
 import { FightBattleStats } from "./fight-battle-stats";
+import { FightStepButtons } from "./fight-step-buttons";
 import { FightTurnDialog } from "./fight-turn-dialog";
 
 const OUTCOME_CLASS = {
@@ -44,19 +43,11 @@ export function FightReplay({
 }: FightReplayProps) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const outcome = fightOutcome(sample.result.winner);
-  const [selectedTurn, setSelectedTurn] = useState<number | null>(null);
+  const [turnIndex, setTurnIndex] = useState<number | null>(null);
   const [isTurnOpen, setIsTurnOpen] = useState(false);
   const [scrollRequest, setScrollRequest] = useState(0);
-  const { turns } = sample;
-  const turn = selectedTurn === null ? undefined : turns[selectedTurn - 1];
-
-  const move =
-    selectedTurn === null
-      ? undefined
-      : sample.rawBattle.events[selectedTurn - 1];
-
-  const warriorOf = (id: string | null | undefined) =>
-    sample.battle.warriors.find((warrior) => warrior.originalId === id);
+  const { turns, turnOfRow } = sample;
+  const turn = turnIndex === null ? undefined : turns[turnIndex];
 
   const [mineWarrior, theirWarrior] = [1, 2].map((id) =>
     sample.battle.warriors.find((warrior) => warrior.originalId === String(id)),
@@ -66,11 +57,11 @@ export function FightReplay({
     sample.result.fighters[fighter]?.name ?? "";
 
   const stepTurn = (offset: number) => {
-    const target = (selectedTurn ?? 0) + offset;
+    const target = (turnIndex ?? -1) + offset;
 
-    return target >= 1 && target <= turns.length
+    return target >= 0 && target < turns.length
       ? () => {
-          setSelectedTurn(target);
+          setTurnIndex(target);
           setScrollRequest((request) => request + 1);
         }
       : null;
@@ -92,28 +83,12 @@ export function FightReplay({
           </span>
         }
         actions={
-          <div className="flex gap-1">
-            <Button
-              size="icon-xs"
-              variant="outline"
-              onClick={onPrevious ?? undefined}
-              disabled={!onPrevious}
-              aria-label={t("fightPage.previousFight")}
-              title={t("fightPage.previousFight")}
-            >
-              <ChevronLeft aria-hidden="true" />
-            </Button>
-            <Button
-              size="icon-xs"
-              variant="outline"
-              onClick={onNext ?? undefined}
-              disabled={!onNext}
-              aria-label={t("fightPage.nextFight")}
-              title={t("fightPage.nextFight")}
-            >
-              <ChevronRight aria-hidden="true" />
-            </Button>
-          </div>
+          <FightStepButtons
+            previousLabel={t("fightPage.previousFight")}
+            nextLabel={t("fightPage.nextFight")}
+            onPrevious={onPrevious}
+            onNext={onNext}
+          />
         }
       />
       <Tabs defaultValue="log" className="min-h-0 flex-1 gap-0">
@@ -134,10 +109,10 @@ export function FightReplay({
                 warriors={sample.battle.warriors}
                 scrollViewportRef={viewportRef}
                 hideHeading
-                selectedTurn={selectedTurn}
+                selectedTurn={turn?.entries[0]?.row ?? null}
                 scrollToSelectedTurnRequestId={scrollRequest}
-                onTurnSelect={(number) => {
-                  setSelectedTurn(number);
+                onTurnSelect={(row) => {
+                  setTurnIndex(turnOfRow[row - 1] ?? null);
                   setIsTurnOpen(true);
                 }}
               />
@@ -156,17 +131,9 @@ export function FightReplay({
         </I18nextProvider>
       </Tabs>
       <FightTurnDialog
-        open={
-          isTurnOpen && turn && move && selectedTurn !== null
-            ? {
-                number: selectedTurn,
-                turn,
-                move,
-                attacker: warriorOf(move.attackerId),
-                defender: warriorOf(move.defenderId),
-              }
-            : null
-        }
+        turn={isTurnOpen ? (turn ?? null) : null}
+        moves={sample.rawBattle.events}
+        warriors={sample.battle.warriors}
         nameOf={nameOf}
         onPrevious={stepTurn(-1)}
         onNext={stepTurn(1)}

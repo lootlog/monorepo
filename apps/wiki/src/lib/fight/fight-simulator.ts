@@ -360,6 +360,7 @@ type Turn = {
   targeting: Targeting;
   random: () => number;
   record: EventSink | undefined;
+  openTurn: (() => EventSink) | undefined;
   inspect: boolean;
   hpOf: () => number[];
 };
@@ -513,18 +514,25 @@ const castSkill = (
 
 const MAX_COUNTER_CHAIN = 10;
 
-const forcedTurnOf = (turn: Turn, actor: FighterState): Turn =>
-  actor.team === turn.actor.team
-    ? { ...turn, actor }
-    : { ...turn, actor, allies: turn.enemies, enemies: turn.allies };
+const forcedTurnOf = (turn: Turn, actor: FighterState): Turn => {
+  const sameTeam = actor.team === turn.actor.team;
+
+  return {
+    ...turn,
+    actor,
+    allies: sameTeam ? turn.allies : turn.enemies,
+    enemies: sameTeam ? turn.enemies : turn.allies,
+    record: turn.openTurn?.(),
+  };
+};
 
 const takeForcedTurn = (
   turn: Turn,
   attacker: FighterState,
   defender: FighterState,
 ): Strike | null => {
-  const { random, record, hpOf } = turn;
   const forcedTurn = forcedTurnOf(turn, attacker);
+  const { random, record, hpOf } = forcedTurn;
 
   startTurn(forcedTurn);
 
@@ -692,7 +700,17 @@ export const simulateFight = (
   const enemiesOf = teammates(states, false);
   const alliesOf = teammates(states, true);
 
-  const sink = record && ((event: FightEvent) => record(event, states));
+  let turns = 0;
+
+  const openTurn =
+    record &&
+    (() => {
+      const number = turns;
+
+      turns += 1;
+
+      return (event: FightEvent) => record(event, states, number);
+    });
 
   const hpOf = () => states.map((state) => state.hp);
   const maxMoves = MOVES_PER_PLAYER * states.length;
@@ -709,7 +727,8 @@ export const simulateFight = (
       enemies: enemiesOf[actor.index] ?? [],
       targeting,
       random,
-      record: sink,
+      record: openTurn?.(),
+      openTurn,
       inspect,
       hpOf,
     };
@@ -725,7 +744,7 @@ export const simulateFight = (
     if (stunned) actor.stunned = false;
     else actor.cursed = false;
 
-    if (lost) sink?.({ kind: "lostTurn", actor: actor.index });
+    if (lost) turn.record?.({ kind: "lostTurn", actor: actor.index });
 
     const timeFactor = lost ? lostTime : act(turn);
 

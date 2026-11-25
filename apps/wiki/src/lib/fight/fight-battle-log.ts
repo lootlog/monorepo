@@ -80,7 +80,7 @@ const drained = (
   reduced > 0 ? `${key}=${amount},${reduced}` : `${key}=${amount}`,
 ];
 
-type FightLogRow = {
+export type FightLogRow = {
   readonly event: number | null;
   readonly at: number;
 };

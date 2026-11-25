@@ -1,23 +1,24 @@
-import type { KeyboardEvent } from "react";
+import { useId, type KeyboardEvent } from "react";
 import { I18nextProvider } from "react-i18next";
+import { X } from "lucide-react";
 import { BattleEventEntry } from "@lootlog/battle-ui/components/battle-event-entry";
+import { BATTLE_TEXT_COLORS } from "@lootlog/battle-ui/lib/battle-color-palette";
 import type {
   BattleWarrior,
   RawBattleParsedEvent,
 } from "@lootlog/battle-ui/lib/battle-types";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { BATTLE_TEXT_COLORS } from "@lootlog/battle-ui/lib/battle-color-palette";
 import { formatNumber } from "@lootlog/domain/locale";
 import { Button } from "@lootlog/ui/components/button";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
 } from "@lootlog/ui/components/dialog";
+import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { t } from "@/i18n/messages";
-import type { FightTurn } from "@/lib/fight/fight-run";
 import { battleI18n } from "@/lib/battle-i18n";
+import type { FightTurn } from "@/lib/fight/fight-turns";
+import { FightStepButtons } from "./fight-step-buttons";
 import { FightTurnChances } from "./fight-turn-chances";
 import { FightTurnFighterEffects } from "./fight-turn-fighter-effects";
 import { FightTurnState } from "./fight-turn-state";
@@ -30,29 +31,35 @@ const TEAM_CLASSES = [
 const SECTION_HEADING_CLASS =
   "border-b border-border/50 pb-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase";
 
-type OpenTurn = {
-  number: number;
-  turn: FightTurn;
-  move: RawBattleParsedEvent;
-  attacker: BattleWarrior | undefined;
-  defender: BattleWarrior | undefined;
-};
-
 type FightTurnDialogProps = {
-  open: OpenTurn | null;
+  turn: FightTurn | null;
+  moves: readonly RawBattleParsedEvent[];
+  warriors: readonly BattleWarrior[];
   nameOf: (index: number) => string;
   onPrevious: (() => void) | null;
   onNext: (() => void) | null;
   onClose: () => void;
 };
 
+const turnTitle = (turn: FightTurn) =>
+  turn.number === null
+    ? t(`fightPage.turn.${turn.phase === "start" ? "start" : "end"}`)
+    : t("fightPage.turn.title", { number: formatNumber(turn.number) });
+
 export function FightTurnDialog({
-  open,
+  turn,
+  moves,
+  warriors,
   nameOf,
   onPrevious,
   onNext,
   onClose,
 }: FightTurnDialogProps) {
+  const titleId = useId();
+
+  const warriorOf = (id: string | null | undefined) =>
+    warriors.find((warrior) => warrior.originalId === id);
+
   const stepWithArrows = (event: KeyboardEvent) => {
     const step =
       event.key === "ArrowLeft"
@@ -69,73 +76,91 @@ export function FightTurnDialog({
 
   return (
     <Dialog
-      open={open !== null}
+      open={turn !== null}
       onOpenChange={(isOpen) => {
         if (!isOpen) onClose();
       }}
     >
       <DialogContent
+        aria-labelledby={titleId}
+        showCloseButton={false}
         className="flex max-h-[90vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-3xl"
         onKeyDown={stepWithArrows}
       >
-        {open ? (
+        {turn ? (
           <>
-            <div className="flex items-start gap-3 border-b border-border/70 pr-12">
-              <DialogHeader className="min-w-0 pb-3">
-                <DialogTitle>
-                  {t("fightPage.turn.title", {
-                    number: formatNumber(open.number),
-                  })}
-                </DialogTitle>
-              </DialogHeader>
-              <div className="ml-auto flex shrink-0 gap-1 pt-3">
-                <Button
-                  size="icon-sm"
-                  variant="outline"
-                  onClick={onPrevious ?? undefined}
-                  disabled={!onPrevious}
-                  aria-label={t("fightPage.turn.previous")}
-                  title={t("fightPage.turn.previous")}
-                >
-                  <ChevronLeft aria-hidden="true" />
-                </Button>
-                <Button
-                  size="icon-sm"
-                  variant="outline"
-                  onClick={onNext ?? undefined}
-                  disabled={!onNext}
-                  aria-label={t("fightPage.turn.next")}
-                  title={t("fightPage.turn.next")}
-                >
-                  <ChevronRight aria-hidden="true" />
-                </Button>
-              </div>
-            </div>
+            <SectionCardHeader
+              id={titleId}
+              title={turnTitle(turn)}
+              actions={
+                <>
+                  <FightStepButtons
+                    previousLabel={t("fightPage.turn.previous")}
+                    nextLabel={t("fightPage.turn.next")}
+                    onPrevious={onPrevious}
+                    onNext={onNext}
+                  />
+                  <DialogClose
+                    render={
+                      <Button
+                        size="icon-xs"
+                        variant="ghost"
+                        aria-label={t("fightPage.turn.close")}
+                        title={t("fightPage.turn.close")}
+                      />
+                    }
+                  >
+                    <X aria-hidden="true" />
+                  </DialogClose>
+                </>
+              }
+            />
             <I18nextProvider i18n={battleI18n}>
-              <ul className="shrink-0 border-b border-border/70 text-[13px] leading-[1.35]">
-                <BattleEventEntry
-                  event={open.move}
-                  attacker={open.attacker}
-                  defender={open.defender}
-                  eventIndex={open.number - 1}
-                  turn={open.number}
-                />
+              <ul className="max-h-[30vh] shrink-0 overflow-y-auto border-b border-border/70 text-[13px] leading-[1.35] [scrollbar-width:thin]">
+                {turn.entries.flatMap(({ row }) => {
+                  const move = moves[row - 1];
+
+                  return move
+                    ? [
+                        <BattleEventEntry
+                          key={row}
+                          event={move}
+                          attacker={warriorOf(move.attackerId)}
+                          defender={warriorOf(move.defenderId)}
+                          eventIndex={row - 1}
+                          turn={row}
+                        />,
+                      ]
+                    : [];
+                })}
               </ul>
             </I18nextProvider>
             <div className="grid min-h-0 flex-1 gap-6 overflow-y-auto p-4 [scrollbar-width:thin] md:grid-cols-2">
               <div className="flex flex-col gap-6">
-                {open.turn.event?.kind === "strike" ? (
-                  <FightTurnChances event={open.turn.event} nameOf={nameOf} />
-                ) : null}
+                {turn.entries.flatMap(({ row, event }) =>
+                  event?.kind === "strike"
+                    ? [
+                        <FightTurnChances
+                          key={row}
+                          row={row}
+                          event={event}
+                          nameOf={nameOf}
+                        />,
+                      ]
+                    : [],
+                )}
                 <section
-                  aria-labelledby="fight-turn-effects"
+                  aria-labelledby={`${titleId}-effects`}
                   className="flex flex-col gap-3"
                 >
-                  <h3 id="fight-turn-effects" className={SECTION_HEADING_CLASS}>
+                  <h3
+                    id={`${titleId}-effects`}
+                    className={SECTION_HEADING_CLASS}
+                  >
                     {t("fightPage.turn.effectsTitle")}
                   </h3>
                   <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-1">
-                    {open.turn.after.map((fighter, index) => (
+                    {turn.after.map((fighter, index) => (
                       <FightTurnFighterEffects
                         key={index}
                         index={index}
@@ -148,10 +173,7 @@ export function FightTurnDialog({
                 </section>
               </div>
               <div className="flex flex-col gap-1">
-                <FightTurnState
-                  before={open.turn.before}
-                  after={open.turn.after}
-                />
+                <FightTurnState before={turn.before} after={turn.after} />
                 <p className="text-xs text-muted-foreground">
                   {t("fightPage.turn.changes")}
                 </p>

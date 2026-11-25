@@ -4,6 +4,7 @@ import { fightBattleLog } from "./fight-battle-log";
 import { simulateFight } from "./fight-simulator";
 import type { FightEvent } from "./fight-events";
 import { snapshotFighter, type FighterSnapshot } from "./fight-snapshot";
+import { groupFightTurns, type RecordedEvent } from "./fight-turns";
 import { NO_LEGENDARY_BONUSES, type Combatant } from "./fight-state";
 import { fighter, NO_DAMAGE } from "./fight.fixtures";
 import type { ActiveSkill, MasteryQueue } from "./fight-skills";
@@ -604,6 +605,58 @@ describe("fightBattleLog", () => {
           attacker === String(event.actor + 1) && event.chances !== null,
       ),
     ).toBe(true);
+  });
+
+  test("groups a skill with its strikes into one turn and gives a counter its own", () => {
+    const doubleShot: ActiveSkill = {
+      id: 1,
+      name: "podwójny",
+      resource: "energy",
+      cost: 0,
+      cooldown: 0,
+      selfCast: false,
+      attacks: true,
+      logged: [],
+      effects: new Map([["add_attacks", { value: 1, turns: 1 }]]),
+    };
+
+    const setup = {
+      teams: [
+        [
+          fighter({
+            hp: 1_000_000,
+            critChance: 100,
+            mastery: { steps: [doubleShot], repeat: true },
+          }),
+        ],
+        [fighter({ hp: 1_000_000, attackSpeed: 1, counterChance: 100 })],
+      ],
+    };
+
+    const recorded: RecordedEvent[] = [];
+
+    const result = simulateFight(setup, seededRandom(1), (event, _, turn) => {
+      recorded.push({ event, turn, after: [] });
+    });
+
+    const { turns } = groupFightTurns(
+      fightBattleLog(
+        setup,
+        recorded.map(({ event }) => event),
+        result,
+      ).rows,
+      recorded,
+      [],
+    );
+
+    const kinds = turns.map((turn) =>
+      turn.entries.map(({ event }) =>
+        event ? `${event.kind}:${event.actor}` : null,
+      ),
+    );
+
+    expect(kinds).toContainEqual(["skill:0", "strike:0", "strike:0"]);
+    expect(kinds).toContainEqual(["strike:1"]);
   });
 
   test("shows a skill's cooldown as its own value on the cast and its strike", () => {
