@@ -1,12 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Tabs, TabsContent } from "@lootlog/ui/components/tabs";
-import { EmptyNotice } from "@/components/common/empty-notice";
 import { ShareLinkButton } from "@/components/common/share-link-button";
 import { EquipmentSetEditor } from "@/components/equipment/equipment-set-editor";
 import { SetItemPickerProvider } from "@/components/equipment/set-item-picker-provider";
 import { FightAnalysis } from "@/components/fight/fight-analysis";
 import { FightCharacterStats } from "@/components/fight/fight-character-stats";
+import { FightEmptyState } from "@/components/fight/fight-empty-state";
 import { FightFighters } from "@/components/fight/fight-fighters";
 import { FightList } from "@/components/fight/fight-list";
 import { FightReplay } from "@/components/fight/fight-replay";
@@ -244,11 +244,10 @@ function FightRoute() {
                 }
               />
             ) : (
-              <EmptyNotice>
-                {fighters
-                  ? t("fightPage.notSimulated")
-                  : t("fightPage.missingProfession")}
-              </EmptyNotice>
+              <FightEmptyState
+                canSimulate={fighters !== null}
+                onSimulate={simulate}
+              />
             )
           }
           fights={

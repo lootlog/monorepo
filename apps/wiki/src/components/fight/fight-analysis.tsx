@@ -28,7 +28,7 @@ export function FightAnalysis({
         className={
           fights
             ? "order-3 min-w-0 lg:order-none lg:col-start-2 2xl:sticky 2xl:top-[7rem] 2xl:col-start-3 2xl:row-start-1 2xl:max-h-[calc(100dvh-8rem)] 2xl:overflow-y-auto 2xl:[scrollbar-width:thin]"
-            : "order-2 min-w-0 lg:order-none"
+            : "order-2 flex min-w-0 items-center justify-center lg:order-none lg:min-h-[calc(100dvh-8rem)] 2xl:col-span-2"
         }
       >
         {results}

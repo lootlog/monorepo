@@ -198,6 +198,7 @@ const messages = {
     runsLabel: "Liczba walk",
     runsOption: "{{runs}} walk",
     missingProfession: "Wybierz profesję obu postaci, żeby zasymulować walkę.",
+    emptyTitle: "Brak symulacji",
     notSimulated:
       "Ustaw obie postacie i kliknij „Symuluj”. Zmiany w zestawach wymagają ponownej symulacji.",
     stale: "Zestawy zmieniły się od ostatniej symulacji.",
