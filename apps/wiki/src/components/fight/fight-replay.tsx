@@ -125,6 +125,7 @@ export function FightReplay({
                 rawBattle={sample.rawBattle}
                 warriors={sample.battle.warriors}
                 scrollViewportRef={viewportRef}
+                hideHeading
                 selectedTurn={selectedTurn}
                 scrollToSelectedTurnRequestId={scrollRequest}
                 onTurnSelect={(number) => {
