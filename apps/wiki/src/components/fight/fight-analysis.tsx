@@ -20,7 +20,7 @@ export function FightAnalysis({
         <div className="order-4 lg:order-none">{characterStats}</div>
       </div>
       {fights ? (
-        <div className="order-2 flex min-w-0 flex-col gap-4 lg:order-none lg:col-start-2 lg:row-start-1 2xl:sticky 2xl:top-[7rem] 2xl:h-[calc(100dvh-8rem)]">
+        <div className="order-2 flex min-w-0 flex-col gap-4 lg:order-none lg:col-start-2 lg:row-start-1">
           {fights}
         </div>
       ) : null}
