@@ -72,6 +72,43 @@ describe("positions", () => {
     ).toEqual(["okrzyk", "step", "strike"]);
   });
 
+  test("steps toward a distant enemy and keeps the queued attack skill instead of skipping to later skills", () => {
+    const skill = (
+      name: string,
+      selfCast: boolean,
+      attacks: boolean,
+    ): ActiveSkill => ({
+      id: 3,
+      name,
+      resource: "energy",
+      cost: 0,
+      cooldown: 20,
+      selfCast,
+      melee: false,
+      attacks,
+      logged: [],
+      effects: new Map([["perdmg", { value: 10, turns: 3 }]]),
+    });
+
+    expect(
+      actionsOf(
+        {
+          position: 1,
+          mastery: {
+            steps: [
+              skill("tarcza", true, false),
+              skill("uderzenie", false, true),
+              skill("blask", true, false),
+            ],
+            repeat: true,
+          },
+        },
+        { position: 3 },
+        5,
+      ),
+    ).toEqual(["tarcza", "step", "step", "uderzenie", "strike"]);
+  });
+
   test("casts a spell on a distant enemy without stepping, but a melee-only skill only in contact", () => {
     const skill = (name: string, melee: boolean): ActiveSkill => ({
       id: 2,
