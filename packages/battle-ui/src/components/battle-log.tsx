@@ -53,7 +53,7 @@ export const BattleLog: FC<BattleLogProps> = ({
   const deferredQuery = useDeferredValue(searchQuery);
   const [activeSearchMatchIndex, setActiveSearchMatchIndex] = useState(-1);
   const toolbarRef = useRef<HTMLDivElement>(null);
-  const turnFocusHandlerRef = useRef(onTurnFocus ?? onTurnSelect);
+  const turnFocusHandlerRef = useRef(onTurnFocus);
 
   const { events } = rawBattle;
 
@@ -114,8 +114,8 @@ export const BattleLog: FC<BattleLogProps> = ({
   const activeSearchTurn = searchMatchTurns[currentMatchIndex] ?? null;
 
   useEffect(() => {
-    turnFocusHandlerRef.current = onTurnFocus ?? onTurnSelect;
-  }, [onTurnFocus, onTurnSelect]);
+    turnFocusHandlerRef.current = onTurnFocus;
+  }, [onTurnFocus]);
 
   useEffect(() => {
     if (activeSearchTurn === null || activeSearchTurn === undefined) {

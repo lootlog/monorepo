@@ -1,4 +1,4 @@
-import { escapeRegExp } from "es-toolkit";
+import { highlightSegments } from "@/lib/highlight-segments";
 
 type HighlightedTextProps = {
   text: string;
@@ -6,22 +6,16 @@ type HighlightedTextProps = {
 };
 
 export function HighlightedText({ text, query }: HighlightedTextProps) {
-  const words = query.trim().split(/\s+/).filter(Boolean).map(escapeRegExp);
-
-  if (words.length === 0) return text;
-
-  const parts = text.split(new RegExp(`(${words.join("|")})`, "giu"));
-
-  return parts.map((part, index) =>
-    index % 2 === 1 ? (
+  return highlightSegments(text, query).map((segment, index) =>
+    segment.marked ? (
       <mark
         key={index}
         className="rounded-xs bg-primary/20 text-inherit [box-decoration-break:clone]"
       >
-        {part}
+        {segment.text}
       </mark>
     ) : (
-      part
+      segment.text
     ),
   );
 }
