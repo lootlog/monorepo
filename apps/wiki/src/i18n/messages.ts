@@ -292,18 +292,6 @@ const messages = {
       title: "Tura #{{number}}",
       previous: "Poprzednia tura",
       next: "Następna tura",
-      start: "Początek walki",
-      end: "Koniec walki",
-      kinds: {
-        strike: "{{actor}}: cios",
-        skill: "{{actor}}: {{skill}}",
-        damageOverTime: "{{actor}}: obrażenia z czasem",
-        heal: "{{actor}}: leczenie",
-        energyRegen: "{{actor}}: odnowienie energii",
-        holyTouchHeal: "{{actor}}: Dotyk anioła",
-        lostTurn: "{{actor}}: utrata tury",
-        step: "{{actor}}: krok naprzód",
-      },
       changes: "Stan przed ruchem → po ruchu.",
       stateCaption: "Stan obu postaci w tej turze",
       sections: {

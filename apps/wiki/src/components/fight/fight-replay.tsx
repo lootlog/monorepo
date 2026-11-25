@@ -50,6 +50,14 @@ export function FightReplay({
   const { turns } = sample;
   const turn = selectedTurn === null ? undefined : turns[selectedTurn - 1];
 
+  const move =
+    selectedTurn === null
+      ? undefined
+      : sample.rawBattle.events[selectedTurn - 1];
+
+  const warriorOf = (id: string | null | undefined) =>
+    sample.battle.warriors.find((warrior) => warrior.originalId === id);
+
   const [mineWarrior, theirWarrior] = [1, 2].map((id) =>
     sample.battle.warriors.find((warrior) => warrior.originalId === String(id)),
   );
@@ -149,13 +157,13 @@ export function FightReplay({
       </Tabs>
       <FightTurnDialog
         open={
-          isTurnOpen && turn && selectedTurn !== null
+          isTurnOpen && turn && move && selectedTurn !== null
             ? {
                 number: selectedTurn,
                 turn,
-                isEnd:
-                  selectedTurn - 1 >
-                  turns.findIndex((entry) => entry.event !== null),
+                move,
+                attacker: warriorOf(move.attackerId),
+                defender: warriorOf(move.defenderId),
               }
             : null
         }

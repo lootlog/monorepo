@@ -2,7 +2,6 @@ import { formatDecimal } from "@lootlog/domain/locale";
 import { t } from "@/i18n/messages";
 import { pluralForm } from "@/lib/plural";
 import { skillEffectLine } from "@/lib/skills/skill-effects";
-import type { FightEvent } from "./fight-events";
 import type {
   FighterBuff,
   FighterCondition,
@@ -40,17 +39,3 @@ export const nextActionLabel = (action: NextAction) =>
   action.kind === "skill"
     ? action.name
     : t(`fightPage.turn.nextActions.${action.kind}`);
-
-export const turnEventLabel = (
-  event: FightEvent | null,
-  isEnd: boolean,
-  nameOf: (index: number) => string,
-) => {
-  if (event === null)
-    return t(isEnd ? "fightPage.turn.end" : "fightPage.turn.start");
-
-  return t(`fightPage.turn.kinds.${event.kind}`, {
-    actor: nameOf(event.actor),
-    skill: event.kind === "skill" ? event.skill.name : "",
-  });
-};

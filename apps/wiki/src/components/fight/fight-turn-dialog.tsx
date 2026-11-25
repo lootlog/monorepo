@@ -1,4 +1,10 @@
 import type { KeyboardEvent } from "react";
+import { I18nextProvider } from "react-i18next";
+import { BattleEventEntry } from "@lootlog/battle-ui/components/battle-event-entry";
+import type {
+  BattleWarrior,
+  RawBattleParsedEvent,
+} from "@lootlog/battle-ui/lib/battle-types";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { BATTLE_TEXT_COLORS } from "@lootlog/battle-ui/lib/battle-color-palette";
 import { formatNumber } from "@lootlog/domain/locale";
@@ -6,13 +12,12 @@ import { Button } from "@lootlog/ui/components/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@lootlog/ui/components/dialog";
 import { t } from "@/i18n/messages";
 import type { FightTurn } from "@/lib/fight/fight-run";
-import { turnEventLabel } from "@/lib/fight/fight-turn-labels";
+import { battleI18n } from "@/lib/battle-i18n";
 import { FightTurnChances } from "./fight-turn-chances";
 import { FightTurnFighterEffects } from "./fight-turn-fighter-effects";
 import { FightTurnState } from "./fight-turn-state";
@@ -28,7 +33,9 @@ const SECTION_HEADING_CLASS =
 type OpenTurn = {
   number: number;
   turn: FightTurn;
-  isEnd: boolean;
+  move: RawBattleParsedEvent;
+  attacker: BattleWarrior | undefined;
+  defender: BattleWarrior | undefined;
 };
 
 type FightTurnDialogProps = {
@@ -74,15 +81,12 @@ export function FightTurnDialog({
         {open ? (
           <>
             <div className="flex items-start gap-3 border-b border-border/70 pr-12">
-              <DialogHeader className="min-w-0 gap-1 pb-3">
+              <DialogHeader className="min-w-0 pb-3">
                 <DialogTitle>
                   {t("fightPage.turn.title", {
                     number: formatNumber(open.number),
                   })}
                 </DialogTitle>
-                <DialogDescription>
-                  {turnEventLabel(open.turn.event, open.isEnd, nameOf)}
-                </DialogDescription>
               </DialogHeader>
               <div className="ml-auto flex shrink-0 gap-1 pt-3">
                 <Button
@@ -107,6 +111,17 @@ export function FightTurnDialog({
                 </Button>
               </div>
             </div>
+            <I18nextProvider i18n={battleI18n}>
+              <ul className="shrink-0 border-b border-border/70 text-[13px] leading-[1.35]">
+                <BattleEventEntry
+                  event={open.move}
+                  attacker={open.attacker}
+                  defender={open.defender}
+                  eventIndex={open.number - 1}
+                  turn={open.number}
+                />
+              </ul>
+            </I18nextProvider>
             <div className="grid min-h-0 flex-1 gap-6 overflow-y-auto p-4 [scrollbar-width:thin] md:grid-cols-2">
               <div className="flex flex-col gap-6">
                 {open.turn.event?.kind === "strike" ? (
