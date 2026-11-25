@@ -23,11 +23,14 @@ const levelGap = (attacker: FighterState, defender: FighterState) => {
   return Math.sign(gap) * Math.max(Math.abs(gap) - LEVEL_GAP_GRACE, 0);
 };
 
-export const critValueGain = (attacker: FighterState, defender: FighterState) =>
+export const critValueShift = (
+  attacker: FighterState,
+  defender: FighterState,
+) =>
   Math.min(
     MAX_CRIT_VALUE_GAIN,
     levelGap(attacker, defender) * CRIT_VALUE_PER_LEVEL,
-  );
+  ) - defender.combatant.critValueReduction;
 
 export const rollCrit = (
   attacker: FighterState,

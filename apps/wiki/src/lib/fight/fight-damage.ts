@@ -1,4 +1,4 @@
-import { critValueGain } from "./fight-crit";
+import { critValueShift } from "./fight-crit";
 import {
   absorbFrom,
   armorAgainst,
@@ -43,13 +43,13 @@ export type Hit = {
 const critValue = ({ attacker, defender }: Hit) =>
   attacker.combatant.critValue +
   buffTotal(attacker, "critval-allies", "critval-enemies") +
-  critValueGain(attacker, defender);
+  critValueShift(attacker, defender);
 
 const critMagicValue = ({ attacker, defender }: Hit, element: number) =>
   attacker.combatant.critMagicValue +
   element +
   buffTotal(attacker, "critmval-allies", "critmval-enemies") +
-  critValueGain(attacker, defender);
+  critValueShift(attacker, defender);
 
 export const physicalStrength = (hit: Hit) => {
   const { attacker, plan, crit, random } = hit;

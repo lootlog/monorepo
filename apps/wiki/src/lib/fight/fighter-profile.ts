@@ -58,36 +58,15 @@ export type FighterProfile = {
   passives: PassiveEffects;
 };
 
-const EXTRA_ITEM_KEYS = [
-  "lowevade",
-  "acdmg",
-  "lowcrit",
-  "dmgmulphysical",
-  "pierceb",
-  "act",
-  "woundred",
-  "adest",
-  "contra",
-  "parry",
-  "abdest",
-  "resdmg",
-];
-
 const EXTRA_SKILL_KEYS = [
-  "pierceb",
-  "act",
-  "woundred",
   "redslow",
   "fastarrow",
   "critslow_per",
-  "decevade_per",
   "dmg_from_player_per",
   "dmgmulabsolute",
   "energygain",
   "redstun",
-  "contra",
   "pcontra",
-  "parry",
   "rage",
   "rage_3turns",
   "redacdmg_per",
@@ -95,7 +74,6 @@ const EXTRA_SKILL_KEYS = [
   "absagain_per",
   "redabdest_per",
   "reddest_per",
-  "resdmg",
   "swing",
   "critmval_f",
   "critmval_c",
@@ -462,17 +440,9 @@ export const fighterProfile = ({
 
   const extra: Record<string, number> = {};
 
-  for (const key of EXTRA_ITEM_KEYS) {
-    extra[key] = totalOf(items.map((item) => itemNumber(item, key)));
-  }
-
   for (const key of EXTRA_SKILL_KEYS) {
-    extra[key] = (extra[key] ?? 0) + (bonuses.get(key) ?? 0);
+    extra[key] = bonuses.get(key) ?? 0;
   }
-
-  extra.lowevade =
-    (extra.lowevade ?? 0) +
-    Math.round(((extra.decevade_per ?? 0) * skillPlanLevel(level)) / 20);
 
   const slows = items.map((item) => itemNumber(item, "slow"));
 
@@ -523,6 +493,8 @@ export const toCombatant = (
     light: stats.light,
     poison: stats.poison,
     wound: stats.wound,
+    offhandPoison: stats.offhandPoison,
+    offhandWound: stats.offhandWound,
     attackSpeed: stats.attackSpeed,
     critChance: stats.critChance,
     critValue: stats.critValue,
@@ -534,44 +506,47 @@ export const toCombatant = (
     },
     offhandCritChance: stats.offhandCritChance,
     offhandCritValue: stats.offhandCritValue,
-    critReduction: extraOf("lowcrit"),
+    critReduction: stats.critReduction,
+    critValueReduction: stats.critValueReduction,
     pierce: stats.pierce,
-    pierceBlock: extraOf("pierceb"),
+    pierceBlock: stats.pierceBlock,
     armor: stats.armor,
     shieldArmor: extraOf("shieldArmor"),
-    armorDestruction: extraOf("acdmg"),
+    armorDestruction: stats.armorDestruction,
+    armorDestructionResist: stats.armorDestructionResist,
     evadePoints: stats.evadePoints,
-    evadeReduction: extraOf("lowevade"),
+    evadeReduction: stats.evadeReduction,
     blockPoints: stats.blockPoints,
     absorb: stats.absorb,
     absorbMagic: stats.absorbMagic,
     absorbDistance: extraOf("absorbd"),
     absorbRenewal: extraOf("absagain_per"),
-    absorbDestruction: extraOf("abdest"),
+    absorbDestruction: stats.absorbDestruction,
     absorbDestructionReduction: extraOf("redabdest_per"),
-    resistanceDestruction: extraOf("resdmg"),
+    resistanceDestruction: stats.resistanceDestruction,
     energyDrain: profile.energyDrain,
     manaDrain: profile.manaDrain,
     drainReduction: extraOf("reddest_per"),
+    drainResist: stats.drainResist,
     swingChance: extraOf("swing"),
     resistFire: stats.resFire,
     resistFrost: stats.resFrost,
     resistLight: stats.resLight,
-    resistPoison: extraOf("act"),
-    resistWound: extraOf("woundred"),
+    resistPoison: stats.resistPoison,
+    resistWound: stats.resistWound,
     healing: stats.healing,
-    healingReduction: extraOf("adest"),
+    enemyHealingCut: stats.enemyHealingCut,
     energy: stats.energy,
     energyGain: extraOf("energygain"),
     mana: stats.mana,
-    physicalBonus: extraOf("dmgmulphysical"),
+    physicalBonus: stats.physicalBonus,
     damageBonus: extraOf("dmgmulabsolute"),
     damageTakenBonus: extraOf("dmg_from_player_per"),
     enemySlow: (extraOf("slowSum") + profile.skillSlow) / 100,
     slowReduction: extraOf("redslow"),
     stunReduction: extraOf("redstun"),
-    counterChance: extraOf("contra"),
-    parryChance: extraOf("parry"),
+    counterChance: stats.counterChance,
+    parryChance: stats.parryChance,
     parryCounterChance: extraOf("pcontra"),
     rageTurns: extraOf("rage"),
     rageBonus: extraOf("rage_3turns"),

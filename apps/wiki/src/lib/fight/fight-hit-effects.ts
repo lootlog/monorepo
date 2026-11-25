@@ -200,19 +200,28 @@ export const vampire = (attacker: FighterState, dealt: number) =>
       (1 - buffTotal(attacker, "lowheal_per-enemies") / 100),
   );
 
-export const applyPoison = (
+type WeaponsLanded = { readonly main: boolean; readonly offhand: boolean };
+
+const applyPoison = (
   attacker: FighterState,
   defender: FighterState,
   plan: ActionPlan,
+  landed: WeaponsLanded,
 ) => {
-  const { poison } = attacker.combatant;
+  const { poison, offhandPoison } = attacker.combatant;
 
-  if (poison.damage <= 0) return false;
+  const applied = [
+    ...(landed.main ? [poison] : []),
+    ...(landed.offhand ? [offhandPoison] : []),
+  ].filter((weapon) => weapon.damage > 0);
+
+  if (applied.length === 0) return false;
 
   const damage =
-    poison.damage * (1 + plan.effect("poisonbon_poison-perw") / 100);
+    applied.reduce((total, weapon) => total + weapon.damage, 0) *
+    (1 + plan.effect("poisonbon_poison-perw") / 100);
 
-  const slow = poison.slow;
+  const slow = Math.max(...applied.map((weapon) => weapon.slow));
 
   if (!defender.poison || damage >= defender.poison.damage) {
     defender.poison = {
@@ -228,32 +237,41 @@ export const applyPoison = (
   return true;
 };
 
-export const applyWound = (
+const applyWound = (
   attacker: FighterState,
   defender: FighterState,
   plan: ActionPlan,
-  poisonApplied: boolean,
   random: () => number,
+  landed: WeaponsLanded,
+  poisonApplied: boolean,
 ) => {
-  const { wound } = attacker.combatant;
+  const { wound, offhandWound } = attacker.combatant;
 
-  if (wound.damage <= 0) return false;
-
-  const chance =
+  const mainChance =
     wound.chance +
     (defender.wound === null ? plan.effect("active_wound_per") : 0);
 
-  if (random() >= chance / 100) return false;
+  const main = landed.main && wound.damage > 0 && chance(random, mainChance);
 
-  const cap = WOUND_CAP_FACTOR * wound.damage;
+  const offhand =
+    landed.offhand &&
+    offhandWound.damage > 0 &&
+    chance(random, offhandWound.chance);
+
+  const damage =
+    (main ? wound.damage : 0) + (offhand ? offhandWound.damage : 0);
+
+  if (damage <= 0) return { main, offhand, halved: false };
+
+  const cap = WOUND_CAP_FACTOR * damage;
 
   if (defender.wound === null) {
-    defender.wound = { damage: wound.damage, cap, turnsLeft: DOT_TURNS };
+    defender.wound = { damage, cap, turnsLeft: DOT_TURNS };
 
-    return true;
+    return { main, offhand, halved: false };
   }
 
-  const growth = (WOUND_GROWTH * wound.damage) / (poisonApplied ? 2 : 1);
+  const growth = (WOUND_GROWTH * damage) / (poisonApplied ? 2 : 1);
   defender.wound.cap = Math.max(defender.wound.cap, cap);
   defender.wound.damage = Math.min(
     defender.wound.cap,
@@ -264,7 +282,21 @@ export const applyWound = (
     defender.wound.turnsLeft + WOUND_EXTENSION_TURNS,
   );
 
-  return true;
+  return { main, offhand, halved: poisonApplied };
+};
+
+export const NO_WEAPON_WOUNDS = { main: false, offhand: false, halved: false };
+
+export const applyWeaponDamageOverTime = (
+  attacker: FighterState,
+  defender: FighterState,
+  plan: ActionPlan,
+  random: () => number,
+  landed: WeaponsLanded,
+) => {
+  const poisonApplied = applyPoison(attacker, defender, plan, landed);
+
+  return applyWound(attacker, defender, plan, random, landed, poisonApplied);
 };
 
 const RAGE_3TURNS_TURNS = 3;

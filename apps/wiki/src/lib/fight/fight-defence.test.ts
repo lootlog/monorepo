@@ -53,19 +53,25 @@ describe("damage and defence", () => {
     expect(hit?.absorbedMagic).toBe(2000);
   });
 
-  test("slows with a frost weapon for three of the target's turns", () => {
-    const attacker = createState(
-      fighter({ ...mage, frostSlow: 0.5, hp: 10_000_000 }),
-      0,
-      0,
-    );
+  test.each([
+    { case: "takes frost damage", armor: 0 },
+    { case: "takes no frost damage", armor: 1_000_000 },
+  ])(
+    "slows with a frost weapon for three of the target's turns when it $case",
+    ({ armor }) => {
+      const attacker = createState(
+        fighter({ ...mage, frostSlow: 0.5, hp: 10_000_000 }),
+        0,
+        0,
+      );
 
-    const defender = createState(fighter({ hp: 10_000_000 }), 1, 1);
+      const defender = createState(fighter({ hp: 10_000_000, armor }), 1, 1);
+      const hit = strike(attacker, defender, NO_SKILL, seededRandom(5));
 
-    strike(attacker, defender, NO_SKILL, seededRandom(5));
-
-    expect(defender.frostSlow?.turnsLeft).toBe(3);
-  });
+      expect(hit.damage.frost === 0).toBe(armor > 0);
+      expect(defender.frostSlow?.turnsLeft).toBe(3);
+    },
+  );
 
   test("lets an armor pierce skip armor for magic damage too", () => {
     const frostTaken = (pierce: number) =>
@@ -102,34 +108,109 @@ describe("damage and defence", () => {
     expect(critRate(225)).toBeGreaterThan(0.6);
   });
 
-  test("drains the attacker's energy with the defender's item and logs it on the strike", () => {
-    const setup = {
-      teams: [
-        [fighter({ hp: 10_000_000, energy: 300 })],
-        [
-          fighter({
-            hp: 10_000_000,
-            attackSpeed: 1,
-            energyDrain: { chance: 100, amount: 13 },
-          }),
+  test.each([
+    { drainResist: 0, drained: 13 },
+    { drainResist: 4, drained: 9 },
+  ])(
+    "drains $drained energy past $drainResist of cursed resistance and logs it on the strike",
+    ({ drainResist, drained }) => {
+      const setup = {
+        teams: [
+          [
+            fighter({
+              hp: 10_000_000,
+              energy: 300,
+              drainResist: { mana: 0, energy: drainResist },
+            }),
+          ],
+          [
+            fighter({
+              hp: 10_000_000,
+              attackSpeed: 1,
+              energyDrain: { chance: 100, amount: 13 },
+            }),
+          ],
         ],
-      ],
-    };
+      };
 
-    const events: FightEvent[] = [];
+      const events: FightEvent[] = [];
 
-    const result = simulateFight(setup, seededRandom(5), (event) => {
-      events.push(event);
-    });
+      const result = simulateFight(setup, seededRandom(5), (event) => {
+        events.push(event);
+      });
 
-    const [first] = strikesBy(events, 0);
+      const [first] = strikesBy(events, 0);
 
-    expect(first?.energyDrained.amount).toBe(13);
-    expect(
-      fightBattlePayload(setup, events, result).events[0]?.f?.m?.some((row) =>
-        row.includes("-endest=13"),
+      expect(first?.energyDrained.amount).toBe(drained);
+      expect(
+        fightBattlePayload(setup, events, result).events[0]?.f?.m?.some((row) =>
+          row.includes(`-endest=${drained}`),
+        ),
+      ).toBe(true);
+    },
+  );
+
+  test("adds the auxiliary weapon's poison and wound to the main weapon's on one hit", () => {
+    const attacker = createState(
+      fighter({
+        profession: "b",
+        hp: 10_000_000,
+        offhand: { min: 500, max: 500 },
+        poison: { damage: 300, slow: 0.5 },
+        offhandPoison: { damage: 200, slow: 0.8 },
+        wound: { chance: 100, damage: 400 },
+        offhandWound: { chance: 100, damage: 200 },
+      }),
+      0,
+      0,
+    );
+
+    const defender = createState(fighter({ hp: 10_000_000 }), 1, 1);
+    const hit = strike(attacker, defender, NO_SKILL, seededRandom(5));
+
+    expect(hit.wounds).toMatchObject({ main: true, offhand: true });
+    expect(defender.poison).toMatchObject({ damage: 500, slow: 0.8 });
+    expect(defender.wound).toMatchObject({ damage: 600, cap: 1200 });
+  });
+
+  test("cuts the struck enemy's item healing for its next two turns", () => {
+    const healsOf = (enemyHealingCut: number) =>
+      eventsOf(
+        { physical: { min: 1000, max: 1000 }, enemyHealingCut },
+        { healing: 1000 },
+      ).flatMap((event) =>
+        event.kind === "heal" && event.actor === 1 ? [event.amount] : [],
+      );
+
+    expect(healsOf(0)[0]).toBe(1000);
+    expect(healsOf(300)[0]).toBe(700);
+  });
+
+  test("lowers the attacker's crit strength by the defender's cursed reduction", () => {
+    const critStrength = (critValueReduction: number) =>
+      strikesBy(
+        eventsOf(
+          { physical: { min: 1000, max: 1000 }, critChance: 100 },
+          { critValueReduction },
+        ),
+        0,
+      )[0]?.strength.physical;
+
+    expect(critStrength(0)).toBe(1200);
+    expect(critStrength(20)).toBe(1000);
+  });
+
+  test("takes the defender's cursed armor protection off the item's armor destruction", () => {
+    const [hit] = strikesBy(
+      eventsOf(
+        { physical: { min: 1000, max: 1000 }, armorDestruction: 100 },
+        { armor: 5000, armorDestructionResist: 40 },
       ),
-    ).toBe(true);
+      0,
+    );
+
+    expect(hit?.armorDestroyed).toBe(60);
+    expect(hit?.armorDestructionResisted).toBe(40);
   });
 
   test("takes two turns after a curse lands with a stun", () => {

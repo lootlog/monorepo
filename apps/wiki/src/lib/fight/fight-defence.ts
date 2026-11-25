@@ -217,7 +217,11 @@ export const drain = (
       ? adrenalinDrainReduction.value
       : 0);
 
-  const reduced = Math.round((amount * Math.min(100, reduction)) / 100);
+  const resisted = Math.min(amount, attacker.combatant.drainResist[pool]);
+
+  const reduced =
+    resisted +
+    Math.round(((amount - resisted) * Math.min(100, reduction)) / 100);
 
   const drained = Math.min(attacker[pool], amount - reduced);
 

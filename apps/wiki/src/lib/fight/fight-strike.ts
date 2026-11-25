@@ -1,6 +1,6 @@
 import {
-  applyPoison,
-  applyWound,
+  applyWeaponDamageOverTime,
+  NO_WEAPON_WOUNDS,
   chance,
   counters,
   damageLoweredBy,
@@ -14,7 +14,7 @@ import {
   stunOnHit,
   vampire,
 } from "./fight-hit-effects";
-import { critValueGain, rollCrit } from "./fight-crit";
+import { critValueShift, rollCrit } from "./fight-crit";
 import {
   magicDamage,
   magicStrength,
@@ -83,12 +83,19 @@ export type Strike = {
   readonly pierced: boolean;
   readonly pierceShown: boolean;
   readonly pierceBlocked: boolean;
-  readonly wounded: boolean;
+  readonly wounds: {
+    readonly main: boolean;
+    readonly offhand: boolean;
+    readonly halved: boolean;
+  };
   readonly stun: boolean;
   readonly freeze: boolean;
   readonly immune: boolean;
   readonly armorDestroyed: number;
   readonly armorDestructionReduction: number;
+  readonly armorDestructionResisted: number;
+  readonly critValueReduced: number;
+  readonly enemyHealingCut: number;
   readonly resistanceDestroyed: number;
   readonly absorbDestroyed: number;
   readonly absorbed: number;
@@ -132,6 +139,58 @@ const pierceChance = (attacker: FighterState) =>
       buffTotal(attacker, "disturb_pierce", "stinkbomb_pierce"),
   );
 
+const ENEMY_HEALING_CUT_TURNS = 2;
+
+const cutEnemyHealing = (attacker: FighterState, defender: FighterState) => {
+  const amount = attacker.combatant.enemyHealingCut;
+
+  if (amount <= 0) return 0;
+
+  defender.enemyHealingCut = {
+    amount: Math.max(amount, defender.enemyHealingCut?.amount ?? 0),
+    turnsLeft: ENEMY_HEALING_CUT_TURNS,
+  };
+
+  return amount;
+};
+
+const weaponWounds = (
+  { attacker, defender, plan, random }: Hit,
+  missed: boolean,
+  landed: { readonly main: boolean; readonly offhand: boolean },
+) => {
+  if (missed) return NO_WEAPON_WOUNDS;
+
+  const wounds = applyWeaponDamageOverTime(
+    attacker,
+    defender,
+    plan,
+    random,
+    landed,
+  );
+
+  if (wounds.main || wounds.offhand) {
+    gainCombo(attacker, attacker.combatant.comboGain.wound);
+  }
+
+  return wounds;
+};
+
+const cursedStatEffects = (
+  attacker: FighterState,
+  defender: FighterState,
+  outcome: { missed: boolean; struck: boolean; anyCrit: boolean },
+) => ({
+  armorDestructionResisted: outcome.missed
+    ? 0
+    : Math.min(
+        attacker.combatant.armorDestruction,
+        defender.combatant.armorDestructionResist,
+      ),
+  critValueReduced: outcome.anyCrit ? defender.combatant.critValueReduction : 0,
+  enemyHealingCut: outcome.struck ? cutEnemyHealing(attacker, defender) : 0,
+});
+
 const mainWeaponHit = (hit: Hit, scale: DamageScale) => {
   const { attacker, defender, plan, random } = hit;
   const a = attacker.combatant;
@@ -155,7 +214,7 @@ const mainWeaponHit = (hit: Hit, scale: DamageScale) => {
 
   destroyArmor(
     defender,
-    a.armorDestruction +
+    Math.max(0, a.armorDestruction - d.armorDestructionResist) +
       attacker.pendingArmorDestruction +
       (plan.effect("active_acdmg_per") / 100) * currentArmor(defender),
   );
@@ -180,24 +239,18 @@ const mainWeaponHit = (hit: Hit, scale: DamageScale) => {
   const fire = taken(magic.taken.fire);
   const frost = taken(magic.taken.frost);
   const light = taken(magic.taken.light);
-  let wounded = false;
+  const damaging = physical + fire + frost + light > 0;
 
-  if (physical + fire + frost + light > 0) {
-    const poisonApplied = applyPoison(attacker, defender, plan);
+  if (damaging && a.enemySlow > 0) {
+    defender.slowBySource.set(attacker.index, a.enemySlow);
+  }
 
-    wounded = applyWound(attacker, defender, plan, poisonApplied, random);
-
-    if (wounded) gainCombo(attacker, a.comboGain.wound);
-
-    if (a.enemySlow > 0) defender.slowBySource.set(attacker.index, a.enemySlow);
-
-    if (frost > 0 && a.frostSlow > 0) {
-      defender.frostSlow = {
-        slow: a.frostSlow,
-        boost: plan.effect("slowfreeze_per") / 100,
-        turnsLeft: Math.max(FROST_SLOW_TURNS, plan.turns("slowfreeze_per")),
-      };
-    }
+  if (magic.strength.frost > 0 && a.frostSlow > 0) {
+    defender.frostSlow = {
+      slow: a.frostSlow,
+      boost: plan.effect("slowfreeze_per") / 100,
+      turnsLeft: Math.max(FROST_SLOW_TURNS, plan.turns("slowfreeze_per")),
+    };
   }
 
   return {
@@ -218,7 +271,7 @@ const mainWeaponHit = (hit: Hit, scale: DamageScale) => {
     pierced,
     pierceShown: pierceRolled && !pierceBlocked,
     pierceBlocked,
-    wounded,
+    damaging,
     resistanceDestroyed,
     absorbed: taken(physicalHit.absorbed),
     absorbedMagic: taken(magic.absorbed),
@@ -235,7 +288,7 @@ const MISSED = {
   pierced: false,
   pierceShown: false,
   pierceBlocked: false,
-  wounded: false,
+  damaging: false,
   resistanceDestroyed: 0,
   absorbDestroyed: 0,
   absorbed: 0,
@@ -331,7 +384,7 @@ const offhandHit = (hit: Hit, scale: DamageScale, mainParried: boolean) => {
   const critFactor =
     crit.strength > 0
       ? (crit.strength *
-          (a.offhandCritValue + critValueGain(attacker, defender))) /
+          (a.offhandCritValue + critValueShift(attacker, defender))) /
         100
       : 1;
 
@@ -585,9 +638,20 @@ export const strike = (
     ? NO_THIRD_ATTACK
     : thirdAttack(attacker, defender, random, main.pierced);
 
+  const wounds = weaponWounds(hit, missed, {
+    main: main.damaging,
+    offhand: offhand.taken > 0,
+  });
+
   const anyCrit = crit || offhand.crit;
   const immune = isImmune(defender);
   const struck = !missed && !immune;
+
+  const cursed = cursedStatEffects(attacker, defender, {
+    missed,
+    struck,
+    anyCrit,
+  });
 
   const { critred, facade, damage, dealt, done } = defendedDamage(
     defender,
@@ -661,12 +725,13 @@ export const strike = (
     pierced: main.pierced,
     pierceShown: main.pierceShown,
     pierceBlocked: main.pierceBlocked,
-    wounded: main.wounded,
+    wounds,
     stun,
     freeze,
     immune: immune && !missed,
     armorDestroyed,
     armorDestructionReduction: destroyed > 0 ? reduction : 0,
+    ...cursed,
     resistanceDestroyed: main.resistanceDestroyed,
     absorbed: main.absorbed + Math.round(third.absorbed * scale.taken),
     absorbedMagic: main.absorbedMagic,

@@ -121,6 +121,8 @@ export type Combatant = {
   readonly light: DamageRange;
   readonly poison: { readonly damage: number; readonly slow: number };
   readonly wound: { readonly chance: number; readonly damage: number };
+  readonly offhandPoison: { readonly damage: number; readonly slow: number };
+  readonly offhandWound: { readonly chance: number; readonly damage: number };
   readonly attackSpeed: number;
   readonly critChance: number;
   readonly critValue: number;
@@ -129,11 +131,13 @@ export type Combatant = {
   readonly offhandCritChance: number;
   readonly offhandCritValue: number;
   readonly critReduction: number;
+  readonly critValueReduction: number;
   readonly pierce: number;
   readonly pierceBlock: number;
   readonly armor: number;
   readonly shieldArmor: number;
   readonly armorDestruction: number;
+  readonly armorDestructionResist: number;
   readonly evadePoints: number;
   readonly evadeReduction: number;
   readonly blockPoints: number;
@@ -147,6 +151,7 @@ export type Combatant = {
   readonly energyDrain: ResourceDrain;
   readonly manaDrain: ResourceDrain;
   readonly drainReduction: number;
+  readonly drainResist: { readonly mana: number; readonly energy: number };
   readonly swingChance: number;
   readonly resistFire: number;
   readonly resistFrost: number;
@@ -154,7 +159,7 @@ export type Combatant = {
   readonly resistPoison: number;
   readonly resistWound: number;
   readonly healing: number;
-  readonly healingReduction: number;
+  readonly enemyHealingCut: number;
   readonly energy: number;
   readonly energyGain: number;
   readonly mana: number;
@@ -212,6 +217,7 @@ export type FighterState = SkillUserState & {
   critWound: DamageOverTime | null;
   poisonResistanceLost: number;
   healCut: number;
+  enemyHealingCut: { amount: number; turnsLeft: number } | null;
   pendingArmorDestruction: number;
   anguish: DamageOverTime | null;
   skillDots: Map<SkillDamageOverTime, DamageOverTime>;
@@ -264,6 +270,7 @@ export const createState = (
   critWound: null,
   poisonResistanceLost: 0,
   healCut: 0,
+  enemyHealingCut: null,
   pendingArmorDestruction: 0,
   anguish: null,
   skillDots: new Map(),

@@ -345,8 +345,10 @@ const applyHealing = (
   enemies: readonly FighterState[],
 ) => {
   const base =
-    state.combatant.healing *
-    Math.max(0, healingModifier(state, allies, enemies));
+    Math.max(
+      0,
+      state.combatant.healing - (state.enemyHealingCut?.amount ?? 0),
+    ) * Math.max(0, healingModifier(state, allies, enemies));
 
   if (base <= 0 || state.hp >= state.combatant.hp) return 0;
 
@@ -354,19 +356,12 @@ const applyHealing = (
 
   if (decayed <= 0) return 0;
 
-  let reduction = 0;
-
-  for (const enemy of enemies) {
-    if (enemy.alive)
-      reduction = Math.max(reduction, enemy.combatant.healingReduction);
-  }
-
   state.healTriggers += 1;
   state.healCut = 0;
 
   const healed = Math.min(
     state.combatant.hp - state.hp,
-    Math.max(0, Math.round(decayed - reduction)),
+    Math.max(0, Math.round(decayed)),
   );
 
   state.hp += healed;
@@ -416,6 +411,12 @@ const endTurn = (state: FighterState) => {
   }
 
   if (state.critSlowTurns > 0) state.critSlowTurns -= 1;
+
+  if (state.enemyHealingCut) {
+    state.enemyHealingCut.turnsLeft -= 1;
+
+    if (state.enemyHealingCut.turnsLeft <= 0) state.enemyHealingCut = null;
+  }
 
   state.mana = Math.min(
     state.combatant.mana,
