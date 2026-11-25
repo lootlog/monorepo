@@ -1,9 +1,5 @@
-import {
-  simulateFight,
-  type FightEvent,
-  type FightResult,
-  type FightSetup,
-} from "./fight-simulator";
+import { simulateFight } from "./fight-simulator";
+import type { FightEvent, FightResult, FightSetup } from "./fight-events";
 import { withAllyHealth } from "./fight-state";
 
 type DamageSource = "strike" | "skill" | "overTime";

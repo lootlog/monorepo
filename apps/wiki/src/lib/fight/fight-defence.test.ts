@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
-import { fightBattlePayload } from "./fight-battle-log";
-import { simulateFight, type FightEvent } from "./fight-simulator";
+import { fightBattleLog } from "./fight-battle-log";
+import { simulateFight } from "./fight-simulator";
+import type { FightEvent } from "./fight-events";
 import { strike } from "./fight-strike";
 import {
   createState,
@@ -143,8 +144,8 @@ describe("damage and defence", () => {
 
       expect(first?.energyDrained.amount).toBe(drained);
       expect(
-        fightBattlePayload(setup, events, result).events[0]?.f?.m?.some((row) =>
-          row.includes(`-endest=${drained}`),
+        fightBattleLog(setup, events, result).payload.events[0]?.f?.m?.some(
+          (row) => row.includes(`-endest=${drained}`),
         ),
       ).toBe(true);
     },

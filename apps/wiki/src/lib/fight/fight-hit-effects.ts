@@ -303,14 +303,16 @@ const RAGE_3TURNS_TURNS = 3;
 
 const RAGE_BONUS = 10;
 
+export const parryChance = (attacker: FighterState, defender: FighterState) =>
+  MELEE.has(attacker.combatant.profession) && !defender.stunned
+    ? defender.combatant.parryChance
+    : 0;
+
 export const parries = (
   attacker: FighterState,
   defender: FighterState,
   random: () => number,
-) =>
-  MELEE.has(attacker.combatant.profession) &&
-  !defender.stunned &&
-  chance(random, defender.combatant.parryChance);
+) => chance(random, parryChance(attacker, defender));
 
 const CRIT_RAGE_HEALTH = 25;
 

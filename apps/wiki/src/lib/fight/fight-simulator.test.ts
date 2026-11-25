@@ -1,7 +1,9 @@
 import { BattleProcessor } from "@lootlog/battle-processor/battle-processor";
 import { describe, expect, test } from "vitest";
-import { fightBattlePayload } from "./fight-battle-log";
-import { simulateFight, type FightEvent } from "./fight-simulator";
+import { fightBattleLog } from "./fight-battle-log";
+import { simulateFight } from "./fight-simulator";
+import type { FightEvent } from "./fight-events";
+import { snapshotFighter, type FighterSnapshot } from "./fight-snapshot";
 import { NO_LEGENDARY_BONUSES, type Combatant } from "./fight-state";
 import { fighter, NO_DAMAGE } from "./fight.fixtures";
 import type { ActiveSkill, MasteryQueue } from "./fight-skills";
@@ -82,13 +84,18 @@ describe("simulateFights", () => {
 
     const events: FightEvent[] = [];
 
-    const result = simulateFight(setup, seededRandom(5), (event) => {
-      events.push(event);
-    });
+    const result = simulateFight(
+      setup,
+      seededRandom(5),
+      (event) => {
+        events.push(event);
+      },
+      true,
+    );
 
     const evadedRows =
-      fightBattlePayload(setup, events, result).events[0]?.f?.m?.filter((row) =>
-        row.includes("-evade"),
+      fightBattleLog(setup, events, result).payload.events[0]?.f?.m?.filter(
+        (row) => row.includes("-evade"),
       ) ?? [];
 
     expect(evadedRows.length).toBeGreaterThan(0);
@@ -250,8 +257,8 @@ describe("battle mastery", () => {
     });
 
     expect(
-      fightBattlePayload(setup, events, result).events[0]?.f?.m?.find((row) =>
-        row.includes("tspell=Kamienna skóra"),
+      fightBattleLog(setup, events, result).payload.events[0]?.f?.m?.find(
+        (row) => row.includes("tspell=Kamienna skóra"),
       ),
     ).toBe(
       "1=100.00;1=100.00;tspell=Kamienna skóra;skillId=34;resfire_per=30;resfrost_per=30;reslight_per=40;antidote=15;achpp_per=0",
@@ -547,7 +554,97 @@ describe("skill effects", () => {
   });
 });
 
-describe("fightBattlePayload", () => {
+describe("fightBattleLog", () => {
+  test("ties every processed log move to the simulated event that wrote it", () => {
+    const setup = {
+      teams: [
+        [
+          fighter({
+            name: "truciciel",
+            hp: 200_000,
+            poison: { damage: 500, slow: 0 },
+            wound: { chance: 50, damage: 700 },
+          }),
+        ],
+        [fighter({ name: "cel", hp: 200_000, profession: "w" })],
+      ],
+    };
+
+    const events: FightEvent[] = [];
+
+    const result = simulateFight(
+      setup,
+      seededRandom(5),
+      (event) => {
+        events.push(event);
+      },
+      true,
+    );
+
+    const { payload, rows } = fightBattleLog(setup, events, result);
+
+    const moves = new BattleProcessor("full").processBattle(
+      payload,
+    ).parsedMoves;
+
+    const strikeRows = rows.flatMap((row, index) => {
+      const event = row.event === null ? null : events[row.event];
+
+      return event?.kind === "strike"
+        ? [{ attacker: moves[index]?.attackerId, event }]
+        : [];
+    });
+
+    expect(moves).toHaveLength(rows.length);
+    expect(rows.at(-1)).toEqual({ event: null, at: events.length });
+    expect(strikeRows.length).toBeGreaterThan(0);
+    expect(
+      strikeRows.every(
+        ({ attacker, event }) =>
+          attacker === String(event.actor + 1) && event.chances !== null,
+      ),
+    ).toBe(true);
+  });
+
+  test("shows a skill's cooldown as its own value on the cast and its strike", () => {
+    const volley: ActiveSkill = {
+      id: 1,
+      name: "salwa",
+      resource: "energy",
+      cost: 0,
+      cooldown: 5,
+      selfCast: false,
+      attacks: true,
+      logged: [],
+      effects: new Map(),
+    };
+
+    const setup = {
+      teams: [
+        [
+          fighter({
+            hp: 1_000_000,
+            mastery: { steps: [volley], repeat: true },
+          }),
+        ],
+        [fighter({ hp: 1_000_000, attackSpeed: 1 })],
+      ],
+    };
+
+    const steps: { event: FightEvent; caster: FighterSnapshot | undefined }[] =
+      [];
+
+    simulateFight(setup, seededRandom(1), (event, states) => {
+      steps.push({ event, caster: states[0] && snapshotFighter(states[0]) });
+    });
+
+    const cast = steps.findIndex(({ event }) => event.kind === "skill");
+
+    expect(
+      steps.slice(cast, cast + 2).map(({ caster }) => caster?.cooldowns),
+    ).toEqual([[{ name: "salwa", turns: 5 }], [{ name: "salwa", turns: 5 }]]);
+  });
+
   test("shows piercing efficiency once, on the attacker's first strike", () => {
     const piercing = fighter({
       name: "przeszywający",
@@ -574,7 +671,7 @@ describe("fightBattlePayload", () => {
       (event) => event.kind === "strike" && event.actor === 0,
     );
 
-    const rows = fightBattlePayload(setup, events, result).events[0]?.f?.m;
+    const rows = fightBattleLog(setup, events, result).payload.events[0]?.f?.m;
 
     expect(
       new Set(strikes.map((event) => event.kind === "strike" && event.target))
@@ -676,7 +773,7 @@ describe("fightBattlePayload", () => {
       events.push(event);
     });
 
-    const payload = fightBattlePayload(setup, events, result);
+    const payload = fightBattleLog(setup, events, result).payload;
 
     const battle = new BattleProcessor("full").processBattle(payload);
 

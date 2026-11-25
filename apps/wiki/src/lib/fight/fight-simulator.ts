@@ -1,4 +1,11 @@
-import { applyCast, type CastOutcome } from "./fight-cast";
+import { applyCast } from "./fight-cast";
+import type {
+  FightEvent,
+  FightRecorder,
+  FightResult,
+  FightSetup,
+  Targeting,
+} from "./fight-events";
 import {
   addBuff,
   buffTotal,
@@ -22,101 +29,13 @@ import {
   MAX_RESISTANCE,
   reaches,
   takeDamage,
-  type Combatant,
   type FighterState,
 } from "./fight-state";
 import { elementResistance } from "./fight-defence";
+import { strikeChances } from "./fight-chances";
 import { strike, type Strike } from "./fight-strike";
 
-type Targeting = "lowestLevel" | "random";
-
-export type FightSetup = {
-  readonly teams: readonly (readonly Combatant[])[];
-  readonly targeting?: Targeting;
-};
-
-type FighterOutcome = {
-  readonly name: string;
-  readonly team: number;
-  readonly alive: boolean;
-  readonly hpLeft: number;
-  readonly moves: number;
-  readonly damageDealt: number;
-  readonly healed: number;
-  readonly skillUses: ReadonlyMap<string, number>;
-};
-
-export type FightEvent =
-  | {
-      readonly kind: "damageOverTime";
-      readonly actor: number;
-      readonly poison: number;
-      readonly poisonReduction: number;
-      readonly wound: number;
-      readonly woundReduction: number;
-      readonly injure: number;
-      readonly critWound: number;
-      readonly lingeringReduction: number;
-      readonly anguish: number;
-      readonly fire: number;
-      readonly fireReduction: number;
-      readonly light: number;
-      readonly lightReduction: number;
-      readonly absolute: number;
-      readonly lastHeal: number;
-      readonly hp: readonly number[];
-    }
-  | {
-      readonly kind: "energyRegen";
-      readonly actor: number;
-      readonly amount: number;
-      readonly hp: readonly number[];
-    }
-  | {
-      readonly kind: "holyTouchHeal";
-      readonly actor: number;
-      readonly amount: number;
-      readonly hp: readonly number[];
-    }
-  | { readonly kind: "lostTurn"; readonly actor: number }
-  | {
-      readonly kind: "step";
-      readonly actor: number;
-      readonly hp: readonly number[];
-    }
-  | {
-      readonly kind: "heal";
-      readonly actor: number;
-      readonly amount: number;
-      readonly cut: number;
-      readonly hp: readonly number[];
-    }
-  | (CastOutcome & {
-      readonly kind: "skill";
-      readonly actor: number;
-      readonly target: number;
-      readonly skill: ActiveSkill;
-      readonly comboSpent: number;
-      readonly comboDamage: number;
-      readonly lastHeal: number;
-      readonly hp: readonly number[];
-    })
-  | (Strike & {
-      readonly kind: "strike";
-      readonly actor: number;
-      readonly target: number;
-      readonly fastArrow: boolean;
-      readonly lastHeal: number;
-      readonly hp: readonly number[];
-    });
-
-export type FightRecorder = (event: FightEvent) => void;
-
-export type FightResult = {
-  readonly winner: number | null;
-  readonly moves: number;
-  readonly fighters: readonly FighterOutcome[];
-};
+type EventSink = (event: FightEvent) => void;
 
 const MOVES_PER_PLAYER = 75;
 
@@ -135,7 +54,7 @@ const strongestEnemySlow = (state: FighterState) => {
   return strongest;
 };
 
-const attackTime = (state: FighterState) => {
+export const attackTime = (state: FighterState) => {
   const { attackSpeed, slowReduction } = state.combatant;
 
   const additive =
@@ -440,7 +359,8 @@ type Turn = {
   enemies: readonly FighterState[];
   targeting: Targeting;
   random: () => number;
-  record: FightRecorder | undefined;
+  record: EventSink | undefined;
+  inspect: boolean;
   hpOf: () => number[];
 };
 
@@ -623,11 +543,16 @@ const takeForcedTurn = (
     return null;
   }
 
+  const chances = turn.inspect
+    ? strikeChances(attacker, defender, NO_SKILL)
+    : null;
+
   const hit = strike(attacker, defender, NO_SKILL, random);
   const lastHeal = tryLastHeal(defender, random);
 
   record?.({
     kind: "strike",
+    chances,
     actor: attacker.index,
     target: defender.index,
     fastArrow: false,
@@ -670,6 +595,8 @@ const attack = (turn: Turn, plan: ActionPlan) => {
 
     if (target === null || !actor.alive) break;
 
+    const chances = turn.inspect ? strikeChances(actor, target, plan) : null;
+
     const hit = strike(
       actor,
       target,
@@ -683,6 +610,7 @@ const attack = (turn: Turn, plan: ActionPlan) => {
 
     record?.({
       kind: "strike",
+      chances,
       actor: actor.index,
       target: target.index,
       fastArrow: fastArrow && index === 0,
@@ -720,13 +648,15 @@ const act = (turn: Turn) => {
   return skillFactor * attackFactor;
 };
 
-export const simulateFight = (
-  setup: FightSetup,
-  random: () => number,
-  record?: FightRecorder,
-): FightResult => {
-  const targeting = setup.targeting ?? "lowestLevel";
+const teammates = (
+  states: readonly FighterState[],
+  same: boolean,
+): readonly (readonly FighterState[])[] =>
+  states.map((state) =>
+    states.filter((other) => (other.team === state.team) === same),
+  );
 
+export const createFightStates = (setup: FightSetup): FighterState[] => {
   const states = withAllyHealth(setup.teams).flatMap((team, teamIndex) =>
     team.map((combatant) => createState(combatant, teamIndex, 0)),
   );
@@ -736,13 +666,7 @@ export const simulateFight = (
     state.clock = attackTime(state);
   });
 
-  const enemiesOf = states.map((state) =>
-    states.filter((other) => other.team !== state.team),
-  );
-
-  const alliesOf = states.map((state) =>
-    states.filter((other) => other.team === state.team),
-  );
+  const enemiesOf = teammates(states, false);
 
   for (const state of states) {
     const weakening = state.combatant.passives.poisonWeakening;
@@ -753,6 +677,22 @@ export const simulateFight = (
       addBuff(enemy, "poison_lowdmg_per", weakening, Infinity, state.index);
     }
   }
+
+  return states;
+};
+
+export const simulateFight = (
+  setup: FightSetup,
+  random: () => number,
+  record?: FightRecorder,
+  inspect = false,
+): FightResult => {
+  const targeting = setup.targeting ?? "lowestLevel";
+  const states = createFightStates(setup);
+  const enemiesOf = teammates(states, false);
+  const alliesOf = teammates(states, true);
+
+  const sink = record && ((event: FightEvent) => record(event, states));
 
   const hpOf = () => states.map((state) => state.hp);
   const maxMoves = MOVES_PER_PLAYER * states.length;
@@ -769,7 +709,8 @@ export const simulateFight = (
       enemies: enemiesOf[actor.index] ?? [],
       targeting,
       random,
-      record,
+      record: sink,
+      inspect,
       hpOf,
     };
 
@@ -784,7 +725,7 @@ export const simulateFight = (
     if (stunned) actor.stunned = false;
     else actor.cursed = false;
 
-    if (lost) record?.({ kind: "lostTurn", actor: actor.index });
+    if (lost) sink?.({ kind: "lostTurn", actor: actor.index });
 
     const timeFactor = lost ? lostTime : act(turn);
 

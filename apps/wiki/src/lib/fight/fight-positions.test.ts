@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
-import { fightBattlePayload } from "./fight-battle-log";
-import { simulateFight, type FightEvent } from "./fight-simulator";
+import { fightBattleLog } from "./fight-battle-log";
+import { simulateFight } from "./fight-simulator";
+import type { FightEvent } from "./fight-events";
 import type { Combatant } from "./fight-state";
 import type { ActiveSkill, MasteryQueue } from "./fight-skills";
 import { seededRandom } from "./fight-summary";
@@ -95,8 +96,8 @@ describe("positions", () => {
       events.push(event);
     });
 
-    expect(fightBattlePayload(setup, events, result).events[0]?.f?.m).toContain(
-      "1=100.00;0;step",
-    );
+    expect(
+      fightBattleLog(setup, events, result).payload.events[0]?.f?.m,
+    ).toContain("1=100.00;0;step");
   });
 });

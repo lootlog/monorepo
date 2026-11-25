@@ -1,4 +1,5 @@
 import { t } from "@/i18n/messages";
+import { pluralForm } from "@/lib/plural";
 import { SKILL_EFFECT_TEMPLATES } from "@/lib/skills/skill-effect-templates";
 import { parseSkillRank, skillValueAt } from "@/lib/skills/skill-tree";
 import { formatDecimal } from "@lootlog/domain/locale";
@@ -27,9 +28,6 @@ const TEMPLATES = new Map<string, SkillEffectTemplate>(
 
 const signed = (value: number) =>
   `${value >= 0 ? "+" : ""}${formatDecimal(value)}`;
-
-const pluralForm = (count: number) =>
-  count === 1 ? "one" : count > 1 && count < 5 ? "few" : "many";
 
 const turnsText = (count: number) => t(`skills.turns.${pluralForm(count)}`);
 

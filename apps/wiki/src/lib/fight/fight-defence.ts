@@ -13,7 +13,7 @@ export type Drained = { readonly amount: number; readonly reduced: number };
 
 export const LEVEL_CAP_FOR_CHANCES = 300;
 
-const MAX_EVADE_OR_BLOCK = 50;
+export const MAX_EVADE_OR_BLOCK = 50;
 
 const EVADE_OR_BLOCK_PER_POINT = 20;
 
@@ -46,13 +46,9 @@ export const armorReduced = (damage: number, armor: number) => {
 const cappedChance = (percent: number) =>
   clamp(percent, 0, MAX_EVADE_OR_BLOCK) / 100;
 
-export const evadeChance = (
-  defender: FighterState,
-  attacker: FighterState,
-  activeReduction: number,
-) => {
+export const evadeParts = (defender: FighterState, attacker: FighterState) => {
   if (UNAVOIDABLE.has(attacker.combatant.profession) || defender.stunned)
-    return 0;
+    return null;
 
   const points = Math.max(
     0,
@@ -62,12 +58,24 @@ export const evadeChance = (
 
   const { adrenalinEvade } = defender.combatant.passives;
 
-  const chance =
-    (points * EVADE_OR_BLOCK_PER_POINT) /
-      Math.min(attacker.combatant.level, LEVEL_CAP_FOR_CHANCES) +
-    (isBelow(defender, adrenalinEvade) ? adrenalinEvade.value : 0);
+  return {
+    points:
+      (points * EVADE_OR_BLOCK_PER_POINT) /
+      Math.min(attacker.combatant.level, LEVEL_CAP_FOR_CHANCES),
+    adrenaline: isBelow(defender, adrenalinEvade) ? adrenalinEvade.value : 0,
+  };
+};
 
-  return cappedChance(chance - activeReduction);
+export const evadeChance = (
+  defender: FighterState,
+  attacker: FighterState,
+  activeReduction: number,
+) => {
+  const parts = evadeParts(defender, attacker);
+
+  return parts
+    ? cappedChance(parts.points + parts.adrenaline - activeReduction)
+    : 0;
 };
 
 export const blockChance = (

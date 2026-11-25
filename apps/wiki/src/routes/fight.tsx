@@ -248,6 +248,7 @@ function FightRoute() {
                 </div>
                 {replay ? (
                   <FightReplay
+                    key={replay.index}
                     index={replay.index}
                     sample={replay.sample}
                     onPrevious={stepTo(-1)}

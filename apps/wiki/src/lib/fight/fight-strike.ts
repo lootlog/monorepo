@@ -132,7 +132,7 @@ type DamageScale = {
   readonly taken: number;
 };
 
-const pierceChance = (attacker: FighterState) =>
+export const pierceChance = (attacker: FighterState) =>
   Math.max(
     0,
     attacker.combatant.pierce -

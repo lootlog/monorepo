@@ -2,7 +2,7 @@ import type {
   BattlePayload,
   BattleWarriorSnapshot,
 } from "@lootlog/battle-processor/battle-log";
-import type { FightEvent, FightResult, FightSetup } from "./fight-simulator";
+import type { FightEvent, FightResult, FightSetup } from "./fight-events";
 import { crushKey } from "./fight-passives";
 import { withAllyHealth, type Combatant, type Profession } from "./fight-state";
 
@@ -80,11 +80,21 @@ const drained = (
   reduced > 0 ? `${key}=${amount},${reduced}` : `${key}=${amount}`,
 ];
 
-export const fightBattlePayload = (
+type FightLogRow = {
+  readonly event: number | null;
+  readonly at: number;
+};
+
+type FightBattleLog = {
+  readonly payload: BattlePayload;
+  readonly rows: readonly FightLogRow[];
+};
+
+export const fightBattleLog = (
   setup: FightSetup,
   events: readonly FightEvent[],
   result: FightResult,
-): BattlePayload => {
+): FightBattleLog => {
   const fighters = withAllyHealth(setup.teams).flatMap((team, teamIndex) =>
     team.map((combatant) => ({ combatant, team: teamIndex + 1 })),
   );
@@ -292,7 +302,7 @@ export const fightBattlePayload = (
     }),
   );
 
-  const rows = events.flatMap((event): string[] => {
+  const eventRows = events.map((event): string[] => {
     switch (event.kind) {
       case "step":
         return [`${sideAt(event.actor, event.hp)};0;step`];
@@ -364,15 +374,30 @@ export const fightBattlePayload = (
     ]),
   );
 
+  const rows = [
+    ...auraRows.map(() => ({ event: null, at: 0 })),
+    ...eventRows.flatMap((lines, event) =>
+      lines.map(() => ({ event, at: event })),
+    ),
+    ...outcome.map(() => ({ event: null, at: events.length })),
+  ];
+
   return {
-    accountId: "simulation",
-    characterId: SIMULATED_CHARACTER_ID,
-    world: "simulation",
-    events: [
-      {
-        ev: 0,
-        f: { w: warriors, m: [...auraRows, ...rows, ...outcome], endBattle: 1 },
-      },
-    ],
+    payload: {
+      accountId: "simulation",
+      characterId: SIMULATED_CHARACTER_ID,
+      world: "simulation",
+      events: [
+        {
+          ev: 0,
+          f: {
+            w: warriors,
+            m: [...auraRows, ...eventRows.flat(), ...outcome],
+            endBattle: 1,
+          },
+        },
+      ],
+    },
+    rows,
   };
 };

@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
-import { fightBattlePayload } from "./fight-battle-log";
-import { simulateFight, type FightEvent } from "./fight-simulator";
+import { fightBattleLog } from "./fight-battle-log";
+import { simulateFight } from "./fight-simulator";
+import type { FightEvent } from "./fight-events";
 import { evadeChance } from "./fight-defence";
 import {
   createState,
@@ -34,7 +35,7 @@ const fightOf = (mine: Partial<Combatant>, theirs: Partial<Combatant>) => {
 
   return {
     events,
-    rows: fightBattlePayload(setup, events, result).events[0]?.f?.m ?? [],
+    rows: fightBattleLog(setup, events, result).payload.events[0]?.f?.m ?? [],
   };
 };
 

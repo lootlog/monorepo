@@ -32,14 +32,19 @@ const VULTURE_HEALTH = 20;
 export const isDistance = (state: FighterState) =>
   DISTANCE.has(state.combatant.profession);
 
+export const arrowBlockChance = (
+  attacker: FighterState,
+  defender: FighterState,
+) =>
+  isDistance(attacker) && !defender.stunned
+    ? defender.combatant.passives.arrowBlockChance
+    : 0;
+
 export const arrowBlocks = (
   attacker: FighterState,
   defender: FighterState,
   random: () => number,
-) =>
-  isDistance(attacker) &&
-  !defender.stunned &&
-  chance(random, defender.combatant.passives.arrowBlockChance);
+) => chance(random, arrowBlockChance(attacker, defender));
 
 export const NO_THIRD_ATTACK = { strength: 0, taken: 0, absorbed: 0 };
 

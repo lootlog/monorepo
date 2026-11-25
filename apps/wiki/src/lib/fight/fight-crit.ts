@@ -32,10 +32,9 @@ export const critValueShift = (
     levelGap(attacker, defender) * CRIT_VALUE_PER_LEVEL,
   ) - defender.combatant.critValueReduction;
 
-export const rollCrit = (
+export const critChances = (
   attacker: FighterState,
   defender: FighterState,
-  random: () => number,
   ownChance: number,
 ) => {
   const ownCritChance =
@@ -46,24 +45,30 @@ export const rollCrit = (
   const { lastCrit } = attacker.combatant.passives;
   const finishing = isBelow(defender, lastCrit) ? lastCrit.value : 0;
 
-  const veryCrit = chance(
-    random,
-    (attacker.combatant.legendary.verycrit *
-      Math.max(0, ownCritChance + finishing)) /
+  return {
+    veryCrit:
+      (attacker.combatant.legendary.verycrit *
+        Math.max(0, ownCritChance + finishing)) /
       100,
-  );
+    crit:
+      Math.max(
+        MIN_CRIT,
+        ownCritChance -
+          buffTotal(attacker, "disturb_crit", "stinkbomb_crit") -
+          defender.combatant.critReduction,
+      ) + finishing,
+  };
+};
 
-  const critChance =
-    (Math.max(
-      MIN_CRIT,
-      ownCritChance -
-        buffTotal(attacker, "disturb_crit", "stinkbomb_crit") -
-        defender.combatant.critReduction,
-    ) +
-      finishing) /
-    100;
-
-  const crit = veryCrit || random() < critChance;
+export const rollCrit = (
+  attacker: FighterState,
+  defender: FighterState,
+  random: () => number,
+  ownChance: number,
+) => {
+  const chances = critChances(attacker, defender, ownChance);
+  const veryCrit = chance(random, chances.veryCrit);
+  const crit = veryCrit || random() < chances.crit / 100;
 
   return {
     crit,

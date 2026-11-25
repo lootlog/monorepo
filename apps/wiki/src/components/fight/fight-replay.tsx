@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { I18nextProvider } from "react-i18next";
 import { cn } from "cn";
 import { BattleLog } from "@lootlog/battle-ui/components/battle-log";
@@ -20,6 +20,7 @@ import { t } from "@/i18n/messages";
 import { battleI18n } from "@/lib/battle-i18n";
 import { fightOutcome } from "@/lib/fight/fight-list";
 import type { FightSample } from "@/lib/fight/fight-run";
+import { FightTurnDetails } from "./fight-turn-details";
 
 const OUTCOME_CLASS = {
   won: BATTLE_TEXT_COLORS.result.won,
@@ -42,6 +43,24 @@ export function FightReplay({
 }: FightReplayProps) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const outcome = fightOutcome(sample.result.winner);
+  const [selectedTurn, setSelectedTurn] = useState<number | null>(null);
+  const [scrollRequest, setScrollRequest] = useState(0);
+  const { turns } = sample;
+  const turn = selectedTurn === null ? undefined : turns[selectedTurn - 1];
+
+  const nameOf = (fighter: number) =>
+    sample.result.fighters[fighter]?.name ?? "";
+
+  const stepTurn = (offset: number) => {
+    const target = (selectedTurn ?? 0) + offset;
+
+    return target >= 1 && target <= turns.length
+      ? () => {
+          setSelectedTurn(target);
+          setScrollRequest((request) => request + 1);
+        }
+      : null;
+  };
 
   return (
     <SectionCard
@@ -93,15 +112,43 @@ export function FightReplay({
           </TabsList>
         </div>
         <I18nextProvider i18n={battleI18n}>
-          <TabsContent value="log" className="min-h-0">
-            <ScrollArea ref={viewportRef} className="md:h-full">
-              <BattleLog
-                key={index}
-                rawBattle={sample.rawBattle}
-                warriors={sample.battle.warriors}
-                scrollViewportRef={viewportRef}
-              />
-            </ScrollArea>
+          <TabsContent value="log" className="@container/replay min-h-0">
+            <div className="flex flex-col md:h-full @2xl/replay:grid @2xl/replay:grid-cols-[minmax(0,1fr)_24rem]">
+              <ScrollArea
+                ref={viewportRef}
+                className="md:min-h-0 md:flex-1 @2xl/replay:h-full"
+              >
+                <BattleLog
+                  key={index}
+                  rawBattle={sample.rawBattle}
+                  warriors={sample.battle.warriors}
+                  scrollViewportRef={viewportRef}
+                  selectedTurn={selectedTurn}
+                  scrollToSelectedTurnRequestId={scrollRequest}
+                  onTurnSelect={setSelectedTurn}
+                />
+              </ScrollArea>
+              {turn && selectedTurn !== null ? (
+                <div className="sticky bottom-0 max-h-[55dvh] shrink-0 overflow-y-auto border-t border-border/70 bg-card [scrollbar-width:thin] md:max-h-[50%] @2xl/replay:static @2xl/replay:max-h-none @2xl/replay:border-t-0 @2xl/replay:border-l">
+                  <FightTurnDetails
+                    number={selectedTurn}
+                    turn={turn}
+                    isEnd={
+                      selectedTurn - 1 >
+                      turns.findIndex((entry) => entry.event !== null)
+                    }
+                    nameOf={nameOf}
+                    onPrevious={stepTurn(-1)}
+                    onNext={stepTurn(1)}
+                    onClose={() => setSelectedTurn(null)}
+                  />
+                </div>
+              ) : (
+                <p className="hidden border-l border-border/70 p-3 text-xs text-muted-foreground @2xl/replay:block">
+                  {t("fightPage.turn.pick")}
+                </p>
+              )}
+            </div>
           </TabsContent>
           <TabsContent value="summary" className="min-h-0">
             <ScrollArea className="md:h-full">
