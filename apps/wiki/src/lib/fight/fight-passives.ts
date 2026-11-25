@@ -54,8 +54,7 @@ export const thirdAttack = (
     return NO_THIRD_ATTACK;
   }
 
-  const strength =
-    roll(random, a.physical) * (1 + a.physicalBonus / 100) * scale;
+  const strength = roll(random, a.physical) * scale;
 
   return {
     strength,

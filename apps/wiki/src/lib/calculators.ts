@@ -1,6 +1,8 @@
 import { groupBy } from "es-toolkit";
 import { parseItemStatEntries } from "@lootlog/domain/item-stat";
 import {
+  isUpgradeLevel,
+  itemStatUpgradeLevel,
   upgradedItemLevel,
   type UpgradeLevel,
 } from "@lootlog/domain/item-upgrade";
@@ -112,6 +114,12 @@ export type WornLegendaryBonus = {
   isWeakened: boolean;
 };
 
+const upgradeLevelOf = (stat: string): UpgradeLevel => {
+  const level = itemStatUpgradeLevel(stat);
+
+  return isUpgradeLevel(level) ? level : 0;
+};
+
 export const wornLegendaryBonusItems = (
   stats: ReadonlyArray<string>,
   characterLevel: number,
@@ -131,6 +139,7 @@ export const wornLegendaryBonusItems = (
             {
               name,
               itemLevel: Number(itemLevel),
+              upgrade: upgradeLevelOf(stat),
               strength: legendaryBonusStrength(level, Number(itemLevel)),
             },
           ]

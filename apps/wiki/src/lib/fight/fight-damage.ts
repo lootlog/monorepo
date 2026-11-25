@@ -80,7 +80,6 @@ export const physicalStrength = (hit: Hit) => {
       rolled *
       (crit > 0 ? (crit * critValue(hit)) / 100 + added : 1 + added) *
       (1 + buffTotal(attacker, "aura-adddmg2_per-meele_physical") / 100) *
-      (1 + attacker.combatant.physicalBonus / 100) *
       (1 + rage) *
       scale *
       (1 + vulture),
@@ -135,13 +134,12 @@ export const physicalDamage = (
   const { attacker, defender, plan } = hit;
   const { rolled, strength } = physicalStrength(hit);
 
-  const { physical, physicalBonus } = attacker.combatant;
+  const { physical } = attacker.combatant;
 
   const armorDestruction = destroyArmor(
     defender,
     (plan.effect("active_acdmg_physical-perw") / 100) *
-      ((physical.min + physical.max) / 2) *
-      (1 + physicalBonus / 100),
+      ((physical.min + physical.max) / 2),
   );
 
   const raw = strength * blockFactor;
@@ -183,16 +181,20 @@ export const magicDamage = (
 ) => {
   const { attacker, defender, plan } = hit;
   const armor = MAGIC_ARMOR_FACTOR * armorAgainst(defender, attacker);
-  const strength = magicStrength(hit);
+  const lightCharger = attacker.combatant.light.max > 0;
 
-  if (attacker.combatant.light.max > 0) {
+  const addLightAttacks = (count: number) =>
     attacker.lightAttacks.set(
       defender.index,
-      (attacker.lightAttacks.get(defender.index) ?? 0) +
-        1 +
-        plan.effect("active_add_light_cumulaction"),
+      (attacker.lightAttacks.get(defender.index) ?? 0) + count,
     );
-  }
+
+  if (lightCharger)
+    addLightAttacks(plan.effect("active_add_light_cumulaction"));
+
+  const strength = magicStrength(hit);
+
+  if (lightCharger) addLightAttacks(1);
 
   const armored = (value: number) =>
     value <= 0

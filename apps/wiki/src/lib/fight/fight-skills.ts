@@ -27,6 +27,7 @@ type Buff = {
   source: number;
   age: number;
   pending: boolean;
+  fresh: boolean;
 };
 
 type MasteryStep = ActiveSkill | "attack" | "step" | null;
@@ -219,9 +220,13 @@ export const addBuff = (
   value: number,
   turns: number,
   source: number,
+  fresh = false,
 ) => {
+  const pending = NEXT_TURN_BUFFS.has(key);
+
   state.buffs = state.buffs.filter(
-    (buff) => buff.key !== key || buff.source !== source,
+    (buff) =>
+      buff.key !== key || buff.source !== source || (pending && !buff.pending),
   );
   state.buffs.push({
     key,
@@ -229,7 +234,8 @@ export const addBuff = (
     turnsLeft: Math.max(1, turns),
     source,
     age: 0,
-    pending: NEXT_TURN_BUFFS.has(key),
+    pending,
+    fresh,
   });
 };
 
@@ -348,14 +354,26 @@ export const endSkillTurn = (state: SkillUserState) => {
   state.previousSkill = state.castThisTurn;
   state.castThisTurn = null;
 
+  const activated = state.buffs.filter((buff) => buff.pending);
+
   for (const buff of state.buffs) {
-    if (buff.pending) {
+    if (buff.pending || buff.fresh) {
       buff.pending = false;
+      buff.fresh = false;
     } else {
       buff.turnsLeft -= 1;
       buff.age += 1;
     }
   }
 
-  state.buffs = state.buffs.filter((buff) => buff.turnsLeft > 0);
+  state.buffs = state.buffs.filter(
+    (buff) =>
+      buff.turnsLeft > 0 &&
+      !activated.some(
+        (newer) =>
+          newer !== buff &&
+          newer.key === buff.key &&
+          newer.source === buff.source,
+      ),
+  );
 };

@@ -109,20 +109,59 @@ describe("character stats", () => {
     expect(stats.physical).toEqual({ min: 148, max: 248 });
   });
 
-  it("raises each element and damage over time by its own item bonus on top of all damage", () => {
+  it("adds all damage and every item bonus of a damage kind into one multiplier", () => {
     const stats = characterStats(
       "t",
       100,
       [
         worn("ONE_HAND_WEAPON", "fire=1000;poison=100,500;wound=10,400"),
         worn("RING", "dmgmul=10;dmgmulfire=20;dmgmulpoison=50;dmgmulwound=25"),
+        worn("NECKLACE", "dmgmulfire=10"),
       ],
       new Map(),
     );
 
-    expect(stats.fire).toEqual({ min: 1056, max: 1584 });
-    expect(stats.poison.damage).toBe(825);
-    expect(stats.wound.damage).toBe(550);
+    expect(stats.fire).toEqual({ min: 1120, max: 1680 });
+    expect(stats.poison.damage).toBe(800);
+    expect(stats.wound.damage).toBe(540);
+  });
+
+  it("raises a one-and-a-half-handed weapon's damage by 22% only without a shield", () => {
+    const physical = (...items: ReturnType<typeof worn>[]) =>
+      characterStats("w", 100, items, new Map()).physical;
+
+    const blade = worn("ONE_AND_HALF_HAND_WEAPON", "dmg=100,200");
+
+    expect(physical(blade)).toEqual({ min: 122, max: 244 });
+    expect(physical(blade, worn("SHIELD", "ac=10"))).toEqual({
+      min: 100,
+      max: 200,
+    });
+  });
+
+  it("resists energy destruction by its share of a cursed item's mana resistance", () => {
+    const stats = characterStats(
+      "w",
+      100,
+      [worn("RING", "resmanaendest=9")],
+      new Map(),
+    );
+
+    expect(stats.drainResist).toEqual({ mana: 9, energy: 4 });
+  });
+
+  it("adds the physical item bonus to all damage on the weapon's damage", () => {
+    const stats = characterStats(
+      "w",
+      100,
+      [
+        worn("TWO_HAND_WEAPON", "dmg=100,200"),
+        worn("RING", "dmgmul=10;dmgmulphysical=20"),
+      ],
+      new Map(),
+    );
+
+    expect(stats.physical).toEqual({ min: 130, max: 260 });
   });
 
   it("keeps the auxiliary weapon's poison and wound apart from the main weapon's", () => {

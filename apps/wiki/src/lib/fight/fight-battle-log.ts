@@ -254,6 +254,10 @@ export const fightBattleLog = (
               [true, `+abmdest_per=${event.absorbShareDestroyed.absorbMagic}`],
             ] as const)
           : []),
+        [
+          event.absorbDestructionReduction > 0,
+          `-redabdest_per=${event.absorbDestructionReduction}`,
+        ],
         [event.stun, "+stun"],
         valued("+absorb", event.absorbRenewed),
         valued("+absorbm", event.absorbMagicRenewed),

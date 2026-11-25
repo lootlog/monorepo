@@ -9,6 +9,7 @@ import { groupFightTurns, type RecordedEvent } from "./fight-turns";
 import {
   createState,
   NO_LEGENDARY_BONUSES,
+  NO_PASSIVE_EFFECTS,
   type Combatant,
 } from "./fight-state";
 import { fighter, NO_DAMAGE } from "./fight.fixtures";
@@ -608,6 +609,32 @@ describe("skill effects", () => {
     expect(cast?.kind === "skill" && cast.flatDamage).toBe(4228);
   });
 
+  test("adds all damage to the light bonus on light health damage over time and to the unavoidable bonus on unavoidable", () => {
+    const shock = skill("porazenie", {
+      "dmg_evade_hpp-target_light": [1, 3],
+      "dmg_evade_hpp-target": [1, 3],
+    });
+
+    const events = fightOf(
+      {
+        allDamageBonus: 3,
+        lightDamageBonus: 10,
+        unavoidableBonus: 50,
+        mastery: { steps: [shock], repeat: false },
+      },
+      {},
+    );
+
+    const ticks = events.find(
+      (event) => event.kind === "damageOverTime" && event.actor === 1,
+    );
+
+    expect(
+      ticks?.kind === "damageOverTime" &&
+        Object.fromEntries(ticks.ticks.map((tick) => [tick.kind, tick.damage])),
+    ).toEqual({ light: 113_000, absolute: 153_000 });
+  });
+
   test("destroys the same armor with a crushing skill whether or not the strike crits", () => {
     const crusher = skill("niszczyciel", {
       "active_acdmg_physical-perw": [4, 1],
@@ -719,6 +746,159 @@ describe("skill effects", () => {
     expect(attackTime(state)).toBeCloseTo(before / 1.2);
   });
 
+  test("keeps a recast speed-up through the turn that recasts it", () => {
+    const state = createState(fighter({}), 0, 0);
+    const before = attackTime(state);
+
+    addBuff(state, "sa_per", 20, 1, 0);
+    endSkillTurn(state);
+    addBuff(state, "sa_per", 20, 1, 0);
+    const recast = attackTime(state);
+
+    endSkillTurn(state);
+
+    expect(recast).toBeCloseTo(before / 1.2);
+    expect(attackTime(state)).toBeCloseTo(before / 1.2);
+  });
+
+  test("lets a buff cast on oneself without a strike cover the enemy's next turn", () => {
+    const shield: ActiveSkill = {
+      ...skill("tarcza", { immunity_to_dmg: [1, 1] }, false),
+      selfCast: true,
+    };
+
+    const [hit] = strikesBy(
+      fightOf(
+        { attackSpeed: 1, mastery: { steps: [shield], repeat: false } },
+        {},
+      ),
+      1,
+    );
+
+    expect(hit?.immune).toBe(true);
+  });
+
+  test("gives a fighter its first turn one attack time into the fight", () => {
+    const actors = fightOf({ attackSpeed: 1.8 }, { attackSpeed: 1 })
+      .filter((event) => event.kind === "strike")
+      .map((event) => event.actor)
+      .slice(0, 3);
+
+    expect(actors).toEqual([0, 1, 0]);
+  });
+
+  test("adds Tarcza słońca to the heal decay in full on the first heal after the cast", () => {
+    const sunShield: ActiveSkill = {
+      ...skill("tarcza słońca", { sunshield_per: [48, 5] }, false),
+      selfCast: true,
+    };
+
+    const heals = fightOf(
+      {
+        attackSpeed: 1,
+        healing: 1000,
+        mastery: { steps: [sunShield], repeat: false },
+      },
+      { physical: { min: 5000, max: 5000 } },
+    ).flatMap((event) =>
+      event.kind === "heal" && event.actor === 0 ? [event.amount] : [],
+    );
+
+    expect(heals.slice(0, 3)).toEqual([1480, 1334, 1188]);
+  });
+
+  test("keeps a fallen enemy's healing aura until the end of the fight", () => {
+    const heals = (enemyHealing: number) => {
+      const events: FightEvent[] = [];
+
+      simulateFight(
+        {
+          teams: [
+            [fighter({ hp: 10_000_000, healing: 1000, attackSpeed: 2 })],
+            [
+              fighter({
+                hp: 10_000_000,
+                attackSpeed: 1,
+                physical: { min: 5000, max: 5000 },
+              }),
+              fighter({
+                hp: 1,
+                level: 1,
+                attackSpeed: 1,
+                physical: NO_DAMAGE,
+                passives: { ...NO_PASSIVE_EFFECTS, enemyHealing },
+              }),
+            ],
+          ],
+          levelAdvantage: false,
+        },
+        seededRandom(5),
+        (event) => {
+          events.push(event);
+        },
+      );
+
+      return events.flatMap((event) =>
+        event.kind === "heal" && event.actor === 0 ? [event.amount] : [],
+      )[0];
+    };
+
+    expect(heals(50)).toBe(500);
+  });
+
+  test("checks Ostatni ratunek after each damage-over-time tick", () => {
+    const events: FightEvent[] = [];
+
+    simulateFight(
+      {
+        teams: [
+          [
+            fighter({
+              critChance: 0,
+              physical: { min: 800, max: 800 },
+              poison: { damage: 100, slow: 0 },
+              wound: { chance: 100, damage: 100 },
+            }),
+          ],
+          [
+            fighter({
+              hp: 1000,
+              physical: NO_DAMAGE,
+              legendary: {
+                ...NO_LEGENDARY_BONUSES,
+                lastheal: { min: 40, max: 40 },
+              },
+            }),
+          ],
+        ],
+      },
+      seededRandom(5),
+      (event) => {
+        events.push(event);
+      },
+    );
+
+    const [ticks] = events.flatMap((event) =>
+      event.kind === "damageOverTime" && event.actor === 1 ? [event] : [],
+    );
+
+    expect(ticks?.hp[1]).toBe(300);
+  });
+
+  test("counters a parry without a critical hit only with Riposta", () => {
+    const countered = (parryCounterChance: number) =>
+      strikesBy(
+        fightOf(
+          { profession: "w", critChance: 0 },
+          { parryChance: 100, counterChance: 100, parryCounterChance },
+        ),
+        0,
+      ).some((hit) => hit.countered && !hit.crit && !hit.offhandCrit);
+
+    expect(countered(0)).toBe(false);
+    expect(countered(100)).toBe(true);
+  });
+
   test("lets the forced turn of a counter use up the critical slow that triggered it", () => {
     const defenderMoves = (critSlow: number) =>
       simulateFight(
@@ -778,6 +958,38 @@ describe("skill effects", () => {
       warrior.rageTurns,
       warrior.armorDestructionReduction,
     ]).toEqual([40, 1, 30]);
+  });
+
+  test("raises Krwawa udręka with its item's upgrade and puts a bow on the third position only with arrows", () => {
+    const profileOf = (stats: readonly [type: string, stat: string][]) =>
+      fighterProfile({
+        profession: "h",
+        level: 100,
+        items: stats.map(([type, stat]) => ({ item: { type, stat } })),
+        tree: [],
+        ranks: {},
+        weapons: new Set(),
+        mastery: { actions: [], repeat: false },
+      });
+
+    const anguish = (stat: string) =>
+      toCombatant(profileOf([["RING", stat]]), "łowca").legendary.anguish
+        .damage;
+
+    expect(anguish("legbon=anguish,80;enhancement_upgrade_lvl=5")).toBe(
+      anguish("legbon=anguish,90"),
+    );
+    expect(anguish("legbon=anguish,90")).toBeGreaterThan(
+      anguish("legbon=anguish,80"),
+    );
+
+    expect(profileOf([["DISTANCE_WEAPON", "dmg=10,20"]]).position).toBe(1);
+    expect(
+      profileOf([
+        ["DISTANCE_WEAPON", "dmg=10,20"],
+        ["QUIVER", "dmg=1,2"],
+      ]).position,
+    ).toBe(3);
   });
 
   test("lets armor destruction reduction cut the armor an enemy destroys, while the log keeps the full amount", () => {
@@ -1064,6 +1276,54 @@ describe("fightBattleLog", () => {
 
     expect(shownTo("1")).toBe(1);
     expect(shownTo("2")).toBe(1);
+  });
+
+  test("shows a defender's absorption destruction reduction once, on the first strike that destroys its absorption", () => {
+    const drain: ActiveSkill = {
+      id: 1,
+      name: "pchnięcie",
+      resource: "energy",
+      cost: 0,
+      cooldown: 0,
+      selfCast: false,
+      melee: false,
+      attacks: true,
+      logged: [],
+      effects: new Map([["active_absorbdest_per", { value: 10, turns: 1 }]]),
+    };
+
+    const setup = {
+      teams: [
+        [
+          fighter({
+            hp: 10_000_000,
+            physical: { min: 1, max: 1 },
+            mastery: { steps: [drain], repeat: true },
+          }),
+        ],
+        [
+          fighter({
+            hp: 10_000_000,
+            absorb: 100_000,
+            attackSpeed: 1,
+            physical: NO_DAMAGE,
+            absorbDestructionReduction: 60,
+          }),
+        ],
+      ],
+    };
+
+    const events: FightEvent[] = [];
+
+    const result = simulateFight(setup, seededRandom(3), (event) => {
+      events.push(event);
+    });
+
+    const rows = fightBattleLog(setup, events, result).payload.events[0]?.f?.m;
+
+    expect(
+      rows?.filter((row) => row.includes("-redabdest_per=60")).length,
+    ).toBe(1);
   });
 
   test("logs a fight that the battle processor reads back with the simulated damage, bonuses and winner", () => {

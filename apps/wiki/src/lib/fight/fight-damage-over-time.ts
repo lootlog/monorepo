@@ -1,7 +1,7 @@
 import { MAX_RESISTANCE } from "@/lib/character-stats";
 import { elementResistance, resistanceReduction } from "./fight-defence";
 import type { DamageOverTimeKind, DamageTick } from "./fight-events";
-import { poisonWeakeningOf } from "./fight-hit-effects";
+import { poisonWeakeningOf, pooledWeakening } from "./fight-hit-effects";
 import { buffTotal } from "./fight-skills";
 import {
   clamp,
@@ -11,13 +11,11 @@ import {
   type SkillDamageOverTime,
 } from "./fight-state";
 
-const DOT_WEAKENING_SOURCES = 2;
-
 type PendingTick = {
   readonly kind: DamageOverTimeKind;
   readonly dot: DamageOverTime;
   readonly resistance: number;
-  readonly poisonWeakens: boolean;
+  readonly weakened: boolean;
   readonly expire: () => void;
 };
 
@@ -43,7 +41,7 @@ const pendingTicks = (state: FighterState): PendingTick[] => {
             kind,
             dot,
             resistance,
-            poisonWeakens: true,
+            weakened: true,
             expire: () => state.skillDots.delete(kind),
           },
         ]
@@ -57,7 +55,7 @@ const pendingTicks = (state: FighterState): PendingTick[] => {
             kind: "wound" as const,
             dot: state.wound,
             resistance: woundResistance,
-            poisonWeakens: true,
+            weakened: true,
             expire: () => (state.wound = null),
           },
         ]
@@ -68,7 +66,7 @@ const pendingTicks = (state: FighterState): PendingTick[] => {
             kind: "anguish" as const,
             dot: state.anguish,
             resistance: 0,
-            poisonWeakens: true,
+            weakened: true,
             expire: () => (state.anguish = null),
           },
         ]
@@ -79,7 +77,7 @@ const pendingTicks = (state: FighterState): PendingTick[] => {
             kind: "injure" as const,
             dot: state.injure,
             resistance: woundResistance,
-            poisonWeakens: false,
+            weakened: false,
             expire: () => (state.injure = null),
           },
         ]
@@ -90,7 +88,7 @@ const pendingTicks = (state: FighterState): PendingTick[] => {
             kind: "critwound" as const,
             dot: state.critWound,
             resistance: woundResistance,
-            poisonWeakens: false,
+            weakened: false,
             expire: () => (state.critWound = null),
           },
         ]
@@ -101,7 +99,7 @@ const pendingTicks = (state: FighterState): PendingTick[] => {
             kind: "poison" as const,
             dot: state.poison,
             resistance: poisonResistance,
-            poisonWeakens: true,
+            weakened: true,
             expire: () => (state.poison = null),
           },
         ]
@@ -125,7 +123,7 @@ export const tickDamageOverTime = (
   const immune = isImmune(state);
 
   return pendingTicks(state).map(
-    ({ kind, dot, resistance, poisonWeakens, expire }) => {
+    ({ kind, dot, resistance, weakened, expire }) => {
       dot.turnsLeft -= 1;
 
       if (dot.turnsLeft <= 0) expire();
@@ -133,17 +131,12 @@ export const tickDamageOverTime = (
       const source = states[dot.source];
 
       const poisonWeakening =
-        poisonWeakens && source ? poisonWeakeningOf(source) : 0;
-
-      const allWeakening =
-        poisonWeakens && source ? buffTotal(source, "alllowdmg") : 0;
+        weakened && source ? poisonWeakeningOf(source) : 0;
 
       const weakening =
-        [poisonWeakening, -state.combatant.damageTakenBonus]
-          .filter((value) => value > 0)
-          .sort((left, right) => right - left)
-          .slice(0, DOT_WEAKENING_SOURCES)
-          .reduce((total, value) => total + value, 0) + allWeakening;
+        weakened && source
+          ? pooledWeakening(source, state) + buffTotal(source, "alllowdmg")
+          : 0;
 
       return {
         kind,

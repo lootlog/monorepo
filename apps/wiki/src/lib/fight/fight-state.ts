@@ -168,8 +168,9 @@ export type Combatant = {
   readonly energy: number;
   readonly energyGain: number;
   readonly mana: number;
-  readonly physicalBonus: number;
   readonly allDamageBonus: number;
+  readonly physicalBonus: number;
+  readonly lightDamageBonus: number;
   readonly unavoidableBonus: number;
   readonly damageTakenBonus: number;
   readonly enemySlow: number;
@@ -243,6 +244,7 @@ export type FighterState = SkillUserState & {
   lastHealUsed: boolean;
   punctureShown: boolean;
   facadeShown: boolean;
+  absorbProtectionShown: boolean;
   armorProtectionShownTo: Set<number>;
   cursed: boolean;
   slowBySource: Map<number, number>;
@@ -297,6 +299,7 @@ export const createState = (
   lastHealUsed: false,
   punctureShown: false,
   facadeShown: false,
+  absorbProtectionShown: false,
   armorProtectionShownTo: new Set(),
   cursed: false,
   slowBySource: new Map(),
