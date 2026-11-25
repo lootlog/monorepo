@@ -281,22 +281,31 @@ export type Reach = {
   readonly canStep: boolean;
 };
 
-const canTake = (
-  state: SkillUserState,
-  step: MasteryStep,
-  { reachesEnemy, meleeContact, canStep }: Reach,
+type StepAvailability = "take" | "approach" | "skip";
+
+const inRange = (
+  step: ActiveSkill | "attack",
+  { reachesEnemy, meleeContact }: Reach,
 ) => {
-  if (step === null) return false;
-
   if (step === "attack") return reachesEnemy;
-
-  if (step === "step") return canStep;
-
-  if (!canUse(state, step)) return false;
 
   if (step.melee) return meleeContact;
 
   return step.selfCast || !step.attacks || reachesEnemy;
+};
+
+const availabilityOf = (
+  state: SkillUserState,
+  step: NonNullable<MasteryStep>,
+  reach: Reach,
+): StepAvailability => {
+  if (step === "step") return reach.canStep ? "take" : "skip";
+
+  if (step !== "attack" && !canUse(state, step)) return "skip";
+
+  if (inRange(step, reach)) return "take";
+
+  return reach.canStep ? "approach" : "skip";
 };
 
 export const takeAction = (
@@ -310,7 +319,13 @@ export const takeAction = (
     const index = (state.masteryCursor + offset) % steps.length;
     const step = steps[index] ?? null;
 
-    if (step === null || !canTake(state, step, reach)) continue;
+    if (step === null) continue;
+
+    const availability = availabilityOf(state, step, reach);
+
+    if (availability === "skip") continue;
+
+    if (availability === "approach") return "step";
 
     state.masteryCursor = repeat ? (index + 1) % steps.length : index + 1;
 
