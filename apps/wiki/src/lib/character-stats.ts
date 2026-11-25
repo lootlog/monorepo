@@ -116,6 +116,7 @@ export type CharacterStats = {
   resFrost: number;
   resLight: number;
   healing: number;
+  healingItem: number;
   mana: number;
   energy: number;
   physicalBonus: number;
@@ -527,6 +528,7 @@ export const characterStats = (
       Math.max(0, item("heal") - item("adest")) *
         (1 + skill("heal1_per") / 100),
     ),
+    healingItem: Math.max(0, item("heal") - item("adest")),
     mana: Math.floor(
       item("manabon") + skill("manabon") + skill("manastr") * intellect,
     ),

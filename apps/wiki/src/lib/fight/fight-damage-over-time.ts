@@ -135,11 +135,15 @@ export const tickDamageOverTime = (
       const poisonWeakening =
         poisonWeakens && source ? poisonWeakeningOf(source) : 0;
 
-      const weakening = [poisonWeakening, -state.combatant.damageTakenBonus]
-        .filter((value) => value > 0)
-        .sort((left, right) => right - left)
-        .slice(0, DOT_WEAKENING_SOURCES)
-        .reduce((total, value) => total + value, 0);
+      const allWeakening =
+        poisonWeakens && source ? buffTotal(source, "alllowdmg") : 0;
+
+      const weakening =
+        [poisonWeakening, -state.combatant.damageTakenBonus]
+          .filter((value) => value > 0)
+          .sort((left, right) => right - left)
+          .slice(0, DOT_WEAKENING_SOURCES)
+          .reduce((total, value) => total + value, 0) + allWeakening;
 
       return {
         kind,

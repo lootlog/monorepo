@@ -52,14 +52,22 @@ export const critValueBonus = (
   buffTotal(attacker, "critval-allies", "critval-enemies") +
   critValueShift(attacker, defender);
 
+export const MIN_CRIT_VALUE = 100;
+
 const critValue = ({ attacker, defender }: Hit) =>
-  attacker.combatant.critValue + critValueBonus(attacker, defender);
+  Math.max(
+    MIN_CRIT_VALUE,
+    attacker.combatant.critValue + critValueBonus(attacker, defender),
+  );
 
 const critMagicValue = ({ attacker, defender }: Hit, element: number) =>
-  attacker.combatant.critMagicValue +
-  element +
-  buffTotal(attacker, "critmval-allies", "critmval-enemies") +
-  critValueShift(attacker, defender);
+  Math.max(
+    MIN_CRIT_VALUE,
+    attacker.combatant.critMagicValue +
+      element +
+      buffTotal(attacker, "critmval-allies", "critmval-enemies") +
+      critValueShift(attacker, defender),
+  );
 
 export const physicalStrength = (hit: Hit) => {
   const { attacker, plan, crit, scale, vulture, rage, random } = hit;

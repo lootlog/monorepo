@@ -23,6 +23,7 @@ import {
   critValueBonus,
   magicDamage,
   magicStrength,
+  MIN_CRIT_VALUE,
   physicalDamage,
   physicalStrength,
   type ElementalDamage,
@@ -366,7 +367,10 @@ const offhandHit = (hit: Hit, mainParried: boolean) => {
   const critFactor =
     crit.strength > 0
       ? (crit.strength *
-          (a.offhandCritValue + critValueBonus(attacker, defender))) /
+          Math.max(
+            MIN_CRIT_VALUE,
+            a.offhandCritValue + critValueBonus(attacker, defender),
+          )) /
         100
       : 1;
 

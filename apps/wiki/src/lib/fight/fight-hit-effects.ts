@@ -341,7 +341,10 @@ const applyWound = (
       defender.wound.cap,
       defender.wound.damage + WOUND_GROWTH * applied,
     );
-    defender.wound.turnsLeft += WOUND_EXTENSION_TURNS;
+    defender.wound.turnsLeft = Math.min(
+      DOT_TURNS,
+      defender.wound.turnsLeft + WOUND_EXTENSION_TURNS,
+    );
   }
 
   return { main, offhand, halved: poisonApplied };

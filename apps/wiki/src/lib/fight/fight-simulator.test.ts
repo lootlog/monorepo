@@ -654,6 +654,66 @@ describe("skill effects", () => {
     );
   });
 
+  test("gives the Aura ochrony caster half its resistance floored and allies full power", () => {
+    const aura: ActiveSkill = {
+      ...skill(
+        "aura",
+        { "aura-ac_per": [20, 8], "aura-resall": [15, 8] },
+        false,
+      ),
+      selfCast: true,
+    };
+
+    const fireTaken = (casterLevel: number, allyLevel: number) => {
+      const events: FightEvent[] = [];
+
+      simulateFight(
+        {
+          teams: [
+            [
+              fighter({
+                hp: 10_000_000,
+                level: casterLevel,
+                attackSpeed: 40,
+                resistFire: 20,
+                physical: NO_DAMAGE,
+                mastery: { steps: [aura], repeat: false },
+              }),
+              fighter({
+                hp: 10_000_000,
+                level: allyLevel,
+                attackSpeed: 1,
+                resistFire: 20,
+                physical: NO_DAMAGE,
+              }),
+            ],
+            [
+              fighter({
+                profession: "m",
+                hp: 10_000_000,
+                attackSpeed: 10,
+                critChance: 0,
+                pierce: 100,
+                physical: NO_DAMAGE,
+                fire: { min: 1000, max: 1000 },
+              }),
+            ],
+          ],
+          levelAdvantage: false,
+        },
+        seededRandom(5),
+        (event) => {
+          events.push(event);
+        },
+      );
+
+      return strikesBy(events, 2)[0]?.damage.fire;
+    };
+
+    expect(fireTaken(100, 200)).toBe(730);
+    expect(fireTaken(200, 100)).toBe(650);
+  });
+
   test("lets a barrier reflect nothing from the blow that kills its holder", () => {
     const attacker = createState(
       fighter({ hp: 1, physical: { min: 100_000, max: 100_000 } }),

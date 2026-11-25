@@ -163,6 +163,7 @@ export type Combatant = {
   readonly resistPoison: number;
   readonly resistWound: number;
   readonly healing: number;
+  readonly healingBonus: number;
   readonly enemyHealingCut: number;
   readonly energy: number;
   readonly energyGain: number;
