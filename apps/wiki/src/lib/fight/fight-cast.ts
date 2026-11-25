@@ -163,6 +163,7 @@ const FLOORED_CASTER_TEAM_BUFFS: ReadonlySet<string> = new Set(["aura-resall"]);
 const applyBuffs = (cast: Cast) => {
   const { caster, target, allies, enemies, skill } = cast;
   let armorBonus = 0;
+  const fresh = !skill.attacks;
 
   for (const [key, effect] of skill.effects) {
     const { turns } = effect;
@@ -173,7 +174,8 @@ const applyBuffs = (cast: Cast) => {
       armorBonus = value;
     }
 
-    if (SELF_BUFFS.has(key)) addBuff(caster, key, value, turns, caster.index);
+    if (SELF_BUFFS.has(key))
+      addBuff(caster, key, value, turns, caster.index, fresh);
 
     const casterShare = TEAM_BUFF_CASTER_SHARE.get(key);
 
@@ -198,6 +200,7 @@ const applyBuffs = (cast: Cast) => {
           ally === caster ? casterValue : value,
           turns,
           caster.index,
+          ally === caster && fresh,
         );
       }
     }

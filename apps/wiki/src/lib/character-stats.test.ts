@@ -126,6 +126,30 @@ describe("character stats", () => {
     expect(stats.wound.damage).toBe(540);
   });
 
+  it("raises a one-and-a-half-handed weapon's damage by 22% only without a shield", () => {
+    const physical = (...items: ReturnType<typeof worn>[]) =>
+      characterStats("w", 100, items, new Map()).physical;
+
+    const blade = worn("ONE_AND_HALF_HAND_WEAPON", "dmg=100,200");
+
+    expect(physical(blade)).toEqual({ min: 122, max: 244 });
+    expect(physical(blade, worn("SHIELD", "ac=10"))).toEqual({
+      min: 100,
+      max: 200,
+    });
+  });
+
+  it("resists energy destruction by its share of a cursed item's mana resistance", () => {
+    const stats = characterStats(
+      "w",
+      100,
+      [worn("RING", "resmanaendest=9")],
+      new Map(),
+    );
+
+    expect(stats.drainResist).toEqual({ mana: 9, energy: 4 });
+  });
+
   it("adds the physical item bonus to all damage on the weapon's damage", () => {
     const stats = characterStats(
       "w",

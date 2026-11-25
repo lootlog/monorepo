@@ -8,7 +8,14 @@ import {
   NO_LEGENDARY_BONUSES,
   type Combatant,
 } from "./fight-state";
-import { NO_SKILL, type ActiveSkill } from "./fight-skills";
+import { tickDamageOverTime } from "./fight-damage-over-time";
+import { weakeningFactor } from "./fight-hit-effects";
+import {
+  addBuff,
+  NO_SKILL,
+  type ActionPlan,
+  type ActiveSkill,
+} from "./fight-skills";
 import { seededRandom } from "./fight-summary";
 import { fighter, NO_DAMAGE } from "./fight.fixtures";
 
@@ -317,7 +324,7 @@ describe("damage and defence", () => {
         mastery: { steps: [blow], repeat: false },
         legendary: { ...NO_LEGENDARY_BONUSES, curse: 100 },
       },
-      { physical: { min: 1, max: 1 }, attackSpeed: 3 },
+      { physical: { min: 1, max: 1 }, attackSpeed: 2.4 },
     );
 
     const stunned = events.findIndex(
@@ -396,5 +403,129 @@ describe("damage and defence", () => {
 
     expect(hits.length).toBeGreaterThan(3);
     expect(hits.map((hit) => hit.countered).slice(0, 2)).toEqual([false, true]);
+  });
+
+  test("ticks injure and critwound at their applied value, cut only by wound resistance", () => {
+    const defender = createState(
+      fighter({ hp: 100_000, damageTakenBonus: -10, resistWound: 30 }),
+      1,
+      1,
+    );
+
+    const attacker = createState(fighter({}), 0, 0);
+
+    defender.injure = { damage: 1000, turnsLeft: 3, source: 0 };
+    defender.critWound = { damage: 2000, turnsLeft: 3, source: 0 };
+
+    expect(
+      tickDamageOverTime(defender, [attacker, defender]).map(
+        (tick) => tick.damage,
+      ),
+    ).toEqual([700, 1400]);
+  });
+
+  test("pools each poisoning enemy's weakening as its own source within the two-source cap", () => {
+    const attacker = createState(fighter({}), 0, 0);
+    const defender = createState(fighter({ damageTakenBonus: -10 }), 1, 1);
+
+    attacker.poison = {
+      damage: 100,
+      slow: 0,
+      turnsLeft: 5,
+      source: 1,
+      boosted: false,
+    };
+    addBuff(attacker, "poison_lowdmg_per", 10, Infinity, 1);
+    addBuff(attacker, "poison_lowdmg_per", 10, Infinity, 2);
+
+    expect(weakeningFactor(attacker, defender)).toBeCloseTo(0.8);
+  });
+
+  test("enrages a defender immune to damage after a critical hit", () => {
+    const attacker = createState(
+      fighter({ critChance: 100, physical: { min: 1000, max: 1000 } }),
+      0,
+      0,
+    );
+
+    const defender = createState(fighter({ rageTurns: 1 }), 1, 1);
+
+    addBuff(defender, "immunity_to_dmg", 1, 2, 1);
+    strike(attacker, defender, NO_SKILL, seededRandom(5));
+
+    expect(defender.buffs.some((buff) => buff.key === "rage")).toBe(true);
+  });
+
+  test("raises the lightning stacks of a cumulating skill before its own strike", () => {
+    const attacker = createState(
+      fighter({
+        profession: "m",
+        critChance: 0,
+        physical: NO_DAMAGE,
+        light: { min: 1000, max: 1000 },
+      }),
+      0,
+      0,
+    );
+
+    const defender = createState(fighter({ hp: 10_000_000 }), 1, 1);
+
+    const shock: ActionPlan = {
+      ...NO_SKILL,
+      effect: (key) => (key === "active_add_light_cumulaction" ? 1 : 0),
+    };
+
+    strike(attacker, defender, NO_SKILL, seededRandom(5));
+
+    expect(
+      strike(attacker, defender, shock, seededRandom(5)).strength.light,
+    ).toBe(1050);
+  });
+
+  test("never parries the auxiliary weapon after the main weapon is evaded", () => {
+    const random = seededRandom(5);
+
+    const attacker = createState(
+      fighter({ profession: "b", offhand: { min: 500, max: 500 } }),
+      0,
+      0,
+    );
+
+    const defender = createState(
+      fighter({ hp: 10_000_000, evadePoints: 100_000, parryChance: 100 }),
+      1,
+      1,
+    );
+
+    const hits = Array.from({ length: 40 }, () =>
+      strike(attacker, defender, NO_SKILL, random),
+    );
+
+    expect(hits.some((hit) => hit.evaded)).toBe(true);
+    expect(hits.filter((hit) => hit.evaded && hit.parried)).toEqual([]);
+  });
+
+  test("swings only at enemies the striker reaches without stepping", () => {
+    const attacker = createState(
+      fighter({ profession: "w", swingChance: 100 }),
+      0,
+      0,
+    );
+
+    const defender = createState(fighter({ hp: 10_000_000 }), 1, 1);
+    const near = createState(fighter({ hp: 10_000_000 }), 1, 2);
+
+    const far = createState(
+      fighter({ hp: 10_000_000, profession: "h", position: 3 }),
+      1,
+      3,
+    );
+
+    const hit = strike(attacker, defender, NO_SKILL, seededRandom(5), [
+      near,
+      far,
+    ]);
+
+    expect(hit.swings.map((swing) => swing.target)).toEqual([2]);
   });
 });

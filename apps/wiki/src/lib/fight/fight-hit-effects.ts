@@ -118,21 +118,39 @@ const ATTACK_WEAKENINGS: ReadonlySet<string> = new Set([
 export const poisonWeakeningOf = (attacker: FighterState) =>
   attacker.poison ? buffTotal(attacker, "poison_lowdmg_per") : 0;
 
-export const weakeningFactor = (
+const poisonWeakenings = (attacker: FighterState) =>
+  attacker.poison
+    ? attacker.buffs
+        .filter((buff) => buff.key === "poison_lowdmg_per")
+        .map((buff) => buff.value)
+    : [];
+
+export const pooledWeakening = (
   attacker: FighterState,
   defender: FighterState,
-) => {
-  const lowered = [
-    ...attacker.buffs
-      .filter((buff) => ATTACK_WEAKENINGS.has(buff.key))
-      .map((buff) => buff.value),
-    poisonWeakeningOf(attacker),
+  attackWeakenings: readonly number[] = [],
+) =>
+  [
+    ...attackWeakenings,
+    ...poisonWeakenings(attacker),
     -defender.combatant.damageTakenBonus,
   ]
     .filter((value) => value > 0)
     .sort((left, right) => right - left)
     .slice(0, WEAKENING_SOURCES)
     .reduce((total, value) => total + value, 0);
+
+export const weakeningFactor = (
+  attacker: FighterState,
+  defender: FighterState,
+) => {
+  const lowered = pooledWeakening(
+    attacker,
+    defender,
+    attacker.buffs
+      .filter((buff) => ATTACK_WEAKENINGS.has(buff.key))
+      .map((buff) => buff.value),
+  );
 
   return Math.max(0, 1 - (lowered + buffTotal(attacker, "alllowdmg")) / 100);
 };
@@ -422,7 +440,8 @@ export const counters = (
 
   const { counterChance, parryCounterChance } = defender.combatant;
 
-  if (parried) return chance(random, counterChance + parryCounterChance);
-
-  return crit && chance(random, counterChance);
+  return chance(
+    random,
+    (crit ? counterChance : 0) + (parried ? parryCounterChance : 0),
+  );
 };

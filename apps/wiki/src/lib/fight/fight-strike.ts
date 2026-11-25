@@ -57,6 +57,7 @@ import {
   type PassiveTriggers,
 } from "./fight-passives";
 import { isImmune, roll, takeDamage, type FighterState } from "./fight-state";
+import { showOnce } from "./fight-shown-once";
 
 type StrikeDamage = ElementalDamage & {
   readonly physical: number;
@@ -97,6 +98,7 @@ export type Strike = {
   readonly armorDestroyed: number;
   readonly armorBroken: boolean;
   readonly armorDestructionReduction: number;
+  readonly absorbDestructionReduction: number;
   readonly armorDestructionResisted: number;
   readonly critValueReduced: number;
   readonly enemyHealingCut: number;
@@ -356,7 +358,7 @@ const NO_OFFHAND = {
   taken: 0,
 };
 
-const offhandHit = (hit: Hit, mainParried: boolean) => {
+const offhandHit = (hit: Hit, mainMissed: boolean) => {
   const { attacker, defender, random } = hit;
   const a = attacker.combatant;
 
@@ -376,7 +378,7 @@ const offhandHit = (hit: Hit, mainParried: boolean) => {
 
   const strength = roll(random, a.offhand) * critFactor * hit.scale;
 
-  const parried = !mainParried && parries(attacker, defender, random);
+  const parried = !mainMissed && parries(attacker, defender, random);
 
   return {
     crit: crit.crit,
@@ -432,7 +434,7 @@ const land = (
     defender.critSlowTurns = 1;
   }
 
-  if (crit && dealt > 0) enrage(defender);
+  if (crit && defended > 0) enrage(defender);
 
   const stunned =
     landed && !blocked
@@ -467,33 +469,6 @@ const afterLanding = (
   ),
   manaDrained: drain(attacker, "mana", defender.combatant.manaDrain, random),
 });
-
-const showOnce = (
-  attacker: FighterState,
-  defender: FighterState,
-  { facade, armorDestroyed }: { facade: number; armorDestroyed: boolean },
-) => {
-  const armorProtected =
-    armorDestroyed && !defender.armorProtectionShownTo.has(attacker.index);
-
-  const shown = {
-    puncture: attacker.punctureShown
-      ? 0
-      : attacker.combatant.legendary.puncture,
-    facade: defender.facadeShown ? 0 : facade,
-    armorDestructionReduction: armorProtected
-      ? defender.combatant.armorDestructionReduction
-      : 0,
-  };
-
-  attacker.punctureShown = true;
-
-  if (facade > 0) defender.facadeShown = true;
-
-  if (armorProtected) defender.armorProtectionShownTo.add(attacker.index);
-
-  return shown;
-};
 
 const rollMisses = (
   attacker: FighterState,
@@ -635,7 +610,7 @@ export const strike = (
   };
 
   const main = missed ? missedHit(hit) : mainWeaponHit(hit);
-  const offhand = offhandHit(hit, parried);
+  const offhand = offhandHit(hit, missed);
 
   const third = arrowBlocked
     ? NO_THIRD_ATTACK
@@ -712,6 +687,7 @@ export const strike = (
   const shown = showOnce(attacker, defender, {
     facade,
     armorDestroyed: defender.armorLost > lostBefore,
+    absorbShareDestroyed: main.absorbShareDestroyed,
   });
 
   return {
@@ -742,6 +718,7 @@ export const strike = (
     armorDestroyed,
     armorBroken: !brokenBefore && isArmorBroken(defender),
     armorDestructionReduction: shown.armorDestructionReduction,
+    absorbDestructionReduction: shown.absorbDestructionReduction,
     ...cursed,
     resistanceDestroyed: main.resistanceDestroyed,
     absorbed: main.absorbed,

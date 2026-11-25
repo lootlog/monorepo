@@ -1,4 +1,6 @@
+import { maxBy } from "es-toolkit";
 import { itemStatValue } from "@lootlog/domain/item-stat";
+import { upgradedItemLevel } from "@lootlog/domain/item-upgrade";
 import {
   anguishDamage,
   isCalculableLegendaryBonus,
@@ -113,11 +115,17 @@ const POSITION_BY_WEAPON: ReadonlyMap<string, BattlePosition> = new Map([
   ["DISTANCE_WEAPON", 3],
 ]);
 
+const hasArrows = (items: readonly FighterItem[]) =>
+  items.some(({ item }) => item.type === "QUIVER");
+
 const battlePosition = (items: readonly FighterItem[]): BattlePosition =>
-  items.reduce<BattlePosition>(
-    (position, { item }) => POSITION_BY_WEAPON.get(item.type ?? "") ?? position,
-    1,
-  );
+  items.reduce<BattlePosition>((position, { item }) => {
+    const weaponPosition = POSITION_BY_WEAPON.get(item.type ?? "");
+
+    return weaponPosition === 3 && !hasArrows(items)
+      ? position
+      : (weaponPosition ?? position);
+  }, 1);
 
 const COMBO_EVENTS = ["crit", "pierce", "wound", "block"] as const;
 
@@ -148,13 +156,11 @@ const legendaryBonuses = (
         )
       : 0;
 
-  const anguishLevel = Math.max(
-    0,
-    ...worn.flatMap((bonus) =>
-      bonus.name === "anguish" && Number.isFinite(bonus.itemLevel)
-        ? [bonus.itemLevel]
-        : [],
+  const anguishItem = maxBy(
+    worn.filter(
+      (bonus) => bonus.name === "anguish" && Number.isFinite(bonus.itemLevel),
     ),
+    (bonus) => upgradedItemLevel(bonus.itemLevel, bonus.upgrade),
   );
 
   const lastHeal = strengthsOf("lastheal");
@@ -172,10 +178,10 @@ const legendaryBonuses = (
     anguish: {
       chance: valueOf("anguish"),
       damage:
-        anguishLevel > 0
+        anguishItem && anguishItem.itemLevel > 0
           ? anguishDamage({
-              itemLevel: anguishLevel,
-              upgrade: 0,
+              itemLevel: anguishItem.itemLevel,
+              upgrade: anguishItem.upgrade,
               strength: stats.strength,
               intellect: stats.intellect,
               agility: stats.agility,

@@ -4,6 +4,7 @@ import {
   isImmune,
   MELEE,
   randomPick,
+  reaches,
   roll,
   takeDamage,
   type FighterState,
@@ -21,7 +22,7 @@ export const swingAt = (
   const a = attacker.combatant;
 
   const targets = randomPick(
-    others.filter((other) => other.alive),
+    others.filter((other) => other.alive && reaches(attacker, other)),
     SWING_TARGETS,
     random,
   );

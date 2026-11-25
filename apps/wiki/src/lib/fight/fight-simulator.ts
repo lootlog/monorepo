@@ -151,11 +151,7 @@ const teamTotal = (
   team: readonly FighterState[],
   effect: (passives: PassiveEffects) => number,
 ) =>
-  team.reduce(
-    (total, member) =>
-      member.alive ? total + effect(member.combatant.passives) : total,
-    0,
-  );
+  team.reduce((total, member) => total + effect(member.combatant.passives), 0);
 
 const healingModifier = (
   state: FighterState,
@@ -164,7 +160,6 @@ const healingModifier = (
 ) =>
   1 +
   (state.combatant.healingBonus +
-    buffTotal(state, "sunshield_per") +
     teamTotal(allies, (passives) => passives.allyHealing) -
     teamTotal(enemies, (passives) => passives.enemyHealing) -
     state.healCut) /
@@ -183,7 +178,11 @@ const applyHealing = (
 
   if (base <= 0 || state.hp >= state.combatant.hp) return 0;
 
-  const decayed = base * (1 - HEAL_DECAY * state.healTriggers);
+  const decayed =
+    base *
+    (1 -
+      HEAL_DECAY * state.healTriggers +
+      buffTotal(state, "sunshield_per") / 100);
 
   if (decayed <= 0) return 0;
 
@@ -252,6 +251,10 @@ const endTurn = (state: FighterState) => {
     state.combatant.mana,
     state.mana + state.combatant.passives.manaGain,
   );
+  state.energy = Math.min(
+    state.combatant.energy,
+    state.energy + state.combatant.energyGain,
+  );
 };
 
 const livingTeams = (states: readonly FighterState[]) =>
@@ -319,10 +322,7 @@ const startTurn = (turn: Turn) => {
 
   const regenerated = buffTotal(actor, "en-regen");
 
-  actor.energy = Math.min(
-    actor.combatant.energy,
-    actor.energy + actor.combatant.energyGain + regenerated,
-  );
+  actor.energy = Math.min(actor.combatant.energy, actor.energy + regenerated);
 
   if (record && regenerated > 0) {
     record({
@@ -348,12 +348,11 @@ const startTurn = (turn: Turn) => {
 
   const ticks = tickDamageOverTime(actor, turn.states);
 
-  takeDamage(
-    actor,
-    ticks.reduce((total, tick) => total + tick.damage, 0),
-  );
+  const lastHeal = ticks.reduce((healed, tick) => {
+    takeDamage(actor, tick.damage);
 
-  const lastHeal = tryLastHeal(actor, random);
+    return healed + tryLastHeal(actor, random);
+  }, 0);
 
   if (record && (ticks.length > 0 || lastHeal > 0)) {
     record({
@@ -620,7 +619,6 @@ export const createFightStates = (setup: FightSetup): FighterState[] => {
   states.forEach((state, index) => {
     state.index = index;
     state.levelAdvantage = setup.levelAdvantage ?? true;
-    state.clock = attackTime(state);
   });
 
   const enemiesOf = teammates(states, false);

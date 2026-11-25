@@ -77,3 +77,11 @@ export const splitItemStat = (stat: string) => {
 
 export const joinItemStat = (revision: string, instance: string | null) =>
   [revision, instance].filter(Boolean).join(";");
+
+const ENERGY_PER_RESISTED_MANA_DESTRUCTION = 0.444;
+
+export const resistedEnergyDestruction = (resistedManaDestruction: number) =>
+  Math.max(
+    1,
+    Math.round(resistedManaDestruction * ENERGY_PER_RESISTED_MANA_DESTRUCTION),
+  );

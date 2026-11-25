@@ -1,4 +1,7 @@
-import { parseItemStatEntries } from "@lootlog/domain/item-stat";
+import {
+  parseItemStatEntries,
+  resistedEnergyDestruction,
+} from "@lootlog/domain/item-stat";
 import type { Profession } from "@/lib/equipment-set";
 import { findEquipmentSlot } from "@/lib/equipment-slots";
 import type { SkillBonuses } from "@/lib/skills/skill-stats";
@@ -232,10 +235,12 @@ const DAMAGE_ENTRIES = new Map(
         damage: sums[weapon].damage + effect.damage,
       };
     },
-    resmanaendest: (sums, [mana = 0, energy = 0]) => {
+    resmanaendest: (sums, [mana = 0]) => {
       sums.drainResist = {
         mana: sums.drainResist.mana + mana,
-        energy: sums.drainResist.energy + energy,
+        energy:
+          sums.drainResist.energy +
+          (mana > 0 ? resistedEnergyDestruction(mana) : 0),
       };
     },
   } satisfies Record<string, AddEntry>),
@@ -262,6 +267,8 @@ const addSingleValue = (
   }
 };
 
+const UNSHIELDED_ONE_AND_HALF_HAND_DAMAGE = 1.22;
+
 const sumItems = (wornItems: readonly WornItem[]): ItemSums => {
   const sums: ItemSums = {
     flat: new Map(),
@@ -283,8 +290,15 @@ const sumItems = (wornItems: readonly WornItem[]): ItemSums => {
     drainResist: { mana: 0, energy: 0 },
   };
 
+  const shielded = wornItems.some(({ item }) => item.type === "SHIELD");
+
   for (const { item } of wornItems) {
     const isOffhand = item.type === "HELP_WEAPON";
+
+    const damageScale =
+      item.type === "ONE_AND_HALF_HAND_WEAPON" && !shielded
+        ? UNSHIELDED_ONE_AND_HALF_HAND_DAMAGE
+        : 1;
 
     const critOwner = isOffhand
       ? "offhand"
@@ -298,7 +312,13 @@ const sumItems = (wornItems: readonly WornItem[]): ItemSums => {
       const [single] = numbers;
 
       if (addDamage && numbers.length > 0) {
-        addDamage(sums, numbers, isOffhand);
+        addDamage(
+          sums,
+          key === "dmg"
+            ? numbers.map((number) => number * damageScale)
+            : numbers,
+          isOffhand,
+        );
       } else if (numbers.length === 1 && single !== undefined) {
         addSingleValue(sums, key, single, critOwner);
       }
