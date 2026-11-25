@@ -34,13 +34,15 @@ export type Fighters = {
   mine: FighterProfile;
   opponent: FighterProfile;
   names: { mine: string; opponent: string };
+  levelAdvantage: boolean;
 };
 
-const setupOf = ({ mine, opponent, names }: Fighters) => ({
+const setupOf = ({ mine, opponent, names, levelAdvantage }: Fighters) => ({
   teams: [
     [toCombatant(mine, names.mine)],
     [toCombatant(opponent, names.opponent)],
   ],
+  levelAdvantage,
 });
 
 const nextTask = () =>

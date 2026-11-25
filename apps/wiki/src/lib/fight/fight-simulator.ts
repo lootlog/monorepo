@@ -76,15 +76,19 @@ export const attackTime = (state: FighterState) => {
 
   const reduction = clamp(slowReduction, 0, 100) / 100;
 
-  const weaponSlow = Math.max(
-    state.poison ? state.poison.slow * (1 - reduction) : 0,
-    state.frostSlow
-      ? state.frostSlow.slow *
-          (1 +
-            (state.frostSlow.boostTurnsLeft > 0 ? state.frostSlow.boost : 0) -
-            reduction)
-      : 0,
-  );
+  const poisonSlow = state.poison ? state.poison.slow * (1 - reduction) : 0;
+
+  const frostSlow = state.frostSlow
+    ? state.frostSlow.slow *
+      (1 +
+        (state.frostSlow.boostTurnsLeft > 0 ? state.frostSlow.boost : 0) -
+        reduction)
+    : 0;
+
+  const weaponSlow =
+    state.poison?.source === state.frostSlow?.source
+      ? Math.max(poisonSlow, frostSlow)
+      : poisonSlow + frostSlow;
 
   const constantSlow = weaponSlow + strongestEnemySlow(state) * (1 - reduction);
 
@@ -120,6 +124,28 @@ const tryLastHeal = (state: FighterState, random: () => number) => {
 
   return healBy(state, (share / 100) * state.combatant.hp - state.hp);
 };
+
+const lastHealsOf = (
+  states: readonly FighterState[],
+  random: () => number,
+  hits: readonly { readonly target: number }[],
+) =>
+  hits.map(({ target }) => {
+    const state = states[target];
+
+    return state ? tryLastHeal(state, random) : 0;
+  });
+
+const lastHealsAfter = (
+  { states, random }: Turn,
+  attacker: FighterState,
+  defender: FighterState,
+  hit: Strike,
+) => ({
+  lastHeal: tryLastHeal(defender, random),
+  reflectLastHeal: hit.reflected > 0 ? tryLastHeal(attacker, random) : 0,
+  swingLastHeals: lastHealsOf(states, random, hit.swings),
+});
 
 const teamTotal = (
   team: readonly FighterState[],
@@ -165,7 +191,7 @@ const applyHealing = (
 
   const healed = Math.min(
     state.combatant.hp - state.hp,
-    Math.max(0, Math.round(decayed)),
+    Math.max(0, Math.floor(decayed)),
   );
 
   state.hp += healed;
@@ -356,7 +382,7 @@ const comboDamageTo = (
     : 0;
 
 const castSkill = (
-  { actor, allies, enemies, random, record, hpOf }: Turn,
+  { actor, allies, enemies, states, random, record, hpOf }: Turn,
   skill: ActiveSkill,
   plan: ActionPlan,
   enemy: FighterState | null,
@@ -395,6 +421,7 @@ const castSkill = (
     comboSpent: plan.comboSpent,
     comboDamage,
     lastHeal,
+    swingLastHeals: lastHealsOf(states, random, outcome.swings),
     hp: hpOf(),
   });
 
@@ -445,7 +472,7 @@ const takeForcedTurn = (
     : null;
 
   const hit = strike(attacker, defender, NO_SKILL, random);
-  const lastHeal = tryLastHeal(defender, random);
+  const lastHeals = lastHealsAfter(forcedTurn, attacker, defender, hit);
 
   record?.({
     kind: "strike",
@@ -454,7 +481,7 @@ const takeForcedTurn = (
     target: defender.index,
     fastArrow: false,
     ...hit,
-    lastHeal,
+    ...lastHeals,
     hp: hpOf(),
   });
 
@@ -509,7 +536,7 @@ const attack = (
       index === attacks - 1,
     );
 
-    const lastHeal = tryLastHeal(target, random);
+    const lastHeals = lastHealsAfter(turn, actor, target, hit);
 
     record?.({
       kind: "strike",
@@ -518,7 +545,7 @@ const attack = (
       target: target.index,
       fastArrow: fastArrow && index === 0,
       ...hit,
-      lastHeal,
+      ...lastHeals,
       hp: hpOf(),
     });
 
@@ -592,6 +619,7 @@ export const createFightStates = (setup: FightSetup): FighterState[] => {
 
   states.forEach((state, index) => {
     state.index = index;
+    state.levelAdvantage = setup.levelAdvantage ?? true;
     state.clock = attackTime(state);
   });
 

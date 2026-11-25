@@ -97,7 +97,7 @@ describe("skill stats", () => {
     );
   });
 
-  it("raise the items' armor by a percentage and add their own", () => {
+  it("raise the armor of items and skills together by a percentage", () => {
     const bonuses = new Map([
       ["ac2_per", 20],
       ["ac", 30],
@@ -105,8 +105,8 @@ describe("skill stats", () => {
 
     expect(
       setStatValueWithSkills({ ac: 100 }, statById("ac"), bonuses, 200),
-    ).toBe(150);
-    expect(setStatValueWithSkills({}, statById("ac"), bonuses, 200)).toBe(30);
+    ).toBe(156);
+    expect(setStatValueWithSkills({}, statById("ac"), bonuses, 200)).toBe(36);
   });
 
   it("turn a percentage of evade into points at the level", () => {

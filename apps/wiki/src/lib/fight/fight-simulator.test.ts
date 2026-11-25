@@ -537,6 +537,97 @@ describe("skill effects", () => {
     },
   );
 
+  test("lifts the stun of the very hit that triggers Płomienne oczyszczenie", () => {
+    const blow = skill("ogłuszenie", { stun: [100, 1] });
+
+    const events = fightOf(
+      { mastery: { steps: [blow], repeat: true } },
+      { legendary: { ...NO_LEGENDARY_BONUSES, cleanse: 100 } },
+    );
+
+    const stuns = strikesBy(events, 0).filter((event) => event.stun);
+
+    expect(stuns.length).toBeGreaterThan(0);
+    expect(stuns.every((event) => event.cleansed)).toBe(true);
+    expect(
+      events.some((event) => event.kind === "lostTurn" && event.actor === 1),
+    ).toBe(false);
+  });
+
+  test("stuns a fighter that is immune to damage without hurting it", () => {
+    const blow = skill("ogłuszenie", { stun: [100, 1] });
+    const calm = skill("spokój", { immunity_to_dmg: [1, 50] }, false);
+
+    const events = fightOf(
+      { mastery: { steps: [blow], repeat: true } },
+      { attackSpeed: 40, mastery: { steps: [calm], repeat: false } },
+    );
+
+    const immune = strikesBy(events, 0).filter((event) => event.immune);
+
+    expect(immune.length).toBeGreaterThan(0);
+    expect(immune.every((event) => event.stun)).toBe(true);
+    expect(immune.every((event) => event.damage.physical === 0)).toBe(true);
+  });
+
+  test("destroys absorption with a skill only when its strike is not evaded", () => {
+    const lance = skill("pocisk", { active_absorbdest_per: [10, 1] });
+
+    const strikes = strikesBy(
+      fightOf(
+        { mastery: { steps: [lance], repeat: true } },
+        { evadePoints: 10_000, absorb: 1_000_000, absorbMagic: 1_000_000 },
+      ),
+      0,
+    );
+
+    const destroyed = (evaded: boolean) =>
+      strikes
+        .filter((event) => event.evaded === evaded)
+        .map((event) => event.absorbShareDestroyed.absorbMagic);
+
+    expect(destroyed(true).length).toBeGreaterThan(0);
+    expect(destroyed(true).every((amount) => amount === 0)).toBe(true);
+    expect(destroyed(false).every((amount) => amount > 0)).toBe(true);
+  });
+
+  test("adds up the caster's damage bonuses on flat skill damage, cut by the target's damage reduction and floored", () => {
+    const orb = skill("kula", { "dmg-target_absolute": [4350, 1] }, false);
+
+    const events = fightOf(
+      {
+        allDamageBonus: 3,
+        unavoidableBonus: 5,
+        mastery: { steps: [orb], repeat: false },
+      },
+      { damageTakenBonus: -10 },
+    );
+
+    const cast = events.find((event) => event.kind === "skill");
+
+    expect(cast?.kind === "skill" && cast.flatDamage).toBe(4228);
+  });
+
+  test("destroys the same armor with a crushing skill whether or not the strike crits", () => {
+    const crusher = skill("niszczyciel", {
+      "active_acdmg_physical-perw": [4, 1],
+    });
+
+    const strikes = strikesBy(
+      fightOf(
+        { critChance: 50, mastery: { steps: [crusher], repeat: true } },
+        { armor: 100_000 },
+      ),
+      0,
+    );
+
+    expect(strikes.some((event) => event.crit)).toBe(true);
+    expect(strikes.some((event) => !event.crit)).toBe(true);
+    expect(new Set(strikes.map((event) => event.armorDestroyed))).toEqual(
+      new Set([40]),
+    );
+  });
+
   test("lets a barrier reflect nothing from the blow that kills its holder", () => {
     const attacker = createState(
       fighter({ hp: 1, physical: { min: 100_000, max: 100_000 } }),

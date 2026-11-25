@@ -16,6 +16,8 @@ const MIN_CRIT = 1;
 const VERY_CRIT_FACTOR = 1.75;
 
 const levelGap = (attacker: FighterState, defender: FighterState) => {
+  if (!attacker.levelAdvantage) return 0;
+
   const gap =
     Math.min(attacker.combatant.level, LEVEL_CAP_FOR_CHANCES) -
     Math.min(defender.combatant.level, LEVEL_CAP_FOR_CHANCES);

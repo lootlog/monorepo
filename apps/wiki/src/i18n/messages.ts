@@ -197,11 +197,12 @@ const messages = {
     progress: "Postęp symulacji",
     runsLabel: "Liczba walk",
     runsOption: "{{runs}} walk",
+    levelAdvantage: "Przewaga poziomowa",
     missingProfession: "Wybierz profesję obu postaci, żeby zasymulować walkę.",
     emptyTitle: "Brak symulacji",
     notSimulated:
       "Ustaw obie postacie i kliknij „Symuluj”. Zmiany w zestawach wymagają ponownej symulacji.",
-    stale: "Zestawy zmieniły się od ostatniej symulacji.",
+    stale: "Zestawy lub ustawienia zmieniły się od ostatniej symulacji.",
     fightersTitle: "Uczestnicy",
     characterStatsTitle: "Statystyki postaci",
     editSet: "Umiejętności i ekwipunek",

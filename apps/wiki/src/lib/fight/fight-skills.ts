@@ -78,6 +78,7 @@ const ATTACK_EFFECTS = [
   "active_acdmg_per",
   "active_acdmg_physical-perw",
   "active_add_light_cumulaction",
+  "active_absorbdest_per",
   "slowfreeze_per",
   "freeze",
   "stun",
@@ -115,8 +116,8 @@ export const TEAM_BUFF_CASTER_SHARE: ReadonlyMap<string, number> = new Map([
   ["critmval-allies", 1],
   ["perdmg-allies", 0.5],
   ["aura-sa_per", 0.5],
-  ["aura-ac_per", 1],
-  ["aura-resall", 1],
+  ["aura-ac_per", 0.5],
+  ["aura-resall", 0.5],
   ["aura-adddmg2_per-meele_physical", 1],
   ["active_crit-allies", 0.5],
 ]);
@@ -153,7 +154,6 @@ const CAST_EFFECTS = [
   "dmg-target_absolute",
   "manaendest",
   "stealmana_per",
-  "active_absorbdest_per",
   "dmg-target_fire-perw",
 ];
 

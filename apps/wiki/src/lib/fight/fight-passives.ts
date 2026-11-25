@@ -1,10 +1,9 @@
 import { armorAgainst, armorReduced } from "./fight-defence";
 import { chance } from "./fight-hit-effects";
-import { addBuff, buffTotal } from "./fight-skills";
+import { addBuff } from "./fight-skills";
 import {
   clamp,
   healthShare,
-  isImmune,
   MELEE,
   roll,
   type Combatant,
@@ -82,7 +81,6 @@ export const crushKey = (combatant: Combatant) =>
   DISTANCE.has(combatant.profession) ? "+crush_distance" : "+crush_physical";
 
 export const vultureShare = (attacker: FighterState, defender: FighterState) =>
-  !isImmune(defender) &&
   healthShare(defender) < VULTURE_HEALTH &&
   (MELEE.has(attacker.combatant.profession) || isDistance(attacker))
     ? attacker.combatant.passives.vulture / 100
@@ -112,7 +110,6 @@ const NO_PASSIVE_TRIGGERS: PassiveTriggers = {
 
 type Landed = {
   readonly crit: boolean;
-  readonly struck: boolean;
   readonly landed: boolean;
   readonly mainTaken: number;
   readonly dealt: number;
@@ -146,10 +143,10 @@ const onCrit = (
   attacker: FighterState,
   defender: FighterState,
   random: () => number,
-  { struck, dealt, pierced, armorDestroyed }: Landed,
+  { landed, dealt, pierced, armorDestroyed }: Landed,
 ) => {
   const p = attacker.combatant.passives;
-  const critWound = struck && dealt > 0 && chance(random, p.critWoundChance);
+  const critWound = landed && dealt > 0 && chance(random, p.critWoundChance);
 
   if (critWound) {
     defender.critWound = lingering(CRIT_WOUND_SHARE * dealt, attacker);
@@ -162,7 +159,7 @@ const onCrit = (
   }
 
   const critPoison =
-    struck && chance(random, p.critPoison.bound) ? p.critPoison.value : 0;
+    landed && chance(random, p.critPoison.bound) ? p.critPoison.value : 0;
 
   if (critPoison > 0) defender.healCut = critPoison;
 
@@ -173,16 +170,14 @@ const onCrit = (
 
   defender.armorLost += critPierce;
 
-  const distracted = struck && chance(random, p.distractChance);
+  const distracted = landed && chance(random, p.distractChance);
 
   if (distracted) defender.cursed = true;
 
-  const poisonResistanceDestroyed = struck ? p.poisonResistanceDestruction : 0;
+  const poisonResistanceDestroyed = landed ? p.poisonResistanceDestruction : 0;
 
   defender.poisonResistanceLost += clamp(
-    defender.combatant.resistPoison +
-      buffTotal(defender, "antidote") -
-      defender.poisonResistanceLost,
+    defender.combatant.resistPoison - defender.poisonResistanceLost,
     0,
     poisonResistanceDestroyed,
   );

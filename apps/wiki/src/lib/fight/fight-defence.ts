@@ -49,19 +49,27 @@ export const evadeParts = (defender: FighterState, attacker: FighterState) => {
   if (UNAVOIDABLE.has(attacker.combatant.profession) || defender.stunned)
     return null;
 
-  const points = Math.max(
-    0,
-    defender.combatant.evadePoints * (1 - puncture(attacker)) -
-      attacker.combatant.evadeReduction,
-  );
+  const perPoint =
+    EVADE_OR_BLOCK_PER_POINT /
+    Math.min(attacker.combatant.level, LEVEL_CAP_FOR_CHANCES);
 
   const { adrenalinEvade } = defender.combatant.passives;
 
+  const adrenaline = isBelow(defender, adrenalinEvade)
+    ? adrenalinEvade.value
+    : 0;
+
+  const own =
+    defender.combatant.evadePoints * (1 - puncture(attacker)) * perPoint +
+    defender.combatant.evadePercent;
+
+  const lowered =
+    attacker.combatant.evadeReduction * perPoint +
+    attacker.combatant.evadeReductionPercent;
+
   return {
-    points:
-      (points * EVADE_OR_BLOCK_PER_POINT) /
-      Math.min(attacker.combatant.level, LEVEL_CAP_FOR_CHANCES),
-    adrenaline: isBelow(defender, adrenalinEvade) ? adrenalinEvade.value : 0,
+    points: Math.max(0, own - lowered),
+    adrenaline: Math.max(0, adrenaline + Math.min(0, own - lowered)),
   };
 };
 
@@ -89,6 +97,7 @@ export const blockChance = (
       (1 - puncture(attacker)) *
       EVADE_OR_BLOCK_PER_POINT) /
       Math.min(attacker.combatant.level, LEVEL_CAP_FOR_CHANCES) +
+    defender.combatant.blockPercent +
     buffTotal(defender, "active_block_per");
 
   return cappedChance(
@@ -168,19 +177,16 @@ export const destroyResistance = (
 ) => {
   const amount = attacker.combatant.resistanceDestruction;
 
-  if (
-    amount <= 0 ||
-    ELEMENTS.every((element) => heldResistance(defender, element) <= 0)
-  ) {
+  const ownLeft = (element: Element) =>
+    defender.combatant[ELEMENT_RESISTANCES[element].stat] -
+    defender.resistanceLost[element];
+
+  if (amount <= 0 || ELEMENTS.every((element) => ownLeft(element) <= 0)) {
     return 0;
   }
 
   for (const element of ELEMENTS) {
-    defender.resistanceLost[element] += clamp(
-      heldResistance(defender, element),
-      0,
-      amount,
-    );
+    defender.resistanceLost[element] += clamp(ownLeft(element), 0, amount);
   }
 
   return amount;
@@ -207,6 +213,25 @@ export const destroyAbsorb = (
   return Math.round(destroyed);
 };
 
+export const NO_ABSORB_SHARE_DESTROYED = { absorb: 0, absorbMagic: 0 };
+
+export const destroyAbsorbShare = (defender: FighterState, percent: number) => {
+  const share =
+    (percent / 100) * (1 - defender.combatant.absorbDestructionReduction / 100);
+
+  if (share <= 0) return NO_ABSORB_SHARE_DESTROYED;
+
+  const destroyed = {
+    absorb: Math.round(defender.absorbLeft * share),
+    absorbMagic: Math.round(defender.absorbMagicLeft * share),
+  };
+
+  defender.absorbLeft *= 1 - share;
+  defender.absorbMagicLeft *= 1 - share;
+
+  return destroyed;
+};
+
 export const renewAbsorb = (attacker: FighterState) => {
   const share = attacker.combatant.absorbRenewal / 100;
   const { absorb, absorbMagic } = attacker.combatant;
@@ -229,34 +254,41 @@ export const renewAbsorb = (attacker: FighterState) => {
   };
 };
 
-export const drain = (
-  attacker: FighterState,
+export const destroyResource = (
+  holder: FighterState,
   pool: "energy" | "mana",
-  { chance: percent, amount }: ResourceDrain,
-  random: () => number,
+  amount: number,
 ): Drained => {
-  if (amount <= 0 || !chance(random, percent)) return NO_DRAIN;
+  if (amount <= 0) return NO_DRAIN;
 
-  const { adrenalinDrainReduction } = attacker.combatant.passives;
+  const { adrenalinDrainReduction } = holder.combatant.passives;
 
   const reduction =
-    attacker.combatant.drainReduction +
-    (isBelow(attacker, adrenalinDrainReduction)
+    holder.combatant.drainReduction +
+    (isBelow(holder, adrenalinDrainReduction)
       ? adrenalinDrainReduction.value
       : 0);
 
-  const resisted = Math.min(amount, attacker.combatant.drainResist[pool]);
+  const resisted = Math.min(amount, holder.combatant.drainResist[pool]);
 
   const reduced =
     resisted +
     Math.round(((amount - resisted) * Math.min(100, reduction)) / 100);
 
-  const drained = Math.min(attacker[pool], amount - reduced);
+  const destroyed = Math.min(holder[pool], amount - reduced);
 
-  attacker[pool] -= drained;
+  holder[pool] -= destroyed;
 
-  return { amount: Math.round(drained), reduced };
+  return { amount: Math.round(destroyed), reduced };
 };
+
+export const drain = (
+  attacker: FighterState,
+  pool: "energy" | "mana",
+  { chance: percent, amount }: ResourceDrain,
+  random: () => number,
+): Drained =>
+  chance(random, percent) ? destroyResource(attacker, pool, amount) : NO_DRAIN;
 
 export const absorbFrom = (
   damage: number,

@@ -43,6 +43,23 @@ describe("character stats", () => {
     expect(stats.critChance).toBe(5);
   });
 
+  it("shares crit from other items and from skills between both hands, keeping each weapon's own", () => {
+    const stats = characterStats(
+      "b",
+      100,
+      [
+        worn("ONE_HAND_WEAPON", "dmg=100,120;crit=2;critval=10"),
+        worn("HELP_WEAPON", "dmg=40,50;crit=5;critval=20"),
+        worn("RING", "crit=4;critval=30"),
+      ],
+      new Map([["crit", 8]]),
+    );
+
+    expect(stats.critChance).toBe(17);
+    expect(stats.offhandCritChance).toBe(20);
+    expect(stats.offhandCritValue - stats.critValue).toBeCloseTo(10);
+  });
+
   it("gives a mage holding a wand and an orb no physical damage", () => {
     const stats = characterStats(
       "m",
