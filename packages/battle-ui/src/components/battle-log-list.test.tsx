@@ -66,8 +66,10 @@ function Fixture(props: Partial<BattleLogListProps>) {
 
 function SearchFixture({
   onTurnFocus,
+  onTurnSelect,
 }: {
-  onTurnFocus: (turn: number) => void;
+  onTurnFocus?: (turn: number) => void;
+  onTurnSelect?: (turn: number) => void;
 }) {
   const outer = useRef<HTMLDivElement>(null);
 
@@ -82,6 +84,7 @@ function SearchFixture({
           warriors={[]}
           scrollViewportRef={outer}
           onTurnFocus={onTurnFocus}
+          onTurnSelect={onTurnSelect}
         />
       </div>
     </I18nextProvider>
@@ -322,5 +325,19 @@ describe("virtual battle log", () => {
     expect(
       view.container.querySelector('[data-battle-search-match="true"]'),
     ).toBeNull();
+  });
+
+  it("scrolls to a search match without selecting its turn", async () => {
+    const onTurnSelect = vi.fn();
+    const view = render(<SearchFixture onTurnSelect={onTurnSelect} />);
+    fireEvent.change(view.getByRole("searchbox"), {
+      target: { value: "dotyk aniola" },
+    });
+    await waitFor(() =>
+      expect(
+        view.container.querySelector('[data-battle-search-match="true"]'),
+      ).not.toBeNull(),
+    );
+    expect(onTurnSelect).not.toHaveBeenCalled();
   });
 });
