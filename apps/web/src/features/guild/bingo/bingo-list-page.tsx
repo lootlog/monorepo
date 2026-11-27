@@ -2,7 +2,7 @@ import { getBingoControllerListBoardsQueryOptions } from "@lootlog/client/main";
 import { ClearFiltersButton } from "@/components/common/clear-filters-button";
 import { KillStatsSearch } from "@/components/common/kill-stats-search";
 import { ListTileSkeleton } from "@/components/common/list-tile-skeleton";
-import { QueryErrorNotice } from "@/components/common/query-error-notice";
+import { RetryButton } from "@/components/common/retry-button";
 import { ResultsSurface } from "@/components/common/results-surface";
 import { ROUTES } from "@/config/routes";
 import { canManageEvent } from "@/features/guild/events/utils/event-access";
@@ -13,7 +13,7 @@ import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { Grid3x3, Plus, SearchX } from "lucide-react";
+import { AlertCircle, Grid3x3, Plus, SearchX } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { BingoCreateDialog } from "./bingo-create-dialog";
@@ -67,12 +67,20 @@ export const BingoListPage = () => {
 
     if (isError) {
       return (
-        <QueryErrorNotice
-          message={t("bingo.loadError")}
-          onRetry={() => void refetch()}
-          isRetrying={isFetching}
-          className="py-12"
-        />
+        <div className="p-3">
+          <EmptyState
+            fill
+            icon={AlertCircle}
+            title={t("bingo.loadError")}
+            description={t("bingo.loadErrorDescription")}
+            action={
+              <RetryButton
+                onRetry={() => void refetch()}
+                isRetrying={isFetching}
+              />
+            }
+          />
+        </div>
       );
     }
 

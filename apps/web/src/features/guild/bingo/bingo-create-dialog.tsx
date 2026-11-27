@@ -22,6 +22,15 @@ import { Grid3x3 } from "lucide-react";
 import { useId, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { BingoBoardSizeField } from "./bingo-board-size-field";
+import { BINGO_POINT_FIELDS, type BingoPoints } from "./bingo-points";
+import { BingoPointsField } from "./bingo-points-field";
+
+const DEFAULT_POINTS: BingoPoints = {
+  pointsPerTile: 1,
+  pointsPerLine: 5,
+  firstCompleterBonus: 0,
+  blackoutBonus: 10,
+};
 
 type BingoCreateDialogProps = {
   readonly guildId: string;
@@ -45,16 +54,14 @@ export const BingoCreateDialog = ({
   const [world, setWorld] = useState("");
   const [mode, setMode] = useState<CreateBingoBoardDtoMode>("RACE");
   const [size, setSize] = useState(BINGO_DEFAULT_BOARD_SIZE);
-  const [pointsPerTile, setPointsPerTile] = useState(1);
-  const [pointsPerLine, setPointsPerLine] = useState(5);
-  const [firstCompleterBonus, setFirstCompleterBonus] = useState(0);
-  const [blackoutBonus, setBlackoutBonus] = useState(10);
+  const [points, setPoints] = useState<BingoPoints>(DEFAULT_POINTS);
   const [populateStarterTiles, setPopulateStarterTiles] = useState(true);
 
   const nameId = useId();
   const descId = useId();
   const worldId = useId();
   const starterId = useId();
+  const pointsId = useId();
 
   const reset = () => {
     setName("");
@@ -62,10 +69,7 @@ export const BingoCreateDialog = ({
     setWorld("");
     setMode("RACE");
     setSize(BINGO_DEFAULT_BOARD_SIZE);
-    setPointsPerTile(1);
-    setPointsPerLine(5);
-    setFirstCompleterBonus(0);
-    setBlackoutBonus(10);
+    setPoints(DEFAULT_POINTS);
     setPopulateStarterTiles(true);
   };
 
@@ -85,10 +89,7 @@ export const BingoCreateDialog = ({
           world: world.trim() || null,
           mode,
           size,
-          pointsPerTile,
-          pointsPerLine,
-          firstCompleterBonus,
-          blackoutBonus,
+          ...points,
           populateStarterTiles,
         },
       });
@@ -184,62 +185,20 @@ export const BingoCreateDialog = ({
             <BingoBoardSizeField value={size} onChange={setSize} />
 
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <div className="space-y-1.5">
-                <Label>{t("bingo.createDialog.pointsPerTile")}</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  max={1000}
-                  value={pointsPerTile}
+              {BINGO_POINT_FIELDS.map((field) => (
+                <BingoPointsField
+                  key={field}
+                  id={`${pointsId}-${field}`}
+                  label={t(`bingo.createDialog.${field}`)}
+                  value={points[field]}
                   onChange={(event) =>
-                    setPointsPerTile(
-                      Math.max(0, Number(event.target.value) || 0),
-                    )
+                    setPoints((previous) => ({
+                      ...previous,
+                      [field]: Math.max(0, Number(event.target.value) || 0),
+                    }))
                   }
                 />
-              </div>
-              <div className="space-y-1.5">
-                <Label>{t("bingo.createDialog.pointsPerLine")}</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  max={1000}
-                  value={pointsPerLine}
-                  onChange={(event) =>
-                    setPointsPerLine(
-                      Math.max(0, Number(event.target.value) || 0),
-                    )
-                  }
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>{t("bingo.createDialog.firstCompleterBonus")}</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  max={1000}
-                  value={firstCompleterBonus}
-                  onChange={(event) =>
-                    setFirstCompleterBonus(
-                      Math.max(0, Number(event.target.value) || 0),
-                    )
-                  }
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>{t("bingo.createDialog.blackoutBonus")}</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  max={1000}
-                  value={blackoutBonus}
-                  onChange={(event) =>
-                    setBlackoutBonus(
-                      Math.max(0, Number(event.target.value) || 0),
-                    )
-                  }
-                />
-              </div>
+              ))}
             </div>
 
             <div className="flex items-center justify-between gap-3 rounded-lg border border-border/70 bg-muted/20 p-3">
