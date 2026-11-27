@@ -152,13 +152,62 @@ const messages = {
     noResults: "Żaden przedmiot nie pasuje do postaci i filtrów.",
     allFilters: "Więcej filtrów w wyszukiwarce przedmiotów",
   },
+  savedSets: {
+    open: "Zapisane",
+    title: "Zapisane postacie",
+    description:
+      "Postacie zapisane na koncie Lootlog. Wczytana postać zastępuje tę, którą teraz edytujesz.",
+    pageDescription:
+      "Postacie zapisane na Twoim koncie Lootlog. Wczytaj którąś do zestawu albo ustaw ją jako przeciwnika w symulatorze walki.",
+    signInRequired:
+      "Zaloguj się, żeby zapisywać postacie na koncie i wczytywać je na innych urządzeniach.",
+    saveLabel: "Zapisz obecną postać pod nickiem",
+    namePlaceholder: "Nick postaci",
+    save: "Zapisz",
+    count: "{{count}}/{{limit}}",
+    pageCount: "Zapisane: {{count}}/{{limit}}",
+    limitReached:
+      "Masz już {{limit}} zapisanych postaci. Usuń albo nadpisz którąś, żeby zapisać nową.",
+    saveFailed: "Nie udało się zapisać zmian. Spróbuj ponownie.",
+    loadFailed: "Nie udało się wczytać zapisanych postaci.",
+    empty: "Nie masz jeszcze zapisanych postaci.",
+    pageEmpty:
+      "Nie masz jeszcze zapisanych postaci. Złóż zestaw i zapisz go przyciskiem „Zapisane”.",
+    openSetPage: "Otwórz zestaw",
+    manage: "Wszystkie zapisane postacie",
+    fightAsOpponent: "Walcz z nią",
+    loadToSet: "Wczytaj do zestawu",
+    noProfession: "Bez profesji nie da się policzyć statystyk.",
+    emptySlot: "{{slot}}: pusty",
+    addDescription: "+ Dodaj opis",
+    edit: "Edytuj nick i opis",
+    editTitle: "Edycja: {{name}}",
+    editSave: "Zapisz",
+    nameLabel: "Nick",
+    descriptionLabel: "Opis",
+    descriptionPlaceholder: "Np. build pod PvP, na kogo, co zmienić…",
+    level: "{{level}} lvl",
+    items: "przedmioty {{worn}}/{{total}}",
+    load: "Wczytaj",
+    loadNamed: "Wczytaj: {{name}}",
+    more: "Więcej akcji: {{name}}",
+    overwrite: "Nadpisz obecną",
+    overwriteTitle: "Nadpisać „{{name}}”?",
+    overwriteDescription:
+      "Zapisana postać zostanie zastąpiona tą, którą teraz edytujesz.",
+    delete: "Usuń",
+    deleteTitle: "Usunąć „{{name}}”?",
+    deleteDescription:
+      "Zapisana postać zniknie z konta. Tego nie da się cofnąć.",
+    cancel: "Anuluj",
+  },
   setLayout: {
     openWindow: "Statystyki",
     openPage: "Strona zestawu",
   },
   setPage: {
     description:
-      "Twoja postać, założone przedmioty, rozdane umiejętności i suma ich statystyk. Zestaw zapisuje się w przeglądarce; link z przycisku udostępniania otwiera go u kogoś innego.",
+      "Twoja postać, założone przedmioty, rozdane umiejętności i suma ich statystyk. Zestaw zapisuje się w przeglądarce, a po zalogowaniu możesz zapisać go na koncie; link z przycisku udostępniania otwiera go u kogoś innego.",
     itemsTitle: "Założone przedmioty",
     noItems:
       "Nie masz jeszcze założonych przedmiotów. Kliknij pusty slot, żeby znaleźć do niego przedmiot.",
@@ -886,6 +935,7 @@ const messages = {
     signInFailed: "Nie udało się zalogować. Spróbuj ponownie.",
     openLootlog: "Otwórz Lootloga",
     appearance: "Wygląd",
+    savedSets: "Zapisane postacie",
     moderation: "Moderacja",
     logout: "Wyloguj się",
   },

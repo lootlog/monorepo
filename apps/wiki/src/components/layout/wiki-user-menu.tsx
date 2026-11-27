@@ -1,5 +1,12 @@
 import { Link } from "@tanstack/react-router";
-import { ExternalLink, Flag, LogIn, LogOut, Palette } from "lucide-react";
+import {
+  Bookmark,
+  ExternalLink,
+  Flag,
+  LogIn,
+  LogOut,
+  Palette,
+} from "lucide-react";
 import { useCatalogReportsControllerGetViewer } from "@lootlog/client/catalog";
 import {
   Avatar,
@@ -108,6 +115,13 @@ export function WikiUserMenu() {
           >
             <Palette />
             {t("userMenu.appearance")}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            render={<Link to="/characters" />}
+            className="rounded-lg px-2.5 py-2"
+          >
+            <Bookmark />
+            {t("userMenu.savedSets")}
           </DropdownMenuItem>
           {viewer.data?.canModerate ? (
             <DropdownMenuItem

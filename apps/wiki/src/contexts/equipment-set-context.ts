@@ -17,6 +17,7 @@ type EquipmentSetContextValue = {
   upgrade: (slot: EquipmentSlotId, upgrade: ItemUpgrade) => void;
   unequip: (slot: EquipmentSlotId) => void;
   clear: () => void;
+  replace: (set: EquipmentSet) => void;
   setCharacter: (character: Pick<EquipmentSet, "profession" | "level">) => void;
   setSkillRank: (skillId: number, rank: number) => void;
   resetSkills: () => void;

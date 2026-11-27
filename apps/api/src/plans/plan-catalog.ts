@@ -15,6 +15,7 @@ export const USER_PLANS = {
     watchedItems: 10,
     customThemes: 2,
     apiKeys: 10,
+    equipmentSets: 10,
     characterAuras: false,
   },
   premium: {
@@ -22,6 +23,7 @@ export const USER_PLANS = {
     watchedItems: 50,
     customThemes: 25,
     apiKeys: 25,
+    equipmentSets: 50,
     characterAuras: true,
   },
 } as const satisfies Record<Plan, UserEntitlements>;

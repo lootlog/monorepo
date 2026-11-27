@@ -107,6 +107,7 @@ const makeData = (
         watchedItems: 10,
         customThemes: 2,
         apiKeys: 10,
+        equipmentSets: 10,
       }),
     userOwnsTheme: () => Effect.succeed(true),
     updateUserPreferences: () => Effect.succeed(userPreferences),

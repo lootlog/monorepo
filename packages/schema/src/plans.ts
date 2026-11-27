@@ -28,6 +28,7 @@ export const UserLimits = Schema.Struct({
   watchedItems: NonNegativeSafeInteger,
   customThemes: NonNegativeSafeInteger,
   apiKeys: NonNegativeSafeInteger,
+  equipmentSets: NonNegativeSafeInteger,
 });
 
 export type UserLimits = typeof UserLimits.Type;
@@ -49,6 +50,7 @@ export const UserOverrides = Schema.Struct({
   watchedItems: Schema.NullOr(PlanLimit),
   customThemes: Schema.NullOr(PlanLimit),
   apiKeys: Schema.NullOr(PlanLimit),
+  equipmentSets: Schema.NullOr(PlanLimit),
   characterAuras: Schema.NullOr(Schema.Boolean),
 });
 

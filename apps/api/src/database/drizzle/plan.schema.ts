@@ -48,6 +48,7 @@ export const userEntitlementTable = pgTable(
     watchedItemLimit: integer("watchedItemLimit"),
     customThemeLimit: integer("customThemeLimit"),
     apiKeyLimit: integer("apiKeyLimit"),
+    equipmentSetLimit: integer("equipmentSetLimit"),
     characterAuras: boolean("characterAuras"),
     updatedByUserId: text("updatedByUserId"),
     updatedAt: timestamp("updatedAt", { mode: "date", precision: 3 }).notNull(),

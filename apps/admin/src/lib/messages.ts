@@ -320,6 +320,7 @@ export const text = {
   planLimitWatchedItems: "Obserwowane przedmioty",
   planLimitCustomThemes: "Własne motywy",
   planLimitApiKeys: "Aktywne klucze API",
+  planLimitEquipmentSets: "Zapisane zestawy wiki",
   planFeatureCharacterAuras: "Wybór aur",
 
   cancel: "Anuluj",

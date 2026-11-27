@@ -1,24 +1,21 @@
 import { useState } from "react";
-import { Flag, LogIn } from "lucide-react";
+import { Flag } from "lucide-react";
 import {
   type CatalogReportDtoOutputSubjectType,
   type CatalogReportsControllerGetOwnParams,
   useCatalogReportsControllerGetOwn,
 } from "@lootlog/client/catalog";
-import { useDiscordSignIn } from "@lootlog/client/auth-session";
 import { Button } from "@lootlog/ui/components/button";
-import { ButtonLoadingContent } from "@lootlog/ui/components/button-loading-content";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@lootlog/ui/components/dialog";
 import { ReportForm } from "@/components/reports/report-form";
-import { useWikiContext } from "@/contexts/wiki-context";
+import { SignInPrompt } from "@/components/common/sign-in-prompt";
 import { useSession } from "@/hooks/use-session";
 import { useSignedInCatalogRequest } from "@/hooks/use-signed-in-catalog-request";
 import { t } from "@/i18n/messages";
@@ -35,10 +32,8 @@ export function ReportButton({
   subjectId,
   name,
 }: ReportButtonProps) {
-  const { config, authClient } = useWikiContext();
   const { session } = useSession();
   const request = useSignedInCatalogRequest();
-  const signIn = useDiscordSignIn(authClient);
   const [open, setOpen] = useState(false);
 
   const subject = {
@@ -77,33 +72,7 @@ export function ReportButton({
             onDone={() => setOpen(false)}
           />
         ) : (
-          <div className="flex flex-col gap-4 px-4 pb-4">
-            <p className="text-sm text-muted-foreground">
-              {t("reports.signInRequired")}
-            </p>
-            {signIn.hasError ? (
-              <p role="alert" className="text-sm text-destructive">
-                {t("userMenu.signInFailed")}
-              </p>
-            ) : null}
-            <DialogFooter>
-              <Button
-                type="button"
-                disabled={signIn.isPending}
-                onClick={() =>
-                  void signIn.signIn({
-                    callbackURL: window.location.href,
-                    webOrigin: config.webAppUrl,
-                  })
-                }
-              >
-                <ButtonLoadingContent loading={signIn.isPending}>
-                  <LogIn aria-hidden="true" />
-                  {t("userMenu.signIn")}
-                </ButtonLoadingContent>
-              </Button>
-            </DialogFooter>
-          </div>
+          <SignInPrompt reason={t("reports.signInRequired")} />
         )}
       </DialogContent>
     </Dialog>

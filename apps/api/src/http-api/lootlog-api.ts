@@ -27,6 +27,7 @@ import { GuildStatsCardGroup } from "#src/contracts/guild-stats-card/api";
 import { PublicGuildStatsCardGroup } from "#src/contracts/public-guild-stats-card/api";
 import { DocsGroup } from "#src/contracts/docs/api";
 import { UserThemesGroup } from "#src/contracts/user-themes/api";
+import { UserEquipmentSetsGroup } from "#src/contracts/user-equipment-sets/api";
 import { CharacterAurasGroup } from "#src/contracts/character-auras/api";
 
 export class LootlogApi extends HttpApi.make("LootlogApi")
@@ -64,6 +65,7 @@ export class LootlogApi extends HttpApi.make("LootlogApi")
     PublicGuildStatsCardGroup,
     DocsGroup,
     UserThemesGroup,
+    UserEquipmentSetsGroup,
     CharacterAurasGroup,
   )
   .middleware(ApiKeyEndpointPolicy)
