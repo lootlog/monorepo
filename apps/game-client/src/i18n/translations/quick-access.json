@@ -73,17 +73,13 @@
     "expand": "Rozwiń pasek"
   },
   "mobile": {
-    "openMenu": "Otwórz panel Lootloga",
     "navigation": "Nawigacja Lootloga",
+    "more": "Więcej",
+    "moreMenu": "Więcej opcji Lootloga",
     "nav": {
       "timers": "Timery",
       "chat": "Czat",
-      "onlinePlayers": "Gracze",
-      "partyFinder": "Zbiórka",
-      "heroSightings": "Herosi",
-      "globalChat": "Globalny",
-      "command": "Komenda",
-      "settings": "Ustawienia"
+      "command": "Napisz"
     }
   }
 }

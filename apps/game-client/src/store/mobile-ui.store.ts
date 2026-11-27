@@ -22,7 +22,6 @@ interface MobileUiState {
   openPanel: (panel: MobilePanelWindowId) => void;
   closePanel: () => void;
   togglePanel: (panel: MobilePanelWindowId) => void;
-  openLastPanel: () => void;
   toggleSheetExpanded: () => void;
   setPillPosition: (position: WindowPosition) => void;
   resetMobileLayout: () => void;
@@ -65,10 +64,6 @@ export const useMobileUiStore = create<MobileUiState>()(
         } else {
           get().openPanel(panel);
         }
-      },
-      openLastPanel: () => {
-        const panel = get().lastPanel;
-        get().openPanel(panel);
       },
       toggleSheetExpanded: () =>
         set((state) => ({ sheetExpanded: !state.sheetExpanded })),

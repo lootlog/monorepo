@@ -92,6 +92,7 @@ describe("Mobile UI mode", () => {
         position: { x: 400, y: 80 },
         hasDefinedPosition: true,
       },
+      command: { ...state.command, open: false },
       notifications: { ...state.notifications, open: false },
       settings: { ...state.settings, open: false, state: {} },
     }));
@@ -105,7 +106,7 @@ describe("Mobile UI mode", () => {
     await setViewport(initialWidth, initialHeight);
   });
 
-  it("starts collapsed to the floating pill, switches single active panels, and preserves desktop layout when toggled off", async () => {
+  it("opens timers, chat, command, and secondary tools from the pill and 4-slot nav while preserving desktop layout", async () => {
     const user = userEvent.setup();
     const fixture = createGuildPreferencesTest();
 
@@ -115,37 +116,41 @@ describe("Mobile UI mode", () => {
           <QuickAccess />
           <TestWindow id="timers" title="Timery" body="Treść timerów" />
           <TestWindow id="chat" title="Czat" body="Treść czatu" />
+          <TestWindow id="settings" title="Ustawienia" body="Treść ustawień" />
         </MobileUiShell>
       </QueryClientProvider>,
     );
 
-    expect(
-      screen.getByRole("button", { name: "Otwórz panel Lootloga" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Timery" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Czat" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Napisz" })).toBeInTheDocument();
     expect(screen.queryByText("Treść timerów")).toBeNull();
     expect(screen.queryByText("Treść czatu")).toBeNull();
-
-    await user.click(
-      screen.getByRole("button", { name: "Otwórz panel Lootloga" }),
-    );
-
-    expect(screen.getByText("Treść timerów")).toBeInTheDocument();
-    expect(screen.queryByText("Treść czatu")).toBeNull();
-    expect(
-      screen.queryByRole("button", { name: "Otwórz panel Lootloga" }),
-    ).toBeNull();
 
     await user.click(screen.getByRole("button", { name: "Czat" }));
 
     expect(screen.getByText("Treść czatu")).toBeInTheDocument();
     expect(screen.queryByText("Treść timerów")).toBeNull();
+    expect(document.querySelector("[data-ll-mobile-pill]")).toBeNull();
 
-    await user.click(screen.getByRole("button", { name: "Zamknij okno" }));
+    await user.click(screen.getByRole("button", { name: "Timery" }));
 
+    expect(screen.getByText("Treść timerów")).toBeInTheDocument();
     expect(screen.queryByText("Treść czatu")).toBeNull();
-    expect(
-      screen.getByRole("button", { name: "Otwórz panel Lootloga" }),
-    ).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", { name: "Więcej opcji Lootloga" }),
+    );
+    await user.click(screen.getByRole("button", { name: "Ustawienia" }));
+
+    expect(screen.getByText("Treść ustawień")).toBeInTheDocument();
+    expect(screen.queryByText("Treść timerów")).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Napisz" }));
+
+    expect(screen.queryByText("Treść ustawień")).toBeNull();
+    expect(useWindowsStore.getState().command.open).toBe(true);
+    expect(document.querySelector("[data-ll-mobile-pill]")).toBeInTheDocument();
 
     act(() => {
       useSettingsStore.getState().setMobileUiMode("off");
@@ -179,9 +184,7 @@ describe("Mobile UI mode", () => {
         </QueryClientProvider>,
       );
 
-      await user.click(
-        screen.getByRole("button", { name: "Otwórz panel Lootloga" }),
-      );
+      await user.click(screen.getByRole("button", { name: "Timery" }));
       expect(screen.getByText("Treść timerów")).toBeInTheDocument();
 
       fireEvent.keyDown(screen.getByText("Treść timerów"), { key: "Escape" });
@@ -189,9 +192,7 @@ describe("Mobile UI mode", () => {
       expect(screen.queryByText("Treść timerów")).toBeNull();
       expect(gameKeyDown).not.toHaveBeenCalled();
 
-      await user.click(
-        screen.getByRole("button", { name: "Otwórz panel Lootloga" }),
-      );
+      await user.click(screen.getByRole("button", { name: "Timery" }));
       const backdrop = document.querySelector("[data-ll-mobile-backdrop]");
 
       if (!(backdrop instanceof HTMLElement)) {

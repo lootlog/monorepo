@@ -1,18 +1,14 @@
 import { cn } from "cn";
-import { GripVertical, LoaderCircle, LogIn, Wifi, WifiOff } from "lucide-react";
+import {
+  GripVertical,
+  MessageSquareText,
+  MessagesSquare,
+  Timer,
+} from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  CONNECTION_STATUS_TONE,
-  CONNECTION_TONE_TEXT_CLASS_NAME,
-  SIGNED_OUT_CONNECTION_TONE,
-} from "@/components/connection-status-tone";
-import { COUNT_BADGE_CLASS_NAME } from "@/components/count-badge";
-import { useSocket } from "@/contexts/socket-context";
+import { Button } from "@/components/ui/button";
 import { useAccountOwnedReadyRoom } from "@/features/party-finder/hooks/use-ready-rooms";
-import { useQuickAccessItems } from "@/features/quick-access/hooks/use-quick-access-items";
-import { useSignInRequired } from "@/hooks/auth/use-login-state";
-import { useCountBump } from "@/hooks/ui/use-count-bump";
 import { useDrag } from "@/hooks/ui/use-drag";
 import { useMobileMode } from "@/hooks/ui/use-mobile-mode";
 import {
@@ -20,55 +16,22 @@ import {
   useWindowViewport,
   type WindowSize,
 } from "@/hooks/ui/window-viewport";
-import type { RealtimeConnectionStatus } from "@/lib/realtime-connection-status";
 import { useMobileUiStore } from "@/store/mobile-ui.store";
+import { useWindowsStore } from "@/store/windows.store";
+import { MobileMoreMenu } from "./mobile-more-menu";
 
-const STATUS_ICON = {
-  online: {
-    Icon: Wifi,
-    className: CONNECTION_TONE_TEXT_CLASS_NAME[CONNECTION_STATUS_TONE.online],
-  },
-  connecting: {
-    Icon: LoaderCircle,
-    className: cn(
-      CONNECTION_TONE_TEXT_CLASS_NAME[CONNECTION_STATUS_TONE.connecting],
-      "ll:animate-spin ll:motion-reduce:animate-none",
-    ),
-  },
-  reconnecting: {
-    Icon: WifiOff,
-    className:
-      CONNECTION_TONE_TEXT_CLASS_NAME[CONNECTION_STATUS_TONE.reconnecting],
-  },
-  unreachable: {
-    Icon: WifiOff,
-    className:
-      CONNECTION_TONE_TEXT_CLASS_NAME[CONNECTION_STATUS_TONE.unreachable],
-  },
-} as const satisfies Record<
-  RealtimeConnectionStatus,
-  { Icon: typeof Wifi; className: string }
->;
-
-const SIGNED_OUT_ICON = {
-  Icon: LogIn,
-  className: CONNECTION_TONE_TEXT_CLASS_NAME[SIGNED_OUT_CONNECTION_TONE],
-};
-
-const DEFAULT_PILL_SIZE: WindowSize = { width: 120, height: 40 };
+const DEFAULT_PILL_SIZE: WindowSize = { width: 196, height: 42 };
 
 const EDGE_MARGIN = 12;
 
 const PORTRAIT_BOTTOM_OFFSET = 56;
 
+const PILL_ACTION_CLASS_NAME = "ll:h-10 ll:w-10 ll:rounded-none ll:px-0";
+
 export const MobileQuickAccessPill = () => {
   const { t } = useTranslation("quickAccess");
   const { orientation } = useMobileMode();
   const viewport = useWindowViewport();
-  const { status } = useSocket();
-  const signedOut = useSignInRequired();
-  const { totalBadgeCount } = useQuickAccessItems();
-  const badgeRef = useCountBump<HTMLSpanElement>(totalBadgeCount);
 
   const activePanel = useMobileUiStore((state) => state.activePanel);
   const hasReadyRoom = useAccountOwnedReadyRoom() !== null;
@@ -77,8 +40,10 @@ export const MobileQuickAccessPill = () => {
     activePanel !== null && (activePanel !== "party-finder" || hasReadyRoom);
 
   const pillPosition = useMobileUiStore((state) => state.pillPosition);
-  const openLastPanel = useMobileUiStore((state) => state.openLastPanel);
   const setPillPosition = useMobileUiStore((state) => state.setPillPosition);
+  const openAndFocus = useWindowsStore((state) => state.openAndFocus);
+  const toggleOpen = useWindowsStore((state) => state.toggleOpen);
+  const commandOpen = useWindowsStore((state) => state.command.open);
 
   const pillRef = useRef<HTMLDivElement>(null);
 
@@ -134,16 +99,14 @@ export const MobileQuickAccessPill = () => {
 
   if (isPanelVisible) return null;
 
-  const { Icon, className: iconClassName } = signedOut
-    ? SIGNED_OUT_ICON
-    : STATUS_ICON[status];
-
   return (
     <div
       ref={pillRef}
+      role="toolbar"
+      aria-label={t("window.title")}
       data-ll-mobile-pill=""
       className={cn(
-        "ll:pointer-events-auto ll:absolute ll:z-[400] ll:flex ll:items-center ll:rounded-lg ll:border ll:border-white/50 ll:bg-black/85 ll:text-foreground ll:shadow-[2px_2px_3px_3px_rgba(12,13,13,0.4)]",
+        "ll:pointer-events-auto ll:absolute ll:z-[400] ll:flex ll:items-center ll:overflow-hidden ll:rounded-lg ll:border ll:border-white/50 ll:bg-black/85 ll:text-foreground ll:shadow-[2px_2px_3px_3px_rgba(12,13,13,0.4)]",
         isDragging && "ll:shadow-[0_10px_24px_rgb(0_0_0/0.55)]",
       )}
       style={{
@@ -156,34 +119,49 @@ export const MobileQuickAccessPill = () => {
     >
       <div
         aria-hidden="true"
-        className="ll:flex ll:h-10 ll:w-7 ll:shrink-0 ll:cursor-grab ll:items-center ll:justify-center ll:text-muted-foreground ll:touch-none"
+        className="ll:flex ll:h-10 ll:w-7 ll:shrink-0 ll:cursor-grab ll:items-center ll:justify-center ll:border-0 ll:border-r ll:border-solid ll:border-separator-subtle ll:text-muted-foreground ll:touch-none"
         onPointerDown={handlePointerDown}
       >
         <GripVertical className="ll:size-4" />
       </div>
-      <button
+      <Button
         type="button"
+        variant="taskbar"
+        size="sm"
         data-ll-draggable="false"
-        aria-label={t("mobile.openMenu")}
-        className="ll-custom-cursor-pointer ll:flex ll:h-10 ll:items-center ll:gap-2 ll:rounded-r-lg ll:bg-transparent ll:pr-3 ll:pl-0.5 ll:text-xs ll:font-semibold ll:tracking-wide ll:text-foreground ll:outline-none ll:active:scale-96 ll:focus-visible:outline-2 ll:focus-visible:outline-ring"
-        onClick={() => openLastPanel()}
+        data-ll-window-toggle="timers"
+        aria-label={t("mobile.nav.timers")}
+        className={PILL_ACTION_CLASS_NAME}
+        onClick={() => openAndFocus("timers")}
       >
-        <Icon
-          aria-hidden="true"
-          className={cn("ll:size-4 ll:shrink-0", iconClassName)}
-        />
-        <span>{t("window.title")}</span>
-        {totalBadgeCount > 0 ? (
-          <span
-            ref={badgeRef}
-            key={totalBadgeCount}
-            aria-hidden="true"
-            className={cn(COUNT_BADGE_CLASS_NAME, "ll:ring-1 ll:ring-black/80")}
-          >
-            {totalBadgeCount > 99 ? "99+" : totalBadgeCount}
-          </span>
-        ) : null}
-      </button>
+        <Timer aria-hidden="true" className="ll:size-4" />
+      </Button>
+      <Button
+        type="button"
+        variant="taskbar"
+        size="sm"
+        data-ll-draggable="false"
+        data-ll-window-toggle="chat"
+        aria-label={t("mobile.nav.chat")}
+        className={PILL_ACTION_CLASS_NAME}
+        onClick={() => openAndFocus("chat")}
+      >
+        <MessagesSquare aria-hidden="true" className="ll:size-4" />
+      </Button>
+      <Button
+        type="button"
+        variant="taskbar"
+        size="sm"
+        data-ll-draggable="false"
+        data-ll-window-toggle="command"
+        aria-label={t("mobile.nav.command")}
+        aria-pressed={commandOpen}
+        className={PILL_ACTION_CLASS_NAME}
+        onClick={() => toggleOpen("command")}
+      >
+        <MessageSquareText aria-hidden="true" className="ll:size-4" />
+      </Button>
+      <MobileMoreMenu activePanel={null} triggerVariant="pill" />
     </div>
   );
 };

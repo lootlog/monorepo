@@ -120,7 +120,7 @@ export const SettingsRow: FC<SettingsRowProps> = ({
         className={cn(
           "ll:flex ll:shrink-0 ll:items-center",
           stacked && "ll:pt-0.5",
-          wide && SETTINGS_WIDE_CONTROL_CLASS_NAME,
+          !stacked && wide && SETTINGS_WIDE_CONTROL_CLASS_NAME,
           !stacked && wide && "ll:@max-[384px]/settings:w-full",
           controlClassName,
         )}

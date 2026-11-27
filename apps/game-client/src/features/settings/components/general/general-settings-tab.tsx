@@ -90,6 +90,7 @@ export const GeneralSettingsTab: FC = () => {
           controlId="map-auras"
           label={t("settings.general.mapAurasLabel")}
           description={t("settings.general.mapAurasDescription")}
+          control="wide"
         >
           <Select
             value={mapAuras}
@@ -102,7 +103,7 @@ export const GeneralSettingsTab: FC = () => {
             <SelectTrigger
               aria-label={t("settings.general.mapAurasLabel")}
               size="sm"
-              className="ll:w-44"
+              className="ll:w-full"
             >
               <SelectValue />
             </SelectTrigger>
@@ -119,6 +120,7 @@ export const GeneralSettingsTab: FC = () => {
           controlId="mobile-ui-mode"
           label={t("settings.general.mobileUiModeLabel")}
           description={t("settings.general.mobileUiModeDescription")}
+          control="wide"
         >
           <Select
             value={mobileUiMode}
@@ -131,7 +133,7 @@ export const GeneralSettingsTab: FC = () => {
             <SelectTrigger
               aria-label={t("settings.general.mobileUiModeLabel")}
               size="sm"
-              className="ll:w-44"
+              className="ll:w-full"
             >
               <SelectValue />
             </SelectTrigger>
