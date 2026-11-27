@@ -472,7 +472,7 @@ export const SETTINGS_CATALOG = {
   },
 } as const satisfies Record<SettingsDomain, SettingsDomainDefinition>;
 
-export const MOBILE_UI_MODES = ["auto", "on", "off"] as const;
+export const MOBILE_UI_MODES = ["off", "auto", "on"] as const;
 
 export type MobileUiMode = (typeof MOBILE_UI_MODES)[number];
 
@@ -488,7 +488,7 @@ export const DEVICE_SETTINGS_CATALOG = {
     isValid: isOneOf(MAP_AURA_MODES),
   },
   mobileUiMode: {
-    defaultValue: "auto",
+    defaultValue: "off",
     persistence: "DEVICE",
     isValid: isOneOf(MOBILE_UI_MODES),
   },

@@ -30,7 +30,7 @@ describe("useSettingsStore", () => {
     expect(useSettingsStore.getState()).toMatchObject({
       animationEffectsEnabled: false,
       mapAuras: "nearby",
-      mobileUiMode: "auto",
+      mobileUiMode: "off",
       masterVolume: 0.3,
       soundsMuted: false,
       lootDebugLoggingEnabled: false,

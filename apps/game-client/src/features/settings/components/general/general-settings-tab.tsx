@@ -124,7 +124,7 @@ export const GeneralSettingsTab: FC = () => {
             value={mobileUiMode}
             onValueChange={(value) =>
               setMobileUiMode(
-                MOBILE_UI_MODES.find((mode) => mode === value) ?? "auto",
+                MOBILE_UI_MODES.find((mode) => mode === value) ?? "off",
               )
             }
           >
