@@ -73,12 +73,13 @@ export const AddonStatusSection: FC = () => {
         }
         layout={signedOut ? "stacked" : "inline"}
         control="wide"
-        controlClassName="ll:gap-2"
+        controlClassName="ll:flex-wrap ll:gap-2"
       >
         <span
           className={cn(
             STATUS_VALUE_CLASS_NAME,
-            signedOut && "ll:text-destructive ll:text-left",
+            signedOut &&
+              "ll:basis-40 ll:whitespace-normal ll:text-left ll:text-destructive",
           )}
           title={accountValue}
         >

@@ -1,4 +1,8 @@
-# The Worker's local secrets; copy to `.dev.vars`. Deployed Workers get the
-# token from `wrangler secret put CATALOG_SERVICE_TOKEN`.
+# The Worker's local secrets and local service URLs; copy to `.dev.vars`.
+# Deployed Workers take the URLs from `wrangler.jsonc` and the token from
+# `wrangler secret put CATALOG_SERVICE_TOKEN`.
+VITE_API_URL=http://localhost/api/lootlog
+VITE_AUTH_SERVICE_URL=http://localhost/api/auth
+VITE_WEB_APP_URL=http://localhost
 CATALOG_API_URL=http://localhost/api/catalog
 CATALOG_SERVICE_TOKEN=local-development-catalog-service-token

@@ -66,6 +66,7 @@ const SelectTrigger = React.forwardRef<HTMLButtonElement, SelectTriggerProps>(
       data-variant={variant}
       className={cn(
         selectTriggerClassName,
+        "ll:mobile:min-h-10",
         variant === "strip" && selectTriggerStripClassName,
         className,
       )}

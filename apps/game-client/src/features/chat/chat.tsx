@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useChatMessagesListener } from "@/features/chat/hooks/use-chat-messages";
+import { useWindowOpen } from "@/hooks/ui/use-window-open";
 import { useWindowPresence } from "@/hooks/ui/use-window-presence";
 import { getSelectedChatGuildId, useChatStore } from "@/store/chat.store";
 import { useGameStore } from "@/store/game.store";
-import { useWindowsStore } from "@/store/windows.store";
 import { ChatView } from "./chat-view";
 import { receiveChatMessage, type ChatReadState } from "./chat-read-state";
 import { isHiddenNpcChatMessage } from "./chat.helpers";
@@ -11,7 +11,7 @@ import { useHiddenNpcTypes } from "@/features/chat/hooks/use-hidden-npc-types";
 import type { ChatScrollPosition } from "./components/chat-transcript";
 
 export const Chat = () => {
-  const open = useWindowsStore((state) => state.chat.open);
+  const open = useWindowOpen("chat");
   const accountId = useGameStore((state) => state.game?.hero.accountId ?? "");
   const selectedGuildId = useChatStore(getSelectedChatGuildId);
 

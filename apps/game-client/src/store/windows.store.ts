@@ -1,4 +1,3 @@
-import { mapValues } from "es-toolkit";
 import { recordKeys } from "@/utils/record-keys";
 import { Option, Schema } from "effect";
 import { isObjectRecord } from "@lootlog/schema/records";
@@ -11,15 +10,20 @@ import {
   type SettingsSubsectionValue,
   type SettingsTabValue,
 } from "@/constants/settings-tabs";
-import {
-  APP_ERROR_WINDOW_DEFAULT_HEIGHT,
-  APP_ERROR_WINDOW_WIDTH,
-} from "@/constants/app-error-window";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { storageKey } from "@/lib/storage-key";
 import { createChangedOnlyStorage } from "./changed-only-storage";
 import { looseStruct, optionalOrUndefined } from "@lootlog/schema/stored-value";
+import { isMobilePanelWindowId } from "@/lib/mobile-ui/mobile-windows";
+import { isMobileModeActive } from "@/hooks/ui/use-mobile-mode";
+import { useMobileUiStore } from "./mobile-ui.store";
+import { syncMobilePanelOpen } from "./mobile-window-sync";
+import {
+  createDefaultWindows,
+  DEFAULT_QUICK_ACCESS_WIDTH,
+  WINDOW_DEFAULTS,
+} from "./windows-defaults";
 
 const STORAGE_KEY = storageKey("ll-windows-state");
 
@@ -28,21 +32,21 @@ type SettingsWindowState = {
   activeSubsection?: SettingsSubsectionValue;
 };
 
-type WindowPayload = SettingsWindowState;
+export type WindowPayload = SettingsWindowState;
 
-interface WindowPositionState {
+export interface WindowPositionState {
   x: number;
   y: number;
 }
 
 export type WindowOpacity = 1 | 2 | 3 | 4 | 5;
 
-interface WindowSizeState {
+export interface WindowSizeState {
   width: number;
   height: number;
 }
 
-interface WindowData {
+export interface WindowData {
   open: boolean;
   position: WindowPositionState;
   hasDefinedPosition: boolean;
@@ -77,11 +81,14 @@ const createFocusRequest = (windowId: WindowId): WindowFocusRequest => {
 
 type SettingsWindowData = WindowData & { state: SettingsWindowState };
 
-type WindowEntries = Record<Exclude<WindowId, "settings">, WindowData> & {
+export type WindowEntries = Record<
+  Exclude<WindowId, "settings">,
+  WindowData
+> & {
   settings: SettingsWindowData;
 };
 
-interface WindowsState extends WindowEntries {
+export interface WindowsState extends WindowEntries {
   windowFocusHistory: WindowId[];
   focusRequest?: WindowFocusRequest;
   setCurrentWindowFocus: (key: WindowId) => void;
@@ -102,51 +109,6 @@ interface WindowsState extends WindowEntries {
   ) => void;
 }
 
-const DEFAULT_OPACITY: WindowOpacity = 4;
-
-const DEFAULT_POSITION: WindowPositionState = { x: 0, y: 0 };
-
-const DEFAULT_QUICK_ACCESS_WIDTH = 250;
-
-const DEFAULT_SIZE: WindowSizeState = { width: 242, height: 240 };
-
-const WINDOW_DEFAULTS = {
-  "extension-login": { open: true, size: { width: 360, height: 180 } },
-  "app-error": {
-    open: false,
-    size: {
-      width: APP_ERROR_WINDOW_WIDTH,
-      height: APP_ERROR_WINDOW_DEFAULT_HEIGHT,
-    },
-  },
-  settings: { open: false, size: { width: 820, height: 560 } },
-  timers: { open: true, size: DEFAULT_SIZE },
-  chat: { open: true, size: DEFAULT_SIZE },
-  "global-chat": { open: false, size: DEFAULT_SIZE },
-  command: { open: false, size: DEFAULT_SIZE },
-  "online-players": { open: false, size: DEFAULT_SIZE },
-  "npc-detector": { open: false, size: { width: 300, height: 300 } },
-  notifications: { open: false, size: { width: 360, height: 300 } },
-  "quick-access": {
-    open: true,
-    size: { width: DEFAULT_QUICK_ACCESS_WIDTH, height: 56 },
-  },
-  "catching-whitelist-warning": {
-    open: false,
-    size: { width: 400, height: 240 },
-  },
-  "backend-preferences-warning": {
-    open: false,
-    size: { width: 400, height: 240 },
-  },
-  "party-finder": { open: false, size: DEFAULT_SIZE },
-  "create-party-gathering": { open: false, size: { width: 280, height: 230 } },
-  "battle-pings": { open: false, size: DEFAULT_SIZE },
-  "hero-sightings": { open: false, size: { width: 300, height: 260 } },
-  bingo: { open: false, size: { width: 380, height: 340 } },
-  "loot-split": { open: false, size: { width: 300, height: 220 } },
-} as const satisfies Record<string, Pick<WindowData, "open" | "size">>;
-
 export type WindowId = keyof typeof WINDOW_DEFAULTS;
 
 const WINDOW_IDS = recordKeys(WINDOW_DEFAULTS);
@@ -158,19 +120,6 @@ const TRANSIENT_FIELDS = new Set<string>([
   "focusRequest",
   ...RUNTIME_WINDOW_IDS,
 ]);
-
-const createDefaultWindows = (): WindowEntries => {
-  const windows = mapValues(WINDOW_DEFAULTS, ({ open, size }): WindowData => ({
-    open,
-    position: DEFAULT_POSITION,
-    hasDefinedPosition: false,
-    size,
-    opacity: DEFAULT_OPACITY,
-    locked: false,
-  }));
-
-  return { ...windows, settings: { ...windows.settings, state: {} } };
-};
 
 export const sanitizeMaxContentHeight = (height: number | undefined) => {
   if (height === undefined || !Number.isFinite(height)) {
@@ -475,8 +424,22 @@ export const useWindowsStore = create<WindowsState>()(
         ),
       setOpen: (key, open, windowState) => {
         const state = get();
-        const currentWindow = state[key];
 
+        if (isMobileModeActive()) {
+          if (isMobilePanelWindowId(key)) {
+            const patch = syncMobilePanelOpen(state, key, open, windowState);
+
+            if (patch) set(patch);
+
+            return;
+          }
+
+          if (key === "command" && open) {
+            useMobileUiStore.getState().closePanel();
+          }
+        }
+
+        const currentWindow = state[key];
         let nextHistory = state.windowFocusHistory;
 
         if (open) {
@@ -594,7 +557,8 @@ export const useWindowsStore = create<WindowsState>()(
             ? state
             : { [key]: { ...state[key], collapsed } },
         ),
-      resetWindowLayout: () =>
+      resetWindowLayout: () => {
+        useMobileUiStore.getState().resetMobileLayout();
         set((state) => {
           const defaults = useWindowsStore.getInitialState();
 
@@ -618,7 +582,8 @@ export const useWindowsStore = create<WindowsState>()(
               resetWindow(state[id], defaults[id]),
             ]),
           );
-        }),
+        });
+      },
       setSettingsPath: (activeTab, activeSubsection) =>
         set((state) => ({
           settings: {
@@ -631,6 +596,16 @@ export const useWindowsStore = create<WindowsState>()(
           },
         })),
       toggleOpen: (key: WindowId) => {
+        if (isMobileModeActive() && isMobilePanelWindowId(key)) {
+          if (useMobileUiStore.getState().activePanel === key) {
+            get().setOpen(key, false);
+          } else {
+            get().openAndFocus(key);
+          }
+
+          return;
+        }
+
         if (get()[key].open) get().setOpen(key, false);
         else get().openAndFocus(key);
       },

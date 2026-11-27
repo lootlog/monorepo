@@ -1,3 +1,4 @@
+import { formatDecimal } from "@lootlog/domain/locale";
 import { MAX_RESISTANCE, type CharacterStats } from "@/lib/character-stats";
 
 type CharacterStatLine = {
@@ -163,3 +164,22 @@ export const CHARACTER_STAT_SECTIONS: ReadonlyArray<{
     ],
   },
 ];
+
+const rounded = (value: number) => Math.round(value * 100) / 100;
+
+export const formatCharacterStatLine = (
+  stats: CharacterStats,
+  line: CharacterStatLine,
+) => {
+  const value = rounded(line.value(stats));
+  const max = line.max ? rounded(line.max(stats)) : value;
+  const unit = line.unit ?? "";
+
+  return {
+    value: (value + max) / 2,
+    text:
+      max === value
+        ? `${formatDecimal(value)}${unit}`
+        : `${formatDecimal(value)}–${formatDecimal(max)}${unit}`,
+  };
+};

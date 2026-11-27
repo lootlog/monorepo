@@ -8,6 +8,7 @@ import {
   toolbarStripClassName,
   toolbarStripRowClassName,
 } from "@/components/ui/toolbar-strip";
+import { useWindowOpen } from "@/hooks/ui/use-window-open";
 import { useWindowsStore } from "@/store/windows.store";
 import { useAccountOwnedReadyRoom } from "@/features/party-finder/hooks/use-ready-rooms";
 import { usePartyStore } from "@/store/party.store";
@@ -28,7 +29,7 @@ const PARTY_SIZE_LIMIT = 10;
 
 export const PartyFinder = () => {
   const { t } = useTranslation(["partyFinder", "chat"]);
-  const open = useWindowsStore((state) => state["party-finder"].open);
+  const open = useWindowOpen("party-finder");
   const setOpen = useWindowsStore((state) => state.setOpen);
 
   const currentCharacterIdentity = getCurrentReadyRoomCharacterIdentity();

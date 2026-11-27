@@ -79,6 +79,17 @@
       }
     },
     {
+      "files": ["packages/game-facts/src/packets.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["decodeGamePacket"]
+          }
+        ]
+      }
+    },
+    {
       "files": ["packages/protocol/src/rabbit/events.ts"],
       "rules": {
         "anti-slop/no-unknown-parameters": [

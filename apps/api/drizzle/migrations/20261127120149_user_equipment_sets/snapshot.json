@@ -1,0 +1,239 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "9721c69e-f4d2-47b0-ae95-de31825be87e",
+  "prevIds": ["ec882bec-506a-46f7-b428-0eca74fa34e1"],
+  "footprints": [
+    {
+      "statementType": "create_table",
+      "statementTarget": ["table", "public", "UserEquipmentSet"],
+      "writes": [
+        "s|tbl|public.UserEquipmentSet",
+        "n|tbl|public.UserEquipmentSet",
+        "e|tbl|public.UserEquipmentSet",
+        "n|rel|public.UserEquipmentSet",
+        "n|type|public.UserEquipmentSet",
+        "n|rel|public.UserEquipmentSet_pkey"
+      ],
+      "reads": ["n|sch|public"]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "UserEntitlement",
+        "equipmentSetLimit"
+      ],
+      "writes": [
+        "s|col|public.UserEntitlement.equipmentSetLimit",
+        "n|col|public.UserEntitlement.equipmentSetLimit",
+        "e|col|public.UserEntitlement.equipmentSetLimit"
+      ],
+      "reads": ["n|tbl|public.UserEntitlement", "n|sch|public"]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "UserEquipmentSet",
+        "UserEquipmentSet_userId_createdAt_idx"
+      ],
+      "writes": [
+        "s|idx|public.UserEquipmentSet_userId_createdAt_idx",
+        "n|idx|public.UserEquipmentSet_userId_createdAt_idx",
+        "e|idx|public.UserEquipmentSet_userId_createdAt_idx",
+        "n|rel|public.UserEquipmentSet_userId_createdAt_idx"
+      ],
+      "reads": [
+        "n|tbl|public.UserEquipmentSet",
+        "n|sch|public",
+        "n|col|public.UserEquipmentSet.userId",
+        "n|col|public.UserEquipmentSet.createdAt"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "UserEquipmentSet",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "UserEquipmentSet",
+        "name": "id",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "UserEquipmentSet",
+        "name": "userId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "UserEquipmentSet",
+        "name": "name",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "UserEquipmentSet",
+        "name": "description",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "''",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "UserEquipmentSet",
+        "name": "code",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "UserEquipmentSet",
+        "name": "createdAt",
+        "type": "timestamp(3)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "UserEquipmentSet",
+        "name": "updatedAt",
+        "type": "timestamp(3)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "UserEntitlement",
+        "name": "equipmentSetLimit",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "UserEquipmentSet",
+        "name": "UserEquipmentSet_userId_createdAt_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "userId",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "createdAt",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "UserEquipmentSet",
+        "name": "UserEquipmentSet_pkey",
+        "columns": ["id"],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    }
+  ]
+}

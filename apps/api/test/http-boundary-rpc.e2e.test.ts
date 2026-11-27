@@ -114,6 +114,7 @@ describe("API RPC boundary", () => {
           watchedItems: null,
           customThemes: null,
           apiKeys: null,
+          equipmentSets: null,
           characterAuras: null,
         },
       },

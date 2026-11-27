@@ -4,13 +4,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@lootlog/ui/components/popover";
+import { SparkleBurst } from "@lootlog/ui/components/sparkle-burst";
 import { Link } from "@tanstack/react-router";
+import { cn } from "cn";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { formatWeekRange, isCurrentWeek } from "@lootlog/changelog/changelog";
 import { useTranslation } from "react-i18next";
 import { ROUTES } from "@/config/routes";
-import { UnreadDot } from "./unread-dot";
 import { useWhatsNew } from "./use-whats-new";
 import { WhatsNewWeek } from "./whats-new-week";
 
@@ -20,6 +21,7 @@ export const WhatsNewButton = () => {
   const { t, i18n } = useTranslation();
   const { weeks, unreadIds, markAllSeen } = useWhatsNew();
   const [isOpen, setIsOpen] = useState(false);
+  const hasUnread = unreadIds.length > 0;
 
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
@@ -33,26 +35,43 @@ export const WhatsNewButton = () => {
         render={
           <Button
             variant="outline"
-            size="icon"
+            size={hasUnread ? "default" : "icon"}
             aria-label={
-              unreadIds.length > 0
+              hasUnread
                 ? t("layout.whatsNew.openUnread", { count: unreadIds.length })
                 : t("layout.whatsNew.title")
             }
-            className="relative max-md:hidden"
+            className={cn(
+              "relative",
+              hasUnread ? "px-3 max-md:size-9 max-md:px-0" : "max-md:hidden",
+            )}
           />
         }
       >
-        <Sparkles aria-hidden="true" />
-        {unreadIds.length > 0 && (
-          <UnreadDot className="absolute -top-0.5 -right-0.5 ring-2 ring-background" />
+        {hasUnread ? (
+          <SparkleBurst className="text-primary">
+            <Sparkles aria-hidden="true" />
+          </SparkleBurst>
+        ) : (
+          <Sparkles aria-hidden="true" />
+        )}
+        {hasUnread && (
+          <>
+            <span className="max-md:hidden">{t("layout.whatsNew.title")}</span>
+            <span
+              aria-hidden="true"
+              className="flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-2xs font-semibold text-primary-foreground tabular-nums max-md:absolute max-md:-top-1 max-md:-right-1"
+            >
+              {unreadIds.length}
+            </span>
+          </>
         )}
       </PopoverTrigger>
       <PopoverContent
         align="end"
         sideOffset={8}
         collisionPadding={12}
-        className="flex max-h-[min(34rem,var(--available-height))] w-[26rem] flex-col p-0"
+        className="flex max-h-[min(34rem,var(--available-height))] w-[min(26rem,var(--available-width))] flex-col p-0"
       >
         <h2 className="border-b px-4 py-3 text-sm font-semibold">
           {t("layout.whatsNew.title")}

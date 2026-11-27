@@ -100,6 +100,7 @@ export const makeApiKeysRuntimeFactory = ({
           watchedItems: 10,
           customThemes: 2,
           apiKeys: getApiKeyLimit(),
+          equipmentSets: 10,
         }),
       listGuildEvents: unused,
       getEventRanking: unused,

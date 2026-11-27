@@ -20,6 +20,7 @@ import {
   type SettingsSearchItem,
 } from "@/features/settings/settings-search";
 import { useSettingsUiStore } from "@/features/settings/settings-ui.store";
+import { useMobileMode } from "@/hooks/ui/use-mobile-mode";
 import { useWindowsStore } from "@/store/windows.store";
 import { useEffect, useRef, type KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
@@ -33,6 +34,7 @@ const SETTINGS_COMPACT_WIDTH = 600;
 
 export const SettingsTabs = () => {
   const { t } = useTranslation();
+  const { isMobile } = useMobileMode();
   const activeTab = useWindowsStore((state) => state.settings.state?.activeTab);
 
   const activeSubsection = useWindowsStore(
@@ -75,7 +77,7 @@ export const SettingsTabs = () => {
     ? searchSettings(buildSettingsSearchItems(visibleDomains, t), query)
     : [];
 
-  const isCompact = settingsWidth < SETTINGS_COMPACT_WIDTH;
+  const isCompact = isMobile || settingsWidth < SETTINGS_COMPACT_WIDTH;
 
   useEffect(() => {
     if (overlayOpen) searchInputRef.current?.focus();

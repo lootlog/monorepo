@@ -1,11 +1,25 @@
 import { reconnectingBunRedisLayer } from "@lootlog/database/bun-redis";
 import { reveal } from "#src/config/env";
 import type { SecondaryStorage } from "better-auth";
-import { Context, Effect, FiberSet, Layer, type Redacted } from "effect";
+import {
+  Context,
+  Effect,
+  FiberSet,
+  Layer,
+  Schema,
+  type Redacted,
+} from "effect";
 import { Redis } from "effect/persistence";
 import { createFailOpenSecondaryStorage } from "./secondary-storage-fail-open.js";
+import type { RefreshCoordination } from "#src/auth/provider/discord-token-refresh";
 
 const secondaryStorageKey = (key: string) => `auth:better-auth:${key}`;
+
+const refreshCoordinationKey = (key: string) => `auth:${key}`;
+
+const decodeStoredValue = Schema.decodeUnknownSync(
+  Schema.NullOr(Schema.String),
+);
 
 export const createAuthRedisConnection = (url: Redacted.Redacted<string>) =>
   reconnectingBunRedisLayer({
@@ -29,6 +43,7 @@ export class AuthRedisStorage extends Context.Service<
     readonly secondaryStorage: ReturnType<
       typeof createFailOpenSecondaryStorage
     >;
+    readonly refreshCoordination: RefreshCoordination;
   }
 >()("@lootlog/auth/AuthRedisStorage") {
   static readonly layer = Layer.effect(
@@ -86,8 +101,41 @@ export class AuthRedisStorage extends Context.Service<
         },
       );
 
+      const refreshCoordination: RefreshCoordination = {
+        claim: (key, ttlMs) =>
+          run(
+            redis.send(
+              "SET",
+              refreshCoordinationKey(key),
+              "1",
+              "NX",
+              "PX",
+              String(ttlMs),
+            ),
+          ).then((reply) => reply === "OK"),
+        release: (key) =>
+          run(redis.send("DEL", refreshCoordinationKey(key))).then(
+            () => undefined,
+          ),
+        read: (key) =>
+          run(redis.send("GET", refreshCoordinationKey(key))).then(
+            decodeStoredValue,
+          ),
+        publish: (key, value, ttlSeconds) =>
+          run(
+            redis.send(
+              "SET",
+              refreshCoordinationKey(key),
+              value,
+              "EX",
+              String(ttlSeconds),
+            ),
+          ).then(() => undefined),
+      };
+
       return AuthRedisStorage.of({
         secondaryStorage,
+        refreshCoordination,
         consumeApiKeyRateLimit: (keyId) =>
           redis
             .eval(rateLimitScript)(`auth:api-key-rate-limit:${keyId}`, "60")

@@ -16,6 +16,7 @@ import {
   RouterProvider,
 } from "@tanstack/react-router";
 import type { ApiServiceConfig } from "@lootlog/client/transport";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Schema } from "effect";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -60,7 +61,11 @@ const renderSignInError = async (search: Record<string, string>) => {
 
   await router.load();
 
-  return render(<RouterProvider router={router} />);
+  return render(
+    <QueryClientProvider client={new QueryClient()}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>,
+  );
 };
 
 const retryButton = () =>
@@ -108,6 +113,36 @@ describe("SignInError", () => {
         "auth.signinError.kinds.unknown.title",
       );
       expect(screen.getByText(error).tagName).toBe("CODE");
+    },
+  );
+
+  it.each(["DIFFERENT_DISCORD_ACCOUNT", "email_does_not_match"])(
+    "lets a member signed in with another Discord account switch to it after %s",
+    async (error) => {
+      signInFetch.mockImplementation((input) =>
+        String(input).includes("/sign-out")
+          ? Promise.resolve(Response.json({ success: true }))
+          : new Promise<Response>(() => undefined),
+      );
+      await renderSignInError({ error });
+
+      expect(screen.getByRole("heading", { level: 1 }).textContent).toBe(
+        "auth.signinError.kinds.otherDiscordAccount.title",
+      );
+
+      fireEvent.click(
+        screen.getByRole("button", { name: "auth.signinError.switchAccount" }),
+      );
+
+      await waitFor(() => expect(signInFetch).toHaveBeenCalledTimes(2));
+      expect(
+        signInFetch.mock.calls.map(
+          ([input]) => new URL(String(input)).pathname,
+        ),
+      ).toEqual([
+        expect.stringContaining("/sign-out"),
+        expect.stringContaining("/sign-in/social"),
+      ]);
     },
   );
 

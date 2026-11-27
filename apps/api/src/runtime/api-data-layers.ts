@@ -1,4 +1,5 @@
 import { UserThemesData } from "#src/users/user-themes-data";
+import { UserEquipmentSetsData } from "#src/users/user-equipment-sets-data";
 import {
   eventsData,
   eventsServicesLive,
@@ -71,6 +72,7 @@ import { bingoServicesLive } from "#src/runtime/features/bingo";
 const coreDataLayers = Layer.mergeAll(
   MapTemplatesData.layerDatabase,
   UserThemesData.layerDatabase,
+  UserEquipmentSetsData.layerDatabase,
   LootlogConfigData.layerDatabase,
   SettingsData.layerDatabase,
   DocsData.layerDatabase,

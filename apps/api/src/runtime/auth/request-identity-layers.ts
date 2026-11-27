@@ -6,6 +6,7 @@ import { ReadyRoomAuthorization } from "#src/http-api/handlers/party-ready-room/
 import { SettingsIdentity } from "#src/http-api/handlers/preferences/preferences.operations";
 import { UserLootlogConfigIdentity } from "#src/http-api/handlers/user-lootlog-config/user-lootlog-config.handlers";
 import { UserThemesIdentity } from "#src/http-api/handlers/user-themes/user-themes.handlers";
+import { UserEquipmentSetsIdentity } from "#src/http-api/handlers/user-equipment-sets/user-equipment-sets.handlers";
 import { requestScopedIdentity } from "#src/runtime/auth/forward-auth-identity";
 
 const SettingsIdentityLive = Layer.succeed(
@@ -25,6 +26,13 @@ const UserLootlogConfigIdentityLive = Layer.succeed(
 const UserThemesIdentityLive = Layer.succeed(
   UserThemesIdentity,
   UserThemesIdentity.of({
+    userId: Effect.map(requestScopedIdentity, ({ userId }) => userId),
+  }),
+);
+
+const UserEquipmentSetsIdentityLive = Layer.succeed(
+  UserEquipmentSetsIdentity,
+  UserEquipmentSetsIdentity.of({
     userId: Effect.map(requestScopedIdentity, ({ userId }) => userId),
   }),
 );
@@ -55,6 +63,7 @@ export const RequestIdentityLayers = Layer.mergeAll(
   SettingsIdentityLive,
   UserLootlogConfigIdentityLive,
   UserThemesIdentityLive,
+  UserEquipmentSetsIdentityLive,
   CharacterAurasIdentityLive,
   MessagingIdentityLive,
   GlobalChatIdentityLive,

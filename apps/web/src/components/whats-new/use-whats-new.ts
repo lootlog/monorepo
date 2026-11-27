@@ -2,9 +2,9 @@ import { Option, Schema } from "effect";
 import { useEffect } from "react";
 import { useLocalStorage } from "usehooks-ts";
 import {
-  getUnreadHighlightIds,
+  getUnreadIds,
   groupChangelogByWeek,
-  markHighlightsSeen,
+  markSeen,
 } from "@lootlog/changelog/changelog";
 import { CHANGELOG } from "@lootlog/changelog/entries";
 
@@ -16,8 +16,7 @@ const decodeSeenIds = Schema.decodeUnknownOption(
 
 const WEEKS = groupChangelogByWeek(CHANGELOG);
 
-const markSeen = (stored: string[] | null) =>
-  markHighlightsSeen(CHANGELOG, stored);
+const markStoredSeen = (stored: string[] | null) => markSeen(CHANGELOG, stored);
 
 export const useWhatsNew = () => {
   const [seenIds, setSeenIds] = useLocalStorage<string[] | null>(
@@ -34,17 +33,17 @@ export const useWhatsNew = () => {
     },
   );
 
-  const unreadIds = getUnreadHighlightIds(CHANGELOG, seenIds);
+  const unreadIds = getUnreadIds(CHANGELOG, seenIds);
 
   useEffect(() => {
-    if (seenIds === null) setSeenIds(markSeen);
+    if (seenIds === null) setSeenIds(markStoredSeen);
   }, [seenIds, setSeenIds]);
 
   return {
     weeks: WEEKS,
     unreadIds,
     markAllSeen: () => {
-      if (unreadIds.length > 0) setSeenIds(markSeen);
+      if (unreadIds.length > 0) setSeenIds(markStoredSeen);
     },
   };
 };

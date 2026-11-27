@@ -4,9 +4,10 @@ import { useTimersSocket } from "@/features/timers/hooks/use-timers-socket";
 import { useTimersWorld } from "@/features/timers/hooks/use-timers-world";
 import { useTimerSounds } from "@/features/timers/hooks/use-timer-sounds";
 import { useTimers } from "@/hooks/api/use-timers";
+import { useMobileMode } from "@/hooks/ui/use-mobile-mode";
+import { useWindowOpen } from "@/hooks/ui/use-window-open";
 import { useGameStore } from "@/store/game.store";
 import { useTimersStore } from "@/store/timers.store";
-import { useWindowsStore } from "@/store/windows.store";
 
 export const Timers = () => {
   useTimersSocket();
@@ -15,14 +16,15 @@ export const Timers = () => {
   const { data: timers } = useTimers({ world });
   useTimerSounds(timers, guildId);
 
-  const open = useWindowsStore((state) => state.timers.open);
+  const { isMobile } = useMobileMode();
+  const open = useWindowOpen("timers");
 
   const timersUnderBag = useTimersStore(
     (state) => state.generalConfig.timersUnderBag,
   );
 
   const gameInterface = useGameStore((state) => state.game?.interface);
-  const isUnderBag = timersUnderBag && gameInterface === "ni";
+  const isUnderBag = !isMobile && timersUnderBag && gameInterface === "ni";
   const { shouldRender: shouldRenderTimersView } = useWindowPresence(open);
 
   if (isUnderBag) {

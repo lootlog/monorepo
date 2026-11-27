@@ -1,9 +1,9 @@
 import { expect, test } from "bun:test";
 import {
   filterChangelog,
-  getUnreadHighlightIds,
+  getUnreadIds,
   groupChangelogByWeek,
-  markHighlightsSeen,
+  markSeen,
   type ChangelogItem,
 } from "./changelog.js";
 
@@ -46,25 +46,23 @@ test("a Sunday closes its week and the next Monday opens a new one", () => {
   ]);
 });
 
-test("a new player gets no backlog; a returning one gets what shipped since", () => {
+test("a new player gets no backlog; a returning one gets every feature and improvement shipped since", () => {
   const items = [
-    item("old", "2026-11-01", { highlight: true }),
-    item("new", "2026-11-18", { highlight: true }),
-    item("quiet", "2026-11-18"),
+    item("old", "2026-11-01", { type: "feature" }),
+    item("new", "2026-11-18", { type: "feature" }),
+    item("tweak", "2026-11-18"),
+    item("fix", "2026-11-18", { type: "fix" }),
   ];
 
-  expect(getUnreadHighlightIds(items, null)).toEqual([]);
-  expect(getUnreadHighlightIds(items, ["old"])).toEqual(["new"]);
+  expect(getUnreadIds(items, null)).toEqual([]);
+  expect(getUnreadIds(items, ["old"])).toEqual(["new", "tweak"]);
 });
 
 test("opening the list in an older build keeps what a newer build marked seen", () => {
-  const olderBuild = [item("old", "2026-11-01", { highlight: true })];
+  const olderBuild = [item("old", "2026-11-01")];
 
-  expect(markHighlightsSeen(olderBuild, ["old", "newer"])).toEqual([
-    "old",
-    "newer",
-  ]);
-  expect(markHighlightsSeen(olderBuild, null)).toEqual(["old"]);
+  expect(markSeen(olderBuild, ["old", "newer"])).toEqual(["old", "newer"]);
+  expect(markSeen(olderBuild, null)).toEqual(["old"]);
 });
 
 test("a filter keeps an entry met on any chosen surface and narrows by type", () => {

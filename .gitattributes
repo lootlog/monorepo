@@ -64,3 +64,7 @@ packages/battle-ui/src/lib/battle-message.ts size-limit-exempt
 # The realtime v1 protocol declares every frame, command, and event schema in
 # one canonical contract module, so it stays whole
 packages/protocol/src/realtime/protocol.ts size-limit-exempt
+
+# The AirTag Redis store is one key layout and the Lua scripts that share
+# LUA_COMMON over it, so it stays whole
+apps/gateway/src/realtime/air-tag-store.ts size-limit-exempt

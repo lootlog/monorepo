@@ -33,6 +33,7 @@ const userRow = (
   watchedItemLimit: null,
   customThemeLimit: null,
   apiKeyLimit: null,
+  equipmentSetLimit: null,
   characterAuras: null,
   updatedByUserId: "operator",
   updatedAt: now,

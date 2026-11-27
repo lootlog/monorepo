@@ -48,6 +48,13 @@ export const CORE_SETTINGS_DOMAINS = [
             settingKeys: ["device.mapAuras"],
           },
           {
+            id: "mobile-ui-mode",
+            labelKey: "settings.general.mobileUiModeLabel",
+            descriptionKey: "settings.general.mobileUiModeDescription",
+            aliases: ["telefon", "mobilny", "mobile", "dotyk", "interfejs"],
+            settingKeys: ["device.mobileUiMode"],
+          },
+          {
             id: "loot-split-window",
             labelKey: "lootSplit.settings.windowLabel",
             descriptionKey: "lootSplit.settings.windowDescription",

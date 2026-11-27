@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CalculatorsRouteImport } from './routes/calculators'
+import { Route as CharactersRouteImport } from './routes/characters'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as EventsRouteImport } from './routes/events'
 import { Route as FightRouteImport } from './routes/fight'
@@ -34,6 +35,11 @@ const IndexRoute = IndexRouteImport.update({
 const CalculatorsRoute = CalculatorsRouteImport.update({
   id: '/calculators',
   path: '/calculators',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CharactersRoute = CharactersRouteImport.update({
+  id: '/characters',
+  path: '/characters',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CompareRoute = CompareRouteImport.update({
@@ -110,6 +116,7 @@ const ApiCatalogSplatRoute = ApiCatalogSplatRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/calculators': typeof CalculatorsRoute
+  '/characters': typeof CharactersRoute
   '/compare': typeof CompareRoute
   '/events': typeof EventsRoute
   '/fight': typeof FightRoute
@@ -128,6 +135,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/calculators': typeof CalculatorsRoute
+  '/characters': typeof CharactersRoute
   '/compare': typeof CompareRoute
   '/events': typeof EventsRoute
   '/fight': typeof FightRoute
@@ -147,6 +155,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/calculators': typeof CalculatorsRoute
+  '/characters': typeof CharactersRoute
   '/compare': typeof CompareRoute
   '/events': typeof EventsRoute
   '/fight': typeof FightRoute
@@ -167,6 +176,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/calculators'
+    | '/characters'
     | '/compare'
     | '/events'
     | '/fight'
@@ -185,6 +195,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/calculators'
+    | '/characters'
     | '/compare'
     | '/events'
     | '/fight'
@@ -203,6 +214,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/calculators'
+    | '/characters'
     | '/compare'
     | '/events'
     | '/fight'
@@ -222,6 +234,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CalculatorsRoute: typeof CalculatorsRoute
+  CharactersRoute: typeof CharactersRoute
   CompareRoute: typeof CompareRoute
   EventsRoute: typeof EventsRoute
   FightRoute: typeof FightRoute
@@ -252,6 +265,13 @@ declare module '@tanstack/react-router' {
       path: '/calculators'
       fullPath: '/calculators'
       preLoaderRoute: typeof CalculatorsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/characters': {
+      id: '/characters'
+      path: '/characters'
+      fullPath: '/characters'
+      preLoaderRoute: typeof CharactersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/compare': {
@@ -358,6 +378,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CalculatorsRoute: CalculatorsRoute,
+  CharactersRoute: CharactersRoute,
   CompareRoute: CompareRoute,
   EventsRoute: EventsRoute,
   FightRoute: FightRoute,

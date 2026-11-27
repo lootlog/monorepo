@@ -25,6 +25,7 @@ import { HeroSightingsHandlers } from "./hero-sightings/hero-sightings.handlers.
 import { UserLootlogConfigHandlers } from "./user-lootlog-config/user-lootlog-config.handlers.js";
 import { UsersHandlers } from "./users/users.handlers.js";
 import { UserThemesHandlers } from "./user-themes/user-themes.handlers.js";
+import { UserEquipmentSetsHandlers } from "./user-equipment-sets/user-equipment-sets.handlers.js";
 import { CharacterAurasHandlers } from "./character-auras/character-auras.handlers.js";
 import { BingoHandlers } from "./bingo/bingo.handlers.js";
 
@@ -55,6 +56,7 @@ export const LootlogApiHandlers = Layer.mergeAll(
   PublicGuildStatsCardHandlers,
   DocsHandlers,
   UserThemesHandlers,
+  UserEquipmentSetsHandlers,
   CharacterAurasHandlers,
   BingoHandlers,
 );

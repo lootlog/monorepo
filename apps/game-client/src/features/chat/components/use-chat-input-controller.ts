@@ -656,6 +656,7 @@ export function useChatInputController({
     handleSuggestionSelect,
     handleClearChatConfirm,
     handleInputKeyDown,
+    handleSubmit,
     replaceMessage,
     variant,
     selectedGuildId,

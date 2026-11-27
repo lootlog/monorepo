@@ -111,6 +111,10 @@
       "project": ["src/**/*.{ts,tsx}!"],
       "includeEntryExports": true
     },
+    "packages/game-facts": {
+      "project": ["src/**/*.{ts,tsx}!"],
+      "includeEntryExports": true
+    },
     "packages/game-client-api": {
       "project": ["src/**/*.ts!"]
     },

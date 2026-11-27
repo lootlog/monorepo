@@ -132,6 +132,10 @@ export const EQUIPMENT_SET_PARAM = "set";
 
 export const LEGACY_EQUIPMENT_SET_PARAM = "zestaw";
 
+export const OPPONENT_SET_PARAM = "opponent";
+
+export const LEGACY_OPPONENT_SET_PARAM = "przeciwnik";
+
 export const MAX_CHARACTER_LEVEL = 500;
 
 export const isCharacterLevel = (level: number) =>

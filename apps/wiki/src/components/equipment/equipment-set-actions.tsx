@@ -4,6 +4,7 @@ import { ShareLinkButton } from "@/components/common/share-link-button";
 import { useEquipmentSet } from "@/contexts/equipment-set-context";
 import { t } from "@/i18n/messages";
 import { encodeEquipmentSet, EQUIPMENT_SET_PARAM } from "@/lib/equipment-set";
+import { SavedSetsButton } from "./saved-sets-button";
 
 export function EquipmentSetActions({
   compact = false,
@@ -20,6 +21,7 @@ export function EquipmentSetActions({
 
   return (
     <>
+      <SavedSetsButton compact={compact} />
       <ShareLinkButton
         path="/set"
         params={{ [EQUIPMENT_SET_PARAM]: encodeEquipmentSet(set) }}

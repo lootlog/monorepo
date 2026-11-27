@@ -91,15 +91,6 @@ const createTestInstance = () =>
         redirectURI: "http://localhost:3000/api/auth/callback/discord",
         scopes: ["identify", "email"],
       }),
-      account: {
-        identityStrategy: "provider-id" as const,
-        accountLinking: {
-          enabled: true,
-          disableImplicitLinking: false,
-          allowDifferentEmails: false,
-          updateUserInfoOnLink: true,
-        },
-      },
       plugins: [
         jwt({
           jwt: {
@@ -197,6 +188,108 @@ describe("Discord OAuth identity", () => {
 
     return { authHeaders, callbackLocation, session };
   };
+
+  const reauthenticateWithDiscord = async (
+    authHeaders: Headers,
+    profile: DiscordProfile,
+  ) => {
+    activeDiscordProfile = profile;
+
+    const linkResponse = await instance.client.linkSocial({
+      provider: "discord",
+      callbackURL: "/",
+      fetchOptions: {
+        headers: authHeaders,
+        onSuccess: ({ response }) => {
+          storeResponseCookies(authHeaders, response.headers);
+        },
+      },
+    });
+
+    const authorizationURL = new URL(linkResponse.data?.url ?? "");
+    const state = authorizationURL.searchParams.get("state") ?? "";
+    let callbackLocation = "";
+
+    await instance.client.$fetch("/callback/discord", {
+      method: "GET",
+      query: { code: `code-${profile.id}`, state },
+      headers: authHeaders,
+      onError: ({ response }) => {
+        callbackLocation = response.headers.get("location") ?? "";
+      },
+    });
+
+    const accounts = await instance.auth.api.listUserAccounts({
+      headers: authHeaders,
+    });
+
+    return { callbackLocation, accounts };
+  };
+
+  it("reauthenticates the same Discord account after its email changed", async () => {
+    const { authHeaders } = await signInWithDiscord(
+      createDiscordProfile({ id: DISCORD_A }),
+    );
+
+    const result = await reauthenticateWithDiscord(
+      authHeaders,
+      createDiscordProfile({ id: DISCORD_A, email: "changed@example.com" }),
+    );
+
+    expect(result.callbackLocation).not.toContain("error");
+    expect(result.accounts.map(({ accountId }) => accountId)).toEqual([
+      DISCORD_A,
+    ]);
+  });
+
+  it("refuses to attach another person's Discord account during reauthentication", async () => {
+    const { authHeaders } = await signInWithDiscord(
+      createDiscordProfile({ id: DISCORD_A }),
+    );
+
+    const result = await reauthenticateWithDiscord(
+      authHeaders,
+      createDiscordProfile({ id: DISCORD_B, email: "other@example.com" }),
+    );
+
+    expect(result.callbackLocation).toContain(
+      "error=DIFFERENT_DISCORD_ACCOUNT",
+    );
+    expect(result.accounts.map(({ accountId }) => accountId)).toEqual([
+      DISCORD_A,
+    ]);
+
+    const session = await instance.auth.api.getSession({
+      headers: authHeaders,
+    });
+
+    expect(session?.user.discordId).toBe(DISCORD_A);
+  });
+
+  it("refuses to link a Discord account from a client-supplied id token", async () => {
+    const { authHeaders } = await signInWithDiscord(
+      createDiscordProfile({ id: DISCORD_A }),
+    );
+
+    activeDiscordProfile = createDiscordProfile({
+      id: DISCORD_B,
+      email: "other@example.com",
+    });
+
+    const result = await instance.client.linkSocial({
+      provider: "discord",
+      idToken: { token: "forged-id-token", accessToken: "access-token" },
+      fetchOptions: { headers: authHeaders },
+    });
+
+    expect(result.error?.code).toBe("ID_TOKEN_NOT_SUPPORTED");
+
+    const accounts = await instance.auth.api.listUserAccounts({
+      headers: authHeaders,
+    });
+
+    expect(accounts.map(({ accountId }) => accountId)).toEqual([DISCORD_A]);
+  });
 
   it("provisions a user from the verified Discord profile", async () => {
     const discordProfile = createDiscordProfile({ id: DISCORD_A });

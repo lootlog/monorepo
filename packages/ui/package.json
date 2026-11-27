@@ -8,6 +8,7 @@
     "./globals.css": "./src/styles/globals.css",
     "./scroll-fade.css": "./src/styles/scroll-fade.css",
     "./ember-sparks.css": "./src/styles/ember-sparks.css",
+    "./sparkle-burst.css": "./src/styles/sparkle-burst.css",
     "./page-scroll.css": "./src/styles/page-scroll.css",
     "./portal.css": "./src/styles/portal.css",
     "./scrollbars.css": "./src/styles/scrollbars.css",

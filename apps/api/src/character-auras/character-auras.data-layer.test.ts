@@ -28,6 +28,7 @@ const NO_OVERRIDES: UserOverrides = {
   watchedItems: null,
   customThemes: null,
   apiKeys: null,
+  equipmentSets: null,
   characterAuras: null,
 };
 

@@ -997,6 +997,41 @@ export interface CharacterAurasResponseDto {
   auras: CharacterAuraResponseDto[];
 }
 
+export interface SuccessResponseDtoOutput {
+  success: boolean;
+}
+
+export interface UserEquipmentSetResponseDto {
+  id: string;
+  name: string;
+  description: string;
+  code: string;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  createdAt: string;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  updatedAt: string;
+}
+
+export interface UpdateUserEquipmentSetDto {
+  name?: string;
+  description?: string;
+  /**
+     * @maxLength 2048
+     * @pattern ^[\d_a-z.-]+$
+     */
+  code?: string;
+}
+
+export interface CreateUserEquipmentSetDto {
+  name: string;
+  description?: string;
+  /**
+     * @maxLength 2048
+     * @pattern ^[\d_a-z.-]+$
+     */
+  code: string;
+}
+
 export type SharedUserThemeResponseDtoDefinitionBaseThemeId = typeof SharedUserThemeResponseDtoDefinitionBaseThemeId[keyof typeof SharedUserThemeResponseDtoDefinitionBaseThemeId];
 
 
@@ -1334,10 +1369,6 @@ export interface UserThemeResponseDto {
   createdAt: string;
   /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
   updatedAt: string;
-}
-
-export interface SuccessResponseDtoOutput {
-  success: boolean;
 }
 
 export type UpdateUserThemeDtoDefinitionBaseThemeId = typeof UpdateUserThemeDtoDefinitionBaseThemeId[keyof typeof UpdateUserThemeDtoDefinitionBaseThemeId];
@@ -12250,6 +12281,11 @@ export type UsersControllerGetUserLimits200 = {
      * @maximum 9007199254740991
      */
   apiKeys: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  equipmentSets: number;
 };
 
 export type UsersControllerGetGameClientBootstrapParams = {
@@ -13756,6 +13792,12 @@ export type UserThemesControllerUnshareThemePathParameters = {
  }
 export type UserThemesControllerGetSharedThemePathParameters = {
  shareToken: string,
+ }
+export type UserEquipmentSetsControllerUpdateSetPathParameters = {
+ setId: string,
+ }
+export type UserEquipmentSetsControllerDeleteSetPathParameters = {
+ setId: string,
  }
 export type BingoControllerListBoardsPathParameters = {
  guildId: string,
@@ -38817,6 +38859,403 @@ export const useGetUserThemesControllerGetSharedThemeQueryData = () => {
 }
 
 
+
+export const getUserEquipmentSetsControllerGetSetsUrl = () => {
+
+
+
+
+  return `/users/@me/equipment-sets`
+}
+
+/**
+ * List the authenticated user's saved wiki equipment sets, own characters and opponents, oldest first
+ * @summary Get saved equipment sets
+ */
+export const userEquipmentSetsControllerGetSets = async ( options?: Parameters<typeof mainFetch>[1]): Promise<UserEquipmentSetResponseDto[]> => {
+
+  return mainFetch<UserEquipmentSetResponseDto[]>(getUserEquipmentSetsControllerGetSetsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getUserEquipmentSetsControllerGetSetsQueryKey = () => {
+    return [
+    `/users/@me/equipment-sets`
+    ] as const;
+    }
+
+
+export const getUserEquipmentSetsControllerGetSetsQueryOptions = <TData = Awaited<ReturnType<typeof userEquipmentSetsControllerGetSets>>, TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof userEquipmentSetsControllerGetSets>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getUserEquipmentSetsControllerGetSetsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof userEquipmentSetsControllerGetSets>>> = ({ signal }) => userEquipmentSetsControllerGetSets({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof userEquipmentSetsControllerGetSets>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type UserEquipmentSetsControllerGetSetsQueryResult = NonNullable<Awaited<ReturnType<typeof userEquipmentSetsControllerGetSets>>>
+export type UserEquipmentSetsControllerGetSetsQueryError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>
+
+
+export function useUserEquipmentSetsControllerGetSets<TData = Awaited<ReturnType<typeof userEquipmentSetsControllerGetSets>>, TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof userEquipmentSetsControllerGetSets>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof userEquipmentSetsControllerGetSets>>,
+          TError,
+          Awaited<ReturnType<typeof userEquipmentSetsControllerGetSets>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUserEquipmentSetsControllerGetSets<TData = Awaited<ReturnType<typeof userEquipmentSetsControllerGetSets>>, TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof userEquipmentSetsControllerGetSets>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof userEquipmentSetsControllerGetSets>>,
+          TError,
+          Awaited<ReturnType<typeof userEquipmentSetsControllerGetSets>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUserEquipmentSetsControllerGetSets<TData = Awaited<ReturnType<typeof userEquipmentSetsControllerGetSets>>, TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof userEquipmentSetsControllerGetSets>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get saved equipment sets
+ */
+
+export function useUserEquipmentSetsControllerGetSets<TData = Awaited<ReturnType<typeof userEquipmentSetsControllerGetSets>>, TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof userEquipmentSetsControllerGetSets>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getUserEquipmentSetsControllerGetSetsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get saved equipment sets
+ */
+export const prefetchUserEquipmentSetsControllerGetSetsQuery = async <TData = Awaited<ReturnType<typeof userEquipmentSetsControllerGetSets>>, TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>>(
+ queryClient: QueryClient,  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof userEquipmentSetsControllerGetSets>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getUserEquipmentSetsControllerGetSetsQueryOptions(options)
+
+  await queryClient.query(queryOptions).catch(() => {});
+
+  return queryClient;
+}
+
+/**
+ * @summary Invalidates the {@link useUserEquipmentSetsControllerGetSets} query
+ */
+export const invalidateUserEquipmentSetsControllerGetSets = async (
+ queryClient: QueryClient,  options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getUserEquipmentSetsControllerGetSetsQueryKey() }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get saved equipment sets
+ */
+export const useSetUserEquipmentSetsControllerGetSetsQueryData = () => {
+  const queryClient = useQueryClient();
+  return (updater: Awaited<ReturnType<typeof userEquipmentSetsControllerGetSets>> | undefined | ((old: Awaited<ReturnType<typeof userEquipmentSetsControllerGetSets>> | undefined) => Awaited<ReturnType<typeof userEquipmentSetsControllerGetSets>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof userEquipmentSetsControllerGetSets>>>({ exact: $exactMatch, queryKey: getUserEquipmentSetsControllerGetSetsQueryKey() }, updater);
+  };
+}
+
+/**
+ * @summary Get saved equipment sets
+ */
+export const useGetUserEquipmentSetsControllerGetSetsQueryData = () => {
+  const queryClient = useQueryClient();
+  return () =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof userEquipmentSetsControllerGetSets>>>(getUserEquipmentSetsControllerGetSetsQueryKey());
+}
+
+
+
+export const getUserEquipmentSetsControllerCreateSetUrl = () => {
+
+
+
+
+  return `/users/@me/equipment-sets`
+}
+
+/**
+ * Save a wiki equipment set for the authenticated user; fails with 409 once the user has reached the equipment set limit
+ * @summary Save equipment set
+ */
+export const userEquipmentSetsControllerCreateSet = async (createUserEquipmentSetDto: CreateUserEquipmentSetDto, options?: Parameters<typeof mainFetch>[1]): Promise<UserEquipmentSetResponseDto> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return mainFetch<UserEquipmentSetResponseDto>(getUserEquipmentSetsControllerCreateSetUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(createUserEquipmentSetDto)
+  }
+);}
+
+
+
+
+
+export const getUserEquipmentSetsControllerCreateSetMutationKey = () => ['userEquipmentSetsControllerCreateSet'] as const;
+
+export const getUserEquipmentSetsControllerCreateSetMutationOptions = <TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof userEquipmentSetsControllerCreateSet>>, TError,UserEquipmentSetsControllerCreateSetMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof userEquipmentSetsControllerCreateSet>>, TError,UserEquipmentSetsControllerCreateSetMutationVariables, TContext> => {
+
+const mutationKey = getUserEquipmentSetsControllerCreateSetMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof userEquipmentSetsControllerCreateSet>>, UserEquipmentSetsControllerCreateSetMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  userEquipmentSetsControllerCreateSet(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UserEquipmentSetsControllerCreateSetMutationResult = NonNullable<Awaited<ReturnType<typeof userEquipmentSetsControllerCreateSet>>>
+    export type UserEquipmentSetsControllerCreateSetMutationBody = BodyType<CreateUserEquipmentSetDto>
+    export type UserEquipmentSetsControllerCreateSetMutationError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>
+    export type UserEquipmentSetsControllerCreateSetMutationVariables = {data: BodyType<CreateUserEquipmentSetDto>}
+
+    /**
+ * @summary Save equipment set
+ */
+export const useUserEquipmentSetsControllerCreateSet = <TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof userEquipmentSetsControllerCreateSet>>, TError,UserEquipmentSetsControllerCreateSetMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof userEquipmentSetsControllerCreateSet>>,
+        TError,
+        UserEquipmentSetsControllerCreateSetMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUserEquipmentSetsControllerCreateSetMutationOptions(options), queryClient);
+    }
+
+export const getUserEquipmentSetsControllerUpdateSetUrl = ({ setId }: UserEquipmentSetsControllerUpdateSetPathParameters,) => {
+
+
+
+
+  return `/users/@me/equipment-sets/${setId}`
+}
+
+/**
+ * Rename a saved equipment set or overwrite its contents
+ * @summary Update saved equipment set
+ */
+export const userEquipmentSetsControllerUpdateSet = async ({ setId }: UserEquipmentSetsControllerUpdateSetPathParameters,
+    updateUserEquipmentSetDto: UpdateUserEquipmentSetDto, options?: Parameters<typeof mainFetch>[1]): Promise<UserEquipmentSetResponseDto> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return mainFetch<UserEquipmentSetResponseDto>(getUserEquipmentSetsControllerUpdateSetUrl({ setId }),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateUserEquipmentSetDto)
+  }
+);}
+
+
+
+
+
+export const getUserEquipmentSetsControllerUpdateSetMutationKey = () => ['userEquipmentSetsControllerUpdateSet'] as const;
+
+export const getUserEquipmentSetsControllerUpdateSetMutationOptions = <TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof userEquipmentSetsControllerUpdateSet>>, TError,UserEquipmentSetsControllerUpdateSetMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof userEquipmentSetsControllerUpdateSet>>, TError,UserEquipmentSetsControllerUpdateSetMutationVariables, TContext> => {
+
+const mutationKey = getUserEquipmentSetsControllerUpdateSetMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof userEquipmentSetsControllerUpdateSet>>, UserEquipmentSetsControllerUpdateSetMutationVariables> = (props) => {
+          const {pathParams,data} = props ?? {};
+
+          return  userEquipmentSetsControllerUpdateSet(pathParams,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UserEquipmentSetsControllerUpdateSetMutationResult = NonNullable<Awaited<ReturnType<typeof userEquipmentSetsControllerUpdateSet>>>
+    export type UserEquipmentSetsControllerUpdateSetMutationBody = BodyType<UpdateUserEquipmentSetDto>
+    export type UserEquipmentSetsControllerUpdateSetMutationError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>
+    export type UserEquipmentSetsControllerUpdateSetMutationVariables = {pathParams: UserEquipmentSetsControllerUpdateSetPathParameters;data: BodyType<UpdateUserEquipmentSetDto>}
+
+    /**
+ * @summary Update saved equipment set
+ */
+export const useUserEquipmentSetsControllerUpdateSet = <TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof userEquipmentSetsControllerUpdateSet>>, TError,UserEquipmentSetsControllerUpdateSetMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof userEquipmentSetsControllerUpdateSet>>,
+        TError,
+        UserEquipmentSetsControllerUpdateSetMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUserEquipmentSetsControllerUpdateSetMutationOptions(options), queryClient);
+    }
+
+export const getUserEquipmentSetsControllerDeleteSetUrl = ({ setId }: UserEquipmentSetsControllerDeleteSetPathParameters,) => {
+
+
+
+
+  return `/users/@me/equipment-sets/${setId}`
+}
+
+/**
+ * @summary Delete saved equipment set
+ */
+export const userEquipmentSetsControllerDeleteSet = async ({ setId }: UserEquipmentSetsControllerDeleteSetPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<SuccessResponseDtoOutput> => {
+
+  return mainFetch<SuccessResponseDtoOutput>(getUserEquipmentSetsControllerDeleteSetUrl({ setId }),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getUserEquipmentSetsControllerDeleteSetMutationKey = () => ['userEquipmentSetsControllerDeleteSet'] as const;
+
+export const getUserEquipmentSetsControllerDeleteSetMutationOptions = <TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof userEquipmentSetsControllerDeleteSet>>, TError,UserEquipmentSetsControllerDeleteSetMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof userEquipmentSetsControllerDeleteSet>>, TError,UserEquipmentSetsControllerDeleteSetMutationVariables, TContext> => {
+
+const mutationKey = getUserEquipmentSetsControllerDeleteSetMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof userEquipmentSetsControllerDeleteSet>>, UserEquipmentSetsControllerDeleteSetMutationVariables> = (props) => {
+          const {pathParams} = props ?? {};
+
+          return  userEquipmentSetsControllerDeleteSet(pathParams,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UserEquipmentSetsControllerDeleteSetMutationResult = NonNullable<Awaited<ReturnType<typeof userEquipmentSetsControllerDeleteSet>>>
+
+    export type UserEquipmentSetsControllerDeleteSetMutationError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>
+    export type UserEquipmentSetsControllerDeleteSetMutationVariables = {pathParams: UserEquipmentSetsControllerDeleteSetPathParameters}
+
+    /**
+ * @summary Delete saved equipment set
+ */
+export const useUserEquipmentSetsControllerDeleteSet = <TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof userEquipmentSetsControllerDeleteSet>>, TError,UserEquipmentSetsControllerDeleteSetMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof userEquipmentSetsControllerDeleteSet>>,
+        TError,
+        UserEquipmentSetsControllerDeleteSetMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUserEquipmentSetsControllerDeleteSetMutationOptions(options), queryClient);
+    }
 
 export const getCharacterAurasControllerGetAurasUrl = () => {
 

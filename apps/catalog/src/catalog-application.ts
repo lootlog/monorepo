@@ -19,6 +19,7 @@ import { CatalogHttpServer } from "#src/http-api/catalog-http";
 import { CatalogOperations } from "#src/http-api/catalog-operations";
 import { CatalogRpcServer } from "#src/rpc/catalog-rpc-server";
 import { CatalogReports } from "#src/reports/reports.service";
+import { CatalogFacts } from "#src/facts/facts.service";
 import {
   CatalogItemObservation,
   CatalogItemRevisions,
@@ -133,6 +134,7 @@ export const CatalogApplication = Layer.mergeAll(
 ).pipe(
   Layer.provide(CatalogOperations.layer),
   Layer.provide(CatalogReports.layer),
+  Layer.provide(CatalogFacts.layer),
   Layer.provide(CatalogDatabase.layer),
   Layer.provide(PgClientLive),
   Layer.provide(RabbitLive),
