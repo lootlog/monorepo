@@ -54,8 +54,8 @@ the original destination with publisher confirmation, then acknowledge the
 dead letter. Reset the retry-count header for a fresh retry budget. An
 interrupted replay can duplicate delivery, so consumers must remain idempotent.
 
-Apply the new API and Battlelog database migrations before deploying their
-workers. See [loot publication recovery](../apps/api/drizzle/README.md) and
+Apply the new API, Battlelog, and Catalog database migrations
+(`bun run db:migrate:deploy` in the service) before deploying their workers. See [loot publication recovery](../apps/api/drizzle/README.md) and
 [battle object cleanup](../apps/battlelog/drizzle/README.md) for pending-work
 inspection and rollback constraints.
 
