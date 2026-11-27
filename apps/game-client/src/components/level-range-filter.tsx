@@ -55,7 +55,7 @@ export const LevelRangeFilter: FC<LevelRangeFilterProps> = ({
       onChange={(event) => handleChange(field, event)}
       className={cn(
         toolbarStripLightDividerClassName,
-        "ll:w-8 ll:shrink-0 input-no-spinner ll:px-0.5 ll:text-center",
+        "ll:w-8 ll:mobile:w-11 ll:shrink-0 input-no-spinner ll:px-0.5 ll:text-center",
       )}
       min={min}
       max={max}

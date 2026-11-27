@@ -112,7 +112,7 @@ export const MobilePromptFrame = ({
             </div>
             <p
               id={titleId}
-              className="ll:m-0 ll:min-w-0 ll:truncate ll:text-center ll:text-xs ll:font-semibold ll:leading-none ll:tracking-wide ll:text-foreground"
+              className="ll:m-0 ll:min-w-0 ll:truncate ll:text-center ll:text-sm ll:font-semibold ll:leading-none ll:tracking-wide ll:text-foreground"
             >
               {title}
             </p>

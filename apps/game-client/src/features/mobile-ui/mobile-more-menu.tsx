@@ -9,6 +9,7 @@ import {
 } from "@/components/connection-status-tone";
 import { COUNT_BADGE_CLASS_NAME } from "@/components/count-badge";
 import { Button } from "@/components/ui/button";
+import { MOBILE_NAV_BUTTON_CLASS_NAME } from "./mobile-nav-button";
 import {
   Popover,
   PopoverContent,
@@ -104,12 +105,12 @@ export const MobileMoreMenu = ({
           aria-pressed={isSecondaryActive}
           className={
             triggerVariant === "bar"
-              ? "ll:relative ll:h-10 ll:w-full ll:gap-1.5 ll:rounded-none ll:px-1.5 ll:text-xs ll:font-semibold"
+              ? cn("ll:relative", MOBILE_NAV_BUTTON_CLASS_NAME)
               : "ll:relative ll:h-10 ll:w-10 ll:rounded-r-lg ll:rounded-l-none ll:px-0"
           }
         >
           <span className="ll:relative ll:flex ll:items-center">
-            <Ellipsis aria-hidden="true" className="ll:size-4" />
+            <Ellipsis aria-hidden="true" className="ll:size-5" />
             <span
               aria-hidden="true"
               className={cn(
@@ -163,7 +164,7 @@ export const MobileMoreMenu = ({
               )}
               onClick={() => handleOpenWindow("party-finder")}
             >
-              <Swords aria-hidden="true" className="ll:size-4" />
+              <Swords aria-hidden="true" className="ll:size-5" />
               <span className="ll:truncate">
                 {tPartyFinder("window.title")}
               </span>

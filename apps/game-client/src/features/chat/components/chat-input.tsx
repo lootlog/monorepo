@@ -54,7 +54,7 @@ export function ChatInput(props: ChatInputProps) {
       <ChatComposeModeMenu
         controller={controller}
         side="top"
-        iconClassName="ll:size-3.5"
+        iconClassName="ll:size-3.5 ll:mobile:size-5"
       />
       <ChatComposeField
         controller={controller}
@@ -77,7 +77,7 @@ export function ChatInput(props: ChatInputProps) {
           disabled={isPending || messageValue.trim().length === 0}
           onClick={() => void handleSubmit()}
         >
-          <SendHorizontal className="ll:size-4" aria-hidden="true" />
+          <SendHorizontal className="ll:size-5" aria-hidden="true" />
         </IconButton>
       ) : null}
       <ChatQuickActionStrip guildId={selectedGuildId} />

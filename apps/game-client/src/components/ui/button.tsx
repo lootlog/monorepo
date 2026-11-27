@@ -11,7 +11,7 @@ const MENU_ITEM_CLASS_NAME =
   "ll-action-menu-item ll:active:scale-100 ll:h-auto ll:min-h-7 ll:justify-start ll:px-2 ll:py-1.5 ll:text-xs ll:font-semibold ll:disabled:text-muted-foreground";
 
 const buttonVariants = cva(
-  "ll:inline-flex ll:shrink-0 ll:items-center ll:justify-center ll:gap-1.5 ll:whitespace-nowrap ll:rounded-sm ll:border ll:border-transparent ll:text-[13px] ll:font-medium ll:transition-[background-color,color,border-color,box-shadow,scale] ll:outline-none ll:active:scale-96 ll:disabled:pointer-events-none ll:disabled:opacity-50 ll:focus-visible:border-ring ll:focus-visible:ring-[3px] ll:focus-visible:ring-ring/50 ll:aria-invalid:border-destructive ll:aria-invalid:ring-destructive/20 ll:[&_svg]:pointer-events-none ll:[&_svg]:shrink-0 ll:[&_svg:not([class*=size-])]:size-3.5 ll-custom-cursor-pointer",
+  "ll:inline-flex ll:shrink-0 ll:items-center ll:justify-center ll:gap-1.5 ll:whitespace-nowrap ll:rounded-sm ll:border ll:border-transparent ll:text-[13px] ll:font-medium ll:transition-[background-color,color,border-color,box-shadow,scale] ll:outline-none ll:active:scale-96 ll:disabled:pointer-events-none ll:disabled:opacity-50 ll:focus-visible:border-ring ll:focus-visible:ring-[3px] ll:focus-visible:ring-ring/50 ll:aria-invalid:border-destructive ll:aria-invalid:ring-destructive/20 ll:[&_svg]:pointer-events-none ll:[&_svg]:shrink-0 ll:[&_svg:not([class*=size-])]:size-3.5 ll:mobile:min-h-10 ll:mobile:min-w-10 ll:mobile:[&_svg:not([class*=size-])]:size-5 ll-custom-cursor-pointer",
   {
     variants: {
       variant: {
