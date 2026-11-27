@@ -62,6 +62,7 @@ export const BingoLeaderboard = ({
               resetScroll: false,
             }}
             isViewer={entry.member.id === selectedMemberId}
+            pinned={isViewer}
             live
           />
         );
