@@ -279,12 +279,13 @@ for _,observation in ipairs(observations) do
       target.seenBy=liveObservers(existing,now,ttl)
     end
     target.seenBy[observer]=now
-    -- One reporter per target: theirs until they fall silent for the lease.
-    if existing ~= nil and existing.reporter ~= nil and existing.reporter ~= observer and now-tonumber(existing.reporterAt or 0) < lease then
-      target.reporter=existing.reporter; target.reporterAt=existing.reporterAt
+    -- One reporter per target: theirs until they fall silent for the lease. Only
+    -- a reporter that raises map threats keeps them fresh, so it outranks one that cannot.
+    if existing ~= nil and existing.reporter ~= nil and existing.reporter ~= observer and now-tonumber(existing.reporterAt or 0) < lease and (existing.reporterRaisesThreats == true or not threatsAllowed) then
+      target.reporter=existing.reporter; target.reporterAt=existing.reporterAt; target.reporterRaisesThreats=existing.reporterRaisesThreats
       standby[#standby+1]=target.targetId
     else
-      target.reporter=observer; target.reporterAt=now
+      target.reporter=observer; target.reporterAt=now; target.reporterRaisesThreats=threatsAllowed
     end
     local broadcast=existing == nil
     if existing ~= nil then
