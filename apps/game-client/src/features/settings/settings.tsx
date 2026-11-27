@@ -3,12 +3,13 @@ import { SettingsSaveStatus } from "@/features/settings/components/shared/settin
 import { SettingsTabs } from "@/features/settings/components/settings-tabs";
 import { useWhatsNew } from "@/features/settings/components/whats-new/use-whats-new";
 import { useSettingsUiStore } from "@/features/settings/settings-ui.store";
+import { useWindowOpen } from "@/hooks/ui/use-window-open";
 import { useWindowsStore } from "@/store/windows.store";
 import { useEffect, useEffectEvent } from "react";
 import { useTranslation } from "react-i18next";
 
 export const Settings = () => {
-  const open = useWindowsStore((state) => state.settings.open);
+  const open = useWindowOpen("settings");
   const setOpen = useWindowsStore((state) => state.setOpen);
   const { t } = useTranslation();
   const setOverlayOpen = useSettingsUiStore((state) => state.setOverlayOpen);

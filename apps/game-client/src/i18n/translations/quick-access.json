@@ -71,5 +71,15 @@
   "collapse": {
     "collapse": "Zwiń pasek",
     "expand": "Rozwiń pasek"
+  },
+  "mobile": {
+    "navigation": "Nawigacja Lootloga",
+    "more": "Więcej",
+    "moreMenu": "Więcej opcji Lootloga",
+    "nav": {
+      "timers": "Timery",
+      "chat": "Czat",
+      "command": "Napisz"
+    }
   }
 }

@@ -20,6 +20,7 @@ import {
   type ItemRarityEnum as ItemRarity,
 } from "@lootlog/schema/item-rarity";
 import { MAP_AURA_MODES } from "@lootlog/schema/character-aura";
+import { MOBILE_UI_MODES } from "@lootlog/domain/settings-documents";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -48,6 +49,8 @@ export const GeneralSettingsTab: FC = () => {
 
   const mapAuras = useSettingsStore((state) => state.mapAuras);
   const setMapAuras = useSettingsStore((state) => state.setMapAuras);
+  const mobileUiMode = useSettingsStore((state) => state.mobileUiMode);
+  const setMobileUiMode = useSettingsStore((state) => state.setMobileUiMode);
   const lootSplit = useAccountEnabledFlag("lootSplit");
   const { t } = useTranslation();
 
@@ -87,6 +90,7 @@ export const GeneralSettingsTab: FC = () => {
           controlId="map-auras"
           label={t("settings.general.mapAurasLabel")}
           description={t("settings.general.mapAurasDescription")}
+          control="wide"
         >
           <Select
             value={mapAuras}
@@ -99,7 +103,7 @@ export const GeneralSettingsTab: FC = () => {
             <SelectTrigger
               aria-label={t("settings.general.mapAurasLabel")}
               size="sm"
-              className="ll:w-44"
+              className="ll:w-full"
             >
               <SelectValue />
             </SelectTrigger>
@@ -107,6 +111,36 @@ export const GeneralSettingsTab: FC = () => {
               {MAP_AURA_MODES.map((mode) => (
                 <SelectItem key={mode} value={mode}>
                   {t(`settings.general.mapAurasModes.${mode}`)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </SettingsRow>
+        <SettingsRow
+          controlId="mobile-ui-mode"
+          label={t("settings.general.mobileUiModeLabel")}
+          description={t("settings.general.mobileUiModeDescription")}
+          control="wide"
+        >
+          <Select
+            value={mobileUiMode}
+            onValueChange={(value) =>
+              setMobileUiMode(
+                MOBILE_UI_MODES.find((mode) => mode === value) ?? "off",
+              )
+            }
+          >
+            <SelectTrigger
+              aria-label={t("settings.general.mobileUiModeLabel")}
+              size="sm"
+              className="ll:w-full"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {MOBILE_UI_MODES.map((mode) => (
+                <SelectItem key={mode} value={mode}>
+                  {t(`settings.general.mobileUiModes.${mode}`)}
                 </SelectItem>
               ))}
             </SelectContent>

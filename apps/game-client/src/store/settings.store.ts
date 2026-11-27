@@ -2,7 +2,10 @@ import { clamp } from "es-toolkit";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import type { MapAuraMode } from "@lootlog/schema/character-aura";
-import { DEVICE_SETTINGS_CATALOG } from "@lootlog/domain/settings-documents";
+import {
+  DEVICE_SETTINGS_CATALOG,
+  type MobileUiMode,
+} from "@lootlog/domain/settings-documents";
 import { storageKey } from "@/lib/storage-key";
 import { createChangedOnlyStorage } from "./changed-only-storage";
 import { enqueueSettingsPatch } from "@/lib/settings-persistence/settings-patch-client";
@@ -12,6 +15,7 @@ const STORAGE_KEY = storageKey("ll:settings:state");
 const {
   animationEffectsEnabled: animationEffectsSetting,
   mapAuras: mapAurasSetting,
+  mobileUiMode: mobileUiModeSetting,
   masterVolume: masterVolumeSetting,
   soundsMuted: soundsMutedSetting,
 } = DEVICE_SETTINGS_CATALOG;
@@ -19,6 +23,7 @@ const {
 interface SettingsState {
   animationEffectsEnabled: boolean;
   mapAuras: MapAuraMode;
+  mobileUiMode: MobileUiMode;
   lootDebugLoggingEnabled: boolean;
   masterVolume: number;
   soundsMuted: boolean;
@@ -29,6 +34,7 @@ interface SettingsState {
   setGuildId: (charId: string, guildId: string) => void;
   setLootDebugLoggingEnabled: (enabled: boolean) => void;
   setMapAuras: (mode: MapAuraMode) => void;
+  setMobileUiMode: (mode: MobileUiMode) => void;
   setMasterVolume: (volume: number) => void;
   setWorld: (guildId: string, world: string) => void;
   toggleAnimationEffects: () => void;
@@ -42,6 +48,7 @@ export const useSettingsStore = create<SettingsState>()(
     (set, get) => ({
       animationEffectsEnabled: animationEffectsSetting.defaultValue,
       mapAuras: mapAurasSetting.defaultValue,
+      mobileUiMode: mobileUiModeSetting.defaultValue,
       lootDebugLoggingEnabled: false,
       masterVolume: masterVolumeSetting.defaultValue,
       soundsMuted: soundsMutedSetting.defaultValue,
@@ -81,6 +88,9 @@ export const useSettingsStore = create<SettingsState>()(
       },
       setMapAuras: (mapAuras) => {
         set({ mapAuras });
+      },
+      setMobileUiMode: (mobileUiMode) => {
+        set({ mobileUiMode });
       },
       setMasterVolume: (masterVolume) => {
         set({
@@ -125,6 +135,7 @@ export const useSettingsStore = create<SettingsState>()(
       partialize: (state) => ({
         animationEffectsEnabled: state.animationEffectsEnabled,
         mapAuras: state.mapAuras,
+        mobileUiMode: state.mobileUiMode,
         lootDebugLoggingEnabled: state.lootDebugLoggingEnabled,
         masterVolume: state.masterVolume,
         soundsMuted: state.soundsMuted,

@@ -11,6 +11,7 @@ import { useTimersWorld } from "@/features/timers/hooks/use-timers-world";
 import { useTimerListProjection } from "@/features/timers/hooks/use-timer-list-projection";
 import { UnderBagTimers } from "@/features/timers/under-bag-timers";
 import { useTimers } from "@/hooks/api/use-timers";
+import { useMobileMode } from "@/hooks/ui/use-mobile-mode";
 import { DEFAULT_TIMERS_FILTERS, useTimersStore } from "@/store/timers.store";
 import { GLOBAL_TIMER_SETTINGS_KEY } from "@/store/timer-settings-sync";
 import { useWindowsStore } from "@/store/windows.store";
@@ -24,6 +25,7 @@ interface TimersViewProps {
 
 export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
   const { t } = useTranslation("timers");
+  const { isMobile } = useMobileMode();
 
   const {
     allowWorldSelection,
@@ -148,7 +150,9 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
     setShowHiddenTimers(true);
   };
 
-  const actions = generalConfig.compactView ? undefined : (
+  const effectiveCompactView = !isMobile && generalConfig.compactView;
+
+  const actions = effectiveCompactView ? undefined : (
     <TimersActions
       timerFiltersEnabled={timerFiltersEnabled}
       toggleTimerFiltersEnabled={toggleTimerFiltersEnabled}
@@ -180,7 +184,7 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
       minColumnWidth={displayConfig.minColumnWidth}
       legacyAppearance={displayConfig.legacyAppearance}
       onResetFilters={handleResetFilters}
-      compactView={generalConfig.compactView}
+      compactView={effectiveCompactView}
       error={!hasTimersResponse ? timersError : null}
       initialLoading={initialTimersLoading}
       onRetry={() => {
@@ -219,11 +223,9 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
       title={t("window.title")}
       onClose={() => setOpen("timers", false)}
       minHeight={108}
-      contentClassName={
-        generalConfig.compactView ? undefined : "ll:-mx-1 ll:-mb-1"
-      }
-      disableTitle={generalConfig.compactView}
-      draggableContent={generalConfig.compactView}
+      contentClassName={effectiveCompactView ? undefined : "ll:-mx-1 ll:-mb-1"}
+      disableTitle={effectiveCompactView}
+      draggableContent={effectiveCompactView}
       actions={actions}
     >
       <div className="ll:flex ll:flex-col ll:h-full">{content}</div>

@@ -32,9 +32,11 @@ export const SettingsWindowShell: FC<SettingsWindowShellProps> = ({
   >
     {compact ? (
       <>
-        <div className={cn(navColumnClassName, "ll:w-11")}>{nav}</div>
+        <div className={cn(navColumnClassName, "ll:w-11")}>
+          <ScrollArea className="ll:min-h-0 ll:flex-1">{nav}</ScrollArea>
+        </div>
         {searchOverlayOpen ? (
-          <div className="ll:absolute ll:inset-y-0 ll:start-11 ll:z-30 ll:flex ll:w-64 ll:flex-col ll:gap-3 ll:border-0 ll:border-e ll:border-solid ll:border-border ll:bg-black/90 ll:p-1 ll:ps-2 ll:pe-3 ll:animate-in ll:fade-in-0 ll:duration-150">
+          <div className="ll:absolute ll:inset-y-0 ll:start-11 ll:z-30 ll:flex ll:w-[min(16rem,calc(100%-3rem))] ll:flex-col ll:gap-3 ll:border-0 ll:border-e ll:border-solid ll:border-border ll:bg-black/90 ll:p-1 ll:ps-2 ll:pe-3 ll:animate-in ll:fade-in-0 ll:duration-150">
             {search}
           </div>
         ) : null}

@@ -1,6 +1,7 @@
 import type { FC } from "react";
 import type { LucideIcon } from "lucide-react";
 import { useWindowDisplayPosition } from "@/components/draggable-window/use-window-display-position";
+import { useMobileMode } from "@/hooks/ui/use-mobile-mode";
 import { useWindowViewport } from "@/hooks/ui/window-viewport";
 import { useWindowsStore } from "@/store/windows.store";
 
@@ -21,6 +22,7 @@ export const WindowLauncher: FC<WindowLauncherProps> = ({
   onOpen,
   besideQuickAccess = false,
 }) => {
+  const { isMobile } = useMobileMode();
   const viewport = useWindowViewport();
 
   const quickAccessSize = useWindowsStore(
@@ -28,6 +30,27 @@ export const WindowLauncher: FC<WindowLauncherProps> = ({
   );
 
   const position = useWindowDisplayPosition("quick-access", quickAccessSize);
+
+  if (isMobile) {
+    return (
+      <button
+        type="button"
+        className="ll-custom-cursor-pointer ll:pointer-events-auto ll:fixed ll:z-[400] ll:inline-flex ll:h-10 ll:items-center ll:gap-1.5 ll:rounded-lg ll:border ll:border-white/50 ll:bg-black/85 ll:px-3 ll:text-xs ll:font-semibold ll:text-foreground ll:shadow-[2px_2px_3px_3px_rgba(12,13,13,0.4)] ll:transition-colors ll:motion-reduce:transition-none ll:hover:bg-black ll:focus-visible:outline-2 ll:focus-visible:outline-ring"
+        style={{
+          left: "max(12px, env(safe-area-inset-left, 0px))",
+          bottom: "max(12px, env(safe-area-inset-bottom, 0px))",
+        }}
+        onClick={(event) => {
+          event.stopPropagation();
+          onOpen();
+        }}
+      >
+        <Icon size={16} aria-hidden="true" />
+        {label}
+      </button>
+    );
+  }
+
   let top = position.y;
 
   if (besideQuickAccess) {
