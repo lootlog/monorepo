@@ -1,7 +1,7 @@
 import {
-  getUnreadHighlightIds,
+  getUnreadIds,
   groupChangelogByWeek,
-  markHighlightsSeen,
+  markSeen,
 } from "@lootlog/changelog/changelog";
 import { CHANGELOG } from "@lootlog/changelog/entries";
 import { Schema } from "effect";
@@ -15,8 +15,12 @@ const SeenIds = Schema.NullOr(Schema.mutable(Schema.Array(Schema.String)));
 
 const WEEKS = groupChangelogByWeek(CHANGELOG);
 
-const markSeen = (stored: string[] | null) =>
-  markHighlightsSeen(CHANGELOG, stored);
+const GAME_CLIENT_CHANGES = CHANGELOG.filter((item) =>
+  item.surfaces.includes("game-client"),
+);
+
+const markStoredSeen = (stored: string[] | null) =>
+  markSeen(GAME_CLIENT_CHANGES, stored);
 
 export const useWhatsNew = () => {
   const [seenIds, setSeenIds] = useLocalStorage<string[] | null>(
@@ -25,17 +29,17 @@ export const useWhatsNew = () => {
     SeenIds,
   );
 
-  const unreadIds = getUnreadHighlightIds(CHANGELOG, seenIds);
+  const unreadIds = getUnreadIds(GAME_CLIENT_CHANGES, seenIds);
 
   useEffect(() => {
-    if (seenIds === null) setSeenIds(markSeen);
+    if (seenIds === null) setSeenIds(markStoredSeen);
   }, [seenIds, setSeenIds]);
 
   return {
     weeks: WEEKS,
     unreadIds,
     markAllSeen: () => {
-      if (unreadIds.length > 0) setSeenIds(markSeen);
+      if (unreadIds.length > 0) setSeenIds(markStoredSeen);
     },
   };
 };

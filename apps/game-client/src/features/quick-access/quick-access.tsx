@@ -7,6 +7,7 @@ import { QuickAccessCollapseButton } from "@/features/quick-access/components/qu
 import { QuickAccessCollapsedBar } from "@/features/quick-access/components/quick-access-collapsed-bar";
 import { GuildListPopover } from "@/features/quick-access/components/guild-list-popover";
 import { SetupChecklistButton } from "@/features/setup-checklist/components/setup-checklist-button";
+import { WhatsNewQuickAccessButton } from "@/features/settings/components/whats-new/whats-new-quick-access-button";
 import { QuickAccessWindowButton } from "@/features/quick-access/components/quick-access-window-button";
 import { useQuickAccessItems } from "@/features/quick-access/hooks/use-quick-access-items";
 import { useMobileMode } from "@/hooks/ui/use-mobile-mode";
@@ -68,6 +69,7 @@ export const QuickAccess = () => {
       >
         <div className="ll:flex ll:h-full ll:w-max ll:min-w-full ll:items-center ll:gap-0.5 ll:px-0.5">
           <SetupChecklistButton />
+          <WhatsNewQuickAccessButton />
           {buttons.map((button) => (
             <QuickAccessWindowButton key={button.windowId} {...button} />
           ))}
