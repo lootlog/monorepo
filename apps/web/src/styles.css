@@ -1,2 +1,3 @@
 @import "@lootlog/ui/globals.css";
+@import "@lootlog/ui/sparkle-burst.css";
 @source "../../../packages/battle-ui/src/**/*.{ts,tsx}";
