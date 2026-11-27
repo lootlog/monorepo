@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { releaseWindowFocus } from "@/components/draggable-window/use-draggable-window-frame";
+import { useMobileMode } from "@/hooks/ui/use-mobile-mode";
 import { useWindowPresence } from "@/hooks/ui/use-window-presence";
 import { useWindowsStore } from "@/store/windows.store";
 
@@ -30,6 +31,7 @@ export const CommandOverlay: FC<CommandOverlayProps> = ({
   onDismiss,
   onEscape,
 }) => {
+  const { isMobile } = useMobileMode();
   const { onAnimationEnd, phase, shouldRender } = useWindowPresence(open);
   const overlayRef = useRef<HTMLDivElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
@@ -108,8 +110,16 @@ export const CommandOverlay: FC<CommandOverlayProps> = ({
       aria-label={label}
       aria-hidden={phase === "exit" ? true : undefined}
       data-ll-command-overlay=""
-      className="ll:pointer-events-auto ll:absolute ll:top-[12vh] ll:left-1/2 ll:z-[450] ll:w-[min(440px,calc(100vw-32px))] ll:-translate-x-1/2"
-      style={{ pointerEvents: phase === "exit" ? "none" : undefined }}
+      className={cn(
+        "ll:pointer-events-auto ll:z-[450] ll:left-1/2 ll:-translate-x-1/2",
+        isMobile
+          ? "ll:fixed ll:w-[min(440px,calc(100dvw-16px))]"
+          : "ll:absolute ll:top-[12vh] ll:w-[min(440px,calc(100vw-32px))]",
+      )}
+      style={{
+        top: isMobile ? "max(8px, env(safe-area-inset-top, 0px))" : undefined,
+        pointerEvents: phase === "exit" ? "none" : undefined,
+      }}
       onKeyDown={handleKeyDown}
       onWheel={(event) => event.stopPropagation()}
     >

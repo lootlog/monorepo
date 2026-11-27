@@ -2,12 +2,13 @@ import { DraggableWindow } from "@/components/draggable-window/draggable-window"
 import { OnlinePlayersActions } from "@/features/online-players/components/online-players-actions";
 import { OnlinePlayersList } from "@/features/online-players/components/online-players-list";
 import { useOnlinePlayersStore } from "@/features/online-players/online-players.store";
+import { useWindowOpen } from "@/hooks/ui/use-window-open";
 import { useWindowsStore } from "@/store/windows.store";
 import { useTranslation } from "react-i18next";
 
 export const OnlinePlayers = () => {
   const { t } = useTranslation("onlinePlayers");
-  const open = useWindowsStore((state) => state["online-players"].open);
+  const open = useWindowOpen("online-players");
   const setOpen = useWindowsStore((state) => state.setOpen);
   const viewMode = useOnlinePlayersStore((state) => state.viewMode);
   const filtersVisible = useOnlinePlayersStore((state) => state.filtersVisible);

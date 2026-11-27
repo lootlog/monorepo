@@ -472,6 +472,10 @@ export const SETTINGS_CATALOG = {
   },
 } as const satisfies Record<SettingsDomain, SettingsDomainDefinition>;
 
+export const MOBILE_UI_MODES = ["auto", "on", "off"] as const;
+
+export type MobileUiMode = (typeof MOBILE_UI_MODES)[number];
+
 export const DEVICE_SETTINGS_CATALOG = {
   animationEffectsEnabled: {
     defaultValue: true,
@@ -482,6 +486,11 @@ export const DEVICE_SETTINGS_CATALOG = {
     defaultValue: "auto",
     persistence: "DEVICE",
     isValid: isOneOf(MAP_AURA_MODES),
+  },
+  mobileUiMode: {
+    defaultValue: "auto",
+    persistence: "DEVICE",
+    isValid: isOneOf(MOBILE_UI_MODES),
   },
   masterVolume: {
     defaultValue: 0.5,

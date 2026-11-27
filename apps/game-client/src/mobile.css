@@ -1,0 +1,127 @@
+@keyframes ll-mobile-sheet-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 24px, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes ll-mobile-sheet-exit {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translate3d(0, 20px, 0);
+  }
+}
+
+@keyframes ll-mobile-drawer-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(24px, 0, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes ll-mobile-drawer-exit {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translate3d(20px, 0, 0);
+  }
+}
+
+#lootlog-root [data-ll-mobile-panel] > .ll-mobile-sheet-preparing {
+  opacity: 0;
+  transform: translate3d(0, 24px, 0);
+  will-change: opacity, transform;
+}
+
+#lootlog-root [data-ll-mobile-panel] > .ll-mobile-sheet-enter {
+  animation: ll-mobile-sheet-enter var(--ll-transition-duration-medium)
+    var(--ll-ease-enter) both !important;
+  will-change: opacity, transform;
+}
+
+#lootlog-root [data-ll-mobile-panel] > .ll-mobile-sheet-exit {
+  animation: ll-mobile-sheet-exit var(--ll-transition-duration-short)
+    var(--ll-ease-exit) both !important;
+  will-change: opacity, transform;
+}
+
+#lootlog-root [data-ll-mobile-panel] > .ll-mobile-drawer-preparing {
+  opacity: 0;
+  transform: translate3d(24px, 0, 0);
+  will-change: opacity, transform;
+}
+
+#lootlog-root [data-ll-mobile-panel] > .ll-mobile-drawer-enter {
+  animation: ll-mobile-drawer-enter var(--ll-transition-duration-medium)
+    var(--ll-ease-enter) both !important;
+  will-change: opacity, transform;
+}
+
+#lootlog-root [data-ll-mobile-panel] > .ll-mobile-drawer-exit {
+  animation: ll-mobile-drawer-exit var(--ll-transition-duration-short)
+    var(--ll-ease-exit) both !important;
+  will-change: opacity, transform;
+}
+
+#lootlog-root [data-ll-mobile-alert] > .ll-window-preparing,
+#lootlog-root [data-ll-mobile-prompt] > .ll-window-preparing {
+  opacity: 0;
+  transform: translate3d(0, -8px, 0) scale(0.97);
+  will-change: opacity, transform;
+}
+
+#lootlog-root [data-ll-mobile-alert] > .ll-window-enter,
+#lootlog-root [data-ll-mobile-prompt] > .ll-window-enter {
+  animation: ll-window-enter var(--ll-transition-duration-medium)
+    var(--ll-ease-enter) both !important;
+  will-change: opacity, transform;
+}
+
+#lootlog-root [data-ll-mobile-alert] > .ll-window-exit,
+#lootlog-root [data-ll-mobile-prompt] > .ll-window-exit {
+  animation: ll-window-exit var(--ll-transition-duration-short)
+    var(--ll-ease-exit) both !important;
+  will-change: opacity, transform;
+}
+
+/* Mobile touch ergonomics: larger hit targets and 16px text inputs to prevent
+   iOS Safari auto-zooming Margonem when focusing chat or search fields. */
+.ll-mobile [data-slot="button"] {
+  min-height: 36px;
+  min-width: 36px;
+}
+
+.ll-mobile [data-slot="select-trigger"] {
+  min-height: 36px;
+}
+
+.ll-mobile [data-slot="input"] {
+  min-height: 36px;
+  font-size: 16px;
+}
+
+.ll-mobile .ll-action-menu-item {
+  min-height: 40px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  font-size: 13px;
+}

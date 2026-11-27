@@ -206,6 +206,13 @@
       "nearby": "Moja i najbliższe",
       "off": "Wyłączone"
     },
+    "mobileUiModeLabel": "Tryb mobilny",
+    "mobileUiModeDescription": "Dopasowuje okna i przyciski dodatku do ekranu dotykowego na tym urządzeniu.",
+    "mobileUiModes": {
+      "auto": "Automatycznie",
+      "on": "Włączony",
+      "off": "Wyłączony"
+    },
     "statusTitle": "Stan dodatku",
     "accountLabel": "Konto",
     "accountChecking": "Sprawdzanie sesji…",

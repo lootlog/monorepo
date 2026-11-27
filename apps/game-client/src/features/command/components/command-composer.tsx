@@ -1,12 +1,15 @@
 import type { FC } from "react";
+import { SendHorizontal } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
 import { GuildTargetSelect } from "@/components/guild-target-select";
+import { IconButton } from "@/components/ui/icon-button";
 import { Kbd } from "@/components/ui/kbd";
 import { ChatComposeField } from "@/features/chat/components/chat-compose-field";
 import { ChatComposeModeMenu } from "@/features/chat/components/chat-compose-mode-menu";
 import { ChatMentionSuggestions } from "@/features/chat/components/chat-mention-suggestions";
 import { useChatInputController } from "@/features/chat/components/use-chat-input-controller";
+import { useMobileMode } from "@/hooks/ui/use-mobile-mode";
 import { useGuildTargets } from "@/hooks/use-guild-targets";
 import { useChatStore } from "@/store/chat.store";
 import { clearCommandDraft, COMMAND_DRAFT_KEY } from "../command-draft";
@@ -20,6 +23,8 @@ type CommandComposerProps = {
 export const CommandComposer: FC<CommandComposerProps> = ({ onClose }) => {
   const { t } = useTranslation("command");
   const { t: tChat } = useTranslation("chat");
+  const { t: tCommon } = useTranslation("common");
+  const { isMobile } = useMobileMode();
 
   const { commandGuildId, setCommandGuildId } = useChatStore(
     useShallow((state) => ({
@@ -55,6 +60,7 @@ export const CommandComposer: FC<CommandComposerProps> = ({ onClose }) => {
     showMentionSuggestionNoResults,
     selectedMentionIndex,
     handleSuggestionSelect,
+    handleSubmit,
     replaceMessage,
     focusEditorCaret,
     caretIndex,
@@ -78,7 +84,15 @@ export const CommandComposer: FC<CommandComposerProps> = ({ onClose }) => {
           shellClassName="ll:h-full"
           className="ll:self-stretch"
         />
-        {isPending ? null : (
+        {isPending ? null : isMobile ? (
+          <IconButton
+            label={tCommon("actions.send")}
+            disabled={messageValue.trim().length === 0}
+            onClick={() => void handleSubmit()}
+          >
+            <SendHorizontal className="ll:size-4" aria-hidden="true" />
+          </IconButton>
+        ) : (
           <Kbd aria-hidden className="ll:shrink-0">
             Enter
           </Kbd>

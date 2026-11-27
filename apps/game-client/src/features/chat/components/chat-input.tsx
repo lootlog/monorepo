@@ -1,4 +1,8 @@
+import { SendHorizontal } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { IconButton } from "@/components/ui/icon-button";
 import { inputVariantClasses } from "@/components/ui/input";
+import { useMobileMode } from "@/hooks/ui/use-mobile-mode";
 import { ChatQuickActionStrip } from "./chat-quick-action-strip";
 import { ChatComposeField } from "@/features/chat/components/chat-compose-field";
 import { ChatComposeModeMenu } from "@/features/chat/components/chat-compose-mode-menu";
@@ -21,12 +25,15 @@ const CHAT_INPUT_FOCUS_CLASSES = {
 };
 
 export function ChatInput(props: ChatInputProps) {
+  const { t: tCommon } = useTranslation("common");
+  const { isMobile } = useMobileMode();
   const controller = useChatInputController(props);
 
   const {
     replyDraft,
     clearReplyDraft,
     caretIndex,
+    messageValue,
     isPending,
     isFetchingMemberNames,
     isFetchingRoleNames,
@@ -37,6 +44,7 @@ export function ChatInput(props: ChatInputProps) {
     selectedMentionIndex,
     focusEditorCaret,
     handleSuggestionSelect,
+    handleSubmit,
     variant,
     selectedGuildId,
   } = controller;
@@ -63,6 +71,15 @@ export function ChatInput(props: ChatInputProps) {
             "ll:bg-black/92 ll:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]",
         )}
       />
+      {isMobile ? (
+        <IconButton
+          label={tCommon("actions.send")}
+          disabled={isPending || messageValue.trim().length === 0}
+          onClick={() => void handleSubmit()}
+        >
+          <SendHorizontal className="ll:size-4" aria-hidden="true" />
+        </IconButton>
+      ) : null}
       <ChatQuickActionStrip guildId={selectedGuildId} />
     </>
   );

@@ -1,12 +1,13 @@
 import { useTranslation } from "react-i18next";
 import { DraggableWindow } from "@/components/draggable-window/draggable-window";
+import { useWindowOpen } from "@/hooks/ui/use-window-open";
 import { useWindowsStore } from "@/store/windows.store";
 import { GlobalChatContent } from "./components/global-chat-content";
 import { GlobalChatOnline } from "./components/global-chat-online";
 
 export const GlobalChat = () => {
   const { t } = useTranslation("globalChat");
-  const open = useWindowsStore((state) => state["global-chat"].open);
+  const open = useWindowOpen("global-chat");
   const setOpen = useWindowsStore((state) => state.setOpen);
 
   return (

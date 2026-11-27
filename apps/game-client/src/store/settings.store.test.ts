@@ -30,6 +30,7 @@ describe("useSettingsStore", () => {
     expect(useSettingsStore.getState()).toMatchObject({
       animationEffectsEnabled: false,
       mapAuras: "nearby",
+      mobileUiMode: "auto",
       masterVolume: 0.3,
       soundsMuted: false,
       lootDebugLoggingEnabled: false,
@@ -121,6 +122,16 @@ describe("useSettingsStore", () => {
     );
 
     expect(storedSettings.state?.animationEffectsEnabled).toBe(false);
+  });
+
+  it("persists mobile UI mode in settings storage", () => {
+    useSettingsStore.getState().setMobileUiMode("on");
+
+    const storedSettings = JSON.parse(
+      localStorage.getItem(SETTINGS_STORAGE_KEY) ?? "{}",
+    );
+
+    expect(storedSettings.state?.mobileUiMode).toBe("on");
   });
 
   it("uses the first accessible guild when the current selection is missing", () => {

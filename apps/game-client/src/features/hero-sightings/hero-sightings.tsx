@@ -2,8 +2,8 @@ import { HeroSightingsWindow } from "@/features/hero-sightings/hero-sightings-wi
 import { useHeroSightingsSocket } from "@/features/hero-sightings/hooks/use-hero-sightings-socket";
 import { useTimersWorld } from "@/features/timers/hooks/use-timers-world";
 import { useHeroSightings } from "@/hooks/api/use-hero-sightings";
+import { useWindowOpen } from "@/hooks/ui/use-window-open";
 import { useWindowPresence } from "@/hooks/ui/use-window-presence";
-import { useWindowsStore } from "@/store/windows.store";
 
 export const HeroSightings = () => {
   useHeroSightingsSocket();
@@ -11,7 +11,7 @@ export const HeroSightings = () => {
   const { world } = useTimersWorld();
   useHeroSightings(world);
 
-  const open = useWindowsStore((state) => state["hero-sightings"].open);
+  const open = useWindowOpen("hero-sightings");
   const { shouldRender } = useWindowPresence(open);
 
   return shouldRender ? <HeroSightingsWindow isOpen={open} /> : null;

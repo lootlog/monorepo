@@ -20,6 +20,7 @@ import {
   type ItemRarityEnum as ItemRarity,
 } from "@lootlog/schema/item-rarity";
 import { MAP_AURA_MODES } from "@lootlog/schema/character-aura";
+import { MOBILE_UI_MODES } from "@lootlog/domain/settings-documents";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -48,6 +49,8 @@ export const GeneralSettingsTab: FC = () => {
 
   const mapAuras = useSettingsStore((state) => state.mapAuras);
   const setMapAuras = useSettingsStore((state) => state.setMapAuras);
+  const mobileUiMode = useSettingsStore((state) => state.mobileUiMode);
+  const setMobileUiMode = useSettingsStore((state) => state.setMobileUiMode);
   const lootSplit = useAccountEnabledFlag("lootSplit");
   const { t } = useTranslation();
 
@@ -107,6 +110,35 @@ export const GeneralSettingsTab: FC = () => {
               {MAP_AURA_MODES.map((mode) => (
                 <SelectItem key={mode} value={mode}>
                   {t(`settings.general.mapAurasModes.${mode}`)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </SettingsRow>
+        <SettingsRow
+          controlId="mobile-ui-mode"
+          label={t("settings.general.mobileUiModeLabel")}
+          description={t("settings.general.mobileUiModeDescription")}
+        >
+          <Select
+            value={mobileUiMode}
+            onValueChange={(value) =>
+              setMobileUiMode(
+                MOBILE_UI_MODES.find((mode) => mode === value) ?? "auto",
+              )
+            }
+          >
+            <SelectTrigger
+              aria-label={t("settings.general.mobileUiModeLabel")}
+              size="sm"
+              className="ll:w-44"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {MOBILE_UI_MODES.map((mode) => (
+                <SelectItem key={mode} value={mode}>
+                  {t(`settings.general.mobileUiModes.${mode}`)}
                 </SelectItem>
               ))}
             </SelectContent>
