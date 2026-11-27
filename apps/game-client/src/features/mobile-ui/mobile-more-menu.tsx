@@ -21,6 +21,7 @@ import { ConnectionStatus } from "@/features/quick-access/components/connection-
 import { GuildListPopover } from "@/features/quick-access/components/guild-list-popover";
 import { useQuickAccessItems } from "@/features/quick-access/hooks/use-quick-access-items";
 import { SetupChecklistButton } from "@/features/setup-checklist/components/setup-checklist-button";
+import { WhatsNewQuickAccessButton } from "@/features/settings/components/whats-new/whats-new-quick-access-button";
 import { useSignInRequired } from "@/hooks/auth/use-login-state";
 import { useCountBump } from "@/hooks/ui/use-count-bump";
 import type { MobilePanelWindowId } from "@/lib/mobile-ui/mobile-windows";
@@ -147,6 +148,7 @@ export const MobileMoreMenu = ({
           <div className="ll:flex ll:items-center ll:gap-0.5">
             <ConnectionStatus />
             <SetupChecklistButton />
+            <WhatsNewQuickAccessButton />
           </div>
           <GuildListPopover />
         </div>

@@ -129,18 +129,18 @@ export const groupChangelogByWeek = (
   return [...weeks.values()];
 };
 
-const getHighlightIds = (items: readonly ChangelogItem[]) =>
-  items.flatMap((item) => (item.highlight ? [item.id] : []));
+const getAnnouncedIds = (items: readonly ChangelogItem[]) =>
+  items.flatMap((item) => (item.type === "fix" ? [] : [item.id]));
 
-export const getUnreadHighlightIds = (
+export const getUnreadIds = (
   items: readonly ChangelogItem[],
   seenIds: readonly string[] | null,
 ) =>
   seenIds === null
     ? []
-    : getHighlightIds(items).filter((id) => !seenIds.includes(id));
+    : getAnnouncedIds(items).filter((id) => !seenIds.includes(id));
 
-export const markHighlightsSeen = (
+export const markSeen = (
   items: readonly ChangelogItem[],
   seenIds: readonly string[] | null,
-) => [...new Set([...(seenIds ?? []), ...getHighlightIds(items)])];
+) => [...new Set([...(seenIds ?? []), ...getAnnouncedIds(items)])];

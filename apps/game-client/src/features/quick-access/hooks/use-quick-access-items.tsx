@@ -93,16 +93,6 @@ export const useQuickAccessItems = () => {
       label: t("buttons.settings"),
       icon: <Settings aria-hidden="true" className={ICON_CLASS_NAME} />,
       hotkeyAction: "toggle-settings",
-      badge:
-        whatsNewUnread > 0
-          ? {
-              count: whatsNewUnread,
-              label: t("settings.whatsNew.badge", {
-                ns: "translation",
-                count: whatsNewUnread,
-              }),
-            }
-          : undefined,
     },
   ];
 
