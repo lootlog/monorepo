@@ -60,7 +60,7 @@ concurrent writers must not overwrite each other.
 - **`settings-documents.ts`** (`packages/domain/src/settings-documents.ts`): validators check document shape only, because legacy documents were backfilled from lenient storage; leaf normalization stays with consuming features.
 - **`getNumber`** (`apps/game-client/src/lib/api/generated-helpers.ts`) and **`normalizeSoundCategoryConfig`** (`apps/game-client/src/lib/settings-persistence/use-sound-settings.ts`): keep coercing numeric strings and dropping non-object entries, because legacy settings still carry them.
 - **`settingsDocumentsSchema`** (`apps/game-client/src/lib/settings-persistence/settings-documents.ts`): the client caches documents in wire form, so it validates against `Schema.toEncoded` of the shared contract.
-- **`markHighlightsSeen`** (`packages/changelog/src/changelog.ts`): keeps seen ids it does not recognise, so an older build cannot mark them unread.
+- **`markSeen`** (`packages/changelog/src/changelog.ts`): keeps seen ids it does not recognise, so an older build cannot mark them unread.
 - **`showAllGuilds`** (`packages/domain/src/guild-preferences.ts`): keeps hidden ids of Lootlogs the User lost access to, so regaining access restores the hide choice.
 - **`activityFeed.excludedGuildIds`** (`packages/domain/src/settings-documents.ts`): stores exclusions, so new Lootlogs and NPC groups appear by default.
 

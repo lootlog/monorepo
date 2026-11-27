@@ -34,7 +34,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           evt.stopPropagation();
         }}
         className={cn(
-          "ll:placeholder:text-muted-foreground ll:[&::selection]:bg-primary ll:[&::selection]:text-primary-foreground ll:flex ll:w-full ll:min-w-0 ll:bg-transparent ll:pb-0 ll:text-[13px] ll:text-foreground ll:transition-[color,box-shadow] ll:outline-none ll:disabled:pointer-events-none ll:disabled:cursor-not-allowed ll:disabled:opacity-50",
+          "ll:placeholder:text-muted-foreground ll:[&::selection]:bg-primary ll:[&::selection]:text-primary-foreground ll:flex ll:w-full ll:min-w-0 ll:bg-transparent ll:pb-0 ll:text-[13px] ll:mobile:min-h-10 ll:mobile:text-[16px] ll:text-foreground ll:transition-[color,box-shadow] ll:outline-none ll:disabled:pointer-events-none ll:disabled:cursor-not-allowed ll:disabled:opacity-50",
           inputSizeClasses[size],
           inputVariantClasses[variant],
           variant !== "borderless" &&

@@ -42,7 +42,7 @@ export const TimersNpcTypeFilter: FC<TimersNpcTypeFilterProps> = ({
           aria-expanded={open}
           className={cn(
             toolbarStripLightDividerClassName,
-            "ll-custom-cursor-pointer ll:flex ll:h-full ll:shrink-0 ll:items-center ll:gap-1 ll:bg-transparent ll:px-2 ll:pt-px ll:text-[11px] ll:text-foreground/90 ll:transition-colors ll:hover:bg-white/5 ll:focus-visible:outline-2 ll:focus-visible:-outline-offset-2 ll:focus-visible:outline-ring",
+            "ll-custom-cursor-pointer ll:flex ll:h-full ll:shrink-0 ll:items-center ll:gap-1 ll:bg-transparent ll:px-2 ll:pt-px ll:text-[11px] ll:mobile:px-3 ll:mobile:text-[13px] ll:text-foreground/90 ll:transition-colors ll:hover:bg-white/5 ll:focus-visible:outline-2 ll:focus-visible:-outline-offset-2 ll:focus-visible:outline-ring",
             open && "ll:bg-white/5",
           )}
         >

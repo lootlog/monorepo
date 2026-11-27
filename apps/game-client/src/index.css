@@ -4,6 +4,7 @@
 @import "shadcn/tailwind.css";
 @import "@lootlog/ui/scroll-fade.css";
 @import "./motion.css";
+@import "./mobile.css";
 @source "src/**/*.{ts,tsx}";
 
 /*
@@ -14,6 +15,7 @@
  */
 @custom-variant data-active (&:where([data-active]:not([data-active="false"])));
 @custom-variant data-disabled (&:where([data-disabled]:not([data-disabled="false"])));
+@custom-variant mobile (.ll-mobile &);
 
 /*
  * Scoped stand-in for the Tailwind preflight, which cannot be loaded because

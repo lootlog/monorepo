@@ -1,6 +1,7 @@
 import { Tooltip as BaseTooltip } from "@base-ui/react/tooltip";
 import * as React from "react";
 import { cn } from "cn";
+import { useMobileMode } from "@/hooks/ui/use-mobile-mode";
 import type { CursorTooltipOffsets } from "./cursor-tooltip-placement";
 import {
   ensureCursorTracking,
@@ -29,15 +30,18 @@ function TooltipProvider({
 }
 
 function Tooltip<Payload>({
+  disabled,
   onOpenChange,
   ...props
 }: BaseTooltip.Root.Props<Payload>) {
   const hasProvider = React.useContext(TooltipProviderContext);
+  const { isMobile, coarsePointer } = useMobileMode();
   const [followsCursor, setFollowsCursor] = React.useState(false);
 
   const tooltip = (
     <TooltipFollowsCursorContext.Provider value={followsCursor}>
       <BaseTooltip.Root
+        disabled={disabled || isMobile || coarsePointer}
         disableHoverablePopup
         onOpenChange={(open, details) => {
           if (open) setFollowsCursor(details.reason === "trigger-hover");

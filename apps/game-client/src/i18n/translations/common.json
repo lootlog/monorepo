@@ -21,7 +21,8 @@
     "mute": "Wycisz",
     "unmute": "Włącz dźwięk",
     "retry": "Spróbuj ponownie",
-    "clearSearch": "Wyczyść wyszukiwanie"
+    "clearSearch": "Wyczyść wyszukiwanie",
+    "send": "Wyślij"
   },
   "auth": {
     "windowTitle": "Logowanie do Lootloga",
@@ -73,7 +74,9 @@
     "opacityLevel": "Krycie tła: {{level}}/{{max}}. Kliknij, aby zmienić",
     "unlockWindow": "Odblokuj okno",
     "lockWindow": "Zablokuj okno",
-    "closeWindow": "Zamknij okno"
+    "closeWindow": "Zamknij okno",
+    "expandHeight": "Rozwiń na pełny ekran",
+    "collapseHeight": "Zmniejsz wysokość panelu"
   },
   "guildSwitcher": {
     "allServers": "Wszystkie Lootlogi",

@@ -206,6 +206,13 @@
       "nearby": "Moja i najbliższe",
       "off": "Wyłączone"
     },
+    "mobileUiModeLabel": "Tryb mobilny",
+    "mobileUiModeDescription": "Dopasowuje okna i przyciski dodatku do ekranu dotykowego na tym urządzeniu.",
+    "mobileUiModes": {
+      "auto": "Automatycznie",
+      "on": "Włączony",
+      "off": "Wyłączony"
+    },
     "statusTitle": "Stan dodatku",
     "accountLabel": "Konto",
     "accountChecking": "Sprawdzanie sesji…",
@@ -235,6 +242,11 @@
     "unread": "Nieprzeczytane",
     "howItWorks": "Jak to działa",
     "allChanges": "Wszystkie zmiany",
+    "unreadTitle": "Nowości w Lootlogu",
+    "moreChanges_one": "Jeszcze {{count}} zmiana",
+    "moreChanges_few": "Jeszcze {{count}} zmiany",
+    "moreChanges_many": "Jeszcze {{count}} zmian",
+    "moreChanges_other": "Jeszcze {{count}} zmian",
     "badge_one": "{{count}} nowość w Lootlogu",
     "badge_few": "{{count}} nowości w Lootlogu",
     "badge_many": "{{count}} nowości w Lootlogu",

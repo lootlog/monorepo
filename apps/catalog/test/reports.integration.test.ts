@@ -12,9 +12,9 @@ import { migrateCatalogDatabase } from "#src/database/migrate";
 import {
   DAILY_REPORT_LIMIT,
   makeReportsModule,
-  type ReportCaller,
   type ReportsModule,
 } from "#src/reports/reports.service";
+import type { CatalogCaller } from "#src/shared/catalog-caller";
 
 let postgres: StartedPostgreSqlContainer;
 
@@ -22,14 +22,14 @@ let pool: pg.Pool;
 
 let runtime: ManagedRuntime.ManagedRuntime<CatalogDatabase, unknown>;
 
-const moderator: ReportCaller = {
+const moderator: CatalogCaller = {
   userId: "moderator",
   roles: ["wiki-moderator"],
 };
 
-const alice: ReportCaller = { userId: "alice", roles: [] };
+const alice: CatalogCaller = { userId: "alice", roles: [] };
 
-const bob: ReportCaller = { userId: "bob", roles: [] };
+const bob: CatalogCaller = { userId: "bob", roles: [] };
 
 beforeAll(async () => {
   postgres = await new PostgreSqlContainer("postgres:18.7-alpine")
@@ -204,7 +204,7 @@ test("moderators alone see the queue, most reported page first, under its curren
   ).toBe("FORBIDDEN");
 
   for (const role of ["wiki-moderator", "admin"] as const) {
-    const caller: ReportCaller = { ...alice, roles: [role] };
+    const caller: CatalogCaller = { ...alice, roles: [role] };
 
     expect((await reports((module) => module.list(caller, {}))).total).toBe(2);
     expect(

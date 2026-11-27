@@ -3,6 +3,10 @@ import { Effect, Option, Schema } from "effect";
 import type { BetterAuthOptions } from "better-auth";
 import { APIError } from "better-auth/api";
 import { refreshAccessToken } from "better-auth/oauth2";
+import {
+  createSingleFlightRefresh,
+  type RefreshCoordination,
+} from "./discord-token-refresh.js";
 
 const DISCORD_TOKEN_ENDPOINT = "https://discord.com/api/oauth2/token";
 
@@ -40,6 +44,7 @@ interface DiscordAuthOptionsInput {
   clientSecret: string;
   redirectURI: string;
   scopes: string[];
+  refreshCoordination?: RefreshCoordination;
 }
 
 const isDiscordOAuthCallback = (
@@ -54,13 +59,67 @@ const isDiscordOAuthCallback = (
   >[1],
 ) => context?.path === "/callback/:id" && context.params?.id === "discord";
 
+const DIFFERENT_DISCORD_ACCOUNT = "DIFFERENT_DISCORD_ACCOUNT";
+
+type ValidateUserInfoContext = Parameters<
+  NonNullable<NonNullable<BetterAuthOptions["user"]>["validateUserInfo"]>
+>[1];
+
+const isKnownDiscordIdentity = async (
+  { context }: ValidateUserInfoContext,
+  {
+    userId,
+    email,
+    discordAccountId,
+  }: {
+    userId: string;
+    email: string | undefined;
+    discordAccountId: string;
+  },
+) => {
+  const [storedUser, accounts] = await Promise.all([
+    context.internalAdapter.findUserById(userId),
+    context.internalAdapter.findAccounts(userId),
+  ]);
+
+  return (
+    accounts.some(
+      (account) =>
+        account.providerId === "discord" &&
+        account.accountId === discordAccountId,
+    ) ||
+    (storedUser !== null &&
+      email !== undefined &&
+      storedUser.email.toLowerCase() === email.toLowerCase())
+  );
+};
+
 export const createDiscordAuthOptions = ({
   clientId,
   clientSecret,
   redirectURI,
   scopes,
-}: DiscordAuthOptionsInput) =>
-  ({
+  refreshCoordination,
+}: DiscordAuthOptionsInput) => {
+  const refreshFromDiscord = (refreshToken: string) =>
+    refreshAccessToken({
+      refreshToken,
+      options: { clientId, clientSecret },
+      tokenEndpoint: DISCORD_TOKEN_ENDPOINT,
+    }).catch((cause: unknown) => {
+      logRefreshFailure(cause);
+      throw cause;
+    });
+
+  return {
+    account: {
+      accountLinking: {
+        enabled: true,
+        disableImplicitLinking: false,
+        allowDifferentEmails: true,
+        updateUserInfoOnLink: true,
+      },
+    },
     user: {
       additionalFields: {
         discordId: {
@@ -72,7 +131,7 @@ export const createDiscordAuthOptions = ({
       deleteUser: {
         enabled: true,
       },
-      validateUserInfo: ({ source, user }) => {
+      validateUserInfo: async ({ source, user }, context) => {
         const providerProfileId = source.oauth?.profile?.id;
 
         if (
@@ -86,6 +145,33 @@ export const createDiscordAuthOptions = ({
             errorDescription: "Discord identity could not be verified",
           };
         }
+
+        if (source.action !== "link-account") return;
+
+        if (
+          user.id !== undefined &&
+          (await isKnownDiscordIdentity(context, {
+            userId: user.id,
+            email: user.email,
+            discordAccountId: providerProfileId,
+          }))
+        )
+          return;
+
+        runLogEffect(
+          Effect.logWarning("Discord account does not match the user").pipe(
+            Effect.annotateLogs({
+              context: "BetterAuth",
+              userId: user.id ?? "unknown",
+            }),
+          ),
+        );
+
+        return {
+          error: DIFFERENT_DISCORD_ACCOUNT,
+          errorDescription:
+            "The Discord account belongs to a different identity",
+        };
       },
     },
     databaseHooks: {
@@ -113,16 +199,15 @@ export const createDiscordAuthOptions = ({
         clientSecret,
         redirectURI,
         prompt: "consent",
+        disableIdTokenSignIn: true,
         scope: scopes,
-        refreshAccessToken: (refreshToken) =>
-          refreshAccessToken({
-            refreshToken,
-            options: { clientId, clientSecret },
-            tokenEndpoint: DISCORD_TOKEN_ENDPOINT,
-          }).catch((cause: unknown) => {
-            logRefreshFailure(cause);
-            throw cause;
-          }),
+        refreshAccessToken:
+          refreshCoordination === undefined
+            ? refreshFromDiscord
+            : createSingleFlightRefresh(
+                refreshCoordination,
+                refreshFromDiscord,
+              ),
         overrideUserInfoOnSignIn: true,
         mapProfileToUser: (profile) => ({
           firstName: profile.given_name,
@@ -131,7 +216,8 @@ export const createDiscordAuthOptions = ({
         }),
       },
     },
-  }) satisfies Pick<
+  } satisfies Pick<
     BetterAuthOptions,
-    "databaseHooks" | "socialProviders" | "user"
+    "account" | "databaseHooks" | "socialProviders" | "user"
   >;
+};

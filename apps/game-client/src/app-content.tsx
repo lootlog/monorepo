@@ -1,6 +1,7 @@
 import { useChatQuickActions } from "@/features/chat/hooks/use-chat-quick-actions";
 import { AnimationEffectsRootClass } from "@/components/animation-effects-root-class";
 import { OverlayBootMarks } from "@/components/overlay-boot-marks";
+import { MobileUiShell } from "@/features/mobile-ui/mobile-ui-shell";
 import { useDeferredValue } from "react";
 import { BackendPreferencesWarning } from "@/features/backend-preferences-warning/backend-preferences-warning";
 import { CatchingWhitelistWarning } from "@/features/catching-whitelist-warning/catching-whitelist-warning";
@@ -79,7 +80,7 @@ export const AppContent = () => {
   const overlayVisible = useDeferredValue(gameInitialized);
 
   return overlayVisible ? (
-    <>
+    <MobileUiShell>
       <OverlayBootMarks />
       <AnimationEffectsRootClass />
       <Timers />
@@ -102,6 +103,6 @@ export const AppContent = () => {
       <BattlePingWindow />
       <LootSplitWindow />
       <WhoIsHereAirTags />
-    </>
+    </MobileUiShell>
   ) : null;
 };

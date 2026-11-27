@@ -191,6 +191,7 @@
         "@effect/sql-pg": "catalog:",
         "@lootlog/database": "workspace:*",
         "@lootlog/domain": "workspace:*",
+        "@lootlog/game-facts": "workspace:*",
         "@lootlog/instrumentation": "workspace:*",
         "@lootlog/meilisearch": "workspace:*",
         "@lootlog/messaging": "workspace:*",
@@ -534,6 +535,7 @@
         "@lootlog/battle-ui": "workspace:*",
         "@lootlog/client": "workspace:*",
         "@lootlog/domain": "workspace:*",
+        "@lootlog/game-facts": "workspace:*",
         "@lootlog/protocol": "workspace:*",
         "@lootlog/schema": "workspace:*",
         "@lootlog/ui": "workspace:*",
@@ -724,6 +726,21 @@
         "@types/bun": "catalog:",
         "@types/node": "catalog:",
         "tsdown": "^0.23.1",
+        "typescript": "catalog:",
+      },
+    },
+    "packages/game-facts": {
+      "name": "@lootlog/game-facts",
+      "version": "0.0.0",
+      "dependencies": {
+        "@lootlog/domain": "workspace:*",
+        "@lootlog/schema": "workspace:*",
+        "effect": "catalog:",
+      },
+      "devDependencies": {
+        "@effect/tsgo": "0.67.3",
+        "@lootlog/typescript-config": "workspace:*",
+        "@types/bun": "catalog:",
         "typescript": "catalog:",
       },
     },
@@ -1586,6 +1603,8 @@
     "@lootlog/game-client": ["@lootlog/game-client@workspace:apps/game-client"],
 
     "@lootlog/game-client-api": ["@lootlog/game-client-api@workspace:packages/game-client-api"],
+
+    "@lootlog/game-facts": ["@lootlog/game-facts@workspace:packages/game-facts"],
 
     "@lootlog/gateway": ["@lootlog/gateway@workspace:apps/gateway"],
 

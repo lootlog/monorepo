@@ -27,6 +27,7 @@
     "@effect/sql-pg": "catalog:",
     "@lootlog/database": "workspace:*",
     "@lootlog/domain": "workspace:*",
+    "@lootlog/game-facts": "workspace:*",
     "@lootlog/instrumentation": "workspace:*",
     "@lootlog/meilisearch": "workspace:*",
     "@lootlog/messaging": "workspace:*",

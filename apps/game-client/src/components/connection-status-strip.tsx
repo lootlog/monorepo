@@ -137,7 +137,7 @@ export const ConnectionStatusStrip: FC<ConnectionStatusStripProps> = ({
       {mounted && shownNotice ? (
         <div
           className={cn(
-            "ll:-mt-px ll:h-7 ll:shrink-0 ll:overflow-hidden",
+            "ll:-mt-px ll:h-7 ll:shrink-0 ll:overflow-hidden ll:mobile:h-10",
             leaving ? "ll-status-strip-exit" : "ll-status-strip-enter",
           )}
         >

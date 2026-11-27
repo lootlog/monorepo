@@ -14,7 +14,6 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@lootlog/ui/components/toggle-group";
-import { PortalPageHeader } from "@lootlog/ui/components/portal-page-header";
 import { ReportedSubjectCard } from "@/components/reports/reported-subject-card";
 import { useSignedInCatalogRequest } from "@/hooks/use-signed-in-catalog-request";
 import { t } from "@/i18n/messages";
@@ -60,11 +59,10 @@ export function ModerationQueue() {
   const lastShown = Math.min(offset + PAGE_SIZE, total);
 
   return (
-    <div className="flex flex-col gap-6 py-6">
-      <PortalPageHeader
-        title={t("moderation.title")}
-        description={t("moderation.description")}
-      />
+    <div className="flex flex-col gap-6">
+      <p className="text-sm text-muted-foreground">
+        {t("moderation.description")}
+      </p>
 
       <ToggleGroup
         aria-label={t("moderation.statusLabel")}

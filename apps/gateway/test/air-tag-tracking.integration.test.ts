@@ -415,4 +415,60 @@ describe("realtime Dragonfly integration: air tag tracking", () => {
     await Bun.sleep(AIR_TAG_REPORTER_LEASE_MS + 100);
     expect(await report(walker, sighting)).toEqual(reported);
   }, 30_000);
+
+  test("a verified observer reports an air-tag target an unverified one holds, so map threats stay fresh", async () => {
+    await using airTags = await startAirTagInstances();
+    const { first, second, sourceAirTags, recipientAirTags } = airTags;
+    const unverified = makeSocket("unverified");
+    const verified = makeSocket("verified");
+    unverified.socket.data.confidence = "reported";
+
+    for (const observer of [unverified, verified]) {
+      moveAirTagSocket(observer.socket, { mapId: 11, map: "Tuzmer" });
+      first.hub.register(observer.socket);
+      await Effect.runPromise(
+        sourceAirTags.updateSubscription(observer.socket, {
+          requestId: `${observer.socket.data.connectionId}-subscription`,
+          enabled: true,
+          expectedMapId: 11,
+        }),
+      );
+    }
+
+    const watcher = threatWatcher("threat-watcher");
+    second.hub.register(watcher.socket);
+
+    const report = (observer: ReturnType<typeof makeSocket>) =>
+      Effect.runPromise(
+        sourceAirTags.publishObservations(observer.socket, {
+          expectedMapId: 11,
+          observations: [clanEnemy],
+        }),
+      );
+
+    const reported = {
+      status: "accepted",
+      acceptedScopes: 1,
+      acceptedTargets: 1,
+    } as const;
+
+    expect(await report(unverified)).toEqual(reported);
+    expect(await report(verified)).toEqual(reported);
+    expect(await report(unverified)).toMatchObject({
+      standbyTargetIds: [clanEnemy.targetId],
+    });
+    expect(await report(verified)).toEqual(reported);
+
+    await expect(
+      Effect.runPromise(
+        recipientAirTags.fetchMapThreats(
+          watcher.socket,
+          "organization-1",
+          "classic",
+        ),
+      ),
+    ).resolves.toMatchObject({
+      threats: [{ mapId: 11, enemies: [{ targetId: clanEnemy.targetId }] }],
+    });
+  }, 30_000);
 });
