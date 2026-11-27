@@ -57,7 +57,10 @@ export class BingoGroup extends HttpApiGroup.make("bingo").add(
       params: BingoBoardPath,
       payload: UpdateBingoBoardRequest,
       success: BingoBoardSummaryResponse,
-      error: HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(400)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+      ],
     },
   )
     .middleware(BearerSecurityMiddleware)
@@ -82,7 +85,10 @@ export class BingoGroup extends HttpApiGroup.make("bingo").add(
       params: BingoBoardPath,
       payload: ReplaceBingoTilesRequest,
       success: BingoBoardDetailResponse,
-      error: HttpErrorResponse.pipe(HttpApiSchema.status(400)),
+      error: [
+        HttpErrorResponse.pipe(HttpApiSchema.status(400)),
+        HttpErrorResponse.pipe(HttpApiSchema.status(404)),
+      ],
     },
   )
     .middleware(BearerSecurityMiddleware)

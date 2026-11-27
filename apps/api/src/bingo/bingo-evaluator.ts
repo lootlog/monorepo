@@ -4,19 +4,20 @@ import {
   matchesHeroSightingCondition,
   matchesKillCondition,
 } from "@lootlog/domain/bingo";
+import type { BattleRecordedV1 } from "@lootlog/protocol/rabbit/events";
 import {
   BingoBoardStatus,
   BingoTileConditionKind,
-  type BattleRecordedV1,
-  type BingoMilestoneNotificationEvent,
-  type BingoRealtimeUpdate,
 } from "@lootlog/schema/bingo";
-import type { NpcTypeEnum } from "@lootlog/schema/npc-type";
+import {
+  NpcTypeEnum,
+  type NpcTypeEnum as NpcType,
+} from "@lootlog/schema/npc-type";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
   bingoBoardTable,
+  bingoKillOutboxTable,
   bingoTileProgressTable,
-  bingoTileTable,
 } from "#src/database/drizzle/bingo.schema";
 import {
   itemSnapshotTable,
@@ -24,18 +25,23 @@ import {
   lootNpcTable,
   lootPlayerTable,
   lootSubmissionTable,
+  lootTable,
   npcSnapshotTable,
   organizationLootRecordTable,
   playerSnapshotTable,
 } from "#src/database/drizzle/loot.schema";
 import { memberTable } from "#src/database/drizzle/organization.schema";
 import { userMargonemAccountTable } from "#src/database/drizzle/user.schema";
+import type { KillInput, KillWrite } from "#src/kills/kill-creation.writes";
 import { and, eq, inArray, isNull, or } from "drizzle-orm";
-import { Clock, Effect } from "effect";
-import { groupBy } from "es-toolkit";
+import { Effect } from "effect";
 import {
   applyBingoTileProgress,
+  lockBingoBoardForProgress,
+  type ApplyTileProgressOutcome,
   type BingoBoardRow,
+  type BingoTileRow,
+  type BingoTransaction,
 } from "./bingo-progress-writer.js";
 import type { BingoPublisher } from "./bingo-publisher.js";
 
@@ -49,23 +55,11 @@ const isBoardActiveAt = (board: BingoBoardRow, at: Date): boolean => {
   return true;
 };
 
-const emitOutcomes = (
-  publisher: BingoPublisher,
-  realtimeUpdates: ReadonlyArray<BingoRealtimeUpdate>,
-  milestones: ReadonlyArray<BingoMilestoneNotificationEvent>,
-) =>
-  Effect.all(
-    [
-      Effect.forEach(realtimeUpdates, publisher.publishRealtimeUpdate, {
-        concurrency: 4,
-        discard: true,
-      }),
-      Effect.forEach(milestones, publisher.publishMilestoneNotification, {
-        concurrency: 4,
-        discard: true,
-      }),
-    ],
-    { concurrency: 2, discard: true },
+const activeBoardsWhere = (guildIds: ReadonlyArray<string>, world: string) =>
+  and(
+    inArray(bingoBoardTable.guildId, [...guildIds]),
+    eq(bingoBoardTable.status, BingoBoardStatus.ACTIVE),
+    or(isNull(bingoBoardTable.world), eq(bingoBoardTable.world, world)),
   );
 
 export type BingoKillSignal = {
@@ -74,7 +68,7 @@ export type BingoKillSignal = {
   readonly world: string;
   readonly npcId: number;
   readonly npcName: string;
-  readonly npcType: NpcTypeEnum;
+  readonly npcType: NpcType;
   readonly npcLvl: number;
   readonly killedAt: Date;
 };
@@ -96,229 +90,315 @@ export type BingoLootSignal = {
   readonly guildIds: ReadonlyArray<string>;
 };
 
+type LockedBoard = {
+  readonly board: BingoBoardRow;
+  readonly tiles: ReadonlyArray<BingoTileRow>;
+  readonly transaction: BingoTransaction;
+};
+
+export const enqueueBingoKill =
+  (
+    kill: KillInput & { readonly guildId: string; readonly memberId: number },
+  ): KillWrite =>
+  (transaction) => [
+    Effect.gen(function* () {
+      const [board] = yield* transaction
+        .select({ id: bingoBoardTable.id })
+        .from(bingoBoardTable)
+        .where(activeBoardsWhere([kill.guildId], kill.world))
+        .limit(1);
+
+      if (!board) return;
+
+      yield* transaction.insert(bingoKillOutboxTable).values({
+        guildId: kill.guildId,
+        memberId: kill.memberId,
+        world: kill.world,
+        npcId: kill.npcId,
+        npcName: kill.npcName,
+        npcType: kill.npcType,
+        npcLvl: kill.npcLvl,
+        killedAt: kill.lastKilledAt,
+      });
+    }),
+  ];
+
 export const makeBingoEvaluator = (
   database: typeof ApiDatabase.Service,
   publisher: BingoPublisher,
 ) => {
-  const loadActiveBoardsWithTiles = Effect.fn(
-    "bingo.evaluator.loadActiveBoards",
-  )(function* (guildIds: ReadonlyArray<string>, world: string, at: Date) {
-    if (guildIds.length === 0) return [];
+  const findActiveBoards = Effect.fn("bingo.evaluator.findActiveBoards")(
+    function* (guildIds: ReadonlyArray<string>, world: string, at: Date) {
+      if (guildIds.length === 0) return [];
 
-    const boards = yield* database
-      .select()
-      .from(bingoBoardTable)
-      .where(
-        and(
-          inArray(bingoBoardTable.guildId, [...guildIds]),
-          eq(bingoBoardTable.status, BingoBoardStatus.ACTIVE),
-          or(isNull(bingoBoardTable.world), eq(bingoBoardTable.world, world)),
-        ),
-      );
+      const boards = yield* database
+        .select()
+        .from(bingoBoardTable)
+        .where(activeBoardsWhere(guildIds, world))
+        .orderBy(bingoBoardTable.id);
 
-    const activeBoards = boards.filter((board) => isBoardActiveAt(board, at));
+      return boards.filter((board) => isBoardActiveAt(board, at));
+    },
+  );
 
-    if (activeBoards.length === 0) return [];
+  const progressBoards = Effect.fn("bingo.evaluator.progressBoards")(function* <
+    E,
+  >(
+    boards: ReadonlyArray<BingoBoardRow>,
+    at: Date,
+    apply: (
+      locked: LockedBoard,
+    ) => Effect.Effect<ReadonlyArray<ApplyTileProgressOutcome>, E>,
+  ) {
+    const outcomes = yield* Effect.forEach(boards, ({ id: boardId }) =>
+      database.transaction((transaction) =>
+        Effect.gen(function* () {
+          const locked = yield* lockBingoBoardForProgress(transaction, boardId);
 
-    const tiles = yield* database
-      .select()
-      .from(bingoTileTable)
-      .where(
-        inArray(
-          bingoTileTable.boardId,
-          activeBoards.map((board) => board.id),
-        ),
-      );
+          if (!locked || !isBoardActiveAt(locked.board, at)) return [];
 
-    const tilesByBoard = groupBy(tiles, (tile) => tile.boardId);
+          return yield* apply({ ...locked, transaction });
+        }),
+      ),
+    );
 
-    return activeBoards.map((board) => ({
-      board,
-      tiles: tilesByBoard[board.id] ?? [],
-    }));
+    const applied = outcomes.flat();
+
+    yield* Effect.forEach(
+      applied.flatMap(({ realtimeUpdate }) =>
+        realtimeUpdate ? [realtimeUpdate] : [],
+      ),
+      publisher.publishRealtimeUpdate,
+      { concurrency: 4, discard: true },
+    );
+
+    if (applied.some(({ milestoneQueued }) => milestoneQueued)) {
+      yield* publisher.signalMilestones;
+    }
   });
+
+  const findMember = (guildId: string, memberId: number) =>
+    database
+      .select({ id: memberTable.id, name: memberTable.name })
+      .from(memberTable)
+      .where(
+        and(eq(memberTable.guildId, guildId), eq(memberTable.id, memberId)),
+      )
+      .limit(1)
+      .pipe(Effect.map((rows) => rows[0] ?? null));
 
   const evaluateKill = Effect.fn("bingo.evaluator.kill")(function* (
     signal: BingoKillSignal,
   ) {
-    const activeBoards = yield* loadActiveBoardsWithTiles(
+    const boards = yield* findActiveBoards(
       [signal.guildId],
       signal.world,
       signal.killedAt,
     );
 
-    if (activeBoards.length === 0) return;
+    if (boards.length === 0) return;
 
-    const memberRows = yield* database
-      .select({ id: memberTable.id, name: memberTable.name })
-      .from(memberTable)
-      .where(eq(memberTable.id, signal.memberId))
-      .limit(1);
-
-    const member = memberRows[0];
+    const member = yield* findMember(signal.guildId, signal.memberId);
 
     if (!member) return;
 
-    const realtimeUpdates: BingoRealtimeUpdate[] = [];
-    const milestones: BingoMilestoneNotificationEvent[] = [];
-
-    for (const { board, tiles } of activeBoards) {
-      const matchingTiles = tiles.filter(
-        (tile) =>
-          tile.condition.kind === BingoTileConditionKind.KILL &&
-          matchesKillCondition(tile.condition, {
-            npcName: signal.npcName,
-            npcType: signal.npcType,
-            npcLvl: signal.npcLvl,
-          }),
-      );
-
-      if (matchingTiles.length === 0) continue;
-
-      const dedupKey = `kill:${signal.world}:${signal.npcId}:${signal.killedAt.getTime()}`;
-
-      yield* database.transaction((transaction) =>
-        Effect.gen(function* () {
-          for (const tile of matchingTiles) {
-            const outcome = yield* applyBingoTileProgress(transaction, {
+    yield* progressBoards(
+      boards,
+      signal.killedAt,
+      ({ board, tiles, transaction }) =>
+        Effect.forEach(
+          tiles.filter(
+            (tile) =>
+              tile.condition.kind === BingoTileConditionKind.KILL &&
+              matchesKillCondition(tile.condition, {
+                npcName: signal.npcName,
+                npcType: signal.npcType,
+                npcLvl: signal.npcLvl,
+              }),
+          ),
+          (tile) =>
+            applyBingoTileProgress(transaction, {
               board,
               boardTiles: tiles,
               tile,
               memberId: member.id,
               memberName: member.name,
               sourceKind: BingoTileConditionKind.KILL,
-              dedupKey,
+              dedupKey: `kill:${signal.world}:${signal.npcId}:${signal.killedAt.getTime()}`,
               mode: { kind: "delta", delta: 1 },
               summary: `${signal.npcName} (${signal.npcLvl} lvl)`,
               metadata: {
                 npcId: signal.npcId,
                 npcName: signal.npcName,
-                npcType: signal.npcType,
-                npcLvl: signal.npcLvl,
                 world: signal.world,
+                npcs: [{ type: signal.npcType, lvl: signal.npcLvl }],
               },
               occurredAt: signal.killedAt,
-            });
-
-            if (outcome.realtimeUpdate) {
-              realtimeUpdates.push(outcome.realtimeUpdate);
-            }
-
-            if (outcome.milestoneNotification) {
-              milestones.push(outcome.milestoneNotification);
-            }
-          }
-        }),
-      );
-    }
-
-    if (realtimeUpdates.length > 0 || milestones.length > 0) {
-      yield* emitOutcomes(publisher, realtimeUpdates, milestones);
-    }
+            }),
+        ),
+    );
   });
 
   const evaluateHeroSighting = Effect.fn("bingo.evaluator.heroSighting")(
     function* (signal: BingoHeroSightingSignal) {
-      const activeBoards = yield* loadActiveBoardsWithTiles(
+      const boards = yield* findActiveBoards(
         [signal.guildId],
         signal.world,
         signal.occurredAt,
       );
 
-      if (activeBoards.length === 0) return;
+      if (boards.length === 0) return;
 
-      const memberRows = yield* database
-        .select({ id: memberTable.id, name: memberTable.name })
-        .from(memberTable)
-        .where(eq(memberTable.id, signal.detectedById))
-        .limit(1);
-
-      const member = memberRows[0];
+      const member = yield* findMember(signal.guildId, signal.detectedById);
 
       if (!member) return;
 
-      const realtimeUpdates: BingoRealtimeUpdate[] = [];
-      const milestones: BingoMilestoneNotificationEvent[] = [];
-
-      for (const { board, tiles } of activeBoards) {
-        const matchingTiles = tiles.filter(
-          (tile) =>
-            tile.condition.kind === BingoTileConditionKind.HERO_SIGHTING &&
-            matchesHeroSightingCondition(tile.condition, {
-              heroName: signal.heroName,
-              heroLvl: signal.heroLvl,
-              manual: signal.manual,
-            }),
-        );
-
-        if (matchingTiles.length === 0) continue;
-
-        const dedupKey = `sighting:${signal.sightingId}`;
-
-        yield* database.transaction((transaction) =>
-          Effect.gen(function* () {
-            for (const tile of matchingTiles) {
-              const outcome = yield* applyBingoTileProgress(transaction, {
+      yield* progressBoards(
+        boards,
+        signal.occurredAt,
+        ({ board, tiles, transaction }) =>
+          Effect.forEach(
+            tiles.filter(
+              (tile) =>
+                tile.condition.kind === BingoTileConditionKind.HERO_SIGHTING &&
+                matchesHeroSightingCondition(tile.condition, {
+                  heroName: signal.heroName,
+                  heroLvl: signal.heroLvl,
+                  manual: signal.manual,
+                }),
+            ),
+            (tile) =>
+              applyBingoTileProgress(transaction, {
                 board,
                 boardTiles: tiles,
                 tile,
                 memberId: member.id,
                 memberName: member.name,
                 sourceKind: BingoTileConditionKind.HERO_SIGHTING,
-                dedupKey,
+                dedupKey: `sighting:${signal.sightingId}`,
                 mode: { kind: "delta", delta: 1 },
                 summary: `Wykryto: ${signal.heroName} (${signal.heroLvl} lvl)`,
                 metadata: {
                   sightingId: signal.sightingId,
                   heroName: signal.heroName,
-                  heroLvl: signal.heroLvl,
                   world: signal.world,
+                  npcs: [{ type: NpcTypeEnum.HERO, lvl: signal.heroLvl }],
                 },
                 occurredAt: signal.occurredAt,
-              });
+              }),
+          ),
+      );
+    },
+  );
 
-              if (outcome.realtimeUpdate) {
-                realtimeUpdates.push(outcome.realtimeUpdate);
-              }
+  const loadLootParticipants = Effect.fn("bingo.evaluator.lootParticipants")(
+    function* (lootId: number, guildIds: ReadonlyArray<string>) {
+      const [submissions, lootPlayers] = yield* Effect.all(
+        [
+          database
+            .select({
+              guildId: organizationLootRecordTable.guildId,
+              memberId: memberTable.id,
+              memberName: memberTable.name,
+            })
+            .from(organizationLootRecordTable)
+            .innerJoin(
+              lootSubmissionTable,
+              eq(
+                lootSubmissionTable.organizationLootRecordId,
+                organizationLootRecordTable.id,
+              ),
+            )
+            .innerJoin(
+              memberTable,
+              eq(memberTable.id, lootSubmissionTable.memberId),
+            )
+            .where(
+              and(
+                eq(organizationLootRecordTable.lootId, lootId),
+                inArray(organizationLootRecordTable.guildId, [...guildIds]),
+                isNull(organizationLootRecordTable.archivedAt),
+              ),
+            ),
+          database
+            .select({ accountId: playerSnapshotTable.accountId })
+            .from(lootPlayerTable)
+            .innerJoin(
+              playerSnapshotTable,
+              eq(playerSnapshotTable.id, lootPlayerTable.playerSnapshotId),
+            )
+            .where(eq(lootPlayerTable.lootId, lootId)),
+        ],
+        { concurrency: 2 },
+      );
 
-              if (outcome.milestoneNotification) {
-                milestones.push(outcome.milestoneNotification);
-              }
-            }
-          }),
-        );
+      const accountIds = [
+        ...new Set(lootPlayers.map((player) => String(player.accountId))),
+      ];
+
+      const verifiedMembers =
+        accountIds.length > 0
+          ? yield* database
+              .select({
+                guildId: memberTable.guildId,
+                memberId: memberTable.id,
+                memberName: memberTable.name,
+              })
+              .from(userMargonemAccountTable)
+              .innerJoin(
+                memberTable,
+                and(
+                  eq(memberTable.globalUserId, userMargonemAccountTable.userId),
+                  inArray(memberTable.guildId, [...guildIds]),
+                  eq(memberTable.active, true),
+                ),
+              )
+              .where(inArray(userMargonemAccountTable.accountId, accountIds))
+          : [];
+
+      const membersByGuild = new Map<
+        string,
+        Map<number, { readonly id: number; readonly name: string }>
+      >();
+
+      for (const row of [...submissions, ...verifiedMembers]) {
+        const guildMembers =
+          membersByGuild.get(row.guildId) ??
+          new Map<number, { readonly id: number; readonly name: string }>();
+
+        guildMembers.set(row.memberId, {
+          id: row.memberId,
+          name: row.memberName,
+        });
+        membersByGuild.set(row.guildId, guildMembers);
       }
 
-      if (realtimeUpdates.length > 0 || milestones.length > 0) {
-        yield* emitOutcomes(publisher, realtimeUpdates, milestones);
-      }
+      return membersByGuild;
     },
   );
 
   const evaluateLoot = Effect.fn("bingo.evaluator.loot")(function* (
     signal: BingoLootSignal,
   ) {
-    const now = new Date(yield* Clock.currentTimeMillis);
+    const [loot] = yield* database
+      .select({ createdAt: lootTable.createdAt })
+      .from(lootTable)
+      .where(eq(lootTable.id, signal.lootId))
+      .limit(1);
 
-    const activeBoards = yield* loadActiveBoardsWithTiles(
+    if (!loot) return;
+
+    const droppedAt = loot.createdAt;
+
+    const boards = yield* findActiveBoards(
       signal.guildIds,
       signal.world,
-      now,
+      droppedAt,
     );
 
-    if (activeBoards.length === 0) return;
+    if (boards.length === 0) return;
 
-    const boardsWithLootTiles = activeBoards.filter(({ tiles }) =>
-      tiles.some((tile) => tile.condition.kind === BingoTileConditionKind.LOOT),
-    );
-
-    if (boardsWithLootTiles.length === 0) return;
-
-    const targetGuildIds = [
-      ...new Set(boardsWithLootTiles.map(({ board }) => board.guildId)),
-    ];
-
-    const [items, npcs, submissions, lootPlayers] = yield* Effect.all(
+    const [items, npcs] = yield* Effect.all(
       [
         database
           .select({
@@ -344,147 +424,70 @@ export const makeBingoEvaluator = (
             eq(npcSnapshotTable.id, lootNpcTable.npcSnapshotId),
           )
           .where(eq(lootNpcTable.lootId, signal.lootId)),
-        database
-          .select({
-            guildId: organizationLootRecordTable.guildId,
-            memberId: memberTable.id,
-            memberName: memberTable.name,
-          })
-          .from(organizationLootRecordTable)
-          .innerJoin(
-            lootSubmissionTable,
-            eq(
-              lootSubmissionTable.organizationLootRecordId,
-              organizationLootRecordTable.id,
-            ),
-          )
-          .innerJoin(
-            memberTable,
-            eq(memberTable.id, lootSubmissionTable.memberId),
-          )
-          .where(
-            and(
-              eq(organizationLootRecordTable.lootId, signal.lootId),
-              inArray(organizationLootRecordTable.guildId, targetGuildIds),
-              isNull(organizationLootRecordTable.archivedAt),
-            ),
-          ),
-        database
-          .select({
-            accountId: playerSnapshotTable.accountId,
-          })
-          .from(lootPlayerTable)
-          .innerJoin(
-            playerSnapshotTable,
-            eq(playerSnapshotTable.id, lootPlayerTable.playerSnapshotId),
-          )
-          .where(eq(lootPlayerTable.lootId, signal.lootId)),
       ],
-      { concurrency: 4 },
+      { concurrency: 2 },
     );
 
-    const accountIds = [
-      ...new Set(lootPlayers.map((player) => String(player.accountId))),
-    ];
+    const membersByGuild = yield* loadLootParticipants(
+      signal.lootId,
+      signal.guildIds,
+    );
 
-    const verifiedMembers =
-      accountIds.length > 0
-        ? yield* database
-            .select({
-              guildId: memberTable.guildId,
-              memberId: memberTable.id,
-              memberName: memberTable.name,
-            })
-            .from(userMargonemAccountTable)
-            .innerJoin(
-              memberTable,
-              and(
-                eq(memberTable.globalUserId, userMargonemAccountTable.userId),
-                inArray(memberTable.guildId, targetGuildIds),
-                eq(memberTable.active, true),
-              ),
-            )
-            .where(inArray(userMargonemAccountTable.accountId, accountIds))
-        : [];
+    const participatingBoards = boards.filter((board) =>
+      membersByGuild.has(board.guildId),
+    );
 
-    const membersByGuild = new Map<
-      string,
-      Map<number, { readonly id: number; readonly name: string }>
-    >();
+    yield* progressBoards(
+      participatingBoards,
+      droppedAt,
+      ({ board, tiles, transaction }) => {
+        const guildMembers = [
+          ...(membersByGuild.get(board.guildId)?.values() ?? []),
+        ];
 
-    for (const row of [...submissions, ...verifiedMembers]) {
-      const guildMap =
-        membersByGuild.get(row.guildId) ??
-        new Map<number, { readonly id: number; readonly name: string }>();
+        const lootTileMatches = tiles.flatMap((tile) => {
+          if (tile.condition.kind !== BingoTileConditionKind.LOOT) return [];
 
-      guildMap.set(row.memberId, { id: row.memberId, name: row.memberName });
-      membersByGuild.set(row.guildId, guildMap);
-    }
+          const matches = findMatchingLootItems(tile.condition, {
+            items,
+            npcs,
+          });
 
-    const realtimeUpdates: BingoRealtimeUpdate[] = [];
-    const milestones: BingoMilestoneNotificationEvent[] = [];
+          return matches.length > 0 ? [{ tile, matches }] : [];
+        });
 
-    for (const { board, tiles } of boardsWithLootTiles) {
-      const guildMembers = [
-        ...(membersByGuild.get(board.guildId)?.values() ?? []),
-      ];
+        const progress = guildMembers.flatMap((member) =>
+          lootTileMatches.flatMap(({ tile, matches }) =>
+            matches.map((match) => ({ member, tile, match })),
+          ),
+        );
 
-      if (guildMembers.length === 0) continue;
-
-      const lootTileMatches = tiles.flatMap((tile) => {
-        if (tile.condition.kind !== BingoTileConditionKind.LOOT) return [];
-
-        const matches = findMatchingLootItems(tile.condition, { items, npcs });
-
-        return matches.length > 0 ? [{ tile, matches }] : [];
-      });
-
-      if (lootTileMatches.length === 0) continue;
-
-      yield* database.transaction((transaction) =>
-        Effect.gen(function* () {
-          for (const member of guildMembers) {
-            for (const { tile, matches } of lootTileMatches) {
-              for (const match of matches) {
-                const outcome = yield* applyBingoTileProgress(transaction, {
-                  board,
-                  boardTiles: tiles,
-                  tile,
-                  memberId: member.id,
-                  memberName: member.name,
-                  sourceKind: BingoTileConditionKind.LOOT,
-                  dedupKey: `loot:${signal.lootId}:${match.hid}`,
-                  mode: { kind: "delta", delta: 1 },
-                  summary: match.npcName
-                    ? `${match.itemName} (${match.npcName})`
-                    : match.itemName,
-                  metadata: {
-                    lootId: signal.lootId,
-                    itemName: match.itemName,
-                    rarity: match.rarity,
-                    npcName: match.npcName,
-                    world: signal.world,
-                  },
-                  occurredAt: now,
-                });
-
-                if (outcome.realtimeUpdate) {
-                  realtimeUpdates.push(outcome.realtimeUpdate);
-                }
-
-                if (outcome.milestoneNotification) {
-                  milestones.push(outcome.milestoneNotification);
-                }
-              }
-            }
-          }
-        }),
-      );
-    }
-
-    if (realtimeUpdates.length > 0 || milestones.length > 0) {
-      yield* emitOutcomes(publisher, realtimeUpdates, milestones);
-    }
+        return Effect.forEach(progress, ({ member, tile, match }) =>
+          applyBingoTileProgress(transaction, {
+            board,
+            boardTiles: tiles,
+            tile,
+            memberId: member.id,
+            memberName: member.name,
+            sourceKind: BingoTileConditionKind.LOOT,
+            dedupKey: `loot:${signal.lootId}:${match.hid}`,
+            mode: { kind: "delta", delta: 1 },
+            summary: match.npcName
+              ? `${match.itemName} (${match.npcName})`
+              : match.itemName,
+            metadata: {
+              lootId: signal.lootId,
+              itemName: match.itemName,
+              rarity: match.rarity,
+              npcName: match.npcName,
+              world: signal.world,
+              npcs: npcs.map(({ type, lvl }) => ({ type, lvl })),
+            },
+            occurredAt: droppedAt,
+          }),
+        );
+      },
+    );
   });
 
   const evaluateBattle = Effect.fn("bingo.evaluator.battle")(function* (
@@ -511,116 +514,96 @@ export const makeBingoEvaluator = (
 
     if (memberships.length === 0) return;
 
-    const guildIds = [...new Set(memberships.map((row) => row.guildId))];
-
-    const activeBoards = yield* loadActiveBoardsWithTiles(
-      guildIds,
-      signal.world,
-      occurredAt,
-    );
-
-    if (activeBoards.length === 0) return;
-
     const memberByGuild = new Map(
       memberships.map((membership) => [membership.guildId, membership]),
     );
 
-    const realtimeUpdates: BingoRealtimeUpdate[] = [];
-    const milestones: BingoMilestoneNotificationEvent[] = [];
+    const boards = yield* findActiveBoards(
+      [...memberByGuild.keys()],
+      signal.world,
+      occurredAt,
+    );
 
-    for (const { board, tiles } of activeBoards) {
-      const membership = memberByGuild.get(board.guildId);
+    if (boards.length === 0) return;
 
-      if (!membership) continue;
+    yield* progressBoards(boards, occurredAt, ({ board, tiles, transaction }) =>
+      Effect.gen(function* () {
+        const membership = memberByGuild.get(board.guildId);
 
-      const battleTiles = tiles.filter(
-        (tile) => tile.condition.kind === BingoTileConditionKind.BATTLE,
-      );
+        if (!membership) return [];
 
-      if (battleTiles.length === 0) continue;
-
-      yield* database.transaction((transaction) =>
-        Effect.gen(function* () {
-          const existingProgress = yield* transaction
-            .select()
-            .from(bingoTileProgressTable)
-            .where(
-              and(
-                eq(bingoTileProgressTable.boardId, board.id),
-                eq(bingoTileProgressTable.memberId, membership.memberId),
-              ),
-            );
-
-          const progressByTile = new Map(
-            existingProgress.map((row) => [row.tileId, row]),
+        const existingProgress = yield* transaction
+          .select()
+          .from(bingoTileProgressTable)
+          .where(
+            and(
+              eq(bingoTileProgressTable.boardId, board.id),
+              eq(bingoTileProgressTable.memberId, membership.memberId),
+            ),
           );
 
-          for (const tile of battleTiles) {
-            if (tile.condition.kind !== BingoTileConditionKind.BATTLE) continue;
+        const progressByTile = new Map(
+          existingProgress.map((row) => [row.tileId, row]),
+        );
 
-            const current = progressByTile.get(tile.id);
-
-            const evaluation = evaluateBattleCondition(
-              tile.condition,
-              {
-                battleType: signal.battleType,
-                matchmaking: signal.matchmaking,
-                won: signal.won,
-                unfinished: signal.unfinished,
-                hasFlee: signal.hasFlee,
-              },
-              current?.currentCount ?? 0,
-              current?.completedAt !== null && current !== undefined,
-            );
-
-            if (!evaluation.matched) continue;
-
-            const summary = evaluation.resetStreak
-              ? signal.matchmaking
-                ? "Przerwana seria w Otchłani"
-                : "Przerwana seria walk PvP"
-              : signal.matchmaking
-                ? "Wygrana w Otchłani"
-                : `Wygrana PvP (${signal.battleType})`;
-
-            const outcome = yield* applyBingoTileProgress(transaction, {
-              board,
-              boardTiles: tiles,
-              tile,
-              memberId: membership.memberId,
-              memberName: membership.memberName,
-              sourceKind: BingoTileConditionKind.BATTLE,
-              dedupKey: `battle:${signal.battleId}`,
-              mode: {
-                kind: "absolute",
-                nextCount: evaluation.nextCount,
-              },
-              summary,
-              metadata: {
-                battleId: signal.battleId,
-                matchmaking: signal.matchmaking,
-                battleType: signal.battleType,
-                won: signal.won,
-                resetStreak: evaluation.resetStreak,
-              },
-              occurredAt,
+        return yield* Effect.forEach(tiles, (tile) => {
+          if (tile.condition.kind !== BingoTileConditionKind.BATTLE) {
+            return Effect.succeed<ApplyTileProgressOutcome>({
+              applied: false,
             });
-
-            if (outcome.realtimeUpdate) {
-              realtimeUpdates.push(outcome.realtimeUpdate);
-            }
-
-            if (outcome.milestoneNotification) {
-              milestones.push(outcome.milestoneNotification);
-            }
           }
-        }),
-      );
-    }
 
-    if (realtimeUpdates.length > 0 || milestones.length > 0) {
-      yield* emitOutcomes(publisher, realtimeUpdates, milestones);
-    }
+          const current = progressByTile.get(tile.id);
+
+          const evaluation = evaluateBattleCondition(
+            tile.condition,
+            {
+              battleType: signal.battleType,
+              matchmaking: signal.matchmaking,
+              won: signal.won,
+              unfinished: signal.unfinished,
+              hasFlee: signal.hasFlee,
+            },
+            current?.currentCount ?? 0,
+            current !== undefined && current.completedAt !== null,
+          );
+
+          if (!evaluation.matched) {
+            return Effect.succeed<ApplyTileProgressOutcome>({
+              applied: false,
+            });
+          }
+
+          const summary = evaluation.resetStreak
+            ? signal.matchmaking
+              ? "Przerwana seria w Otchłani"
+              : "Przerwana seria walk PvP"
+            : signal.matchmaking
+              ? "Wygrana w Otchłani"
+              : `Wygrana PvP (${signal.battleType})`;
+
+          return applyBingoTileProgress(transaction, {
+            board,
+            boardTiles: tiles,
+            tile,
+            memberId: membership.memberId,
+            memberName: membership.memberName,
+            sourceKind: BingoTileConditionKind.BATTLE,
+            dedupKey: `battle:${signal.battleId}`,
+            mode: { kind: "absolute", nextCount: evaluation.nextCount },
+            summary,
+            metadata: {
+              battleId: signal.battleId,
+              matchmaking: signal.matchmaking,
+              battleType: signal.battleType,
+              won: signal.won,
+              resetStreak: evaluation.resetStreak,
+            },
+            occurredAt,
+          });
+        });
+      }),
+    );
   });
 
   return {

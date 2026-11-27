@@ -1,3 +1,4 @@
+import type { BattleRecordedV1 } from "@lootlog/protocol/rabbit/events";
 import { sql } from "drizzle-orm";
 import {
   boolean,
@@ -9,6 +10,7 @@ import {
   jsonb,
   pgTable,
   primaryKey,
+  serial,
   text,
   timestamp,
   uniqueIndex,
@@ -336,3 +338,19 @@ export type BattleWarrior = typeof battleWarriors.$inferSelect;
 export type NewBattleWarrior = typeof battleWarriors.$inferInsert;
 
 export type UserCharacter = typeof userCharacters.$inferSelect;
+
+export const battleRecordedOutbox = pgTable(
+  "battle_recorded_outbox",
+  {
+    id: serial("id").primaryKey(),
+    event: jsonb("event").$type<BattleRecordedV1>().notNull(),
+    lastAttemptAt: timestamp("lastAttemptAt", { precision: 3 }),
+    createdAt: timestamp("createdAt", { precision: 3 }).defaultNow().notNull(),
+  },
+  (table) => [
+    index("battle_recorded_outbox_lastAttemptAt_id_idx").on(
+      table.lastAttemptAt.asc().nullsFirst(),
+      table.id.asc(),
+    ),
+  ],
+);

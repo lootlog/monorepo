@@ -1,5 +1,4 @@
 import {
-  BattleRecordedV1Schema,
   BingoMilestoneNotificationEventSchema,
   BingoRealtimeUpdateSchema,
 } from "@lootlog/schema/bingo";
@@ -65,6 +64,23 @@ export const MargonemAccountVerifiedV1 = Schema.Struct({
 });
 
 export type MargonemAccountVerifiedV1 = typeof MargonemAccountVerifiedV1.Type;
+
+export const BattleRecordedV1 = Schema.Struct({
+  version: Schema.Literal(1),
+  battleId: Schema.NonEmptyString,
+  userId: Schema.NonEmptyString,
+  accountId: Schema.NonEmptyString,
+  characterId: Schema.NonEmptyString,
+  world: Schema.NonEmptyString,
+  battleType: Schema.NonEmptyString,
+  matchmaking: Schema.Boolean,
+  won: Schema.Boolean,
+  unfinished: Schema.Boolean,
+  hasFlee: Schema.Boolean,
+  occurredAt: Schema.NonEmptyString,
+});
+
+export type BattleRecordedV1 = typeof BattleRecordedV1.Type;
 
 const NullableString = Schema.NullOr(Schema.String);
 
@@ -340,7 +356,7 @@ const BattlelogUserDataDelete = Schema.Struct({
 
 const canonicalRabbitEventSchemas = {
   [RabbitRoutingKey.BATTLELOG_USER_DATA_DELETE]: BattlelogUserDataDelete,
-  [RabbitRoutingKey.BATTLELOG_BATTLE_RECORDED_V1]: BattleRecordedV1Schema,
+  [RabbitRoutingKey.BATTLELOG_BATTLE_RECORDED_V1]: BattleRecordedV1,
   [RabbitRoutingKey.GAME_CHARACTER_OFFLINE]: GameCharacterOffline,
   [RabbitRoutingKey.MARGONEM_ACCOUNT_VERIFIED_V1]: MargonemAccountVerifiedV1,
   [RabbitRoutingKey.GUILDS_KILLS_ACCEPTED_V1]: GuildKillsAcceptedV1,

@@ -14,7 +14,7 @@ import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import { organizationLootRecordTable } from "#src/database/drizzle/loot.schema";
 import { lootPublicationOutboxTable } from "#src/database/drizzle/loot-publication-outbox.schema";
-import { makeOutboxDispatcher } from "#src/shared/outbox-worker";
+import { makeOutboxDispatcher } from "@lootlog/database/outbox";
 
 const RabbitPublication = Schema.Union([
   Schema.Struct({

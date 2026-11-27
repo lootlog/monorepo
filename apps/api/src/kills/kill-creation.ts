@@ -51,6 +51,13 @@ export interface KillCreationCache {
   ) => Effect.Effect<string | null, unknown>;
 }
 
+export interface MemberKillFollowUp {
+  readonly enqueue: (
+    kill: KillInput & { readonly guildId: string; readonly memberId: number },
+  ) => KillWrite;
+  readonly committed: Effect.Effect<void>;
+}
+
 export const makeKillCreation = (
   database: typeof ApiDatabase.Service,
   cache: KillCreationCache,
@@ -59,13 +66,10 @@ export const makeKillCreation = (
   ) => Effect.Effect<void> = () => Effect.void,
   publishPersonalStatsChanged: (userId: string) => Effect.Effect<void> = () =>
     Effect.void,
-  onMemberKillCommitted: (
-    input: KillInput & {
-      readonly guildId: string;
-      readonly memberId: number;
-      readonly killedAt: Date;
-    },
-  ) => Effect.Effect<void> = () => Effect.void,
+  memberKillFollowUp: MemberKillFollowUp = {
+    enqueue: () => () => [],
+    committed: Effect.void,
+  },
 ) => {
   const protect = adapterOperation("kills.drizzle");
 
@@ -303,6 +307,9 @@ export const makeKillCreation = (
             ? [incrementGuild({ ...input, guildId }, periodStart)]
             : []),
         ]),
+        ...targets.map(({ guildId, memberId }) =>
+          memberKillFollowUp.enqueue({ ...input, guildId, memberId }),
+        ),
         ...(bossKilledAt
           ? targets
               .filter(({ countsGuild }) => countsGuild)
@@ -353,14 +360,7 @@ export const makeKillCreation = (
           publishActivity({ ...input, guildId }).pipe(Effect.forkDetach),
         { discard: true },
       );
-      yield* Effect.forEach(
-        targets,
-        ({ guildId, memberId }) =>
-          onMemberKillCommitted({ ...input, guildId, memberId, killedAt }).pipe(
-            Effect.forkDetach,
-          ),
-        { discard: true },
-      );
+      yield* memberKillFollowUp.committed;
 
       return { updated: targets.length };
     });

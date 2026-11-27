@@ -7,10 +7,12 @@ import {
 import { ItemRarityEnum } from "@lootlog/schema/item-rarity";
 import { NpcTypeEnum } from "@lootlog/schema/npc-type";
 import {
+  BINGO_GRID_COORDS,
   BINGO_LINES,
   calculateMemberBingoScore,
   computeCompletedBingoLines,
   evaluateBattleCondition,
+  findBingoCompletedLineCoordKeys,
   findMatchingLootItems,
   matchesHeroSightingCondition,
   matchesKillCondition,
@@ -194,10 +196,9 @@ describe("clan bingo domain", () => {
       [1, 20],
     ]);
 
-    const tiles = Array.from({ length: 25 }, (_, index) => ({
+    const tiles = BINGO_GRID_COORDS.map((coord, index) => ({
       id: `t-${index}`,
-      row: Math.floor(index / 5),
-      col: index % 5,
+      ...coord,
       points: index === 0 ? 3 : null,
       lockedByMemberId: lockedByIndex.get(index) ?? null,
     }));
@@ -243,5 +244,32 @@ describe("clan bingo domain", () => {
     expect(lockoutScore.completedLines).toEqual([]);
     expect(lockoutScore.firstCompleterPoints).toBe(0);
     expect(lockoutScore.totalPoints).toBe(6);
+  });
+
+  it("highlights a completed line only when none of its tiles is locked by another member in LOCKOUT", () => {
+    const tiles = BINGO_GRID_COORDS.map((coord) => ({
+      ...coord,
+      lockedByMemberId: coord.row === 0 && coord.col === 1 ? 20 : null,
+    }));
+
+    const completedRow0 = (tile: { readonly row: number }) => tile.row === 0;
+
+    expect(
+      findBingoCompletedLineCoordKeys(
+        BingoBoardMode.RACE,
+        10,
+        tiles,
+        completedRow0,
+      ),
+    ).toEqual(new Set(["0:0", "0:1", "0:2", "0:3", "0:4"]));
+
+    expect(
+      findBingoCompletedLineCoordKeys(
+        BingoBoardMode.LOCKOUT,
+        10,
+        tiles,
+        completedRow0,
+      ),
+    ).toEqual(new Set());
   });
 });

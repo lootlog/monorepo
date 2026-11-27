@@ -9,7 +9,9 @@ import {
   BingoMutationResponse,
 } from "#src/contracts/bingo/schemas";
 import { OrganizationWorkspaceOperationError } from "#src/guilds/organization-workspace-access";
+import type { BingoViewer } from "#src/bingo/bingo-read";
 import {
+  type OrganizationWorkspaceGuildAccess,
   decode,
   requireGuild,
   toOrganizationWorkspaceHttpResponse,
@@ -25,6 +27,13 @@ const MANAGE_BINGO_REQUIREMENT = {
     Capability.LOOTLOG_EVENTS_MANAGE,
   ],
 } as const;
+
+const toBingoViewer = (
+  access: OrganizationWorkspaceGuildAccess,
+): BingoViewer => ({
+  discordId: access.discordId,
+  permissions: access.permissions,
+});
 
 const runBingo = <A>(effect: Effect.Effect<A, unknown>) =>
   effect.pipe(
@@ -49,7 +58,7 @@ export const BingoHandlers = HttpApiBuilder.group(
             );
 
             const result = yield* runBingo(
-              bingo.listBoards(access.guildId, access.discordId),
+              bingo.listBoards(access.guildId, toBingoViewer(access)),
             );
 
             return yield* decode(BingoBoardListResponse, result);
@@ -64,7 +73,7 @@ export const BingoHandlers = HttpApiBuilder.group(
             );
 
             const result = yield* runBingo(
-              bingo.createBoard(access.guildId, access.discordId, payload),
+              bingo.createBoard(access.guildId, toBingoViewer(access), payload),
             );
 
             return yield* decode(BingoBoardDetailResponse, result);
@@ -79,7 +88,11 @@ export const BingoHandlers = HttpApiBuilder.group(
             );
 
             const result = yield* runBingo(
-              bingo.getBoard(access.guildId, params.boardId, access.discordId),
+              bingo.getBoard(
+                access.guildId,
+                params.boardId,
+                toBingoViewer(access),
+              ),
             );
 
             return yield* decode(BingoBoardDetailResponse, result);
@@ -97,7 +110,7 @@ export const BingoHandlers = HttpApiBuilder.group(
               bingo.updateBoard(
                 access.guildId,
                 params.boardId,
-                access.discordId,
+                toBingoViewer(access),
                 payload,
               ),
             );
@@ -132,7 +145,7 @@ export const BingoHandlers = HttpApiBuilder.group(
               bingo.replaceTiles(
                 access.guildId,
                 params.boardId,
-                access.discordId,
+                toBingoViewer(access),
                 payload,
               ),
             );
@@ -153,7 +166,7 @@ export const BingoHandlers = HttpApiBuilder.group(
                 access.guildId,
                 params.boardId,
                 params.tileId,
-                access.discordId,
+                toBingoViewer(access),
                 payload,
               ),
             );

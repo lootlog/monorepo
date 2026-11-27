@@ -3,61 +3,58 @@ import {
   getBingoControllerListBoardsQueryKey,
 } from "@lootlog/client/main";
 import { useSocket } from "@/contexts/socket-context";
+import { useReconnectCatchUp } from "@/hooks/use-reconnect-catch-up";
+import type { AppSocketEvents } from "@/lib/socket";
 import { useQueryClient } from "@tanstack/react-query";
-import { useEffect, useEffectEvent, useRef } from "react";
+import { useEffect, useEffectEvent } from "react";
 
 export const useBingoSocket = (
   guildId: string | undefined,
   boardId?: string,
 ) => {
-  const { socket, connected, joined, status } = useSocket();
+  const { socket, connected, joined } = useSocket();
   const queryClient = useQueryClient();
-  const needsCatchUp = useRef(false);
 
-  const invalidate = useEffectEvent(
-    (targetGuildId: string, targetBoardId?: string) => {
+  const invalidate = (targetGuildId: string, targetBoardId?: string) => {
+    void queryClient.invalidateQueries({
+      queryKey: getBingoControllerListBoardsQueryKey({
+        guildId: targetGuildId,
+      }),
+    });
+
+    if (targetBoardId) {
       void queryClient.invalidateQueries({
-        queryKey: getBingoControllerListBoardsQueryKey({
+        queryKey: getBingoControllerGetBoardQueryKey({
           guildId: targetGuildId,
+          boardId: targetBoardId,
         }),
       });
+    }
+  };
 
-      const idToRefresh = targetBoardId ?? boardId;
-
-      if (idToRefresh) {
-        void queryClient.invalidateQueries({
-          queryKey: getBingoControllerGetBoardQueryKey({
-            guildId: targetGuildId,
-            boardId: idToRefresh,
-          }),
-        });
-      }
-    },
-  );
-
-  // oxlint-disable-next-line lootlog/no-unreasoned-state-sync -- subscribes to external gateway bingo.updated events and catches up on reconnect while mounted
-  useEffect(() => {
-    if (status === "unreachable") needsCatchUp.current = true;
-
-    if (!connected || !joined || !socket || !guildId) return;
-
-    const handleUpdate = (payload: {
-      readonly guildId: string;
-      readonly boardId: string;
-    }) => {
+  const handleUpdate = useEffectEvent(
+    (payload: AppSocketEvents["bingo.updated"]) => {
       if (payload.guildId !== guildId) return;
 
       invalidate(payload.guildId, payload.boardId);
-    };
+    },
+  );
 
-    socket.on("bingo.updated", handleUpdate);
+  // oxlint-disable-next-line lootlog/no-unreasoned-state-sync -- subscribes to gateway bingo.updated events while mounted
+  useEffect(() => {
+    if (!connected || !joined || !socket) return;
 
-    if (needsCatchUp.current) invalidate(guildId, boardId);
+    const onUpdate = (payload: AppSocketEvents["bingo.updated"]) =>
+      handleUpdate(payload);
 
-    needsCatchUp.current = true;
+    socket.on("bingo.updated", onUpdate);
 
     return () => {
-      socket.off("bingo.updated", handleUpdate);
+      socket.off("bingo.updated", onUpdate);
     };
-  }, [connected, joined, socket, status, guildId, boardId]);
+  }, [connected, joined, socket]);
+
+  useReconnectCatchUp(() => {
+    if (guildId) invalidate(guildId, boardId);
+  });
 };

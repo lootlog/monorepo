@@ -21,13 +21,16 @@ Work that only improves freshness stays best effort. This builds on
 
 ### Transactional outboxes
 
-- **`makeOutboxWorker`** (`apps/api/src/shared/outbox-worker.ts`): signals are hints in a dropping queue; the database stays the durable source of work, with a one-second fallback poll, so a lost signal delays a publication but never drops it.
-- **`makeOutboxDispatcher`** (`apps/api/src/shared/outbox-worker.ts`): delivers one locked row per transaction, deletes a row only after delivery succeeds, and stamps `lastAttemptAt` on failure so older work is tried first. Delivery is at least once.
+- **`makeOutboxWorker`** (`packages/database/src/outbox.ts`): signals are hints in a dropping queue; the database stays the durable source of work, with a one-second fallback poll, so a lost signal delays a publication but never drops it.
+- **`makeOutboxDispatcher`** (`packages/database/src/outbox.ts`): delivers one locked row per transaction, deletes a row only after delivery succeeds, and stamps `lastAttemptAt` on failure so older work is tried first. Delivery is at least once.
 - **`makeLootPublicationDispatcher`** (`apps/api/src/loots/submission/loot-publication-outbox.ts`): locks one outbox intent per transaction and leaves failed deliveries in the table for the next poll, so an accepted loot's publication is never lost. It holds one transaction per delivery for simplicity; leased batches are worth adding only if measured throughput requires them.
 - **`makeLootSnapshotReader`** (`apps/api/src/loots/submission/loot-publication-outbox.ts`): encodes the `loot.created` payload through the same Organization-scoped query as HTTP responses, so event consumers and HTTP readers see identical loot shapes.
 - **`createDraw`** (`apps/api/src/loots/loot.repository.ts`): inserts the draw announcement outbox row in the draw's transaction, so the announcement survives a broker outage or a restart before publication.
 - **`makeLootDrawAnnouncementDispatcher`** (`apps/api/src/loots/loot-draw-announcement-outbox.ts`): reads the draw when sending, so a draw voided meanwhile still announces its first outcome as drawn. A replayed row reuses the same message id, and a row whose loot or draw is gone is dropped.
 - **`makeEventHeroCheckDispatcher`** (`apps/api/src/events/kills/event-hero-check-outbox.ts`): may enqueue a row more than once, because the deterministic BullMQ job id and the kill processor's window dedup make a repeat a no-op.
+- **`applyBingoTileProgress`** (`apps/api/src/bingo/bingo-progress-writer.ts`): runs under the board row lock taken by `lockBingoBoardForProgress`, so progress, lockout claims and the dedup check see one order per board; a completion writes its milestone to `BingoMilestoneOutbox` in the same transaction, so a broker outage cannot drop a Discord announcement that a redelivery would no longer produce.
+- **`enqueueBingoKill`** (`apps/api/src/bingo/bingo-evaluator.ts`): kills keep only counters, so the kill transaction stores a `BingoKillOutbox` row for each Organization with an active board; the row is evaluated after commit and retried until it succeeds.
+- **`battleRecordedOutbox`** (`apps/battlelog/src/database/schema.ts`): the `battlelog.battle.recorded.v1` fact is stored with the battle and published by the battlelog's own outbox worker, so a submission never waits on RabbitMQ and an accepted battle always reaches Bingo.
 - **`reconcile`** (`apps/api/src/guilds/guild-discord-sync.data-layer.ts`): deletes removed Discord channels and writes their `discord.guild.channel.deleted` facts to the outbox in one transaction, so a failed publish cannot lose a deletion that a later refresh would no longer see.
 
 ### Member change delivery

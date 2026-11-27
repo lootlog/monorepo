@@ -6,8 +6,7 @@ import type {
   BingoBoardDetailResponseDtoTilesItemCondition,
   ReplaceBingoTilesDtoTilesItem,
 } from "@lootlog/client/main";
-import { ItemRarityEnum } from "@lootlog/schema/item-rarity";
-import { NpcTypeEnum } from "@lootlog/schema/npc-type";
+import type { BingoTileConditionKind } from "@lootlog/schema/bingo";
 import { IconDialogHeader } from "@/components/common/icon-dialog-header";
 import { Button } from "@lootlog/ui/components/button";
 import {
@@ -22,57 +21,10 @@ import { SlidersHorizontal, Trash2 } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { BingoConditionFields } from "./bingo-condition-fields";
-
-type ConditionKind = BingoBoardDetailResponseDtoTilesItemCondition["kind"];
-
-const CONDITION_KINDS: readonly ConditionKind[] = [
-  "LOOT",
-  "KILL",
-  "HERO_SIGHTING",
-  "BATTLE",
-  "MANUAL",
-];
-
-const defaultConditionForKind = (
-  kind: ConditionKind,
-  targetCount: number,
-): BingoBoardDetailResponseDtoTilesItemCondition => {
-  switch (kind) {
-    case "LOOT":
-      return {
-        kind: "LOOT",
-        targetCount,
-        rarities: [ItemRarityEnum.LEGENDARY],
-        npcTypes: [NpcTypeEnum.ELITE2],
-      };
-    case "KILL":
-      return {
-        kind: "KILL",
-        targetCount,
-        npcTypes: [NpcTypeEnum.COLOSSUS],
-      };
-    case "HERO_SIGHTING":
-      return {
-        kind: "HERO_SIGHTING",
-        targetCount,
-        includeManual: false,
-      };
-    case "BATTLE":
-      return {
-        kind: "BATTLE",
-        targetCount,
-        metric: "WIN_STREAK",
-        matchmakingOnly: true,
-        battleTypes: [],
-        excludeFlee: true,
-      };
-    case "MANUAL":
-      return {
-        kind: "MANUAL",
-        targetCount,
-      };
-  }
-};
+import {
+  BINGO_CONDITION_KINDS,
+  BINGO_CONDITION_KIND_ORDER,
+} from "./bingo-condition-kinds";
 
 type BingoTileEditorDialogProps = {
   readonly open: boolean;
@@ -109,7 +61,7 @@ export const BingoTileEditorDialog = ({
 
   const [condition, setCondition] =
     useState<BingoBoardDetailResponseDtoTilesItemCondition>(
-      initialTile?.condition ?? defaultConditionForKind("LOOT", 1),
+      initialTile?.condition ?? BINGO_CONDITION_KINDS.LOOT.defaultCondition(1),
     );
 
   const applyPreset = (preset: BingoTilePreset) => {
@@ -118,10 +70,12 @@ export const BingoTileEditorDialog = ({
     setCondition(structuredClone(preset.condition));
   };
 
-  const handleKindChange = (nextKind: ConditionKind) => {
+  const handleKindChange = (nextKind: BingoTileConditionKind) => {
     if (nextKind === condition.kind) return;
 
-    setCondition(defaultConditionForKind(nextKind, condition.targetCount));
+    setCondition(
+      BINGO_CONDITION_KINDS[nextKind].defaultCondition(condition.targetCount),
+    );
   };
 
   const handleSubmit = (event: FormEvent) => {
@@ -217,7 +171,7 @@ export const BingoTileEditorDialog = ({
             <div className="space-y-2">
               <Label>{t("bingo.tileEditor.conditionKind")}</Label>
               <div className="flex flex-wrap gap-1.5">
-                {CONDITION_KINDS.map((kind) => (
+                {BINGO_CONDITION_KIND_ORDER.map((kind) => (
                   <Button
                     key={kind}
                     type="button"

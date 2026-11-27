@@ -1,6 +1,6 @@
 import {
   calculateMemberBingoScore,
-  computeCompletedBingoLines,
+  isBingoTileLockedForMember,
 } from "@lootlog/domain/bingo";
 import {
   BingoBoardMode,
@@ -10,13 +10,14 @@ import {
 } from "@lootlog/schema/bingo";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
+  bingoBoardTable,
+  bingoMilestoneOutboxTable,
   bingoProgressEventTable,
   bingoTileProgressTable,
   bingoTileTable,
-  type bingoBoardTable,
 } from "#src/database/drizzle/bingo.schema";
 import type { JsonValue } from "#src/database/json";
-import { and, eq, isNotNull, isNull } from "drizzle-orm";
+import { and, asc, eq, isNotNull, isNull } from "drizzle-orm";
 import { Effect } from "effect";
 
 type Database = typeof ApiDatabase.Service;
@@ -50,11 +51,32 @@ export type ApplyTileProgressInput = {
   readonly occurredAt: Date;
 };
 
-type ApplyTileProgressOutcome = {
+export type ApplyTileProgressOutcome = {
   readonly applied: boolean;
   readonly realtimeUpdate?: BingoRealtimeUpdate;
-  readonly milestoneNotification?: BingoMilestoneNotificationEvent;
+  readonly milestoneQueued?: boolean;
 };
+
+export const lockBingoBoardForProgress = Effect.fn(
+  "bingo.lockBoardForProgress",
+)(function* (transaction: BingoTransaction, boardId: string) {
+  const [board] = yield* transaction
+    .select()
+    .from(bingoBoardTable)
+    .where(eq(bingoBoardTable.id, boardId))
+    .limit(1)
+    .for("update");
+
+  if (!board) return null;
+
+  const tiles = yield* transaction
+    .select()
+    .from(bingoTileTable)
+    .where(eq(bingoTileTable.boardId, boardId))
+    .orderBy(asc(bingoTileTable.row), asc(bingoTileTable.col));
+
+  return { board, tiles };
+});
 
 const computeNextProgressState = (
   mode: ApplyTileProgressInput["mode"],
@@ -111,24 +133,15 @@ const resolveCompletionOutcome = (options: {
     ]),
   );
 
-  const completedCoordsBefore = memberCompletedRows.flatMap((row) => {
-    if (row.tileId === tile.id) return [];
-
-    const boardTile = tileMap.get(row.tileId);
-
-    return boardTile ? [{ row: boardTile.row, col: boardTile.col }] : [];
-  });
-
-  const linesBefore = computeCompletedBingoLines(completedCoordsBefore);
+  const scoreBefore = calculateMemberBingoScore(
+    board,
+    input.boardTiles,
+    memberId,
+    memberCompletedRows.filter((row) => row.tileId !== tile.id),
+  );
 
   const scoreAfter = calculateMemberBingoScore(
-    {
-      mode: board.mode,
-      pointsPerTile: board.pointsPerTile,
-      pointsPerLine: board.pointsPerLine,
-      firstCompleterBonus: board.firstCompleterBonus,
-      blackoutBonus: board.blackoutBonus,
-    },
+    board,
     [...tileMap.values()],
     memberId,
     memberCompletedRows,
@@ -136,7 +149,7 @@ const resolveCompletionOutcome = (options: {
 
   const newLinesCount = Math.max(
     0,
-    scoreAfter.completedLines.length - linesBefore.length,
+    scoreAfter.completedLines.length - scoreBefore.completedLines.length,
   );
 
   const milestoneKind = scoreAfter.isBlackout
@@ -147,39 +160,36 @@ const resolveCompletionOutcome = (options: {
 
   return {
     newLinesCount,
-    outcome: {
-      applied: true,
-      realtimeUpdate: {
-        guildId: board.guildId,
-        boardId: board.id,
-        reason: newLinesCount > 0 ? "line_completed" : "tile_completed",
-        memberId,
-        memberName,
-        tileId: tile.id,
-        tileTitle: tile.title,
-        completedLinesCount: scoreAfter.completedLines.length,
-        blackout: scoreAfter.isBlackout,
-      },
-      milestoneNotification: {
-        guildId: board.guildId,
-        boardId: board.id,
-        boardName: board.name,
-        world: board.world,
-        eventId,
-        milestoneKind,
-        memberId,
-        memberName,
-        tileId: tile.id,
-        tileTitle: tile.title,
-        row: tile.row,
-        col: tile.col,
-        summary: input.summary,
-        completedTileCount: scoreAfter.completedTileIds.length,
-        completedLinesCount: scoreAfter.completedLines.length,
-        totalPoints: scoreAfter.totalPoints,
-        occurredAt: input.occurredAt.toISOString(),
-      },
-    } satisfies ApplyTileProgressOutcome,
+    realtimeUpdate: {
+      guildId: board.guildId,
+      boardId: board.id,
+      reason: newLinesCount > 0 ? "line_completed" : "tile_completed",
+      memberId,
+      memberName,
+      tileId: tile.id,
+      tileTitle: tile.title,
+      completedLinesCount: scoreAfter.completedLines.length,
+      blackout: scoreAfter.isBlackout,
+    } satisfies BingoRealtimeUpdate,
+    milestoneNotification: {
+      guildId: board.guildId,
+      boardId: board.id,
+      boardName: board.name,
+      world: board.world,
+      eventId,
+      milestoneKind,
+      memberId,
+      memberName,
+      tileId: tile.id,
+      tileTitle: tile.title,
+      row: tile.row,
+      col: tile.col,
+      summary: input.summary,
+      completedTileCount: scoreAfter.completedTileIds.length,
+      completedLinesCount: scoreAfter.completedLines.length,
+      totalPoints: scoreAfter.totalPoints,
+      occurredAt: input.occurredAt.toISOString(),
+    } satisfies BingoMilestoneNotificationEvent,
   };
 };
 
@@ -254,17 +264,6 @@ const syncTileLock = Effect.fn("bingo.syncTileLock")(function* (
   };
 });
 
-const isBlockedByLockout = (
-  board: BingoBoardRow,
-  tile: BingoTileRow,
-  memberId: number,
-  isManual: boolean,
-): boolean =>
-  !isManual &&
-  board.mode === BingoBoardMode.LOCKOUT &&
-  tile.lockedByMemberId !== null &&
-  tile.lockedByMemberId !== memberId;
-
 const persistCompletion = Effect.fn("bingo.persistCompletion")(function* (
   transaction: BingoTransaction,
   options: {
@@ -289,12 +288,13 @@ const persistCompletion = Effect.fn("bingo.persistCompletion")(function* (
       ),
     );
 
-  const { newLinesCount, outcome } = resolveCompletionOutcome({
-    input,
-    eventId,
-    lockedTileByThisMember,
-    memberCompletedRows,
-  });
+  const { newLinesCount, realtimeUpdate, milestoneNotification } =
+    resolveCompletionOutcome({
+      input,
+      eventId,
+      lockedTileByThisMember,
+      memberCompletedRows,
+    });
 
   if (newLinesCount > 0) {
     yield* transaction
@@ -303,7 +303,16 @@ const persistCompletion = Effect.fn("bingo.persistCompletion")(function* (
       .where(eq(bingoProgressEventTable.id, eventId));
   }
 
-  return outcome;
+  yield* transaction.insert(bingoMilestoneOutboxTable).values({
+    guildId: input.board.guildId,
+    event: milestoneNotification,
+  });
+
+  return {
+    applied: true,
+    realtimeUpdate,
+    milestoneQueued: true,
+  } satisfies ApplyTileProgressOutcome;
 });
 
 const insertProgressEvent = (
@@ -317,32 +326,80 @@ const insertProgressEvent = (
     readonly newlyCompleted: boolean;
   },
 ) =>
+  transaction.insert(bingoProgressEventTable).values({
+    id: eventId,
+    boardId: input.board.id,
+    tileId: input.tile.id,
+    memberId: input.memberId,
+    sourceKind: input.sourceKind,
+    dedupKey: input.dedupKey,
+    delta: stats.delta,
+    previousCount: stats.previousCount,
+    newCount: stats.nextCount,
+    completedTile: stats.newlyCompleted,
+    completedLineCount: 0,
+    summary: input.summary,
+    metadata: input.metadata ?? null,
+    occurredAt: input.occurredAt,
+  });
+
+const hasRecordedSource = (
+  transaction: BingoTransaction,
+  input: ApplyTileProgressInput,
+) =>
   transaction
-    .insert(bingoProgressEventTable)
+    .select({ id: bingoProgressEventTable.id })
+    .from(bingoProgressEventTable)
+    .where(
+      and(
+        eq(bingoProgressEventTable.tileId, input.tile.id),
+        eq(bingoProgressEventTable.memberId, input.memberId),
+        eq(bingoProgressEventTable.dedupKey, input.dedupKey),
+      ),
+    )
+    .limit(1)
+    .pipe(Effect.map((rows) => rows.length > 0));
+
+const readTileProgress = (
+  transaction: BingoTransaction,
+  tileId: string,
+  memberId: number,
+) =>
+  transaction
+    .select()
+    .from(bingoTileProgressTable)
+    .where(
+      and(
+        eq(bingoTileProgressTable.tileId, tileId),
+        eq(bingoTileProgressTable.memberId, memberId),
+      ),
+    )
+    .limit(1)
+    .pipe(Effect.map((rows) => rows[0] ?? null));
+
+const upsertTileProgress = (
+  transaction: BingoTransaction,
+  input: ApplyTileProgressInput,
+  progress: {
+    readonly currentCount: number;
+    readonly targetCount: number;
+    readonly completedAt: Date | null;
+    readonly manualOverride: boolean;
+  },
+) =>
+  transaction
+    .insert(bingoTileProgressTable)
     .values({
-      id: eventId,
       boardId: input.board.id,
       tileId: input.tile.id,
       memberId: input.memberId,
-      sourceKind: input.sourceKind,
-      dedupKey: input.dedupKey,
-      delta: stats.delta,
-      previousCount: stats.previousCount,
-      newCount: stats.nextCount,
-      completedTile: stats.newlyCompleted,
-      completedLineCount: 0,
-      summary: input.summary,
-      metadata: input.metadata ?? null,
-      occurredAt: input.occurredAt,
+      ...progress,
+      updatedAt: input.occurredAt,
     })
-    .onConflictDoNothing({
-      target: [
-        bingoProgressEventTable.tileId,
-        bingoProgressEventTable.memberId,
-        bingoProgressEventTable.dedupKey,
-      ],
-    })
-    .returning({ id: bingoProgressEventTable.id });
+    .onConflictDoUpdate({
+      target: [bingoTileProgressTable.tileId, bingoTileProgressTable.memberId],
+      set: { ...progress, updatedAt: input.occurredAt },
+    });
 
 const NOT_APPLIED: ApplyTileProgressOutcome = { applied: false };
 
@@ -353,22 +410,15 @@ export const applyBingoTileProgress = Effect.fn("bingo.applyTileProgress")(
     const isManual =
       input.mode.kind === "absolute" && Boolean(input.mode.manualOverride);
 
-    if (isBlockedByLockout(board, tile, memberId, isManual)) {
+    if (!isManual && isBingoTileLockedForMember(board.mode, tile, memberId)) {
       return NOT_APPLIED;
     }
 
-    const existingRows = yield* transaction
-      .select()
-      .from(bingoTileProgressTable)
-      .where(
-        and(
-          eq(bingoTileProgressTable.tileId, tile.id),
-          eq(bingoTileProgressTable.memberId, memberId),
-        ),
-      )
-      .limit(1);
+    if (yield* hasRecordedSource(transaction, input)) {
+      return NOT_APPLIED;
+    }
 
-    const existing = existingRows[0] ?? null;
+    const existing = yield* readTileProgress(transaction, tile.id, memberId);
     const targetCount = tile.condition.targetCount;
     const previousCount = existing?.currentCount ?? 0;
     const wasCompleted = existing !== null && existing.completedAt !== null;
@@ -407,46 +457,21 @@ export const applyBingoTileProgress = Effect.fn("bingo.applyTileProgress")(
 
     const eventId = Bun.randomUUIDv7();
 
-    const insertedEvent = yield* insertProgressEvent(
-      transaction,
-      input,
-      eventId,
-      { delta, previousCount, nextCount, newlyCompleted },
-    );
+    yield* insertProgressEvent(transaction, input, eventId, {
+      delta,
+      previousCount,
+      nextCount,
+      newlyCompleted,
+    });
 
-    if (insertedEvent.length === 0) {
-      return NOT_APPLIED;
-    }
-
-    const completedAt = willBeCompleted
-      ? (existing?.completedAt ?? input.occurredAt)
-      : null;
-
-    yield* transaction
-      .insert(bingoTileProgressTable)
-      .values({
-        boardId: board.id,
-        tileId: tile.id,
-        memberId,
-        currentCount: nextCount,
-        targetCount,
-        completedAt,
-        manualOverride: isManual,
-        updatedAt: input.occurredAt,
-      })
-      .onConflictDoUpdate({
-        target: [
-          bingoTileProgressTable.tileId,
-          bingoTileProgressTable.memberId,
-        ],
-        set: {
-          currentCount: nextCount,
-          targetCount,
-          completedAt,
-          manualOverride: isManual,
-          updatedAt: input.occurredAt,
-        },
-      });
+    yield* upsertTileProgress(transaction, input, {
+      currentCount: nextCount,
+      targetCount,
+      completedAt: willBeCompleted
+        ? (existing?.completedAt ?? input.occurredAt)
+        : null,
+      manualOverride: isManual,
+    });
 
     if (!newlyCompleted) {
       const outcome: ApplyTileProgressOutcome = {

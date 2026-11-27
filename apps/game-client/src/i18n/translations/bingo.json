@@ -17,7 +17,10 @@
   },
   "summary": {
     "tiles": "{{done}}/25 pól",
-    "lines": "{{count}} linii",
+    "lines_one": "{{count}} linia",
+    "lines_few": "{{count}} linie",
+    "lines_many": "{{count}} linii",
+    "lines_other": "{{count}} linii",
     "points": "{{points}} pkt",
     "rank": "Miejsce #{{rank}}"
   },

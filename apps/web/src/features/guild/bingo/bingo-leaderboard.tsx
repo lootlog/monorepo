@@ -56,7 +56,7 @@ export const BingoLeaderboard = ({
                       variant="outline"
                       className="px-1.5 py-0 text-[10px]"
                     >
-                      Ty
+                      {t("bingo.leaderboard.you")}
                     </Badge>
                   ) : null}
                   {entry.isBlackout ? (
@@ -66,16 +66,16 @@ export const BingoLeaderboard = ({
                   ) : null}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  {entry.completedTileCount}/25{" "}
-                  {t("bingo.stats.tiles").toLowerCase()} ·{" "}
-                  {entry.completedLines.length}{" "}
-                  {t("bingo.stats.lines").toLowerCase()}
+                  {t("bingo.units.tiles", { done: entry.completedTileCount })} ·{" "}
+                  {t("bingo.units.lines", {
+                    count: entry.completedLines.length,
+                  })}
                 </div>
               </div>
             </div>
             <div className="shrink-0 text-right">
               <div className="text-sm font-semibold tabular-nums text-foreground">
-                {entry.totalPoints} pkt
+                {t("bingo.units.points", { points: entry.totalPoints })}
               </div>
             </div>
           </button>

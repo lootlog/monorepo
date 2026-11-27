@@ -9,6 +9,7 @@ import {
   type BingoBoardSummaryResponseDtoStatus,
 } from "@lootlog/client/main";
 import { ROUTES } from "@/config/routes";
+import { canManageEvent } from "@/features/guild/events/utils/event-access";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { Badge, type BadgeProps } from "@lootlog/ui/components/badge";
@@ -27,7 +28,7 @@ import { BingoAdminActions } from "./bingo-admin-actions";
 import { BingoBoardGrid } from "./bingo-board-grid";
 import { BingoLeaderboard } from "./bingo-leaderboard";
 import { BingoManualProgressDialog } from "./bingo-manual-progress-dialog";
-import { canManageBingo } from "./bingo-permissions";
+import { BingoMemberStats } from "./bingo-member-stats";
 import { useBingoSocket } from "./use-bingo-socket";
 
 const STATUS_BADGE_VARIANT: Record<
@@ -81,7 +82,7 @@ export const BingoDetailPage = ({ boardId }: BingoDetailPageProps) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: accessPolicy } = useGuildPermissions();
-  const canManage = canManageBingo(accessPolicy);
+  const canManage = canManageEvent(accessPolicy);
 
   const updateBoard = useBingoControllerUpdateBoard();
   const deleteBoard = useBingoControllerDeleteBoard();
@@ -216,36 +217,20 @@ export const BingoDetailPage = ({ boardId }: BingoDetailPageProps) => {
 
       <div className="grid gap-4 xl:grid-cols-12">
         <div className="space-y-3 xl:col-span-8">
+          <BingoMemberStats
+            completedTileCount={completedTileCount}
+            completedLineCount={completedLineCount}
+            totalPoints={totalPoints}
+          />
           <SectionCard className="space-y-3 p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                <span className="font-medium text-foreground">
-                  {isInspectingOther
-                    ? t("bingo.actions.viewingPlayer", {
-                        name: inspectedMemberName,
-                      })
-                    : t("bingo.actions.viewOwnBoard")}
-                </span>
-                <span>·</span>
-                <span>
-                  {t("bingo.stats.tiles")}:{" "}
-                  <strong className="text-foreground">
-                    {completedTileCount}/25
-                  </strong>
-                </span>
-                <span>·</span>
-                <span>
-                  {t("bingo.stats.lines")}:{" "}
-                  <strong className="text-foreground">
-                    {completedLineCount}
-                  </strong>
-                </span>
-                <span>·</span>
-                <span>
-                  {t("bingo.stats.points")}:{" "}
-                  <strong className="text-foreground">{totalPoints}</strong>
-                </span>
-              </div>
+              <span className="text-xs font-medium text-foreground">
+                {isInspectingOther
+                  ? t("bingo.actions.viewingPlayer", {
+                      name: inspectedMemberName,
+                    })
+                  : t("bingo.actions.viewOwnBoard")}
+              </span>
 
               {isInspectingOther ? (
                 <Button

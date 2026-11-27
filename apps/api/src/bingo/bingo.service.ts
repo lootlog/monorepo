@@ -19,15 +19,20 @@ import type {
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
   bingoBoardTable,
+  bingoProgressEventTable,
   bingoTileProgressTable,
   bingoTileTable,
 } from "#src/database/drizzle/bingo.schema";
 import { memberTable } from "#src/database/drizzle/organization.schema";
 import { and, eq, inArray } from "drizzle-orm";
 import { Clock, Effect } from "effect";
+import { isEqual } from "es-toolkit";
 import {
   applyBingoTileProgress,
+  lockBingoBoardForProgress,
+  type BingoBoardRow,
   type BingoTileRow,
+  type BingoTransaction,
 } from "./bingo-progress-writer.js";
 import type { BingoPublisher } from "./bingo-publisher.js";
 import {
@@ -35,6 +40,7 @@ import {
   getBingoBoardDetail,
   listBingoBoards,
   requireBingoBoard,
+  type BingoViewer,
 } from "./bingo-read.js";
 
 const parseOptionalDate = (
@@ -67,6 +73,36 @@ const validateTileCoordinates = (tiles: ReadonlyArray<BingoTileInput>) => {
   return Effect.void;
 };
 
+const hasRecordedProgress = (transaction: BingoTransaction, boardId: string) =>
+  transaction
+    .select({ id: bingoProgressEventTable.id })
+    .from(bingoProgressEventTable)
+    .where(eq(bingoProgressEventTable.boardId, boardId))
+    .limit(1)
+    .pipe(Effect.map((rows) => rows.length > 0));
+
+const changesScoringWithProgress = (
+  board: BingoBoardRow,
+  input: UpdateBingoBoardRequest,
+) =>
+  (input.status === BingoBoardStatus.DRAFT &&
+    board.status !== BingoBoardStatus.DRAFT) ||
+  (input.mode !== undefined && input.mode !== board.mode);
+
+const lockGuildBoard = Effect.fn("bingo.lockGuildBoard")(function* (
+  transaction: BingoTransaction,
+  guildId: string,
+  boardId: string,
+) {
+  const locked = yield* lockBingoBoardForProgress(transaction, boardId);
+
+  if (!locked || locked.board.guildId !== guildId) {
+    return yield* new ResourceNotFoundError("Bingo board not found");
+  }
+
+  return locked;
+});
+
 export const makeBingoService = (
   database: typeof ApiDatabase.Service,
   publisher: BingoPublisher,
@@ -75,15 +111,15 @@ export const makeBingoService = (
 
   const createBoard = Effect.fn("bingo.createBoard")(function* (
     guildId: string,
-    viewerDiscordId: string,
+    viewer: BingoViewer,
     input: CreateBingoBoardRequest,
   ) {
     const now = new Date(yield* Clock.currentTimeMillis);
 
-    const viewer = yield* findBingoViewerMember(
+    const creator = yield* findBingoViewerMember(
       database,
       guildId,
-      viewerDiscordId,
+      viewer.discordId,
     );
 
     const boardId = Bun.randomUUIDv7();
@@ -117,7 +153,7 @@ export const makeBingoService = (
             blackoutBonus: input.blackoutBonus ?? 10,
             startsAt: parseOptionalDate(input.startsAt) ?? null,
             endsAt: parseOptionalDate(input.endsAt) ?? null,
-            createdByMemberId: viewer?.id ?? null,
+            createdByMemberId: creator?.id ?? null,
             createdAt: now,
             updatedAt: now,
           });
@@ -149,22 +185,15 @@ export const makeBingoService = (
       reason: "board_created",
     });
 
-    return yield* getBingoBoardDetail(
-      database,
-      guildId,
-      boardId,
-      viewerDiscordId,
-    );
+    return yield* getBingoBoardDetail(database, guildId, boardId, viewer);
   });
 
   const updateBoard = Effect.fn("bingo.updateBoard")(function* (
     guildId: string,
     boardId: string,
-    viewerDiscordId: string,
+    viewer: BingoViewer,
     input: UpdateBingoBoardRequest,
   ) {
-    yield* requireBingoBoard(database, guildId, boardId);
-
     const now = new Date(yield* Clock.currentTimeMillis);
 
     const patch: Partial<typeof bingoBoardTable.$inferInsert> = {
@@ -209,15 +238,29 @@ export const makeBingoService = (
 
     yield* query(
       "bingo.updateBoard",
-      database
-        .update(bingoBoardTable)
-        .set(patch)
-        .where(
-          and(
-            eq(bingoBoardTable.guildId, guildId),
-            eq(bingoBoardTable.id, boardId),
-          ),
-        ),
+      database.transaction((transaction) =>
+        Effect.gen(function* () {
+          const { board } = yield* lockGuildBoard(
+            transaction,
+            guildId,
+            boardId,
+          );
+
+          if (
+            changesScoringWithProgress(board, input) &&
+            (yield* hasRecordedProgress(transaction, boardId))
+          ) {
+            return yield* new InvalidRequestError(
+              "Board mode and draft status cannot change after progress was recorded",
+            );
+          }
+
+          yield* transaction
+            .update(bingoBoardTable)
+            .set(patch)
+            .where(eq(bingoBoardTable.id, boardId));
+        }),
+      ),
     );
 
     yield* publisher.publishRealtimeUpdate({
@@ -230,7 +273,7 @@ export const makeBingoService = (
       database,
       guildId,
       boardId,
-      viewerDiscordId,
+      viewer,
     );
 
     return detail.board;
@@ -266,10 +309,9 @@ export const makeBingoService = (
   const replaceTiles = Effect.fn("bingo.replaceTiles")(function* (
     guildId: string,
     boardId: string,
-    viewerDiscordId: string,
+    viewer: BingoViewer,
     input: ReplaceBingoTilesRequest,
   ) {
-    yield* requireBingoBoard(database, guildId, boardId);
     yield* validateTileCoordinates(input.tiles);
 
     const now = new Date(yield* Clock.currentTimeMillis);
@@ -278,10 +320,11 @@ export const makeBingoService = (
       "bingo.replaceTiles",
       database.transaction((transaction) =>
         Effect.gen(function* () {
-          const existingTiles = yield* transaction
-            .select()
-            .from(bingoTileTable)
-            .where(eq(bingoTileTable.boardId, boardId));
+          const { tiles: existingTiles } = yield* lockGuildBoard(
+            transaction,
+            guildId,
+            boardId,
+          );
 
           const existingByCoord = new Map<string, BingoTileRow>(
             existingTiles.map((tile) => [`${tile.row}:${tile.col}`, tile]),
@@ -306,6 +349,11 @@ export const makeBingoService = (
             const current = existingByCoord.get(key);
 
             if (current) {
+              const conditionChanged = !isEqual(
+                current.condition,
+                tile.condition,
+              );
+
               yield* transaction
                 .update(bingoTileTable)
                 .set({
@@ -314,17 +362,19 @@ export const makeBingoService = (
                   points: tile.points ?? null,
                   conditionKind: tile.condition.kind,
                   condition: tile.condition,
+                  ...(conditionChanged && {
+                    lockedByMemberId: null,
+                    lockedAt: null,
+                  }),
                   updatedAt: now,
                 })
                 .where(eq(bingoTileTable.id, current.id));
 
-              yield* transaction
-                .update(bingoTileProgressTable)
-                .set({
-                  targetCount: tile.condition.targetCount,
-                  updatedAt: now,
-                })
-                .where(eq(bingoTileProgressTable.tileId, current.id));
+              if (conditionChanged) {
+                yield* transaction
+                  .delete(bingoTileProgressTable)
+                  .where(eq(bingoTileProgressTable.tileId, current.id));
+              }
             } else {
               yield* transaction.insert(bingoTileTable).values({
                 id: Bun.randomUUIDv7(),
@@ -356,40 +406,36 @@ export const makeBingoService = (
       reason: "tiles_updated",
     });
 
-    return yield* getBingoBoardDetail(
-      database,
-      guildId,
-      boardId,
-      viewerDiscordId,
-    );
+    return yield* getBingoBoardDetail(database, guildId, boardId, viewer);
   });
 
   const updateTileProgress = Effect.fn("bingo.updateTileProgress")(function* (
     guildId: string,
     boardId: string,
     tileId: string,
-    viewerDiscordId: string,
+    viewer: BingoViewer,
     input: UpdateBingoTileProgressRequest,
   ) {
-    const board = yield* requireBingoBoard(database, guildId, boardId);
     const now = new Date(yield* Clock.currentTimeMillis);
 
-    const [tiles, memberRows] = yield* Effect.all(
-      [
-        query(
-          "bingo.updateTileProgress.tiles",
-          database
-            .select()
-            .from(bingoTileTable)
-            .where(eq(bingoTileTable.boardId, board.id)),
-        ),
-        query(
-          "bingo.updateTileProgress.member",
-          database
-            .select({
-              id: memberTable.id,
-              name: memberTable.name,
-            })
+    const outcome = yield* query(
+      "bingo.updateTileProgress.tx",
+      database.transaction((transaction) =>
+        Effect.gen(function* () {
+          const { board, tiles } = yield* lockGuildBoard(
+            transaction,
+            guildId,
+            boardId,
+          );
+
+          const tile = tiles.find((candidate) => candidate.id === tileId);
+
+          if (!tile) {
+            return yield* new ResourceNotFoundError("Bingo tile not found");
+          }
+
+          const [member] = yield* transaction
+            .select({ id: memberTable.id, name: memberTable.name })
             .from(memberTable)
             .where(
               and(
@@ -397,55 +443,37 @@ export const makeBingoService = (
                 eq(memberTable.id, input.memberId),
               ),
             )
-            .limit(1),
-        ),
-      ],
-      { concurrency: 2 },
-    );
+            .limit(1);
 
-    const tile = tiles.find((candidate) => candidate.id === tileId);
+          if (!member) {
+            return yield* new ResourceNotFoundError("Guild member not found");
+          }
 
-    if (!tile) {
-      return yield* new ResourceNotFoundError("Bingo tile not found");
-    }
+          const nextCount =
+            input.currentCount ??
+            (input.completed === false ? 0 : tile.condition.targetCount);
 
-    const member = memberRows[0];
-
-    if (!member) {
-      return yield* new ResourceNotFoundError("Guild member not found");
-    }
-
-    const nextCount =
-      input.currentCount ??
-      (input.completed === true
-        ? tile.condition.targetCount
-        : input.completed === false
-          ? 0
-          : tile.condition.targetCount);
-
-    const outcome = yield* query(
-      "bingo.updateTileProgress.tx",
-      database.transaction((transaction) =>
-        applyBingoTileProgress(transaction, {
-          board,
-          boardTiles: tiles,
-          tile,
-          memberId: member.id,
-          memberName: member.name,
-          sourceKind: BingoTileConditionKind.MANUAL,
-          dedupKey: `manual:${Bun.randomUUIDv7()}`,
-          mode: {
-            kind: "absolute",
-            nextCount,
-            forceCompleted: input.completed,
-            manualOverride: true,
-          },
-          summary:
-            input.note?.trim() ||
-            (input.completed === false
-              ? "Cofnięto zaliczenie pola przez administrację"
-              : "Ręczna aktualizacja postępu przez administrację"),
-          occurredAt: now,
+          return yield* applyBingoTileProgress(transaction, {
+            board,
+            boardTiles: tiles,
+            tile,
+            memberId: member.id,
+            memberName: member.name,
+            sourceKind: BingoTileConditionKind.MANUAL,
+            dedupKey: `manual:${Bun.randomUUIDv7()}`,
+            mode: {
+              kind: "absolute",
+              nextCount,
+              forceCompleted: input.completed,
+              manualOverride: true,
+            },
+            summary:
+              input.note?.trim() ||
+              (input.completed === false
+                ? "Cofnięto zaliczenie pola przez administrację"
+                : "Ręczna aktualizacja postępu przez administrację"),
+            occurredAt: now,
+          });
         }),
       ),
     );
@@ -454,25 +482,18 @@ export const makeBingoService = (
       yield* publisher.publishRealtimeUpdate(outcome.realtimeUpdate);
     }
 
-    if (outcome.milestoneNotification) {
-      yield* publisher.publishMilestoneNotification(
-        outcome.milestoneNotification,
-      );
+    if (outcome.milestoneQueued) {
+      yield* publisher.signalMilestones;
     }
 
-    return yield* getBingoBoardDetail(
-      database,
-      guildId,
-      boardId,
-      viewerDiscordId,
-    );
+    return yield* getBingoBoardDetail(database, guildId, boardId, viewer);
   });
 
   return {
-    listBoards: (guildId: string, viewerDiscordId: string) =>
-      listBingoBoards(database, guildId, viewerDiscordId),
-    getBoard: (guildId: string, boardId: string, viewerDiscordId: string) =>
-      getBingoBoardDetail(database, guildId, boardId, viewerDiscordId),
+    listBoards: (guildId: string, viewer: BingoViewer) =>
+      listBingoBoards(database, guildId, viewer),
+    getBoard: (guildId: string, boardId: string, viewer: BingoViewer) =>
+      getBingoBoardDetail(database, guildId, boardId, viewer),
     createBoard,
     updateBoard,
     deleteBoard,

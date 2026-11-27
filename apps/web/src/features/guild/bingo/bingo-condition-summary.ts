@@ -1,6 +1,14 @@
 import type { BingoBoardDetailResponseDtoTilesItemCondition } from "@lootlog/client/main";
 import type { TFunction } from "i18next";
 
+const formatNpcTypes = (
+  npcTypes: ReadonlyArray<string>,
+  t: TFunction,
+): string =>
+  npcTypes
+    .map((type) => t(`npcType.${type}`, { defaultValue: type }))
+    .join("/");
+
 export const formatBingoConditionSummary = (
   condition: BingoBoardDetailResponseDtoTilesItemCondition,
   t: TFunction,
@@ -20,11 +28,7 @@ export const formatBingoConditionSummary = (
       }
 
       if (condition.npcTypes.length > 0) {
-        parts.push(
-          condition.npcTypes
-            .map((type) => t(`npcType.${type}`, { defaultValue: type }))
-            .join("/"),
-        );
+        parts.push(formatNpcTypes(condition.npcTypes, t));
       }
 
       if (condition.npcNamePattern) {
@@ -44,11 +48,7 @@ export const formatBingoConditionSummary = (
       const parts: string[] = [t("bingo.conditionKind.KILL")];
 
       if (condition.npcTypes.length > 0) {
-        parts.push(
-          condition.npcTypes
-            .map((type) => t(`npcType.${type}`, { defaultValue: type }))
-            .join("/"),
-        );
+        parts.push(formatNpcTypes(condition.npcTypes, t));
       }
 
       if (condition.npcNamePattern) {
@@ -74,12 +74,16 @@ export const formatBingoConditionSummary = (
 
     case "BATTLE": {
       const parts: string[] = [
-        condition.matchmakingOnly ? "Otchłań" : t("bingo.conditionKind.BATTLE"),
+        condition.matchmakingOnly
+          ? t("bingo.conditionSummary.abyss")
+          : t("bingo.conditionKind.BATTLE"),
       ];
 
       parts.push(
         condition.metric === "WIN_STREAK"
-          ? `seria ${condition.targetCount}`
+          ? t("bingo.conditionSummary.streak", {
+              count: condition.targetCount,
+            })
           : `×${condition.targetCount}`,
       );
 

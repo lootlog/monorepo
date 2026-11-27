@@ -14060,11 +14060,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/BingoBoardSummaryResponseDto"
         "400":
-          description: RequestValidationError
+          description: HttpErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/RequestValidationError"
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: ReauthenticationRequired | HttpErrorResponse
           content:
@@ -14201,6 +14203,12 @@ paths:
                   - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
                   - $ref: "#/components/schemas/HttpErrorResponse"
         "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
           description: HttpErrorResponse
           content:
             application/json:

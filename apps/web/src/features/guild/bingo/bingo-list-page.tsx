@@ -5,8 +5,10 @@ import {
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { ROUTES } from "@/config/routes";
+import { canManageEvent } from "@/features/guild/events/utils/event-access";
 import { Badge, type BadgeProps } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
+import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { EmptyState } from "@lootlog/ui/components/empty-state";
 import { PageHeader } from "@lootlog/ui/components/page-header";
 import { SectionCard } from "@lootlog/ui/components/section-card";
@@ -16,7 +18,6 @@ import { Grid3x3, Plus, Settings2, Trophy, Users } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { BingoCreateDialog } from "./bingo-create-dialog";
-import { canManageBingo } from "./bingo-permissions";
 import { useBingoSocket } from "./use-bingo-socket";
 
 const STATUS_BADGE_VARIANT: Record<
@@ -33,7 +34,7 @@ export const BingoListPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { data: accessPolicy } = useGuildPermissions();
-  const canManage = canManageBingo(accessPolicy);
+  const canManage = canManageEvent(accessPolicy);
   const [createOpen, setCreateOpen] = useState(false);
 
   useBingoSocket({ guildId });
@@ -96,26 +97,29 @@ export const BingoListPage = () => {
             <SectionCard key={board.id} className="flex flex-col gap-3 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 space-y-1">
-                  <Link
-                    to={ROUTES.guild.bingo.board(guildId, board.id)}
-                    className="block truncate text-base font-semibold text-foreground hover:text-primary"
-                  >
+                  <h2 className="truncate text-base font-semibold text-foreground">
                     {board.name}
-                  </Link>
+                  </h2>
                   {board.description ? (
                     <p className="line-clamp-2 text-xs text-muted-foreground">
                       {board.description}
                     </p>
                   ) : null}
                 </div>
-                <div className="flex shrink-0 items-center gap-1.5">
-                  <Badge variant={STATUS_BADGE_VARIANT[board.status]}>
-                    {t(`bingo.status.${board.status}`)}
-                  </Badge>
-                  <Badge variant="outline">
-                    {t(`bingo.mode.${board.mode}`)}
-                  </Badge>
-                </div>
+                <ChevronLink
+                  render={
+                    <Link to={ROUTES.guild.bingo.board(guildId, board.id)} />
+                  }
+                >
+                  {t("bingo.actions.openBoard")}
+                </ChevronLink>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-1.5">
+                <Badge variant={STATUS_BADGE_VARIANT[board.status]}>
+                  {t(`bingo.status.${board.status}`)}
+                </Badge>
+                <Badge variant="outline">{t(`bingo.mode.${board.mode}`)}</Badge>
               </div>
 
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
@@ -130,13 +134,22 @@ export const BingoListPage = () => {
                 </span>
                 <span className="inline-flex items-center gap-1 font-medium text-foreground">
                   <Trophy className="size-3.5 text-amber-500" />
-                  {board.viewerCompletedTiles}/25 · {board.viewerCompletedLines}{" "}
-                  linii · {board.viewerTotalPoints} pkt
+                  {t("bingo.units.tiles", {
+                    done: board.viewerCompletedTiles,
+                  })}{" "}
+                  ·{" "}
+                  {t("bingo.units.lines", {
+                    count: board.viewerCompletedLines,
+                  })}{" "}
+                  ·{" "}
+                  {t("bingo.units.points", {
+                    points: board.viewerTotalPoints,
+                  })}
                 </span>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-1">
-                {canManage ? (
+              {canManage ? (
+                <div className="flex items-center justify-end gap-2 pt-1">
                   <Button
                     size="sm"
                     variant="outline"
@@ -148,17 +161,8 @@ export const BingoListPage = () => {
                   >
                     {t("bingo.edit")}
                   </Button>
-                ) : null}
-                <Button
-                  size="sm"
-                  nativeButton={false}
-                  render={
-                    <Link to={ROUTES.guild.bingo.board(guildId, board.id)} />
-                  }
-                >
-                  {t("bingo.actions.viewOwnBoard")}
-                </Button>
-              </div>
+                </div>
+              ) : null}
             </SectionCard>
           ))}
         </div>

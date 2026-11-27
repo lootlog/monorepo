@@ -1,5 +1,13 @@
 import { adapterOperation } from "@lootlog/instrumentation/operation";
+import {
+  AccessRequirement,
+  createAccessPolicy,
+} from "@lootlog/domain/access-policy";
 import { calculateMemberBingoScore } from "@lootlog/domain/bingo";
+import { canViewLoot } from "@lootlog/domain/loot-visibility";
+import { canReadHeroSighting } from "@lootlog/domain/npc-permissions";
+import { BingoTileConditionKind } from "@lootlog/schema/bingo";
+import type { Capability } from "@lootlog/schema/permissions";
 import { ResourceNotFoundError } from "@lootlog/protocol/http/errors";
 import type {
   BingoActivityEntry,
@@ -18,13 +26,76 @@ import {
   bingoTileProgressTable,
   bingoTileTable,
 } from "#src/database/drizzle/bingo.schema";
-import { memberTable } from "#src/database/drizzle/organization.schema";
+import {
+  memberTable,
+  memberToRoleTable,
+  roleTable,
+} from "#src/database/drizzle/organization.schema";
+import { toLootVisibilityRoles } from "#src/loots/loot-visibility";
 import { and, asc, desc, eq, inArray } from "drizzle-orm";
-import { Effect } from "effect";
+import { Effect, Option, Schema } from "effect";
 import { groupBy } from "es-toolkit";
 import type { BingoBoardRow, BingoTileRow } from "./bingo-progress-writer.js";
 
 const RECENT_ACTIVITY_LIMIT = 40;
+
+export type BingoViewer = {
+  readonly discordId: string;
+  readonly permissions: ReadonlyArray<Capability>;
+};
+
+type ViewerRole = Pick<
+  typeof roleTable.$inferSelect,
+  "id" | "permissions" | "lvlRangeFrom" | "lvlRangeTo"
+>;
+
+const decodeSourceNpcs = Schema.decodeUnknownOption(
+  Schema.Struct({
+    npcs: Schema.Array(
+      Schema.Struct({
+        type: Schema.NullOr(Schema.String),
+        lvl: Schema.NullOr(Schema.Finite),
+      }),
+    ),
+  }),
+);
+
+const canViewActivitySource = (
+  row: typeof bingoProgressEventTable.$inferSelect,
+  viewer: BingoViewer,
+  roles: ReadonlyArray<ViewerRole>,
+): boolean => {
+  if (
+    row.sourceKind !== BingoTileConditionKind.LOOT &&
+    row.sourceKind !== BingoTileConditionKind.KILL &&
+    row.sourceKind !== BingoTileConditionKind.HERO_SIGHTING
+  ) {
+    return true;
+  }
+
+  const npcs = Option.match(decodeSourceNpcs(row.metadata), {
+    onNone: () => [],
+    onSome: (metadata) => metadata.npcs,
+  });
+
+  if (row.sourceKind === BingoTileConditionKind.HERO_SIGHTING) {
+    return (
+      createAccessPolicy({ capabilities: viewer.permissions }).allowsAny(
+        AccessRequirement.ADMINISTER,
+      ) ||
+      (npcs.length > 0 &&
+        npcs.every(
+          ({ lvl }) => lvl !== null && canReadHeroSighting(roles, lvl),
+        ))
+    );
+  }
+
+  return canViewLoot({
+    permissions: viewer.permissions,
+    roles: toLootVisibilityRoles(roles),
+    npcs: npcs.map(({ type, lvl }) => ({ type, level: lvl })),
+  });
+};
 
 type MemberRow = Pick<
   typeof memberTable.$inferSelect,
@@ -289,12 +360,12 @@ export const requireBingoBoard = (
 export const listBingoBoards = Effect.fn("bingo.listBoards")(function* (
   database: typeof ApiDatabase.Service,
   guildId: string,
-  viewerDiscordId: string,
+  bingoViewer: BingoViewer,
 ) {
   const viewer = yield* findBingoViewerMember(
     database,
     guildId,
-    viewerDiscordId,
+    bingoViewer.discordId,
   );
 
   const boards = yield* query(
@@ -365,15 +436,31 @@ export const getBingoBoardDetail = Effect.fn("bingo.getBoard")(function* (
   database: typeof ApiDatabase.Service,
   guildId: string,
   boardId: string,
-  viewerDiscordId: string,
+  bingoViewer: BingoViewer,
 ) {
   const board = yield* requireBingoBoard(database, guildId, boardId);
 
   const viewer = yield* findBingoViewerMember(
     database,
     guildId,
-    viewerDiscordId,
+    bingoViewer.discordId,
   );
+
+  const viewerRoles = viewer
+    ? yield* query(
+        "bingo.getBoard.viewerRoles",
+        database
+          .select({
+            id: roleTable.id,
+            permissions: roleTable.permissions,
+            lvlRangeFrom: roleTable.lvlRangeFrom,
+            lvlRangeTo: roleTable.lvlRangeTo,
+          })
+          .from(memberToRoleTable)
+          .innerJoin(roleTable, eq(roleTable.id, memberToRoleTable.B))
+          .where(eq(memberToRoleTable.A, viewer.id)),
+      )
+    : [];
 
   const [tiles, progressRows, activityRows] = yield* Effect.all(
     [
@@ -417,7 +504,11 @@ export const getBingoBoardDetail = Effect.fn("bingo.getBoard")(function* (
     memberIds.add(progress.memberId);
   }
 
-  for (const activity of activityRows) {
+  const visibleActivityRows = activityRows.filter((row) =>
+    canViewActivitySource(row, bingoViewer, viewerRoles),
+  );
+
+  for (const activity of visibleActivityRows) {
     memberIds.add(activity.memberId);
   }
 
@@ -442,7 +533,7 @@ export const getBingoBoardDetail = Effect.fn("bingo.getBoard")(function* (
     viewer,
     tiles,
     progressRows,
-    activityRows,
+    activityRows: visibleActivityRows,
     members,
   });
 });

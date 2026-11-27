@@ -1,3 +1,4 @@
+import { isBingoTileLockedForMember } from "@lootlog/domain/bingo";
 import type {
   BingoBoardDetailResponseDtoMemberProgressItem,
   BingoBoardDetailResponseDtoTilesItem,
@@ -6,30 +7,10 @@ import type {
 import { Badge } from "@lootlog/ui/components/badge";
 import { cn } from "cn";
 import type { TFunction } from "i18next";
-import {
-  CheckCircle2,
-  Crown,
-  Flame,
-  Hand,
-  Lock,
-  Plus,
-  Radar,
-  Skull,
-  Sparkles,
-  Swords,
-} from "lucide-react";
+import { CheckCircle2, Crown, Flame, Lock, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { BINGO_CONDITION_KINDS } from "./bingo-condition-kinds";
 import { formatBingoConditionSummary } from "./bingo-condition-summary";
-
-type ConditionKind = BingoBoardDetailResponseDtoTilesItem["conditionKind"];
-
-const CONDITION_ICON = {
-  LOOT: Sparkles,
-  KILL: Skull,
-  HERO_SIGHTING: Radar,
-  BATTLE: Swords,
-  MANUAL: Hand,
-} as const satisfies Record<ConditionKind, typeof Sparkles>;
 
 type BingoBoardCellProps = {
   readonly row: number;
@@ -74,10 +55,11 @@ const computeTileViewState = (
   const targetCount = tile.condition.targetCount;
   const currentCount = progress?.currentCount ?? 0;
 
-  const isLockedByOther =
-    mode === "LOCKOUT" &&
-    tile.lockedByMemberId !== null &&
-    tile.lockedByMemberId !== selectedMemberId;
+  const isLockedByOther = isBingoTileLockedForMember(
+    mode,
+    tile,
+    selectedMemberId,
+  );
 
   const isCompletedBySelected =
     progress !== null && progress.completedAt !== null && !isLockedByOther;
@@ -154,13 +136,13 @@ export const BingoBoardCell = ({
             : t("bingo.board.emptyCell")}
         </span>
         <span className="text-[10px] text-muted-foreground/70">
-          R{row + 1} · C{col + 1}
+          {t("bingo.board.coord", { row: row + 1, col: col + 1 })}
         </span>
       </button>
     );
   }
 
-  const Icon = CONDITION_ICON[tile.conditionKind];
+  const Icon = BINGO_CONDITION_KINDS[tile.conditionKind].icon;
 
   const view = computeTileViewState(tile, {
     mode,
@@ -196,7 +178,7 @@ export const BingoBoardCell = ({
             <Lock className="size-3.5 text-muted-foreground" />
           ) : null}
           <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
-            {view.tilePoints} pkt
+            {t("bingo.units.points", { points: view.tilePoints })}
           </Badge>
         </div>
       </div>
@@ -212,9 +194,7 @@ export const BingoBoardCell = ({
 
       {editable ? (
         <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-          <span>
-            R{row + 1} · C{col + 1}
-          </span>
+          <span>{t("bingo.board.coord", { row: row + 1, col: col + 1 })}</span>
           <span>{t("bingo.board.clickToConfigure")}</span>
         </div>
       ) : (

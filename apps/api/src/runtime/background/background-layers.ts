@@ -37,7 +37,7 @@ import { RecordsServices } from "#src/runtime/features/records";
 import { NotificationsServices } from "#src/runtime/features/notifications";
 import { GuildDiscordSync } from "#src/runtime/features/organizations";
 import { MemberServices } from "#src/runtime/features/members";
-import { BingoEvaluator } from "#src/bingo/bingo-data";
+import { BingoEvaluator, BingoOutboxes } from "#src/bingo/bingo-data";
 
 const decodeHeroSighting = Schema.decodeUnknownEffect(HeroSightingResponse);
 
@@ -52,6 +52,9 @@ export const RabbitConsumers = Layer.effectDiscard(
 
     yield* runLootPublications.pipe(Effect.forkScoped);
     yield* runLootDrawAnnouncements.pipe(Effect.forkScoped);
+    const bingoOutboxes = yield* BingoOutboxes;
+    yield* bingoOutboxes.runMilestones.pipe(Effect.forkScoped);
+    yield* bingoOutboxes.runKills.pipe(Effect.forkScoped);
     const readyRooms = yield* ReadyRoomData;
     const guildSync = yield* GuildDiscordSync;
     const { memberDelivery } = yield* MemberServices;

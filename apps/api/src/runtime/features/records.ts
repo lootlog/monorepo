@@ -21,7 +21,7 @@ import {
   makeLootPublicationDispatcher,
   makeLootSnapshotReader,
 } from "#src/loots/submission/loot-publication-outbox";
-import { makeOutboxWorker } from "#src/shared/outbox-worker";
+import { makeOutboxWorker } from "@lootlog/database/outbox";
 import { makeLootDrawAnnouncementDispatcher } from "#src/loots/loot-draw-announcement-outbox";
 import { makeLootSubmissionAcceptance } from "#src/loots/submission/loot-submission-acceptance.service";
 import {
@@ -35,7 +35,8 @@ import { DependencyUnavailableError } from "@lootlog/protocol/http/errors";
 import { RabbitMessaging, eventMessage } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Context, Effect, Layer } from "effect";
-import { BingoEvaluator } from "#src/bingo/bingo-data";
+import { BingoOutboxes } from "#src/bingo/bingo-data";
+import { enqueueBingoKill } from "#src/bingo/bingo-evaluator";
 import { recordsDataLayer } from "#src/http-api/access/records.data-layer";
 import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
 
@@ -57,7 +58,7 @@ export const recordsServicesLive = Layer.effect(
     const redis = yield* ApiRedis;
     const rabbit = yield* RabbitMessaging;
     const database = yield* ApiDatabase;
-    const bingoEvaluator = yield* BingoEvaluator;
+    const bingoOutboxes = yield* BingoOutboxes;
     const lootStats = new LootStatsService(database, redis);
     const locks = makeRedisLockManager(redis);
 
@@ -188,23 +189,7 @@ export const recordsServicesLive = Layer.effect(
                   ),
                 ),
               ),
-          (kill) =>
-            bingoEvaluator
-              .evaluateKill({
-                guildId: kill.guildId,
-                memberId: kill.memberId,
-                world: kill.world,
-                npcId: kill.npcId,
-                npcName: kill.npcName,
-                npcType: kill.npcType,
-                npcLvl: kill.npcLvl,
-                killedAt: kill.killedAt,
-              })
-              .pipe(
-                Effect.catch((error) =>
-                  Effect.logWarning("Bingo kill evaluation failed", { error }),
-                ),
-              ),
+          { enqueue: enqueueBingoKill, committed: bingoOutboxes.signalKills },
         ),
         guildKillQueries: makeGuildKillQueries(killStatsPersistence, {
           getOrSetStale: (key, schema, load, freshSeconds) =>

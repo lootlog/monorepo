@@ -38,7 +38,8 @@
     "participants": "Uczestnicy",
     "configuredTiles": "Skonfigurowane pola",
     "worldAny": "Wszystkie światy",
-    "blackout": "Blackout!"
+    "blackout": "Blackout!",
+    "tilesOfTotal": "z {{total}} pól"
   },
   "actions": {
     "start": "Rozpocznij Bingo",
@@ -58,7 +59,8 @@
     "cancel": "Anuluj",
     "createBoard": "Utwórz planszę",
     "creating": "Tworzenie...",
-    "saving": "Zapisywanie..."
+    "saving": "Zapisywanie...",
+    "openBoard": "Otwórz planszę"
   },
   "createDialog": {
     "title": "Utwórz nowe Clan Bingo",
@@ -127,7 +129,8 @@
     "progress": "{{current}}/{{target}}",
     "completed": "Zaliczone",
     "streak": "Seria: {{current}}/{{target}}",
-    "unconfiguredHint": "Plansza nie ma jeszcze skonfigurowanych pól."
+    "unconfiguredHint": "Plansza nie ma jeszcze skonfigurowanych pól.",
+    "coord": "W{{row}} · K{{col}}"
   },
   "leaderboard": {
     "title": "Ranking solo",
@@ -136,7 +139,8 @@
     "player": "Gracz",
     "tiles": "Pola",
     "lines": "Linie",
-    "points": "Punkty"
+    "points": "Punkty",
+    "you": "Ty"
   },
   "activity": {
     "title": "Postępy na żywo",
@@ -151,5 +155,17 @@
     "tilesSaved": "Zapisano konfigurację planszy 5×5",
     "progressUpdated": "Zaktualizowano postęp gracza",
     "error": "Nie udało się wykonać operacji"
+  },
+  "units": {
+    "points": "{{points}} pkt",
+    "tiles": "{{done}}/25 pól",
+    "lines_one": "{{count}} linia",
+    "lines_few": "{{count}} linie",
+    "lines_many": "{{count}} linii",
+    "lines_other": "{{count}} linii"
+  },
+  "conditionSummary": {
+    "abyss": "Otchłań",
+    "streak": "seria {{count}}"
   }
 }

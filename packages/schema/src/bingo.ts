@@ -201,20 +201,3 @@ export const BingoMilestoneNotificationEventSchema = Schema.Struct({
 
 export type BingoMilestoneNotificationEvent =
   typeof BingoMilestoneNotificationEventSchema.Type;
-
-export const BattleRecordedV1Schema = Schema.Struct({
-  version: Schema.Literal(1),
-  battleId: Schema.NonEmptyString,
-  userId: Schema.NonEmptyString,
-  accountId: Schema.NonEmptyString,
-  characterId: Schema.NonEmptyString,
-  world: Schema.NonEmptyString,
-  battleType: Schema.NonEmptyString,
-  matchmaking: Schema.Boolean,
-  won: Schema.Boolean,
-  unfinished: Schema.Boolean,
-  hasFlee: Schema.Boolean,
-  occurredAt: Schema.NonEmptyString,
-});
-
-export type BattleRecordedV1 = typeof BattleRecordedV1Schema.Type;

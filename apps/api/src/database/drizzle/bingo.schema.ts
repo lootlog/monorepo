@@ -1,5 +1,8 @@
 import type { JsonValue } from "#src/database/json";
-import type { BingoTileCondition } from "@lootlog/schema/bingo";
+import type {
+  BingoMilestoneNotificationEvent,
+  BingoTileCondition,
+} from "@lootlog/schema/bingo";
 import { sql } from "drizzle-orm";
 import {
   boolean,
@@ -16,7 +19,7 @@ import {
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
-import { guildTable, memberTable } from "./organization.schema.js";
+import { guildTable, memberTable, npcTypeEnum } from "./organization.schema.js";
 
 export const bingoBoardModeEnum = pgEnum("BingoBoardMode", ["RACE", "LOCKOUT"]);
 
@@ -231,5 +234,66 @@ export const bingoProgressEventTable = pgTable(
     })
       .onDelete("cascade")
       .onUpdate("cascade"),
+  ],
+);
+
+export const bingoMilestoneOutboxTable = pgTable(
+  "BingoMilestoneOutbox",
+  {
+    id: serial("id").primaryKey(),
+    guildId: text("guildId").notNull(),
+    event: jsonb("event").$type<BingoMilestoneNotificationEvent>().notNull(),
+    lastAttemptAt: timestamp("lastAttemptAt", { precision: 3 }),
+    createdAt: timestamp("createdAt", { precision: 3 }).defaultNow().notNull(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.guildId],
+      foreignColumns: [guildTable.id],
+      name: "BingoMilestoneOutbox_guildId_fkey",
+    })
+      .onDelete("cascade")
+      .onUpdate("cascade"),
+    index("BingoMilestoneOutbox_lastAttemptAt_id_idx").on(
+      table.lastAttemptAt.asc().nullsFirst(),
+      table.id.asc(),
+    ),
+  ],
+);
+
+export const bingoKillOutboxTable = pgTable(
+  "BingoKillOutbox",
+  {
+    id: serial("id").primaryKey(),
+    guildId: text("guildId").notNull(),
+    memberId: integer("memberId").notNull(),
+    world: text("world").notNull(),
+    npcId: integer("npcId").notNull(),
+    npcName: text("npcName").notNull(),
+    npcType: npcTypeEnum("npcType").notNull(),
+    npcLvl: integer("npcLvl").notNull(),
+    killedAt: timestamp("killedAt", { mode: "date", precision: 3 }).notNull(),
+    lastAttemptAt: timestamp("lastAttemptAt", { precision: 3 }),
+    createdAt: timestamp("createdAt", { precision: 3 }).defaultNow().notNull(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.guildId],
+      foreignColumns: [guildTable.id],
+      name: "BingoKillOutbox_guildId_fkey",
+    })
+      .onDelete("cascade")
+      .onUpdate("cascade"),
+    foreignKey({
+      columns: [table.memberId],
+      foreignColumns: [memberTable.id],
+      name: "BingoKillOutbox_memberId_fkey",
+    })
+      .onDelete("cascade")
+      .onUpdate("cascade"),
+    index("BingoKillOutbox_lastAttemptAt_id_idx").on(
+      table.lastAttemptAt.asc().nullsFirst(),
+      table.id.asc(),
+    ),
   ],
 );

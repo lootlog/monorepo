@@ -1,28 +1,20 @@
-import { useEffect, useEffectEvent, useRef } from "react";
+import { useEffect, useEffectEvent } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { HeroSightingResponseDto } from "@lootlog/client/main";
 import { useSocket } from "@/contexts/socket-context";
+import { useReconnectCatchUp } from "@/hooks/use-reconnect-catch-up";
 import { queryKeys } from "@/lib/query-keys";
 import { upsertHeroSightings } from "@/hooks/api/hero-sightings-cache";
 
 export const useHeroSightingsSocket = () => {
-  const { socket, connected, joined, status } = useSocket();
+  const { socket, connected, joined } = useSocket();
   const queryClient = useQueryClient();
-  const needsCatchUp = useRef(false);
 
   const handleUpdate = useEffectEvent((sighting: HeroSightingResponseDto) => {
     upsertHeroSightings(queryClient, [sighting]);
   });
 
-  const refreshAfterReconnect = useEffectEvent(() => {
-    const queryKey = queryKeys.allHeroSightings();
-    void queryClient.cancelQueries({ queryKey });
-    void queryClient.invalidateQueries({ queryKey });
-  });
-
   useEffect(() => {
-    if (status === "unreachable") needsCatchUp.current = true;
-
     if (!connected || !joined || !socket) return;
 
     const onUpdate = (sighting: HeroSightingResponseDto) =>
@@ -30,11 +22,14 @@ export const useHeroSightingsSocket = () => {
 
     socket.on("hero-sighting.updated", onUpdate);
 
-    if (needsCatchUp.current) refreshAfterReconnect();
-    needsCatchUp.current = true;
-
     return () => {
       socket.off("hero-sighting.updated", onUpdate);
     };
-  }, [connected, joined, socket, status]);
+  }, [connected, joined, socket]);
+
+  useReconnectCatchUp(() => {
+    const queryKey = queryKeys.allHeroSightings();
+    void queryClient.cancelQueries({ queryKey });
+    void queryClient.invalidateQueries({ queryKey });
+  });
 };

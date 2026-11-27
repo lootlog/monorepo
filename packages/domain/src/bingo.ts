@@ -59,19 +59,64 @@ export const BINGO_LINES: readonly BingoLineDefinition[] = [
   },
 ];
 
-const coordKey = (row: number, col: number) => `${row}:${col}`;
+export const BINGO_GRID_COORDS: readonly BingoGridCoord[] = Array.from(
+  { length: BINGO_BOARD_SIZE * BINGO_BOARD_SIZE },
+  (_, index) => ({
+    row: Math.floor(index / BINGO_BOARD_SIZE),
+    col: index % BINGO_BOARD_SIZE,
+  }),
+);
+
+export const bingoCoordKey = ({ row, col }: BingoGridCoord) => `${row}:${col}`;
+
+export const indexBingoTilesByCoord = <Tile extends BingoGridCoord>(
+  tiles: ReadonlyArray<Tile>,
+): ReadonlyMap<string, Tile> =>
+  new Map(tiles.map((tile) => [bingoCoordKey(tile), tile]));
+
+export const isBingoTileLockedForMember = (
+  mode: BingoBoardMode,
+  tile: { readonly lockedByMemberId: number | null },
+  memberId: number,
+): boolean =>
+  mode === BingoBoardMode.LOCKOUT &&
+  tile.lockedByMemberId !== null &&
+  tile.lockedByMemberId !== memberId;
 
 export const computeCompletedBingoLines = (
   completedCoords: ReadonlyArray<BingoGridCoord>,
 ): BingoLineId[] => {
-  const completedSet = new Set(
-    completedCoords.map(({ row, col }) => coordKey(row, col)),
-  );
+  const completedSet = new Set(completedCoords.map(bingoCoordKey));
 
   return BINGO_LINES.flatMap((line) =>
-    line.coords.every(({ row, col }) => completedSet.has(coordKey(row, col)))
+    line.coords.every((coord) => completedSet.has(bingoCoordKey(coord)))
       ? [line.id]
       : [],
+  );
+};
+
+export const findBingoCompletedLineCoordKeys = <
+  Tile extends BingoGridCoord & { readonly lockedByMemberId: number | null },
+>(
+  mode: BingoBoardMode,
+  memberId: number,
+  tiles: ReadonlyArray<Tile>,
+  isCompleted: (tile: Tile) => boolean,
+): ReadonlySet<string> => {
+  const completedLineIds = new Set(
+    computeCompletedBingoLines(
+      tiles.filter(
+        (tile) =>
+          isCompleted(tile) &&
+          !isBingoTileLockedForMember(mode, tile, memberId),
+      ),
+    ),
+  );
+
+  return new Set(
+    BINGO_LINES.flatMap((line) =>
+      completedLineIds.has(line.id) ? line.coords.map(bingoCoordKey) : [],
+    ),
   );
 };
 
@@ -375,13 +420,7 @@ export const calculateMemberBingoScore = (
 
     if (!tile) continue;
 
-    if (
-      config.mode === BingoBoardMode.LOCKOUT &&
-      tile.lockedByMemberId !== null &&
-      tile.lockedByMemberId !== memberId
-    ) {
-      continue;
-    }
+    if (isBingoTileLockedForMember(config.mode, tile, memberId)) continue;
 
     completedTileIds.push(tile.id);
     completedCoords.push({ row: tile.row, col: tile.col });

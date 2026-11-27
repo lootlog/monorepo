@@ -13,7 +13,8 @@
     "./sliding-window-rate-limit": "./src/sliding-window-rate-limit.ts",
     "./bun-redis": "./src/bun-redis.ts",
     "./bullmq": "./src/bullmq.ts",
-    "./returned-row": "./src/returned-row.ts"
+    "./returned-row": "./src/returned-row.ts",
+    "./outbox": "./src/outbox.ts"
   },
   "scripts": {
     "lint": "oxlint src test && effect-tsgo diagnostics --project tsconfig.json --severity error,warning --strict",

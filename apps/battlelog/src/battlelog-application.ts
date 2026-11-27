@@ -1,5 +1,10 @@
 import { eventMessage, RabbitMessaging } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
+import {
+  makeOutboxDispatcher,
+  makeOutboxWorker,
+} from "@lootlog/database/outbox";
+import { battleRecordedOutbox } from "#src/database/schema";
 import { OperationError } from "@lootlog/instrumentation/operation";
 import { acquireBullQueue, acquireBullWorker } from "@lootlog/database/bullmq";
 import { reconnectingBunRedisLayer } from "@lootlog/database/bun-redis";
@@ -71,6 +76,27 @@ export class BattlelogApplication extends Context.Service<
 
       const metadataService = makeBattleMetadata(drizzle, redis, read);
 
+      const battleRecordedFacts = yield* makeOutboxWorker(
+        "Battle recorded",
+        makeOutboxDispatcher(
+          "BattleRecordedOutbox",
+          drizzle,
+          battleRecordedOutbox,
+          (row) =>
+            rabbit.publish(
+              eventMessage(
+                RabbitRoutingKey.BATTLELOG_BATTLE_RECORDED_V1,
+                row.event,
+                {
+                  messageId: `battle-recorded:${row.event.battleId}`,
+                },
+              ),
+            ),
+        )(),
+      );
+
+      yield* battleRecordedFacts.run.pipe(Effect.forkScoped);
+
       const battlesService = makeBattles(
         drizzle,
         redis,
@@ -79,25 +105,7 @@ export class BattlelogApplication extends Context.Service<
         makeBattleListFilter(drizzle),
         metadataService,
         undefined,
-        (event) =>
-          rabbit
-            .publish(
-              eventMessage(
-                RabbitRoutingKey.BATTLELOG_BATTLE_RECORDED_V1,
-                event,
-                {
-                  messageId: `battle-recorded:${event.battleId}`,
-                },
-              ),
-            )
-            .pipe(
-              Effect.asVoid,
-              Effect.catch((error) =>
-                Effect.logWarning("Failed to publish battle recorded event", {
-                  error,
-                }),
-              ),
-            ),
+        battleRecordedFacts.signal,
       );
 
       const queue = yield* acquireBullQueue<DeleteUserBattlesJobData>(

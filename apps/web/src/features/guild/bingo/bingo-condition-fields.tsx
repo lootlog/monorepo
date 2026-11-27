@@ -5,6 +5,7 @@ import { Button } from "@lootlog/ui/components/button";
 import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 import { Switch } from "@lootlog/ui/components/switch";
+import { xor } from "es-toolkit";
 import { useTranslation } from "react-i18next";
 
 const RARITY_OPTIONS: readonly ItemRarityEnum[] = [
@@ -52,27 +53,11 @@ export const BingoConditionFields = ({
   if (condition.kind === "MANUAL") return null;
 
   if (condition.kind === "LOOT") {
-    const toggleRarity = (rarity: ItemRarityEnum) => {
-      const exists = condition.rarities.includes(rarity);
+    const toggleRarity = (rarity: ItemRarityEnum) =>
+      onChange({ ...condition, rarities: xor(condition.rarities, [rarity]) });
 
-      onChange({
-        ...condition,
-        rarities: exists
-          ? condition.rarities.filter((entry) => entry !== rarity)
-          : [...condition.rarities, rarity],
-      });
-    };
-
-    const toggleNpcType = (npcType: NpcTypeEnum) => {
-      const exists = condition.npcTypes.includes(npcType);
-
-      onChange({
-        ...condition,
-        npcTypes: exists
-          ? condition.npcTypes.filter((entry) => entry !== npcType)
-          : [...condition.npcTypes, npcType],
-      });
-    };
+    const toggleNpcType = (npcType: NpcTypeEnum) =>
+      onChange({ ...condition, npcTypes: xor(condition.npcTypes, [npcType]) });
 
     return (
       <div className="space-y-4 rounded-lg border border-border/70 bg-muted/20 p-3.5">
@@ -180,16 +165,8 @@ export const BingoConditionFields = ({
   }
 
   if (condition.kind === "KILL") {
-    const toggleNpcType = (npcType: NpcTypeEnum) => {
-      const exists = condition.npcTypes.includes(npcType);
-
-      onChange({
-        ...condition,
-        npcTypes: exists
-          ? condition.npcTypes.filter((entry) => entry !== npcType)
-          : [...condition.npcTypes, npcType],
-      });
-    };
+    const toggleNpcType = (npcType: NpcTypeEnum) =>
+      onChange({ ...condition, npcTypes: xor(condition.npcTypes, [npcType]) });
 
     return (
       <div className="space-y-4 rounded-lg border border-border/70 bg-muted/20 p-3.5">

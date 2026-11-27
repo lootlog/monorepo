@@ -1,7 +1,7 @@
 import { makeJsonCodec } from "@lootlog/database/redis-cache-fill";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { makeEventHeroCheckDispatcher } from "#src/events/kills/event-hero-check-outbox";
-import { makeOutboxWorker } from "#src/shared/outbox-worker";
+import { makeOutboxWorker } from "@lootlog/database/outbox";
 import { makeRedisLockManager } from "#src/redis/redlock";
 import { ResourceConflictError } from "@lootlog/protocol/http/errors";
 import { ErrorKey } from "#src/timers/error-key";

@@ -92,6 +92,31 @@ Lootloga są brane z serwera Discord i aktualizują się same.
   title="Lootlog · Statystyki"
 />
 
+## Clan Bingo
+
+**Clan Bingo** to plansza 5×5, na której każdy członek zbiera własny postęp.
+Pola zaliczają się same, z danych z gry: łupów, bić, wykryć herosów i walk PvP
+albo w Otchłani. Pole typu **Ręczne** zalicza administracja.
+
+- **Wyścig solo**: każdy gra na całej planszy. Punkty są za pola, linie
+  (12 możliwych: wiersze, kolumny i przekątne), pełną planszę i opcjonalnie
+  za pierwsze zaliczenie pola.
+- **Lockout**: kto pierwszy zaliczy pole, zajmuje je. Pozostali nie zbierają
+  już na nim postępu.
+- Postęp liczy się tylko, gdy plansza jest **Aktywna**, w jej oknie czasowym
+  i na wybranym świecie. Łup liczy się według czasu zdobycia, nie zapisu.
+- Trybu planszy nie zmienisz, a do szkicu jej nie cofniesz, gdy ktoś ma już
+  postęp. Zakończoną planszę możesz otworzyć ponownie.
+- Zmiana warunku pola zeruje postęp na tym polu i zwalnia je w trybie
+  Lockout. Zmiana nazwy, opisu albo punktów postęp zachowuje.
+- Aktywność planszy pokazuje tylko wpisy, których źródło (łup, bicie,
+  wykrycie herosa) widzisz zgodnie ze swoją rolą.
+
+Planszę widzi każdy z `LOOTLOG_ACCESS`. Tworzenie, konfiguracja i ręczna
+zmiana postępu wymagają `LOOTLOG_MANAGE` albo `LOOTLOG_EVENTS_MANAGE`. W grze
+plansza jest pod przyciskiem **Bingo** w szybkim dostępie, a na Discordzie
+pod komendą `/bingo`.
+
 ## Dokumenty
 
 **Dokumenty** to wspólne notatki grupy: zasady, rejestry, depozyty.

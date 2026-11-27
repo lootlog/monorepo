@@ -1,4 +1,9 @@
-import { BINGO_LINES, computeCompletedBingoLines } from "@lootlog/domain/bingo";
+import {
+  BINGO_GRID_COORDS,
+  bingoCoordKey,
+  findBingoCompletedLineCoordKeys,
+  indexBingoTilesByCoord,
+} from "@lootlog/domain/bingo";
 import type {
   BingoBoardDetailResponseDtoMemberProgressItem,
   BingoBoardDetailResponseDtoTilesItem,
@@ -27,11 +32,6 @@ type BingoBoardGridProps = {
   ) => void;
 };
 
-const COORDS = Array.from({ length: 25 }, (_, index) => ({
-  row: Math.floor(index / 5),
-  col: index % 5,
-}));
-
 export const BingoBoardGrid = ({
   tiles,
   mode,
@@ -42,40 +42,20 @@ export const BingoBoardGrid = ({
   selectedCoord = null,
   onSelectCell,
 }: BingoBoardGridProps) => {
-  const tileByCoord = new Map(
-    tiles.map((tile) => [`${tile.row}:${tile.col}`, tile]),
-  );
+  const tileByCoord = indexBingoTilesByCoord(tiles);
 
-  const completedCoords = tiles.flatMap((tile) => {
-    const progress = progressByTileId.get(tile.id);
-
-    if (!progress || progress.completedAt === null) return [];
-
-    if (
-      mode === "LOCKOUT" &&
-      tile.lockedByMemberId !== null &&
-      tile.lockedByMemberId !== selectedMemberId
-    ) {
-      return [];
-    }
-
-    return [{ row: tile.row, col: tile.col }];
-  });
-
-  const completedLineIds = new Set(computeCompletedBingoLines(completedCoords));
-
-  const coordsInCompletedLine = new Set(
-    BINGO_LINES.flatMap((line) =>
-      completedLineIds.has(line.id)
-        ? line.coords.map(({ row, col }) => `${row}:${col}`)
-        : [],
-    ),
+  const coordsInCompletedLine = findBingoCompletedLineCoordKeys(
+    mode,
+    selectedMemberId,
+    tiles,
+    (tile) => (progressByTileId.get(tile.id)?.completedAt ?? null) !== null,
   );
 
   return (
     <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-5">
-      {COORDS.map(({ row, col }) => {
-        const key = `${row}:${col}`;
+      {BINGO_GRID_COORDS.map((coord) => {
+        const { row, col } = coord;
+        const key = bingoCoordKey(coord);
         const tile = tileByCoord.get(key) ?? null;
 
         return (

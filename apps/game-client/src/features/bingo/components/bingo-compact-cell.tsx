@@ -1,3 +1,4 @@
+import { isBingoTileLockedForMember } from "@lootlog/domain/bingo";
 import type {
   BingoBoardDetailResponseDtoTilesItem,
   BingoBoardSummaryResponseDtoMode,
@@ -58,10 +59,11 @@ export const BingoCompactCell = ({
   const targetCount = tile.condition.targetCount;
   const currentCount = progress?.currentCount ?? 0;
 
-  const isLockedByOther =
-    mode === "LOCKOUT" &&
-    tile.lockedByMemberId !== null &&
-    tile.lockedByMemberId !== viewerMemberId;
+  const isLockedByOther = isBingoTileLockedForMember(
+    mode,
+    tile,
+    viewerMemberId,
+  );
 
   const isCompleted =
     progress !== null && progress.completedAt !== null && !isLockedByOther;

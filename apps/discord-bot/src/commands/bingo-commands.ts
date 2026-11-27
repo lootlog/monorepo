@@ -1,4 +1,10 @@
+import {
+  bingoCoordKey,
+  indexBingoTilesByCoord,
+  isBingoTileLockedForMember,
+} from "@lootlog/domain/bingo";
 import type { RpcBingoBoardSummary } from "@lootlog/rpc/api";
+import { BINGO_BOARD_SIZE, type BingoBoardMode } from "@lootlog/schema/bingo";
 import { escapeMarkdown, type SlashCommandSubcommandBuilder } from "discord.js";
 import { Effect } from "effect";
 import { BotConfig } from "#src/config/bot-config";
@@ -53,25 +59,18 @@ const renderEmojiGrid = (
       readonly completedAt: string | null;
     } | null;
   }>,
-  mode: "RACE" | "LOCKOUT",
+  mode: BingoBoardMode,
   viewerMemberId: number,
 ) => {
-  const byCoord = new Map(
-    tiles.map((tile) => [`${tile.row}:${tile.col}`, tile]),
-  );
+  const byCoord = indexBingoTilesByCoord(tiles);
 
-  return Array.from({ length: 5 }, (_, row) =>
-    Array.from({ length: 5 }, (_, col) => {
-      const tile = byCoord.get(`${row}:${col}`);
+  return Array.from({ length: BINGO_BOARD_SIZE }, (_, row) =>
+    Array.from({ length: BINGO_BOARD_SIZE }, (_, col) => {
+      const tile = byCoord.get(bingoCoordKey({ row, col }));
 
       if (!tile) return "⬜";
 
-      const isLockedByOther =
-        mode === "LOCKOUT" &&
-        tile.lockedByMemberId !== null &&
-        tile.lockedByMemberId !== viewerMemberId;
-
-      if (isLockedByOther) return "🔒";
+      if (isBingoTileLockedForMember(mode, tile, viewerMemberId)) return "🔒";
 
       if (tile.viewerProgress?.completedAt) return "🟩";
 

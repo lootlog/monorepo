@@ -39613,7 +39613,7 @@ return mainFetch<BingoBoardSummaryResponseDto>(getBingoControllerUpdateBoardUrl(
 
 export const getBingoControllerUpdateBoardMutationKey = () => ['bingoControllerUpdateBoard'] as const;
 
-export const getBingoControllerUpdateBoardMutationOptions = <TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>,
+export const getBingoControllerUpdateBoardMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError | ReauthenticationRequiredEncoded>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bingoControllerUpdateBoard>>, TError,BingoControllerUpdateBoardMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof bingoControllerUpdateBoard>>, TError,BingoControllerUpdateBoardMutationVariables, TContext> => {
 
@@ -39642,13 +39642,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type BingoControllerUpdateBoardMutationResult = NonNullable<Awaited<ReturnType<typeof bingoControllerUpdateBoard>>>
     export type BingoControllerUpdateBoardMutationBody = BodyType<UpdateBingoBoardDto>
-    export type BingoControllerUpdateBoardMutationError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>
+    export type BingoControllerUpdateBoardMutationError = ErrorType<HttpErrorResponse | RequestValidationError | ReauthenticationRequiredEncoded>
     export type BingoControllerUpdateBoardMutationVariables = {pathParams: BingoControllerUpdateBoardPathParameters;data: BodyType<UpdateBingoBoardDto>}
 
     /**
  * @summary Update organization Bingo board settings
  */
-export const useBingoControllerUpdateBoard = <TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>,
+export const useBingoControllerUpdateBoard = <TError = ErrorType<HttpErrorResponse | RequestValidationError | ReauthenticationRequiredEncoded>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bingoControllerUpdateBoard>>, TError,BingoControllerUpdateBoardMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof bingoControllerUpdateBoard>>,
