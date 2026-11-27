@@ -26,6 +26,8 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { BingoBoardGrid } from "./bingo-board-grid";
 import { BingoBoardSizeField } from "./bingo-board-size-field";
+import { BINGO_POINT_FIELDS } from "./bingo-points";
+import { BingoPointsField } from "./bingo-points-field";
 import { BingoTileEditorDialog } from "./bingo-tile-editor-dialog";
 
 const BINGO_STATUSES = [
@@ -33,13 +35,6 @@ const BINGO_STATUSES = [
   "ACTIVE",
   "FINISHED",
 ] as const satisfies readonly UpdateBingoBoardDtoStatus[];
-
-const POINT_FIELDS = [
-  "pointsPerTile",
-  "pointsPerLine",
-  "firstCompleterBonus",
-  "blackoutBonus",
-] as const;
 
 type BingoSettingsFormValues = {
   name: string;
@@ -350,18 +345,13 @@ export const BingoEditForm = ({
             title={t("bingo.editSections.scoring")}
           >
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-              {POINT_FIELDS.map((name) => (
-                <div key={name} className="space-y-2">
-                  <Label htmlFor={`${fieldId}-${name}`}>
-                    {t(`bingo.createDialog.${name}`)}
-                  </Label>
-                  <Input
-                    id={`${fieldId}-${name}`}
-                    type="number"
-                    min={0}
-                    {...form.register(name, { valueAsNumber: true })}
-                  />
-                </div>
+              {BINGO_POINT_FIELDS.map((name) => (
+                <BingoPointsField
+                  key={name}
+                  id={`${fieldId}-${name}`}
+                  label={t(`bingo.createDialog.${name}`)}
+                  {...form.register(name, { valueAsNumber: true })}
+                />
               ))}
             </div>
           </BandSection>

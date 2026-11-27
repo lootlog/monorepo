@@ -6,6 +6,7 @@
   "emptyTitle": "Brak plansz Clan Bingo",
   "emptyDescription": "Stwórz pierwszą planszę, wybierz jej rozmiar, skonfiguruj warunki pól i rozpocznij rywalizację na żywo.",
   "loadError": "Nie udało się wczytać plansz Bingo.",
+  "loadErrorDescription": "Sprawdź połączenie i spróbuj ponownie.",
   "filterLabel": "Filtry plansz Bingo",
   "filterPlaceholder": "Szukaj planszy...",
   "noResults": "Brak pasujących plansz",
