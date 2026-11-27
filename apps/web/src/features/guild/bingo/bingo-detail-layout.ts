@@ -7,7 +7,8 @@ export const BINGO_DETAIL_BOARD_COLUMN_CLASS =
 export const BINGO_DETAIL_RAIL_CLASS =
   "flex min-w-0 flex-col xl:h-full xl:min-h-0";
 
-export const BINGO_DETAIL_SECTION_CLASS = "flex min-h-0 flex-col";
+export const BINGO_DETAIL_SECTION_CLASS =
+  "flex min-h-0 flex-col [&>section]:flex [&>section]:min-h-0 [&>section]:flex-1 [&>section]:flex-col [&>section>div:first-child]:shrink-0";
 
 export const BINGO_DETAIL_LEADERBOARD_SCROLL_CLASS =
   "min-h-0 flex-1 max-xl:max-h-[26rem] [&>[data-slot=scroll-area-viewport]]:overscroll-contain";

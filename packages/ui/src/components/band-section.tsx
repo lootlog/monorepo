@@ -14,7 +14,6 @@ type BandSectionProps = {
   trailing?: ReactNode;
   wide?: boolean;
   tiled?: boolean;
-  className?: string;
   children: ReactNode;
 };
 
@@ -26,17 +25,16 @@ export const BandSection = ({
   trailing,
   wide = false,
   tiled = false,
-  className,
   children,
 }: BandSectionProps) => (
-  <section aria-labelledby={id} className={className}>
+  <section aria-labelledby={id}>
     <ListGroupHeading
       id={id}
       count={count}
       trailing={trailing}
       className={cn(
         LIST_BAND_HEADING_CLASS,
-        "sticky top-[calc(var(--page-sticky-top)+var(--filter-bar-height,0px)-1px)] z-10 shrink-0",
+        "sticky top-[calc(var(--page-sticky-top)+var(--filter-bar-height,0px)-1px)] z-10",
       )}
     >
       {title}

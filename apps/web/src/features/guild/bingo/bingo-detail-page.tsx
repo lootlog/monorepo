@@ -282,40 +282,42 @@ export const BingoDetailPage = ({
             </ScrollArea>
 
             <aside className={BINGO_DETAIL_RAIL_CLASS}>
-              <BandSection
-                id="bingo-leaderboard"
-                title={t("bingo.leaderboard.title")}
-                count={data.leaderboard.length}
-                tiled
-                className={cn(BINGO_DETAIL_SECTION_CLASS, "xl:flex-1")}
-              >
-                <ScrollArea
-                  orientation="vertical"
-                  className={BINGO_DETAIL_LEADERBOARD_SCROLL_CLASS}
+              <div className={cn(BINGO_DETAIL_SECTION_CLASS, "xl:flex-1")}>
+                <BandSection
+                  id="bingo-leaderboard"
+                  title={t("bingo.leaderboard.title")}
+                  count={data.leaderboard.length}
+                  tiled
                 >
-                  <BingoLeaderboard
-                    guildId={guildId}
-                    boardId={boardId}
-                    entries={data.leaderboard}
-                    totalTileCount={totalTileCount}
-                    selectedMemberId={activeMemberId}
-                    viewerMemberId={data.viewerMemberId}
-                  />
-                </ScrollArea>
-              </BandSection>
-              <BandSection
-                id="bingo-activity"
-                title={t("bingo.activity.title")}
-                tiled
-                className={cn(BINGO_DETAIL_SECTION_CLASS, "xl:max-h-[42%]")}
-              >
-                <ScrollArea
-                  orientation="vertical"
-                  className={BINGO_DETAIL_ACTIVITY_SCROLL_CLASS}
+                  <ScrollArea
+                    orientation="vertical"
+                    className={BINGO_DETAIL_LEADERBOARD_SCROLL_CLASS}
+                  >
+                    <BingoLeaderboard
+                      guildId={guildId}
+                      boardId={boardId}
+                      entries={data.leaderboard}
+                      totalTileCount={totalTileCount}
+                      selectedMemberId={activeMemberId}
+                      viewerMemberId={data.viewerMemberId}
+                    />
+                  </ScrollArea>
+                </BandSection>
+              </div>
+              <div className={cn(BINGO_DETAIL_SECTION_CLASS, "xl:max-h-[42%]")}>
+                <BandSection
+                  id="bingo-activity"
+                  title={t("bingo.activity.title")}
+                  tiled
                 >
-                  <BingoActivityFeed items={data.recentActivity} />
-                </ScrollArea>
-              </BandSection>
+                  <ScrollArea
+                    orientation="vertical"
+                    className={BINGO_DETAIL_ACTIVITY_SCROLL_CLASS}
+                  >
+                    <BingoActivityFeed items={data.recentActivity} />
+                  </ScrollArea>
+                </BandSection>
+              </div>
             </aside>
           </StatsSectionColumns>
         </div>
