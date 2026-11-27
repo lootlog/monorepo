@@ -20,7 +20,7 @@ export const BingoMemberStats = ({
   const { t } = useTranslation();
 
   return (
-    <StatsTileGrid framed className="sm:grid-cols-3">
+    <StatsTileGrid className="sm:grid-cols-3">
       <StatsTile
         icon={Grid3x3}
         label={t("bingo.stats.tiles")}
