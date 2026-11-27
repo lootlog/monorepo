@@ -5,7 +5,7 @@ import { DiscordIcon } from "@lootlog/ui/components/discord-icon";
 import { signInErrorKind } from "@/features/signin/sign-in-error-kind";
 import { signInRetryUrl } from "@/features/signin/sign-in-retry-url";
 import { authClient } from "@/lib/auth-client";
-import { useDiscordSignIn } from "@lootlog/client/auth-session";
+import { useDiscordSignIn, useLogout } from "@lootlog/client/auth-session";
 import {
   COMMUNITY_LINKS,
   WEB_SIGN_IN_PATH,
@@ -27,6 +27,7 @@ const decodeSteps = Schema.decodeUnknownOption(Schema.Array(Schema.String));
 export const SignInError: React.FC = () => {
   const search = useSearch({ from: "/signin_/error" });
   const { signIn, isPending, hasError } = useDiscordSignIn(authClient);
+  const { logout, isPending: isLogoutPending } = useLogout(authClient);
   const { t } = useTranslation();
 
   const kind = signInErrorKind(search.error);
@@ -49,6 +50,8 @@ export const SignInError: React.FC = () => {
         `${window.location.origin}${WEB_SIGN_IN_PATH}`,
       webOrigin: window.location.origin,
     });
+
+  const handleSwitchAccount = () => logout().then(handleRetry);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
@@ -85,6 +88,18 @@ export const SignInError: React.FC = () => {
                 size="xl"
               >
                 {t("auth.signinError.retry")}
+              </Button>
+            )}
+            {kind === "otherDiscordAccount" && (
+              <Button
+                onClick={() => void handleSwitchAccount()}
+                loading={isLogoutPending}
+                disabled={isPending}
+                variant="outline"
+                className="w-full"
+                size="xl"
+              >
+                {t("auth.signinError.switchAccount")}
               </Button>
             )}
             {errorCode && (

@@ -122,18 +122,9 @@ export const createLootlogAuth = ({
       schema: betterAuthSchema,
       transaction: true,
     }),
-    account: {
-      encryptOAuthTokens: true,
-      identityStrategy: "provider-id",
-      accountLinking: {
-        enabled: true,
-        disableImplicitLinking: false,
-        allowDifferentEmails: false,
-        updateUserInfoOnLink: true,
-      },
-    },
     ...storageOptions,
     ...discordAuthOptions,
+    account: { ...discordAuthOptions.account, encryptOAuthTokens: true },
     secret: reveal(config.authSecret),
     session: {
       storeSessionInDatabase: true,

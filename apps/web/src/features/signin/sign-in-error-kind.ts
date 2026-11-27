@@ -19,6 +19,8 @@ const SIGN_IN_ERROR_KINDS = new Map<string, SignInErrorKind>([
   ["account_not_linked", "accountConflict"],
   ["email_not_verified", "accountConflict"],
   ["account_already_linked_to_different_user", "otherDiscordAccount"],
+  ["DIFFERENT_DISCORD_ACCOUNT", "otherDiscordAccount"],
+  ["email_does_not_match", "otherDiscordAccount"],
   ["BANNED_USER", "banned"],
   ["unable_to_get_user_info", "discordUnavailable"],
   ["server_error", "discordUnavailable"],
