@@ -266,6 +266,31 @@ describe("Discord OAuth identity", () => {
     expect(session?.user.discordId).toBe(DISCORD_A);
   });
 
+  it("refuses to link a Discord account from a client-supplied id token", async () => {
+    const { authHeaders } = await signInWithDiscord(
+      createDiscordProfile({ id: DISCORD_A }),
+    );
+
+    activeDiscordProfile = createDiscordProfile({
+      id: DISCORD_B,
+      email: "other@example.com",
+    });
+
+    const result = await instance.client.linkSocial({
+      provider: "discord",
+      idToken: { token: "forged-id-token", accessToken: "access-token" },
+      fetchOptions: { headers: authHeaders },
+    });
+
+    expect(result.error?.code).toBe("ID_TOKEN_NOT_SUPPORTED");
+
+    const accounts = await instance.auth.api.listUserAccounts({
+      headers: authHeaders,
+    });
+
+    expect(accounts.map(({ accountId }) => accountId)).toEqual([DISCORD_A]);
+  });
+
   it("provisions a user from the verified Discord profile", async () => {
     const discordProfile = createDiscordProfile({ id: DISCORD_A });
     const result = await signInWithDiscord(discordProfile);

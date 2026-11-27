@@ -130,20 +130,24 @@ export const createDiscordAuthOptions = ({
           };
         }
 
-        if (source.action !== "link-account" || user.id === undefined) return;
+        if (source.action !== "link-account") return;
 
         if (
-          await isKnownDiscordIdentity(context, {
+          user.id !== undefined &&
+          (await isKnownDiscordIdentity(context, {
             userId: user.id,
             email: user.email,
             discordAccountId: providerProfileId,
-          })
+          }))
         )
           return;
 
         runLogEffect(
           Effect.logWarning("Discord account does not match the user").pipe(
-            Effect.annotateLogs({ context: "BetterAuth", userId: user.id }),
+            Effect.annotateLogs({
+              context: "BetterAuth",
+              userId: user.id ?? "unknown",
+            }),
           ),
         );
 
@@ -179,6 +183,7 @@ export const createDiscordAuthOptions = ({
         clientSecret,
         redirectURI,
         prompt: "consent",
+        disableIdTokenSignIn: true,
         scope: scopes,
         refreshAccessToken: (refreshToken) =>
           refreshAccessToken({
