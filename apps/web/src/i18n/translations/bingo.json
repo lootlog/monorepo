@@ -1,12 +1,29 @@
 {
   "title": "Clan Bingo",
-  "subtitle": "Automatyczne plansze Bingo zaliczane na żywo z klienta gry",
   "create": "Nowe Bingo",
   "edit": "Konfiguruj planszę",
-  "backToList": "Wróć do listy Bingo",
-  "backToBoard": "Wróć do planszy",
+  "editNamed": "Konfiguruj planszę {{name}}",
   "emptyTitle": "Brak plansz Clan Bingo",
   "emptyDescription": "Stwórz pierwszą planszę, wybierz jej rozmiar, skonfiguruj warunki pól i rozpocznij rywalizację na żywo.",
+  "loadError": "Nie udało się wczytać plansz Bingo.",
+  "filterLabel": "Filtry plansz Bingo",
+  "filterPlaceholder": "Szukaj planszy...",
+  "noResults": "Brak pasujących plansz",
+  "noResultsDescription": "Żadna plansza nie pasuje do wyszukiwania. Zmień frazę albo wyczyść filtr.",
+  "header": {
+    "status": "Status",
+    "world": "Świat",
+    "mode": "Tryb",
+    "size": "Rozmiar",
+    "manage": "Zarządzaj planszą",
+    "manageShort": "Zarządzaj"
+  },
+  "editSections": {
+    "general": "Ogólne",
+    "rules": "Zasady rozgrywki",
+    "scoring": "Punktacja",
+    "tiles": "Pola planszy"
+  },
   "status": {
     "DRAFT": "Szkic",
     "ACTIVE": "Aktywne",
@@ -45,31 +62,31 @@
     "lines": "Linie Bingo",
     "points": "Punkty",
     "participants": "Uczestnicy",
-    "configuredTiles": "Skonfigurowane pola",
+    "yourProgress": "Twój postęp",
     "worldAny": "Wszystkie światy",
     "blackout": "Blackout!",
     "tilesOfTotal": "z {{total}} pól"
   },
   "actions": {
     "start": "Rozpocznij Bingo",
+    "startShort": "Start",
     "finish": "Zakończ Bingo",
+    "finishShort": "Zakończ",
     "reopen": "Wznów jako aktywne",
+    "reopenShort": "Wznów",
     "delete": "Usuń Bingo",
     "deleteConfirmTitle": "Usunąć planszę Bingo?",
     "deleteConfirmDescription": "Wszystkie pola, postępy graczy i historia zaliczeń zostaną trwale usunięte.",
-    "saveSettings": "Zapisz ustawienia",
-    "saveBoard": "Zapisz planszę {{size}}×{{size}}",
     "loadStarterBoard": "Wypełnij szablonem startowym",
     "clearTile": "Wyczyść pole",
     "applyTile": "Zastosuj pole",
     "manualOverride": "Korekta ręczna",
+    "manualOverrideShort": "Korekta",
     "viewOwnBoard": "Moja plansza",
     "viewingPlayer": "Podgląd gracza: {{name}}",
     "cancel": "Anuluj",
     "createBoard": "Utwórz planszę",
-    "creating": "Tworzenie...",
-    "saving": "Zapisywanie...",
-    "openBoard": "Otwórz planszę"
+    "creating": "Tworzenie..."
   },
   "createDialog": {
     "title": "Utwórz nowe Clan Bingo",
@@ -131,6 +148,8 @@
     "submit": "Zapisz korektę"
   },
   "board": {
+    "title": "Plansza",
+    "fallbackTitle": "Plansza Bingo",
     "emptyCell": "Puste pole",
     "clickToConfigure": "Kliknij, aby skonfigurować",
     "completedBy": "Zaliczyło: {{count}}",
@@ -145,12 +164,7 @@
   "leaderboard": {
     "title": "Ranking solo",
     "empty": "Nikt jeszcze nie zdobył postępu na tej planszy.",
-    "rank": "#",
-    "player": "Gracz",
-    "tiles": "Pola",
-    "lines": "Linie",
-    "points": "Punkty",
-    "you": "Ty"
+    "viewerName": "{{name}} (Ty)"
   },
   "activity": {
     "title": "Postępy na żywo",
@@ -162,7 +176,6 @@
     "created": "Utworzono planszę Bingo",
     "updated": "Zapisano ustawienia Bingo",
     "deleted": "Usunięto planszę Bingo",
-    "tilesSaved": "Zapisano konfigurację planszy {{size}}×{{size}}",
     "progressUpdated": "Zaktualizowano postęp gracza",
     "error": "Nie udało się wykonać operacji"
   },

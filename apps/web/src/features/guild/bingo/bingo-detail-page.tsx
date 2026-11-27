@@ -8,37 +8,36 @@ import {
   type BingoBoardDetailResponseDtoMemberProgressItem,
   type BingoBoardSummaryResponseDtoStatus,
 } from "@lootlog/client/main";
+import { DetailBar } from "@/components/common/detail-bar";
+import { DetailBarFact } from "@/components/common/detail-bar-fact";
+import { DetailBarFacts } from "@/components/common/detail-bar-facts";
+import { StatsSectionColumns } from "@/components/common/stats-section-columns";
 import { ROUTES } from "@/config/routes";
 import { canManageEvent } from "@/features/guild/events/utils/event-access";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
-import { Badge, type BadgeProps } from "@lootlog/ui/components/badge";
-import { Button } from "@lootlog/ui/components/button";
+import { BandSection } from "@lootlog/ui/components/band-section";
+import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { ConfirmDialog } from "@lootlog/ui/components/confirm-dialog";
-import { PageHeader } from "@lootlog/ui/components/page-header";
-import { SectionCard } from "@lootlog/ui/components/section-card";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
+import { LIST_TILE_INSET_CLASS } from "@lootlog/ui/lib/list-tile";
 import { toast } from "@lootlog/ui/lib/toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Grid3x3 } from "lucide-react";
+import { cn } from "cn";
+import { upperFirst } from "es-toolkit";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { BingoActivityFeed } from "./bingo-activity-feed";
 import { BingoAdminActions } from "./bingo-admin-actions";
 import { BingoBoardGrid } from "./bingo-board-grid";
+import { BINGO_DETAIL_COLUMNS_CLASS } from "./bingo-detail-layout";
+import { BingoDetailSkeleton } from "./bingo-detail-skeleton";
 import { BingoLeaderboard } from "./bingo-leaderboard";
 import { BingoManualProgressDialog } from "./bingo-manual-progress-dialog";
 import { BingoMemberStats } from "./bingo-member-stats";
+import { BINGO_STATUS_TEXT_CLASS } from "./bingo-status";
 import { useBingoSocket } from "./use-bingo-socket";
-
-const STATUS_BADGE_VARIANT: Record<
-  BingoBoardSummaryResponseDtoStatus,
-  BadgeProps["variant"]
-> = {
-  ACTIVE: "ready",
-  DRAFT: "timer",
-  FINISHED: "outline",
-};
 
 const indexMemberProgress = (
   rows: ReadonlyArray<BingoBoardDetailResponseDtoMemberProgressItem>,
@@ -52,7 +51,7 @@ const indexMemberProgress = (
 
 const resolveBoardView = (
   data: BingoBoardDetailResponseDto,
-  inspectedMemberId: number | null,
+  inspectedMemberId: number | undefined,
 ) => {
   const activeMemberId = inspectedMemberId ?? data.viewerMemberId;
 
@@ -67,16 +66,19 @@ const resolveBoardView = (
     completedLineCount: inspectedEntry?.completedLines.length ?? 0,
     totalPoints: inspectedEntry?.totalPoints ?? 0,
     progressByTileId: indexMemberProgress(data.memberProgress, activeMemberId),
-    isInspectingOther:
-      inspectedMemberId !== null && inspectedMemberId !== data.viewerMemberId,
+    isInspectingOther: activeMemberId !== data.viewerMemberId,
   };
 };
 
 type BingoDetailPageProps = {
   readonly boardId: string;
+  readonly inspectedMemberId: number | undefined;
 };
 
-export const BingoDetailPage = ({ boardId }: BingoDetailPageProps) => {
+export const BingoDetailPage = ({
+  boardId,
+  inspectedMemberId,
+}: BingoDetailPageProps) => {
   const guildId = useGuildId() ?? "";
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -89,14 +91,10 @@ export const BingoDetailPage = ({ boardId }: BingoDetailPageProps) => {
 
   useBingoSocket({ guildId, boardId });
 
-  const { data, isLoading } = useQuery({
+  const { data } = useQuery({
     ...getBingoControllerGetBoardQueryOptions({ guildId, boardId }),
     enabled: Boolean(guildId && boardId),
   });
-
-  const [inspectedMemberId, setInspectedMemberId] = useState<number | null>(
-    null,
-  );
 
   const [manualOpen, setManualOpen] = useState(false);
 
@@ -104,14 +102,11 @@ export const BingoDetailPage = ({ boardId }: BingoDetailPageProps) => {
 
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
-  if (isLoading || !data) {
-    return (
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 p-4">
-        <div className="h-24 animate-pulse rounded-xl bg-muted/30" />
-        <div className="h-96 animate-pulse rounded-xl bg-muted/30" />
-      </div>
-    );
+  if (!data) {
+    return <BingoDetailSkeleton />;
   }
+
+  const { board } = data;
 
   const {
     activeMemberId,
@@ -160,11 +155,7 @@ export const BingoDetailPage = ({ boardId }: BingoDetailPageProps) => {
     }
   };
 
-  const boardSubtitle =
-    data.board.description ??
-    `${data.board.world ?? t("bingo.stats.worldAny")} · ${t(`bingo.mode.${data.board.mode}`)} · ${t("bingo.boardSize.value", { size: data.board.size })}`;
-
-  const totalTileCount = data.board.size * data.board.size;
+  const totalTileCount = board.size * board.size;
 
   const handleSelectCell = canManage
     ? (
@@ -180,30 +171,45 @@ export const BingoDetailPage = ({ boardId }: BingoDetailPageProps) => {
     : undefined;
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 p-4">
-      <PageHeader
-        icon={Grid3x3}
-        title={data.board.name}
-        description={boardSubtitle}
-        actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant={STATUS_BADGE_VARIANT[data.board.status]}>
-              {t(`bingo.status.${data.board.status}`)}
-            </Badge>
-            <Button
-              size="sm"
-              variant="outline"
-              nativeButton={false}
-              icon={<ArrowLeft className="size-4" />}
-              render={<Link to={ROUTES.guild.bingo.base(guildId)} />}
-            >
-              {t("bingo.backToList")}
-            </Button>
-            {canManage ? (
+    <div className="flex h-full min-h-0 flex-col">
+      <ScrollArea data-under-top-bar className="min-h-0 flex-1">
+        <h1 className="sr-only">{board.name}</h1>
+        <DetailBar
+          meta={
+            <DetailBarFacts>
+              <DetailBarFact label={t("bingo.header.status")}>
+                <span
+                  className={cn(
+                    "flex items-center gap-1.5",
+                    BINGO_STATUS_TEXT_CLASS[board.status],
+                  )}
+                >
+                  <span
+                    aria-hidden
+                    className="size-2 shrink-0 rounded-full bg-current"
+                  />
+                  {t(`bingo.status.${board.status}`)}
+                </span>
+              </DetailBarFact>
+              <DetailBarFact label={t("bingo.header.world")}>
+                {board.world
+                  ? upperFirst(board.world)
+                  : t("bingo.stats.worldAny")}
+              </DetailBarFact>
+              <DetailBarFact label={t("bingo.header.mode")}>
+                {t(`bingo.mode.${board.mode}`)}
+              </DetailBarFact>
+              <DetailBarFact label={t("bingo.header.size")}>
+                {t("bingo.boardSize.value", { size: board.size })}
+              </DetailBarFact>
+            </DetailBarFacts>
+          }
+          actions={
+            canManage ? (
               <BingoAdminActions
                 guildId={guildId}
                 boardId={boardId}
-                status={data.board.status}
+                status={board.status}
                 isUpdating={updateBoard.isPending}
                 onChangeStatus={changeStatus}
                 onOpenManual={() => {
@@ -212,78 +218,82 @@ export const BingoDetailPage = ({ boardId }: BingoDetailPageProps) => {
                 }}
                 onOpenDelete={() => setDeleteConfirmOpen(true)}
               />
-            ) : null}
-          </div>
-        }
-      />
+            ) : undefined
+          }
+        />
 
-      <div className="grid gap-4 xl:grid-cols-12">
-        <div className="space-y-3 xl:col-span-8">
-          <BingoMemberStats
-            completedTileCount={completedTileCount}
-            totalTileCount={totalTileCount}
-            completedLineCount={completedLineCount}
-            totalPoints={totalPoints}
-          />
-          <SectionCard className="space-y-3 p-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="text-xs font-medium text-foreground">
-                {isInspectingOther
-                  ? t("bingo.actions.viewingPlayer", {
-                      name: inspectedMemberName,
-                    })
-                  : t("bingo.actions.viewOwnBoard")}
-              </span>
-
-              {isInspectingOther ? (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setInspectedMemberId(null)}
+        <StatsSectionColumns fill className={BINGO_DETAIL_COLUMNS_CLASS}>
+          <BandSection
+            id="bingo-board"
+            title={
+              isInspectingOther
+                ? t("bingo.actions.viewingPlayer", {
+                    name: inspectedMemberName,
+                  })
+                : t("bingo.board.title")
+            }
+            description={board.description ?? undefined}
+            trailing={
+              isInspectingOther ? (
+                <ChevronLink
+                  render={
+                    <Link
+                      to={ROUTES.guild.bingo.board(guildId, boardId)}
+                      resetScroll={false}
+                    />
+                  }
                 >
                   {t("bingo.actions.viewOwnBoard")}
-                </Button>
-              ) : null}
-            </div>
-
-            <BingoBoardGrid
-              tiles={data.tiles}
-              mode={data.board.mode}
-              size={data.board.size}
-              pointsPerTile={data.board.pointsPerTile}
-              selectedMemberId={activeMemberId}
-              progressByTileId={progressByTileId}
-              onSelectCell={handleSelectCell}
-            />
-          </SectionCard>
-        </div>
-
-        <div className="flex flex-col gap-4 xl:col-span-4">
-          <SectionCard className="overflow-hidden">
-            <div className="border-b border-border/60 px-4 py-3">
-              <h2 className="text-sm font-semibold text-foreground">
-                {t("bingo.leaderboard.title")}
-              </h2>
-            </div>
-            <BingoLeaderboard
-              entries={data.leaderboard}
+                </ChevronLink>
+              ) : null
+            }
+            tiled
+          >
+            <BingoMemberStats
+              completedTileCount={completedTileCount}
               totalTileCount={totalTileCount}
-              selectedMemberId={activeMemberId}
-              viewerMemberId={data.viewerMemberId}
-              onSelectMember={(memberId) => setInspectedMemberId(memberId)}
+              completedLineCount={completedLineCount}
+              totalPoints={totalPoints}
             />
-          </SectionCard>
-
-          <SectionCard className="overflow-hidden">
-            <div className="border-b border-border/60 px-4 py-3">
-              <h2 className="text-sm font-semibold text-foreground">
-                {t("bingo.activity.title")}
-              </h2>
+            <div className={cn("py-4", LIST_TILE_INSET_CLASS)}>
+              <BingoBoardGrid
+                tiles={data.tiles}
+                mode={board.mode}
+                size={board.size}
+                pointsPerTile={board.pointsPerTile}
+                selectedMemberId={activeMemberId}
+                progressByTileId={progressByTileId}
+                onSelectCell={handleSelectCell}
+              />
             </div>
-            <BingoActivityFeed items={data.recentActivity} />
-          </SectionCard>
-        </div>
-      </div>
+          </BandSection>
+
+          <aside className="min-w-0">
+            <BandSection
+              id="bingo-leaderboard"
+              title={t("bingo.leaderboard.title")}
+              count={data.leaderboard.length}
+              tiled
+            >
+              <BingoLeaderboard
+                guildId={guildId}
+                boardId={boardId}
+                entries={data.leaderboard}
+                totalTileCount={totalTileCount}
+                selectedMemberId={activeMemberId}
+                viewerMemberId={data.viewerMemberId}
+              />
+            </BandSection>
+            <BandSection
+              id="bingo-activity"
+              title={t("bingo.activity.title")}
+              tiled
+            >
+              <BingoActivityFeed items={data.recentActivity} />
+            </BandSection>
+          </aside>
+        </StatsSectionColumns>
+      </ScrollArea>
 
       {canManage ? (
         <>

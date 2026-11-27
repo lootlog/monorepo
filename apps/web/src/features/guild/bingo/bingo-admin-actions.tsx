@@ -1,8 +1,24 @@
 import type { BingoBoardSummaryResponseDtoStatus } from "@lootlog/client/main";
+import { DETAIL_BAR_TOOLBAR_CELL_CLASS } from "@/components/common/detail-bar";
 import { ROUTES } from "@/config/routes";
 import { Button } from "@lootlog/ui/components/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@lootlog/ui/components/dropdown-menu";
 import { Link } from "@tanstack/react-router";
-import { ClipboardCheck, Flag, Play, Settings2, Trash2 } from "lucide-react";
+import {
+  ClipboardCheck,
+  Flag,
+  MoreHorizontal,
+  Play,
+  Settings2,
+  Trash2,
+  type LucideIcon,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 type BingoAdminActionsProps = {
@@ -15,6 +31,35 @@ type BingoAdminActionsProps = {
   readonly onOpenDelete: () => void;
 };
 
+const STATUS_ACTION = {
+  DRAFT: {
+    next: "ACTIVE",
+    icon: Play,
+    labelKey: "bingo.actions.start",
+    shortLabelKey: "bingo.actions.startShort",
+  },
+  ACTIVE: {
+    next: "FINISHED",
+    icon: Flag,
+    labelKey: "bingo.actions.finish",
+    shortLabelKey: "bingo.actions.finishShort",
+  },
+  FINISHED: {
+    next: "ACTIVE",
+    icon: Play,
+    labelKey: "bingo.actions.reopen",
+    shortLabelKey: "bingo.actions.reopenShort",
+  },
+} as const satisfies Record<
+  BingoBoardSummaryResponseDtoStatus,
+  {
+    next: BingoBoardSummaryResponseDtoStatus;
+    icon: LucideIcon;
+    labelKey: string;
+    shortLabelKey: string;
+  }
+>;
+
 export const BingoAdminActions = ({
   guildId,
   boardId,
@@ -25,56 +70,71 @@ export const BingoAdminActions = ({
   onOpenDelete,
 }: BingoAdminActionsProps) => {
   const { t } = useTranslation();
+  const statusAction = STATUS_ACTION[status];
+  const StatusIcon = statusAction.icon;
 
   return (
     <>
-      {status !== "ACTIVE" ? (
-        <Button
-          size="sm"
-          icon={<Play className="size-4" />}
-          disabled={isUpdating}
-          onClick={() => onChangeStatus("ACTIVE")}
-        >
-          {status === "DRAFT"
-            ? t("bingo.actions.start")
-            : t("bingo.actions.reopen")}
-        </Button>
-      ) : (
-        <Button
-          size="sm"
-          variant="outline"
-          icon={<Flag className="size-4" />}
-          disabled={isUpdating}
-          onClick={() => onChangeStatus("FINISHED")}
-        >
-          {t("bingo.actions.finish")}
-        </Button>
-      )}
       <Button
-        size="sm"
-        variant="outline"
-        icon={<ClipboardCheck className="size-4" />}
+        size="lg"
+        variant="chip"
+        className={DETAIL_BAR_TOOLBAR_CELL_CLASS}
+        loading={isUpdating}
+        disabled={isUpdating}
+        onClick={() => onChangeStatus(statusAction.next)}
+      >
+        <StatusIcon className="size-4" />
+        <span className="@max-[36rem]/detail-bar:hidden">
+          {t(statusAction.labelKey)}
+        </span>
+        <span className="hidden @max-[36rem]/detail-bar:inline">
+          {t(statusAction.shortLabelKey)}
+        </span>
+      </Button>
+      <Button
+        size="lg"
+        variant="chip"
+        className={DETAIL_BAR_TOOLBAR_CELL_CLASS}
         onClick={onOpenManual}
       >
-        {t("bingo.actions.manualOverride")}
+        <ClipboardCheck className="size-4" />
+        <span className="@max-[36rem]/detail-bar:hidden">
+          {t("bingo.actions.manualOverride")}
+        </span>
+        <span className="hidden @max-[36rem]/detail-bar:inline">
+          {t("bingo.actions.manualOverrideShort")}
+        </span>
       </Button>
-      <Button
-        size="sm"
-        variant="outline"
-        nativeButton={false}
-        icon={<Settings2 className="size-4" />}
-        render={<Link to={ROUTES.guild.bingo.edit(guildId, boardId)} />}
-      >
-        {t("bingo.edit")}
-      </Button>
-      <Button
-        size="sm"
-        variant="ghost"
-        className="text-destructive hover:text-destructive"
-        icon={<Trash2 className="size-4" />}
-        onClick={onOpenDelete}
-        aria-label={t("bingo.actions.delete")}
-      />
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            <Button
+              size="icon-lg"
+              variant="chip"
+              className={DETAIL_BAR_TOOLBAR_CELL_CLASS}
+              aria-label={t("bingo.header.manage")}
+            >
+              <MoreHorizontal className="size-4" />
+              <span className="hidden @max-[36rem]/detail-bar:inline">
+                {t("bingo.header.manageShort")}
+              </span>
+            </Button>
+          }
+        />
+        <DropdownMenuContent align="end" className="w-52">
+          <DropdownMenuItem
+            render={<Link to={ROUTES.guild.bingo.edit(guildId, boardId)} />}
+          >
+            <Settings2 className="size-4" />
+            {t("bingo.edit")}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem variant="destructive" onClick={onOpenDelete}>
+            <Trash2 className="size-4" />
+            {t("bingo.actions.delete")}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </>
   );
 };

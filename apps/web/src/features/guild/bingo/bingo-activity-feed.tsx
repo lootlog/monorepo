@@ -1,7 +1,12 @@
 import type { BingoBoardDetailResponseDtoRecentActivityItem } from "@lootlog/client/main";
 import { Badge } from "@lootlog/ui/components/badge";
 import { EmptyState } from "@lootlog/ui/components/empty-state";
+import {
+  LIST_TILE_INSET_CLASS,
+  LIST_TILE_RULE_CLASS,
+} from "@lootlog/ui/lib/list-tile";
 import { PRODUCT_LOCALE } from "@lootlog/domain/locale";
+import { cn } from "cn";
 import { Activity } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -21,55 +26,57 @@ export const BingoActivityFeed = ({ items }: BingoActivityFeedProps) => {
 
   if (items.length === 0) {
     return (
-      <EmptyState
-        compact
-        icon={Activity}
-        title={t("bingo.activity.title")}
-        description={t("bingo.activity.empty")}
-      />
+      <EmptyState compact icon={Activity} title={t("bingo.activity.empty")} />
     );
   }
 
   return (
-    <div className="divide-y divide-border/60">
+    <ol>
       {items.map((item) => (
-        <div key={item.id} className="flex flex-col gap-1 px-3 py-2.5 text-sm">
+        <li
+          key={item.id}
+          data-list-tile
+          className={cn(
+            "flex flex-col gap-0.5 py-2.5",
+            LIST_TILE_RULE_CLASS,
+            LIST_TILE_INSET_CLASS,
+          )}
+        >
           <div className="flex items-center justify-between gap-2">
-            <div className="flex min-w-0 items-center gap-1.5">
-              <span className="truncate font-medium text-foreground">
-                {item.member.name}
-              </span>
-              <span className="text-xs text-muted-foreground">·</span>
-              <span className="truncate text-xs font-medium text-primary">
-                {item.tileTitle}
-              </span>
-            </div>
-            <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
-              {timeFormatter.format(new Date(item.occurredAt))}
+            <span className="min-w-0 truncate text-sm font-medium">
+              {item.member.name}
+              <span className="text-muted-foreground"> · </span>
+              <span className="text-primary">{item.tileTitle}</span>
             </span>
+            <time
+              dateTime={item.occurredAt}
+              className="shrink-0 text-2xs tabular-nums text-muted-foreground"
+            >
+              {timeFormatter.format(new Date(item.occurredAt))}
+            </time>
           </div>
-          <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-            <span className="truncate">{item.summary}</span>
-            <div className="flex items-center gap-1.5">
+          <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-xs text-muted-foreground">
+            <span className="min-w-0 truncate">{item.summary}</span>
+            <span className="flex items-center gap-1.5">
               <span className="tabular-nums">
                 {item.previousCount} → {item.newCount}
               </span>
-              {item.completedTile ? (
-                <Badge variant="ready" className="px-1.5 py-0 text-[10px]">
+              {item.completedTile && (
+                <Badge variant="ready" size="sm">
                   {t("bingo.activity.tileCompletedBadge")}
                 </Badge>
-              ) : null}
-              {item.completedLineCount > 0 ? (
-                <Badge variant="default" className="px-1.5 py-0 text-[10px]">
+              )}
+              {item.completedLineCount > 0 && (
+                <Badge variant="tinted" size="sm">
                   {t("bingo.activity.lineCompletedBadge", {
                     count: item.completedLineCount,
                   })}
                 </Badge>
-              ) : null}
-            </div>
+              )}
+            </span>
           </div>
-        </div>
+        </li>
       ))}
-    </div>
+    </ol>
   );
 };
