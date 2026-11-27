@@ -12,7 +12,7 @@ import type { NotificationTriggerType } from "@lootlog/schema/notifications";
 const guildWorldRuleCondition = (
   triggerType: NotificationTriggerType,
   guildId: string,
-  world: string,
+  world: string | null,
 ) =>
   and(
     eq(notificationRuleTable.ownerType, "GUILD"),
@@ -20,10 +20,12 @@ const guildWorldRuleCondition = (
     eq(notificationRuleTable.guildId, guildId),
     eq(notificationRuleTable.enabled, true),
     eq(notificationRuleTable.triggerType, triggerType),
-    or(
-      isNull(notificationRuleTable.world),
-      eq(notificationRuleTable.world, world),
-    ),
+    world === null
+      ? undefined
+      : or(
+          isNull(notificationRuleTable.world),
+          eq(notificationRuleTable.world, world),
+        ),
   );
 
 export const makeNotificationEventStore = (database: ApiDatabaseValue) => {
@@ -36,10 +38,10 @@ export const makeNotificationEventStore = (database: ApiDatabaseValue) => {
   const guildWorldRules = (
     triggerType: Extract<
       NotificationTriggerType,
-      "HERO_SIGHTED" | "LOOT_DRAW_RESOLVED"
+      "HERO_SIGHTED" | "LOOT_DRAW_RESOLVED" | "BINGO_MILESTONE"
     >,
     guildId: string,
-    world: string,
+    world: string | null,
   ) =>
     Effect.gen(function* () {
       const rules = yield* database

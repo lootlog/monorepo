@@ -12,6 +12,7 @@ const GROUP_ORDER = [
   NotificationTriggerType.TIMER_BEFORE_SPAWN,
   NotificationTriggerType.HERO_SIGHTED,
   NotificationTriggerType.LOOT_DRAW_RESOLVED,
+  NotificationTriggerType.BINGO_MILESTONE,
   NotificationTriggerType.SCHEDULED_MESSAGE,
 ] as const;
 

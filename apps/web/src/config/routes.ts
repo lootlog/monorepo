@@ -61,6 +61,13 @@ const ROUTES = {
     },
     activityLogs: (guildId: string) => `/${guildId}/activity-logs`,
     events: (guildId: string) => `/${guildId}/events`,
+    bingo: {
+      base: (guildId: string) => `/${guildId}/bingo`,
+      board: (guildId: string, boardId: string) =>
+        `/${guildId}/bingo/${boardId}`,
+      edit: (guildId: string, boardId: string) =>
+        `/${guildId}/bingo/${boardId}/edit`,
+    },
     notifications: {
       base: (guildId: string) => `/${guildId}/notifications`,
       create: (guildId: string) => `/${guildId}/notifications/create`,

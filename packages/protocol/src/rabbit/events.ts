@@ -1,3 +1,7 @@
+import {
+  BingoMilestoneNotificationEventSchema,
+  BingoRealtimeUpdateSchema,
+} from "@lootlog/schema/bingo";
 import { NotificationGoingUpdateSchema } from "@lootlog/schema/notification-going";
 import { UserFeedItem } from "../feed.js";
 import { NpcTypeSchema } from "@lootlog/schema/npc-type";
@@ -60,6 +64,23 @@ export const MargonemAccountVerifiedV1 = Schema.Struct({
 });
 
 export type MargonemAccountVerifiedV1 = typeof MargonemAccountVerifiedV1.Type;
+
+export const BattleRecordedV1 = Schema.Struct({
+  version: Schema.Literal(1),
+  battleId: Schema.NonEmptyString,
+  userId: Schema.NonEmptyString,
+  accountId: Schema.NonEmptyString,
+  characterId: Schema.NonEmptyString,
+  world: Schema.NonEmptyString,
+  battleType: Schema.NonEmptyString,
+  matchmaking: Schema.Boolean,
+  won: Schema.Boolean,
+  unfinished: Schema.Boolean,
+  hasFlee: Schema.Boolean,
+  occurredAt: Schema.NonEmptyString,
+});
+
+export type BattleRecordedV1 = typeof BattleRecordedV1.Type;
 
 const NullableString = Schema.NullOr(Schema.String);
 
@@ -335,6 +356,7 @@ const BattlelogUserDataDelete = Schema.Struct({
 
 const canonicalRabbitEventSchemas = {
   [RabbitRoutingKey.BATTLELOG_USER_DATA_DELETE]: BattlelogUserDataDelete,
+  [RabbitRoutingKey.BATTLELOG_BATTLE_RECORDED_V1]: BattleRecordedV1,
   [RabbitRoutingKey.GAME_CHARACTER_OFFLINE]: GameCharacterOffline,
   [RabbitRoutingKey.MARGONEM_ACCOUNT_VERIFIED_V1]: MargonemAccountVerifiedV1,
   [RabbitRoutingKey.GUILDS_KILLS_ACCEPTED_V1]: GuildKillsAcceptedV1,
@@ -367,6 +389,7 @@ const canonicalRabbitEventSchemas = {
   [RabbitRoutingKey.GUILDS_MEMBERS_REMOVE]: GuildMemberChanged,
   [RabbitRoutingKey.GUILDS_MEMBERS_UPDATE]: GuildMemberChanged,
   [RabbitRoutingKey.GUILDS_HERO_SIGHTINGS_UPDATE]: GuildHeroSightingUpdated,
+  [RabbitRoutingKey.GUILDS_BINGO_UPDATED]: BingoRealtimeUpdateSchema,
   [RabbitRoutingKey.GUILDS_TIMERS_UPDATE]: OrganizationScopedEvent,
   [RabbitRoutingKey.GUILDS_TIMERS_DELETE]: OrganizationScopedEvent,
   [RabbitRoutingKey.GUILDS_RESERVATIONS_CREATE]: OrganizationScopedEvent,
@@ -394,6 +417,8 @@ const canonicalRabbitEventSchemas = {
     LootCreatedNotificationEventV2Schema,
   [RabbitRoutingKey.NOTIFICATIONS_LOOT_DRAW_RESOLVED]:
     LootDrawResolvedNotificationEventSchema,
+  [RabbitRoutingKey.NOTIFICATIONS_BINGO_MILESTONE]:
+    BingoMilestoneNotificationEventSchema,
   [RabbitRoutingKey.NOTIFICATIONS_TIMER_DELETED]: NotificationTimerDeleted,
   [RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED]: NotificationTimerUpdated,
   [RabbitRoutingKey.PRESENCE_CHECK_REQUEST]: PresenceCheckRequested,

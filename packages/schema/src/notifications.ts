@@ -23,6 +23,7 @@ export const NotificationTriggerType = {
   SCHEDULED_MESSAGE: "SCHEDULED_MESSAGE",
   HERO_SIGHTED: "HERO_SIGHTED",
   LOOT_DRAW_RESOLVED: "LOOT_DRAW_RESOLVED",
+  BINGO_MILESTONE: "BINGO_MILESTONE",
 } as const;
 
 export type NotificationTriggerType =

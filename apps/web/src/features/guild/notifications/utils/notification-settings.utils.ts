@@ -34,6 +34,7 @@ const SUPPORTED_GUILD_NOTIFICATION_TRIGGER_TYPES = [
   NotificationTriggerType.SCHEDULED_MESSAGE,
   NotificationTriggerType.HERO_SIGHTED,
   NotificationTriggerType.LOOT_DRAW_RESOLVED,
+  NotificationTriggerType.BINGO_MILESTONE,
 ] as const;
 
 export const getNotificationTriggerTranslationKey = (
@@ -52,6 +53,8 @@ export const getNotificationTriggerTranslationKey = (
       return "settings.notifications.triggers.heroSighted";
     case NotificationTriggerType.LOOT_DRAW_RESOLVED:
       return "settings.notifications.triggers.lootDrawResolved";
+    case NotificationTriggerType.BINGO_MILESTONE:
+      return "settings.notifications.triggers.bingoMilestone";
   }
 };
 
@@ -178,6 +181,12 @@ export const LOOT_DRAW_PRESET_DETAILED =
 export const LOOT_DRAW_PRESET_MINIMAL = "{{itemName}}: {{outcome}}";
 
 export const getDefaultLootDrawContentTemplate = () => LOOT_DRAW_PRESET_SIMPLE;
+
+const BINGO_MILESTONE_PRESET_SIMPLE =
+  "## {{boardName}} — {{milestoneLabel}}\n\n**{{memberName}}** zalicza pole **{{tileTitle}}**\n{{summary}}\nPostęp: **{{completedTileCount}}/25** pól · **{{completedLinesCount}}** linii · **{{totalPoints}}** pkt";
+
+export const getDefaultBingoMilestoneContentTemplate = () =>
+  BINGO_MILESTONE_PRESET_SIMPLE;
 
 export const getDefaultGuildNotificationRuleContentTemplate = () =>
   TIMER_PRESET_SIMPLE;

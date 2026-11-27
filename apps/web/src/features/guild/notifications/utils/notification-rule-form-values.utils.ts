@@ -8,6 +8,7 @@ import {
 } from "@lootlog/client/main";
 import { getNotificationFieldVisibility } from "./notification-field-visibility";
 import {
+  getDefaultBingoMilestoneContentTemplate,
   getDefaultGuildNotificationRuleContentTemplate,
   getDefaultScheduledMessageContentTemplate,
   getDefaultHeroSightingContentTemplate,
@@ -34,6 +35,8 @@ export const getDefaultContentTemplate = (
       return getDefaultHeroSightingContentTemplate();
     case NotificationTriggerType.LOOT_DRAW_RESOLVED:
       return getDefaultLootDrawContentTemplate();
+    case NotificationTriggerType.BINGO_MILESTONE:
+      return getDefaultBingoMilestoneContentTemplate();
     default:
       return getDefaultGuildNotificationRuleContentTemplate();
   }

@@ -114,6 +114,8 @@ export const makeApiKeysRuntimeFactory = ({
       listUserReservations: unused,
       listGuildReservationSpots: unused,
       getGuildStatsCard: unused,
+      listGuildBingoBoards: unused,
+      getGuildBingoBoard: unused,
     }),
     ["auth"],
   );

@@ -1,0 +1,160 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "25bb64e1-287d-4ff9-81d8-b9a40ab8fe0e",
+  "prevIds": ["e02394e5-2574-4b83-a30d-887ba4868ae0"],
+  "footprints": [
+    {
+      "statementType": "create_table",
+      "statementTarget": ["table", "public", "battle_recorded_outbox"],
+      "writes": [
+        "s|tbl|public.battle_recorded_outbox",
+        "n|tbl|public.battle_recorded_outbox",
+        "e|tbl|public.battle_recorded_outbox",
+        "n|rel|public.battle_recorded_outbox",
+        "n|type|public.battle_recorded_outbox",
+        "n|rel|public.battle_recorded_outbox_pkey"
+      ],
+      "reads": ["n|sch|public"]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "battle_recorded_outbox",
+        "battle_recorded_outbox_lastAttemptAt_id_idx"
+      ],
+      "writes": [
+        "s|idx|public.battle_recorded_outbox_lastAttemptAt_id_idx",
+        "n|idx|public.battle_recorded_outbox_lastAttemptAt_id_idx",
+        "e|idx|public.battle_recorded_outbox_lastAttemptAt_id_idx",
+        "n|rel|public.battle_recorded_outbox_lastAttemptAt_id_idx"
+      ],
+      "reads": [
+        "n|tbl|public.battle_recorded_outbox",
+        "n|sch|public",
+        "n|col|public.battle_recorded_outbox.lastAttemptAt",
+        "n|col|public.battle_recorded_outbox.id"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "battle_recorded_outbox",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "battle_recorded_outbox",
+        "name": "id",
+        "type": "serial",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "battle_recorded_outbox",
+        "name": "event",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "battle_recorded_outbox",
+        "name": "lastAttemptAt",
+        "type": "timestamp(3)",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "battle_recorded_outbox",
+        "name": "createdAt",
+        "type": "timestamp(3)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "battle_recorded_outbox",
+        "name": "battle_recorded_outbox_lastAttemptAt_id_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "lastAttemptAt",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": true,
+            "opclass": null
+          },
+          {
+            "value": "id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "battle_recorded_outbox",
+        "name": "battle_recorded_outbox_pkey",
+        "columns": ["id"],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    }
+  ]
+}

@@ -3,7 +3,7 @@ import type { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import type { Effect } from "effect";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import { discordGuildChannelDeletedOutboxTable } from "#src/database/drizzle/discord-guild-channel-deleted-outbox.schema";
-import { makeOutboxDispatcher } from "#src/shared/outbox-worker";
+import { makeOutboxDispatcher } from "@lootlog/database/outbox";
 
 export type GuildChannelDeletedEvent = CanonicalRabbitEvent<
   typeof RabbitRoutingKey.DISCORD_GUILD_CHANNEL_DELETED

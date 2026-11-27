@@ -37,6 +37,7 @@ import { RecordsServices } from "#src/runtime/features/records";
 import { NotificationsServices } from "#src/runtime/features/notifications";
 import { GuildDiscordSync } from "#src/runtime/features/organizations";
 import { MemberServices } from "#src/runtime/features/members";
+import { BingoEvaluator, BingoOutboxes } from "#src/bingo/bingo-data";
 
 const decodeHeroSighting = Schema.decodeUnknownEffect(HeroSightingResponse);
 
@@ -51,10 +52,14 @@ export const RabbitConsumers = Layer.effectDiscard(
 
     yield* runLootPublications.pipe(Effect.forkScoped);
     yield* runLootDrawAnnouncements.pipe(Effect.forkScoped);
+    const bingoOutboxes = yield* BingoOutboxes;
+    yield* bingoOutboxes.runMilestones.pipe(Effect.forkScoped);
+    yield* bingoOutboxes.runKills.pipe(Effect.forkScoped);
     const readyRooms = yield* ReadyRoomData;
     const guildSync = yield* GuildDiscordSync;
     const { memberDelivery } = yield* MemberServices;
     const { tracking } = yield* EventsServices;
+    const bingoEvaluator = yield* BingoEvaluator;
 
     const { scheduler, matching, store, targets, delivery, rebuild } =
       yield* NotificationsServices;
@@ -170,6 +175,35 @@ export const RabbitConsumers = Layer.effectDiscard(
     );
     yield* consume(apiRabbitRoutes.lootDrawResolved, (data) =>
       notificationEvents.handleLootDrawResolved(data),
+    );
+    yield* consume(apiRabbitRoutes.bingoMilestoneNotification, (data) =>
+      notificationEvents.handleBingoMilestone(data),
+    );
+    yield* consume(apiRabbitRoutes.bingoLootCreated, (data) =>
+      bingoEvaluator.evaluateLoot({
+        lootId: data.lootId,
+        world: data.world,
+        guildIds: data.guildIds,
+      }),
+    );
+    yield* consume(apiRabbitRoutes.bingoHeroSightingUpdated, (data) =>
+      decodeHeroSighting(data).pipe(
+        Effect.flatMap((sighting) =>
+          bingoEvaluator.evaluateHeroSighting({
+            guildId: sighting.guildId,
+            sightingId: sighting.id,
+            world: sighting.world,
+            heroName: sighting.hero.name,
+            heroLvl: sighting.hero.lvl,
+            manual: sighting.manual,
+            detectedById: sighting.detectedBy.memberId,
+            occurredAt: new Date(sighting.firstSeenAt),
+          }),
+        ),
+      ),
+    );
+    yield* consume(apiRabbitRoutes.bingoBattleRecorded, (data) =>
+      bingoEvaluator.evaluateBattle(data),
     );
     yield* consume(
       apiRabbitRoutes.notificationsDeliveryResult,

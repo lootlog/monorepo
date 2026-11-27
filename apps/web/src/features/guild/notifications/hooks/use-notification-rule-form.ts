@@ -481,38 +481,46 @@ export const useNotificationRuleForm = () => {
         ? (values.world ?? undefined)
         : undefined;
 
-    const payload =
-      values.triggerType === NotificationTriggerType.SCHEDULED_MESSAGE
-        ? {
-            ...basePayload,
-            ...getScheduledMessagePayload(values, rule?.scheduledUntil),
-          }
-        : values.triggerType === NotificationTriggerType.HERO_SIGHTED
-          ? {
-              ...basePayload,
-              world,
-              npcLevelMin: values.npcLevelMin ?? null,
-              npcLevelMax: values.npcLevelMax ?? null,
-            }
-          : values.triggerType === NotificationTriggerType.LOOT_DRAW_RESOLVED
-            ? { ...basePayload, world }
-            : (() => {
-                const npcFilterPayload = buildNotificationRuleNpcFilterPayload(
-                  getNotificationRuleNpcIdsForSubmit(values),
-                );
+    const buildPayload = () => {
+      if (values.triggerType === NotificationTriggerType.SCHEDULED_MESSAGE) {
+        return {
+          ...basePayload,
+          ...getScheduledMessagePayload(values, rule?.scheduledUntil),
+        };
+      }
 
-                return {
-                  ...basePayload,
-                  world,
-                  scheduleStrategy:
-                    NotificationScheduleStrategy.SPAWN_WINDOW_RELATIVE,
-                  scheduleAnchor:
-                    values.scheduleAnchor ??
-                    NotificationScheduleAnchor.MIN_SPAWN,
-                  scheduleOffsetMinutes: Number(values.scheduleOffsetMinutes),
-                  ...npcFilterPayload,
-                };
-              })();
+      if (values.triggerType === NotificationTriggerType.HERO_SIGHTED) {
+        return {
+          ...basePayload,
+          world,
+          npcLevelMin: values.npcLevelMin ?? null,
+          npcLevelMax: values.npcLevelMax ?? null,
+        };
+      }
+
+      if (
+        values.triggerType === NotificationTriggerType.LOOT_DRAW_RESOLVED ||
+        values.triggerType === NotificationTriggerType.BINGO_MILESTONE
+      ) {
+        return { ...basePayload, world };
+      }
+
+      const npcFilterPayload = buildNotificationRuleNpcFilterPayload(
+        getNotificationRuleNpcIdsForSubmit(values),
+      );
+
+      return {
+        ...basePayload,
+        world,
+        scheduleStrategy: NotificationScheduleStrategy.SPAWN_WINDOW_RELATIVE,
+        scheduleAnchor:
+          values.scheduleAnchor ?? NotificationScheduleAnchor.MIN_SPAWN,
+        scheduleOffsetMinutes: Number(values.scheduleOffsetMinutes),
+        ...npcFilterPayload,
+      };
+    };
+
+    const payload = buildPayload();
 
     const saveErrorMessage = t(
       isCreateMode

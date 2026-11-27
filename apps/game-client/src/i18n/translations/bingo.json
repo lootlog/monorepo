@@ -1,0 +1,33 @@
+{
+  "window": {
+    "title": "Clan Bingo"
+  },
+  "empty": {
+    "noGuild": "Wybierz Lootlog, aby zobaczyć plansze Bingo.",
+    "noBoards": "Brak aktywnych plansz Bingo dla tego Lootloga."
+  },
+  "status": {
+    "DRAFT": "Szkic",
+    "ACTIVE": "Aktywne",
+    "FINISHED": "Zakończone"
+  },
+  "mode": {
+    "RACE": "Wyścig solo",
+    "LOCKOUT": "Lockout"
+  },
+  "summary": {
+    "tiles": "{{done}}/25 pól",
+    "lines_one": "{{count}} linia",
+    "lines_few": "{{count}} linie",
+    "lines_many": "{{count}} linii",
+    "lines_other": "{{count}} linii",
+    "points": "{{points}} pkt",
+    "rank": "Miejsce #{{rank}}"
+  },
+  "tile": {
+    "empty": "Puste",
+    "completed": "Zaliczone",
+    "lockedBy": "Zajęte: {{name}}",
+    "progress": "{{current}}/{{target}}"
+  }
+}

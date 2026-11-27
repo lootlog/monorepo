@@ -9,6 +9,7 @@ import { Chat } from "@/features/chat/chat";
 import { CommandWindow } from "@/features/command/command";
 import { GlobalChat } from "@/features/global-chat/global-chat";
 import { HeroSightings } from "@/features/hero-sightings/hero-sightings";
+import { Bingo } from "@/features/bingo/bingo";
 import { LootSplitWindow } from "@/features/loot-split/loot-split-window";
 import { useLootSplitSync } from "@/features/loot-split/use-loot-split-sync";
 import { useGlobalChatSync } from "@/features/global-chat/hooks/use-global-chat-sync";
@@ -91,6 +92,7 @@ export const AppContent = () => {
       <OnlinePlayers />
       <NpcDetector />
       <HeroSightings />
+      <Bingo />
       <Notifications />
       <QuickAccess />
       <CatchingWhitelistWarning />

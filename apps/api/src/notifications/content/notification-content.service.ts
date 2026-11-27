@@ -1,9 +1,14 @@
+import type { BingoMilestoneNotificationEvent } from "@lootlog/schema/bingo";
 import {
   isJsonObject,
   type JsonObject,
   type JsonValue,
 } from "#src/database/json";
 import {
+  BINGO_MILESTONE_TITLE,
+  bingoMilestoneLabel,
+  bingoMilestoneMessage,
+  DEFAULT_BINGO_MILESTONE_TEMPLATE,
   DEFAULT_HERO_SIGHTING_TEMPLATE,
   HERO_SIGHTED_TITLE,
   HERO_SIGHTING_STATE_LABEL,
@@ -302,6 +307,57 @@ class NotificationContent {
       lootDraw: Schema.encodeSync(LootDrawResolvedNotificationEventSchema)(
         event,
       ),
+      contentTemplate: template,
+    } satisfies JsonObject;
+  }
+
+  buildBingoMilestonePayload(params: {
+    notificationRule: {
+      id: number;
+      name: string | null;
+      triggerType: NotificationTriggerType;
+      contentTemplate?: string | null;
+    };
+    target: {
+      targetType: NotificationTargetType;
+    };
+    event: BingoMilestoneNotificationEvent;
+  }) {
+    const { event } = params;
+
+    const template =
+      params.notificationRule.contentTemplate ??
+      DEFAULT_BINGO_MILESTONE_TEMPLATE;
+
+    const placeholderValues = {
+      ruleName: params.notificationRule.name?.trim() || BINGO_MILESTONE_TITLE,
+      boardName: event.boardName,
+      memberName: event.memberName,
+      tileTitle: event.tileTitle,
+      milestoneLabel: bingoMilestoneLabel(event.milestoneKind),
+      summary: event.summary,
+      completedTileCount: String(event.completedTileCount),
+      completedLinesCount: String(event.completedLinesCount),
+      totalPoints: String(event.totalPoints),
+      world: event.world ?? "",
+    } satisfies Record<string, string>;
+
+    return {
+      title: BINGO_MILESTONE_TITLE,
+      message: bingoMilestoneMessage(
+        event.memberName,
+        event.tileTitle,
+        event.boardName,
+        event.milestoneKind,
+      ),
+      content: fillTemplate(template, placeholderValues),
+      ...this.allowedMentionsField(template, params.target.targetType),
+      ruleId: params.notificationRule.id,
+      ruleName: params.notificationRule.name,
+      triggerType: params.notificationRule.triggerType,
+      world: event.world,
+      boardId: event.boardId,
+      tileId: event.tileId,
       contentTemplate: template,
     } satisfies JsonObject;
   }

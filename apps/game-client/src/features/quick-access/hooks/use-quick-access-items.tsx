@@ -4,6 +4,7 @@ import { useWhatsNew } from "@/features/settings/components/whats-new/use-whats-
 import { useGlobalChatStore } from "@/store/global-chat.store";
 import {
   Globe,
+  Grid3x3,
   MessageSquareText,
   MessagesSquare,
   Radar,
@@ -52,6 +53,11 @@ export const useQuickAccessItems = () => {
               }),
             }
           : undefined,
+    },
+    {
+      windowId: "bingo",
+      label: t("buttons.bingo"),
+      icon: <Grid3x3 aria-hidden="true" className={ICON_CLASS_NAME} />,
     },
     {
       windowId: "online-players",

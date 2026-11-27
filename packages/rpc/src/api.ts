@@ -30,6 +30,11 @@ import {
   InternalMemberIdentityResponse,
   InternalUserPermissionsQuery,
 } from "@lootlog/schema/internal-guilds";
+import {
+  BingoBoardModeSchema,
+  BingoBoardStatusSchema,
+  BingoLineIdSchema,
+} from "@lootlog/schema/bingo";
 import { ItemRaritySchema } from "@lootlog/schema/item-rarity";
 import { UserGuildPermissionsDtoSchema } from "@lootlog/schema/permissions";
 import { Schema } from "effect";
@@ -242,6 +247,59 @@ export const RpcReservationSpot = Schema.Struct({
   nextReservation: Schema.NullOr(RpcReservation),
 });
 
+export const RpcBingoBoardSummary = Schema.Struct({
+  id: Schema.String,
+  name: Schema.String,
+  world: Schema.NullOr(Schema.String),
+  mode: BingoBoardModeSchema,
+  status: BingoBoardStatusSchema,
+  configuredTileCount: Schema.Finite,
+  participantCount: Schema.Finite,
+  viewerCompletedTiles: Schema.Finite,
+  viewerCompletedLines: Schema.Finite,
+  viewerTotalPoints: Schema.Finite,
+  startsAt: Schema.NullOr(Schema.String),
+  endsAt: Schema.NullOr(Schema.String),
+});
+
+export const RpcBingoBoardList = Schema.Struct({
+  items: Schema.Array(RpcBingoBoardSummary),
+});
+
+export const RpcBingoBoardDetail = Schema.Struct({
+  board: RpcBingoBoardSummary,
+  viewerMemberId: Schema.Finite,
+  tiles: Schema.Array(
+    Schema.Struct({
+      id: Schema.String,
+      row: Schema.Finite,
+      col: Schema.Finite,
+      title: Schema.String,
+      lockedByMemberId: Schema.NullOr(Schema.Finite),
+      viewerProgress: Schema.NullOr(
+        Schema.Struct({
+          currentCount: Schema.Finite,
+          targetCount: Schema.Finite,
+          completedAt: Schema.NullOr(Schema.String),
+        }),
+      ),
+    }),
+  ),
+  leaderboard: Schema.Array(
+    Schema.Struct({
+      rank: Schema.Finite,
+      member: Schema.Struct({
+        id: Schema.Finite,
+        name: Schema.String,
+      }),
+      completedTileCount: Schema.Finite,
+      completedLines: Schema.Array(BingoLineIdSchema),
+      totalPoints: Schema.Finite,
+      isBlackout: Schema.Boolean,
+    }),
+  ),
+});
+
 export class ApiRpcGroup extends RpcGroup.make(
   Rpc.make("getUserGuildPermissions", {
     payload: InternalUserPermissionsQuery,
@@ -363,6 +421,19 @@ export class ApiRpcGroup extends RpcGroup.make(
   Rpc.make("listGuildReservationSpots", {
     payload: MemberGuildActor,
     success: Schema.Array(RpcReservationSpot),
+    error: MemberReadError,
+  }).annotate(RpcCallers, ["discord-bot"]),
+  Rpc.make("listGuildBingoBoards", {
+    payload: MemberGuildActor,
+    success: RpcBingoBoardList,
+    error: MemberReadError,
+  }).annotate(RpcCallers, ["discord-bot"]),
+  Rpc.make("getGuildBingoBoard", {
+    payload: {
+      ...MemberGuildActor,
+      boardId: Schema.String,
+    },
+    success: RpcBingoBoardDetail,
     error: MemberReadError,
   }).annotate(RpcCallers, ["discord-bot"]),
   Rpc.make("getGuildStatsCard", {

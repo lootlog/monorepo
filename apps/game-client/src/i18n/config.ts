@@ -1,6 +1,7 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import backendPreferencesWarning from "./translations/backend-preferences-warning.json";
+import bingo from "./translations/bingo.json";
 import catchingWhitelistWarning from "./translations/catching-whitelist-warning.json";
 import chat from "./translations/chat.json";
 import command from "./translations/command.json";
@@ -44,6 +45,7 @@ i18n.use(initReactI18next).init({
         errorBoundary,
         globalChat,
         heroSightings,
+        bingo,
         lootSplit,
         npcDetector,
         notifications,
@@ -64,6 +66,7 @@ i18n.use(initReactI18next).init({
       errorBoundary,
       globalChat,
       heroSightings,
+      bingo,
       lootSplit,
       npcDetector,
       notifications,

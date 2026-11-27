@@ -29,6 +29,7 @@ import { DocsGroup } from "#src/contracts/docs/api";
 import { UserThemesGroup } from "#src/contracts/user-themes/api";
 import { UserEquipmentSetsGroup } from "#src/contracts/user-equipment-sets/api";
 import { CharacterAurasGroup } from "#src/contracts/character-auras/api";
+import { BingoGroup } from "#src/contracts/bingo/api";
 
 export class LootlogApi extends HttpApi.make("LootlogApi")
   .annotate(OpenApi.Title, "Lootlog API")
@@ -67,6 +68,7 @@ export class LootlogApi extends HttpApi.make("LootlogApi")
     UserThemesGroup,
     UserEquipmentSetsGroup,
     CharacterAurasGroup,
+    BingoGroup,
   )
   .middleware(ApiKeyEndpointPolicy)
   .middleware(SchemaErrorResponse) {}

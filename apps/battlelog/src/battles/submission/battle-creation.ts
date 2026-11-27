@@ -13,6 +13,7 @@ import type { DrizzleDatabase } from "#src/database/database";
 import {
   battles,
   battleSubmissions,
+  battleRecordedOutbox,
   battleTimelines,
   battleWarriorFilters,
   battleWarriors,
@@ -33,6 +34,7 @@ import {
   type BattleAnalysis,
 } from "@lootlog/battle-processor/battle-processor";
 import type { Warrior } from "@lootlog/battle-processor/warrior";
+import type { BattleRecordedV1 } from "@lootlog/protocol/rabbit/events";
 import type { CreateBattleParams } from "#src/battles/battle-service";
 
 type BattleCreationDatabase = Pick<
@@ -44,12 +46,42 @@ type BattleCreationDatabase = Pick<
   };
 };
 
+const battleRecordedFact = (
+  data: CreateBattleParams["data"],
+  userId: string,
+  analysis: BattleAnalysis,
+  battle: { readonly id: string; readonly createdAt: Date },
+): BattleRecordedV1 => {
+  const userWarrior = analysis.warriors.find(
+    (warrior) => warrior.originalId === data.characterId,
+  );
+
+  return {
+    version: 1,
+    battleId: battle.id,
+    userId,
+    accountId: data.accountId,
+    characterId: data.characterId,
+    world: data.world,
+    battleType: analysis.type,
+    matchmaking: Boolean(analysis.matchmaking),
+    won:
+      userWarrior !== undefined &&
+      analysis.outcome.winningTeam > 0 &&
+      userWarrior.team === analysis.outcome.winningTeam,
+    unfinished: analysis.outcome.unfinished,
+    hasFlee: analysis.outcome.hasFlee,
+    occurredAt: battle.createdAt.toISOString(),
+  };
+};
+
 export const makeBattleCreation = (
   drizzle: BattleCreationDatabase,
   battleAnalyticsService: Pick<BattleAnalytics, "invalidateAnalyticsCache">,
   battleMetadataService: Pick<BattleMetadata, "upsertUserCharacter">,
   deduplication: BattleDeduplication,
   deduplicationTiming: Pick<BattleDeduplicationTiming, "cacheTtlSeconds">,
+  battleRecordedQueued: Effect.Effect<void> = Effect.void,
 ) => {
   const logger = new ContextLogger("Battles");
 
@@ -358,8 +390,11 @@ export const makeBattleCreation = (
                   userId,
                   events: encodeBattleEvents(data.events),
                 });
+                yield* tx.insert(battleRecordedOutbox).values({
+                  event: battleRecordedFact(data, userId, analysis, battleId),
+                });
 
-                return { id: battleId.id };
+                return { id: battleId.id, created: true };
               }),
             )
             .pipe(
@@ -380,7 +415,9 @@ export const makeBattleCreation = (
         semanticFingerprint,
       );
 
-      if (existingBattle) return { id: existingBattle.id };
+      if (existingBattle) {
+        return { id: existingBattle.id, created: false };
+      }
 
       return yield* Effect.die(new Error("Battle insert did not return a row"));
     });
@@ -427,16 +464,18 @@ export const makeBattleCreation = (
 
       const analysis = analyzeBattle(data);
 
-      const battleId = (yield* storeBattleInDatabase(
+      const stored = yield* storeBattleInDatabase(
         data,
         userId,
         analysis,
         semanticFingerprint,
-      )).id;
+      );
 
       yield* battleAnalyticsService.invalidateAnalyticsCache(userId);
 
-      return { battleId };
+      if (stored.created) yield* battleRecordedQueued;
+
+      return { battleId: stored.id };
     });
   };
 

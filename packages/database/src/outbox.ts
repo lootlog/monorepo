@@ -1,7 +1,9 @@
 import { asc, eq, notInArray, sql, type InferSelectModel } from "drizzle-orm";
-import type { PgColumn, PgTable } from "drizzle-orm/pg-core";
+import type { EffectPgQueryEffectHKT } from "drizzle-orm/effect-postgres";
+import type { PgColumn, PgQueryResultHKT, PgTable } from "drizzle-orm/pg-core";
+import type { PgEffectDatabase } from "drizzle-orm/pg-core/effect";
+import type { AnyRelations } from "drizzle-orm/relations";
 import { Clock, Effect, Queue, Schema } from "effect";
-import type { ApiDatabase } from "#src/database/drizzle/database";
 
 export const makeOutboxWorker = Effect.fnUntraced(function* (
   name: string,
@@ -31,8 +33,13 @@ export const makeOutboxWorker = Effect.fnUntraced(function* (
   };
 });
 
-type OutboxTransaction = Parameters<
-  Parameters<(typeof ApiDatabase.Service)["transaction"]>[0]
+type OutboxDatabase = Pick<
+  PgEffectDatabase<EffectPgQueryEffectHKT, PgQueryResultHKT, AnyRelations>,
+  "transaction" | "update"
+>;
+
+type OutboxTransaction<Database extends OutboxDatabase> = Parameters<
+  Parameters<Database["transaction"]>[0]
 >[0];
 
 type OutboxTable = PgTable & {
@@ -44,13 +51,17 @@ const decodeOutboxRowId = Schema.decodeUnknownEffect(
   Schema.Struct({ id: Schema.Int }),
 );
 
-export const makeOutboxDispatcher = <Table extends OutboxTable, E>(
+export const makeOutboxDispatcher = <
+  Database extends OutboxDatabase,
+  Table extends OutboxTable,
+  E,
+>(
   name: string,
-  database: typeof ApiDatabase.Service,
+  database: Database,
   table: Table,
   deliver: (
     row: InferSelectModel<Table>,
-    transaction: OutboxTransaction,
+    transaction: OutboxTransaction<Database>,
   ) => Effect.Effect<void, E>,
 ) => {
   const outbox: OutboxTable = table;

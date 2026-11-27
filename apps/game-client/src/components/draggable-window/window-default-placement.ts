@@ -35,6 +35,7 @@ const WINDOW_SLOTS: Record<WindowId, WindowSlot> = {
   "party-finder": { zone: "tools" },
   "create-party-gathering": { zone: "tools" },
   "hero-sightings": { zone: "tools" },
+  bingo: { zone: "tools" },
   "extension-login": { zone: "prompts", cascadeStep: 0 },
   "app-error": { zone: "prompts", cascadeStep: 0 },
   settings: { zone: "prompts", cascadeStep: 0 },

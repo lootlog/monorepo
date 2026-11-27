@@ -313,6 +313,16 @@ const makeApiRpcHandlers = <E, R>(routes: Layer.Layer<never, E, R>) =>
             actor,
             api.reservations.listReservationSpots({ params: { guildId } }),
           ),
+        listGuildBingoBoards: ({ guildId, ...actor }) =>
+          asMember(
+            actor,
+            api.bingo.BingoControllerListBoards({ params: { guildId } }),
+          ),
+        getGuildBingoBoard: ({ guildId, boardId, ...actor }) =>
+          asMember(
+            actor,
+            api.bingo.BingoControllerGetBoard({ params: { guildId, boardId } }),
+          ),
         getGuildStatsCard: ({ guildId }) =>
           Effect.tryPromise({
             try: async () => {

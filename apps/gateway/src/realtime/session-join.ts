@@ -1,5 +1,6 @@
 import { diffAccessPolicies } from "@lootlog/protocol/realtime/access-policy";
 import {
+  BINGO_FEATURE,
   CHARACTER_AURAS_FEATURE,
   HERO_SIGHTING_CAPABILITIES_FEATURE,
   KILL_STATS_FEATURE,
@@ -195,6 +196,7 @@ export const joinSession = (
       data.features?.includes(CHARACTER_AURAS_FEATURE) === true;
     socket.data.killStats =
       data.features?.includes(KILL_STATS_FEATURE) === true;
+    socket.data.bingo = data.features?.includes(BINGO_FEATURE) === true;
     socket.data.heroSightingCapabilities =
       data.features?.includes(HERO_SIGHTING_CAPABILITIES_FEATURE) === true;
     socket.data.joined = true;

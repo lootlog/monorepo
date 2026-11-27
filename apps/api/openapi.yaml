@@ -14084,6 +14084,437 @@ paths:
             schema:
               $ref: "#/components/schemas/UpdateOwnCharacterAuraDto"
         required: true
+  /guilds/{guildId}/bingo:
+    get:
+      tags:
+        - bingo
+      operationId: BingoController_listBoards
+      parameters:
+        - name: guildId
+          in: path
+          schema:
+            type: string
+            minLength: 1
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: BingoBoardListResponseDto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BingoBoardListResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired | HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+      summary: List organization Bingo boards
+    post:
+      tags:
+        - bingo
+      operationId: BingoController_createBoard
+      parameters:
+        - name: guildId
+          in: path
+          schema:
+            type: string
+            minLength: 1
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "201":
+          description: BingoBoardDetailResponseDto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BingoBoardDetailResponseDto"
+        "400":
+          description: HttpErrorResponse | RequestValidationError
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired | HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+      summary: Create organization Bingo board
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBingoBoardDto"
+        required: true
+  /guilds/{guildId}/bingo/{boardId}:
+    get:
+      tags:
+        - bingo
+      operationId: BingoController_getBoard
+      parameters:
+        - name: guildId
+          in: path
+          schema:
+            type: string
+            minLength: 1
+          required: true
+        - name: boardId
+          in: path
+          schema:
+            type: string
+            minLength: 1
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: BingoBoardDetailResponseDto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BingoBoardDetailResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired | HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+      summary: Get organization Bingo board details
+    patch:
+      tags:
+        - bingo
+      operationId: BingoController_updateBoard
+      parameters:
+        - name: guildId
+          in: path
+          schema:
+            type: string
+            minLength: 1
+          required: true
+        - name: boardId
+          in: path
+          schema:
+            type: string
+            minLength: 1
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: BingoBoardSummaryResponseDto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BingoBoardSummaryResponseDto"
+        "400":
+          description: HttpErrorResponse | RequestValidationError
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired | HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+      summary: Update organization Bingo board settings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateBingoBoardDto"
+        required: true
+    delete:
+      tags:
+        - bingo
+      operationId: BingoController_deleteBoard
+      parameters:
+        - name: guildId
+          in: path
+          schema:
+            type: string
+            minLength: 1
+          required: true
+        - name: boardId
+          in: path
+          schema:
+            type: string
+            minLength: 1
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: BingoMutationResponseDto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BingoMutationResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired | HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+      summary: Delete organization Bingo board
+  /guilds/{guildId}/bingo/{boardId}/tiles:
+    put:
+      tags:
+        - bingo
+      operationId: BingoController_replaceTiles
+      parameters:
+        - name: guildId
+          in: path
+          schema:
+            type: string
+            minLength: 1
+          required: true
+        - name: boardId
+          in: path
+          schema:
+            type: string
+            minLength: 1
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: BingoBoardDetailResponseDto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BingoBoardDetailResponseDto"
+        "400":
+          description: HttpErrorResponse | RequestValidationError
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired | HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+      summary: Configure Bingo 5x5 board tiles
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReplaceBingoTilesDto"
+        required: true
+  /guilds/{guildId}/bingo/{boardId}/tiles/{tileId}/progress:
+    post:
+      tags:
+        - bingo
+      operationId: BingoController_updateTileProgress
+      parameters:
+        - name: guildId
+          in: path
+          schema:
+            type: string
+            minLength: 1
+          required: true
+        - name: boardId
+          in: path
+          schema:
+            type: string
+            minLength: 1
+          required: true
+        - name: tileId
+          in: path
+          schema:
+            type: string
+            minLength: 1
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: BingoBoardDetailResponseDto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BingoBoardDetailResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ReauthenticationRequired | HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/ReauthenticationRequiredEncoded"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+      summary: Manually update a member's Bingo tile progress
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateBingoTileProgressDto"
+        required: true
 components:
   schemas:
     RequestValidationError:
@@ -14156,6 +14587,1163 @@ components:
         - _tag
         - code
         - requiresReauth
+      additionalProperties: false
+    BingoBoardDetailResponseDto:
+      type: object
+      properties:
+        board:
+          $ref: "#/components/schemas/BingoBoardSummaryResponseDto"
+        viewerMemberId:
+          type: number
+        tiles:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              boardId:
+                type: string
+              row:
+                type: integer
+                minimum: 0
+                maximum: 4
+              col:
+                type: integer
+                minimum: 0
+                maximum: 4
+              title:
+                type: string
+              description:
+                nullable: true
+                type: string
+              points:
+                nullable: true
+                type: number
+              conditionKind:
+                type: string
+                enum:
+                  - LOOT
+                  - KILL
+                  - HERO_SIGHTING
+                  - BATTLE
+                  - MANUAL
+              condition:
+                anyOf:
+                  - type: object
+                    properties:
+                      kind:
+                        type: string
+                        enum:
+                          - LOOT
+                      targetCount:
+                        type: integer
+                        minimum: 1
+                        maximum: 100000
+                      rarities:
+                        type: array
+                        items:
+                          type: string
+                          enum:
+                            - UNIQUE
+                            - HEROIC
+                            - LEGENDARY
+                            - UPGRADED
+                      npcTypes:
+                        type: array
+                        items:
+                          type: string
+                          enum:
+                            - COMMON
+                            - ELITE
+                            - ELITE2
+                            - ELITE3
+                            - HERO
+                            - EVENT_HERO
+                            - COLOSSUS
+                            - TITAN
+                            - HERO_TRACKER
+                            - NPC
+                      npcNamePattern:
+                        nullable: true
+                        type: string
+                        maxLength: 120
+                      itemNamePattern:
+                        nullable: true
+                        type: string
+                        maxLength: 120
+                      minNpcLvl:
+                        nullable: true
+                        type: integer
+                        minimum: 1
+                        maximum: 500
+                      maxNpcLvl:
+                        nullable: true
+                        type: integer
+                        minimum: 1
+                        maximum: 500
+                    required:
+                      - kind
+                      - targetCount
+                      - rarities
+                      - npcTypes
+                    additionalProperties: false
+                  - type: object
+                    properties:
+                      kind:
+                        type: string
+                        enum:
+                          - KILL
+                      targetCount:
+                        type: integer
+                        minimum: 1
+                        maximum: 100000
+                      npcTypes:
+                        type: array
+                        items:
+                          type: string
+                          enum:
+                            - COMMON
+                            - ELITE
+                            - ELITE2
+                            - ELITE3
+                            - HERO
+                            - EVENT_HERO
+                            - COLOSSUS
+                            - TITAN
+                            - HERO_TRACKER
+                            - NPC
+                      npcNamePattern:
+                        nullable: true
+                        type: string
+                        maxLength: 120
+                      minNpcLvl:
+                        nullable: true
+                        type: integer
+                        minimum: 1
+                        maximum: 500
+                      maxNpcLvl:
+                        nullable: true
+                        type: integer
+                        minimum: 1
+                        maximum: 500
+                    required:
+                      - kind
+                      - targetCount
+                      - npcTypes
+                    additionalProperties: false
+                  - type: object
+                    properties:
+                      kind:
+                        type: string
+                        enum:
+                          - HERO_SIGHTING
+                      targetCount:
+                        type: integer
+                        minimum: 1
+                        maximum: 100000
+                      heroNamePattern:
+                        nullable: true
+                        type: string
+                        maxLength: 120
+                      minHeroLvl:
+                        nullable: true
+                        type: integer
+                        minimum: 1
+                        maximum: 500
+                      maxHeroLvl:
+                        nullable: true
+                        type: integer
+                        minimum: 1
+                        maximum: 500
+                      includeManual:
+                        type: boolean
+                    required:
+                      - kind
+                      - targetCount
+                      - includeManual
+                    additionalProperties: false
+                  - type: object
+                    properties:
+                      kind:
+                        type: string
+                        enum:
+                          - BATTLE
+                      targetCount:
+                        type: integer
+                        minimum: 1
+                        maximum: 100000
+                      metric:
+                        type: string
+                        enum:
+                          - WINS
+                          - WIN_STREAK
+                      matchmakingOnly:
+                        type: boolean
+                      battleTypes:
+                        type: array
+                        items:
+                          type: string
+                          minLength: 1
+                      excludeFlee:
+                        type: boolean
+                    required:
+                      - kind
+                      - targetCount
+                      - metric
+                      - matchmakingOnly
+                      - battleTypes
+                      - excludeFlee
+                    additionalProperties: false
+                  - type: object
+                    properties:
+                      kind:
+                        type: string
+                        enum:
+                          - MANUAL
+                      targetCount:
+                        type: integer
+                        minimum: 1
+                        maximum: 100000
+                    required:
+                      - kind
+                      - targetCount
+                    additionalProperties: false
+              lockedByMemberId:
+                nullable: true
+                type: number
+              lockedByMember:
+                nullable: true
+                type: object
+                properties:
+                  id:
+                    type: number
+                  userId:
+                    type: string
+                  name:
+                    type: string
+                  avatar:
+                    nullable: true
+                    type: string
+                required:
+                  - id
+                  - userId
+                  - name
+                  - avatar
+                additionalProperties: false
+              lockedAt:
+                nullable: true
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              completedByCount:
+                type: number
+              viewerProgress:
+                nullable: true
+                type: object
+                properties:
+                  tileId:
+                    type: string
+                  memberId:
+                    type: number
+                  currentCount:
+                    type: number
+                  targetCount:
+                    type: number
+                  completedAt:
+                    nullable: true
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                  manualOverride:
+                    type: boolean
+                  updatedAt:
+                    type: string
+                    format: date-time
+                    pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+                required:
+                  - tileId
+                  - memberId
+                  - currentCount
+                  - targetCount
+                  - completedAt
+                  - manualOverride
+                  - updatedAt
+                additionalProperties: false
+            required:
+              - id
+              - boardId
+              - row
+              - col
+              - title
+              - description
+              - points
+              - conditionKind
+              - condition
+              - lockedByMemberId
+              - lockedByMember
+              - lockedAt
+              - completedByCount
+              - viewerProgress
+            additionalProperties: false
+        memberProgress:
+          type: array
+          items:
+            type: object
+            properties:
+              tileId:
+                type: string
+              memberId:
+                type: number
+              currentCount:
+                type: number
+              targetCount:
+                type: number
+              completedAt:
+                nullable: true
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+              manualOverride:
+                type: boolean
+              updatedAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            required:
+              - tileId
+              - memberId
+              - currentCount
+              - targetCount
+              - completedAt
+              - manualOverride
+              - updatedAt
+            additionalProperties: false
+        leaderboard:
+          type: array
+          items:
+            type: object
+            properties:
+              rank:
+                type: number
+              member:
+                type: object
+                properties:
+                  id:
+                    type: number
+                  userId:
+                    type: string
+                  name:
+                    type: string
+                  avatar:
+                    nullable: true
+                    type: string
+                required:
+                  - id
+                  - userId
+                  - name
+                  - avatar
+                additionalProperties: false
+              completedTileIds:
+                type: array
+                items:
+                  type: string
+              completedTileCount:
+                type: number
+              completedLines:
+                type: array
+                items:
+                  type: string
+                  enum:
+                    - row-0
+                    - row-1
+                    - row-2
+                    - row-3
+                    - row-4
+                    - col-0
+                    - col-1
+                    - col-2
+                    - col-3
+                    - col-4
+                    - diag-main
+                    - diag-anti
+              tilePoints:
+                type: number
+              linePoints:
+                type: number
+              firstCompleterPoints:
+                type: number
+              blackoutPoints:
+                type: number
+              totalPoints:
+                type: number
+              isBlackout:
+                type: boolean
+              lastCompletedAt:
+                nullable: true
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            required:
+              - rank
+              - member
+              - completedTileIds
+              - completedTileCount
+              - completedLines
+              - tilePoints
+              - linePoints
+              - firstCompleterPoints
+              - blackoutPoints
+              - totalPoints
+              - isBlackout
+              - lastCompletedAt
+            additionalProperties: false
+        recentActivity:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              boardId:
+                type: string
+              tileId:
+                type: string
+              tileTitle:
+                type: string
+              row:
+                type: integer
+                minimum: 0
+                maximum: 4
+              col:
+                type: integer
+                minimum: 0
+                maximum: 4
+              member:
+                type: object
+                properties:
+                  id:
+                    type: number
+                  userId:
+                    type: string
+                  name:
+                    type: string
+                  avatar:
+                    nullable: true
+                    type: string
+                required:
+                  - id
+                  - userId
+                  - name
+                  - avatar
+                additionalProperties: false
+              sourceKind:
+                type: string
+                enum:
+                  - LOOT
+                  - KILL
+                  - HERO_SIGHTING
+                  - BATTLE
+                  - MANUAL
+              delta:
+                type: number
+              previousCount:
+                type: number
+              newCount:
+                type: number
+              completedTile:
+                type: boolean
+              completedLineCount:
+                type: number
+              summary:
+                type: string
+              occurredAt:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+            required:
+              - id
+              - boardId
+              - tileId
+              - tileTitle
+              - row
+              - col
+              - member
+              - sourceKind
+              - delta
+              - previousCount
+              - newCount
+              - completedTile
+              - completedLineCount
+              - summary
+              - occurredAt
+            additionalProperties: false
+      required:
+        - board
+        - viewerMemberId
+        - tiles
+        - memberProgress
+        - leaderboard
+        - recentActivity
+      additionalProperties: false
+    BingoBoardSummaryResponseDto:
+      type: object
+      properties:
+        id:
+          type: string
+        guildId:
+          type: string
+        name:
+          type: string
+        description:
+          nullable: true
+          type: string
+        world:
+          nullable: true
+          type: string
+        mode:
+          type: string
+          enum:
+            - RACE
+            - LOCKOUT
+        status:
+          type: string
+          enum:
+            - DRAFT
+            - ACTIVE
+            - FINISHED
+        pointsPerTile:
+          type: number
+        pointsPerLine:
+          type: number
+        firstCompleterBonus:
+          type: number
+        blackoutBonus:
+          type: number
+        startsAt:
+          nullable: true
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        endsAt:
+          nullable: true
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        createdAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        updatedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        configuredTileCount:
+          type: number
+        participantCount:
+          type: number
+        viewerCompletedTiles:
+          type: number
+        viewerCompletedLines:
+          type: number
+        viewerTotalPoints:
+          type: number
+      required:
+        - id
+        - guildId
+        - name
+        - description
+        - world
+        - mode
+        - status
+        - pointsPerTile
+        - pointsPerLine
+        - firstCompleterBonus
+        - blackoutBonus
+        - startsAt
+        - endsAt
+        - createdAt
+        - updatedAt
+        - configuredTileCount
+        - participantCount
+        - viewerCompletedTiles
+        - viewerCompletedLines
+        - viewerTotalPoints
+      additionalProperties: false
+    UpdateBingoTileProgressDto:
+      type: object
+      properties:
+        memberId:
+          type: integer
+          maximum: 9007199254740991
+          exclusiveMinimum: true
+          minimum: 0
+        currentCount:
+          type: integer
+          minimum: 0
+          maximum: 100000
+        completed:
+          type: boolean
+        note:
+          nullable: true
+          type: string
+          maxLength: 200
+      required:
+        - memberId
+      additionalProperties: false
+    ReplaceBingoTilesDto:
+      type: object
+      properties:
+        tiles:
+          type: array
+          items:
+            type: object
+            properties:
+              row:
+                type: integer
+                minimum: 0
+                maximum: 4
+              col:
+                type: integer
+                minimum: 0
+                maximum: 4
+              title:
+                type: string
+                minLength: 1
+                maxLength: 80
+              description:
+                nullable: true
+                type: string
+                maxLength: 240
+              points:
+                nullable: true
+                type: integer
+                minimum: 0
+                maximum: 10000
+              condition:
+                anyOf:
+                  - type: object
+                    properties:
+                      kind:
+                        type: string
+                        enum:
+                          - LOOT
+                      targetCount:
+                        type: integer
+                        minimum: 1
+                        maximum: 100000
+                      rarities:
+                        type: array
+                        items:
+                          type: string
+                          enum:
+                            - UNIQUE
+                            - HEROIC
+                            - LEGENDARY
+                            - UPGRADED
+                      npcTypes:
+                        type: array
+                        items:
+                          type: string
+                          enum:
+                            - COMMON
+                            - ELITE
+                            - ELITE2
+                            - ELITE3
+                            - HERO
+                            - EVENT_HERO
+                            - COLOSSUS
+                            - TITAN
+                            - HERO_TRACKER
+                            - NPC
+                      npcNamePattern:
+                        nullable: true
+                        type: string
+                        maxLength: 120
+                      itemNamePattern:
+                        nullable: true
+                        type: string
+                        maxLength: 120
+                      minNpcLvl:
+                        nullable: true
+                        type: integer
+                        minimum: 1
+                        maximum: 500
+                      maxNpcLvl:
+                        nullable: true
+                        type: integer
+                        minimum: 1
+                        maximum: 500
+                    required:
+                      - kind
+                      - targetCount
+                      - rarities
+                      - npcTypes
+                    additionalProperties: false
+                  - type: object
+                    properties:
+                      kind:
+                        type: string
+                        enum:
+                          - KILL
+                      targetCount:
+                        type: integer
+                        minimum: 1
+                        maximum: 100000
+                      npcTypes:
+                        type: array
+                        items:
+                          type: string
+                          enum:
+                            - COMMON
+                            - ELITE
+                            - ELITE2
+                            - ELITE3
+                            - HERO
+                            - EVENT_HERO
+                            - COLOSSUS
+                            - TITAN
+                            - HERO_TRACKER
+                            - NPC
+                      npcNamePattern:
+                        nullable: true
+                        type: string
+                        maxLength: 120
+                      minNpcLvl:
+                        nullable: true
+                        type: integer
+                        minimum: 1
+                        maximum: 500
+                      maxNpcLvl:
+                        nullable: true
+                        type: integer
+                        minimum: 1
+                        maximum: 500
+                    required:
+                      - kind
+                      - targetCount
+                      - npcTypes
+                    additionalProperties: false
+                  - type: object
+                    properties:
+                      kind:
+                        type: string
+                        enum:
+                          - HERO_SIGHTING
+                      targetCount:
+                        type: integer
+                        minimum: 1
+                        maximum: 100000
+                      heroNamePattern:
+                        nullable: true
+                        type: string
+                        maxLength: 120
+                      minHeroLvl:
+                        nullable: true
+                        type: integer
+                        minimum: 1
+                        maximum: 500
+                      maxHeroLvl:
+                        nullable: true
+                        type: integer
+                        minimum: 1
+                        maximum: 500
+                      includeManual:
+                        type: boolean
+                    required:
+                      - kind
+                      - targetCount
+                      - includeManual
+                    additionalProperties: false
+                  - type: object
+                    properties:
+                      kind:
+                        type: string
+                        enum:
+                          - BATTLE
+                      targetCount:
+                        type: integer
+                        minimum: 1
+                        maximum: 100000
+                      metric:
+                        type: string
+                        enum:
+                          - WINS
+                          - WIN_STREAK
+                      matchmakingOnly:
+                        type: boolean
+                      battleTypes:
+                        type: array
+                        items:
+                          type: string
+                          minLength: 1
+                      excludeFlee:
+                        type: boolean
+                    required:
+                      - kind
+                      - targetCount
+                      - metric
+                      - matchmakingOnly
+                      - battleTypes
+                      - excludeFlee
+                    additionalProperties: false
+                  - type: object
+                    properties:
+                      kind:
+                        type: string
+                        enum:
+                          - MANUAL
+                      targetCount:
+                        type: integer
+                        minimum: 1
+                        maximum: 100000
+                    required:
+                      - kind
+                      - targetCount
+                    additionalProperties: false
+            required:
+              - row
+              - col
+              - title
+              - condition
+            additionalProperties: false
+      required:
+        - tiles
+      additionalProperties: false
+    BingoMutationResponseDto:
+      type: object
+      properties:
+        ok:
+          type: boolean
+      required:
+        - ok
+      additionalProperties: false
+    UpdateBingoBoardDto:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          nullable: true
+          type: string
+          maxLength: 500
+        world:
+          nullable: true
+          type: string
+          maxLength: 64
+        mode:
+          type: string
+          enum:
+            - RACE
+            - LOCKOUT
+        status:
+          type: string
+          enum:
+            - DRAFT
+            - ACTIVE
+            - FINISHED
+        pointsPerTile:
+          type: integer
+          minimum: 0
+          maximum: 10000
+        pointsPerLine:
+          type: integer
+          minimum: 0
+          maximum: 10000
+        firstCompleterBonus:
+          type: integer
+          minimum: 0
+          maximum: 10000
+        blackoutBonus:
+          type: integer
+          minimum: 0
+          maximum: 10000
+        startsAt:
+          nullable: true
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        endsAt:
+          nullable: true
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+      additionalProperties: false
+    CreateBingoBoardDto:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          nullable: true
+          type: string
+          maxLength: 500
+        world:
+          nullable: true
+          type: string
+          maxLength: 64
+        mode:
+          type: string
+          enum:
+            - RACE
+            - LOCKOUT
+        pointsPerTile:
+          type: integer
+          minimum: 0
+          maximum: 10000
+        pointsPerLine:
+          type: integer
+          minimum: 0
+          maximum: 10000
+        firstCompleterBonus:
+          type: integer
+          minimum: 0
+          maximum: 10000
+        blackoutBonus:
+          type: integer
+          minimum: 0
+          maximum: 10000
+        startsAt:
+          nullable: true
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        endsAt:
+          nullable: true
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        populateStarterTiles:
+          type: boolean
+        tiles:
+          type: array
+          items:
+            type: object
+            properties:
+              row:
+                type: integer
+                minimum: 0
+                maximum: 4
+              col:
+                type: integer
+                minimum: 0
+                maximum: 4
+              title:
+                type: string
+                minLength: 1
+                maxLength: 80
+              description:
+                nullable: true
+                type: string
+                maxLength: 240
+              points:
+                nullable: true
+                type: integer
+                minimum: 0
+                maximum: 10000
+              condition:
+                anyOf:
+                  - type: object
+                    properties:
+                      kind:
+                        type: string
+                        enum:
+                          - LOOT
+                      targetCount:
+                        type: integer
+                        minimum: 1
+                        maximum: 100000
+                      rarities:
+                        type: array
+                        items:
+                          type: string
+                          enum:
+                            - UNIQUE
+                            - HEROIC
+                            - LEGENDARY
+                            - UPGRADED
+                      npcTypes:
+                        type: array
+                        items:
+                          type: string
+                          enum:
+                            - COMMON
+                            - ELITE
+                            - ELITE2
+                            - ELITE3
+                            - HERO
+                            - EVENT_HERO
+                            - COLOSSUS
+                            - TITAN
+                            - HERO_TRACKER
+                            - NPC
+                      npcNamePattern:
+                        nullable: true
+                        type: string
+                        maxLength: 120
+                      itemNamePattern:
+                        nullable: true
+                        type: string
+                        maxLength: 120
+                      minNpcLvl:
+                        nullable: true
+                        type: integer
+                        minimum: 1
+                        maximum: 500
+                      maxNpcLvl:
+                        nullable: true
+                        type: integer
+                        minimum: 1
+                        maximum: 500
+                    required:
+                      - kind
+                      - targetCount
+                      - rarities
+                      - npcTypes
+                    additionalProperties: false
+                  - type: object
+                    properties:
+                      kind:
+                        type: string
+                        enum:
+                          - KILL
+                      targetCount:
+                        type: integer
+                        minimum: 1
+                        maximum: 100000
+                      npcTypes:
+                        type: array
+                        items:
+                          type: string
+                          enum:
+                            - COMMON
+                            - ELITE
+                            - ELITE2
+                            - ELITE3
+                            - HERO
+                            - EVENT_HERO
+                            - COLOSSUS
+                            - TITAN
+                            - HERO_TRACKER
+                            - NPC
+                      npcNamePattern:
+                        nullable: true
+                        type: string
+                        maxLength: 120
+                      minNpcLvl:
+                        nullable: true
+                        type: integer
+                        minimum: 1
+                        maximum: 500
+                      maxNpcLvl:
+                        nullable: true
+                        type: integer
+                        minimum: 1
+                        maximum: 500
+                    required:
+                      - kind
+                      - targetCount
+                      - npcTypes
+                    additionalProperties: false
+                  - type: object
+                    properties:
+                      kind:
+                        type: string
+                        enum:
+                          - HERO_SIGHTING
+                      targetCount:
+                        type: integer
+                        minimum: 1
+                        maximum: 100000
+                      heroNamePattern:
+                        nullable: true
+                        type: string
+                        maxLength: 120
+                      minHeroLvl:
+                        nullable: true
+                        type: integer
+                        minimum: 1
+                        maximum: 500
+                      maxHeroLvl:
+                        nullable: true
+                        type: integer
+                        minimum: 1
+                        maximum: 500
+                      includeManual:
+                        type: boolean
+                    required:
+                      - kind
+                      - targetCount
+                      - includeManual
+                    additionalProperties: false
+                  - type: object
+                    properties:
+                      kind:
+                        type: string
+                        enum:
+                          - BATTLE
+                      targetCount:
+                        type: integer
+                        minimum: 1
+                        maximum: 100000
+                      metric:
+                        type: string
+                        enum:
+                          - WINS
+                          - WIN_STREAK
+                      matchmakingOnly:
+                        type: boolean
+                      battleTypes:
+                        type: array
+                        items:
+                          type: string
+                          minLength: 1
+                      excludeFlee:
+                        type: boolean
+                    required:
+                      - kind
+                      - targetCount
+                      - metric
+                      - matchmakingOnly
+                      - battleTypes
+                      - excludeFlee
+                    additionalProperties: false
+                  - type: object
+                    properties:
+                      kind:
+                        type: string
+                        enum:
+                          - MANUAL
+                      targetCount:
+                        type: integer
+                        minimum: 1
+                        maximum: 100000
+                    required:
+                      - kind
+                      - targetCount
+                    additionalProperties: false
+            required:
+              - row
+              - col
+              - title
+              - condition
+            additionalProperties: false
+      required:
+        - name
+      additionalProperties: false
+    BingoBoardListResponseDto:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/BingoBoardSummaryResponseDto"
+      required:
+        - items
       additionalProperties: false
     OwnCharacterAuraResponseDto:
       type: object
@@ -21209,6 +22797,7 @@ components:
                 - SCHEDULED_MESSAGE
                 - HERO_SIGHTED
                 - LOOT_DRAW_RESOLVED
+                - BINGO_MILESTONE
             guildId:
               nullable: true
               type: string
@@ -21648,6 +23237,7 @@ components:
                       - SCHEDULED_MESSAGE
                       - HERO_SIGHTED
                       - LOOT_DRAW_RESOLVED
+                      - BINGO_MILESTONE
                   world:
                     nullable: true
                     type: string
@@ -21754,6 +23344,7 @@ components:
                       - SCHEDULED_MESSAGE
                       - HERO_SIGHTED
                       - LOOT_DRAW_RESOLVED
+                      - BINGO_MILESTONE
                   guildId:
                     nullable: true
                     type: string
@@ -22110,6 +23701,7 @@ components:
                       - SCHEDULED_MESSAGE
                       - HERO_SIGHTED
                       - LOOT_DRAW_RESOLVED
+                      - BINGO_MILESTONE
                   world:
                     nullable: true
                     type: string
@@ -22216,6 +23808,7 @@ components:
                       - SCHEDULED_MESSAGE
                       - HERO_SIGHTED
                       - LOOT_DRAW_RESOLVED
+                      - BINGO_MILESTONE
                   guildId:
                     nullable: true
                     type: string
@@ -22506,6 +24099,7 @@ components:
             - SCHEDULED_MESSAGE
             - HERO_SIGHTED
             - LOOT_DRAW_RESOLVED
+            - BINGO_MILESTONE
         guildId:
           nullable: true
           type: string
@@ -22878,6 +24472,7 @@ components:
             - SCHEDULED_MESSAGE
             - HERO_SIGHTED
             - LOOT_DRAW_RESOLVED
+            - BINGO_MILESTONE
         targetIds:
           type: array
           items:
@@ -22995,6 +24590,7 @@ components:
             - SCHEDULED_MESSAGE
             - HERO_SIGHTED
             - LOOT_DRAW_RESOLVED
+            - BINGO_MILESTONE
         targetIds:
           type: array
           items:
@@ -23269,6 +24865,7 @@ components:
                   - SCHEDULED_MESSAGE
                   - HERO_SIGHTED
                   - LOOT_DRAW_RESOLVED
+                  - BINGO_MILESTONE
               guildId:
                 nullable: true
                 type: string
@@ -30295,4 +31892,5 @@ tags:
   - name: user-themes
   - name: user-equipment-sets
   - name: character-auras
+  - name: bingo
 servers: []

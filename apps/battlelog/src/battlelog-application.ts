@@ -1,3 +1,10 @@
+import { eventMessage, RabbitMessaging } from "@lootlog/messaging";
+import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
+import {
+  makeOutboxDispatcher,
+  makeOutboxWorker,
+} from "@lootlog/database/outbox";
+import { battleRecordedOutbox } from "#src/database/schema";
 import { OperationError } from "@lootlog/instrumentation/operation";
 import { acquireBullQueue, acquireBullWorker } from "@lootlog/database/bullmq";
 import { reconnectingBunRedisLayer } from "@lootlog/database/bun-redis";
@@ -43,6 +50,7 @@ export class BattlelogApplication extends Context.Service<
       const config = yield* BattlelogConfig;
       const drizzle = yield* drizzleDatabaseEffect;
       const redisClient = yield* Redis.Redis;
+      const rabbit = yield* RabbitMessaging;
       yield* redisClient
         .send("PING")
         .pipe(
@@ -68,6 +76,27 @@ export class BattlelogApplication extends Context.Service<
 
       const metadataService = makeBattleMetadata(drizzle, redis, read);
 
+      const battleRecordedFacts = yield* makeOutboxWorker(
+        "Battle recorded",
+        makeOutboxDispatcher(
+          "BattleRecordedOutbox",
+          drizzle,
+          battleRecordedOutbox,
+          (row) =>
+            rabbit.publish(
+              eventMessage(
+                RabbitRoutingKey.BATTLELOG_BATTLE_RECORDED_V1,
+                row.event,
+                {
+                  messageId: `battle-recorded:${row.event.battleId}`,
+                },
+              ),
+            ),
+        )(),
+      );
+
+      yield* battleRecordedFacts.run.pipe(Effect.forkScoped);
+
       const battlesService = makeBattles(
         drizzle,
         redis,
@@ -75,6 +104,8 @@ export class BattlelogApplication extends Context.Service<
         analyticsService,
         makeBattleListFilter(drizzle),
         metadataService,
+        undefined,
+        battleRecordedFacts.signal,
       );
 
       const queue = yield* acquireBullQueue<DeleteUserBattlesJobData>(

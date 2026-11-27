@@ -8,7 +8,7 @@ import type { LootDrawResponse } from "#src/contracts/loots/schemas";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import { lootDrawAnnouncementOutboxTable } from "#src/database/drizzle/loot-draw-announcement-outbox.schema";
 import type { LootQueryResult } from "#src/loots/query/loot-query-result";
-import { makeOutboxDispatcher } from "#src/shared/outbox-worker";
+import { makeOutboxDispatcher } from "@lootlog/database/outbox";
 
 const drawResolvedEvent = (
   guildId: string,

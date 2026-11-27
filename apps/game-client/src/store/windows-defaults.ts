@@ -52,6 +52,7 @@ export const WINDOW_DEFAULTS = {
   "create-party-gathering": { open: false, size: { width: 280, height: 230 } },
   "battle-pings": { open: false, size: DEFAULT_SIZE },
   "hero-sightings": { open: false, size: { width: 300, height: 260 } },
+  bingo: { open: false, size: { width: 380, height: 340 } },
   "loot-split": { open: false, size: { width: 300, height: 220 } },
 } as const satisfies Record<string, Pick<WindowData, "open" | "size">>;
 

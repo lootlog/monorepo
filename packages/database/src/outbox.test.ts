@@ -1,7 +1,7 @@
 import { expect, it } from "bun:test";
 import { Deferred, Effect, Queue } from "effect";
 import { TestClock } from "effect/testing";
-import { makeOutboxWorker } from "./outbox-worker.js";
+import { makeOutboxWorker } from "./outbox.js";
 
 it("dispatches on startup, coalesces acceptance bursts during delivery, and wakes immediately between fallback polls", async () => {
   await Effect.gen(function* () {

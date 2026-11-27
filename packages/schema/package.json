@@ -11,6 +11,7 @@
     "./browser-extension": "./src/browser-extension.ts",
     "./air-tag": "./src/air-tag.ts",
     "./battle-ping": "./src/battle-ping.ts",
+    "./bingo": "./src/bingo.ts",
     "./chat": "./src/chat.ts",
     "./chat-appearance": "./src/chat-appearance.ts",
     "./discord": "./src/discord.ts",

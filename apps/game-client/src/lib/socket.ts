@@ -6,6 +6,7 @@ import type {
   NpcPresenceSnapshot,
 } from "@lootlog/schema/npc-presence";
 import {
+  BINGO_FEATURE,
   CHARACTER_AURAS_FEATURE,
   HERO_SIGHTING_CAPABILITIES_FEATURE,
   type CommandSuccess,
@@ -392,7 +393,11 @@ export class AppSocket {
         clan: data.clan,
       },
       margonemAccountProof,
-      features: [CHARACTER_AURAS_FEATURE, HERO_SIGHTING_CAPABILITIES_FEATURE],
+      features: [
+        CHARACTER_AURAS_FEATURE,
+        HERO_SIGHTING_CAPABILITIES_FEATURE,
+        BINGO_FEATURE,
+      ],
     });
 
     ensureCurrent();

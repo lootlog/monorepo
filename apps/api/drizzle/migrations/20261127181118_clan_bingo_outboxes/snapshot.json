@@ -1,0 +1,542 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "18b849bc-3667-4166-b597-6f30c6caae83",
+  "prevIds": ["0c637b51-9e63-4655-a06f-c2ec2ea5a695"],
+  "footprints": [
+    {
+      "statementType": "create_table",
+      "statementTarget": ["table", "public", "BingoKillOutbox"],
+      "writes": [
+        "s|tbl|public.BingoKillOutbox",
+        "n|tbl|public.BingoKillOutbox",
+        "e|tbl|public.BingoKillOutbox",
+        "n|rel|public.BingoKillOutbox",
+        "n|type|public.BingoKillOutbox",
+        "n|rel|public.BingoKillOutbox_pkey"
+      ],
+      "reads": ["n|sch|public", "n|enum|public.NpcType"]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": ["table", "public", "BingoMilestoneOutbox"],
+      "writes": [
+        "s|tbl|public.BingoMilestoneOutbox",
+        "n|tbl|public.BingoMilestoneOutbox",
+        "e|tbl|public.BingoMilestoneOutbox",
+        "n|rel|public.BingoMilestoneOutbox",
+        "n|type|public.BingoMilestoneOutbox",
+        "n|rel|public.BingoMilestoneOutbox_pkey"
+      ],
+      "reads": ["n|sch|public"]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "BingoKillOutbox",
+        "BingoKillOutbox_lastAttemptAt_id_idx"
+      ],
+      "writes": [
+        "s|idx|public.BingoKillOutbox_lastAttemptAt_id_idx",
+        "n|idx|public.BingoKillOutbox_lastAttemptAt_id_idx",
+        "e|idx|public.BingoKillOutbox_lastAttemptAt_id_idx",
+        "n|rel|public.BingoKillOutbox_lastAttemptAt_id_idx"
+      ],
+      "reads": [
+        "n|tbl|public.BingoKillOutbox",
+        "n|sch|public",
+        "n|col|public.BingoKillOutbox.lastAttemptAt",
+        "n|col|public.BingoKillOutbox.id"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "BingoMilestoneOutbox",
+        "BingoMilestoneOutbox_lastAttemptAt_id_idx"
+      ],
+      "writes": [
+        "s|idx|public.BingoMilestoneOutbox_lastAttemptAt_id_idx",
+        "n|idx|public.BingoMilestoneOutbox_lastAttemptAt_id_idx",
+        "e|idx|public.BingoMilestoneOutbox_lastAttemptAt_id_idx",
+        "n|rel|public.BingoMilestoneOutbox_lastAttemptAt_id_idx"
+      ],
+      "reads": [
+        "n|tbl|public.BingoMilestoneOutbox",
+        "n|sch|public",
+        "n|col|public.BingoMilestoneOutbox.lastAttemptAt",
+        "n|col|public.BingoMilestoneOutbox.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": ["table", "public", "BingoKillOutbox"],
+      "writes": [
+        "s|fk|public.BingoKillOutbox.BingoKillOutbox_guildId_fkey",
+        "n|fk|public.BingoKillOutbox.BingoKillOutbox_guildId_fkey",
+        "e|fk|public.BingoKillOutbox.BingoKillOutbox_guildId_fkey",
+        "n|con|public.BingoKillOutbox.BingoKillOutbox_guildId_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.BingoKillOutbox",
+        "n|sch|public",
+        "n|tbl|public.Guild",
+        "n|sch|public",
+        "n|col|public.BingoKillOutbox.guildId",
+        "n|col|public.Guild.id",
+        "e|uniqueness|public.Guild.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": ["table", "public", "BingoKillOutbox"],
+      "writes": [
+        "s|fk|public.BingoKillOutbox.BingoKillOutbox_memberId_fkey",
+        "n|fk|public.BingoKillOutbox.BingoKillOutbox_memberId_fkey",
+        "e|fk|public.BingoKillOutbox.BingoKillOutbox_memberId_fkey",
+        "n|con|public.BingoKillOutbox.BingoKillOutbox_memberId_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.BingoKillOutbox",
+        "n|sch|public",
+        "n|tbl|public.Member",
+        "n|sch|public",
+        "n|col|public.BingoKillOutbox.memberId",
+        "n|col|public.Member.id",
+        "e|uniqueness|public.Member.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": ["table", "public", "BingoMilestoneOutbox"],
+      "writes": [
+        "s|fk|public.BingoMilestoneOutbox.BingoMilestoneOutbox_guildId_fkey",
+        "n|fk|public.BingoMilestoneOutbox.BingoMilestoneOutbox_guildId_fkey",
+        "e|fk|public.BingoMilestoneOutbox.BingoMilestoneOutbox_guildId_fkey",
+        "n|con|public.BingoMilestoneOutbox.BingoMilestoneOutbox_guildId_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.BingoMilestoneOutbox",
+        "n|sch|public",
+        "n|tbl|public.Guild",
+        "n|sch|public",
+        "n|col|public.BingoMilestoneOutbox.guildId",
+        "n|col|public.Guild.id",
+        "e|uniqueness|public.Guild.id"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "BingoKillOutbox",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "BingoMilestoneOutbox",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "BingoKillOutbox",
+        "name": "id",
+        "type": "serial",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "BingoKillOutbox",
+        "name": "guildId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "BingoKillOutbox",
+        "name": "memberId",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "BingoKillOutbox",
+        "name": "world",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "BingoKillOutbox",
+        "name": "npcId",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "BingoKillOutbox",
+        "name": "npcName",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "BingoKillOutbox",
+        "name": "npcType",
+        "type": "NpcType",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "BingoKillOutbox",
+        "name": "npcLvl",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "BingoKillOutbox",
+        "name": "killedAt",
+        "type": "timestamp(3)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "BingoKillOutbox",
+        "name": "lastAttemptAt",
+        "type": "timestamp(3)",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "BingoKillOutbox",
+        "name": "createdAt",
+        "type": "timestamp(3)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "BingoMilestoneOutbox",
+        "name": "id",
+        "type": "serial",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "BingoMilestoneOutbox",
+        "name": "guildId",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "BingoMilestoneOutbox",
+        "name": "event",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "BingoMilestoneOutbox",
+        "name": "lastAttemptAt",
+        "type": "timestamp(3)",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "BingoMilestoneOutbox",
+        "name": "createdAt",
+        "type": "timestamp(3)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "BingoKillOutbox",
+        "name": "BingoKillOutbox_lastAttemptAt_id_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "lastAttemptAt",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": true,
+            "opclass": null
+          },
+          {
+            "value": "id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "BingoMilestoneOutbox",
+        "name": "BingoMilestoneOutbox_lastAttemptAt_id_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "lastAttemptAt",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": true,
+            "opclass": null
+          },
+          {
+            "value": "id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "BingoKillOutbox",
+        "name": "BingoKillOutbox_guildId_fkey",
+        "nameExplicit": true,
+        "columns": ["guildId"],
+        "schemaTo": "public",
+        "tableTo": "Guild",
+        "columnsTo": ["id"],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "BingoKillOutbox",
+        "name": "BingoKillOutbox_memberId_fkey",
+        "nameExplicit": true,
+        "columns": ["memberId"],
+        "schemaTo": "public",
+        "tableTo": "Member",
+        "columnsTo": ["id"],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "BingoMilestoneOutbox",
+        "name": "BingoMilestoneOutbox_guildId_fkey",
+        "nameExplicit": true,
+        "columns": ["guildId"],
+        "schemaTo": "public",
+        "tableTo": "Guild",
+        "columnsTo": ["id"],
+        "onUpdate": "CASCADE",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "BingoKillOutbox",
+        "name": "BingoKillOutbox_pkey",
+        "columns": ["id"],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "BingoMilestoneOutbox",
+        "name": "BingoMilestoneOutbox_pkey",
+        "columns": ["id"],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    }
+  ]
+}
