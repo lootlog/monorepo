@@ -1,6 +1,10 @@
 import { describe, expect, it } from "bun:test";
 import { Function, Result, Schema } from "effect";
 import {
+  CreateBingoBoardRequest,
+  UpdateBingoBoardRequest,
+} from "#src/contracts/bingo/schemas";
+import {
   CloseRespawnWindowRequest,
   CreateEventRequest,
   EventListQuery,
@@ -78,6 +82,32 @@ describe("HttpApi contract refinements", () => {
     expect(
       Result.getOrThrow(decodeQuery(EventListQuery)({ world: " Aldous" })),
     ).toEqual({ world: "aldous" });
+  });
+
+  it("normalizes optional bingo board worlds regardless of letter case", () => {
+    expect(
+      Schema.decodeSync(CreateBingoBoardRequest)({
+        name: "ATC",
+        world: "  Arkantes ",
+      }).world,
+    ).toBe("arkantes");
+    expect(
+      Schema.decodeSync(CreateBingoBoardRequest)({
+        name: "ATC",
+        world: null,
+      }).world,
+    ).toBeNull();
+    expect(
+      Schema.decodeSync(CreateBingoBoardRequest)({
+        name: "ATC",
+        world: "   ",
+      }).world,
+    ).toBe("");
+    expect(
+      Schema.decodeSync(UpdateBingoBoardRequest)({
+        world: "GORDION",
+      }).world,
+    ).toBe("gordion");
   });
 
   it("rejects page sizes outside 1..100 or non-integer instead of clamping them", () => {

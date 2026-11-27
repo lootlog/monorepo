@@ -13,6 +13,7 @@ import {
   NonEmptyString,
 } from "@lootlog/schema/http-scalars";
 import * as Schema from "effect/Schema";
+import * as SchemaTransformation from "effect/SchemaTransformation";
 
 const BoardName = NonEmptyString.check(
   Schema.isMaxLength(100).annotate({
@@ -22,6 +23,13 @@ const BoardName = NonEmptyString.check(
 
 const BoardDescription = Schema.NullOr(
   Schema.String.check(Schema.isMaxLength(500)),
+);
+
+const BoardWorld = Schema.NullOr(
+  Schema.String.check(Schema.isMaxLength(64)).pipe(
+    Schema.decode(SchemaTransformation.trim()),
+    Schema.decode(SchemaTransformation.toLowerCase()),
+  ),
 );
 
 const TileTitle = NonEmptyString.check(
@@ -193,9 +201,7 @@ export type BingoTileInput = typeof BingoTileInput.Type;
 export const CreateBingoBoardRequest = Schema.Struct({
   name: BoardName,
   description: Schema.optionalKey(BoardDescription),
-  world: Schema.optionalKey(
-    Schema.NullOr(Schema.String.check(Schema.isMaxLength(64))),
-  ),
+  world: Schema.optionalKey(BoardWorld),
   mode: Schema.optionalKey(BingoBoardModeSchema),
   size: Schema.optionalKey(BingoBoardSizeSchema),
   pointsPerTile: Schema.optionalKey(NonNegativeScore),
@@ -213,9 +219,7 @@ export type CreateBingoBoardRequest = typeof CreateBingoBoardRequest.Type;
 export const UpdateBingoBoardRequest = Schema.Struct({
   name: Schema.optionalKey(BoardName),
   description: Schema.optionalKey(BoardDescription),
-  world: Schema.optionalKey(
-    Schema.NullOr(Schema.String.check(Schema.isMaxLength(64))),
-  ),
+  world: Schema.optionalKey(BoardWorld),
   mode: Schema.optionalKey(BingoBoardModeSchema),
   size: Schema.optionalKey(BingoBoardSizeSchema),
   status: Schema.optionalKey(BingoBoardStatusSchema),

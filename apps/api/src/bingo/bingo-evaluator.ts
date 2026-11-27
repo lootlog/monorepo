@@ -55,11 +55,17 @@ const isBoardActiveAt = (board: BingoBoardRow, at: Date): boolean => {
   return true;
 };
 
+const normalizeSignalWorld = (world: string): string =>
+  world.trim().toLowerCase();
+
 const activeBoardsWhere = (guildIds: ReadonlyArray<string>, world: string) =>
   and(
     inArray(bingoBoardTable.guildId, [...guildIds]),
     eq(bingoBoardTable.status, BingoBoardStatus.ACTIVE),
-    or(isNull(bingoBoardTable.world), eq(bingoBoardTable.world, world)),
+    or(
+      isNull(bingoBoardTable.world),
+      eq(bingoBoardTable.world, normalizeSignalWorld(world)),
+    ),
   );
 
 export type BingoKillSignal = {
@@ -102,10 +108,12 @@ export const enqueueBingoKill =
   ): KillWrite =>
   (transaction) => [
     Effect.gen(function* () {
+      const world = normalizeSignalWorld(kill.world);
+
       const [board] = yield* transaction
         .select({ id: bingoBoardTable.id })
         .from(bingoBoardTable)
-        .where(activeBoardsWhere([kill.guildId], kill.world))
+        .where(activeBoardsWhere([kill.guildId], world))
         .limit(1);
 
       if (!board) return;
@@ -113,7 +121,7 @@ export const enqueueBingoKill =
       yield* transaction.insert(bingoKillOutboxTable).values({
         guildId: kill.guildId,
         memberId: kill.memberId,
-        world: kill.world,
+        world,
         npcId: kill.npcId,
         npcName: kill.npcName,
         npcType: kill.npcType,
@@ -190,9 +198,11 @@ export const makeBingoEvaluator = (
   const evaluateKill = Effect.fn("bingo.evaluator.kill")(function* (
     signal: BingoKillSignal,
   ) {
+    const world = normalizeSignalWorld(signal.world);
+
     const boards = yield* findActiveBoards(
       [signal.guildId],
-      signal.world,
+      world,
       signal.killedAt,
     );
 
@@ -224,13 +234,13 @@ export const makeBingoEvaluator = (
               memberId: member.id,
               memberName: member.name,
               sourceKind: BingoTileConditionKind.KILL,
-              dedupKey: `kill:${signal.world}:${signal.npcId}:${signal.killedAt.getTime()}`,
+              dedupKey: `kill:${world}:${signal.npcId}:${signal.killedAt.getTime()}`,
               mode: { kind: "delta", delta: 1 },
               summary: `${signal.npcName} (${signal.npcLvl} lvl)`,
               metadata: {
                 npcId: signal.npcId,
                 npcName: signal.npcName,
-                world: signal.world,
+                world,
                 npcs: [{ type: signal.npcType, lvl: signal.npcLvl }],
               },
               occurredAt: signal.killedAt,
@@ -241,9 +251,11 @@ export const makeBingoEvaluator = (
 
   const evaluateHeroSighting = Effect.fn("bingo.evaluator.heroSighting")(
     function* (signal: BingoHeroSightingSignal) {
+      const world = normalizeSignalWorld(signal.world);
+
       const boards = yield* findActiveBoards(
         [signal.guildId],
-        signal.world,
+        world,
         signal.occurredAt,
       );
 
@@ -281,7 +293,7 @@ export const makeBingoEvaluator = (
                 metadata: {
                   sightingId: signal.sightingId,
                   heroName: signal.heroName,
-                  world: signal.world,
+                  world,
                   npcs: [{ type: NpcTypeEnum.HERO, lvl: signal.heroLvl }],
                 },
                 occurredAt: signal.occurredAt,
@@ -389,12 +401,9 @@ export const makeBingoEvaluator = (
     if (!loot) return;
 
     const droppedAt = loot.createdAt;
+    const world = normalizeSignalWorld(signal.world);
 
-    const boards = yield* findActiveBoards(
-      signal.guildIds,
-      signal.world,
-      droppedAt,
-    );
+    const boards = yield* findActiveBoards(signal.guildIds, world, droppedAt);
 
     if (boards.length === 0) return;
 
@@ -480,7 +489,7 @@ export const makeBingoEvaluator = (
               itemName: match.itemName,
               rarity: match.rarity,
               npcName: match.npcName,
-              world: signal.world,
+              world,
               npcs: npcs.map(({ type, lvl }) => ({ type, lvl })),
             },
             occurredAt: droppedAt,
