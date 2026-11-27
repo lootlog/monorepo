@@ -21,6 +21,7 @@ import layout from "./translations/layout.json";
 import ui from "./translations/ui.json";
 import docs from "./translations/docs.json";
 import heroSightings from "./translations/hero-sightings.json";
+import bingo from "./translations/bingo.json";
 
 i18n.use(initReactI18next).init({
   resources: {
@@ -46,6 +47,7 @@ i18n.use(initReactI18next).init({
         ui,
         docs,
         heroSightings,
+        bingo,
       },
     },
   },

@@ -1,3 +1,5 @@
+import type { BattleRecordedV1 } from "@lootlog/schema/bingo";
+import type { Effect } from "effect";
 import { makeBattleDeletion } from "#src/battles/deletion/battle-deletion";
 import type { BattleAnalytics } from "#src/battles/analytics/battle-analytics.service";
 import { makeBattleCatalog } from "#src/battles/catalog/battle-catalog";
@@ -26,6 +28,7 @@ export const makeBattles = (
   battleListFilterService: BattleListFilter,
   battleMetadataService: BattleMetadata,
   deduplicationTiming: BattleDeduplicationTiming = defaultBattleDeduplicationTiming,
+  onBattleRecorded?: (event: BattleRecordedV1) => Effect.Effect<void>,
 ) => {
   const deletion = makeBattleDeletion(drizzle, battleAnalyticsService);
 
@@ -35,6 +38,7 @@ export const makeBattles = (
     battleMetadataService,
     makeBattleDeduplication(redisService, deduplicationTiming),
     deduplicationTiming,
+    onBattleRecorded,
   );
 
   const catalog = makeBattleCatalog(

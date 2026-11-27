@@ -33,6 +33,7 @@ import {
   type BattleAnalysis,
 } from "@lootlog/battle-processor/battle-processor";
 import type { Warrior } from "@lootlog/battle-processor/warrior";
+import type { BattleRecordedV1 } from "@lootlog/schema/bingo";
 import type { CreateBattleParams } from "#src/battles/battle-service";
 
 type BattleCreationDatabase = Pick<
@@ -50,6 +51,8 @@ export const makeBattleCreation = (
   battleMetadataService: Pick<BattleMetadata, "upsertUserCharacter">,
   deduplication: BattleDeduplication,
   deduplicationTiming: Pick<BattleDeduplicationTiming, "cacheTtlSeconds">,
+  onBattleRecorded: (event: BattleRecordedV1) => Effect.Effect<void> = () =>
+    Effect.void,
 ) => {
   const logger = new ContextLogger("Battles");
 
@@ -359,7 +362,11 @@ export const makeBattleCreation = (
                   events: encodeBattleEvents(data.events),
                 });
 
-                return { id: battleId.id };
+                return {
+                  id: battleId.id,
+                  createdAt: battleId.createdAt,
+                  created: true,
+                };
               }),
             )
             .pipe(
@@ -380,7 +387,13 @@ export const makeBattleCreation = (
         semanticFingerprint,
       );
 
-      if (existingBattle) return { id: existingBattle.id };
+      if (existingBattle) {
+        return {
+          id: existingBattle.id,
+          createdAt: null,
+          created: false,
+        };
+      }
 
       return yield* Effect.die(new Error("Battle insert did not return a row"));
     });
@@ -427,16 +440,42 @@ export const makeBattleCreation = (
 
       const analysis = analyzeBattle(data);
 
-      const battleId = (yield* storeBattleInDatabase(
+      const stored = yield* storeBattleInDatabase(
         data,
         userId,
         analysis,
         semanticFingerprint,
-      )).id;
+      );
 
       yield* battleAnalyticsService.invalidateAnalyticsCache(userId);
 
-      return { battleId };
+      if (stored.created && stored.createdAt) {
+        const userWarrior = analysis.warriors.find(
+          (w) => w.originalId === data.characterId,
+        );
+
+        const won =
+          userWarrior !== undefined &&
+          analysis.outcome.winningTeam > 0 &&
+          userWarrior.team === analysis.outcome.winningTeam;
+
+        yield* onBattleRecorded({
+          version: 1,
+          battleId: stored.id,
+          userId,
+          accountId: data.accountId,
+          characterId: data.characterId,
+          world: data.world,
+          battleType: analysis.type,
+          matchmaking: Boolean(analysis.matchmaking),
+          won,
+          unfinished: analysis.outcome.unfinished,
+          hasFlee: analysis.outcome.hasFlee,
+          occurredAt: stored.createdAt.toISOString(),
+        });
+      }
+
+      return { battleId: stored.id };
     });
   };
 

@@ -140,6 +140,8 @@ export const prepareSourceEventVisibility = (
     if (event.type === "kill-stats.changed")
       return session.platform === "web-app" && session.killStats === true;
 
+    if (event.type === "bingo.updated") return session.bingo === true;
+
     if (!canReadNpc(session, guild)) return false;
 
     switch (event.type) {

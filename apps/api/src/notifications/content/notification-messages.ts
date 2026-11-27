@@ -43,6 +43,43 @@ export const DEFAULT_LOOT_DRAW_TEMPLATE = [
 
 export const LOOT_DRAW_RESOLVED_TITLE = "Wynik koła";
 
+export const BINGO_MILESTONE_TITLE = "Clan Bingo";
+
+export const DEFAULT_BINGO_MILESTONE_TEMPLATE = [
+  "## {{boardName}} — {{milestoneLabel}}",
+  "",
+  "**{{memberName}}** zalicza pole **{{tileTitle}}**",
+  "{{summary}}",
+  "Postęp: **{{completedTileCount}}/25** pól · **{{completedLinesCount}}** linii · **{{totalPoints}}** pkt",
+].join("\n");
+
+export const bingoMilestoneLabel = (
+  kind: "TILE_COMPLETED" | "LINE_COMPLETED" | "BLACKOUT",
+) => {
+  if (kind === "BLACKOUT") return "PEŁNA PLANSZA (BLACKOUT)!";
+
+  if (kind === "LINE_COMPLETED") return "NOWA LINIA BINGO!";
+
+  return "Zaliczone pole";
+};
+
+export const bingoMilestoneMessage = (
+  memberName: string,
+  tileTitle: string,
+  boardName: string,
+  kind: "TILE_COMPLETED" | "LINE_COMPLETED" | "BLACKOUT",
+) => {
+  if (kind === "BLACKOUT") {
+    return `${memberName} ukończył(a) całą planszę Bingo "${boardName}" (ostatnie pole: ${tileTitle})!`;
+  }
+
+  if (kind === "LINE_COMPLETED") {
+    return `${memberName} zdobył(a) linię Bingo w "${boardName}" dzięki polu "${tileTitle}"!`;
+  }
+
+  return `${memberName} zaliczył(a) pole "${tileTitle}" w Bingo "${boardName}".`;
+};
+
 export const lootDrawOutcomeLine = (
   winnerName: string,
   tickets: string,

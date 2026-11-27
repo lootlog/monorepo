@@ -6,6 +6,7 @@ import { formatLevel } from "@lootlog/domain/profession";
 import type { HeroSightingResponse } from "#src/contracts/hero-sightings/schemas";
 import type { NotificationContentModule } from "#src/notifications/content/notification-content.service";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
+import type { BingoMilestoneNotificationEvent } from "@lootlog/schema/bingo";
 import {
   type DiscordNotificationDeliveryResult,
   type LootCreatedNotificationEventV2,
@@ -374,6 +375,34 @@ export const makeNotificationsEvents = (options: {
     );
   });
 
+  const handleBingoMilestone = Effect.fn("notifications.events.bingoMilestone")(
+    function* (event: BingoMilestoneNotificationEvent) {
+      const now = yield* Clock.currentTimeMillis;
+
+      const rules = yield* options.store.guildWorldRules(
+        "BINGO_MILESTONE",
+        event.guildId,
+        event.world,
+      );
+
+      yield* scheduleInstantJobs(
+        rules,
+        {
+          sourceEntityType: "bingo",
+          sourceEntityId: event.boardId,
+          sourceEventId: `bingo:${event.eventId}`,
+        },
+        now,
+        (rule, target) =>
+          options.content.buildBingoMilestonePayload({
+            notificationRule: rule,
+            target,
+            event,
+          }),
+      );
+    },
+  );
+
   const handleDeliveryResult = Effect.fn("notifications.events.deliveryResult")(
     (event: DiscordNotificationDeliveryResult) => options.delivery(event),
   );
@@ -394,6 +423,7 @@ export const makeNotificationsEvents = (options: {
     handleLootCreated,
     handleHeroSightingUpdated,
     handleLootDrawResolved,
+    handleBingoMilestone,
     handleDeliveryResult,
     handleDiscordGuildChannelDeleted,
   };

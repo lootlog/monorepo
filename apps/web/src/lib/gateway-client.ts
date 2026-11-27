@@ -8,6 +8,7 @@ import {
   unwrapOrganizationEvent,
 } from "@lootlog/client/realtime/event-listeners";
 import {
+  BINGO_FEATURE,
   HERO_SIGHTING_CAPABILITIES_FEATURE,
   KILL_STATS_FEATURE,
   type ServerEventPayload,
@@ -190,7 +191,11 @@ export class GatewayClient {
   join(): void {
     void this.realtime
       .join({
-        features: [KILL_STATS_FEATURE, HERO_SIGHTING_CAPABILITIES_FEATURE],
+        features: [
+          KILL_STATS_FEATURE,
+          HERO_SIGHTING_CAPABILITIES_FEATURE,
+          BINGO_FEATURE,
+        ],
       })
       .catch(() => undefined);
   }

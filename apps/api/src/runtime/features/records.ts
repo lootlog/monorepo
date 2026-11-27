@@ -35,6 +35,7 @@ import { DependencyUnavailableError } from "@lootlog/protocol/http/errors";
 import { RabbitMessaging, eventMessage } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Context, Effect, Layer } from "effect";
+import { BingoEvaluator } from "#src/bingo/bingo-data";
 import { recordsDataLayer } from "#src/http-api/access/records.data-layer";
 import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
 
@@ -56,6 +57,7 @@ export const recordsServicesLive = Layer.effect(
     const redis = yield* ApiRedis;
     const rabbit = yield* RabbitMessaging;
     const database = yield* ApiDatabase;
+    const bingoEvaluator = yield* BingoEvaluator;
     const lootStats = new LootStatsService(database, redis);
     const locks = makeRedisLockManager(redis);
 
@@ -184,6 +186,23 @@ export const recordsServicesLive = Layer.effect(
                   Effect.logWarning(
                     "Personal kill statistics refresh hint failed",
                   ),
+                ),
+              ),
+          (kill) =>
+            bingoEvaluator
+              .evaluateKill({
+                guildId: kill.guildId,
+                memberId: kill.memberId,
+                world: kill.world,
+                npcId: kill.npcId,
+                npcName: kill.npcName,
+                npcType: kill.npcType,
+                npcLvl: kill.npcLvl,
+                killedAt: kill.killedAt,
+              })
+              .pipe(
+                Effect.catch((error) =>
+                  Effect.logWarning("Bingo kill evaluation failed", { error }),
                 ),
               ),
         ),

@@ -59,6 +59,13 @@ export const makeKillCreation = (
   ) => Effect.Effect<void> = () => Effect.void,
   publishPersonalStatsChanged: (userId: string) => Effect.Effect<void> = () =>
     Effect.void,
+  onMemberKillCommitted: (
+    input: KillInput & {
+      readonly guildId: string;
+      readonly memberId: number;
+      readonly killedAt: Date;
+    },
+  ) => Effect.Effect<void> = () => Effect.void,
 ) => {
   const protect = adapterOperation("kills.drizzle");
 
@@ -344,6 +351,14 @@ export const makeKillCreation = (
         targets.filter(({ countsGuild }) => countsGuild),
         ({ guildId }) =>
           publishActivity({ ...input, guildId }).pipe(Effect.forkDetach),
+        { discard: true },
+      );
+      yield* Effect.forEach(
+        targets,
+        ({ guildId, memberId }) =>
+          onMemberKillCommitted({ ...input, guildId, memberId, killedAt }).pipe(
+            Effect.forkDetach,
+          ),
         { discard: true },
       );
 

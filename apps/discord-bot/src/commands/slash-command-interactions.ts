@@ -8,6 +8,7 @@ import {
 } from "discord.js";
 import { Effect } from "effect";
 import { FAILURE_MESSAGES, UNKNOWN_COMMAND } from "./command-messages.js";
+import { bingoCommand } from "./bingo-commands.js";
 import { eventCommand } from "./event-commands.js";
 import {
   npcCommand,
@@ -37,6 +38,7 @@ const SLASH_COMMANDS: ReadonlyArray<SlashCommand> = [
   timerCommand,
   reservationsCommand,
   eventCommand,
+  bingoCommand,
   lootsCommand,
   itemCommand,
   onlineCommand,

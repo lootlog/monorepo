@@ -37,6 +37,7 @@ export const RabbitRoutingKey = {
   GUILDS_DELETE_MESSAGE: "guilds.delete.message",
   GUILDS_DELETE_ROLE: "guilds.delete.role",
   GUILDS_HERO_SIGHTINGS_UPDATE: "guilds.hero-sightings.update",
+  GUILDS_BINGO_UPDATED: "guilds.bingo.updated",
   GUILDS_KILLS_ACCEPTED_V1: "guilds.kills.accepted.v1",
   GUILDS_LOOTS_CREATE: "guilds.loots.create",
   GUILDS_LOOTS_SHARE_UPDATE: "guilds.loots.share.update",
@@ -65,6 +66,7 @@ export const RabbitRoutingKey = {
   NOTIFICATIONS_HERO_SIGHTING_UPDATED: "notifications.hero-sighting.updated",
   NOTIFICATIONS_LOOT_CREATED: "notifications.loot.created",
   NOTIFICATIONS_LOOT_DRAW_RESOLVED: "notifications.loot-draw.resolved",
+  NOTIFICATIONS_BINGO_MILESTONE: "notifications.bingo.milestone",
   NOTIFICATIONS_TIMER_DELETED: "notifications.timer.deleted",
   NOTIFICATIONS_TIMER_UPDATED: "notifications.timer.updated",
   GAME_CHARACTER_OFFLINE: "game.character.offline",
@@ -84,6 +86,7 @@ export const RabbitRoutingKey = {
   USERS_PARTY_READY_ROOM_UPDATED: "users.party-ready-room.updated",
   USERS_KILL_STATS_CHANGED: "users.kill-stats.changed",
   BATTLELOG_USER_DATA_DELETE: "battlelog.user-data.delete",
+  BATTLELOG_BATTLE_RECORDED_V1: "battlelog.battle.recorded.v1",
 } as const;
 
 export type RabbitEventRoutingKey =

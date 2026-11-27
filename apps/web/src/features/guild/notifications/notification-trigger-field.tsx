@@ -34,7 +34,8 @@ export const NotificationTriggerField = ({
 
     if (
       nextType === NotificationTriggerType.HERO_SIGHTED ||
-      nextType === NotificationTriggerType.LOOT_DRAW_RESOLVED
+      nextType === NotificationTriggerType.LOOT_DRAW_RESOLVED ||
+      nextType === NotificationTriggerType.BINGO_MILESTONE
     ) {
       form.setValue("npcIds", []);
       form.setValue("manualNpcIds", "");
@@ -82,6 +83,17 @@ export const NotificationTriggerField = ({
             ),
             description: t(
               "settings.notifications.ruleDialog.triggerOptions.lootDrawResolved",
+            ),
+          },
+          {
+            value: NotificationTriggerType.BINGO_MILESTONE,
+            title: t(
+              getNotificationTriggerTranslationKey(
+                NotificationTriggerType.BINGO_MILESTONE,
+              ),
+            ),
+            description: t(
+              "settings.notifications.ruleDialog.triggerOptions.bingoMilestone",
             ),
           },
           {

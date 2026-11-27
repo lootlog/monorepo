@@ -76,6 +76,770 @@ export interface ReauthenticationRequiredEncoded {
   requiresReauth: true;
 }
 
+export type BingoBoardDetailResponseDtoTilesItemConditionKind = typeof BingoBoardDetailResponseDtoTilesItemConditionKind[keyof typeof BingoBoardDetailResponseDtoTilesItemConditionKind];
+
+
+export const BingoBoardDetailResponseDtoTilesItemConditionKind = {
+  LOOT: 'LOOT',
+  KILL: 'KILL',
+  HERO_SIGHTING: 'HERO_SIGHTING',
+  BATTLE: 'BATTLE',
+  MANUAL: 'MANUAL',
+} as const;
+
+export type BingoBoardDetailResponseDtoTilesItemCondition = {
+  kind: 'LOOT';
+  /**
+     * @minimum 1
+     * @maximum 100000
+     */
+  targetCount: number;
+  rarities: ('UNIQUE' | 'HEROIC' | 'LEGENDARY' | 'UPGRADED')[];
+  npcTypes: ('COMMON' | 'ELITE' | 'ELITE2' | 'ELITE3' | 'HERO' | 'EVENT_HERO' | 'COLOSSUS' | 'TITAN' | 'HERO_TRACKER' | 'NPC')[];
+  /**
+     * @maxLength 120
+     * @nullable
+     */
+  npcNamePattern?: string | null;
+  /**
+     * @maxLength 120
+     * @nullable
+     */
+  itemNamePattern?: string | null;
+  /**
+     * @minimum 1
+     * @maximum 500
+     * @nullable
+     */
+  minNpcLvl?: number | null;
+  /**
+     * @minimum 1
+     * @maximum 500
+     * @nullable
+     */
+  maxNpcLvl?: number | null;
+} | {
+  kind: 'KILL';
+  /**
+     * @minimum 1
+     * @maximum 100000
+     */
+  targetCount: number;
+  npcTypes: ('COMMON' | 'ELITE' | 'ELITE2' | 'ELITE3' | 'HERO' | 'EVENT_HERO' | 'COLOSSUS' | 'TITAN' | 'HERO_TRACKER' | 'NPC')[];
+  /**
+     * @maxLength 120
+     * @nullable
+     */
+  npcNamePattern?: string | null;
+  /**
+     * @minimum 1
+     * @maximum 500
+     * @nullable
+     */
+  minNpcLvl?: number | null;
+  /**
+     * @minimum 1
+     * @maximum 500
+     * @nullable
+     */
+  maxNpcLvl?: number | null;
+} | {
+  kind: 'HERO_SIGHTING';
+  /**
+     * @minimum 1
+     * @maximum 100000
+     */
+  targetCount: number;
+  /**
+     * @maxLength 120
+     * @nullable
+     */
+  heroNamePattern?: string | null;
+  /**
+     * @minimum 1
+     * @maximum 500
+     * @nullable
+     */
+  minHeroLvl?: number | null;
+  /**
+     * @minimum 1
+     * @maximum 500
+     * @nullable
+     */
+  maxHeroLvl?: number | null;
+  includeManual: boolean;
+} | {
+  kind: 'BATTLE';
+  /**
+     * @minimum 1
+     * @maximum 100000
+     */
+  targetCount: number;
+  metric: 'WINS' | 'WIN_STREAK';
+  matchmakingOnly: boolean;
+  /** @items.minLength 1 */
+  battleTypes: string[];
+  excludeFlee: boolean;
+} | {
+  kind: 'MANUAL';
+  /**
+     * @minimum 1
+     * @maximum 100000
+     */
+  targetCount: number;
+};
+
+/**
+ * @nullable
+ */
+export type BingoBoardDetailResponseDtoTilesItemLockedByMember = {
+  id: number;
+  userId: string;
+  name: string;
+  /** @nullable */
+  avatar: string | null;
+} | null;
+
+/**
+ * @nullable
+ */
+export type BingoBoardDetailResponseDtoTilesItemViewerProgress = {
+  tileId: string;
+  memberId: number;
+  currentCount: number;
+  targetCount: number;
+  /**
+     * @nullable
+     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+     */
+  completedAt: string | null;
+  manualOverride: boolean;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  updatedAt: string;
+} | null;
+
+export type BingoBoardDetailResponseDtoTilesItem = {
+  id: string;
+  boardId: string;
+  /**
+     * @minimum 0
+     * @maximum 4
+     */
+  row: number;
+  /**
+     * @minimum 0
+     * @maximum 4
+     */
+  col: number;
+  title: string;
+  /** @nullable */
+  description: string | null;
+  /** @nullable */
+  points: number | null;
+  conditionKind: BingoBoardDetailResponseDtoTilesItemConditionKind;
+  condition: BingoBoardDetailResponseDtoTilesItemCondition;
+  /** @nullable */
+  lockedByMemberId: number | null;
+  /** @nullable */
+  lockedByMember: BingoBoardDetailResponseDtoTilesItemLockedByMember;
+  /**
+     * @nullable
+     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+     */
+  lockedAt: string | null;
+  completedByCount: number;
+  /** @nullable */
+  viewerProgress: BingoBoardDetailResponseDtoTilesItemViewerProgress;
+};
+
+export type BingoBoardDetailResponseDtoMemberProgressItem = {
+  tileId: string;
+  memberId: number;
+  currentCount: number;
+  targetCount: number;
+  /**
+     * @nullable
+     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+     */
+  completedAt: string | null;
+  manualOverride: boolean;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  updatedAt: string;
+};
+
+export type BingoBoardDetailResponseDtoLeaderboardItemMember = {
+  id: number;
+  userId: string;
+  name: string;
+  /** @nullable */
+  avatar: string | null;
+};
+
+export type BingoBoardDetailResponseDtoLeaderboardItemCompletedLinesItem = typeof BingoBoardDetailResponseDtoLeaderboardItemCompletedLinesItem[keyof typeof BingoBoardDetailResponseDtoLeaderboardItemCompletedLinesItem];
+
+
+export const BingoBoardDetailResponseDtoLeaderboardItemCompletedLinesItem = {
+  'row-0': 'row-0',
+  'row-1': 'row-1',
+  'row-2': 'row-2',
+  'row-3': 'row-3',
+  'row-4': 'row-4',
+  'col-0': 'col-0',
+  'col-1': 'col-1',
+  'col-2': 'col-2',
+  'col-3': 'col-3',
+  'col-4': 'col-4',
+  'diag-main': 'diag-main',
+  'diag-anti': 'diag-anti',
+} as const;
+
+export type BingoBoardDetailResponseDtoLeaderboardItem = {
+  rank: number;
+  member: BingoBoardDetailResponseDtoLeaderboardItemMember;
+  completedTileIds: string[];
+  completedTileCount: number;
+  completedLines: BingoBoardDetailResponseDtoLeaderboardItemCompletedLinesItem[];
+  tilePoints: number;
+  linePoints: number;
+  firstCompleterPoints: number;
+  blackoutPoints: number;
+  totalPoints: number;
+  isBlackout: boolean;
+  /**
+     * @nullable
+     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+     */
+  lastCompletedAt: string | null;
+};
+
+export type BingoBoardDetailResponseDtoRecentActivityItemMember = {
+  id: number;
+  userId: string;
+  name: string;
+  /** @nullable */
+  avatar: string | null;
+};
+
+export type BingoBoardDetailResponseDtoRecentActivityItemSourceKind = typeof BingoBoardDetailResponseDtoRecentActivityItemSourceKind[keyof typeof BingoBoardDetailResponseDtoRecentActivityItemSourceKind];
+
+
+export const BingoBoardDetailResponseDtoRecentActivityItemSourceKind = {
+  LOOT: 'LOOT',
+  KILL: 'KILL',
+  HERO_SIGHTING: 'HERO_SIGHTING',
+  BATTLE: 'BATTLE',
+  MANUAL: 'MANUAL',
+} as const;
+
+export type BingoBoardDetailResponseDtoRecentActivityItem = {
+  id: string;
+  boardId: string;
+  tileId: string;
+  tileTitle: string;
+  /**
+     * @minimum 0
+     * @maximum 4
+     */
+  row: number;
+  /**
+     * @minimum 0
+     * @maximum 4
+     */
+  col: number;
+  member: BingoBoardDetailResponseDtoRecentActivityItemMember;
+  sourceKind: BingoBoardDetailResponseDtoRecentActivityItemSourceKind;
+  delta: number;
+  previousCount: number;
+  newCount: number;
+  completedTile: boolean;
+  completedLineCount: number;
+  summary: string;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  occurredAt: string;
+};
+
+export type BingoBoardSummaryResponseDtoMode = typeof BingoBoardSummaryResponseDtoMode[keyof typeof BingoBoardSummaryResponseDtoMode];
+
+
+export const BingoBoardSummaryResponseDtoMode = {
+  RACE: 'RACE',
+  LOCKOUT: 'LOCKOUT',
+} as const;
+
+export type BingoBoardSummaryResponseDtoStatus = typeof BingoBoardSummaryResponseDtoStatus[keyof typeof BingoBoardSummaryResponseDtoStatus];
+
+
+export const BingoBoardSummaryResponseDtoStatus = {
+  DRAFT: 'DRAFT',
+  ACTIVE: 'ACTIVE',
+  FINISHED: 'FINISHED',
+} as const;
+
+export interface BingoBoardSummaryResponseDto {
+  id: string;
+  guildId: string;
+  name: string;
+  /** @nullable */
+  description: string | null;
+  /** @nullable */
+  world: string | null;
+  mode: BingoBoardSummaryResponseDtoMode;
+  status: BingoBoardSummaryResponseDtoStatus;
+  pointsPerTile: number;
+  pointsPerLine: number;
+  firstCompleterBonus: number;
+  blackoutBonus: number;
+  /**
+     * @nullable
+     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+     */
+  startsAt: string | null;
+  /**
+     * @nullable
+     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+     */
+  endsAt: string | null;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  createdAt: string;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  updatedAt: string;
+  configuredTileCount: number;
+  participantCount: number;
+  viewerCompletedTiles: number;
+  viewerCompletedLines: number;
+  viewerTotalPoints: number;
+}
+
+export interface BingoBoardDetailResponseDto {
+  board: BingoBoardSummaryResponseDto;
+  viewerMemberId: number;
+  tiles: BingoBoardDetailResponseDtoTilesItem[];
+  memberProgress: BingoBoardDetailResponseDtoMemberProgressItem[];
+  leaderboard: BingoBoardDetailResponseDtoLeaderboardItem[];
+  recentActivity: BingoBoardDetailResponseDtoRecentActivityItem[];
+}
+
+export interface UpdateBingoTileProgressDto {
+  /**
+     * @maximum 9007199254740991
+     * @exclusiveMinimum 0
+     */
+  memberId: number;
+  /**
+     * @minimum 0
+     * @maximum 100000
+     */
+  currentCount?: number;
+  completed?: boolean;
+  /**
+     * @maxLength 200
+     * @nullable
+     */
+  note?: string | null;
+}
+
+export type ReplaceBingoTilesDtoTilesItemCondition = {
+  kind: 'LOOT';
+  /**
+     * @minimum 1
+     * @maximum 100000
+     */
+  targetCount: number;
+  rarities: ('UNIQUE' | 'HEROIC' | 'LEGENDARY' | 'UPGRADED')[];
+  npcTypes: ('COMMON' | 'ELITE' | 'ELITE2' | 'ELITE3' | 'HERO' | 'EVENT_HERO' | 'COLOSSUS' | 'TITAN' | 'HERO_TRACKER' | 'NPC')[];
+  /**
+     * @maxLength 120
+     * @nullable
+     */
+  npcNamePattern?: string | null;
+  /**
+     * @maxLength 120
+     * @nullable
+     */
+  itemNamePattern?: string | null;
+  /**
+     * @minimum 1
+     * @maximum 500
+     * @nullable
+     */
+  minNpcLvl?: number | null;
+  /**
+     * @minimum 1
+     * @maximum 500
+     * @nullable
+     */
+  maxNpcLvl?: number | null;
+} | {
+  kind: 'KILL';
+  /**
+     * @minimum 1
+     * @maximum 100000
+     */
+  targetCount: number;
+  npcTypes: ('COMMON' | 'ELITE' | 'ELITE2' | 'ELITE3' | 'HERO' | 'EVENT_HERO' | 'COLOSSUS' | 'TITAN' | 'HERO_TRACKER' | 'NPC')[];
+  /**
+     * @maxLength 120
+     * @nullable
+     */
+  npcNamePattern?: string | null;
+  /**
+     * @minimum 1
+     * @maximum 500
+     * @nullable
+     */
+  minNpcLvl?: number | null;
+  /**
+     * @minimum 1
+     * @maximum 500
+     * @nullable
+     */
+  maxNpcLvl?: number | null;
+} | {
+  kind: 'HERO_SIGHTING';
+  /**
+     * @minimum 1
+     * @maximum 100000
+     */
+  targetCount: number;
+  /**
+     * @maxLength 120
+     * @nullable
+     */
+  heroNamePattern?: string | null;
+  /**
+     * @minimum 1
+     * @maximum 500
+     * @nullable
+     */
+  minHeroLvl?: number | null;
+  /**
+     * @minimum 1
+     * @maximum 500
+     * @nullable
+     */
+  maxHeroLvl?: number | null;
+  includeManual: boolean;
+} | {
+  kind: 'BATTLE';
+  /**
+     * @minimum 1
+     * @maximum 100000
+     */
+  targetCount: number;
+  metric: 'WINS' | 'WIN_STREAK';
+  matchmakingOnly: boolean;
+  /** @items.minLength 1 */
+  battleTypes: string[];
+  excludeFlee: boolean;
+} | {
+  kind: 'MANUAL';
+  /**
+     * @minimum 1
+     * @maximum 100000
+     */
+  targetCount: number;
+};
+
+export type ReplaceBingoTilesDtoTilesItem = {
+  /**
+     * @minimum 0
+     * @maximum 4
+     */
+  row: number;
+  /**
+     * @minimum 0
+     * @maximum 4
+     */
+  col: number;
+  /**
+     * @minLength 1
+     * @maxLength 80
+     */
+  title: string;
+  /**
+     * @maxLength 240
+     * @nullable
+     */
+  description?: string | null;
+  /**
+     * @minimum 0
+     * @maximum 10000
+     * @nullable
+     */
+  points?: number | null;
+  condition: ReplaceBingoTilesDtoTilesItemCondition;
+};
+
+export interface ReplaceBingoTilesDto {
+  tiles: ReplaceBingoTilesDtoTilesItem[];
+}
+
+export interface BingoMutationResponseDto {
+  ok: boolean;
+}
+
+export type UpdateBingoBoardDtoMode = typeof UpdateBingoBoardDtoMode[keyof typeof UpdateBingoBoardDtoMode];
+
+
+export const UpdateBingoBoardDtoMode = {
+  RACE: 'RACE',
+  LOCKOUT: 'LOCKOUT',
+} as const;
+
+export type UpdateBingoBoardDtoStatus = typeof UpdateBingoBoardDtoStatus[keyof typeof UpdateBingoBoardDtoStatus];
+
+
+export const UpdateBingoBoardDtoStatus = {
+  DRAFT: 'DRAFT',
+  ACTIVE: 'ACTIVE',
+  FINISHED: 'FINISHED',
+} as const;
+
+export interface UpdateBingoBoardDto {
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  name?: string;
+  /**
+     * @maxLength 500
+     * @nullable
+     */
+  description?: string | null;
+  /**
+     * @maxLength 64
+     * @nullable
+     */
+  world?: string | null;
+  mode?: UpdateBingoBoardDtoMode;
+  status?: UpdateBingoBoardDtoStatus;
+  /**
+     * @minimum 0
+     * @maximum 10000
+     */
+  pointsPerTile?: number;
+  /**
+     * @minimum 0
+     * @maximum 10000
+     */
+  pointsPerLine?: number;
+  /**
+     * @minimum 0
+     * @maximum 10000
+     */
+  firstCompleterBonus?: number;
+  /**
+     * @minimum 0
+     * @maximum 10000
+     */
+  blackoutBonus?: number;
+  /**
+     * @nullable
+     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+     */
+  startsAt?: string | null;
+  /**
+     * @nullable
+     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+     */
+  endsAt?: string | null;
+}
+
+export type CreateBingoBoardDtoMode = typeof CreateBingoBoardDtoMode[keyof typeof CreateBingoBoardDtoMode];
+
+
+export const CreateBingoBoardDtoMode = {
+  RACE: 'RACE',
+  LOCKOUT: 'LOCKOUT',
+} as const;
+
+export type CreateBingoBoardDtoTilesItemCondition = {
+  kind: 'LOOT';
+  /**
+     * @minimum 1
+     * @maximum 100000
+     */
+  targetCount: number;
+  rarities: ('UNIQUE' | 'HEROIC' | 'LEGENDARY' | 'UPGRADED')[];
+  npcTypes: ('COMMON' | 'ELITE' | 'ELITE2' | 'ELITE3' | 'HERO' | 'EVENT_HERO' | 'COLOSSUS' | 'TITAN' | 'HERO_TRACKER' | 'NPC')[];
+  /**
+     * @maxLength 120
+     * @nullable
+     */
+  npcNamePattern?: string | null;
+  /**
+     * @maxLength 120
+     * @nullable
+     */
+  itemNamePattern?: string | null;
+  /**
+     * @minimum 1
+     * @maximum 500
+     * @nullable
+     */
+  minNpcLvl?: number | null;
+  /**
+     * @minimum 1
+     * @maximum 500
+     * @nullable
+     */
+  maxNpcLvl?: number | null;
+} | {
+  kind: 'KILL';
+  /**
+     * @minimum 1
+     * @maximum 100000
+     */
+  targetCount: number;
+  npcTypes: ('COMMON' | 'ELITE' | 'ELITE2' | 'ELITE3' | 'HERO' | 'EVENT_HERO' | 'COLOSSUS' | 'TITAN' | 'HERO_TRACKER' | 'NPC')[];
+  /**
+     * @maxLength 120
+     * @nullable
+     */
+  npcNamePattern?: string | null;
+  /**
+     * @minimum 1
+     * @maximum 500
+     * @nullable
+     */
+  minNpcLvl?: number | null;
+  /**
+     * @minimum 1
+     * @maximum 500
+     * @nullable
+     */
+  maxNpcLvl?: number | null;
+} | {
+  kind: 'HERO_SIGHTING';
+  /**
+     * @minimum 1
+     * @maximum 100000
+     */
+  targetCount: number;
+  /**
+     * @maxLength 120
+     * @nullable
+     */
+  heroNamePattern?: string | null;
+  /**
+     * @minimum 1
+     * @maximum 500
+     * @nullable
+     */
+  minHeroLvl?: number | null;
+  /**
+     * @minimum 1
+     * @maximum 500
+     * @nullable
+     */
+  maxHeroLvl?: number | null;
+  includeManual: boolean;
+} | {
+  kind: 'BATTLE';
+  /**
+     * @minimum 1
+     * @maximum 100000
+     */
+  targetCount: number;
+  metric: 'WINS' | 'WIN_STREAK';
+  matchmakingOnly: boolean;
+  /** @items.minLength 1 */
+  battleTypes: string[];
+  excludeFlee: boolean;
+} | {
+  kind: 'MANUAL';
+  /**
+     * @minimum 1
+     * @maximum 100000
+     */
+  targetCount: number;
+};
+
+export type CreateBingoBoardDtoTilesItem = {
+  /**
+     * @minimum 0
+     * @maximum 4
+     */
+  row: number;
+  /**
+     * @minimum 0
+     * @maximum 4
+     */
+  col: number;
+  /**
+     * @minLength 1
+     * @maxLength 80
+     */
+  title: string;
+  /**
+     * @maxLength 240
+     * @nullable
+     */
+  description?: string | null;
+  /**
+     * @minimum 0
+     * @maximum 10000
+     * @nullable
+     */
+  points?: number | null;
+  condition: CreateBingoBoardDtoTilesItemCondition;
+};
+
+export interface CreateBingoBoardDto {
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  name: string;
+  /**
+     * @maxLength 500
+     * @nullable
+     */
+  description?: string | null;
+  /**
+     * @maxLength 64
+     * @nullable
+     */
+  world?: string | null;
+  mode?: CreateBingoBoardDtoMode;
+  /**
+     * @minimum 0
+     * @maximum 10000
+     */
+  pointsPerTile?: number;
+  /**
+     * @minimum 0
+     * @maximum 10000
+     */
+  pointsPerLine?: number;
+  /**
+     * @minimum 0
+     * @maximum 10000
+     */
+  firstCompleterBonus?: number;
+  /**
+     * @minimum 0
+     * @maximum 10000
+     */
+  blackoutBonus?: number;
+  /**
+     * @nullable
+     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+     */
+  startsAt?: string | null;
+  /**
+     * @nullable
+     * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+     */
+  endsAt?: string | null;
+  populateStarterTiles?: boolean;
+  tiles?: CreateBingoBoardDtoTilesItem[];
+}
+
+export interface BingoBoardListResponseDto {
+  items: BingoBoardSummaryResponseDto[];
+}
+
 export type OwnCharacterAuraResponseDtoPersonalAuraIdsItem = typeof OwnCharacterAuraResponseDtoPersonalAuraIdsItem[keyof typeof OwnCharacterAuraResponseDtoPersonalAuraIdsItem];
 
 
@@ -4417,6 +5181,7 @@ export const WatchedItemResponseDtoNotificationRuleTriggerType = {
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
   HERO_SIGHTED: 'HERO_SIGHTED',
   LOOT_DRAW_RESOLVED: 'LOOT_DRAW_RESOLVED',
+  BINGO_MILESTONE: 'BINGO_MILESTONE',
 } as const;
 
 /**
@@ -4785,6 +5550,7 @@ export const NotificationJobsResponseDtoPendingItemPayloadSnapshotTriggerType = 
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
   HERO_SIGHTED: 'HERO_SIGHTED',
   LOOT_DRAW_RESOLVED: 'LOOT_DRAW_RESOLVED',
+  BINGO_MILESTONE: 'BINGO_MILESTONE',
 } as const;
 
 /**
@@ -4894,6 +5660,7 @@ export const NotificationJobsResponseDtoPendingItemRuleTriggerType = {
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
   HERO_SIGHTED: 'HERO_SIGHTED',
   LOOT_DRAW_RESOLVED: 'LOOT_DRAW_RESOLVED',
+  BINGO_MILESTONE: 'BINGO_MILESTONE',
 } as const;
 
 /**
@@ -5215,6 +5982,7 @@ export const NotificationJobsResponseDtoHistoryItemPayloadSnapshotTriggerType = 
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
   HERO_SIGHTED: 'HERO_SIGHTED',
   LOOT_DRAW_RESOLVED: 'LOOT_DRAW_RESOLVED',
+  BINGO_MILESTONE: 'BINGO_MILESTONE',
 } as const;
 
 /**
@@ -5324,6 +6092,7 @@ export const NotificationJobsResponseDtoHistoryItemRuleTriggerType = {
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
   HERO_SIGHTED: 'HERO_SIGHTED',
   LOOT_DRAW_RESOLVED: 'LOOT_DRAW_RESOLVED',
+  BINGO_MILESTONE: 'BINGO_MILESTONE',
 } as const;
 
 /**
@@ -5608,6 +6377,7 @@ export const NotificationRuleResponseDtoTriggerType = {
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
   HERO_SIGHTED: 'HERO_SIGHTED',
   LOOT_DRAW_RESOLVED: 'LOOT_DRAW_RESOLVED',
+  BINGO_MILESTONE: 'BINGO_MILESTONE',
 } as const;
 
 /**
@@ -5873,6 +6643,7 @@ export const UpdateNotificationRuleDtoTriggerType = {
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
   HERO_SIGHTED: 'HERO_SIGHTED',
   LOOT_DRAW_RESOLVED: 'LOOT_DRAW_RESOLVED',
+  BINGO_MILESTONE: 'BINGO_MILESTONE',
 } as const;
 
 export interface UpdateNotificationRuleDto {
@@ -6004,6 +6775,7 @@ export const CreateNotificationRuleDtoTriggerType = {
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
   HERO_SIGHTED: 'HERO_SIGHTED',
   LOOT_DRAW_RESOLVED: 'LOOT_DRAW_RESOLVED',
+  BINGO_MILESTONE: 'BINGO_MILESTONE',
 } as const;
 
 export interface CreateNotificationRuleDto {
@@ -6293,6 +7065,7 @@ export const GuildNotificationRulesResponseDtoItemsItemTriggerType = {
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
   HERO_SIGHTED: 'HERO_SIGHTED',
   LOOT_DRAW_RESOLVED: 'LOOT_DRAW_RESOLVED',
+  BINGO_MILESTONE: 'BINGO_MILESTONE',
 } as const;
 
 /**
@@ -11350,6 +12123,7 @@ export const NotificationJobPayloadSnapshotResponseDtoTriggerType = {
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
   HERO_SIGHTED: 'HERO_SIGHTED',
   LOOT_DRAW_RESOLVED: 'LOOT_DRAW_RESOLVED',
+  BINGO_MILESTONE: 'BINGO_MILESTONE',
 } as const;
 
 /**
@@ -12982,6 +13756,33 @@ export type UserThemesControllerUnshareThemePathParameters = {
  }
 export type UserThemesControllerGetSharedThemePathParameters = {
  shareToken: string,
+ }
+export type BingoControllerListBoardsPathParameters = {
+ guildId: string,
+ }
+export type BingoControllerCreateBoardPathParameters = {
+ guildId: string,
+ }
+export type BingoControllerGetBoardPathParameters = {
+ guildId: string,
+    boardId: string,
+ }
+export type BingoControllerUpdateBoardPathParameters = {
+ guildId: string,
+    boardId: string,
+ }
+export type BingoControllerDeleteBoardPathParameters = {
+ guildId: string,
+    boardId: string,
+ }
+export type BingoControllerReplaceTilesPathParameters = {
+ guildId: string,
+    boardId: string,
+ }
+export type BingoControllerUpdateTileProgressPathParameters = {
+ guildId: string,
+    boardId: string,
+    tileId: string,
  }
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
@@ -38392,4 +39193,720 @@ export const useCharacterAurasControllerUpdateOwnAura = <TError = ErrorType<Requ
         TContext
       > => {
       return useMutation(getCharacterAurasControllerUpdateOwnAuraMutationOptions(options), queryClient);
+    }
+
+export const getBingoControllerListBoardsUrl = ({ guildId }: BingoControllerListBoardsPathParameters,) => {
+
+
+
+
+  return `/guilds/${guildId}/bingo`
+}
+
+/**
+ * @summary List organization Bingo boards
+ */
+export const bingoControllerListBoards = async ({ guildId }: BingoControllerListBoardsPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<BingoBoardListResponseDto> => {
+
+  return mainFetch<BingoBoardListResponseDto>(getBingoControllerListBoardsUrl({ guildId }),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getBingoControllerListBoardsQueryKey = ({ guildId }: BingoControllerListBoardsPathParameters,) => {
+    return [
+    `/guilds/${guildId}/bingo`
+    ] as const;
+    }
+
+
+export const getBingoControllerListBoardsQueryOptions = <TData = Awaited<ReturnType<typeof bingoControllerListBoards>>, TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>>({ guildId }: BingoControllerListBoardsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof bingoControllerListBoards>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getBingoControllerListBoardsQueryKey({ guildId });
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof bingoControllerListBoards>>> = ({ signal }) => bingoControllerListBoards({ guildId }, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: guildId !== null && guildId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof bingoControllerListBoards>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type BingoControllerListBoardsQueryResult = NonNullable<Awaited<ReturnType<typeof bingoControllerListBoards>>>
+export type BingoControllerListBoardsQueryError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>
+
+
+export function useBingoControllerListBoards<TData = Awaited<ReturnType<typeof bingoControllerListBoards>>, TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>>(
+ pathParams: BingoControllerListBoardsPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof bingoControllerListBoards>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof bingoControllerListBoards>>,
+          TError,
+          Awaited<ReturnType<typeof bingoControllerListBoards>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useBingoControllerListBoards<TData = Awaited<ReturnType<typeof bingoControllerListBoards>>, TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>>(
+ pathParams: BingoControllerListBoardsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof bingoControllerListBoards>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof bingoControllerListBoards>>,
+          TError,
+          Awaited<ReturnType<typeof bingoControllerListBoards>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useBingoControllerListBoards<TData = Awaited<ReturnType<typeof bingoControllerListBoards>>, TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>>(
+ pathParams: BingoControllerListBoardsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof bingoControllerListBoards>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List organization Bingo boards
+ */
+
+export function useBingoControllerListBoards<TData = Awaited<ReturnType<typeof bingoControllerListBoards>>, TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>>(
+ { guildId }: BingoControllerListBoardsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof bingoControllerListBoards>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getBingoControllerListBoardsQueryOptions({ guildId },options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary List organization Bingo boards
+ */
+export const prefetchBingoControllerListBoardsQuery = async <TData = Awaited<ReturnType<typeof bingoControllerListBoards>>, TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>>(
+ queryClient: QueryClient, { guildId }: BingoControllerListBoardsPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof bingoControllerListBoards>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getBingoControllerListBoardsQueryOptions({ guildId },options)
+
+  await queryClient.query(queryOptions).catch(() => {});
+
+  return queryClient;
+}
+
+/**
+ * @summary Invalidates the {@link useBingoControllerListBoards} query
+ */
+export const invalidateBingoControllerListBoards = async (
+ queryClient: QueryClient, { guildId }: BingoControllerListBoardsPathParameters, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getBingoControllerListBoardsQueryKey({ guildId }) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary List organization Bingo boards
+ */
+export const useSetBingoControllerListBoardsQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ guildId }: BingoControllerListBoardsPathParameters,updater: Awaited<ReturnType<typeof bingoControllerListBoards>> | undefined | ((old: Awaited<ReturnType<typeof bingoControllerListBoards>> | undefined) => Awaited<ReturnType<typeof bingoControllerListBoards>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof bingoControllerListBoards>>>({ exact: $exactMatch, queryKey: getBingoControllerListBoardsQueryKey({ guildId }) }, updater);
+  };
+}
+
+/**
+ * @summary List organization Bingo boards
+ */
+export const useGetBingoControllerListBoardsQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ guildId }: BingoControllerListBoardsPathParameters,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof bingoControllerListBoards>>>(getBingoControllerListBoardsQueryKey({ guildId }));
+}
+
+
+
+export const getBingoControllerCreateBoardUrl = ({ guildId }: BingoControllerCreateBoardPathParameters,) => {
+
+
+
+
+  return `/guilds/${guildId}/bingo`
+}
+
+/**
+ * @summary Create organization Bingo board
+ */
+export const bingoControllerCreateBoard = async ({ guildId }: BingoControllerCreateBoardPathParameters,
+    createBingoBoardDto: CreateBingoBoardDto, options?: Parameters<typeof mainFetch>[1]): Promise<BingoBoardDetailResponseDto> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return mainFetch<BingoBoardDetailResponseDto>(getBingoControllerCreateBoardUrl({ guildId }),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(createBingoBoardDto)
+  }
+);}
+
+
+
+
+
+export const getBingoControllerCreateBoardMutationKey = () => ['bingoControllerCreateBoard'] as const;
+
+export const getBingoControllerCreateBoardMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError | ReauthenticationRequiredEncoded>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bingoControllerCreateBoard>>, TError,BingoControllerCreateBoardMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof bingoControllerCreateBoard>>, TError,BingoControllerCreateBoardMutationVariables, TContext> => {
+
+const mutationKey = getBingoControllerCreateBoardMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof bingoControllerCreateBoard>>, BingoControllerCreateBoardMutationVariables> = (props) => {
+          const {pathParams,data} = props ?? {};
+
+          return  bingoControllerCreateBoard(pathParams,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type BingoControllerCreateBoardMutationResult = NonNullable<Awaited<ReturnType<typeof bingoControllerCreateBoard>>>
+    export type BingoControllerCreateBoardMutationBody = BodyType<CreateBingoBoardDto>
+    export type BingoControllerCreateBoardMutationError = ErrorType<HttpErrorResponse | RequestValidationError | ReauthenticationRequiredEncoded>
+    export type BingoControllerCreateBoardMutationVariables = {pathParams: BingoControllerCreateBoardPathParameters;data: BodyType<CreateBingoBoardDto>}
+
+    /**
+ * @summary Create organization Bingo board
+ */
+export const useBingoControllerCreateBoard = <TError = ErrorType<HttpErrorResponse | RequestValidationError | ReauthenticationRequiredEncoded>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bingoControllerCreateBoard>>, TError,BingoControllerCreateBoardMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof bingoControllerCreateBoard>>,
+        TError,
+        BingoControllerCreateBoardMutationVariables,
+        TContext
+      > => {
+      return useMutation(getBingoControllerCreateBoardMutationOptions(options), queryClient);
+    }
+
+export const getBingoControllerGetBoardUrl = ({ guildId, boardId }: BingoControllerGetBoardPathParameters,) => {
+
+
+
+
+  return `/guilds/${guildId}/bingo/${boardId}`
+}
+
+/**
+ * @summary Get organization Bingo board details
+ */
+export const bingoControllerGetBoard = async ({ guildId, boardId }: BingoControllerGetBoardPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<BingoBoardDetailResponseDto> => {
+
+  return mainFetch<BingoBoardDetailResponseDto>(getBingoControllerGetBoardUrl({ guildId, boardId }),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getBingoControllerGetBoardQueryKey = ({ guildId, boardId }: BingoControllerGetBoardPathParameters,) => {
+    return [
+    `/guilds/${guildId}/bingo/${boardId}`
+    ] as const;
+    }
+
+
+export const getBingoControllerGetBoardQueryOptions = <TData = Awaited<ReturnType<typeof bingoControllerGetBoard>>, TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>>({ guildId, boardId }: BingoControllerGetBoardPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof bingoControllerGetBoard>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getBingoControllerGetBoardQueryKey({ guildId, boardId });
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof bingoControllerGetBoard>>> = ({ signal }) => bingoControllerGetBoard({ guildId, boardId }, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: guildId !== null && guildId !== undefined && boardId !== null && boardId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof bingoControllerGetBoard>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type BingoControllerGetBoardQueryResult = NonNullable<Awaited<ReturnType<typeof bingoControllerGetBoard>>>
+export type BingoControllerGetBoardQueryError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>
+
+
+export function useBingoControllerGetBoard<TData = Awaited<ReturnType<typeof bingoControllerGetBoard>>, TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>>(
+ pathParams: BingoControllerGetBoardPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof bingoControllerGetBoard>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof bingoControllerGetBoard>>,
+          TError,
+          Awaited<ReturnType<typeof bingoControllerGetBoard>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useBingoControllerGetBoard<TData = Awaited<ReturnType<typeof bingoControllerGetBoard>>, TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>>(
+ pathParams: BingoControllerGetBoardPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof bingoControllerGetBoard>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof bingoControllerGetBoard>>,
+          TError,
+          Awaited<ReturnType<typeof bingoControllerGetBoard>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useBingoControllerGetBoard<TData = Awaited<ReturnType<typeof bingoControllerGetBoard>>, TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>>(
+ pathParams: BingoControllerGetBoardPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof bingoControllerGetBoard>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get organization Bingo board details
+ */
+
+export function useBingoControllerGetBoard<TData = Awaited<ReturnType<typeof bingoControllerGetBoard>>, TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>>(
+ { guildId, boardId }: BingoControllerGetBoardPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof bingoControllerGetBoard>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getBingoControllerGetBoardQueryOptions({ guildId, boardId },options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get organization Bingo board details
+ */
+export const prefetchBingoControllerGetBoardQuery = async <TData = Awaited<ReturnType<typeof bingoControllerGetBoard>>, TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>>(
+ queryClient: QueryClient, { guildId, boardId }: BingoControllerGetBoardPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof bingoControllerGetBoard>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getBingoControllerGetBoardQueryOptions({ guildId, boardId },options)
+
+  await queryClient.query(queryOptions).catch(() => {});
+
+  return queryClient;
+}
+
+/**
+ * @summary Invalidates the {@link useBingoControllerGetBoard} query
+ */
+export const invalidateBingoControllerGetBoard = async (
+ queryClient: QueryClient, { guildId, boardId }: BingoControllerGetBoardPathParameters, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getBingoControllerGetBoardQueryKey({ guildId, boardId }) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get organization Bingo board details
+ */
+export const useSetBingoControllerGetBoardQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ guildId, boardId }: BingoControllerGetBoardPathParameters,updater: Awaited<ReturnType<typeof bingoControllerGetBoard>> | undefined | ((old: Awaited<ReturnType<typeof bingoControllerGetBoard>> | undefined) => Awaited<ReturnType<typeof bingoControllerGetBoard>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof bingoControllerGetBoard>>>({ exact: $exactMatch, queryKey: getBingoControllerGetBoardQueryKey({ guildId, boardId }) }, updater);
+  };
+}
+
+/**
+ * @summary Get organization Bingo board details
+ */
+export const useGetBingoControllerGetBoardQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ guildId, boardId }: BingoControllerGetBoardPathParameters,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof bingoControllerGetBoard>>>(getBingoControllerGetBoardQueryKey({ guildId, boardId }));
+}
+
+
+
+export const getBingoControllerUpdateBoardUrl = ({ guildId, boardId }: BingoControllerUpdateBoardPathParameters,) => {
+
+
+
+
+  return `/guilds/${guildId}/bingo/${boardId}`
+}
+
+/**
+ * @summary Update organization Bingo board settings
+ */
+export const bingoControllerUpdateBoard = async ({ guildId, boardId }: BingoControllerUpdateBoardPathParameters,
+    updateBingoBoardDto: UpdateBingoBoardDto, options?: Parameters<typeof mainFetch>[1]): Promise<BingoBoardSummaryResponseDto> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return mainFetch<BingoBoardSummaryResponseDto>(getBingoControllerUpdateBoardUrl({ guildId, boardId }),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateBingoBoardDto)
+  }
+);}
+
+
+
+
+
+export const getBingoControllerUpdateBoardMutationKey = () => ['bingoControllerUpdateBoard'] as const;
+
+export const getBingoControllerUpdateBoardMutationOptions = <TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bingoControllerUpdateBoard>>, TError,BingoControllerUpdateBoardMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof bingoControllerUpdateBoard>>, TError,BingoControllerUpdateBoardMutationVariables, TContext> => {
+
+const mutationKey = getBingoControllerUpdateBoardMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof bingoControllerUpdateBoard>>, BingoControllerUpdateBoardMutationVariables> = (props) => {
+          const {pathParams,data} = props ?? {};
+
+          return  bingoControllerUpdateBoard(pathParams,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type BingoControllerUpdateBoardMutationResult = NonNullable<Awaited<ReturnType<typeof bingoControllerUpdateBoard>>>
+    export type BingoControllerUpdateBoardMutationBody = BodyType<UpdateBingoBoardDto>
+    export type BingoControllerUpdateBoardMutationError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>
+    export type BingoControllerUpdateBoardMutationVariables = {pathParams: BingoControllerUpdateBoardPathParameters;data: BodyType<UpdateBingoBoardDto>}
+
+    /**
+ * @summary Update organization Bingo board settings
+ */
+export const useBingoControllerUpdateBoard = <TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bingoControllerUpdateBoard>>, TError,BingoControllerUpdateBoardMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof bingoControllerUpdateBoard>>,
+        TError,
+        BingoControllerUpdateBoardMutationVariables,
+        TContext
+      > => {
+      return useMutation(getBingoControllerUpdateBoardMutationOptions(options), queryClient);
+    }
+
+export const getBingoControllerDeleteBoardUrl = ({ guildId, boardId }: BingoControllerDeleteBoardPathParameters,) => {
+
+
+
+
+  return `/guilds/${guildId}/bingo/${boardId}`
+}
+
+/**
+ * @summary Delete organization Bingo board
+ */
+export const bingoControllerDeleteBoard = async ({ guildId, boardId }: BingoControllerDeleteBoardPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<BingoMutationResponseDto> => {
+
+  return mainFetch<BingoMutationResponseDto>(getBingoControllerDeleteBoardUrl({ guildId, boardId }),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getBingoControllerDeleteBoardMutationKey = () => ['bingoControllerDeleteBoard'] as const;
+
+export const getBingoControllerDeleteBoardMutationOptions = <TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bingoControllerDeleteBoard>>, TError,BingoControllerDeleteBoardMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof bingoControllerDeleteBoard>>, TError,BingoControllerDeleteBoardMutationVariables, TContext> => {
+
+const mutationKey = getBingoControllerDeleteBoardMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof bingoControllerDeleteBoard>>, BingoControllerDeleteBoardMutationVariables> = (props) => {
+          const {pathParams} = props ?? {};
+
+          return  bingoControllerDeleteBoard(pathParams,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type BingoControllerDeleteBoardMutationResult = NonNullable<Awaited<ReturnType<typeof bingoControllerDeleteBoard>>>
+
+    export type BingoControllerDeleteBoardMutationError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>
+    export type BingoControllerDeleteBoardMutationVariables = {pathParams: BingoControllerDeleteBoardPathParameters}
+
+    /**
+ * @summary Delete organization Bingo board
+ */
+export const useBingoControllerDeleteBoard = <TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bingoControllerDeleteBoard>>, TError,BingoControllerDeleteBoardMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof bingoControllerDeleteBoard>>,
+        TError,
+        BingoControllerDeleteBoardMutationVariables,
+        TContext
+      > => {
+      return useMutation(getBingoControllerDeleteBoardMutationOptions(options), queryClient);
+    }
+
+export const getBingoControllerReplaceTilesUrl = ({ guildId, boardId }: BingoControllerReplaceTilesPathParameters,) => {
+
+
+
+
+  return `/guilds/${guildId}/bingo/${boardId}/tiles`
+}
+
+/**
+ * @summary Configure Bingo 5x5 board tiles
+ */
+export const bingoControllerReplaceTiles = async ({ guildId, boardId }: BingoControllerReplaceTilesPathParameters,
+    replaceBingoTilesDto: ReplaceBingoTilesDto, options?: Parameters<typeof mainFetch>[1]): Promise<BingoBoardDetailResponseDto> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return mainFetch<BingoBoardDetailResponseDto>(getBingoControllerReplaceTilesUrl({ guildId, boardId }),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(replaceBingoTilesDto)
+  }
+);}
+
+
+
+
+
+export const getBingoControllerReplaceTilesMutationKey = () => ['bingoControllerReplaceTiles'] as const;
+
+export const getBingoControllerReplaceTilesMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError | ReauthenticationRequiredEncoded>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bingoControllerReplaceTiles>>, TError,BingoControllerReplaceTilesMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof bingoControllerReplaceTiles>>, TError,BingoControllerReplaceTilesMutationVariables, TContext> => {
+
+const mutationKey = getBingoControllerReplaceTilesMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof bingoControllerReplaceTiles>>, BingoControllerReplaceTilesMutationVariables> = (props) => {
+          const {pathParams,data} = props ?? {};
+
+          return  bingoControllerReplaceTiles(pathParams,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type BingoControllerReplaceTilesMutationResult = NonNullable<Awaited<ReturnType<typeof bingoControllerReplaceTiles>>>
+    export type BingoControllerReplaceTilesMutationBody = BodyType<ReplaceBingoTilesDto>
+    export type BingoControllerReplaceTilesMutationError = ErrorType<HttpErrorResponse | RequestValidationError | ReauthenticationRequiredEncoded>
+    export type BingoControllerReplaceTilesMutationVariables = {pathParams: BingoControllerReplaceTilesPathParameters;data: BodyType<ReplaceBingoTilesDto>}
+
+    /**
+ * @summary Configure Bingo 5x5 board tiles
+ */
+export const useBingoControllerReplaceTiles = <TError = ErrorType<HttpErrorResponse | RequestValidationError | ReauthenticationRequiredEncoded>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bingoControllerReplaceTiles>>, TError,BingoControllerReplaceTilesMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof bingoControllerReplaceTiles>>,
+        TError,
+        BingoControllerReplaceTilesMutationVariables,
+        TContext
+      > => {
+      return useMutation(getBingoControllerReplaceTilesMutationOptions(options), queryClient);
+    }
+
+export const getBingoControllerUpdateTileProgressUrl = ({ guildId, boardId, tileId }: BingoControllerUpdateTileProgressPathParameters,) => {
+
+
+
+
+  return `/guilds/${guildId}/bingo/${boardId}/tiles/${tileId}/progress`
+}
+
+/**
+ * @summary Manually update a member's Bingo tile progress
+ */
+export const bingoControllerUpdateTileProgress = async ({ guildId, boardId, tileId }: BingoControllerUpdateTileProgressPathParameters,
+    updateBingoTileProgressDto: UpdateBingoTileProgressDto, options?: Parameters<typeof mainFetch>[1]): Promise<BingoBoardDetailResponseDto> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return mainFetch<BingoBoardDetailResponseDto>(getBingoControllerUpdateTileProgressUrl({ guildId, boardId, tileId }),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateBingoTileProgressDto)
+  }
+);}
+
+
+
+
+
+export const getBingoControllerUpdateTileProgressMutationKey = () => ['bingoControllerUpdateTileProgress'] as const;
+
+export const getBingoControllerUpdateTileProgressMutationOptions = <TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bingoControllerUpdateTileProgress>>, TError,BingoControllerUpdateTileProgressMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof bingoControllerUpdateTileProgress>>, TError,BingoControllerUpdateTileProgressMutationVariables, TContext> => {
+
+const mutationKey = getBingoControllerUpdateTileProgressMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof bingoControllerUpdateTileProgress>>, BingoControllerUpdateTileProgressMutationVariables> = (props) => {
+          const {pathParams,data} = props ?? {};
+
+          return  bingoControllerUpdateTileProgress(pathParams,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type BingoControllerUpdateTileProgressMutationResult = NonNullable<Awaited<ReturnType<typeof bingoControllerUpdateTileProgress>>>
+    export type BingoControllerUpdateTileProgressMutationBody = BodyType<UpdateBingoTileProgressDto>
+    export type BingoControllerUpdateTileProgressMutationError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>
+    export type BingoControllerUpdateTileProgressMutationVariables = {pathParams: BingoControllerUpdateTileProgressPathParameters;data: BodyType<UpdateBingoTileProgressDto>}
+
+    /**
+ * @summary Manually update a member's Bingo tile progress
+ */
+export const useBingoControllerUpdateTileProgress = <TError = ErrorType<RequestValidationError | ReauthenticationRequiredEncoded | HttpErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bingoControllerUpdateTileProgress>>, TError,BingoControllerUpdateTileProgressMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof bingoControllerUpdateTileProgress>>,
+        TError,
+        BingoControllerUpdateTileProgressMutationVariables,
+        TContext
+      > => {
+      return useMutation(getBingoControllerUpdateTileProgressMutationOptions(options), queryClient);
     }

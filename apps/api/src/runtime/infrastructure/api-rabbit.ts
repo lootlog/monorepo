@@ -117,6 +117,26 @@ export const apiRabbitRoutes = {
     RabbitRoutingKey.NOTIFICATIONS_LOOT_DRAW_RESOLVED,
     { failure: "retry" },
   ),
+  bingoMilestoneNotification: consumerRoute(
+    "backend-notifications-bingo-milestone",
+    RabbitRoutingKey.NOTIFICATIONS_BINGO_MILESTONE,
+    { failure: "retry" },
+  ),
+  bingoLootCreated: consumerRoute(
+    "backend-bingo-loot-created",
+    RabbitRoutingKey.NOTIFICATIONS_LOOT_CREATED,
+    { failure: "retry" },
+  ),
+  bingoHeroSightingUpdated: consumerRoute(
+    "backend-bingo-hero-sighting-updated",
+    RabbitRoutingKey.NOTIFICATIONS_HERO_SIGHTING_UPDATED,
+    { failure: "retry" },
+  ),
+  bingoBattleRecorded: consumerRoute(
+    "backend-bingo-battle-recorded",
+    RabbitRoutingKey.BATTLELOG_BATTLE_RECORDED_V1,
+    { failure: "retry" },
+  ),
 };
 
 export const ApiRabbitLive = Layer.unwrap(

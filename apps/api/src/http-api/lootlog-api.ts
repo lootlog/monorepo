@@ -28,6 +28,7 @@ import { PublicGuildStatsCardGroup } from "#src/contracts/public-guild-stats-car
 import { DocsGroup } from "#src/contracts/docs/api";
 import { UserThemesGroup } from "#src/contracts/user-themes/api";
 import { CharacterAurasGroup } from "#src/contracts/character-auras/api";
+import { BingoGroup } from "#src/contracts/bingo/api";
 
 export class LootlogApi extends HttpApi.make("LootlogApi")
   .annotate(OpenApi.Title, "Lootlog API")
@@ -65,6 +66,7 @@ export class LootlogApi extends HttpApi.make("LootlogApi")
     DocsGroup,
     UserThemesGroup,
     CharacterAurasGroup,
+    BingoGroup,
   )
   .middleware(ApiKeyEndpointPolicy)
   .middleware(SchemaErrorResponse) {}

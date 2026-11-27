@@ -80,6 +80,16 @@ const apiWeb = HttpRouter.toWebHandler(
         getGuildTopKilledNpcs: unused,
         listUserReservations: unused,
         listGuildReservationSpots: unused,
+        listGuildBingoBoards: record(
+          "api.listGuildBingoBoards",
+          () => Effect.fail(new RpcNotFoundError()),
+          () => rpcOverrides.listGuildBingoBoards,
+        ),
+        getGuildBingoBoard: record(
+          "api.getGuildBingoBoard",
+          () => Effect.fail(new RpcNotFoundError()),
+          () => rpcOverrides.getGuildBingoBoard,
+        ),
         getGuildStatsCard: record(
           "api.getGuildStatsCard",
           () => Effect.fail(new RpcNotFoundError()),
@@ -666,5 +676,118 @@ describe("slash commands", () => {
     const reply = await invoke("karta");
 
     expect(reply.content).toBe(COMMAND_TEXT.card.unavailable);
+  });
+
+  it("renders the active Bingo 5x5 grid with completed, in-progress, and locked cells", async () => {
+    const summary = (id: string, name: string, status: "DRAFT" | "ACTIVE") => ({
+      id,
+      name,
+      world: "Aldous",
+      mode: "LOCKOUT" as const,
+      status,
+      startsAt: null,
+      endsAt: null,
+      configuredTileCount: 25,
+      participantCount: 2,
+      viewerCompletedTiles: 1,
+      viewerCompletedLines: 0,
+      viewerTotalPoints: 10,
+    });
+
+    rpcOverrides = {
+      getMemberIdentity: linkedMember,
+      listGuildBingoBoards: () =>
+        Effect.succeed({
+          items: [
+            summary("board-draft", "Szkic", "DRAFT"),
+            summary("board-active", "Bingo Jesienne", "ACTIVE"),
+          ],
+        }),
+      getGuildBingoBoard: () =>
+        Effect.succeed({
+          board: summary("board-active", "Bingo Jesienne", "ACTIVE"),
+          viewerMemberId: 1,
+          tiles: [
+            {
+              id: "t-0-0",
+              row: 0,
+              col: 0,
+              title: "Legenda",
+              lockedByMemberId: 1,
+              viewerProgress: {
+                currentCount: 1,
+                targetCount: 1,
+                completedAt: "2026-11-27T12:00:00.000Z",
+              },
+            },
+            {
+              id: "t-0-1",
+              row: 0,
+              col: 1,
+              title: "Herosi",
+              lockedByMemberId: null,
+              viewerProgress: {
+                currentCount: 2,
+                targetCount: 3,
+                completedAt: null,
+              },
+            },
+            {
+              id: "t-0-2",
+              row: 0,
+              col: 2,
+              title: "Kolos",
+              lockedByMemberId: 2,
+              viewerProgress: null,
+            },
+            {
+              id: "t-0-3",
+              row: 0,
+              col: 3,
+              title: "Otchłań",
+              lockedByMemberId: null,
+              viewerProgress: {
+                currentCount: 0,
+                targetCount: 5,
+                completedAt: null,
+              },
+            },
+          ],
+          leaderboard: [
+            {
+              rank: 1,
+              member: { id: 2, name: "Borys" },
+              totalPoints: 20,
+              completedTileCount: 2,
+              completedLines: [],
+              isBlackout: false,
+            },
+            {
+              rank: 2,
+              member: { id: 1, name: "Aria" },
+              totalPoints: 10,
+              completedTileCount: 1,
+              completedLines: [],
+              isBlackout: false,
+            },
+          ],
+        }),
+    };
+
+    const boardReply = await invoke("bingo", { subcommand: "tablica" });
+    const rankingReply = await invoke("bingo", { subcommand: "ranking" });
+
+    expect(
+      rpcCalls.find(({ method }) => method === "api.getGuildBingoBoard")
+        ?.payload,
+    ).toEqual({
+      userId: "user-1",
+      discordId,
+      guildId,
+      boardId: "board-active",
+    });
+    expect(description(boardReply)).toContain("🟩🟨🔒⬛⬜");
+    expect(description(rankingReply)).toContain("Borys");
+    expect(description(rankingReply)).toContain(`<@${discordId}>`);
   });
 });

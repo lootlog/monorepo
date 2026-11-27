@@ -68,6 +68,7 @@ export type AppNavigationItemId =
   | "organization-reservations"
   | "organization-docs"
   | "organization-events"
+  | "organization-bingo"
   | "organization-stats"
   | "organization-activity"
   | "organization-notifications"
@@ -206,6 +207,13 @@ function buildOrganizationSidebarRegistry(
       labelKey: "layout.navigation.events",
       path: ROUTES.guild.events(organizationId),
       visible: canViewEvents,
+    },
+    {
+      id: "organization-bingo",
+      labelKey: "layout.navigation.bingo",
+      path: ROUTES.guild.bingo.base(organizationId),
+      visible: (accessPolicy) =>
+        accessPolicy?.allows(Capability.LOOTLOG_ACCESS) ?? false,
     },
     {
       id: "organization-stats",

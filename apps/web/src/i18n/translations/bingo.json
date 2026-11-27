@@ -1,0 +1,155 @@
+{
+  "title": "Clan Bingo",
+  "subtitle": "Automatyczne plansze 5×5 zaliczane na żywo z klienta gry",
+  "create": "Nowe Bingo",
+  "edit": "Konfiguruj planszę",
+  "backToList": "Wróć do listy Bingo",
+  "backToBoard": "Wróć do planszy",
+  "emptyTitle": "Brak plansz Clan Bingo",
+  "emptyDescription": "Stwórz pierwszą planszę 5×5, skonfiguruj warunki pól i rozpocznij rywalizację na żywo.",
+  "status": {
+    "DRAFT": "Szkic",
+    "ACTIVE": "Aktywne",
+    "FINISHED": "Zakończone"
+  },
+  "mode": {
+    "RACE": "Wyścig solo",
+    "LOCKOUT": "Lockout"
+  },
+  "modeDescription": {
+    "RACE": "Każdy gracz zbiera własny postęp na wszystkich 25 polach. Punkty za pola, linie Bingo i opcjonalnie za pierwsze zaliczenie.",
+    "LOCKOUT": "Kto pierwszy zaliczy pole, blokuje je dla siebie. Pozostali gracze nie mogą już go zdobyć."
+  },
+  "conditionKind": {
+    "LOOT": "Loot",
+    "KILL": "Zabójstwa",
+    "HERO_SIGHTING": "Wykrycia herosów",
+    "BATTLE": "Walki / Otchłań",
+    "MANUAL": "Ręczne"
+  },
+  "battleMetric": {
+    "WINS": "Łączna liczba wygranych",
+    "WIN_STREAK": "Wygrane z rzędu (seria)"
+  },
+  "stats": {
+    "tiles": "Pola",
+    "lines": "Linie Bingo",
+    "points": "Punkty",
+    "participants": "Uczestnicy",
+    "configuredTiles": "Skonfigurowane pola",
+    "worldAny": "Wszystkie światy",
+    "blackout": "Blackout!"
+  },
+  "actions": {
+    "start": "Rozpocznij Bingo",
+    "finish": "Zakończ Bingo",
+    "reopen": "Wznów jako aktywne",
+    "delete": "Usuń Bingo",
+    "deleteConfirmTitle": "Usunąć planszę Bingo?",
+    "deleteConfirmDescription": "Wszystkie pola, postępy graczy i historia zaliczeń zostaną trwale usunięte.",
+    "saveSettings": "Zapisz ustawienia",
+    "saveBoard": "Zapisz planszę 5×5",
+    "loadStarterBoard": "Wypełnij szablonem startowym",
+    "clearTile": "Wyczyść pole",
+    "applyTile": "Zastosuj pole",
+    "manualOverride": "Korekta ręczna",
+    "viewOwnBoard": "Moja plansza",
+    "viewingPlayer": "Podgląd gracza: {{name}}",
+    "cancel": "Anuluj",
+    "createBoard": "Utwórz planszę",
+    "creating": "Tworzenie...",
+    "saving": "Zapisywanie..."
+  },
+  "createDialog": {
+    "title": "Utwórz nowe Clan Bingo",
+    "description": "Plansza powstanie jako szkic — możesz dowolnie zmienić każde z 25 pól przed startem.",
+    "name": "Nazwa Bingo",
+    "namePlaceholder": "np. Jesienne Clan Bingo 5×5",
+    "descriptionLabel": "Opis (opcjonalnie)",
+    "descriptionPlaceholder": "Zasady, nagrody lub dodatkowe informacje dla klanu",
+    "world": "Świat (opcjonalnie)",
+    "worldPlaceholder": "Zostaw puste dla wszystkich światów",
+    "mode": "Tryb rywalizacji",
+    "pointsPerTile": "Pkt za pole",
+    "pointsPerLine": "Pkt za linię (5 w rzędzie)",
+    "firstCompleterBonus": "Bonus za 1. zaliczenie pola",
+    "blackoutBonus": "Bonus za pełną planszę (25/25)",
+    "populateStarter": "Wypełnij planszę przykładowymi polami startowymi"
+  },
+  "tileEditor": {
+    "title": "Konfiguracja pola ({{row}}×{{col}})",
+    "presets": "Gotowe szablony",
+    "tileTitle": "Nazwa pola",
+    "tileTitlePlaceholder": "np. Legenda z dowolnego E2",
+    "tileDescription": "Opis (opcjonalnie)",
+    "tileDescriptionPlaceholder": "Krótki opis wyświetlany po najechaniu na pole",
+    "customPoints": "Własna punktacja pola (opcjonalnie)",
+    "customPointsPlaceholder": "Domyślna z ustawień planszy",
+    "conditionKind": "Typ automatycznego warunku",
+    "targetCount": "Wymagana liczba",
+    "rarities": "Rzadkość przedmiotu (puste = dowolna)",
+    "npcTypes": "Typ potwora (puste = dowolny)",
+    "npcNamePattern": "Fragment nazwy NPC (opcjonalnie)",
+    "npcNamePlaceholder": "np. Mamlambo",
+    "itemNamePattern": "Fragment nazwy przedmiotu (opcjonalnie)",
+    "itemNamePlaceholder": "np. Ostrze",
+    "heroNamePattern": "Fragment nazwy herosa (opcjonalnie)",
+    "heroNamePlaceholder": "np. Mroczny Patryk",
+    "minLvl": "Min. poziom",
+    "maxLvl": "Maks. poziom",
+    "includeManualSightings": "Uwzględniaj ręcznie dodane wykrycia herosów",
+    "battleMetric": "Sposób liczenia walk",
+    "matchmakingOnly": "Tylko Otchłań (matchmaking)",
+    "excludeFlee": "Nie zaliczaj ucieczek (i przerywaj serię przy ucieczce)"
+  },
+  "manualDialog": {
+    "title": "Ręczna aktualizacja postępu",
+    "description": "Zaktualizuj postęp lub zalicz/cofnij pole dla wybranego członka organizacji.",
+    "member": "Członek gildii",
+    "memberPlaceholder": "Wybierz członka",
+    "tile": "Pole planszy",
+    "tilePlaceholder": "Wybierz pole",
+    "currentCount": "Nowy licznik postępu",
+    "completed": "Status zaliczenia",
+    "completedAuto": "Automatycznie (gdy licznik osiągnie cel)",
+    "completedYes": "Zalicz pole",
+    "completedNo": "Cofnij zaliczenie",
+    "note": "Powód / notatka (opcjonalnie)",
+    "notePlaceholder": "np. Zatwierdzone wyzwanie specjalne",
+    "submit": "Zapisz korektę"
+  },
+  "board": {
+    "emptyCell": "Puste pole",
+    "clickToConfigure": "Kliknij, aby skonfigurować",
+    "completedBy": "Zaliczyło: {{count}}",
+    "lockedBy": "Zajęte: {{name}}",
+    "firstBy": "Pierwszy: {{name}}",
+    "progress": "{{current}}/{{target}}",
+    "completed": "Zaliczone",
+    "streak": "Seria: {{current}}/{{target}}",
+    "unconfiguredHint": "Plansza nie ma jeszcze skonfigurowanych pól."
+  },
+  "leaderboard": {
+    "title": "Ranking solo",
+    "empty": "Nikt jeszcze nie zdobył postępu na tej planszy.",
+    "rank": "#",
+    "player": "Gracz",
+    "tiles": "Pola",
+    "lines": "Linie",
+    "points": "Punkty"
+  },
+  "activity": {
+    "title": "Postępy na żywo",
+    "empty": "Gdy gracze zaczną zdobywać łupy, zabijać bossy, znajdować herosów lub wygrywać w Otchłani, postępy pojawią się tutaj automatycznie.",
+    "tileCompletedBadge": "Zaliczone pole",
+    "lineCompletedBadge": "+{{count}} linia Bingo!"
+  },
+  "toasts": {
+    "created": "Utworzono planszę Bingo",
+    "updated": "Zapisano ustawienia Bingo",
+    "deleted": "Usunięto planszę Bingo",
+    "tilesSaved": "Zapisano konfigurację planszy 5×5",
+    "progressUpdated": "Zaktualizowano postęp gracza",
+    "error": "Nie udało się wykonać operacji"
+  }
+}

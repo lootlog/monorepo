@@ -18,6 +18,7 @@ import { Route as BattlesIdRouteImport } from './routes/battles.$id'
 import { Route as SigninErrorRouteImport } from './routes/signin_.error'
 import { Route as AuthenticatedGuildIdIndexRouteImport } from './routes/_authenticated/$guildId/index'
 import { Route as AuthenticatedGuildIdActivityLogsRouteImport } from './routes/_authenticated/$guildId/activity-logs'
+import { Route as AuthenticatedGuildIdBingoRouteImport } from './routes/_authenticated/$guildId/bingo'
 import { Route as AuthenticatedGuildIdDocsRouteImport } from './routes/_authenticated/$guildId/docs'
 import { Route as AuthenticatedGuildIdEventsRouteImport } from './routes/_authenticated/$guildId/events'
 import { Route as AuthenticatedGuildIdHeroSightingsRouteImport } from './routes/_authenticated/$guildId/hero-sightings'
@@ -34,6 +35,7 @@ import { Route as AuthenticatedAtmeReservationsRouteImport } from './routes/_aut
 import { Route as AuthenticatedAtmeSettingsRouteImport } from './routes/_authenticated/@me/settings'
 import { Route as AuthenticatedAtmeStatisticsRouteImport } from './routes/_authenticated/@me/statistics'
 import { Route as AuthenticatedAtmeWhatsNewRouteImport } from './routes/_authenticated/@me/whats-new'
+import { Route as AuthenticatedGuildIdBingoBoardIdRouteImport } from './routes/_authenticated/$guildId/bingo_.$boardId'
 import { Route as AuthenticatedGuildIdDocsIndexRouteImport } from './routes/_authenticated/$guildId/docs/index'
 import { Route as AuthenticatedGuildIdDocsDocIdRouteImport } from './routes/_authenticated/$guildId/docs/$docId'
 import { Route as AuthenticatedGuildIdEventsEventIdRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_'
@@ -64,6 +66,7 @@ import { Route as AuthenticatedAtmeSettingsAccountRouteImport } from './routes/_
 import { Route as AuthenticatedAtmeSettingsAppearanceRouteImport } from './routes/_authenticated/@me/settings/appearance'
 import { Route as AuthenticatedAtmeSettingsServersRouteImport } from './routes/_authenticated/@me/settings/servers'
 import { Route as AuthenticatedReservationSharingInvitationsTokenRouteImport } from './routes/_authenticated/reservation-sharing/invitations/$token'
+import { Route as AuthenticatedGuildIdBingoBoardIdEditRouteImport } from './routes/_authenticated/$guildId/bingo_.$boardId_.edit'
 import { Route as AuthenticatedGuildIdEventsEventIdIndexRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_/index'
 import { Route as AuthenticatedGuildIdEventsEventIdEditRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.edit'
 import { Route as AuthenticatedGuildIdEventsEventIdKillsRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.kills'
@@ -139,6 +142,12 @@ const AuthenticatedGuildIdActivityLogsRoute =
   AuthenticatedGuildIdActivityLogsRouteImport.update({
     id: '/activity-logs',
     path: '/activity-logs',
+    getParentRoute: () => AuthenticatedGuildIdRoute,
+  } as any)
+const AuthenticatedGuildIdBingoRoute =
+  AuthenticatedGuildIdBingoRouteImport.update({
+    id: '/bingo',
+    path: '/bingo',
     getParentRoute: () => AuthenticatedGuildIdRoute,
   } as any)
 const AuthenticatedGuildIdDocsRoute =
@@ -234,6 +243,12 @@ const AuthenticatedAtmeWhatsNewRoute =
     id: '/whats-new',
     path: '/whats-new',
     getParentRoute: () => AuthenticatedAtmeRoute,
+  } as any)
+const AuthenticatedGuildIdBingoBoardIdRoute =
+  AuthenticatedGuildIdBingoBoardIdRouteImport.update({
+    id: '/bingo_/$boardId',
+    path: '/bingo/$boardId',
+    getParentRoute: () => AuthenticatedGuildIdRoute,
   } as any)
 const AuthenticatedGuildIdDocsIndexRoute =
   AuthenticatedGuildIdDocsIndexRouteImport.update({
@@ -414,6 +429,12 @@ const AuthenticatedReservationSharingInvitationsTokenRoute =
     id: '/reservation-sharing/invitations/$token',
     path: '/reservation-sharing/invitations/$token',
     getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedGuildIdBingoBoardIdEditRoute =
+  AuthenticatedGuildIdBingoBoardIdEditRouteImport.update({
+    id: '/bingo_/$boardId_/edit',
+    path: '/bingo/$boardId/edit',
+    getParentRoute: () => AuthenticatedGuildIdRoute,
   } as any)
 const AuthenticatedGuildIdEventsEventIdIndexRoute =
   AuthenticatedGuildIdEventsEventIdIndexRouteImport.update({
@@ -607,6 +628,7 @@ export interface FileRoutesByFullPath {
   '/battles/$id': typeof BattlesIdRoute
   '/signin/error': typeof SigninErrorRoute
   '/$guildId/activity-logs': typeof AuthenticatedGuildIdActivityLogsRoute
+  '/$guildId/bingo': typeof AuthenticatedGuildIdBingoRoute
   '/$guildId/docs': typeof AuthenticatedGuildIdDocsRouteWithChildren
   '/$guildId/events': typeof AuthenticatedGuildIdEventsRoute
   '/$guildId/hero-sightings': typeof AuthenticatedGuildIdHeroSightingsRoute
@@ -624,6 +646,7 @@ export interface FileRoutesByFullPath {
   '/@me/whats-new': typeof AuthenticatedAtmeWhatsNewRoute
   '/$guildId/': typeof AuthenticatedGuildIdIndexRoute
   '/@me/': typeof AuthenticatedAtmeIndexRoute
+  '/$guildId/bingo/$boardId': typeof AuthenticatedGuildIdBingoBoardIdRoute
   '/$guildId/docs/$docId': typeof AuthenticatedGuildIdDocsDocIdRoute
   '/$guildId/events/$eventId': typeof AuthenticatedGuildIdEventsEventIdRouteWithChildren
   '/$guildId/notifications/$ruleId': typeof AuthenticatedGuildIdNotificationsRuleIdRoute
@@ -654,6 +677,7 @@ export interface FileRoutesByFullPath {
   '/$guildId/stats/': typeof AuthenticatedGuildIdStatsIndexRoute
   '/@me/battle-panel/': typeof AuthenticatedAtmeBattlePanelIndexRoute
   '/@me/settings/': typeof AuthenticatedAtmeSettingsIndexRoute
+  '/$guildId/bingo/$boardId/edit': typeof AuthenticatedGuildIdBingoBoardIdEditRoute
   '/$guildId/events/$eventId/edit': typeof AuthenticatedGuildIdEventsEventIdEditRouteWithChildren
   '/$guildId/events/$eventId/kills': typeof AuthenticatedGuildIdEventsEventIdKillsRoute
   '/$guildId/events/$eventId/ranking': typeof AuthenticatedGuildIdEventsEventIdRankingRoute
@@ -692,6 +716,7 @@ export interface FileRoutesByTo {
   '/battles/$id': typeof BattlesIdRoute
   '/signin/error': typeof SigninErrorRoute
   '/$guildId/activity-logs': typeof AuthenticatedGuildIdActivityLogsRoute
+  '/$guildId/bingo': typeof AuthenticatedGuildIdBingoRoute
   '/$guildId/events': typeof AuthenticatedGuildIdEventsRoute
   '/$guildId/hero-sightings': typeof AuthenticatedGuildIdHeroSightingsRoute
   '/$guildId/timers': typeof AuthenticatedGuildIdTimersRoute
@@ -702,6 +727,7 @@ export interface FileRoutesByTo {
   '/@me/whats-new': typeof AuthenticatedAtmeWhatsNewRoute
   '/$guildId': typeof AuthenticatedGuildIdIndexRoute
   '/@me': typeof AuthenticatedAtmeIndexRoute
+  '/$guildId/bingo/$boardId': typeof AuthenticatedGuildIdBingoBoardIdRoute
   '/$guildId/docs/$docId': typeof AuthenticatedGuildIdDocsDocIdRoute
   '/$guildId/notifications/$ruleId': typeof AuthenticatedGuildIdNotificationsRuleIdRoute
   '/$guildId/notifications/channels': typeof AuthenticatedGuildIdNotificationsChannelsRoute
@@ -731,6 +757,7 @@ export interface FileRoutesByTo {
   '/$guildId/stats': typeof AuthenticatedGuildIdStatsIndexRoute
   '/@me/battle-panel': typeof AuthenticatedAtmeBattlePanelIndexRoute
   '/@me/settings': typeof AuthenticatedAtmeSettingsIndexRoute
+  '/$guildId/bingo/$boardId/edit': typeof AuthenticatedGuildIdBingoBoardIdEditRoute
   '/$guildId/events/$eventId/kills': typeof AuthenticatedGuildIdEventsEventIdKillsRoute
   '/$guildId/events/$eventId/ranking': typeof AuthenticatedGuildIdEventsEventIdRankingRoute
   '/$guildId/settings/members/$memberId': typeof AuthenticatedGuildIdSettingsMembersMemberIdRoute
@@ -770,6 +797,7 @@ export interface FileRoutesById {
   '/battles/$id': typeof BattlesIdRoute
   '/signin_/error': typeof SigninErrorRoute
   '/_authenticated/$guildId/activity-logs': typeof AuthenticatedGuildIdActivityLogsRoute
+  '/_authenticated/$guildId/bingo': typeof AuthenticatedGuildIdBingoRoute
   '/_authenticated/$guildId/docs': typeof AuthenticatedGuildIdDocsRouteWithChildren
   '/_authenticated/$guildId/events': typeof AuthenticatedGuildIdEventsRoute
   '/_authenticated/$guildId/hero-sightings': typeof AuthenticatedGuildIdHeroSightingsRoute
@@ -787,6 +815,7 @@ export interface FileRoutesById {
   '/_authenticated/@me/whats-new': typeof AuthenticatedAtmeWhatsNewRoute
   '/_authenticated/$guildId/': typeof AuthenticatedGuildIdIndexRoute
   '/_authenticated/@me/': typeof AuthenticatedAtmeIndexRoute
+  '/_authenticated/$guildId/bingo_/$boardId': typeof AuthenticatedGuildIdBingoBoardIdRoute
   '/_authenticated/$guildId/docs/$docId': typeof AuthenticatedGuildIdDocsDocIdRoute
   '/_authenticated/$guildId/events_/$eventId_': typeof AuthenticatedGuildIdEventsEventIdRouteWithChildren
   '/_authenticated/$guildId/notifications/$ruleId': typeof AuthenticatedGuildIdNotificationsRuleIdRoute
@@ -817,6 +846,7 @@ export interface FileRoutesById {
   '/_authenticated/$guildId/stats/': typeof AuthenticatedGuildIdStatsIndexRoute
   '/_authenticated/@me/battle-panel/': typeof AuthenticatedAtmeBattlePanelIndexRoute
   '/_authenticated/@me/settings/': typeof AuthenticatedAtmeSettingsIndexRoute
+  '/_authenticated/$guildId/bingo_/$boardId_/edit': typeof AuthenticatedGuildIdBingoBoardIdEditRoute
   '/_authenticated/$guildId/events_/$eventId_/edit': typeof AuthenticatedGuildIdEventsEventIdEditRouteWithChildren
   '/_authenticated/$guildId/events_/$eventId_/kills': typeof AuthenticatedGuildIdEventsEventIdKillsRoute
   '/_authenticated/$guildId/events_/$eventId_/ranking': typeof AuthenticatedGuildIdEventsEventIdRankingRoute
@@ -859,6 +889,7 @@ export interface FileRouteTypes {
     | '/battles/$id'
     | '/signin/error'
     | '/$guildId/activity-logs'
+    | '/$guildId/bingo'
     | '/$guildId/docs'
     | '/$guildId/events'
     | '/$guildId/hero-sightings'
@@ -876,6 +907,7 @@ export interface FileRouteTypes {
     | '/@me/whats-new'
     | '/$guildId/'
     | '/@me/'
+    | '/$guildId/bingo/$boardId'
     | '/$guildId/docs/$docId'
     | '/$guildId/events/$eventId'
     | '/$guildId/notifications/$ruleId'
@@ -906,6 +938,7 @@ export interface FileRouteTypes {
     | '/$guildId/stats/'
     | '/@me/battle-panel/'
     | '/@me/settings/'
+    | '/$guildId/bingo/$boardId/edit'
     | '/$guildId/events/$eventId/edit'
     | '/$guildId/events/$eventId/kills'
     | '/$guildId/events/$eventId/ranking'
@@ -944,6 +977,7 @@ export interface FileRouteTypes {
     | '/battles/$id'
     | '/signin/error'
     | '/$guildId/activity-logs'
+    | '/$guildId/bingo'
     | '/$guildId/events'
     | '/$guildId/hero-sightings'
     | '/$guildId/timers'
@@ -954,6 +988,7 @@ export interface FileRouteTypes {
     | '/@me/whats-new'
     | '/$guildId'
     | '/@me'
+    | '/$guildId/bingo/$boardId'
     | '/$guildId/docs/$docId'
     | '/$guildId/notifications/$ruleId'
     | '/$guildId/notifications/channels'
@@ -983,6 +1018,7 @@ export interface FileRouteTypes {
     | '/$guildId/stats'
     | '/@me/battle-panel'
     | '/@me/settings'
+    | '/$guildId/bingo/$boardId/edit'
     | '/$guildId/events/$eventId/kills'
     | '/$guildId/events/$eventId/ranking'
     | '/$guildId/settings/members/$memberId'
@@ -1021,6 +1057,7 @@ export interface FileRouteTypes {
     | '/battles/$id'
     | '/signin_/error'
     | '/_authenticated/$guildId/activity-logs'
+    | '/_authenticated/$guildId/bingo'
     | '/_authenticated/$guildId/docs'
     | '/_authenticated/$guildId/events'
     | '/_authenticated/$guildId/hero-sightings'
@@ -1038,6 +1075,7 @@ export interface FileRouteTypes {
     | '/_authenticated/@me/whats-new'
     | '/_authenticated/$guildId/'
     | '/_authenticated/@me/'
+    | '/_authenticated/$guildId/bingo_/$boardId'
     | '/_authenticated/$guildId/docs/$docId'
     | '/_authenticated/$guildId/events_/$eventId_'
     | '/_authenticated/$guildId/notifications/$ruleId'
@@ -1068,6 +1106,7 @@ export interface FileRouteTypes {
     | '/_authenticated/$guildId/stats/'
     | '/_authenticated/@me/battle-panel/'
     | '/_authenticated/@me/settings/'
+    | '/_authenticated/$guildId/bingo_/$boardId_/edit'
     | '/_authenticated/$guildId/events_/$eventId_/edit'
     | '/_authenticated/$guildId/events_/$eventId_/kills'
     | '/_authenticated/$guildId/events_/$eventId_/ranking'
@@ -1171,6 +1210,13 @@ declare module '@tanstack/react-router' {
       path: '/activity-logs'
       fullPath: '/$guildId/activity-logs'
       preLoaderRoute: typeof AuthenticatedGuildIdActivityLogsRouteImport
+      parentRoute: typeof AuthenticatedGuildIdRoute
+    }
+    '/_authenticated/$guildId/bingo': {
+      id: '/_authenticated/$guildId/bingo'
+      path: '/bingo'
+      fullPath: '/$guildId/bingo'
+      preLoaderRoute: typeof AuthenticatedGuildIdBingoRouteImport
       parentRoute: typeof AuthenticatedGuildIdRoute
     }
     '/_authenticated/$guildId/docs': {
@@ -1284,6 +1330,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/@me/whats-new'
       preLoaderRoute: typeof AuthenticatedAtmeWhatsNewRouteImport
       parentRoute: typeof AuthenticatedAtmeRoute
+    }
+    '/_authenticated/$guildId/bingo_/$boardId': {
+      id: '/_authenticated/$guildId/bingo_/$boardId'
+      path: '/bingo/$boardId'
+      fullPath: '/$guildId/bingo/$boardId'
+      preLoaderRoute: typeof AuthenticatedGuildIdBingoBoardIdRouteImport
+      parentRoute: typeof AuthenticatedGuildIdRoute
     }
     '/_authenticated/$guildId/docs/': {
       id: '/_authenticated/$guildId/docs/'
@@ -1494,6 +1547,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/reservation-sharing/invitations/$token'
       preLoaderRoute: typeof AuthenticatedReservationSharingInvitationsTokenRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/$guildId/bingo_/$boardId_/edit': {
+      id: '/_authenticated/$guildId/bingo_/$boardId_/edit'
+      path: '/bingo/$boardId/edit'
+      fullPath: '/$guildId/bingo/$boardId/edit'
+      preLoaderRoute: typeof AuthenticatedGuildIdBingoBoardIdEditRouteImport
+      parentRoute: typeof AuthenticatedGuildIdRoute
     }
     '/_authenticated/$guildId/events_/$eventId_/': {
       id: '/_authenticated/$guildId/events_/$eventId_/'
@@ -1903,6 +1963,7 @@ const AuthenticatedGuildIdEventsEventIdRouteWithChildren =
 
 interface AuthenticatedGuildIdRouteChildren {
   AuthenticatedGuildIdActivityLogsRoute: typeof AuthenticatedGuildIdActivityLogsRoute
+  AuthenticatedGuildIdBingoRoute: typeof AuthenticatedGuildIdBingoRoute
   AuthenticatedGuildIdDocsRoute: typeof AuthenticatedGuildIdDocsRouteWithChildren
   AuthenticatedGuildIdEventsRoute: typeof AuthenticatedGuildIdEventsRoute
   AuthenticatedGuildIdHeroSightingsRoute: typeof AuthenticatedGuildIdHeroSightingsRoute
@@ -1912,11 +1973,14 @@ interface AuthenticatedGuildIdRouteChildren {
   AuthenticatedGuildIdStatsRoute: typeof AuthenticatedGuildIdStatsRouteWithChildren
   AuthenticatedGuildIdTimersRoute: typeof AuthenticatedGuildIdTimersRoute
   AuthenticatedGuildIdIndexRoute: typeof AuthenticatedGuildIdIndexRoute
+  AuthenticatedGuildIdBingoBoardIdRoute: typeof AuthenticatedGuildIdBingoBoardIdRoute
   AuthenticatedGuildIdEventsEventIdRoute: typeof AuthenticatedGuildIdEventsEventIdRouteWithChildren
+  AuthenticatedGuildIdBingoBoardIdEditRoute: typeof AuthenticatedGuildIdBingoBoardIdEditRoute
 }
 
 const AuthenticatedGuildIdRouteChildren: AuthenticatedGuildIdRouteChildren = {
   AuthenticatedGuildIdActivityLogsRoute: AuthenticatedGuildIdActivityLogsRoute,
+  AuthenticatedGuildIdBingoRoute: AuthenticatedGuildIdBingoRoute,
   AuthenticatedGuildIdDocsRoute: AuthenticatedGuildIdDocsRouteWithChildren,
   AuthenticatedGuildIdEventsRoute: AuthenticatedGuildIdEventsRoute,
   AuthenticatedGuildIdHeroSightingsRoute:
@@ -1930,8 +1994,11 @@ const AuthenticatedGuildIdRouteChildren: AuthenticatedGuildIdRouteChildren = {
   AuthenticatedGuildIdStatsRoute: AuthenticatedGuildIdStatsRouteWithChildren,
   AuthenticatedGuildIdTimersRoute: AuthenticatedGuildIdTimersRoute,
   AuthenticatedGuildIdIndexRoute: AuthenticatedGuildIdIndexRoute,
+  AuthenticatedGuildIdBingoBoardIdRoute: AuthenticatedGuildIdBingoBoardIdRoute,
   AuthenticatedGuildIdEventsEventIdRoute:
     AuthenticatedGuildIdEventsEventIdRouteWithChildren,
+  AuthenticatedGuildIdBingoBoardIdEditRoute:
+    AuthenticatedGuildIdBingoBoardIdEditRoute,
 }
 
 const AuthenticatedGuildIdRouteWithChildren =

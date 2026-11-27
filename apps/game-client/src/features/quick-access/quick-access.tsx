@@ -16,6 +16,7 @@ import { useGlobalChatStore } from "@/store/global-chat.store";
 import { useWindowsStore } from "@/store/windows.store";
 import {
   Globe,
+  Grid3x3,
   MessageSquareText,
   MessagesSquare,
   Radar,
@@ -71,6 +72,11 @@ export const QuickAccess = () => {
               }),
             }
           : undefined,
+    },
+    {
+      windowId: "bingo",
+      label: t("buttons.bingo"),
+      icon: <Grid3x3 aria-hidden="true" className={ICON_CLASS_NAME} />,
     },
     {
       windowId: "online-players",

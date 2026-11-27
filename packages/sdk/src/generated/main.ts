@@ -3511,6 +3511,7 @@ export const GuildNotificationRulesResponseDtoItemsItemTriggerType = {
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
   HERO_SIGHTED: 'HERO_SIGHTED',
   LOOT_DRAW_RESOLVED: 'LOOT_DRAW_RESOLVED',
+  BINGO_MILESTONE: 'BINGO_MILESTONE',
 } as const;
 
 /**
@@ -3820,6 +3821,7 @@ export const NotificationRuleResponseDtoTriggerType = {
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
   HERO_SIGHTED: 'HERO_SIGHTED',
   LOOT_DRAW_RESOLVED: 'LOOT_DRAW_RESOLVED',
+  BINGO_MILESTONE: 'BINGO_MILESTONE',
 } as const;
 
 /**
@@ -4085,6 +4087,7 @@ export const CreateNotificationRuleDtoTriggerType = {
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
   HERO_SIGHTED: 'HERO_SIGHTED',
   LOOT_DRAW_RESOLVED: 'LOOT_DRAW_RESOLVED',
+  BINGO_MILESTONE: 'BINGO_MILESTONE',
 } as const;
 
 export interface CreateNotificationRuleDto {
@@ -4216,6 +4219,7 @@ export const UpdateNotificationRuleDtoTriggerType = {
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
   HERO_SIGHTED: 'HERO_SIGHTED',
   LOOT_DRAW_RESOLVED: 'LOOT_DRAW_RESOLVED',
+  BINGO_MILESTONE: 'BINGO_MILESTONE',
 } as const;
 
 export interface UpdateNotificationRuleDto {
@@ -4369,6 +4373,7 @@ export const NotificationJobsResponseDtoPendingItemPayloadSnapshotTriggerType = 
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
   HERO_SIGHTED: 'HERO_SIGHTED',
   LOOT_DRAW_RESOLVED: 'LOOT_DRAW_RESOLVED',
+  BINGO_MILESTONE: 'BINGO_MILESTONE',
 } as const;
 
 /**
@@ -4478,6 +4483,7 @@ export const NotificationJobsResponseDtoPendingItemRuleTriggerType = {
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
   HERO_SIGHTED: 'HERO_SIGHTED',
   LOOT_DRAW_RESOLVED: 'LOOT_DRAW_RESOLVED',
+  BINGO_MILESTONE: 'BINGO_MILESTONE',
 } as const;
 
 /**
@@ -4799,6 +4805,7 @@ export const NotificationJobsResponseDtoHistoryItemPayloadSnapshotTriggerType = 
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
   HERO_SIGHTED: 'HERO_SIGHTED',
   LOOT_DRAW_RESOLVED: 'LOOT_DRAW_RESOLVED',
+  BINGO_MILESTONE: 'BINGO_MILESTONE',
 } as const;
 
 /**
@@ -4908,6 +4915,7 @@ export const NotificationJobsResponseDtoHistoryItemRuleTriggerType = {
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
   HERO_SIGHTED: 'HERO_SIGHTED',
   LOOT_DRAW_RESOLVED: 'LOOT_DRAW_RESOLVED',
+  BINGO_MILESTONE: 'BINGO_MILESTONE',
 } as const;
 
 /**
@@ -5301,6 +5309,7 @@ export const WatchedItemResponseDtoNotificationRuleTriggerType = {
   SCHEDULED_MESSAGE: 'SCHEDULED_MESSAGE',
   HERO_SIGHTED: 'HERO_SIGHTED',
   LOOT_DRAW_RESOLVED: 'LOOT_DRAW_RESOLVED',
+  BINGO_MILESTONE: 'BINGO_MILESTONE',
 } as const;
 
 /**

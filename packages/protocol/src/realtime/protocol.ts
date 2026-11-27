@@ -1,5 +1,6 @@
 import { AccessPolicySnapshot, AccessPolicyChange } from "./access-policy.js";
 import { UserFeedItem } from "../feed.js";
+import { BingoRealtimeUpdateSchema } from "@lootlog/schema/bingo";
 import { CharacterAurasChangedSchema } from "@lootlog/schema/character-aura";
 import { NonNegativeInt } from "@lootlog/schema/primitives";
 import {
@@ -244,6 +245,8 @@ const SessionJoinCommand = command(
 export const CHARACTER_AURAS_FEATURE = "character-auras";
 
 export const KILL_STATS_FEATURE = "kill-stats";
+
+export const BINGO_FEATURE = "bingo";
 
 export const HERO_SIGHTING_CAPABILITIES_FEATURE = "hero-sighting-capabilities";
 
@@ -530,6 +533,7 @@ export const ServerEvent = Schema.Union([
   serverEvent("timer.created", OrganizationEvent),
   serverEvent("timer.deleted", OrganizationEvent),
   serverEvent("hero-sighting.updated", OrganizationEvent),
+  serverEvent("bingo.updated", BingoRealtimeUpdateSchema),
   serverEvent("reservation.created", OrganizationEvent),
   serverEvent("reservation.deleted", OrganizationEvent),
   serverEvent("reservation.changed", ReservationChangedEventV2),

@@ -332,6 +332,8 @@ it("returns 503 while permissions are unavailable and recovers without caching t
     listUserReservations: unused,
     listGuildReservationSpots: unused,
     getGuildStatsCard: unused,
+    listGuildBingoBoards: unused,
+    getGuildBingoBoard: unused,
   });
 
   const permissions = Permissions.layer.pipe(

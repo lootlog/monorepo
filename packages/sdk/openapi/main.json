@@ -24894,7 +24894,8 @@
                     "WATCHED_ITEM_DROPPED",
                     "SCHEDULED_MESSAGE",
                     "HERO_SIGHTED",
-                    "LOOT_DRAW_RESOLVED"
+                    "LOOT_DRAW_RESOLVED",
+                    "BINGO_MILESTONE"
                   ]
                 },
                 "guildId": {
@@ -25327,7 +25328,8 @@
               "WATCHED_ITEM_DROPPED",
               "SCHEDULED_MESSAGE",
               "HERO_SIGHTED",
-              "LOOT_DRAW_RESOLVED"
+              "LOOT_DRAW_RESOLVED",
+              "BINGO_MILESTONE"
             ]
           },
           "guildId": {
@@ -25778,7 +25780,8 @@
               "WATCHED_ITEM_DROPPED",
               "SCHEDULED_MESSAGE",
               "HERO_SIGHTED",
-              "LOOT_DRAW_RESOLVED"
+              "LOOT_DRAW_RESOLVED",
+              "BINGO_MILESTONE"
             ]
           },
           "targetIds": {
@@ -25918,7 +25921,8 @@
               "WATCHED_ITEM_DROPPED",
               "SCHEDULED_MESSAGE",
               "HERO_SIGHTED",
-              "LOOT_DRAW_RESOLVED"
+              "LOOT_DRAW_RESOLVED",
+              "BINGO_MILESTONE"
             ]
           },
           "targetIds": {
@@ -26059,7 +26063,8 @@
                         "WATCHED_ITEM_DROPPED",
                         "SCHEDULED_MESSAGE",
                         "HERO_SIGHTED",
-                        "LOOT_DRAW_RESOLVED"
+                        "LOOT_DRAW_RESOLVED",
+                        "BINGO_MILESTONE"
                       ]
                     },
                     "world": {
@@ -26188,7 +26193,8 @@
                         "WATCHED_ITEM_DROPPED",
                         "SCHEDULED_MESSAGE",
                         "HERO_SIGHTED",
-                        "LOOT_DRAW_RESOLVED"
+                        "LOOT_DRAW_RESOLVED",
+                        "BINGO_MILESTONE"
                       ]
                     },
                     "guildId": {
@@ -26614,7 +26620,8 @@
                         "WATCHED_ITEM_DROPPED",
                         "SCHEDULED_MESSAGE",
                         "HERO_SIGHTED",
-                        "LOOT_DRAW_RESOLVED"
+                        "LOOT_DRAW_RESOLVED",
+                        "BINGO_MILESTONE"
                       ]
                     },
                     "world": {
@@ -26743,7 +26750,8 @@
                         "WATCHED_ITEM_DROPPED",
                         "SCHEDULED_MESSAGE",
                         "HERO_SIGHTED",
-                        "LOOT_DRAW_RESOLVED"
+                        "LOOT_DRAW_RESOLVED",
+                        "BINGO_MILESTONE"
                       ]
                     },
                     "guildId": {
@@ -27333,7 +27341,8 @@
                   "WATCHED_ITEM_DROPPED",
                   "SCHEDULED_MESSAGE",
                   "HERO_SIGHTED",
-                  "LOOT_DRAW_RESOLVED"
+                  "LOOT_DRAW_RESOLVED",
+                  "BINGO_MILESTONE"
                 ]
               },
               "guildId": {

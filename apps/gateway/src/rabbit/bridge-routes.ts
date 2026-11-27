@@ -411,6 +411,12 @@ export const gatewayBridgeRoutes = ({
       "organization.timers",
       "hero-sighting.updated",
     ),
+    [RabbitRoutingKey.GUILDS_BINGO_UPDATED]: (data, messageId) =>
+      publish(
+        { topic: "organization.activity", organizationId: data.guildId },
+        { v: 1, type: "bingo.updated", data },
+        messageId,
+      ),
     [RabbitRoutingKey.GUILDS_RESERVATIONS_CREATE]: organizationRoute(
       "organization.reservations",
       "reservation.created",

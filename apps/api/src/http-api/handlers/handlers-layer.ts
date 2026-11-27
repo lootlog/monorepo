@@ -26,6 +26,7 @@ import { UserLootlogConfigHandlers } from "./user-lootlog-config/user-lootlog-co
 import { UsersHandlers } from "./users/users.handlers.js";
 import { UserThemesHandlers } from "./user-themes/user-themes.handlers.js";
 import { CharacterAurasHandlers } from "./character-auras/character-auras.handlers.js";
+import { BingoHandlers } from "./bingo/bingo.handlers.js";
 
 export const LootlogApiHandlers = Layer.mergeAll(
   UsersHandlers,
@@ -55,4 +56,5 @@ export const LootlogApiHandlers = Layer.mergeAll(
   DocsHandlers,
   UserThemesHandlers,
   CharacterAurasHandlers,
+  BingoHandlers,
 );

@@ -47,6 +47,7 @@ export interface SessionData extends AuthenticatedIdentity {
   character?: typeof PresenceCharacter.Type;
   characterAuras?: boolean;
   killStats?: boolean;
+  bingo?: boolean;
   heroSightingCapabilities?: boolean;
   confidence: typeof PresenceConfidence.Type;
   presence?: BasicPresence & {

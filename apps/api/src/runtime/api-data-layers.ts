@@ -66,6 +66,7 @@ import { MemberRefreshJobDataLive } from "#src/members/member-read.data-layer";
 import { MyReservationsData } from "#src/reservations/reservations-data";
 import { timersData } from "#src/runtime/features/timers";
 import { heroSightingsData } from "#src/runtime/features/hero-sightings";
+import { bingoServicesLive } from "#src/runtime/features/bingo";
 
 const coreDataLayers = Layer.mergeAll(
   MapTemplatesData.layerDatabase,
@@ -115,6 +116,7 @@ export const apiRequestDataLayers = coreDataLayers.pipe(
   Layer.provide(recordsServicesLive),
   Layer.provide(eventTimersLive),
   Layer.provide(memberServicesLive),
+  Layer.provideMerge(bingoServicesLive),
   Layer.provide(Layer.merge(ApiDatabaseLive, apiQueues)),
 );
 
@@ -132,5 +134,6 @@ export const apiDataLayers = Layer.mergeAll(
   Layer.provide(recordsServicesLive),
   Layer.provide(eventTimersLive),
   Layer.provide(memberServicesLive),
+  Layer.provideMerge(bingoServicesLive),
   Layer.provide(Layer.merge(ApiDatabaseLive, apiQueues)),
 );

@@ -419,6 +419,7 @@
       "TIMER_BEFORE_SPAWN": "Przypomnienia przed spawnem",
       "HERO_SIGHTED": "Wykrycia herosów",
       "LOOT_DRAW_RESOLVED": "Wyniki koła",
+      "BINGO_MILESTONE": "Clan Bingo",
       "SCHEDULED_MESSAGE": "Zaplanowane wiadomości"
     },
     "rows": {
@@ -486,7 +487,8 @@
       "watchedItemDropped": "Drop obserwowanego przedmiotu",
       "scheduledMessage": "Zaplanowana wiadomość",
       "heroSighted": "Wykrycie herosa",
-      "lootDrawResolved": "Wynik koła"
+      "lootDrawResolved": "Wynik koła",
+      "bingoMilestone": "Clan Bingo"
     },
     "jobStatuses": {
       "pending": "Oczekuje",
@@ -729,7 +731,8 @@
         "timerBeforeSpawn": "Gdy zbliża się respawn potwora z ustawionym timerem.",
         "scheduledMessage": "O wybranej porze, jednorazowo lub cyklicznie.",
         "heroSighted": "Gdy ktoś z Lootloga wykryje, gdzie pojawi się heros.",
-        "lootDrawResolved": "Gdy ktoś zakręci kołem o legendę albo unieważni jego wynik."
+        "lootDrawResolved": "Gdy ktoś zakręci kołem o legendę albo unieważni jego wynik.",
+        "bingoMilestone": "Gdy gracz zaliczy pole, linię lub pełną planszę w Clan Bingo."
       },
       "whenTimer": "Lootlog wyśle przypomnienie, gdy ktoś z Lootloga ustawi timer wybranego potwora.",
       "whenHeroSighting": "Lootlog wyśle wiadomość, gdy wykrywacz pokaże, gdzie na wybranym świecie pojawi się heros. O grasującym herosie nie wysyła nic.",

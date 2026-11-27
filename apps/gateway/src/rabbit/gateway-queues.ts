@@ -30,6 +30,11 @@ export const gatewayRoutes = [
     { failure: "retry" },
   ),
   consumerRoute(
+    "gateway-guilds-bingo-updated",
+    RabbitRoutingKey.GUILDS_BINGO_UPDATED,
+    { failure: "nack" },
+  ),
+  consumerRoute(
     "gateway-guilds-loots-create",
     RabbitRoutingKey.GUILDS_LOOTS_CREATE,
     { failure: "retry" },

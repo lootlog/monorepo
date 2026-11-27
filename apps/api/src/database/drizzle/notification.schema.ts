@@ -36,6 +36,7 @@ export const notificationTriggerTypeEnum = pgEnum("NotificationTriggerType", [
   "SCHEDULED_MESSAGE",
   "HERO_SIGHTED",
   "LOOT_DRAW_RESOLVED",
+  "BINGO_MILESTONE",
 ]);
 
 export const notificationScheduleStrategyEnum = pgEnum(

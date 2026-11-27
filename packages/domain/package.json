@@ -9,6 +9,7 @@
     "./activity-feed": "./src/activity-feed.ts",
     "./account-preferences": "./src/account-preferences.ts",
     "./attack-speed": "./src/attack-speed.ts",
+    "./bingo": "./src/bingo.ts",
     "./chat-message-permissions": "./src/chat-message-permissions.ts",
     "./chat-appearance": "./src/chat-appearance.ts",
     "./discord-avatar": "./src/discord-avatar.ts",

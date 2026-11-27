@@ -56,11 +56,25 @@ const LOOT_DRAW_VARIABLE_KEYS = [
   "world",
 ] as const;
 
+const BINGO_MILESTONE_VARIABLE_KEYS = [
+  "ruleName",
+  "boardName",
+  "memberName",
+  "tileTitle",
+  "milestoneLabel",
+  "summary",
+  "completedTileCount",
+  "completedLinesCount",
+  "totalPoints",
+  "world",
+] as const;
+
 const TEMPLATE_VARIABLE_PATTERN = [
   ...new Set([
     ...TIMER_VARIABLE_KEYS,
     ...HERO_SIGHTING_VARIABLE_KEYS,
     ...LOOT_DRAW_VARIABLE_KEYS,
+    ...BINGO_MILESTONE_VARIABLE_KEYS,
   ]),
 ].join("|");
 
@@ -74,6 +88,8 @@ export const getTemplateVariableKeys = (
       return HERO_SIGHTING_VARIABLE_KEYS;
     case NotificationTriggerType.LOOT_DRAW_RESOLVED:
       return LOOT_DRAW_VARIABLE_KEYS;
+    case NotificationTriggerType.BINGO_MILESTONE:
+      return BINGO_MILESTONE_VARIABLE_KEYS;
     default:
       return TIMER_VARIABLE_KEYS;
   }

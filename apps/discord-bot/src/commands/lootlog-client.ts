@@ -1,5 +1,7 @@
 import {
   ApiRpcGroup,
+  type RpcBingoBoardDetail,
+  type RpcBingoBoardList,
   type RpcEventRankingEntry,
   type RpcEventSummary,
   type RpcEventTimer,
@@ -112,6 +114,13 @@ interface MemberApiClient {
     ReadonlyArray<typeof RpcReservationSpot.Type>,
     CommandFailure
   >;
+  readonly listGuildBingoBoards: Effect.Effect<
+    typeof RpcBingoBoardList.Type,
+    CommandFailure
+  >;
+  readonly getGuildBingoBoard: (
+    boardId: string,
+  ) => Effect.Effect<typeof RpcBingoBoardDetail.Type, CommandFailure>;
 }
 
 interface MemberGatewayClient {
@@ -224,6 +233,13 @@ export class LootlogClient extends Context.Service<
             listGuildReservationSpots: runRpc(() =>
               apiRpc.listGuildReservationSpots(guildActor),
             ),
+            listGuildBingoBoards: runRpc(() =>
+              apiRpc.listGuildBingoBoards(guildActor),
+            ),
+            getGuildBingoBoard: (boardId) =>
+              runRpc(() =>
+                apiRpc.getGuildBingoBoard({ ...guildActor, boardId }),
+              ),
           },
           gateway: {
             getOrganizationPresence: runRpc(() =>
