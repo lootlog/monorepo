@@ -3,6 +3,10 @@ import { Effect, Option, Schema } from "effect";
 import type { BetterAuthOptions } from "better-auth";
 import { APIError } from "better-auth/api";
 import { refreshAccessToken } from "better-auth/oauth2";
+import {
+  createSingleFlightRefresh,
+  type RefreshCoordination,
+} from "./discord-token-refresh.js";
 
 const DISCORD_TOKEN_ENDPOINT = "https://discord.com/api/oauth2/token";
 
@@ -40,6 +44,7 @@ interface DiscordAuthOptionsInput {
   clientSecret: string;
   redirectURI: string;
   scopes: string[];
+  refreshCoordination?: RefreshCoordination;
 }
 
 const isDiscordOAuthCallback = (
@@ -94,8 +99,19 @@ export const createDiscordAuthOptions = ({
   clientSecret,
   redirectURI,
   scopes,
-}: DiscordAuthOptionsInput) =>
-  ({
+  refreshCoordination,
+}: DiscordAuthOptionsInput) => {
+  const refreshFromDiscord = (refreshToken: string) =>
+    refreshAccessToken({
+      refreshToken,
+      options: { clientId, clientSecret },
+      tokenEndpoint: DISCORD_TOKEN_ENDPOINT,
+    }).catch((cause: unknown) => {
+      logRefreshFailure(cause);
+      throw cause;
+    });
+
+  return {
     account: {
       accountLinking: {
         enabled: true,
@@ -185,15 +201,13 @@ export const createDiscordAuthOptions = ({
         prompt: "consent",
         disableIdTokenSignIn: true,
         scope: scopes,
-        refreshAccessToken: (refreshToken) =>
-          refreshAccessToken({
-            refreshToken,
-            options: { clientId, clientSecret },
-            tokenEndpoint: DISCORD_TOKEN_ENDPOINT,
-          }).catch((cause: unknown) => {
-            logRefreshFailure(cause);
-            throw cause;
-          }),
+        refreshAccessToken:
+          refreshCoordination === undefined
+            ? refreshFromDiscord
+            : createSingleFlightRefresh(
+                refreshCoordination,
+                refreshFromDiscord,
+              ),
         overrideUserInfoOnSignIn: true,
         mapProfileToUser: (profile) => ({
           firstName: profile.given_name,
@@ -202,7 +216,8 @@ export const createDiscordAuthOptions = ({
         }),
       },
     },
-  }) satisfies Pick<
+  } satisfies Pick<
     BetterAuthOptions,
     "account" | "databaseHooks" | "socialProviders" | "user"
   >;
+};
