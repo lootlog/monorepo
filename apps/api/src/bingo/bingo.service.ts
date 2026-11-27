@@ -54,6 +54,14 @@ const parseOptionalDate = (
   return new Date(value);
 };
 
+const normalizeBoardWorld = (
+  value: string | null | undefined,
+): string | null => {
+  const trimmed = value?.trim();
+
+  return trimmed ? trimmed.toLowerCase() : null;
+};
+
 const validateTileCoordinates = (
   size: number,
   tiles: ReadonlyArray<BingoTileInput>,
@@ -148,7 +156,7 @@ export const makeBingoService = (
 
     yield* validateTileCoordinates(size, initialTiles);
 
-    const world = input.world?.trim() ? input.world.trim() : null;
+    const world = normalizeBoardWorld(input.world);
 
     yield* query(
       "bingo.createBoard",
@@ -221,7 +229,7 @@ export const makeBingoService = (
     if (input.description !== undefined) patch.description = input.description;
 
     if (input.world !== undefined) {
-      patch.world = input.world?.trim() ? input.world.trim() : null;
+      patch.world = normalizeBoardWorld(input.world);
     }
 
     if (input.mode !== undefined) patch.mode = input.mode;
