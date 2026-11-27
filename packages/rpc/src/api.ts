@@ -32,6 +32,7 @@ import {
 } from "@lootlog/schema/internal-guilds";
 import {
   BingoBoardModeSchema,
+  BingoBoardSizeSchema,
   BingoBoardStatusSchema,
   BingoLineIdSchema,
 } from "@lootlog/schema/bingo";
@@ -252,6 +253,7 @@ export const RpcBingoBoardSummary = Schema.Struct({
   name: Schema.String,
   world: Schema.NullOr(Schema.String),
   mode: BingoBoardModeSchema,
+  size: BingoBoardSizeSchema,
   status: BingoBoardStatusSchema,
   configuredTileCount: Schema.Finite,
   participantCount: Schema.Finite,

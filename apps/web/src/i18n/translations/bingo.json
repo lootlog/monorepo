@@ -1,12 +1,12 @@
 {
   "title": "Clan Bingo",
-  "subtitle": "Automatyczne plansze 5×5 zaliczane na żywo z klienta gry",
+  "subtitle": "Automatyczne plansze Bingo zaliczane na żywo z klienta gry",
   "create": "Nowe Bingo",
   "edit": "Konfiguruj planszę",
   "backToList": "Wróć do listy Bingo",
   "backToBoard": "Wróć do planszy",
   "emptyTitle": "Brak plansz Clan Bingo",
-  "emptyDescription": "Stwórz pierwszą planszę 5×5, skonfiguruj warunki pól i rozpocznij rywalizację na żywo.",
+  "emptyDescription": "Stwórz pierwszą planszę, wybierz jej rozmiar, skonfiguruj warunki pól i rozpocznij rywalizację na żywo.",
   "status": {
     "DRAFT": "Szkic",
     "ACTIVE": "Aktywne",
@@ -17,7 +17,7 @@
     "LOCKOUT": "Lockout"
   },
   "modeDescription": {
-    "RACE": "Każdy gracz zbiera własny postęp na wszystkich 25 polach. Punkty za pola, linie Bingo i opcjonalnie za pierwsze zaliczenie.",
+    "RACE": "Każdy gracz zbiera własny postęp na wszystkich polach planszy. Punkty za pola, linie Bingo i opcjonalnie za pierwsze zaliczenie.",
     "LOCKOUT": "Kto pierwszy zaliczy pole, blokuje je dla siebie. Pozostali gracze nie mogą już go zdobyć."
   },
   "conditionKind": {
@@ -30,6 +30,15 @@
   "battleMetric": {
     "WINS": "Łączna liczba wygranych",
     "WIN_STREAK": "Wygrane z rzędu (seria)"
+  },
+  "boardSize": {
+    "label": "Rozmiar planszy",
+    "value": "{{size}}×{{size}}",
+    "locked": "Rozmiaru nie można już zmienić, bo ktoś ma postęp na tej planszy.",
+    "shrinkWarning_one": "Zmniejszenie planszy do {{size}}×{{size}} usunie {{count}} pole spoza nowej siatki.",
+    "shrinkWarning_few": "Zmniejszenie planszy do {{size}}×{{size}} usunie {{count}} pola spoza nowej siatki.",
+    "shrinkWarning_many": "Zmniejszenie planszy do {{size}}×{{size}} usunie {{count}} pól spoza nowej siatki.",
+    "shrinkWarning_other": "Zmniejszenie planszy do {{size}}×{{size}} usunie {{count}} pola spoza nowej siatki."
   },
   "stats": {
     "tiles": "Pola",
@@ -49,7 +58,7 @@
     "deleteConfirmTitle": "Usunąć planszę Bingo?",
     "deleteConfirmDescription": "Wszystkie pola, postępy graczy i historia zaliczeń zostaną trwale usunięte.",
     "saveSettings": "Zapisz ustawienia",
-    "saveBoard": "Zapisz planszę 5×5",
+    "saveBoard": "Zapisz planszę {{size}}×{{size}}",
     "loadStarterBoard": "Wypełnij szablonem startowym",
     "clearTile": "Wyczyść pole",
     "applyTile": "Zastosuj pole",
@@ -64,19 +73,20 @@
   },
   "createDialog": {
     "title": "Utwórz nowe Clan Bingo",
-    "description": "Plansza powstanie jako szkic — możesz dowolnie zmienić każde z 25 pól przed startem.",
+    "description": "Plansza powstanie jako szkic — możesz dowolnie zmienić każde pole przed startem.",
     "name": "Nazwa Bingo",
-    "namePlaceholder": "np. Jesienne Clan Bingo 5×5",
+    "namePlaceholder": "np. Jesienne Clan Bingo",
     "descriptionLabel": "Opis (opcjonalnie)",
     "descriptionPlaceholder": "Zasady, nagrody lub dodatkowe informacje dla klanu",
     "world": "Świat (opcjonalnie)",
     "worldPlaceholder": "Zostaw puste dla wszystkich światów",
     "mode": "Tryb rywalizacji",
     "pointsPerTile": "Pkt za pole",
-    "pointsPerLine": "Pkt za linię (5 w rzędzie)",
+    "pointsPerLine": "Pkt za pełną linię",
     "firstCompleterBonus": "Bonus za 1. zaliczenie pola",
-    "blackoutBonus": "Bonus za pełną planszę (25/25)",
-    "populateStarter": "Wypełnij planszę przykładowymi polami startowymi"
+    "blackoutBonus": "Bonus za pełną planszę",
+    "populateStarter": "Wypełnij planszę przykładowymi polami startowymi",
+    "status": "Status"
   },
   "tileEditor": {
     "title": "Konfiguracja pola ({{row}}×{{col}})",
@@ -152,13 +162,14 @@
     "created": "Utworzono planszę Bingo",
     "updated": "Zapisano ustawienia Bingo",
     "deleted": "Usunięto planszę Bingo",
-    "tilesSaved": "Zapisano konfigurację planszy 5×5",
+    "tilesSaved": "Zapisano konfigurację planszy {{size}}×{{size}}",
     "progressUpdated": "Zaktualizowano postęp gracza",
     "error": "Nie udało się wykonać operacji"
   },
   "units": {
     "points": "{{points}} pkt",
-    "tiles": "{{done}}/25 pól",
+    "tiles": "{{done}}/{{total}} pól",
+    "tileFraction": "{{done}}/{{total}}",
     "lines_one": "{{count}} linia",
     "lines_few": "{{count}} linie",
     "lines_many": "{{count}} linii",

@@ -16,7 +16,7 @@
     "LOCKOUT": "Lockout"
   },
   "summary": {
-    "tiles": "{{done}}/25 pól",
+    "tiles": "{{done}}/{{total}} pól",
     "lines_one": "{{count}} linia",
     "lines_few": "{{count}} linie",
     "lines_many": "{{count}} linii",

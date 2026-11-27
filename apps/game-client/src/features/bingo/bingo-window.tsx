@@ -111,6 +111,7 @@ export const BingoWindow = ({ isOpen }: BingoWindowProps) => {
                   <span className="ll:text-white/75">
                     {t("summary.tiles", {
                       done: detail.board.viewerCompletedTiles,
+                      total: detail.board.size * detail.board.size,
                     })}{" "}
                     ·{" "}
                     {t("summary.lines", {

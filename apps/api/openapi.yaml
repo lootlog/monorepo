@@ -14436,7 +14436,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HttpErrorResponse"
-      summary: Configure Bingo 5x5 board tiles
+      summary: Configure Bingo board tiles
       requestBody:
         content:
           application/json:
@@ -14607,11 +14607,13 @@ components:
               row:
                 type: integer
                 minimum: 0
-                maximum: 4
+                exclusiveMaximum: true
+                maximum: 7
               col:
                 type: integer
                 minimum: 0
-                maximum: 4
+                exclusiveMaximum: true
+                maximum: 7
               title:
                 type: string
               description:
@@ -14953,20 +14955,15 @@ components:
               completedLines:
                 type: array
                 items:
-                  type: string
-                  enum:
-                    - row-0
-                    - row-1
-                    - row-2
-                    - row-3
-                    - row-4
-                    - col-0
-                    - col-1
-                    - col-2
-                    - col-3
-                    - col-4
-                    - diag-main
-                    - diag-anti
+                  anyOf:
+                    - type: string
+                      pattern: ^row-[+-]?(?:\d+(?:\.\d+)?|\.\d+)(?:[Ee][+-]?\d+)?$
+                    - type: string
+                      pattern: ^col-[+-]?(?:\d+(?:\.\d+)?|\.\d+)(?:[Ee][+-]?\d+)?$
+                    - type: string
+                      enum:
+                        - diag-main
+                        - diag-anti
               tilePoints:
                 type: number
               linePoints:
@@ -15014,11 +15011,13 @@ components:
               row:
                 type: integer
                 minimum: 0
-                maximum: 4
+                exclusiveMaximum: true
+                maximum: 7
               col:
                 type: integer
                 minimum: 0
-                maximum: 4
+                exclusiveMaximum: true
+                maximum: 7
               member:
                 type: object
                 properties:
@@ -15106,6 +15105,10 @@ components:
           enum:
             - RACE
             - LOCKOUT
+        size:
+          type: integer
+          minimum: 3
+          maximum: 7
         status:
           type: string
           enum:
@@ -15155,6 +15158,7 @@ components:
         - description
         - world
         - mode
+        - size
         - status
         - pointsPerTile
         - pointsPerLine
@@ -15202,11 +15206,13 @@ components:
               row:
                 type: integer
                 minimum: 0
-                maximum: 4
+                exclusiveMaximum: true
+                maximum: 7
               col:
                 type: integer
                 minimum: 0
-                maximum: 4
+                exclusiveMaximum: true
+                maximum: 7
               title:
                 type: string
                 minLength: 1
@@ -15438,6 +15444,10 @@ components:
           enum:
             - RACE
             - LOCKOUT
+        size:
+          type: integer
+          minimum: 3
+          maximum: 7
         status:
           type: string
           enum:
@@ -15491,6 +15501,10 @@ components:
           enum:
             - RACE
             - LOCKOUT
+        size:
+          type: integer
+          minimum: 3
+          maximum: 7
         pointsPerTile:
           type: integer
           minimum: 0
@@ -15527,11 +15541,13 @@ components:
               row:
                 type: integer
                 minimum: 0
-                maximum: 4
+                exclusiveMaximum: true
+                maximum: 7
               col:
                 type: integer
                 minimum: 0
-                maximum: 4
+                exclusiveMaximum: true
+                maximum: 7
               title:
                 type: string
                 minLength: 1

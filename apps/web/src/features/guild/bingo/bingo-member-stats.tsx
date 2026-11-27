@@ -1,4 +1,3 @@
-import { BINGO_GRID_COORDS } from "@lootlog/domain/bingo";
 import { StatsTile } from "@lootlog/ui/components/stats-tile";
 import { StatsTileGrid } from "@lootlog/ui/components/stats-tile-grid";
 import { StatsTileNumber } from "@lootlog/ui/components/stats-tile-number";
@@ -7,12 +6,14 @@ import { useTranslation } from "react-i18next";
 
 type BingoMemberStatsProps = {
   readonly completedTileCount: number;
+  readonly totalTileCount: number;
   readonly completedLineCount: number;
   readonly totalPoints: number;
 };
 
 export const BingoMemberStats = ({
   completedTileCount,
+  totalTileCount,
   completedLineCount,
   totalPoints,
 }: BingoMemberStatsProps) => {
@@ -25,7 +26,7 @@ export const BingoMemberStats = ({
         label={t("bingo.stats.tiles")}
         value={<StatsTileNumber value={completedTileCount} />}
         detail={t("bingo.stats.tilesOfTotal", {
-          total: BINGO_GRID_COORDS.length,
+          total: totalTileCount,
         })}
       />
       <StatsTile

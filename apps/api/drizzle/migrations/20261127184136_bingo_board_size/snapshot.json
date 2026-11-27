@@ -1,0 +1,86 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "8ec615f7-5b7e-4ccf-9356-62aac4235a12",
+  "prevIds": [
+    "18b849bc-3667-4166-b597-6f30c6caae83",
+    "9721c69e-f4d2-47b0-ae95-de31825be87e"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": ["column", "public", "BingoBoard", "size"],
+      "writes": [
+        "s|col|public.BingoBoard.size",
+        "n|col|public.BingoBoard.size",
+        "e|col|public.BingoBoard.size"
+      ],
+      "reads": ["n|tbl|public.BingoBoard", "n|sch|public"]
+    },
+    {
+      "statementType": "add_check",
+      "statementTarget": ["table", "public", "BingoBoard"],
+      "writes": [
+        "s|ck|public.BingoBoard.BingoBoard_size_check",
+        "n|ck|public.BingoBoard.BingoBoard_size_check",
+        "e|ck|public.BingoBoard.BingoBoard_size_check",
+        "n|con|public.BingoBoard.BingoBoard_size_check"
+      ],
+      "reads": [
+        "n|tbl|public.BingoBoard",
+        "n|sch|public",
+        "n|col|public.BingoBoard.size"
+      ]
+    },
+    {
+      "statementType": "alter_check",
+      "statementTarget": ["table", "public", "BingoTile"],
+      "writes": ["s|ck|public.BingoTile.BingoTile_row_col_bounds_check"],
+      "reads": [
+        "n|tbl|public.BingoTile",
+        "n|sch|public",
+        "n|col|public.BingoTile.row",
+        "n|col|public.BingoTile.col",
+        "e|col|public.BingoTile.row",
+        "e|col|public.BingoTile.col"
+      ],
+      "sqlHash": "cf86ca35caaa1f3d"
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "BingoBoard",
+        "name": "size",
+        "type": "smallint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "5",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "BingoBoard",
+        "name": "BingoBoard_size_check",
+        "value": "\"size\" BETWEEN 3 AND 7",
+        "entityType": "checks"
+      }
+    },
+    {
+      "op": "alter",
+      "key": "checks\u0000[\"public\",\"BingoTile\",\"BingoTile_row_col_bounds_check\"]",
+      "set": {
+        "value": "\"row\" >= 0 AND \"row\" < 7 AND \"col\" >= 0 AND \"col\" < 7"
+      }
+    }
+  ]
+}

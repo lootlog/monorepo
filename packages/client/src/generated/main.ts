@@ -223,12 +223,12 @@ export type BingoBoardDetailResponseDtoTilesItem = {
   boardId: string;
   /**
      * @minimum 0
-     * @maximum 4
+     * @exclusiveMaximum 7
      */
   row: number;
   /**
      * @minimum 0
-     * @maximum 4
+     * @exclusiveMaximum 7
      */
   col: number;
   title: string;
@@ -275,30 +275,12 @@ export type BingoBoardDetailResponseDtoLeaderboardItemMember = {
   avatar: string | null;
 };
 
-export type BingoBoardDetailResponseDtoLeaderboardItemCompletedLinesItem = typeof BingoBoardDetailResponseDtoLeaderboardItemCompletedLinesItem[keyof typeof BingoBoardDetailResponseDtoLeaderboardItemCompletedLinesItem];
-
-
-export const BingoBoardDetailResponseDtoLeaderboardItemCompletedLinesItem = {
-  'row-0': 'row-0',
-  'row-1': 'row-1',
-  'row-2': 'row-2',
-  'row-3': 'row-3',
-  'row-4': 'row-4',
-  'col-0': 'col-0',
-  'col-1': 'col-1',
-  'col-2': 'col-2',
-  'col-3': 'col-3',
-  'col-4': 'col-4',
-  'diag-main': 'diag-main',
-  'diag-anti': 'diag-anti',
-} as const;
-
 export type BingoBoardDetailResponseDtoLeaderboardItem = {
   rank: number;
   member: BingoBoardDetailResponseDtoLeaderboardItemMember;
   completedTileIds: string[];
   completedTileCount: number;
-  completedLines: BingoBoardDetailResponseDtoLeaderboardItemCompletedLinesItem[];
+  completedLines: (string | 'diag-main' | 'diag-anti')[];
   tilePoints: number;
   linePoints: number;
   firstCompleterPoints: number;
@@ -338,12 +320,12 @@ export type BingoBoardDetailResponseDtoRecentActivityItem = {
   tileTitle: string;
   /**
      * @minimum 0
-     * @maximum 4
+     * @exclusiveMaximum 7
      */
   row: number;
   /**
      * @minimum 0
-     * @maximum 4
+     * @exclusiveMaximum 7
      */
   col: number;
   member: BingoBoardDetailResponseDtoRecentActivityItemMember;
@@ -384,6 +366,11 @@ export interface BingoBoardSummaryResponseDto {
   /** @nullable */
   world: string | null;
   mode: BingoBoardSummaryResponseDtoMode;
+  /**
+     * @minimum 3
+     * @maximum 7
+     */
+  size: number;
   status: BingoBoardSummaryResponseDtoStatus;
   pointsPerTile: number;
   pointsPerLine: number;
@@ -543,12 +530,12 @@ export type ReplaceBingoTilesDtoTilesItemCondition = {
 export type ReplaceBingoTilesDtoTilesItem = {
   /**
      * @minimum 0
-     * @maximum 4
+     * @exclusiveMaximum 7
      */
   row: number;
   /**
      * @minimum 0
-     * @maximum 4
+     * @exclusiveMaximum 7
      */
   col: number;
   /**
@@ -612,6 +599,11 @@ export interface UpdateBingoBoardDto {
      */
   world?: string | null;
   mode?: UpdateBingoBoardDtoMode;
+  /**
+     * @minimum 3
+     * @maximum 7
+     */
+  size?: number;
   status?: UpdateBingoBoardDtoStatus;
   /**
      * @minimum 0
@@ -758,12 +750,12 @@ export type CreateBingoBoardDtoTilesItemCondition = {
 export type CreateBingoBoardDtoTilesItem = {
   /**
      * @minimum 0
-     * @maximum 4
+     * @exclusiveMaximum 7
      */
   row: number;
   /**
      * @minimum 0
-     * @maximum 4
+     * @exclusiveMaximum 7
      */
   col: number;
   /**
@@ -802,6 +794,11 @@ export interface CreateBingoBoardDto {
      */
   world?: string | null;
   mode?: CreateBingoBoardDtoMode;
+  /**
+     * @minimum 3
+     * @maximum 7
+     */
+  size?: number;
   /**
      * @minimum 0
      * @maximum 10000
@@ -40181,7 +40178,7 @@ export const getBingoControllerReplaceTilesUrl = ({ guildId, boardId }: BingoCon
 }
 
 /**
- * @summary Configure Bingo 5x5 board tiles
+ * @summary Configure Bingo board tiles
  */
 export const bingoControllerReplaceTiles = async ({ guildId, boardId }: BingoControllerReplaceTilesPathParameters,
     replaceBingoTilesDto: ReplaceBingoTilesDto, options?: Parameters<typeof mainFetch>[1]): Promise<BingoBoardDetailResponseDto> => {
@@ -40248,7 +40245,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type BingoControllerReplaceTilesMutationVariables = {pathParams: BingoControllerReplaceTilesPathParameters;data: BodyType<ReplaceBingoTilesDto>}
 
     /**
- * @summary Configure Bingo 5x5 board tiles
+ * @summary Configure Bingo board tiles
  */
 export const useBingoControllerReplaceTiles = <TError = ErrorType<HttpErrorResponse | RequestValidationError | ReauthenticationRequiredEncoded>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bingoControllerReplaceTiles>>, TError,BingoControllerReplaceTilesMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}

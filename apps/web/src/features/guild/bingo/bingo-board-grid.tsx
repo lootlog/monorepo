@@ -1,6 +1,6 @@
 import {
-  BINGO_GRID_COORDS,
   bingoCoordKey,
+  bingoGridCoords,
   findBingoCompletedLineCoordKeys,
   indexBingoTilesByCoord,
 } from "@lootlog/domain/bingo";
@@ -9,11 +9,21 @@ import type {
   BingoBoardDetailResponseDtoTilesItem,
   BingoBoardSummaryResponseDtoMode,
 } from "@lootlog/client/main";
+import { cn } from "cn";
 import { BingoBoardCell } from "./bingo-board-cell";
+
+const LARGE_SCREEN_COLUMN_CLASS = new Map<number, string>([
+  [3, "lg:grid-cols-3"],
+  [4, "lg:grid-cols-4"],
+  [5, "lg:grid-cols-5"],
+  [6, "lg:grid-cols-6"],
+  [7, "lg:grid-cols-7"],
+]);
 
 type BingoBoardGridProps = {
   readonly tiles: ReadonlyArray<BingoBoardDetailResponseDtoTilesItem>;
   readonly mode: BingoBoardSummaryResponseDtoMode;
+  readonly size: number;
   readonly pointsPerTile: number;
   readonly selectedMemberId: number;
   readonly progressByTileId: ReadonlyMap<
@@ -35,6 +45,7 @@ type BingoBoardGridProps = {
 export const BingoBoardGrid = ({
   tiles,
   mode,
+  size,
   pointsPerTile,
   selectedMemberId,
   progressByTileId,
@@ -45,15 +56,20 @@ export const BingoBoardGrid = ({
   const tileByCoord = indexBingoTilesByCoord(tiles);
 
   const coordsInCompletedLine = findBingoCompletedLineCoordKeys(
-    mode,
+    { mode, size },
     selectedMemberId,
     tiles,
     (tile) => (progressByTileId.get(tile.id)?.completedAt ?? null) !== null,
   );
 
   return (
-    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-5">
-      {BINGO_GRID_COORDS.map((coord) => {
+    <div
+      className={cn(
+        "grid grid-cols-1 gap-2 sm:grid-cols-2",
+        LARGE_SCREEN_COLUMN_CLASS.get(size),
+      )}
+    >
+      {bingoGridCoords(size).map((coord) => {
         const { row, col } = coord;
         const key = bingoCoordKey(coord);
         const tile = tileByCoord.get(key) ?? null;

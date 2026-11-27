@@ -50,7 +50,7 @@ export const DEFAULT_BINGO_MILESTONE_TEMPLATE = [
   "",
   "**{{memberName}}** zalicza pole **{{tileTitle}}**",
   "{{summary}}",
-  "Postęp: **{{completedTileCount}}/25** pól · **{{completedLinesCount}}** linii · **{{totalPoints}}** pkt",
+  "Postęp: **{{completedTileCount}}/{{totalTileCount}}** pól · **{{completedLinesCount}}** linii · **{{totalPoints}}** pkt",
 ].join("\n");
 
 export const bingoMilestoneLabel = (

@@ -1,6 +1,7 @@
 import { adapterOperation } from "@lootlog/instrumentation/operation";
 import { buildStarterBingoTiles } from "@lootlog/domain/bingo";
 import {
+  BINGO_DEFAULT_BOARD_SIZE,
   BingoBoardMode,
   BingoBoardStatus,
   BingoTileConditionKind,
@@ -24,7 +25,7 @@ import {
   bingoTileTable,
 } from "#src/database/drizzle/bingo.schema";
 import { memberTable } from "#src/database/drizzle/organization.schema";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, gte, inArray, or } from "drizzle-orm";
 import { Clock, Effect } from "effect";
 import { isEqual } from "es-toolkit";
 import {
@@ -53,11 +54,22 @@ const parseOptionalDate = (
   return new Date(value);
 };
 
-const validateTileCoordinates = (tiles: ReadonlyArray<BingoTileInput>) => {
+const validateTileCoordinates = (
+  size: number,
+  tiles: ReadonlyArray<BingoTileInput>,
+) => {
   const seen = new Set<string>();
 
   for (const tile of tiles) {
     const key = `${tile.row}:${tile.col}`;
+
+    if (tile.row >= size || tile.col >= size) {
+      return Effect.fail(
+        new InvalidRequestError(
+          `Tile (${tile.row}, ${tile.col}) is outside the ${size}x${size} board`,
+        ),
+      );
+    }
 
     if (seen.has(key)) {
       return Effect.fail(
@@ -87,7 +99,8 @@ const changesScoringWithProgress = (
 ) =>
   (input.status === BingoBoardStatus.DRAFT &&
     board.status !== BingoBoardStatus.DRAFT) ||
-  (input.mode !== undefined && input.mode !== board.mode);
+  (input.mode !== undefined && input.mode !== board.mode) ||
+  (input.size !== undefined && input.size !== board.size);
 
 const lockGuildBoard = Effect.fn("bingo.lockGuildBoard")(function* (
   transaction: BingoTransaction,
@@ -124,14 +137,16 @@ export const makeBingoService = (
 
     const boardId = Bun.randomUUIDv7();
 
+    const size = input.size ?? BINGO_DEFAULT_BOARD_SIZE;
+
     const initialTiles: ReadonlyArray<BingoTileInput> =
       input.tiles !== undefined
         ? input.tiles
         : input.populateStarterTiles !== false
-          ? buildStarterBingoTiles()
+          ? buildStarterBingoTiles(size)
           : [];
 
-    yield* validateTileCoordinates(initialTiles);
+    yield* validateTileCoordinates(size, initialTiles);
 
     const world = input.world?.trim() ? input.world.trim() : null;
 
@@ -146,6 +161,7 @@ export const makeBingoService = (
             description: input.description ?? null,
             world,
             mode: input.mode ?? BingoBoardMode.RACE,
+            size,
             status: BingoBoardStatus.DRAFT,
             pointsPerTile: input.pointsPerTile ?? 1,
             pointsPerLine: input.pointsPerLine ?? 5,
@@ -210,6 +226,8 @@ export const makeBingoService = (
 
     if (input.mode !== undefined) patch.mode = input.mode;
 
+    if (input.size !== undefined) patch.size = input.size;
+
     if (input.status !== undefined) patch.status = input.status;
 
     if (input.pointsPerTile !== undefined) {
@@ -251,8 +269,22 @@ export const makeBingoService = (
             (yield* hasRecordedProgress(transaction, boardId))
           ) {
             return yield* new InvalidRequestError(
-              "Board mode and draft status cannot change after progress was recorded",
+              "Board size, mode and draft status cannot change after progress was recorded",
             );
+          }
+
+          if (input.size !== undefined && input.size < board.size) {
+            yield* transaction
+              .delete(bingoTileTable)
+              .where(
+                and(
+                  eq(bingoTileTable.boardId, boardId),
+                  or(
+                    gte(bingoTileTable.row, input.size),
+                    gte(bingoTileTable.col, input.size),
+                  ),
+                ),
+              );
           }
 
           yield* transaction
@@ -312,19 +344,19 @@ export const makeBingoService = (
     viewer: BingoViewer,
     input: ReplaceBingoTilesRequest,
   ) {
-    yield* validateTileCoordinates(input.tiles);
-
     const now = new Date(yield* Clock.currentTimeMillis);
 
     yield* query(
       "bingo.replaceTiles",
       database.transaction((transaction) =>
         Effect.gen(function* () {
-          const { tiles: existingTiles } = yield* lockGuildBoard(
+          const { board, tiles: existingTiles } = yield* lockGuildBoard(
             transaction,
             guildId,
             boardId,
           );
+
+          yield* validateTileCoordinates(board.size, input.tiles);
 
           const existingByCoord = new Map<string, BingoTileRow>(
             existingTiles.map((tile) => [`${tile.row}:${tile.col}`, tile]),

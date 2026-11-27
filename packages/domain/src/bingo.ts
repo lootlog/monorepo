@@ -1,5 +1,4 @@
 import {
-  BINGO_BOARD_SIZE,
   BingoBattleMetric,
   BingoBoardMode,
   BingoTileConditionKind,
@@ -24,48 +23,34 @@ export type BingoLineDefinition = {
   readonly coords: readonly BingoGridCoord[];
 };
 
-const ROW_LINE_IDS = ["row-0", "row-1", "row-2", "row-3", "row-4"] as const;
+export const bingoLines = (size: number): readonly BingoLineDefinition[] => {
+  const indexes = Array.from({ length: size }, (_, index) => index);
 
-const COL_LINE_IDS = ["col-0", "col-1", "col-2", "col-3", "col-4"] as const;
+  return [
+    ...indexes.map((row) => ({
+      id: `row-${row}` as const,
+      coords: indexes.map((col) => ({ row, col })),
+    })),
+    ...indexes.map((col) => ({
+      id: `col-${col}` as const,
+      coords: indexes.map((row) => ({ row, col })),
+    })),
+    {
+      id: "diag-main" as const,
+      coords: indexes.map((index) => ({ row: index, col: index })),
+    },
+    {
+      id: "diag-anti" as const,
+      coords: indexes.map((index) => ({ row: index, col: size - 1 - index })),
+    },
+  ];
+};
 
-export const BINGO_LINES: readonly BingoLineDefinition[] = [
-  ...ROW_LINE_IDS.map((id, row) => ({
-    id,
-    coords: Array.from({ length: BINGO_BOARD_SIZE }, (_, col) => ({
-      row,
-      col,
-    })),
-  })),
-  ...COL_LINE_IDS.map((id, col) => ({
-    id,
-    coords: Array.from({ length: BINGO_BOARD_SIZE }, (_, row) => ({
-      row,
-      col,
-    })),
-  })),
-  {
-    id: "diag-main",
-    coords: Array.from({ length: BINGO_BOARD_SIZE }, (_, index) => ({
-      row: index,
-      col: index,
-    })),
-  },
-  {
-    id: "diag-anti",
-    coords: Array.from({ length: BINGO_BOARD_SIZE }, (_, index) => ({
-      row: index,
-      col: BINGO_BOARD_SIZE - 1 - index,
-    })),
-  },
-];
-
-export const BINGO_GRID_COORDS: readonly BingoGridCoord[] = Array.from(
-  { length: BINGO_BOARD_SIZE * BINGO_BOARD_SIZE },
-  (_, index) => ({
-    row: Math.floor(index / BINGO_BOARD_SIZE),
-    col: index % BINGO_BOARD_SIZE,
-  }),
-);
+export const bingoGridCoords = (size: number): readonly BingoGridCoord[] =>
+  Array.from({ length: size * size }, (_, index) => ({
+    row: Math.floor(index / size),
+    col: index % size,
+  }));
 
 export const bingoCoordKey = ({ row, col }: BingoGridCoord) => `${row}:${col}`;
 
@@ -84,11 +69,12 @@ export const isBingoTileLockedForMember = (
   tile.lockedByMemberId !== memberId;
 
 export const computeCompletedBingoLines = (
+  size: number,
   completedCoords: ReadonlyArray<BingoGridCoord>,
 ): BingoLineId[] => {
   const completedSet = new Set(completedCoords.map(bingoCoordKey));
 
-  return BINGO_LINES.flatMap((line) =>
+  return bingoLines(size).flatMap((line) =>
     line.coords.every((coord) => completedSet.has(bingoCoordKey(coord)))
       ? [line.id]
       : [],
@@ -98,23 +84,24 @@ export const computeCompletedBingoLines = (
 export const findBingoCompletedLineCoordKeys = <
   Tile extends BingoGridCoord & { readonly lockedByMemberId: number | null },
 >(
-  mode: BingoBoardMode,
+  board: { readonly mode: BingoBoardMode; readonly size: number },
   memberId: number,
   tiles: ReadonlyArray<Tile>,
   isCompleted: (tile: Tile) => boolean,
 ): ReadonlySet<string> => {
   const completedLineIds = new Set(
     computeCompletedBingoLines(
+      board.size,
       tiles.filter(
         (tile) =>
           isCompleted(tile) &&
-          !isBingoTileLockedForMember(mode, tile, memberId),
+          !isBingoTileLockedForMember(board.mode, tile, memberId),
       ),
     ),
   );
 
   return new Set(
-    BINGO_LINES.flatMap((line) =>
+    bingoLines(board.size).flatMap((line) =>
       completedLineIds.has(line.id) ? line.coords.map(bingoCoordKey) : [],
     ),
   );
@@ -371,6 +358,7 @@ export const evaluateBattleCondition = (
 
 export type BingoScoreConfig = {
   readonly mode: BingoBoardMode;
+  readonly size: number;
   readonly pointsPerTile: number;
   readonly pointsPerLine: number;
   readonly firstCompleterBonus: number;
@@ -447,11 +435,15 @@ export const calculateMemberBingoScore = (
     }
   }
 
-  const completedLines = computeCompletedBingoLines(completedCoords);
+  const completedLines = computeCompletedBingoLines(
+    config.size,
+    completedCoords,
+  );
+
   const linePoints = completedLines.length * config.pointsPerLine;
 
   const isBlackout =
-    tiles.length === BINGO_BOARD_SIZE * BINGO_BOARD_SIZE &&
+    tiles.length === config.size * config.size &&
     completedTileIds.length === tiles.length;
 
   const blackoutPoints = isBlackout ? config.blackoutBonus : 0;
@@ -623,7 +615,9 @@ export const BINGO_TILE_PRESETS: readonly BingoTilePreset[] = [
   },
 ];
 
-export const buildStarterBingoTiles = (): Array<{
+export const buildStarterBingoTiles = (
+  size: number,
+): Array<{
   readonly row: number;
   readonly col: number;
   readonly title: string;
@@ -638,9 +632,9 @@ export const buildStarterBingoTiles = (): Array<{
     readonly condition: BingoTileCondition;
   }> = [];
 
-  for (let row = 0; row < BINGO_BOARD_SIZE; row += 1) {
-    for (let col = 0; col < BINGO_BOARD_SIZE; col += 1) {
-      const index = row * BINGO_BOARD_SIZE + col;
+  for (let row = 0; row < size; row += 1) {
+    for (let col = 0; col < size; col += 1) {
+      const index = row * size + col;
       const preset = BINGO_TILE_PRESETS[index % BINGO_TILE_PRESETS.length];
 
       if (!preset) continue;

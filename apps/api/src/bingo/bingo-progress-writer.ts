@@ -186,6 +186,7 @@ const resolveCompletionOutcome = (options: {
       col: tile.col,
       summary: input.summary,
       completedTileCount: scoreAfter.completedTileIds.length,
+      totalTileCount: board.size * board.size,
       completedLinesCount: scoreAfter.completedLines.length,
       totalPoints: scoreAfter.totalPoints,
       occurredAt: input.occurredAt.toISOString(),

@@ -4,7 +4,7 @@ import {
   isBingoTileLockedForMember,
 } from "@lootlog/domain/bingo";
 import type { RpcBingoBoardSummary } from "@lootlog/rpc/api";
-import { BINGO_BOARD_SIZE, type BingoBoardMode } from "@lootlog/schema/bingo";
+import type { BingoBoardMode } from "@lootlog/schema/bingo";
 import { escapeMarkdown, type SlashCommandSubcommandBuilder } from "discord.js";
 import { Effect } from "effect";
 import { BotConfig } from "#src/config/bot-config";
@@ -59,18 +59,19 @@ const renderEmojiGrid = (
       readonly completedAt: string | null;
     } | null;
   }>,
-  mode: BingoBoardMode,
+  board: { readonly mode: BingoBoardMode; readonly size: number },
   viewerMemberId: number,
 ) => {
   const byCoord = indexBingoTilesByCoord(tiles);
 
-  return Array.from({ length: BINGO_BOARD_SIZE }, (_, row) =>
-    Array.from({ length: BINGO_BOARD_SIZE }, (_, col) => {
+  return Array.from({ length: board.size }, (_, row) =>
+    Array.from({ length: board.size }, (_, col) => {
       const tile = byCoord.get(bingoCoordKey({ row, col }));
 
       if (!tile) return "⬜";
 
-      if (isBingoTileLockedForMember(mode, tile, viewerMemberId)) return "🔒";
+      if (isBingoTileLockedForMember(board.mode, tile, viewerMemberId))
+        return "🔒";
 
       if (tile.viewerProgress?.completedAt) return "🟩";
 
@@ -123,6 +124,7 @@ const runBingoCommand = (invocation: CommandInvocation) =>
           COMMAND_TEXT.bingo.rankingDetail(
             entry.totalPoints,
             entry.completedTileCount,
+            detail.board.size * detail.board.size,
             entry.completedLines.length,
           ),
         isOwn: (entry) => entry.member.id === session.memberId,
@@ -142,12 +144,13 @@ const runBingoCommand = (invocation: CommandInvocation) =>
 
     const grid = renderEmojiGrid(
       detail.tiles,
-      detail.board.mode,
+      detail.board,
       detail.viewerMemberId,
     );
 
     const summary = COMMAND_TEXT.bingo.progressSummary(
       detail.board.viewerCompletedTiles,
+      detail.board.size * detail.board.size,
       detail.board.viewerCompletedLines,
       detail.board.viewerTotalPoints,
     );

@@ -7,8 +7,8 @@ import {
 import { ItemRarityEnum } from "@lootlog/schema/item-rarity";
 import { NpcTypeEnum } from "@lootlog/schema/npc-type";
 import {
-  BINGO_GRID_COORDS,
-  BINGO_LINES,
+  bingoGridCoords,
+  bingoLines,
   calculateMemberBingoScore,
   computeCompletedBingoLines,
   evaluateBattleCondition,
@@ -20,7 +20,7 @@ import {
 
 describe("clan bingo domain", () => {
   it("detects rows, columns, and both diagonals on a 5x5 grid", () => {
-    expect(BINGO_LINES).toHaveLength(12);
+    expect(bingoLines(5)).toHaveLength(12);
 
     const completed = [
       { row: 0, col: 0 },
@@ -34,10 +34,45 @@ describe("clan bingo domain", () => {
       { row: 4, col: 4 },
     ];
 
-    expect(computeCompletedBingoLines(completed)).toEqual([
+    expect(computeCompletedBingoLines(5, completed)).toEqual([
       "row-0",
       "diag-main",
     ]);
+  });
+
+  it("scores lines and blackout against the board's own size", () => {
+    const tiles = bingoGridCoords(3).map((coord, index) => ({
+      id: `t-${index}`,
+      ...coord,
+      points: null,
+      lockedByMemberId: null,
+    }));
+
+    const config = {
+      mode: BingoBoardMode.RACE,
+      size: 3,
+      pointsPerTile: 1,
+      pointsPerLine: 5,
+      firstCompleterBonus: 0,
+      blackoutBonus: 10,
+    };
+
+    const completeAll = tiles.map(({ id }) => ({
+      tileId: id,
+      completedAt: new Date("2026-11-27T12:00:00.000Z"),
+    }));
+
+    const fullBoard = calculateMemberBingoScore(config, tiles, 1, completeAll);
+
+    expect(fullBoard.completedLines).toHaveLength(8);
+    expect(fullBoard.isBlackout).toBe(true);
+
+    const anti = computeCompletedBingoLines(
+      7,
+      bingoGridCoords(7).filter(({ row, col }) => row + col === 6),
+    );
+
+    expect(anti).toEqual(["diag-anti"]);
   });
 
   it("matches legendary loot from any E2 and folds Polish diacritics on patterns", () => {
@@ -196,7 +231,7 @@ describe("clan bingo domain", () => {
       [1, 20],
     ]);
 
-    const tiles = BINGO_GRID_COORDS.map((coord, index) => ({
+    const tiles = bingoGridCoords(5).map((coord, index) => ({
       id: `t-${index}`,
       ...coord,
       points: index === 0 ? 3 : null,
@@ -211,6 +246,7 @@ describe("clan bingo domain", () => {
     const raceScore = calculateMemberBingoScore(
       {
         mode: BingoBoardMode.RACE,
+        size: 5,
         pointsPerTile: 1,
         pointsPerLine: 5,
         firstCompleterBonus: 2,
@@ -230,6 +266,7 @@ describe("clan bingo domain", () => {
     const lockoutScore = calculateMemberBingoScore(
       {
         mode: BingoBoardMode.LOCKOUT,
+        size: 5,
         pointsPerTile: 1,
         pointsPerLine: 5,
         firstCompleterBonus: 2,
@@ -247,7 +284,7 @@ describe("clan bingo domain", () => {
   });
 
   it("highlights a completed line only when none of its tiles is locked by another member in LOCKOUT", () => {
-    const tiles = BINGO_GRID_COORDS.map((coord) => ({
+    const tiles = bingoGridCoords(5).map((coord) => ({
       ...coord,
       lockedByMemberId: coord.row === 0 && coord.col === 1 ? 20 : null,
     }));
@@ -256,7 +293,7 @@ describe("clan bingo domain", () => {
 
     expect(
       findBingoCompletedLineCoordKeys(
-        BingoBoardMode.RACE,
+        { mode: BingoBoardMode.RACE, size: 5 },
         10,
         tiles,
         completedRow0,
@@ -265,7 +302,7 @@ describe("clan bingo domain", () => {
 
     expect(
       findBingoCompletedLineCoordKeys(
-        BingoBoardMode.LOCKOUT,
+        { mode: BingoBoardMode.LOCKOUT, size: 5 },
         10,
         tiles,
         completedRow0,
