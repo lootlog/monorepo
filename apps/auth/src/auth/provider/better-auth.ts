@@ -90,10 +90,12 @@ export const createLootlogAuth = ({
   config,
   database,
   secondaryStorage,
+  refreshCoordination,
 }: {
   readonly config: AuthConfig;
   readonly database: ReturnType<typeof drizzle>;
   readonly secondaryStorage?: AuthRedisStorage["Service"]["secondaryStorage"];
+  readonly refreshCoordination?: AuthRedisStorage["Service"]["refreshCoordination"];
 }) => {
   const betterAuthBaseURL = resolveBetterAuthBaseURL(config.appUrl);
 
@@ -102,6 +104,7 @@ export const createLootlogAuth = ({
     clientSecret: reveal(config.discordClientSecret),
     redirectURI: `${betterAuthBaseURL}/callback/discord`,
     scopes: [...DISCORD_AUTH_SCOPES],
+    ...(refreshCoordination !== undefined && { refreshCoordination }),
   });
 
   const storageOptions: Pick<BetterAuthOptions, "secondaryStorage"> = {};
@@ -262,6 +265,7 @@ export class BetterAuthRuntime extends Context.Service<
         config,
         database: drizzle({ client: pool }),
         secondaryStorage: redis.secondaryStorage,
+        refreshCoordination: redis.refreshCoordination,
       });
 
       return BetterAuthRuntime.of(toAuthProvider(auth));
