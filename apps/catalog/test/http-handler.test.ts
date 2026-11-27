@@ -12,9 +12,10 @@ import {
 } from "../src/http-api/catalog-operations.js";
 import {
   CatalogReports,
-  type ReportCaller,
   type ReportsModule,
 } from "../src/reports/reports.service.js";
+import { CatalogFacts, type FactsModule } from "../src/facts/facts.service.js";
+import type { CatalogCaller } from "../src/shared/catalog-caller.js";
 
 const SERVICE_TOKEN = "catalog-service-token-for-http-tests";
 
@@ -33,7 +34,7 @@ const config = CatalogConfig.of({
 
 const service = { [CATALOG_SERVICE_TOKEN_HEADER]: SERVICE_TOKEN };
 
-const makeReports = (callers: ReportCaller[]): ReportsModule => {
+const makeReports = (callers: CatalogCaller[]): ReportsModule => {
   const report = {
     id: "4b0f4c8e-8f0e-4d6a-9d43-0d1c1a3b5e6f",
     subjectType: "ITEM",
@@ -46,7 +47,7 @@ const makeReports = (callers: ReportCaller[]): ReportsModule => {
     reviewedAt: null,
   } as const;
 
-  const record = (caller: ReportCaller) => {
+  const record = (caller: CatalogCaller) => {
     callers.push(caller);
   };
 
@@ -69,9 +70,26 @@ const makeReports = (callers: ReportCaller[]): ReportsModule => {
   };
 };
 
+const makeFacts = (callers: CatalogCaller[]): FactsModule => ({
+  preview: (caller) =>
+    Effect.sync(() => callers.push(caller)).pipe(
+      Effect.as({ alreadyImported: false, facts: [] }),
+    ),
+  submit: (caller) =>
+    Effect.sync(() => callers.push(caller)).pipe(
+      Effect.as({
+        submissionId: "submission",
+        alreadyImported: false,
+        newVariants: 0,
+        confirmedVariants: 0,
+      }),
+    ),
+});
+
 const makeBoundary = (
   overrides: Partial<CatalogOperationsValue> = {},
   reports: ReportsModule = makeReports([]),
+  facts: FactsModule = makeFacts([]),
 ) => {
   const operations: CatalogOperationsValue = {
     catalogItems: () => Effect.succeed({ hits: [], estimatedTotalHits: 0 }),
@@ -90,6 +108,7 @@ const makeBoundary = (
     CatalogRoutes.pipe(
       Layer.provide(Layer.succeed(CatalogOperations, operations)),
       Layer.provide(Layer.succeed(CatalogReports, reports)),
+      Layer.provide(Layer.succeed(CatalogFacts, facts)),
       Layer.provide(Layer.succeed(CatalogConfig, config)),
       Layer.provide(HttpServer.layerServices),
     ),
@@ -105,6 +124,7 @@ const makeBoundary = (
       new Request(`http://localhost${path}`, { ...init, headers }),
       Context.make(CatalogOperations, operations).pipe(
         Context.add(CatalogReports, reports),
+        Context.add(CatalogFacts, facts),
       ),
     );
 
@@ -223,7 +243,7 @@ test("reads need the service token or an identity from the edge, and keys stay s
 });
 
 test("reports come from the signed-in User the edge names, never a service or an API key", async () => {
-  const callers: ReportCaller[] = [];
+  const callers: CatalogCaller[] = [];
   const boundary = makeBoundary({}, makeReports(callers));
 
   const report = {
@@ -289,6 +309,68 @@ test("reports come from the signed-in User the edge names, never a service or an
       { userId: "user-1", roles: [] },
       { userId: "user-1", roles: ["wiki-moderator"] },
     ]);
+  } finally {
+    await boundary.dispose();
+  }
+});
+
+test("game facts come from the signed-in User the edge names, never a service", async () => {
+  const callers: CatalogCaller[] = [];
+  const boundary = makeBoundary({}, makeReports([]), makeFacts(callers));
+
+  const submission = {
+    method: "POST",
+    body: JSON.stringify({
+      submissionKey: "a".repeat(64),
+      source: "RECORDING",
+      gameVersion: "pl",
+      world: "gordion",
+      extractorVersion: 1,
+      facts: [
+        {
+          observedAt: "2026-11-25T05:00:00.000Z",
+          fact: {
+            kind: "ITEM",
+            itemId: 1,
+            name: "Miecz",
+            icon: "mie/1.gif",
+            itemClass: 1,
+            stat: "",
+            price: 1,
+            currency: "zl",
+          },
+        },
+      ],
+    }),
+  };
+
+  const json = { "content-type": "application/json" };
+
+  try {
+    expect(
+      (
+        await boundary.handler(
+          "/catalog/facts/preview",
+          { ...service, ...json },
+          submission,
+        )
+      ).status,
+    ).toBe(401);
+    expect(
+      (
+        await boundary.handler(
+          "/catalog/facts/submissions",
+          {
+            "x-auth-user-id": "user-1",
+            "x-auth-discord-id": "discord-1",
+            "x-auth-roles": "wiki-moderator",
+            ...json,
+          },
+          submission,
+        )
+      ).status,
+    ).toBe(200);
+    expect(callers).toEqual([{ userId: "user-1", roles: ["wiki-moderator"] }]);
   } finally {
     await boundary.dispose();
   }

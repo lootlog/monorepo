@@ -1,6 +1,6 @@
 import {
   InvalidRequestError,
-  PermissionDeniedError,
+  type PermissionDeniedError,
   RateLimitedError,
   ResourceConflictError,
   ResourceNotFoundError,
@@ -19,9 +19,10 @@ import {
 } from "drizzle-orm";
 import type { EffectDrizzleQueryError } from "drizzle-orm/effect-core";
 import {
-  hasPlatformRole,
-  type PlatformRole,
-} from "@lootlog/schema/platform-roles";
+  type CatalogCaller,
+  isCatalogModerator,
+  requireCatalogModerator,
+} from "#src/shared/catalog-caller";
 import { returnedRow } from "@lootlog/database/returned-row";
 import { Context, Effect, Layer } from "effect";
 import { groupBy } from "es-toolkit";
@@ -47,11 +48,6 @@ import type {
 export const DAILY_REPORT_LIMIT = 30;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-
-export type ReportCaller = {
-  readonly userId: string;
-  readonly roles: ReadonlyArray<PlatformRole>;
-};
 
 type ReportRow = typeof catalogReportTable.$inferSelect;
 
@@ -94,14 +90,6 @@ const npcGameVersion = sql`${catalogNpcTable.document}->>'gameVersion'`;
 const isCurrentNpc = sql`${catalogNpcTable.document}->'current' is distinct from 'false'::jsonb`;
 
 export const makeReportsModule = (database: CatalogDatabaseValue) => {
-  const isModerator = (caller: ReportCaller) =>
-    hasPlatformRole(caller.roles, "wiki-moderator");
-
-  const requireModerator = (caller: ReportCaller) =>
-    isModerator(caller)
-      ? Effect.void
-      : Effect.fail(new PermissionDeniedError("Catalog moderators only"));
-
   const itemNames = (
     gameVersion: Subject["gameVersion"],
     ids: ReadonlyArray<number>,
@@ -178,7 +166,7 @@ export const makeReportsModule = (database: CatalogDatabaseValue) => {
     });
 
   const create = (
-    caller: ReportCaller,
+    caller: CatalogCaller,
     request: CreateCatalogReportRequest,
   ): Effect.Effect<
     CatalogReportDto_Output,
@@ -246,7 +234,7 @@ export const makeReportsModule = (database: CatalogDatabaseValue) => {
       return toReport(row);
     });
 
-  const getOwn = (caller: ReportCaller, subject: CatalogOwnReportQuery) =>
+  const getOwn = (caller: CatalogCaller, subject: CatalogOwnReportQuery) =>
     database
       .select()
       .from(catalogReportTable)
@@ -260,7 +248,7 @@ export const makeReportsModule = (database: CatalogDatabaseValue) => {
       .limit(1)
       .pipe(Effect.map(([row]) => ({ report: row ? toReport(row) : null })));
 
-  const withdraw = (caller: ReportCaller, reportId: string) =>
+  const withdraw = (caller: CatalogCaller, reportId: string) =>
     database
       .delete(catalogReportTable)
       .where(
@@ -280,14 +268,14 @@ export const makeReportsModule = (database: CatalogDatabaseValue) => {
       );
 
   const list = (
-    caller: ReportCaller,
+    caller: CatalogCaller,
     query: CatalogReportsQuery,
   ): Effect.Effect<
     CatalogReportsResponseDto_Output,
     EffectDrizzleQueryError | PermissionDeniedError
   > =>
     Effect.gen(function* () {
-      yield* requireModerator(caller);
+      yield* requireCatalogModerator(caller);
 
       const status = query.status ?? "OPEN";
       const ofStatus = eq(catalogReportTable.status, status);
@@ -349,11 +337,11 @@ export const makeReportsModule = (database: CatalogDatabaseValue) => {
     });
 
   const review = (
-    caller: ReportCaller,
+    caller: CatalogCaller,
     { reportIds, status }: ReviewCatalogReportsRequest,
   ) =>
     Effect.gen(function* () {
-      yield* requireModerator(caller);
+      yield* requireCatalogModerator(caller);
 
       const ids = [...new Set(reportIds)];
 
@@ -442,8 +430,8 @@ export const makeReportsModule = (database: CatalogDatabaseValue) => {
     create,
     getOwn,
     withdraw,
-    viewer: (caller: ReportCaller) => ({
-      canModerate: isModerator(caller),
+    viewer: (caller: CatalogCaller) => ({
+      canModerate: isCatalogModerator(caller),
     }),
     list,
     review,

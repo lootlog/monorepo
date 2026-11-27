@@ -1,36 +1,27 @@
-import {
-  applicationErrorHttpResponse,
-  AuthenticationRequiredError,
-} from "@lootlog/protocol/http/errors";
-import { readForwardAuthIdentity } from "@lootlog/schema/api-key-policy";
-import { readForwardedPlatformRoles } from "@lootlog/schema/platform-roles";
+import { applicationErrorHttpResponse } from "@lootlog/protocol/http/errors";
 import { Effect } from "effect";
-import { HttpServerRequest } from "effect/http";
 import { HttpApiBuilder } from "effect/http-api";
 import {
   CatalogReports,
-  type ReportCaller,
   type ReportsModule,
 } from "#src/reports/reports.service";
+import {
+  type CatalogCaller,
+  forwardedCatalogCaller,
+} from "#src/shared/catalog-caller";
 import { CatalogApi } from "../catalog-api.js";
 
 const asCaller = <A, E>(
   operation: (
     reports: ReportsModule,
-    caller: ReportCaller,
+    caller: CatalogCaller,
   ) => Effect.Effect<A, E>,
 ) =>
   Effect.gen(function* () {
-    const request = yield* HttpServerRequest.HttpServerRequest;
-    const identity = readForwardAuthIdentity(request.headers);
-
-    if (!identity) return yield* new AuthenticationRequiredError();
+    const caller = yield* forwardedCatalogCaller;
     const reports = yield* CatalogReports;
 
-    return yield* operation(reports, {
-      userId: identity.userId,
-      roles: readForwardedPlatformRoles(request.headers),
-    });
+    return yield* operation(reports, caller);
   }).pipe(Effect.catch(applicationErrorHttpResponse));
 
 export const ReportsHandlers = HttpApiBuilder.group(
