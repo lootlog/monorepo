@@ -109,10 +109,10 @@ export const MobileAlertFrame = ({
           onWindowAnimationEnd();
         }}
       >
-        <div className="ll:flex ll:h-8 ll:shrink-0 ll:items-center ll:justify-between ll:gap-2 ll:px-1.5">
+        <div className="ll:flex ll:h-11 ll:shrink-0 ll:items-center ll:justify-between ll:gap-2 ll:px-1.5">
           <p
             id={titleId}
-            className="ll:m-0 ll:min-w-0 ll:truncate ll:text-xs ll:font-semibold ll:leading-none ll:tracking-wide ll:text-foreground"
+            className="ll:m-0 ll:min-w-0 ll:truncate ll:text-sm ll:font-semibold ll:leading-none ll:tracking-wide ll:text-foreground"
           >
             {title}
           </p>

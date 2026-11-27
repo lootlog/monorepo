@@ -26,7 +26,7 @@ export function SegmentedControl<Value extends string>({
         if (next !== undefined) onValueChange(next);
       }}
       className={cn(
-        "ll:grid ll:h-7 ll:min-w-0 ll:auto-cols-fr ll:grid-flow-col ll:bg-black/20",
+        "ll:grid ll:h-7 ll:mobile:h-10 ll:min-w-0 ll:auto-cols-fr ll:grid-flow-col ll:bg-black/20",
         className,
       )}
       {...props}
@@ -41,7 +41,7 @@ export function SegmentedControlItem({
   return (
     <Toggle
       className={cn(
-        "ll:relative ll:flex ll:h-full ll:min-w-0 ll:items-center ll:justify-center ll:gap-1 ll:rounded-none ll:border-0 ll:bg-transparent ll:px-1 ll:py-0 ll:text-[11px] ll:font-semibold ll:leading-none ll:text-muted-foreground ll:transition-[color,background-color] ll:duration-150 ll:hover:bg-white/5 ll:hover:text-foreground ll:focus-visible:outline-2 ll:focus-visible:-outline-offset-2 ll:focus-visible:outline-ring ll:data-pressed:bg-primary ll:data-pressed:text-primary-foreground ll:data-pressed:hover:bg-primary/90 ll-custom-cursor-pointer",
+        "ll:relative ll:flex ll:h-full ll:min-w-0 ll:items-center ll:justify-center ll:gap-1 ll:rounded-none ll:border-0 ll:bg-transparent ll:px-1 ll:py-0 ll:text-[11px] ll:mobile:text-[13px] ll:font-semibold ll:leading-none ll:text-muted-foreground ll:transition-[color,background-color] ll:duration-150 ll:hover:bg-white/5 ll:hover:text-foreground ll:focus-visible:outline-2 ll:focus-visible:-outline-offset-2 ll:focus-visible:outline-ring ll:data-pressed:bg-primary ll:data-pressed:text-primary-foreground ll:data-pressed:hover:bg-primary/90 ll-custom-cursor-pointer",
         className,
       )}
       {...props}

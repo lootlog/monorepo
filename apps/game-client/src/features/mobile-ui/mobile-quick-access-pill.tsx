@@ -134,7 +134,7 @@ export const MobileQuickAccessPill = () => {
         className={PILL_ACTION_CLASS_NAME}
         onClick={() => openAndFocus("timers")}
       >
-        <Timer aria-hidden="true" className="ll:size-4" />
+        <Timer aria-hidden="true" className="ll:size-5" />
       </Button>
       <Button
         type="button"
@@ -146,7 +146,7 @@ export const MobileQuickAccessPill = () => {
         className={PILL_ACTION_CLASS_NAME}
         onClick={() => openAndFocus("chat")}
       >
-        <MessagesSquare aria-hidden="true" className="ll:size-4" />
+        <MessagesSquare aria-hidden="true" className="ll:size-5" />
       </Button>
       <Button
         type="button"
@@ -159,7 +159,7 @@ export const MobileQuickAccessPill = () => {
         className={PILL_ACTION_CLASS_NAME}
         onClick={() => toggleOpen("command")}
       >
-        <MessageSquareText aria-hidden="true" className="ll:size-4" />
+        <MessageSquareText aria-hidden="true" className="ll:size-5" />
       </Button>
       <MobileMoreMenu activePanel={null} triggerVariant="pill" />
     </div>

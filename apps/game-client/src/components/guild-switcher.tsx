@@ -170,7 +170,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
       <TooltipProvider>
         <div
           className={cn(
-            "ll:flex ll:h-7 ll:w-full ll:items-center ll:justify-between ll:pl-2 ll:pr-0.5",
+            "ll:flex ll:h-7 ll:w-full ll:items-center ll:justify-between ll:pl-2 ll:pr-0.5 ll:mobile:h-10",
             className,
           )}
           role="status"
@@ -258,7 +258,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
         className={cn("ll:w-full", className)}
         orientation="horizontal"
       >
-        <div className="ll:-ml-px ll:flex ll:h-7 ll:w-max ll:min-w-full ll:items-center">
+        <div className="ll:-ml-px ll:flex ll:h-7 ll:w-max ll:min-w-full ll:items-center ll:mobile:h-10">
           {content}
         </div>
       </ScrollArea>

@@ -20,7 +20,7 @@ export const WindowFooter: FC<WindowFooterProps> = ({
   >
     <div
       className={cn(
-        "ll:flex ll:h-8 ll:items-center ll:gap-1 ll:px-3",
+        "ll:flex ll:h-8 ll:items-center ll:gap-1 ll:px-3 ll:mobile:h-12 ll:mobile:gap-2",
         rowClassName,
       )}
     >

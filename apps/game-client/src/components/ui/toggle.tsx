@@ -3,7 +3,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "cn";
 
 const toggleVariants = cva(
-  "ll:group/toggle ll:inline-flex ll:items-center ll:justify-center ll:gap-1 ll:rounded-sm ll:text-[13px] ll:font-medium ll:whitespace-nowrap ll:transition-all ll:outline-none ll:hover:bg-muted ll:hover:text-foreground ll:focus-visible:border-ring ll:focus-visible:ring-[3px] ll:focus-visible:ring-ring/50 ll:disabled:pointer-events-none ll:disabled:opacity-50 ll:aria-invalid:border-destructive ll:data-pressed:bg-accent ll:data-pressed:text-accent-foreground ll:data-pressed:hover:bg-accent/80 ll:aria-invalid:ring-destructive/40 ll:[&_svg]:pointer-events-none ll:[&_svg]:shrink-0 ll:[&_svg:not([class*=size-])]:size-4 ll-custom-cursor-pointer",
+  "ll:group/toggle ll:inline-flex ll:items-center ll:justify-center ll:gap-1 ll:rounded-sm ll:text-[13px] ll:font-medium ll:whitespace-nowrap ll:transition-all ll:outline-none ll:hover:bg-muted ll:hover:text-foreground ll:focus-visible:border-ring ll:focus-visible:ring-[3px] ll:focus-visible:ring-ring/50 ll:disabled:pointer-events-none ll:disabled:opacity-50 ll:aria-invalid:border-destructive ll:data-pressed:bg-accent ll:data-pressed:text-accent-foreground ll:data-pressed:hover:bg-accent/80 ll:aria-invalid:ring-destructive/40 ll:[&_svg]:pointer-events-none ll:[&_svg]:shrink-0 ll:[&_svg:not([class*=size-])]:size-4 ll:mobile:min-h-10 ll:mobile:min-w-10 ll-custom-cursor-pointer",
   {
     variants: {
       variant: {

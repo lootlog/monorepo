@@ -173,13 +173,13 @@ export const MobilePanelFrame = ({
             onWindowAnimationEnd();
           }}
         >
-          <div className="ll:grid ll:min-h-9 ll:shrink-0 ll:grid-cols-[1fr_auto_1fr] ll:items-center ll:gap-1 ll:border-0 ll:border-b ll:border-solid ll:border-separator-subtle ll:px-1.5 ll:py-1">
+          <div className="ll:grid ll:min-h-9 ll:shrink-0 ll:grid-cols-[1fr_auto_1fr] ll:items-center ll:gap-1 ll:px-1.5 ll:py-1">
             <div className="ll:flex ll:items-center ll:gap-0.5 ll:justify-self-start">
               {actions}
             </div>
             <p
               id={titleId}
-              className="ll:m-0 ll:min-w-0 ll:truncate ll:text-center ll:text-xs ll:font-semibold ll:leading-none ll:tracking-wide ll:text-foreground"
+              className="ll:m-0 ll:min-w-0 ll:truncate ll:text-center ll:text-sm ll:font-semibold ll:leading-none ll:tracking-wide ll:text-foreground"
             >
               {title}
             </p>
