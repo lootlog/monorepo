@@ -31,7 +31,14 @@ import { useTranslation } from "react-i18next";
 import { BingoActivityFeed } from "./bingo-activity-feed";
 import { BingoAdminActions } from "./bingo-admin-actions";
 import { BingoBoardGrid } from "./bingo-board-grid";
-import { BINGO_DETAIL_COLUMNS_CLASS } from "./bingo-detail-layout";
+import {
+  BINGO_DETAIL_ACTIVITY_SCROLL_CLASS,
+  BINGO_DETAIL_BOARD_COLUMN_CLASS,
+  BINGO_DETAIL_COLUMNS_CLASS,
+  BINGO_DETAIL_LEADERBOARD_SCROLL_CLASS,
+  BINGO_DETAIL_RAIL_CLASS,
+  BINGO_DETAIL_SECTION_CLASS,
+} from "./bingo-detail-layout";
 import { BingoDetailSkeleton } from "./bingo-detail-skeleton";
 import { BingoLeaderboard } from "./bingo-leaderboard";
 import { BingoManualProgressDialog } from "./bingo-manual-progress-dialog";
@@ -173,126 +180,147 @@ export const BingoDetailPage = ({
   return (
     <div className="flex h-full min-h-0 flex-col">
       <ScrollArea data-under-top-bar className="min-h-0 flex-1">
-        <h1 className="sr-only">{board.name}</h1>
-        <DetailBar
-          meta={
-            <DetailBarFacts>
-              <DetailBarFact label={t("bingo.header.status")}>
-                <span
-                  className={cn(
-                    "flex items-center gap-1.5",
-                    BINGO_STATUS_TEXT_CLASS[board.status],
-                  )}
-                >
+        <div className="flex min-w-0 flex-col xl:h-full">
+          <h1 className="sr-only">{board.name}</h1>
+          <DetailBar
+            meta={
+              <DetailBarFacts>
+                <DetailBarFact label={t("bingo.header.status")}>
                   <span
-                    aria-hidden
-                    className="size-2 shrink-0 rounded-full bg-current"
-                  />
-                  {t(`bingo.status.${board.status}`)}
-                </span>
-              </DetailBarFact>
-              <DetailBarFact label={t("bingo.header.world")}>
-                {board.world
-                  ? upperFirst(board.world)
-                  : t("bingo.stats.worldAny")}
-              </DetailBarFact>
-              <DetailBarFact label={t("bingo.header.mode")}>
-                {t(`bingo.mode.${board.mode}`)}
-              </DetailBarFact>
-              <DetailBarFact label={t("bingo.header.size")}>
-                {t("bingo.boardSize.value", { size: board.size })}
-              </DetailBarFact>
-            </DetailBarFacts>
-          }
-          actions={
-            canManage ? (
-              <BingoAdminActions
-                guildId={guildId}
-                boardId={boardId}
-                status={board.status}
-                isUpdating={updateBoard.isPending}
-                onChangeStatus={changeStatus}
-                onOpenManual={() => {
-                  setManualTileId(null);
-                  setManualOpen(true);
-                }}
-                onOpenDelete={() => setDeleteConfirmOpen(true)}
-              />
-            ) : undefined
-          }
-        />
-
-        <StatsSectionColumns fill className={BINGO_DETAIL_COLUMNS_CLASS}>
-          <BandSection
-            id="bingo-board"
-            title={
-              isInspectingOther
-                ? t("bingo.actions.viewingPlayer", {
-                    name: inspectedMemberName,
-                  })
-                : t("bingo.board.title")
-            }
-            description={board.description ?? undefined}
-            trailing={
-              isInspectingOther ? (
-                <ChevronLink
-                  render={
-                    <Link
-                      to={ROUTES.guild.bingo.board(guildId, boardId)}
-                      resetScroll={false}
+                    className={cn(
+                      "flex items-center gap-1.5",
+                      BINGO_STATUS_TEXT_CLASS[board.status],
+                    )}
+                  >
+                    <span
+                      aria-hidden
+                      className="size-2 shrink-0 rounded-full bg-current"
                     />
-                  }
-                >
-                  {t("bingo.actions.viewOwnBoard")}
-                </ChevronLink>
-              ) : null
+                    {t(`bingo.status.${board.status}`)}
+                  </span>
+                </DetailBarFact>
+                <DetailBarFact label={t("bingo.header.world")}>
+                  {board.world
+                    ? upperFirst(board.world)
+                    : t("bingo.stats.worldAny")}
+                </DetailBarFact>
+                <DetailBarFact label={t("bingo.header.mode")}>
+                  {t(`bingo.mode.${board.mode}`)}
+                </DetailBarFact>
+                <DetailBarFact label={t("bingo.header.size")}>
+                  {t("bingo.boardSize.value", { size: board.size })}
+                </DetailBarFact>
+              </DetailBarFacts>
             }
-            tiled
-          >
-            <BingoMemberStats
-              completedTileCount={completedTileCount}
-              totalTileCount={totalTileCount}
-              completedLineCount={completedLineCount}
-              totalPoints={totalPoints}
-            />
-            <div className={cn("py-4", LIST_TILE_INSET_CLASS)}>
-              <BingoBoardGrid
-                tiles={data.tiles}
-                mode={board.mode}
-                size={board.size}
-                pointsPerTile={board.pointsPerTile}
-                selectedMemberId={activeMemberId}
-                progressByTileId={progressByTileId}
-                onSelectCell={handleSelectCell}
-              />
-            </div>
-          </BandSection>
+            actions={
+              canManage ? (
+                <BingoAdminActions
+                  guildId={guildId}
+                  boardId={boardId}
+                  status={board.status}
+                  isUpdating={updateBoard.isPending}
+                  onChangeStatus={changeStatus}
+                  onOpenManual={() => {
+                    setManualTileId(null);
+                    setManualOpen(true);
+                  }}
+                  onOpenDelete={() => setDeleteConfirmOpen(true)}
+                />
+              ) : undefined
+            }
+          />
 
-          <aside className="min-w-0">
-            <BandSection
-              id="bingo-leaderboard"
-              title={t("bingo.leaderboard.title")}
-              count={data.leaderboard.length}
-              tiled
+          <StatsSectionColumns className={BINGO_DETAIL_COLUMNS_CLASS}>
+            <ScrollArea
+              orientation="vertical"
+              className={BINGO_DETAIL_BOARD_COLUMN_CLASS}
             >
-              <BingoLeaderboard
-                guildId={guildId}
-                boardId={boardId}
-                entries={data.leaderboard}
-                totalTileCount={totalTileCount}
-                selectedMemberId={activeMemberId}
-                viewerMemberId={data.viewerMemberId}
-              />
-            </BandSection>
-            <BandSection
-              id="bingo-activity"
-              title={t("bingo.activity.title")}
-              tiled
-            >
-              <BingoActivityFeed items={data.recentActivity} />
-            </BandSection>
-          </aside>
-        </StatsSectionColumns>
+              <BandSection
+                id="bingo-board"
+                title={
+                  isInspectingOther
+                    ? t("bingo.actions.viewingPlayer", {
+                        name: inspectedMemberName,
+                      })
+                    : t("bingo.board.title")
+                }
+                description={board.description ?? undefined}
+                trailing={
+                  isInspectingOther ? (
+                    <ChevronLink
+                      render={
+                        <Link
+                          to={ROUTES.guild.bingo.board(guildId, boardId)}
+                          resetScroll={false}
+                        />
+                      }
+                    >
+                      {t("bingo.actions.viewOwnBoard")}
+                    </ChevronLink>
+                  ) : null
+                }
+                tiled
+              >
+                <BingoMemberStats
+                  completedTileCount={completedTileCount}
+                  totalTileCount={totalTileCount}
+                  completedLineCount={completedLineCount}
+                  totalPoints={totalPoints}
+                />
+                <div className={cn("py-4", LIST_TILE_INSET_CLASS)}>
+                  <BingoBoardGrid
+                    tiles={data.tiles}
+                    mode={board.mode}
+                    size={board.size}
+                    pointsPerTile={board.pointsPerTile}
+                    selectedMemberId={activeMemberId}
+                    progressByTileId={progressByTileId}
+                    onSelectCell={handleSelectCell}
+                  />
+                </div>
+              </BandSection>
+            </ScrollArea>
+
+            <aside className={BINGO_DETAIL_RAIL_CLASS}>
+              <div className={cn(BINGO_DETAIL_SECTION_CLASS, "xl:flex-1")}>
+                <BandSection
+                  id="bingo-leaderboard"
+                  title={t("bingo.leaderboard.title")}
+                  count={data.leaderboard.length}
+                  tiled
+                >
+                  <ScrollArea
+                    orientation="vertical"
+                    className={BINGO_DETAIL_LEADERBOARD_SCROLL_CLASS}
+                  >
+                    <BingoLeaderboard
+                      guildId={guildId}
+                      boardId={boardId}
+                      entries={data.leaderboard}
+                      totalTileCount={totalTileCount}
+                      selectedMemberId={activeMemberId}
+                      viewerMemberId={data.viewerMemberId}
+                    />
+                  </ScrollArea>
+                </BandSection>
+              </div>
+              <div className={cn(BINGO_DETAIL_SECTION_CLASS, "xl:max-h-[42%]")}>
+                <BandSection
+                  id="bingo-activity"
+                  title={t("bingo.activity.title")}
+                  tiled
+                >
+                  <ScrollArea
+                    orientation="vertical"
+                    className={BINGO_DETAIL_ACTIVITY_SCROLL_CLASS}
+                  >
+                    <BingoActivityFeed items={data.recentActivity} />
+                  </ScrollArea>
+                </BandSection>
+              </div>
+            </aside>
+          </StatsSectionColumns>
+        </div>
       </ScrollArea>
 
       {canManage ? (

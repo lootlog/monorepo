@@ -9,6 +9,7 @@ import type { MenuItem } from "./sidebar-nav/types";
 import { GuildSidebarHeader } from "./guild-sidebar-header";
 import { GuildPinnedEventsSection } from "./guild-pinned-events-section";
 import { CollapsePresence } from "@/components/common/collapse-presence";
+import { useActiveBingoCount } from "@/hooks/api/use-active-bingo-count";
 import { useActiveEventCount } from "@/hooks/api/use-active-event-count";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { useMatches } from "@tanstack/react-router";
@@ -18,17 +19,10 @@ import {
 } from "@/navigation/app-navigation";
 import { APP_NAVIGATION_ICONS } from "@/navigation/app-navigation-icons";
 
-function getNavigationIcon(id: AppNavigationItemId, hasActiveEvents: boolean) {
+function getNavigationIcon(id: AppNavigationItemId, highlighted: boolean) {
   const Icon = APP_NAVIGATION_ICONS[id];
 
-  return (
-    <Icon
-      className={cn(
-        "mr-1 size-4",
-        id === "organization-events" && hasActiveEvents && "text-primary",
-      )}
-    />
-  );
+  return <Icon className={cn("mr-1 size-4", highlighted && "text-primary")} />;
 }
 
 type GuildsSidebarNavProps = {
@@ -49,27 +43,43 @@ export const GuildsSidebarNav: FC<GuildsSidebarNavProps> = ({
     ({ id }) => id === "organization-events",
   );
 
+  const bingoNavigationItem = navigation.sidebarItems.find(
+    ({ id }) => id === "organization-bingo",
+  );
+
   const activeEventsGuildId = eventsNavigationItem?.visible
     ? (guildId ?? "")
     : "";
 
+  const activeBingoGuildId = bingoNavigationItem?.visible
+    ? (guildId ?? "")
+    : "";
+
   const activeEventCount = useActiveEventCount(activeEventsGuildId);
+  const activeBingoCount = useActiveBingoCount(activeBingoGuildId);
 
-  const hasActiveEvents = activeEventCount > 0;
+  const activeCountByItemId: Partial<Record<AppNavigationItemId, number>> = {
+    "organization-events": activeEventCount,
+    "organization-bingo": activeBingoCount,
+  };
 
-  const menuItems: MenuItem[] = navigation.sidebarItems.map((item) => ({
-    active: item.active,
-    available: true,
-    enabled: item.visible,
-    icon: getNavigationIcon(item.id, hasActiveEvents),
-    label: item.label,
-    path: item.href,
-    group: item.group,
-    badge:
-      item.id === "organization-events" && hasActiveEvents
-        ? { content: activeEventCount, variant: "default" }
+  const menuItems: MenuItem[] = navigation.sidebarItems.map((item) => {
+    const activeCount = activeCountByItemId[item.id] ?? 0;
+    const hasActiveCount = activeCount > 0;
+
+    return {
+      active: item.active,
+      available: true,
+      enabled: item.visible,
+      icon: getNavigationIcon(item.id, hasActiveCount),
+      label: item.label,
+      path: item.href,
+      group: item.group,
+      badge: hasActiveCount
+        ? { content: activeCount, variant: "default" }
         : undefined,
-  }));
+    };
+  });
 
   const handleItemClick = () => {
     setOpenMobile(false);
