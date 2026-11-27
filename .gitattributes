@@ -60,3 +60,7 @@ apps/wiki/src/lib/skills/trees/*.ts size-limit-exempt
 # The battle message builder ports the game battle log function as one
 # table of row keys, so it stays whole
 packages/battle-ui/src/lib/battle-message.ts size-limit-exempt
+
+# The AirTag Redis store is one key layout and the Lua scripts that share
+# LUA_COMMON over it, so it stays whole
+apps/gateway/src/realtime/air-tag-store.ts size-limit-exempt
