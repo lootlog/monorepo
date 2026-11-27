@@ -28,6 +28,19 @@ import type {
 
 import { catalogFetch } from '../mutators';
 import type { ErrorType , BodyType } from '../mutators';
+/**
+ * @nullable
+ */
+export type HttpErrorResponseDetails = { [key: string]: unknown } | null;
+
+export interface HttpErrorResponse {
+  code: string;
+  /** @nullable */
+  message?: string | null;
+  /** @nullable */
+  details?: HttpErrorResponseDetails;
+}
+
 export type RequestValidationErrorCode = typeof RequestValidationErrorCode[keyof typeof RequestValidationErrorCode];
 
 
@@ -50,17 +63,581 @@ export interface RequestValidationError {
   details: RequestValidationErrorDetails;
 }
 
-/**
- * @nullable
- */
-export type HttpErrorResponseDetails = { [key: string]: unknown } | null;
+export interface CatalogFactSubmissionResponse {
+  submissionId: string;
+  /** Whether this recording was imported before with this extractor version; nothing changed then. */
+  alreadyImported: boolean;
+  /**
+     * Facts the catalog had not seen in this form before.
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  newVariants: number;
+  /**
+     * Facts the catalog already knew, now confirmed again.
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  confirmedVariants: number;
+}
 
-export interface HttpErrorResponse {
-  code: string;
-  /** @nullable */
-  message?: string | null;
-  /** @nullable */
-  details?: HttpErrorResponseDetails;
+export type CatalogFactSubmissionRequestGameVersion = typeof CatalogFactSubmissionRequestGameVersion[keyof typeof CatalogFactSubmissionRequestGameVersion];
+
+
+export const CatalogFactSubmissionRequestGameVersion = {
+  en: 'en',
+  pl: 'pl',
+} as const;
+
+export type GameMapFactKind = typeof GameMapFactKind[keyof typeof GameMapFactKind];
+
+
+export const GameMapFactKind = {
+  MAP: 'MAP',
+} as const;
+
+/**
+ * A map as the game describes it on entering.
+ */
+export interface GameMapFact {
+  kind: GameMapFactKind;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  mapId: number;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  parentMapId: number | null;
+  /** @maxLength 200 */
+  name: string;
+  /** @maxLength 300 */
+  file: string;
+  /**
+     * @maxLength 300
+     * @nullable
+     */
+  background: string | null;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  pvp: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  minLevel: number | null;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  maxLevel: number | null;
+  /**
+     * @maxLength 200
+     * @nullable
+     */
+  respawnMapName: string | null;
+}
+
+export type GameGatewayFactKind = typeof GameGatewayFactKind[keyof typeof GameGatewayFactKind];
+
+
+export const GameGatewayFactKind = {
+  GATEWAY: 'GATEWAY',
+} as const;
+
+/**
+ * A passage on one map tile leading to another map.
+ */
+export interface GameGatewayFact {
+  kind: GameGatewayFactKind;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  fromMapId: number;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  toMapId: number;
+  /**
+     * @maxLength 200
+     * @nullable
+     */
+  toMapName: string | null;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  x: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  y: number;
+  requiresKey: boolean;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  minLevel: number | null;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  maxLevel: number | null;
+}
+
+export type GameNpcFactKind = typeof GameNpcFactKind[keyof typeof GameNpcFactKind];
+
+
+export const GameNpcFactKind = {
+  NPC: 'NPC',
+} as const;
+
+/**
+ * An NPC template.
+ */
+export interface GameNpcFact {
+  kind: GameNpcFactKind;
+  /**
+     * The NPC template id.
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  npcId: number;
+  /** @maxLength 200 */
+  name: string;
+  /**
+     * `null` for an elastic NPC, whose level follows the hero's level.
+     * @minimum 0
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  level: number | null;
+  /**
+     * @maxLength 1
+     * @nullable
+     */
+  profession: string | null;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  margonemType: number | null;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  warriorType: number | null;
+  elastic: boolean;
+}
+
+export type GameNpcPlacementFactKind = typeof GameNpcPlacementFactKind[keyof typeof GameNpcPlacementFactKind];
+
+
+export const GameNpcPlacementFactKind = {
+  NPC_PLACEMENT: 'NPC_PLACEMENT',
+} as const;
+
+/**
+ * An NPC standing on a map tile.
+ */
+export interface GameNpcPlacementFact {
+  kind: GameNpcPlacementFactKind;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  mapId: number;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  npcId: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  x: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  y: number;
+  /**
+     * @maxLength 300
+     * @nullable
+     */
+  icon: string | null;
+}
+
+export type GameMonsterStatsFactKind = typeof GameMonsterStatsFactKind[keyof typeof GameMonsterStatsFactKind];
+
+
+export const GameMonsterStatsFactKind = {
+  MONSTER_STATS: 'MONSTER_STATS',
+} as const;
+
+/**
+ * A monster's statistics as a fight reveals them.
+ */
+export interface GameMonsterStatsFact {
+  kind: GameMonsterStatsFactKind;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  npcId: number;
+  /** @maxLength 200 */
+  name: string;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  level: number;
+  /**
+     * @maxLength 1
+     * @nullable
+     */
+  profession: string | null;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  warriorType: number | null;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  hp: number;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  armor: number | null;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  fireResistance: number | null;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  frostResistance: number | null;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  lightningResistance: number | null;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  poisonResistance: number | null;
+}
+
+export type GameDialogNodeFactKind = typeof GameDialogNodeFactKind[keyof typeof GameDialogNodeFactKind];
+
+
+export const GameDialogNodeFactKind = {
+  DIALOG_NODE: 'DIALOG_NODE',
+} as const;
+
+export type GameDialogNodeFactOptionsItem = {
+  /**
+     * @maxLength 40
+     * @pattern ^\d+(?:\.\d+)?$
+     */
+  optionId: string;
+  /** @maxLength 5000 */
+  text: string;
+  /**
+     * The game's line flags: 4 ends the talk, 8 and 16 mark quests, 32 a shop.
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  flags: number;
+};
+
+/**
+ * One step of an NPC talk, its text kept as the game sends it, with [SEX=…|…] and [NICK] placeholders.
+ */
+export interface GameDialogNodeFact {
+  kind: GameDialogNodeFactKind;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  npcId: number;
+  /**
+     * @maxLength 40
+     * @pattern ^\d+$
+     */
+  nodeId: string;
+  /** @maxLength 200 */
+  speaker: string;
+  /** @maxLength 5000 */
+  text: string;
+  /** @maxItems 64 */
+  options: GameDialogNodeFactOptionsItem[];
+}
+
+export type GameDialogTransitionFactKind = typeof GameDialogTransitionFactKind[keyof typeof GameDialogTransitionFactKind];
+
+
+export const GameDialogTransitionFactKind = {
+  DIALOG_TRANSITION: 'DIALOG_TRANSITION',
+} as const;
+
+/**
+ * Where choosing a dialog option leads; every target `null` ends the talk.
+ */
+export interface GameDialogTransitionFact {
+  kind: GameDialogTransitionFactKind;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  npcId: number;
+  /**
+     * @maxLength 40
+     * @pattern ^\d+(?:\.\d+)?$
+     */
+  optionId: string;
+  /**
+     * @maxLength 40
+     * @nullable
+     * @pattern ^\d+$
+     */
+  nextNodeId: string | null;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  shopId: number | null;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  teleportMapId: number | null;
+}
+
+export type GameShopFactKind = typeof GameShopFactKind[keyof typeof GameShopFactKind];
+
+
+export const GameShopFactKind = {
+  SHOP: 'SHOP',
+} as const;
+
+export type GameShopFactOffersItem = {
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  itemId: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  price: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  quantity: number;
+};
+
+/**
+ * A shop's offer.
+ */
+export interface GameShopFact {
+  kind: GameShopFactKind;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  shopId: number;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  npcId: number | null;
+  /** @maxLength 20 */
+  currency: string;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     * @nullable
+     */
+  buyBackPercent: number | null;
+  /** @maxItems 500 */
+  offers: GameShopFactOffersItem[];
+}
+
+export type GameItemFactKind = typeof GameItemFactKind[keyof typeof GameItemFactKind];
+
+
+export const GameItemFactKind = {
+  ITEM: 'ITEM',
+} as const;
+
+/**
+ * An item template.
+ */
+export interface GameItemFact {
+  kind: GameItemFactKind;
+  /**
+     * The item template id.
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  itemId: number;
+  /** @maxLength 200 */
+  name: string;
+  /** @maxLength 300 */
+  icon: string;
+  /**
+     * @minimum -9007199254740991
+     * @maximum 9007199254740991
+     */
+  itemClass: number;
+  /** @maxLength 5000 */
+  stat: string;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  price: number;
+  /** @maxLength 20 */
+  currency: string;
+}
+
+export type GameDropFactKind = typeof GameDropFactKind[keyof typeof GameDropFactKind];
+
+
+export const GameDropFactKind = {
+  DROP: 'DROP',
+} as const;
+
+/**
+ * An item dropped after a fight against these NPC templates.
+ */
+export interface GameDropFact {
+  kind: GameDropFactKind;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  itemId: number;
+  /**
+     * @minItems 1
+     * @maxItems 20
+     * @items.minimum 1
+     * @items.maximum 9007199254740991
+     */
+  npcIds: number[];
+}
+
+export interface ObservedGameFact {
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  observedAt: string;
+  fact: GameMapFact | GameGatewayFact | GameNpcFact | GameNpcPlacementFact | GameMonsterStatsFact | GameDialogNodeFact | GameDialogTransitionFact | GameShopFact | GameItemFact | GameDropFact;
+}
+
+export interface CatalogFactSubmissionRequest {
+  /**
+     * The SHA-256 of the recording; one recording is imported once per extractor version.
+     * @pattern ^[a-f0-9]{64}$
+     */
+  submissionKey: string;
+  /** `RECORDING` for facts read from a protocol recording a moderator uploaded. */
+  source: 'RECORDING';
+  gameVersion: CatalogFactSubmissionRequestGameVersion;
+  /** @pattern ^[a-z0-9-]{1,40}$ */
+  world: string;
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  extractorVersion: number;
+  /**
+     * @minItems 1
+     * @maxItems 20000
+     */
+  facts: ObservedGameFact[];
+}
+
+export type CatalogFactPreviewDtoOutputKind = typeof CatalogFactPreviewDtoOutputKind[keyof typeof CatalogFactPreviewDtoOutputKind];
+
+
+export const CatalogFactPreviewDtoOutputKind = {
+  MAP: 'MAP',
+  GATEWAY: 'GATEWAY',
+  NPC: 'NPC',
+  NPC_PLACEMENT: 'NPC_PLACEMENT',
+  MONSTER_STATS: 'MONSTER_STATS',
+  DIALOG_NODE: 'DIALOG_NODE',
+  DIALOG_TRANSITION: 'DIALOG_TRANSITION',
+  SHOP: 'SHOP',
+  ITEM: 'ITEM',
+  DROP: 'DROP',
+} as const;
+
+/**
+ * `NEW` when the catalog knows nothing about the subject, `SAME` when it already shows this, `CHANGED` when this replaces what it shows, `OLDER` when the catalog shows something observed later.
+ */
+export type CatalogFactPreviewDtoOutputStatus = typeof CatalogFactPreviewDtoOutputStatus[keyof typeof CatalogFactPreviewDtoOutputStatus];
+
+
+export const CatalogFactPreviewDtoOutputStatus = {
+  NEW: 'NEW',
+  SAME: 'SAME',
+  CHANGED: 'CHANGED',
+  OLDER: 'OLDER',
+} as const;
+
+export interface CatalogFactPreviewDtoOutput {
+  /**
+     * Position of the fact in the submitted list; repeated facts are previewed once, at their first position.
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  factIndex: number;
+  kind: CatalogFactPreviewDtoOutputKind;
+  subject: string;
+  /** `NEW` when the catalog knows nothing about the subject, `SAME` when it already shows this, `CHANGED` when this replaces what it shows, `OLDER` when the catalog shows something observed later. */
+  status: CatalogFactPreviewDtoOutputStatus;
+  /** What the catalog shows for the subject now, when it differs from the fact. */
+  current: GameMapFact | GameGatewayFact | GameNpcFact | GameNpcPlacementFact | GameMonsterStatsFact | GameDialogNodeFact | GameDialogTransitionFact | GameShopFact | GameItemFact | GameDropFact | null;
+}
+
+export interface CatalogFactPreviewResponse {
+  /** Whether this recording was imported before with this extractor version. */
+  alreadyImported: boolean;
+  /** One entry per distinct submitted fact, in submission order. */
+  facts: CatalogFactPreviewDtoOutput[];
 }
 
 /**
@@ -2182,4 +2759,182 @@ export const useCatalogReportsControllerReview = <TError = ErrorType<RequestVali
         TContext
       > => {
       return useMutation(getCatalogReportsControllerReviewMutationOptions(options), queryClient);
+    }
+
+export const getCatalogFactsControllerPreviewUrl = () => {
+
+
+
+
+  return `/catalog/facts/preview`
+}
+
+/**
+ * Show which submitted facts are new, already known, or change what the catalog shows, without saving them; catalog moderators only.
+ * @summary Compare game facts with the catalog
+ */
+export const catalogFactsControllerPreview = async (catalogFactSubmissionRequest: CatalogFactSubmissionRequest, options?: Parameters<typeof catalogFetch>[1]): Promise<CatalogFactPreviewResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return catalogFetch<CatalogFactPreviewResponse>(getCatalogFactsControllerPreviewUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(catalogFactSubmissionRequest)
+  }
+);}
+
+
+
+
+
+export const getCatalogFactsControllerPreviewMutationKey = () => ['catalogFactsControllerPreview'] as const;
+
+export const getCatalogFactsControllerPreviewMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof catalogFactsControllerPreview>>, TError,CatalogFactsControllerPreviewMutationVariables, TContext>, request?: SecondParameter<typeof catalogFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof catalogFactsControllerPreview>>, TError,CatalogFactsControllerPreviewMutationVariables, TContext> => {
+
+const mutationKey = getCatalogFactsControllerPreviewMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof catalogFactsControllerPreview>>, CatalogFactsControllerPreviewMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  catalogFactsControllerPreview(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CatalogFactsControllerPreviewMutationResult = NonNullable<Awaited<ReturnType<typeof catalogFactsControllerPreview>>>
+    export type CatalogFactsControllerPreviewMutationBody = BodyType<CatalogFactSubmissionRequest>
+    export type CatalogFactsControllerPreviewMutationError = ErrorType<HttpErrorResponse | RequestValidationError>
+    export type CatalogFactsControllerPreviewMutationVariables = {data: BodyType<CatalogFactSubmissionRequest>}
+
+    /**
+ * @summary Compare game facts with the catalog
+ */
+export const useCatalogFactsControllerPreview = <TError = ErrorType<HttpErrorResponse | RequestValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof catalogFactsControllerPreview>>, TError,CatalogFactsControllerPreviewMutationVariables, TContext>, request?: SecondParameter<typeof catalogFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof catalogFactsControllerPreview>>,
+        TError,
+        CatalogFactsControllerPreviewMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCatalogFactsControllerPreviewMutationOptions(options), queryClient);
+    }
+
+export const getCatalogFactsControllerSubmitUrl = () => {
+
+
+
+
+  return `/catalog/facts/submissions`
+}
+
+/**
+ * Save facts read from a recording; catalog moderators only. A recording already imported with the same extractor version changes nothing.
+ * @summary Save game facts
+ */
+export const catalogFactsControllerSubmit = async (catalogFactSubmissionRequest: CatalogFactSubmissionRequest, options?: Parameters<typeof catalogFetch>[1]): Promise<CatalogFactSubmissionResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return catalogFetch<CatalogFactSubmissionResponse>(getCatalogFactsControllerSubmitUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(catalogFactSubmissionRequest)
+  }
+);}
+
+
+
+
+
+export const getCatalogFactsControllerSubmitMutationKey = () => ['catalogFactsControllerSubmit'] as const;
+
+export const getCatalogFactsControllerSubmitMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof catalogFactsControllerSubmit>>, TError,CatalogFactsControllerSubmitMutationVariables, TContext>, request?: SecondParameter<typeof catalogFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof catalogFactsControllerSubmit>>, TError,CatalogFactsControllerSubmitMutationVariables, TContext> => {
+
+const mutationKey = getCatalogFactsControllerSubmitMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof catalogFactsControllerSubmit>>, CatalogFactsControllerSubmitMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  catalogFactsControllerSubmit(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CatalogFactsControllerSubmitMutationResult = NonNullable<Awaited<ReturnType<typeof catalogFactsControllerSubmit>>>
+    export type CatalogFactsControllerSubmitMutationBody = BodyType<CatalogFactSubmissionRequest>
+    export type CatalogFactsControllerSubmitMutationError = ErrorType<HttpErrorResponse | RequestValidationError>
+    export type CatalogFactsControllerSubmitMutationVariables = {data: BodyType<CatalogFactSubmissionRequest>}
+
+    /**
+ * @summary Save game facts
+ */
+export const useCatalogFactsControllerSubmit = <TError = ErrorType<HttpErrorResponse | RequestValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof catalogFactsControllerSubmit>>, TError,CatalogFactsControllerSubmitMutationVariables, TContext>, request?: SecondParameter<typeof catalogFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof catalogFactsControllerSubmit>>,
+        TError,
+        CatalogFactsControllerSubmitMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCatalogFactsControllerSubmitMutationOptions(options), queryClient);
     }

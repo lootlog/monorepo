@@ -1,0 +1,29 @@
+{
+  "name": "@lootlog/game-facts",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    "./facts": "./src/facts.ts",
+    "./extractor": "./src/extractor.ts",
+    "./recording": "./src/recording.ts"
+  },
+  "scripts": {
+    "lint": "oxlint src && effect-tsgo diagnostics --project tsconfig.json --severity error,warning --strict",
+    "typecheck": "bun check",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@lootlog/domain": "workspace:*",
+    "@lootlog/schema": "workspace:*",
+    "effect": "catalog:"
+  },
+  "devDependencies": {
+    "@effect/tsgo": "0.67.3",
+    "@lootlog/typescript-config": "workspace:*",
+    "@types/bun": "catalog:",
+    "typescript": "catalog:"
+  }
+}

@@ -835,8 +835,125 @@ paths:
             schema:
               $ref: "#/components/schemas/ReviewCatalogReportsRequest"
         required: true
+  /catalog/facts/preview:
+    post:
+      tags:
+        - CatalogFacts
+      operationId: CatalogFactsController_preview
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CatalogFactPreviewResponse"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+      description: Show which submitted facts are new, already known, or change what the catalog shows, without saving them; catalog moderators only.
+      summary: Compare game facts with the catalog
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CatalogFactSubmissionRequest"
+        required: true
+  /catalog/facts/submissions:
+    post:
+      tags:
+        - CatalogFacts
+      operationId: CatalogFactsController_submit
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CatalogFactSubmissionResponse"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+      description: Save facts read from a recording; catalog moderators only. A recording already imported with the same extractor version changes nothing.
+      summary: Save game facts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CatalogFactSubmissionRequest"
+        required: true
 components:
   schemas:
+    HttpErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          nullable: true
+          type: string
+        details:
+          nullable: true
+          type: object
+      required:
+        - code
     RequestValidationError:
       type: object
       properties:
@@ -873,19 +990,621 @@ components:
         - code
         - message
         - details
-    HttpErrorResponse:
+    CatalogFactSubmissionResponse:
       type: object
       properties:
-        code:
+        submissionId:
           type: string
-        message:
-          nullable: true
-          type: string
-        details:
-          nullable: true
-          type: object
+        alreadyImported:
+          type: boolean
+          description: Whether this recording was imported before with this extractor version; nothing changed then.
+        newVariants:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+          description: Facts the catalog had not seen in this form before.
+        confirmedVariants:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+          description: Facts the catalog already knew, now confirmed again.
       required:
-        - code
+        - submissionId
+        - alreadyImported
+        - newVariants
+        - confirmedVariants
+    CatalogFactSubmissionRequest:
+      type: object
+      properties:
+        submissionKey:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+          description: The SHA-256 of the recording; one recording is imported once per extractor version.
+        source:
+          anyOf:
+            - type: string
+              enum:
+                - RECORDING
+          description: "`RECORDING` for facts read from a protocol recording a moderator uploaded."
+        gameVersion:
+          type: string
+          enum:
+            - en
+            - pl
+        world:
+          type: string
+          pattern: ^[a-z0-9-]{1,40}$
+        extractorVersion:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        facts:
+          type: array
+          items:
+            $ref: "#/components/schemas/ObservedGameFact"
+          minItems: 1
+          maxItems: 20000
+      required:
+        - submissionKey
+        - source
+        - gameVersion
+        - world
+        - extractorVersion
+        - facts
+    ObservedGameFact:
+      type: object
+      properties:
+        observedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        fact:
+          anyOf:
+            - $ref: "#/components/schemas/GameMapFact"
+            - $ref: "#/components/schemas/GameGatewayFact"
+            - $ref: "#/components/schemas/GameNpcFact"
+            - $ref: "#/components/schemas/GameNpcPlacementFact"
+            - $ref: "#/components/schemas/GameMonsterStatsFact"
+            - $ref: "#/components/schemas/GameDialogNodeFact"
+            - $ref: "#/components/schemas/GameDialogTransitionFact"
+            - $ref: "#/components/schemas/GameShopFact"
+            - $ref: "#/components/schemas/GameItemFact"
+            - $ref: "#/components/schemas/GameDropFact"
+      required:
+        - observedAt
+        - fact
+    GameDropFact:
+      type: object
+      properties:
+        kind:
+          type: string
+          enum:
+            - DROP
+        itemId:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        npcIds:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+          minItems: 1
+          maxItems: 20
+      required:
+        - kind
+        - itemId
+        - npcIds
+      description: An item dropped after a fight against these NPC templates.
+    GameItemFact:
+      type: object
+      properties:
+        kind:
+          type: string
+          enum:
+            - ITEM
+        itemId:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+          description: The item template id.
+        name:
+          type: string
+          maxLength: 200
+        icon:
+          type: string
+          maxLength: 300
+        itemClass:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        stat:
+          type: string
+          maxLength: 5000
+        price:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        currency:
+          type: string
+          maxLength: 20
+      required:
+        - kind
+        - itemId
+        - name
+        - icon
+        - itemClass
+        - stat
+        - price
+        - currency
+      description: An item template.
+    GameShopFact:
+      type: object
+      properties:
+        kind:
+          type: string
+          enum:
+            - SHOP
+        shopId:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        npcId:
+          nullable: true
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        currency:
+          type: string
+          maxLength: 20
+        buyBackPercent:
+          nullable: true
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        offers:
+          type: array
+          items:
+            type: object
+            properties:
+              itemId:
+                type: integer
+                minimum: 1
+                maximum: 9007199254740991
+              price:
+                type: integer
+                minimum: 0
+                maximum: 9007199254740991
+              quantity:
+                type: integer
+                minimum: 0
+                maximum: 9007199254740991
+            required:
+              - itemId
+              - price
+              - quantity
+          maxItems: 500
+      required:
+        - kind
+        - shopId
+        - npcId
+        - currency
+        - buyBackPercent
+        - offers
+      description: A shop's offer.
+    GameDialogTransitionFact:
+      type: object
+      properties:
+        kind:
+          type: string
+          enum:
+            - DIALOG_TRANSITION
+        npcId:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        optionId:
+          type: string
+          maxLength: 40
+          pattern: ^\d+(?:\.\d+)?$
+        nextNodeId:
+          nullable: true
+          type: string
+          maxLength: 40
+          pattern: ^\d+$
+        shopId:
+          nullable: true
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        teleportMapId:
+          nullable: true
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+      required:
+        - kind
+        - npcId
+        - optionId
+        - nextNodeId
+        - shopId
+        - teleportMapId
+      description: Where choosing a dialog option leads; every target `null` ends the talk.
+    GameDialogNodeFact:
+      type: object
+      properties:
+        kind:
+          type: string
+          enum:
+            - DIALOG_NODE
+        npcId:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        nodeId:
+          type: string
+          maxLength: 40
+          pattern: ^\d+$
+        speaker:
+          type: string
+          maxLength: 200
+        text:
+          type: string
+          maxLength: 5000
+        options:
+          type: array
+          items:
+            type: object
+            properties:
+              optionId:
+                type: string
+                maxLength: 40
+                pattern: ^\d+(?:\.\d+)?$
+              text:
+                type: string
+                maxLength: 5000
+              flags:
+                type: integer
+                minimum: 0
+                maximum: 9007199254740991
+                description: "The game's line flags: 4 ends the talk, 8 and 16 mark quests, 32 a shop."
+            required:
+              - optionId
+              - text
+              - flags
+          maxItems: 64
+      required:
+        - kind
+        - npcId
+        - nodeId
+        - speaker
+        - text
+        - options
+      description: One step of an NPC talk, its text kept as the game sends it, with [SEX=…|…] and [NICK] placeholders.
+    GameMonsterStatsFact:
+      type: object
+      properties:
+        kind:
+          type: string
+          enum:
+            - MONSTER_STATS
+        npcId:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        name:
+          type: string
+          maxLength: 200
+        level:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        profession:
+          nullable: true
+          type: string
+          maxLength: 1
+        warriorType:
+          nullable: true
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        hp:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        armor:
+          nullable: true
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        fireResistance:
+          nullable: true
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        frostResistance:
+          nullable: true
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        lightningResistance:
+          nullable: true
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        poisonResistance:
+          nullable: true
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+      required:
+        - kind
+        - npcId
+        - name
+        - level
+        - profession
+        - warriorType
+        - hp
+        - armor
+        - fireResistance
+        - frostResistance
+        - lightningResistance
+        - poisonResistance
+      description: A monster's statistics as a fight reveals them.
+    GameNpcPlacementFact:
+      type: object
+      properties:
+        kind:
+          type: string
+          enum:
+            - NPC_PLACEMENT
+        mapId:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        npcId:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        x:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        y:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        icon:
+          nullable: true
+          type: string
+          maxLength: 300
+      required:
+        - kind
+        - mapId
+        - npcId
+        - x
+        - y
+        - icon
+      description: An NPC standing on a map tile.
+    GameNpcFact:
+      type: object
+      properties:
+        kind:
+          type: string
+          enum:
+            - NPC
+        npcId:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+          description: The NPC template id.
+        name:
+          type: string
+          maxLength: 200
+        level:
+          description: "`null` for an elastic NPC, whose level follows the hero's level."
+          nullable: true
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        profession:
+          nullable: true
+          type: string
+          maxLength: 1
+        margonemType:
+          nullable: true
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        warriorType:
+          nullable: true
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        elastic:
+          type: boolean
+      required:
+        - kind
+        - npcId
+        - name
+        - level
+        - profession
+        - margonemType
+        - warriorType
+        - elastic
+      description: An NPC template.
+    GameGatewayFact:
+      type: object
+      properties:
+        kind:
+          type: string
+          enum:
+            - GATEWAY
+        fromMapId:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        toMapId:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        toMapName:
+          nullable: true
+          type: string
+          maxLength: 200
+        x:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        y:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        requiresKey:
+          type: boolean
+        minLevel:
+          nullable: true
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        maxLevel:
+          nullable: true
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+      required:
+        - kind
+        - fromMapId
+        - toMapId
+        - toMapName
+        - x
+        - y
+        - requiresKey
+        - minLevel
+        - maxLevel
+      description: A passage on one map tile leading to another map.
+    GameMapFact:
+      type: object
+      properties:
+        kind:
+          type: string
+          enum:
+            - MAP
+        mapId:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        parentMapId:
+          nullable: true
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        name:
+          type: string
+          maxLength: 200
+        file:
+          type: string
+          maxLength: 300
+        background:
+          nullable: true
+          type: string
+          maxLength: 300
+        pvp:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        minLevel:
+          nullable: true
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        maxLevel:
+          nullable: true
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        respawnMapName:
+          nullable: true
+          type: string
+          maxLength: 200
+      required:
+        - kind
+        - mapId
+        - parentMapId
+        - name
+        - file
+        - background
+        - pvp
+        - minLevel
+        - maxLevel
+        - respawnMapName
+      description: A map as the game describes it on entering.
+    CatalogFactPreviewResponse:
+      type: object
+      properties:
+        alreadyImported:
+          type: boolean
+          description: Whether this recording was imported before with this extractor version.
+        facts:
+          type: array
+          items:
+            $ref: "#/components/schemas/CatalogFactPreviewDto_Output"
+          description: One entry per distinct submitted fact, in submission order.
+      required:
+        - alreadyImported
+        - facts
+    CatalogFactPreviewDto_Output:
+      type: object
+      properties:
+        factIndex:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+          description: Position of the fact in the submitted list; repeated facts are previewed once, at their first position.
+        kind:
+          type: string
+          enum:
+            - MAP
+            - GATEWAY
+            - NPC
+            - NPC_PLACEMENT
+            - MONSTER_STATS
+            - DIALOG_NODE
+            - DIALOG_TRANSITION
+            - SHOP
+            - ITEM
+            - DROP
+        subject:
+          type: string
+        status:
+          type: string
+          enum:
+            - NEW
+            - SAME
+            - CHANGED
+            - OLDER
+          description: "`NEW` when the catalog knows nothing about the subject, `SAME` when it already shows this, `CHANGED` when this replaces what it shows, `OLDER` when the catalog shows something observed later."
+        current:
+          description: What the catalog shows for the subject now, when it differs from the fact.
+          nullable: true
+          anyOf:
+            - $ref: "#/components/schemas/GameMapFact"
+            - $ref: "#/components/schemas/GameGatewayFact"
+            - $ref: "#/components/schemas/GameNpcFact"
+            - $ref: "#/components/schemas/GameNpcPlacementFact"
+            - $ref: "#/components/schemas/GameMonsterStatsFact"
+            - $ref: "#/components/schemas/GameDialogNodeFact"
+            - $ref: "#/components/schemas/GameDialogTransitionFact"
+            - $ref: "#/components/schemas/GameShopFact"
+            - $ref: "#/components/schemas/GameItemFact"
+            - $ref: "#/components/schemas/GameDropFact"
+      required:
+        - factIndex
+        - kind
+        - subject
+        - status
+        - current
     ReviewCatalogReportsRequest:
       type: object
       properties:

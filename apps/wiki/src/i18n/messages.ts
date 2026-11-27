@@ -645,7 +645,7 @@ const messages = {
     signInFailed: "Nie udało się zalogować. Spróbuj ponownie.",
     openLootlog: "Otwórz Lootloga",
     appearance: "Wygląd",
-    moderation: "Zgłoszenia błędów",
+    moderation: "Moderacja",
     logout: "Wyloguj się",
   },
   reports: {
@@ -697,11 +697,16 @@ const messages = {
     },
   },
   moderation: {
-    title: "Zgłoszenia błędów",
+    title: "Moderacja wiki",
+    tabsLabel: "Obszary moderacji",
+    tabs: {
+      reports: "Zgłoszenia błędów",
+      recordings: "Nagrania",
+    },
     description:
       "Strony wiki, które gracze zgłosili jako błędne. Najczęściej zgłaszane są na górze.",
-    signInRequired: "Zaloguj się, żeby zobaczyć zgłoszenia.",
-    moderatorsOnly: "Zgłoszenia mogą przeglądać tylko moderatorzy wiki.",
+    signInRequired: "Zaloguj się, żeby moderować wiki.",
+    moderatorsOnly: "Moderacja jest dostępna tylko dla moderatorów wiki.",
     loadError: "Nie udało się wczytać zgłoszeń.",
     statusLabel: "Stan zgłoszeń",
     statuses: {
@@ -732,6 +737,70 @@ const messages = {
     range: "{{from}}–{{to}} z {{total}}",
     previous: "Poprzednie",
     next: "Następne",
+    recordings: {
+      description:
+        "Wczytaj nagranie protokołu z dodatku. Fakty o grze są odczytywane w przeglądarce, a dane graczy, czat i identyfikatory przedmiotów nie opuszczają komputera.",
+      fileLabel: "Plik nagrania (.json)",
+      reading: "Odczytywanie nagrania…",
+      readError:
+        "To nie jest nagranie protokołu albo pochodzi z nieznanego świata.",
+      summary:
+        "{{file}} · świat {{world}} · nagrano {{startedAt}} · faktów: {{count}}",
+      previewError: "Nie udało się porównać nagrania z wiki.",
+      alreadyImported:
+        "To nagranie zostało już zapisane tą wersją odczytu. Zapis niczego nie zmieni.",
+      countsTitle: "Co wnosi nagranie",
+      kindColumn: "Rodzaj",
+      statuses: {
+        NEW: "Nowe",
+        CHANGED: "Zmienione",
+        OLDER: "Starsze",
+        SAME: "Bez zmian",
+      },
+      kinds: {
+        MAP: "Mapy",
+        GATEWAY: "Przejścia",
+        NPC: "NPC",
+        NPC_PLACEMENT: "Rozmieszczenie NPC",
+        MONSTER_STATS: "Statystyki potworów",
+        DIALOG_NODE: "Kroki dialogów",
+        DIALOG_TRANSITION: "Odpowiedzi w dialogach",
+        SHOP: "Sklepy",
+        ITEM: "Przedmioty",
+        DROP: "Dropy",
+      },
+      changesTitle: "Zmiany względem wiki",
+      changesDescription:
+        "Nagranie jest nowsze niż to, co pokazuje wiki, i zastąpi te wartości.",
+      changedSubject: "{{kind}} {{subject}}",
+      coverageTitle: "Czego odczyt jeszcze nie rozumie",
+      coverageDescription:
+        "Pakiety i przypadki pominięte przy odczycie. Każdy z nich to kandydat do rozbudowy odczytu.",
+      unknownPackets: "Nieznane pakiety",
+      skipped: "Pominięte",
+      skips: {
+        TOWN_INCOMPLETE: "Mapa bez id, nazwy albo pliku",
+        GATEWAYS_WITHOUT_MAP: "Przejścia odebrane przed wejściem na mapę",
+        GATEWAY_MALFORMED: "Przejście z niepełnymi danymi",
+        NPC_TEMPLATE_INCOMPLETE: "Szablon NPC bez id albo nazwy",
+        NPC_WITHOUT_MAP: "NPC odebrany przed wejściem na mapę",
+        DIALOG_NPC_UNKNOWN: "Dialog z NPC o nieznanym szablonie",
+        DIALOG_WITHOUT_OPTIONS: "Krok dialogu bez opcji odpowiedzi",
+        SHOP_INCOMPLETE: "Sklep bez id albo oferty",
+        ITEM_INCOMPLETE: "Przedmiot bez szablonu, nazwy albo ikony",
+        LOOT_WITHOUT_FIGHT: "Łup bez walki w nagraniu",
+        FIGHT_NPC_UNKNOWN: "Przeciwnik o nieznanym szablonie",
+        ELASTIC_MONSTER_STATS:
+          "Statystyki potwora z elastycznym poziomem (zależą od bohatera)",
+        FACT_OUTSIDE_CONTRACT: "Fakt z wartościami spoza dozwolonego zakresu",
+      },
+      coverageComplete: "Odczyt rozpoznał wszystkie pakiety w nagraniu.",
+      occurrences: "×{{count}}",
+      submit: "Zapisz w wiki",
+      submitError: "Nie udało się zapisać nagrania. Spróbuj ponownie.",
+      submitted:
+        "Zapisano. Nowe fakty: {{created}}, potwierdzone: {{confirmed}}.",
+    },
   },
   home: {
     title: "Wiki Margonem",

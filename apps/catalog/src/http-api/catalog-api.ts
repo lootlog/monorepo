@@ -4,6 +4,7 @@ import { SchemaErrorResponse } from "@lootlog/protocol/http/schema-error-respons
 import { HttpApi, OpenApi } from "effect/http-api";
 import { CatalogAccess } from "./catalog-access.js";
 import { CatalogGroup } from "./contracts/catalog/api.js";
+import { CatalogFactsGroup } from "./contracts/facts/api.js";
 import { CatalogReportsGroup } from "./contracts/reports/api.js";
 
 export class CatalogApi extends HttpApi.make("CatalogApi")
@@ -14,7 +15,7 @@ export class CatalogApi extends HttpApi.make("CatalogApi")
     "Margonem items and NPCs as Lootlog observed them",
   )
   .annotate(OpenApi.Servers, [])
-  .add(healthGroup(), CatalogGroup, CatalogReportsGroup)
+  .add(healthGroup(), CatalogGroup, CatalogReportsGroup, CatalogFactsGroup)
   .middleware(CatalogAccess)
   .middleware(ApiKeyEndpointPolicy)
   .middleware(SchemaErrorResponse) {}
