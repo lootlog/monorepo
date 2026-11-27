@@ -1,3 +1,4 @@
+import { SparkleBurst } from "@lootlog/ui/components/sparkle-burst";
 import { cn } from "cn";
 import { Sparkles } from "lucide-react";
 import { useState, type FC } from "react";
@@ -51,10 +52,9 @@ export const WhatsNewQuickAccessButton: FC = () => {
             )}`}
             icon={
               <span className="ll:relative ll:flex">
-                <Sparkles
-                  aria-hidden="true"
-                  className="ll:size-4 ll:text-primary"
-                />
+                <SparkleBurst className="ll:text-primary">
+                  <Sparkles aria-hidden="true" className="ll:size-4" />
+                </SparkleBurst>
                 <span
                   ref={badgeRef}
                   key={unreadIds.length}

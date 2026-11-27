@@ -4,6 +4,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@lootlog/ui/components/popover";
+import { SparkleBurst } from "@lootlog/ui/components/sparkle-burst";
 import { Link } from "@tanstack/react-router";
 import { cn } from "cn";
 import { ArrowRight, Sparkles } from "lucide-react";
@@ -42,17 +43,18 @@ export const WhatsNewButton = () => {
             }
             className={cn(
               "relative",
-              hasUnread
-                ? "max-md:size-9 max-md:has-[>svg]:px-0"
-                : "max-md:hidden",
+              hasUnread ? "px-3 max-md:size-9 max-md:px-0" : "max-md:hidden",
             )}
           />
         }
       >
-        <Sparkles
-          aria-hidden="true"
-          className={cn(hasUnread && "text-primary")}
-        />
+        {hasUnread ? (
+          <SparkleBurst className="text-primary">
+            <Sparkles aria-hidden="true" />
+          </SparkleBurst>
+        ) : (
+          <Sparkles aria-hidden="true" />
+        )}
         {hasUnread && (
           <>
             <span className="max-md:hidden">{t("layout.whatsNew.title")}</span>
