@@ -183,7 +183,7 @@ export const LOOT_DRAW_PRESET_MINIMAL = "{{itemName}}: {{outcome}}";
 export const getDefaultLootDrawContentTemplate = () => LOOT_DRAW_PRESET_SIMPLE;
 
 const BINGO_MILESTONE_PRESET_SIMPLE =
-  "## {{boardName}} — {{milestoneLabel}}\n\n**{{memberName}}** zalicza pole **{{tileTitle}}**\n{{summary}}\nPostęp: **{{completedTileCount}}/25** pól · **{{completedLinesCount}}** linii · **{{totalPoints}}** pkt";
+  "## {{boardName}} — {{milestoneLabel}}\n\n**{{memberName}}** zalicza pole **{{tileTitle}}**\n{{summary}}\nPostęp: **{{completedTileCount}}/{{totalTileCount}}** pól · **{{completedLinesCount}}** linii · **{{totalPoints}}** pkt";
 
 export const getDefaultBingoMilestoneContentTemplate = () =>
   BINGO_MILESTONE_PRESET_SIMPLE;

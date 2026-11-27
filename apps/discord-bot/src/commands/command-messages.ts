@@ -216,8 +216,8 @@ export const COMMAND_TEXT = {
       `⚠️ Brakuje uprawnień: ${permissions}`,
   },
   bingo: {
-    description: "Clan Bingo 5×5 — plansza na żywo i ranking solo",
-    boardDescription: "Pokaż aktualną planszę 5×5 i swój postęp",
+    description: "Clan Bingo — plansza na żywo i ranking solo",
+    boardDescription: "Pokaż aktualną planszę Bingo i swój postęp",
     rankingDescription: "Pokaż ranking graczy w Clan Bingo",
     boardOption: "Plansza Bingo (domyślnie aktywna)",
     empty: "Na tym serwerze nie ma jeszcze żadnej planszy Clan Bingo.",
@@ -225,10 +225,19 @@ export const COMMAND_TEXT = {
     rankingEmpty: "Nikt jeszcze nie zdobył punktów na tej planszy Bingo.",
     boardTitle: (name: string) => `🎯 Clan Bingo — ${name}`,
     rankingTitle: (name: string) => `🏆 Ranking Bingo — ${name}`,
-    progressSummary: (tiles: number, lines: number, points: number) =>
-      `Pola: **${tiles}/25** · Linie: **${lines}** · Punkty: **${points}**`,
-    rankingDetail: (points: number, tiles: number, lines: number) =>
-      `**${points} pkt** (${tiles}/25 pól · ${lines} linii)`,
+    progressSummary: (
+      tiles: number,
+      totalTiles: number,
+      lines: number,
+      points: number,
+    ) =>
+      `Pola: **${tiles}/${totalTiles}** · Linie: **${lines}** · Punkty: **${points}**`,
+    rankingDetail: (
+      points: number,
+      tiles: number,
+      totalTiles: number,
+      lines: number,
+    ) => `**${points} pkt** (${tiles}/${totalTiles} pól · ${lines} linii)`,
     legend: "🟩 zaliczone · 🟨 w trakcie · ⬛ do zdobycia · 🔒 zajęte",
   },
   buttons: {

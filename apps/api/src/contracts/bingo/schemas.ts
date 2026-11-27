@@ -1,5 +1,7 @@
 import {
+  BINGO_MAX_BOARD_SIZE,
   BingoBoardModeSchema,
+  BingoBoardSizeSchema,
   BingoBoardStatusSchema,
   BingoLineIdSchema,
   BingoTileConditionKindSchema,
@@ -34,7 +36,7 @@ const TileDescription = Schema.NullOr(
 
 const GridIndex = Schema.Int.check(
   Schema.isGreaterThanOrEqualTo(0),
-  Schema.isLessThanOrEqualTo(4),
+  Schema.isLessThan(BINGO_MAX_BOARD_SIZE),
 );
 
 const NonNegativeScore = Schema.Int.check(
@@ -141,6 +143,7 @@ export const BingoBoardSummaryResponse = Schema.Struct({
   description: Schema.NullOr(Schema.String),
   world: Schema.NullOr(Schema.String),
   mode: BingoBoardModeSchema,
+  size: BingoBoardSizeSchema,
   status: BingoBoardStatusSchema,
   pointsPerTile: FiniteNumber,
   pointsPerLine: FiniteNumber,
@@ -194,6 +197,7 @@ export const CreateBingoBoardRequest = Schema.Struct({
     Schema.NullOr(Schema.String.check(Schema.isMaxLength(64))),
   ),
   mode: Schema.optionalKey(BingoBoardModeSchema),
+  size: Schema.optionalKey(BingoBoardSizeSchema),
   pointsPerTile: Schema.optionalKey(NonNegativeScore),
   pointsPerLine: Schema.optionalKey(NonNegativeScore),
   firstCompleterBonus: Schema.optionalKey(NonNegativeScore),
@@ -213,6 +217,7 @@ export const UpdateBingoBoardRequest = Schema.Struct({
     Schema.NullOr(Schema.String.check(Schema.isMaxLength(64))),
   ),
   mode: Schema.optionalKey(BingoBoardModeSchema),
+  size: Schema.optionalKey(BingoBoardSizeSchema),
   status: Schema.optionalKey(BingoBoardStatusSchema),
   pointsPerTile: Schema.optionalKey(NonNegativeScore),
   pointsPerLine: Schema.optionalKey(NonNegativeScore),

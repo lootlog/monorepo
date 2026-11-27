@@ -162,7 +162,9 @@ export const BingoDetailPage = ({ boardId }: BingoDetailPageProps) => {
 
   const boardSubtitle =
     data.board.description ??
-    `${data.board.world ?? t("bingo.stats.worldAny")} · ${t(`bingo.mode.${data.board.mode}`)}`;
+    `${data.board.world ?? t("bingo.stats.worldAny")} · ${t(`bingo.mode.${data.board.mode}`)} · ${t("bingo.boardSize.value", { size: data.board.size })}`;
+
+  const totalTileCount = data.board.size * data.board.size;
 
   const handleSelectCell = canManage
     ? (
@@ -219,6 +221,7 @@ export const BingoDetailPage = ({ boardId }: BingoDetailPageProps) => {
         <div className="space-y-3 xl:col-span-8">
           <BingoMemberStats
             completedTileCount={completedTileCount}
+            totalTileCount={totalTileCount}
             completedLineCount={completedLineCount}
             totalPoints={totalPoints}
           />
@@ -246,6 +249,7 @@ export const BingoDetailPage = ({ boardId }: BingoDetailPageProps) => {
             <BingoBoardGrid
               tiles={data.tiles}
               mode={data.board.mode}
+              size={data.board.size}
               pointsPerTile={data.board.pointsPerTile}
               selectedMemberId={activeMemberId}
               progressByTileId={progressByTileId}
@@ -263,6 +267,7 @@ export const BingoDetailPage = ({ boardId }: BingoDetailPageProps) => {
             </div>
             <BingoLeaderboard
               entries={data.leaderboard}
+              totalTileCount={totalTileCount}
               selectedMemberId={activeMemberId}
               viewerMemberId={data.viewerMemberId}
               onSelectMember={(memberId) => setInspectedMemberId(memberId)}

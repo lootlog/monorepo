@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 
 type BingoLeaderboardProps = {
   readonly entries: ReadonlyArray<BingoBoardDetailResponseDtoLeaderboardItem>;
+  readonly totalTileCount: number;
   readonly selectedMemberId: number;
   readonly viewerMemberId: number;
   readonly onSelectMember: (memberId: number) => void;
@@ -14,6 +15,7 @@ type BingoLeaderboardProps = {
 
 export const BingoLeaderboard = ({
   entries,
+  totalTileCount,
   selectedMemberId,
   viewerMemberId,
   onSelectMember,
@@ -66,7 +68,11 @@ export const BingoLeaderboard = ({
                   ) : null}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  {t("bingo.units.tiles", { done: entry.completedTileCount })} ·{" "}
+                  {t("bingo.units.tiles", {
+                    done: entry.completedTileCount,
+                    total: totalTileCount,
+                  })}{" "}
+                  ·{" "}
                   {t("bingo.units.lines", {
                     count: entry.completedLines.length,
                   })}

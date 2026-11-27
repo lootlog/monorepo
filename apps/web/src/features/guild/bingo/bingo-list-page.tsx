@@ -120,13 +120,19 @@ export const BingoListPage = () => {
                   {t(`bingo.status.${board.status}`)}
                 </Badge>
                 <Badge variant="outline">{t(`bingo.mode.${board.mode}`)}</Badge>
+                <Badge variant="outline">
+                  {t("bingo.boardSize.value", { size: board.size })}
+                </Badge>
               </div>
 
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
                 <span>{board.world ?? t("bingo.stats.worldAny")}</span>
                 <span className="inline-flex items-center gap-1">
                   <Grid3x3 className="size-3.5" />
-                  {board.configuredTileCount}/25
+                  {t("bingo.units.tileFraction", {
+                    done: board.configuredTileCount,
+                    total: board.size * board.size,
+                  })}
                 </span>
                 <span className="inline-flex items-center gap-1">
                   <Users className="size-3.5" />
@@ -136,6 +142,7 @@ export const BingoListPage = () => {
                   <Trophy className="size-3.5 text-amber-500" />
                   {t("bingo.units.tiles", {
                     done: board.viewerCompletedTiles,
+                    total: board.size * board.size,
                   })}{" "}
                   ·{" "}
                   {t("bingo.units.lines", {

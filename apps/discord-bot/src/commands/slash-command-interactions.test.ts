@@ -684,6 +684,7 @@ describe("slash commands", () => {
       name,
       world: "Aldous",
       mode: "LOCKOUT" as const,
+      size: 5,
       status,
       startsAt: null,
       endsAt: null,

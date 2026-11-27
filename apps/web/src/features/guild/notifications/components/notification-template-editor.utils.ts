@@ -64,6 +64,7 @@ const BINGO_MILESTONE_VARIABLE_KEYS = [
   "milestoneLabel",
   "summary",
   "completedTileCount",
+  "totalTileCount",
   "completedLinesCount",
   "totalPoints",
   "world",

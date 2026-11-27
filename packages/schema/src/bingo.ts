@@ -2,7 +2,16 @@ import { Schema } from "effect";
 import { ItemRaritySchema } from "./item-rarity.js";
 import { NpcTypeSchema } from "./npc-type.js";
 
-export const BINGO_BOARD_SIZE = 5;
+export const BINGO_MIN_BOARD_SIZE = 3;
+
+export const BINGO_MAX_BOARD_SIZE = 7;
+
+export const BINGO_DEFAULT_BOARD_SIZE = 5;
+
+export const BingoBoardSizeSchema = Schema.Int.check(
+  Schema.isGreaterThanOrEqualTo(BINGO_MIN_BOARD_SIZE),
+  Schema.isLessThanOrEqualTo(BINGO_MAX_BOARD_SIZE),
+);
 
 export const BingoBoardMode = {
   RACE: "RACE",
@@ -56,19 +65,10 @@ const BingoBattleMetricSchema = Schema.Literals(
   Object.values(BingoBattleMetric),
 );
 
-export const BingoLineIdSchema = Schema.Literals([
-  "row-0",
-  "row-1",
-  "row-2",
-  "row-3",
-  "row-4",
-  "col-0",
-  "col-1",
-  "col-2",
-  "col-3",
-  "col-4",
-  "diag-main",
-  "diag-anti",
+export const BingoLineIdSchema = Schema.Union([
+  Schema.TemplateLiteral(["row-", Schema.Int]),
+  Schema.TemplateLiteral(["col-", Schema.Int]),
+  Schema.Literals(["diag-main", "diag-anti"]),
 ]);
 
 export type BingoLineId = typeof BingoLineIdSchema.Type;
@@ -194,6 +194,7 @@ export const BingoMilestoneNotificationEventSchema = Schema.Struct({
   col: Schema.Int,
   summary: Schema.String,
   completedTileCount: Schema.Int,
+  totalTileCount: Schema.optionalKey(Schema.Int),
   completedLinesCount: Schema.Int,
   totalPoints: Schema.Int,
   occurredAt: Schema.NonEmptyString,

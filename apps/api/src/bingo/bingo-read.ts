@@ -137,6 +137,7 @@ const toBoardSummary = (
   description: board.description,
   world: board.world,
   mode: board.mode,
+  size: board.size,
   status: board.status,
   pointsPerTile: board.pointsPerTile,
   pointsPerLine: board.pointsPerLine,

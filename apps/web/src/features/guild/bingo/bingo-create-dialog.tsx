@@ -3,6 +3,7 @@ import {
   useBingoControllerCreateBoard,
   type CreateBingoBoardDtoMode,
 } from "@lootlog/client/main";
+import { BINGO_DEFAULT_BOARD_SIZE } from "@lootlog/schema/bingo";
 import { IconDialogHeader } from "@/components/common/icon-dialog-header";
 import { Button } from "@lootlog/ui/components/button";
 import {
@@ -20,6 +21,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Grid3x3 } from "lucide-react";
 import { useId, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
+import { BingoBoardSizeField } from "./bingo-board-size-field";
 
 type BingoCreateDialogProps = {
   readonly guildId: string;
@@ -42,6 +44,7 @@ export const BingoCreateDialog = ({
   const [description, setDescription] = useState("");
   const [world, setWorld] = useState("");
   const [mode, setMode] = useState<CreateBingoBoardDtoMode>("RACE");
+  const [size, setSize] = useState(BINGO_DEFAULT_BOARD_SIZE);
   const [pointsPerTile, setPointsPerTile] = useState(1);
   const [pointsPerLine, setPointsPerLine] = useState(5);
   const [firstCompleterBonus, setFirstCompleterBonus] = useState(0);
@@ -58,6 +61,7 @@ export const BingoCreateDialog = ({
     setDescription("");
     setWorld("");
     setMode("RACE");
+    setSize(BINGO_DEFAULT_BOARD_SIZE);
     setPointsPerTile(1);
     setPointsPerLine(5);
     setFirstCompleterBonus(0);
@@ -80,6 +84,7 @@ export const BingoCreateDialog = ({
           description: description.trim() || null,
           world: world.trim() || null,
           mode,
+          size,
           pointsPerTile,
           pointsPerLine,
           firstCompleterBonus,
@@ -175,6 +180,8 @@ export const BingoCreateDialog = ({
                 ]}
               />
             </div>
+
+            <BingoBoardSizeField value={size} onChange={setSize} />
 
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <div className="space-y-1.5">

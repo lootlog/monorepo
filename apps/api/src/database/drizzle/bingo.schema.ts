@@ -1,7 +1,10 @@
 import type { JsonValue } from "#src/database/json";
-import type {
-  BingoMilestoneNotificationEvent,
-  BingoTileCondition,
+import {
+  BINGO_DEFAULT_BOARD_SIZE,
+  BINGO_MAX_BOARD_SIZE,
+  BINGO_MIN_BOARD_SIZE,
+  type BingoMilestoneNotificationEvent,
+  type BingoTileCondition,
 } from "@lootlog/schema/bingo";
 import { sql } from "drizzle-orm";
 import {
@@ -47,6 +50,7 @@ export const bingoBoardTable = pgTable(
     world: text("world"),
     mode: bingoBoardModeEnum("mode").default("RACE").notNull(),
     status: bingoBoardStatusEnum("status").default("DRAFT").notNull(),
+    size: smallint("size").default(BINGO_DEFAULT_BOARD_SIZE).notNull(),
     pointsPerTile: integer("pointsPerTile").default(1).notNull(),
     pointsPerLine: integer("pointsPerLine").default(5).notNull(),
     firstCompleterBonus: integer("firstCompleterBonus").default(0).notNull(),
@@ -66,6 +70,10 @@ export const bingoBoardTable = pgTable(
       table.updatedAt.desc(),
     ),
     index("BingoBoard_status_world_idx").on(table.status, table.world),
+    check(
+      "BingoBoard_size_check",
+      sql`${table.size} BETWEEN ${sql.raw(String(BINGO_MIN_BOARD_SIZE))} AND ${sql.raw(String(BINGO_MAX_BOARD_SIZE))}`,
+    ),
     foreignKey({
       columns: [table.guildId],
       foreignColumns: [guildTable.id],
@@ -114,7 +122,7 @@ export const bingoTileTable = pgTable(
     ),
     check(
       "BingoTile_row_col_bounds_check",
-      sql`${table.row} >= 0 AND ${table.row} < 5 AND ${table.col} >= 0 AND ${table.col} < 5`,
+      sql`${table.row} >= 0 AND ${table.row} < ${sql.raw(String(BINGO_MAX_BOARD_SIZE))} AND ${table.col} >= 0 AND ${table.col} < ${sql.raw(String(BINGO_MAX_BOARD_SIZE))}`,
     ),
     foreignKey({
       columns: [table.boardId],

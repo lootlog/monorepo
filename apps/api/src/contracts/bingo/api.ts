@@ -93,7 +93,7 @@ export class BingoGroup extends HttpApiGroup.make("bingo").add(
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "BingoController_replaceTiles")
-    .annotate(OpenApi.Summary, "Configure Bingo 5x5 board tiles"),
+    .annotate(OpenApi.Summary, "Configure Bingo board tiles"),
   HttpApiEndpoint.post(
     "BingoControllerUpdateTileProgress",
     "/guilds/:guildId/bingo/:boardId/tiles/:tileId/progress",

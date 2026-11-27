@@ -1,4 +1,7 @@
-import type { BingoMilestoneNotificationEvent } from "@lootlog/schema/bingo";
+import {
+  BINGO_DEFAULT_BOARD_SIZE,
+  type BingoMilestoneNotificationEvent,
+} from "@lootlog/schema/bingo";
 import {
   isJsonObject,
   type JsonObject,
@@ -337,6 +340,10 @@ class NotificationContent {
       milestoneLabel: bingoMilestoneLabel(event.milestoneKind),
       summary: event.summary,
       completedTileCount: String(event.completedTileCount),
+      totalTileCount: String(
+        event.totalTileCount ??
+          BINGO_DEFAULT_BOARD_SIZE * BINGO_DEFAULT_BOARD_SIZE,
+      ),
       completedLinesCount: String(event.completedLinesCount),
       totalPoints: String(event.totalPoints),
       world: event.world ?? "",

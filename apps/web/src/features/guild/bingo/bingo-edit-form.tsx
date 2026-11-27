@@ -22,6 +22,7 @@ import { ArrowLeft, Save, Settings2, Sparkles } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { BingoBoardGrid } from "./bingo-board-grid";
+import { BingoBoardSizeField } from "./bingo-board-size-field";
 import { BingoTileEditorDialog } from "./bingo-tile-editor-dialog";
 
 const toEditableTiles = (
@@ -35,6 +36,10 @@ const toEditableTiles = (
     points: tile.points,
     condition: tile.condition,
   }));
+
+const isInsideBoard =
+  (size: number) => (tile: { readonly row: number; readonly col: number }) =>
+    tile.row < size && tile.col < size;
 
 type BingoEditFormProps = {
   readonly guildId: string;
@@ -57,6 +62,7 @@ export const BingoEditForm = ({
   const [description, setDescription] = useState(data.board.description ?? "");
   const [world, setWorld] = useState(data.board.world ?? "");
   const [mode, setMode] = useState<UpdateBingoBoardDtoMode>(data.board.mode);
+  const [size, setSize] = useState(data.board.size);
 
   const [status, setStatus] = useState<UpdateBingoBoardDtoStatus>(
     data.board.status,
@@ -81,6 +87,23 @@ export const BingoEditForm = ({
     readonly col: number;
   } | null>(null);
 
+  const boardSize = data.board.size;
+
+  const hasProgress =
+    data.memberProgress.length > 0 || data.leaderboard.length > 0;
+
+  const sizeLocked = hasProgress;
+
+  const removedTileCount = draftTiles.filter(
+    (tile) => !isInsideBoard(size)(tile),
+  ).length;
+
+  const sizeHint = sizeLocked
+    ? t("bingo.boardSize.locked")
+    : removedTileCount > 0
+      ? t("bingo.boardSize.shrinkWarning", { count: removedTileCount, size })
+      : null;
+
   const handleSaveSettings = async (event: FormEvent) => {
     event.preventDefault();
 
@@ -92,6 +115,7 @@ export const BingoEditForm = ({
           description: description.trim() || null,
           world: world.trim() || null,
           mode,
+          size,
           status,
           pointsPerTile,
           pointsPerLine,
@@ -99,6 +123,7 @@ export const BingoEditForm = ({
           blackoutBonus,
         },
       });
+      setDraftTiles((previous) => previous.filter(isInsideBoard(size)));
       await onInvalidate();
       toast.success(t("bingo.toasts.updated"));
     } catch {
@@ -113,7 +138,7 @@ export const BingoEditForm = ({
         data: { tiles: draftTiles },
       });
       await onInvalidate();
-      toast.success(t("bingo.toasts.tilesSaved"));
+      toast.success(t("bingo.toasts.tilesSaved", { size: boardSize }));
     } catch {
       toast.error(t("bingo.toasts.error"));
     }
@@ -121,7 +146,7 @@ export const BingoEditForm = ({
 
   const handleLoadStarter = () => {
     setDraftTiles(
-      buildStarterBingoTiles().map((tile) => ({
+      buildStarterBingoTiles(boardSize).map((tile) => ({
         row: tile.row,
         col: tile.col,
         title: tile.title,
@@ -227,8 +252,15 @@ export const BingoEditForm = ({
             </div>
 
             <div className="space-y-3">
+              <BingoBoardSizeField
+                value={size}
+                onChange={setSize}
+                disabled={sizeLocked}
+                hint={sizeHint}
+              />
+
               <div className="space-y-1.5">
-                <Label>Status</Label>
+                <Label>{t("bingo.createDialog.status")}</Label>
                 <div className="flex flex-wrap gap-1.5">
                   {(["DRAFT", "ACTIVE", "FINISHED"] as const).map(
                     (candidate) => (
@@ -329,7 +361,11 @@ export const BingoEditForm = ({
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <h2 className="text-sm font-semibold text-foreground">
-              {t("bingo.stats.configuredTiles")}: {draftTiles.length}/25
+              {t("bingo.stats.configuredTiles")}:{" "}
+              {t("bingo.units.tileFraction", {
+                done: draftTiles.length,
+                total: boardSize * boardSize,
+              })}
             </h2>
             <p className="text-xs text-muted-foreground">
               {t("bingo.board.clickToConfigure")}
@@ -354,7 +390,7 @@ export const BingoEditForm = ({
             >
               {replaceTiles.isPending
                 ? t("bingo.actions.saving")
-                : t("bingo.actions.saveBoard")}
+                : t("bingo.actions.saveBoard", { size: boardSize })}
             </Button>
           </div>
         </div>
@@ -362,6 +398,7 @@ export const BingoEditForm = ({
         <BingoBoardGrid
           tiles={previewTiles}
           mode={mode}
+          size={boardSize}
           pointsPerTile={pointsPerTile}
           selectedMemberId={0}
           progressByTileId={new Map()}
