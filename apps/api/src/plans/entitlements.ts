@@ -62,6 +62,7 @@ export const userEntitlements = (
     watchedItems: row?.watchedItemLimit ?? plan.watchedItems,
     customThemes: row?.customThemeLimit ?? plan.customThemes,
     apiKeys: row?.apiKeyLimit ?? plan.apiKeys,
+    equipmentSets: row?.equipmentSetLimit ?? plan.equipmentSets,
     characterAuras: row?.characterAuras ?? plan.characterAuras,
   };
 };
@@ -155,6 +156,7 @@ const userEntitlementView = (
     watchedItems: row?.watchedItemLimit ?? null,
     customThemes: row?.customThemeLimit ?? null,
     apiKeys: row?.apiKeyLimit ?? null,
+    equipmentSets: row?.equipmentSetLimit ?? null,
     characterAuras: row?.characterAuras ?? null,
   },
   plans: USER_PLANS,
@@ -234,6 +236,7 @@ export const writeUserEntitlement = (
     watchedItemLimit: overrides.watchedItems,
     customThemeLimit: overrides.customThemes,
     apiKeyLimit: overrides.apiKeys,
+    equipmentSetLimit: overrides.equipmentSets,
     characterAuras: overrides.characterAuras,
   };
 

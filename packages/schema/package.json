@@ -48,6 +48,7 @@
     "./api-services": "./src/api-services.ts",
     "./internal-guilds": "./src/internal-guilds.ts",
     "./custom-theme": "./src/custom-theme.ts",
+    "./equipment-sets": "./src/equipment-sets.ts",
     "./character-aura": "./src/character-aura.ts",
     "./plans": "./src/plans.ts",
     "./platform-roles": "./src/platform-roles.ts"

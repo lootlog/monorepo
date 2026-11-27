@@ -26,6 +26,8 @@ import {
   EMPTY_EQUIPMENT_SET,
   encodeEquipmentSet,
   EQUIPMENT_SET_PARAM,
+  LEGACY_OPPONENT_SET_PARAM,
+  OPPONENT_SET_PARAM,
 } from "@/lib/equipment-set";
 import { fightHighlights } from "@/lib/fight/fight-highlights";
 import {
@@ -57,11 +59,9 @@ export const Route = createFileRoute("/fight")({
       : {},
 });
 
-const OPPONENT_PARAM = "przeciwnik";
-
 const STORED_OPPONENT = {
   storageKey: "lootlog-wiki-fight-opponent",
-  params: [OPPONENT_PARAM],
+  params: [OPPONENT_SET_PARAM, LEGACY_OPPONENT_SET_PARAM],
   encode: encodeEquipmentSet,
   decode: decodeEquipmentSet,
   empty: EMPTY_EQUIPMENT_SET,
@@ -120,7 +120,7 @@ function FightRoute() {
 
   const encodedSets = {
     [EQUIPMENT_SET_PARAM]: encodeEquipmentSet(mySet),
-    [OPPONENT_PARAM]: encodeEquipmentSet(opponentSet),
+    [OPPONENT_SET_PARAM]: encodeEquipmentSet(opponentSet),
   };
 
   const sets = [...Object.values(encodedSets), levelAdvantage].join("|");

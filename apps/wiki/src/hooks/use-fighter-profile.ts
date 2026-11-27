@@ -9,7 +9,7 @@ export const useFighterProfile = (set: EquipmentSet) => {
   const { data: tree, isPending } = useSkillTree(set.profession);
 
   if (set.profession === null) {
-    return { profile: null, isLoaded: true };
+    return { profile: null, wornItems, isLoaded };
   }
 
   return {
@@ -22,6 +22,7 @@ export const useFighterProfile = (set: EquipmentSet) => {
       weapons: wornSkillWeapons(wornItems),
       mastery: set.mastery,
     }),
+    wornItems,
     isLoaded: isLoaded && !isPending,
   };
 };

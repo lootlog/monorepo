@@ -3,6 +3,7 @@ import { cn } from "cn";
 import { Button } from "@lootlog/ui/components/button";
 import { EquipmentSetCharacter } from "@/components/equipment/equipment-set-character";
 import { EquipmentSetDoll } from "@/components/equipment/equipment-set-doll";
+import { SavedSetsButton } from "@/components/equipment/saved-sets-button";
 import { useSetSummary } from "@/hooks/use-set-summary";
 import { t } from "@/i18n/messages";
 import { EQUIPMENT_SLOTS } from "@/lib/equipment-slots";
@@ -36,10 +37,13 @@ export function FightFighter({
           </span>
         </div>
         <EquipmentSetCharacter />
-        <Button size="xs" variant="outline" onClick={onEdit}>
-          <Settings2 aria-hidden="true" />
-          {t("fightPage.editSet")}
-        </Button>
+        <div className="flex flex-wrap gap-2 *:grow">
+          <Button size="xs" variant="outline" onClick={onEdit}>
+            <Settings2 aria-hidden="true" />
+            {t("fightPage.editSet")}
+          </Button>
+          <SavedSetsButton size="xs" />
+        </div>
       </div>
     </div>
   );

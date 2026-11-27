@@ -57,6 +57,7 @@ export function EquipmentSetEditor({
           update((current) => upgradeSlot(current, slotId, upgrade)),
         unequip: (slotId) => update((current) => unequipSlot(current, slotId)),
         clear: () => update(() => EMPTY_EQUIPMENT_SET),
+        replace: (next) => update(() => next),
         setCharacter: (character) =>
           update((current) =>
             character.profession === current.profession

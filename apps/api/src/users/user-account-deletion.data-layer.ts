@@ -33,6 +33,7 @@ import {
   userThemeTable,
 } from "#src/database/drizzle/user.schema";
 import { userEntitlementTable } from "#src/database/drizzle/plan.schema";
+import { userEquipmentSetTable } from "#src/database/drizzle/equipment-set.schema";
 import { userPinnedEventTable } from "#src/database/drizzle/event.schema";
 import { userPinnedReservationSpotTable } from "#src/database/drizzle/reservation.schema";
 import { NotificationOwnerType } from "@lootlog/schema/notifications";
@@ -150,6 +151,9 @@ const deletePersistedAccount = (
       yield* transaction
         .delete(userThemeTable)
         .where(eq(userThemeTable.userId, identity.userId));
+      yield* transaction
+        .delete(userEquipmentSetTable)
+        .where(eq(userEquipmentSetTable.userId, identity.userId));
       yield* transaction
         .delete(userSettingDocumentTable)
         .where(eq(userSettingDocumentTable.userId, identity.userId));

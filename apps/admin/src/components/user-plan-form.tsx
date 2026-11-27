@@ -19,6 +19,11 @@ const fields: ReadonlyArray<PlanFormField> = [
   { key: "customThemes", label: text.planLimitCustomThemes, kind: "limit" },
   { key: "apiKeys", label: text.planLimitApiKeys, kind: "limit" },
   {
+    key: "equipmentSets",
+    label: text.planLimitEquipmentSets,
+    kind: "limit",
+  },
+  {
     key: "characterAuras",
     label: text.planFeatureCharacterAuras,
     kind: "feature",
