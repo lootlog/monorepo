@@ -489,4 +489,90 @@ describe("traffic splitter", () => {
       expect(await response.text()).not.toContain("og:title");
     });
   });
+
+  describe("cdn sprite proxy", () => {
+    it("proxies allowed Margonem sprites with immutable caching and CORS headers", async () => {
+      const imageBytes = new Uint8Array([71, 73, 70, 56, 57, 97]);
+
+      const upstreamFetch = vi.fn<UpstreamFetch>(() =>
+        Promise.resolve(
+          new Response(imageBytes, {
+            status: 200,
+            headers: { "content-type": "image/gif" },
+          }),
+        ),
+      );
+
+      const response = await routeRequest(
+        new Request(
+          "https://lootlog.pl/cdn-proxy/obrazki/postacie/vip/12345.gif",
+          {
+            headers: {
+              cookie: "session=secret",
+              authorization: "Bearer secret",
+            },
+          },
+        ),
+        productionEnvironment,
+        upstreamFetch,
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get("access-control-allow-origin")).toBe("*");
+      expect(response.headers.get("cache-control")).toBe(
+        "public, max-age=31536000, immutable",
+      );
+      expect(response.headers.get("content-type")).toBe("image/gif");
+      expect(upstreamFetch).toHaveBeenCalledOnce();
+      expect(upstreamFetch.mock.calls[0]?.[0].url).toBe(
+        "https://micc.garmory-cdn.cloud/obrazki/postacie/vip/12345.gif",
+      );
+      expect(upstreamFetch.mock.calls[0]?.[0].headers.has("cookie")).toBe(
+        false,
+      );
+      expect(
+        upstreamFetch.mock.calls[0]?.[0].headers.has("authorization"),
+      ).toBe(false);
+    });
+
+    it.each([
+      "/cdn-proxy/obrazki/postacie/../secret.gif",
+      "/cdn-proxy/obrazki/postacie/%2e%2e/secret.gif",
+      "/cdn-proxy/obrazki/unknown/avatar.gif",
+      "/cdn-proxy/obrazki/postacie/script.js",
+      "/cdn-proxy/obrazki/postacie/",
+    ])("rejects disallowed cdn proxy path %s with 404", async (pathname) => {
+      const upstreamFetch = vi.fn<UpstreamFetch>(() =>
+        Promise.resolve(new Response("ok")),
+      );
+
+      const response = await routeRequest(
+        new Request(`https://lootlog.pl${pathname}`),
+        productionEnvironment,
+        upstreamFetch,
+      );
+
+      expect(response.status).toBe(404);
+      expect(upstreamFetch).not.toHaveBeenCalled();
+    });
+
+    it("rejects non-image upstream responses with 415", async () => {
+      const upstreamFetch = vi.fn<UpstreamFetch>(() =>
+        Promise.resolve(
+          new Response("<html>not an image</html>", {
+            status: 200,
+            headers: { "content-type": "text/html" },
+          }),
+        ),
+      );
+
+      const response = await routeRequest(
+        new Request("https://lootlog.pl/cdn-proxy/obrazki/postacie/hero.gif"),
+        productionEnvironment,
+        upstreamFetch,
+      );
+
+      expect(response.status).toBe(415);
+    });
+  });
 });

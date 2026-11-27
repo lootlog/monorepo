@@ -9,6 +9,7 @@
     "./battle-log": "./src/battle-log.ts",
     "./battle-processor": "./src/battle-processor.ts",
     "./finishing-blows": "./src/finishing-blows.ts",
+    "./replay-timeline": "./src/replay-timeline.ts",
     "./statistics": "./src/statistics.ts",
     "./timeline": "./src/timeline.ts",
     "./warrior": "./src/warrior.ts"
