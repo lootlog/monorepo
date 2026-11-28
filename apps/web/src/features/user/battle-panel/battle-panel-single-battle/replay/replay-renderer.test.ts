@@ -115,9 +115,12 @@ const createFakeCanvasContext = (width: number, height: number) => {
 const EMPTY_ASSETS = { sprites: new Map(), battleground: null };
 
 describe("battle replay helpers and renderer", () => {
-  it("loads outfits straight from the Margonem CDN and rejects path traversal", () => {
+  it("loads outfits from the Margonem character folder like the game does, npc-folder outfits included, and rejects path traversal", () => {
     expect(getReplaySpriteUrl("/vip/12345.gif")).toBe(
       "https://micc.garmory-cdn.cloud/obrazki/postacie/vip/12345.gif",
+    );
+    expect(getReplaySpriteUrl("/npc/que-mietek-zul-0.gif")).toBe(
+      "https://micc.garmory-cdn.cloud/obrazki/postacie/npc/que-mietek-zul-0.gif",
     );
     expect(getReplaySpriteUrl("../evil.gif")).toBeNull();
     expect(getReplaySpriteUrl("")).toBeNull();
