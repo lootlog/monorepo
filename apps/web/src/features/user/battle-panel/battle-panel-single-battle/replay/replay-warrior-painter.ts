@@ -148,7 +148,7 @@ const applyTargetReaction = (
   const vx = context.base.x - attacker.x;
   const vy = context.base.feetY - attacker.feetY;
   const distance = Math.hypot(vx, vy) || 1;
-  const knock = (event.isCrit ? 6 : 3) * wave;
+  const knock = (event.isVeryCrit ? 11 : event.isCrit ? 6 : 3) * wave;
   draft.dx += (vx / distance) * knock;
   draft.dy += (vy / distance) * knock;
 };

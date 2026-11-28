@@ -25,6 +25,11 @@ export type ReplayDamageKind =
   | "wound"
   | "true";
 
+type ReplayDamagePart = {
+  readonly kind: ReplayDamageKind;
+  readonly amount: number;
+};
+
 export type ReplayLegendaryKind =
   | "lastHeal"
   | "curse"
@@ -82,6 +87,7 @@ export type ReplayAttackEvent = ReplayEventBase & {
   readonly targetId: string;
   readonly damage: number;
   readonly damageKind: ReplayDamageKind;
+  readonly damageParts: readonly ReplayDamagePart[];
   readonly isCrit: boolean;
   readonly isVeryCrit: boolean;
   readonly isEvade: boolean;
@@ -409,12 +415,20 @@ const scheduleBundles = (
   return { events, snapshots, actionDurationMs: cursorMs };
 };
 
+const resolveDecidedWinningTeam = (input: ReplayBattleInput) =>
+  input.unfinished || input.winner === "?" || !input.winningTeam
+    ? null
+    : input.winningTeam;
+
 const findMvpParticipant = (
   participants: readonly ReplayParticipant[],
+  winningTeam: number | null,
 ): ReplayParticipant | null => {
   let mvp: ReplayParticipant | null = null;
 
   for (const participant of participants) {
+    if (winningTeam !== null && participant.team !== winningTeam) continue;
+
     if (!mvp || participant.totalDamageDealt > mvp.totalDamageDealt) {
       mvp = participant;
     }
@@ -461,7 +475,11 @@ export const buildReplayTimeline = (
     state,
   );
 
-  const mvpParticipant = findMvpParticipant(participants);
+  const mvpParticipant = findMvpParticipant(
+    participants,
+    resolveDecidedWinningTeam(input),
+  );
+
   const outcome = resolveOutcome(input, leftTeamNumber);
 
   const winnerName = input.winner && input.winner !== "?" ? input.winner : null;

@@ -150,6 +150,53 @@ describe("battle replay helpers and renderer", () => {
     );
   });
 
+  it("shows each damage element of a mixed hit as its own number", () => {
+    const timeline = buildReplayTimeline({
+      characterId: "1",
+      warriors: [
+        {
+          originalId: "1",
+          name: "Wojownik",
+          lvl: 190,
+          prof: "w",
+          icon: "/w.gif",
+          team: 1,
+        },
+        {
+          originalId: "2",
+          name: "Mag",
+          lvl: 190,
+          prof: "m",
+          icon: "/m.gif",
+          team: 2,
+        },
+      ],
+      moves: parseBattleMoves([
+        {
+          ev: 1000,
+          f: { m: ["1=100;2=80;+dmg=700;+dmgf=350;-dmg=600;-dmgf=250"] },
+        },
+      ]),
+    });
+
+    const attack = timeline.events.find((event) => event.kind === "attack");
+
+    const impactMs =
+      (attack?.tStart ?? 0) +
+      ((attack?.tEnd ?? 0) - (attack?.tStart ?? 0)) * REPLAY_IMPACT_FRACTION;
+
+    const frame = createFakeCanvasContext(1280, 720);
+
+    renderFrame(frame.ctx, timeline, impactMs + 60, "16:9", {
+      assets: EMPTY_ASSETS,
+      labels: TEST_LABELS,
+    });
+
+    expect(frame.fillTextCalls).toEqual(
+      expect.arrayContaining(["600", "+250"]),
+    );
+  });
+
   it("shows the hit, its damage and both fighters at impact, then the outcome and an MVP card that stays on the last frame", () => {
     const timeline = buildReplayTimeline({
       characterId: "1",

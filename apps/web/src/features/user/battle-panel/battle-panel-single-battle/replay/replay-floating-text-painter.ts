@@ -7,17 +7,24 @@ import {
 } from "@lootlog/battle-processor/replay-timeline";
 import type { ReplayRenderLabels } from "./replay-canvas-types";
 import { DAMAGE_KIND_COLORS } from "./replay-effects-painter";
+import { getLegendaryColor } from "./replay-legendary-painter";
 import { clamp01, createSeededRandom, easeOutCubic } from "./replay-motion";
-import { drawPixelText, formatReplayNumber } from "./replay-pixel-text";
+import {
+  drawPixelText,
+  formatReplayNumber,
+  measurePixelText,
+} from "./replay-pixel-text";
 import type { ReplayScene } from "./replay-scene-layout";
 import type { WarriorPoseMap } from "./replay-warrior-painter";
+
+type TextSegment = { readonly text: string; readonly color: string };
 
 type FloatingText = {
   readonly key: string;
   readonly anchorId: string;
-  readonly text: string;
+  readonly segments: readonly TextSegment[];
   readonly caption: string | null;
-  readonly color: string;
+  readonly captionColor: string;
   readonly size: number;
   readonly startMs: number;
   readonly lifeMs: number;
@@ -41,6 +48,31 @@ const getGuardLabel = (
   return event.isBlock ? labels.block : null;
 };
 
+const CAPTION_COLOR = "#fff4dc";
+
+const CRIT_CAPTION_COLOR = "#ffd24a";
+
+const VERY_CRIT_CAPTION_COLOR = "#ff4e91";
+
+const getCritCaptionColor = (event: ReplayAttackEvent) =>
+  event.isVeryCrit ? VERY_CRIT_CAPTION_COLOR : CRIT_CAPTION_COLOR;
+
+const getDamageSegments = (event: ReplayAttackEvent): TextSegment[] => {
+  if (event.damageParts.length === 0) {
+    return [
+      {
+        text: formatReplayNumber(event.damage),
+        color: DAMAGE_KIND_COLORS[event.damageKind],
+      },
+    ];
+  }
+
+  return event.damageParts.map((part, index) => ({
+    text: `${index === 0 ? "" : "+"}${formatReplayNumber(part.amount)}`,
+    color: DAMAGE_KIND_COLORS[part.kind],
+  }));
+};
+
 const describeAttack = (
   event: ReplayAttackEvent,
   labels: ReplayRenderLabels,
@@ -50,35 +82,39 @@ const describeAttack = (
     key: event.id,
     anchorId: event.targetId,
     caption: null,
+    captionColor: CAPTION_COLOR,
     size: baseSize,
     startMs: getImpactMs(event),
     lifeMs: TEXT_LIFE_MS,
   };
 
-  if (event.isEvade) return { ...common, text: labels.evade, color: "#c9d6ea" };
+  if (event.isEvade) {
+    return { ...common, segments: [{ text: labels.evade, color: "#c9d6ea" }] };
+  }
 
   const guard = getGuardLabel(event, labels);
 
   if (event.damage <= 0) {
-    return guard ? { ...common, text: guard, color: "#cfe3ff" } : null;
+    return guard
+      ? { ...common, segments: [{ text: guard, color: "#cfe3ff" }] }
+      : null;
   }
 
   if (event.isCrit) {
     return {
       ...common,
-      text: formatReplayNumber(event.damage),
+      segments: getDamageSegments(event),
       caption: labels.crit,
-      color: "#ffd24a",
-      size: Math.round(baseSize * 1.5),
+      captionColor: getCritCaptionColor(event),
+      size: Math.round(baseSize * (event.isVeryCrit ? 1.8 : 1.5)),
       lifeMs: TEXT_LIFE_MS * 1.25,
     };
   }
 
   return {
     ...common,
-    text: formatReplayNumber(event.damage),
+    segments: getDamageSegments(event),
     caption: guard ?? (event.isPierce ? labels.pierce : null),
-    color: DAMAGE_KIND_COLORS[event.damageKind],
   };
 };
 
@@ -95,9 +131,14 @@ const describeEvent = (
     return {
       key: event.id,
       anchorId: event.targetId,
-      text: `+${formatReplayNumber(event.amount)}`,
+      segments: [
+        {
+          text: `+${formatReplayNumber(event.amount)}`,
+          color: event.kind === "heal" ? "#6ff07a" : "#7fd4ff",
+        },
+      ],
       caption: null,
-      color: event.kind === "heal" ? "#6ff07a" : "#7fd4ff",
+      captionColor: CAPTION_COLOR,
       size: baseSize,
       startMs: event.tStart + 120,
       lifeMs: TEXT_LIFE_MS,
@@ -110,9 +151,14 @@ const describeEvent = (
     return {
       key: event.id,
       anchorId: event.targetId,
-      text: formatReplayNumber(event.damage),
+      segments: [
+        {
+          text: formatReplayNumber(event.damage),
+          color: DAMAGE_KIND_COLORS[event.damageKind],
+        },
+      ],
       caption: null,
-      color: DAMAGE_KIND_COLORS[event.damageKind],
+      captionColor: CAPTION_COLOR,
       size: Math.round(baseSize * 0.85),
       startMs: event.tStart + 80,
       lifeMs: TEXT_LIFE_MS,
@@ -123,9 +169,14 @@ const describeEvent = (
     return {
       key: event.id,
       anchorId: event.actorId,
-      text: labels.legendary[event.legendaryKind],
+      segments: [
+        {
+          text: labels.legendary[event.legendaryKind],
+          color: getLegendaryColor(event.legendaryKind),
+        },
+      ],
       caption: null,
-      color: "#ffd24a",
+      captionColor: CAPTION_COLOR,
       size: Math.round(baseSize * 1.15),
       startMs: event.tStart,
       lifeMs: 1400,
@@ -136,9 +187,9 @@ const describeEvent = (
     return {
       key: event.id,
       anchorId: event.actorId,
-      text: labels.flee,
+      segments: [{ text: labels.flee, color: "#f4ead8" }],
       caption: null,
-      color: "#f4ead8",
+      captionColor: CAPTION_COLOR,
       size: baseSize,
       startMs: event.tStart,
       lifeMs: TEXT_LIFE_MS,
@@ -146,6 +197,36 @@ const describeEvent = (
   }
 
   return null;
+};
+
+const paintSegments = (
+  ctx: CanvasRenderingContext2D,
+  text: FloatingText,
+  centerX: number,
+  y: number,
+) => {
+  const gap = Math.round(text.size * 0.3);
+
+  const widths = text.segments.map((segment) =>
+    measurePixelText(ctx, segment.text, text.size),
+  );
+
+  const totalWidth =
+    widths.reduce((sum, width) => sum + width, 0) +
+    gap * (text.segments.length - 1);
+
+  let left = centerX - totalWidth / 2;
+
+  for (const [index, segment] of text.segments.entries()) {
+    drawPixelText(ctx, segment.text, Math.round(left), y, {
+      size: text.size,
+      color: segment.color,
+      align: "left",
+      baseline: "middle",
+      outlineWidth: Math.max(3, text.size / 4),
+    });
+    left += (widths[index] ?? 0) + gap;
+  }
 };
 
 export const paintFloatingText = (
@@ -199,19 +280,13 @@ export const paintFloatingText = (
     ctx.save();
     ctx.globalAlpha = life < 0.65 ? 1 : 1 - (life - 0.65) / 0.35;
 
-    drawPixelText(ctx, text.text, x, y, {
-      size: text.size,
-      color: text.color,
-      align: "center",
-      baseline: "middle",
-      outlineWidth: Math.max(3, text.size / 4),
-    });
+    paintSegments(ctx, text, x, y);
 
     if (text.caption) {
       drawPixelText(ctx, text.caption, x, y - text.size * 0.85, {
         size: Math.round(baseSize * 0.7),
         weight: 700,
-        color: "#fff4dc",
+        color: text.captionColor,
         align: "center",
         baseline: "middle",
         outlineWidth: 2.5,

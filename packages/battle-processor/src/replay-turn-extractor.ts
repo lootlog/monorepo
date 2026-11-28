@@ -575,6 +575,12 @@ const finalizeAttackOrStep = (
       targetId: acc.defenderId,
       damage: acc.attackDamage,
       damageKind,
+      damageParts: Array.from(acc.damageKindTotals, ([kind, amount]) => ({
+        kind,
+        amount,
+      }))
+        .filter((part) => part.amount > 0)
+        .sort((first, second) => second.amount - first.amount),
       isCrit: acc.isCrit,
       isVeryCrit: acc.isVeryCrit,
       isEvade: acc.isEvade,
