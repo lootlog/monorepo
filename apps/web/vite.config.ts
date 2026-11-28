@@ -69,19 +69,6 @@ export default defineConfig({
     hmr: { path: "/web-hmr" },
     port: 3000,
     host: "0.0.0.0",
-    proxy: {
-      "/cdn-proxy/obrazki": {
-        target: "https://micc.garmory-cdn.cloud",
-        changeOrigin: true,
-        rewrite: (requestPath) => requestPath.replace(/^\/cdn-proxy/, ""),
-        configure: (proxy) => {
-          proxy.on("proxyReq", (proxyRequest) => {
-            proxyRequest.removeHeader("cookie");
-            proxyRequest.removeHeader("authorization");
-          });
-        },
-      },
-    },
   },
   preview: {
     port: 3000,
