@@ -8,7 +8,7 @@ import { getCameraImpact, paintCombatEffects } from "./replay-effects-painter";
 import { paintFloatingText } from "./replay-floating-text-painter";
 import { paintReplayHud } from "./replay-hud-painter";
 import { getReplayScene, type ReplayScene } from "./replay-scene-layout";
-import { paintVictoryOverlay } from "./replay-victory-painter";
+import { paintVictoryDim, paintVictoryOverlay } from "./replay-victory-painter";
 import {
   computeWarriorPoses,
   paintWarriorOverlays,
@@ -101,6 +101,10 @@ export const renderFrame = (
   ctx.translate(camera.x, camera.y);
 
   paintBackdrop(ctx, scene, battleground);
+
+  if (state.victoryEvent) {
+    paintVictoryDim(ctx, scene, state.victoryProgress);
+  }
 
   const poses = computeWarriorPoses(
     timeline.participants,

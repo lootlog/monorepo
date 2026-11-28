@@ -155,7 +155,7 @@ describe("battle replay helpers and renderer", () => {
     );
   });
 
-  it("shows the hit, its damage and both fighters at impact, then the outcome and MVP in the outro", () => {
+  it("shows the hit, its damage and both fighters at impact, then the outcome and an MVP card that stays on the last frame", () => {
     const timeline = buildReplayTimeline({
       characterId: "1",
       warriors: [
@@ -225,18 +225,30 @@ describe("battle replay helpers and renderer", () => {
       landscape.fillTextCalls.some((text) => /^8\s?100$/u.test(text)),
     ).toBe(true);
 
-    const verticalOutro = createFakeCanvasContext(1080, 1920);
+    const outroStart = createFakeCanvasContext(1080, 1920);
 
     renderFrame(
-      verticalOutro.ctx,
+      outroStart.ctx,
       timeline,
-      timeline.actionDurationMs + 900,
+      timeline.actionDurationMs + 300,
       "9:16",
       { assets: EMPTY_ASSETS, labels: TEST_LABELS },
     );
 
-    expect(verticalOutro.fillTextCalls).toEqual(
-      expect.arrayContaining(["Zwycięstwo", "MVP walki", "Wojownik"]),
+    expect(outroStart.fillTextCalls).toContain("Zwycięstwo");
+
+    const lastFrame = createFakeCanvasContext(1080, 1920);
+
+    renderFrame(lastFrame.ctx, timeline, timeline.totalDurationMs, "9:16", {
+      assets: EMPTY_ASSETS,
+      labels: TEST_LABELS,
+    });
+
+    expect(lastFrame.fillTextCalls).toEqual(
+      expect.arrayContaining([
+        "Zwycięstwo · Liczba tur: 2",
+        "MVP walki: Wojownik",
+      ]),
     );
   });
 });

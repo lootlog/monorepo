@@ -10,6 +10,7 @@ import type {
   ReplayLoadedSprite,
   ReplaySpriteMap,
 } from "./replay-canvas-types";
+import { getCelebration, isCelebrating, SHEET_ROW } from "./replay-celebration";
 import { drawPixelText, fitPixelText } from "./replay-pixel-text";
 import { getFrontwardDirection, type ReplayScene } from "./replay-scene-layout";
 import {
@@ -24,6 +25,8 @@ type WarriorPose = {
   readonly feetY: number;
   readonly flash: number;
   readonly walkFrame: number;
+  readonly facingRow: number;
+  readonly lift: number;
   readonly isActing: boolean;
   readonly opacity: number;
   readonly deathFade: number;
@@ -248,11 +251,27 @@ export const computeWarriorPoses = (
       );
     }
 
+    const celebration =
+      state.victoryEvent &&
+      isCelebrating(participant, state.victoryEvent, draft.deathFade > 0)
+        ? getCelebration(
+            participant,
+            state.victoryEvent,
+            state.timeMs,
+            scene.spriteScale,
+            reducedMotion,
+          )
+        : null;
+
     poses.set(participant.id, {
       x: base.x + draft.dx,
       feetY: base.feetY + draft.dy,
       flash: draft.flash,
-      walkFrame: draft.walking ? walkFrame : 0,
+      walkFrame: celebration?.walkFrame ?? (draft.walking ? walkFrame : 0),
+      facingRow:
+        celebration?.facingRow ??
+        (participant.side === "left" ? SHEET_ROW.north : SHEET_ROW.south),
+      lift: celebration?.lift ?? 0,
       isActing: draft.isActing,
       opacity: draft.opacity,
       deathFade: draft.deathFade,
@@ -268,13 +287,12 @@ const drawSpriteImage = (
   ctx: CanvasRenderingContext2D,
   source: CanvasImageSource,
   sprite: ReplayLoadedSprite,
-  participant: ReplayParticipant,
-  walkFrame: number,
+  pose: Pick<WarriorPose, "walkFrame" | "facingRow">,
   left: number,
   top: number,
   scale: number,
 ) => {
-  const directionRow = participant.side === "left" ? 3 : 0;
+  const { walkFrame, facingRow: directionRow } = pose;
   const sx = sprite.isSheet ? walkFrame * sprite.frameWidth : 0;
   const sy = sprite.isSheet ? directionRow * sprite.frameHeight : 0;
 
@@ -351,8 +369,9 @@ export const paintWarriors = (
     const spriteWidth = (sprite?.frameWidth ?? scene.frameWidth) * scale;
     const spriteHeight = (sprite?.frameHeight ?? scene.frameHeight) * scale;
     const left = snap(x - spriteWidth / 2, scene.unit);
-    const top = snap(feetY - spriteHeight, scene.unit);
+    const top = snap(feetY - pose.lift - spriteHeight, scene.unit);
     const aliveOpacity = pose.opacity * (1 - pose.deathFade);
+    const shadowScale = 1 - Math.min(0.45, pose.lift / (spriteHeight * 0.6));
 
     ctx.save();
     ctx.globalAlpha = 0.42 * aliveOpacity + 0.18 * pose.deathFade;
@@ -361,8 +380,8 @@ export const paintWarriors = (
     ctx.ellipse(
       x,
       feetY - scale,
-      spriteWidth * 0.34,
-      2.5 * scale,
+      spriteWidth * 0.34 * shadowScale,
+      2.5 * scale * shadowScale,
       0,
       0,
       Math.PI * 2,
@@ -383,16 +402,7 @@ export const paintWarriors = (
 
     if (aliveOpacity > 0) {
       ctx.globalAlpha = aliveOpacity;
-      drawSpriteImage(
-        ctx,
-        sprite.image,
-        sprite,
-        participant,
-        pose.walkFrame,
-        left,
-        top,
-        scale,
-      );
+      drawSpriteImage(ctx, sprite.image, sprite, pose, left, top, scale);
     }
 
     if (pose.deathFade > 0) {
@@ -401,8 +411,7 @@ export const paintWarriors = (
         ctx,
         sprite.faded,
         sprite,
-        participant,
-        0,
+        { walkFrame: 0, facingRow: pose.facingRow },
         left,
         top,
         scale,
@@ -411,16 +420,7 @@ export const paintWarriors = (
 
     if (pose.flash > 0) {
       ctx.globalAlpha = pose.flash;
-      drawSpriteImage(
-        ctx,
-        sprite.flash,
-        sprite,
-        participant,
-        pose.walkFrame,
-        left,
-        top,
-        scale,
-      );
+      drawSpriteImage(ctx, sprite.flash, sprite, pose, left, top, scale);
     }
 
     ctx.restore();
