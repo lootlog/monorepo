@@ -98,7 +98,11 @@ export const renderFrame = (
   ctx.save();
   ctx.setTransform(scene.unit, 0, 0, scene.unit, 0, 0);
   ctx.save();
-  ctx.translate(camera.x, camera.y);
+  ctx.translate(
+    camera.x + (scene.width / 2) * (1 - camera.zoom),
+    camera.y + (scene.height / 2) * (1 - camera.zoom),
+  );
+  ctx.scale(camera.zoom, camera.zoom);
 
   paintBackdrop(ctx, scene, battleground);
 

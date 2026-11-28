@@ -6,6 +6,13 @@ import {
   type ReplayStateAtTime,
 } from "@lootlog/battle-processor/replay-timeline";
 import {
+  getBodyPoint,
+  paintSparks,
+  pixel,
+  type Point,
+} from "./replay-effect-primitives";
+import { paintLegendaryEffect } from "./replay-legendary-painter";
+import {
   clamp01,
   createSeededRandom,
   easeOutCubic,
@@ -24,36 +31,6 @@ export const DAMAGE_KIND_COLORS: Record<ReplayDamageKind, string> = {
   poison: "#7fdc5a",
   wound: "#e0453a",
   true: "#f39cff",
-};
-
-type Point = { readonly x: number; readonly y: number };
-
-const SPARK_LIFETIME_MS = 520;
-
-const getBodyPoint = (
-  poses: WarriorPoseMap,
-  id: string | null,
-  scene: ReplayScene,
-): Point | null => {
-  const pose = id ? poses.get(id) : undefined;
-
-  if (!pose) return null;
-
-  return {
-    x: pose.x,
-    y: pose.feetY - scene.frameHeight * scene.spriteScale * 0.55,
-  };
-};
-
-const pixel = (
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  size: number,
-  color: string,
-) => {
-  ctx.fillStyle = color;
-  ctx.fillRect(Math.round(x - size / 2), Math.round(y - size / 2), size, size);
 };
 
 const paintArrow = (
@@ -208,41 +185,6 @@ const paintProjectile = (
   }
 };
 
-const paintSparks = (
-  ctx: CanvasRenderingContext2D,
-  seed: string,
-  origin: Point,
-  elapsedMs: number,
-  count: number,
-  colors: readonly string[],
-  spread: number,
-  gravity: number,
-) => {
-  if (elapsedMs < 0 || elapsedMs > SPARK_LIFETIME_MS) return;
-
-  const random = createSeededRandom(seed);
-  const life = elapsedMs / SPARK_LIFETIME_MS;
-
-  for (let index = 0; index < count; index += 1) {
-    const angle = random() * Math.PI * 2;
-    const speed = spread * (0.45 + random() * 0.75);
-    const size = random() > 0.7 ? 3 : 2;
-    const color = colors[Math.floor(random() * colors.length)] ?? "#ffffff";
-    const travel = easeOutCubic(life);
-
-    ctx.globalAlpha = 1 - life ** 2;
-    pixel(
-      ctx,
-      origin.x + Math.cos(angle) * speed * travel,
-      origin.y + Math.sin(angle) * speed * travel + gravity * life * life,
-      size,
-      color,
-    );
-  }
-
-  ctx.globalAlpha = 1;
-};
-
 const paintSlash = (
   ctx: CanvasRenderingContext2D,
   origin: Point,
@@ -261,23 +203,6 @@ const paintSlash = (
     }
   }
 
-  ctx.globalAlpha = 1;
-};
-
-const paintRing = (
-  ctx: CanvasRenderingContext2D,
-  origin: Point,
-  progress: number,
-  color: string,
-  maxRadius: number,
-) => {
-  const radius = 4 + maxRadius * easeOutCubic(progress);
-  ctx.globalAlpha = 1 - progress;
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.ellipse(origin.x, origin.y, radius, radius * 0.6, 0, 0, Math.PI * 2);
-  ctx.stroke();
   ctx.globalAlpha = 1;
 };
 
@@ -363,31 +288,6 @@ const paintRestoreEffect = (
   ctx.globalAlpha = 1;
 };
 
-const paintLegendaryEffect = (
-  ctx: CanvasRenderingContext2D,
-  seed: string,
-  origin: Point,
-  elapsedMs: number,
-) => {
-  const ringProgress = clamp01(elapsedMs / 700);
-
-  if (ringProgress < 1) {
-    paintRing(ctx, origin, ringProgress, "#ffd24a", 30);
-    paintRing(ctx, origin, clamp01(ringProgress * 1.4), "#fff4c2", 20);
-  }
-
-  paintSparks(
-    ctx,
-    `${seed}:legend`,
-    origin,
-    elapsedMs,
-    14,
-    ["#ffd24a", "#fff4c2", "#ff9f1c"],
-    28,
-    -6,
-  );
-};
-
 const paintEventEffect = (
   ctx: CanvasRenderingContext2D,
   event: ReplayEvent,
@@ -412,13 +312,10 @@ const paintEventEffect = (
       break;
     }
 
-    case "legendary_proc": {
-      const origin = getBodyPoint(poses, event.actorId, scene);
-
-      if (origin) paintLegendaryEffect(ctx, event.id, origin, elapsedMs);
+    case "legendary_proc":
+      paintLegendaryEffect(ctx, event, timeMs, poses, scene);
 
       break;
-    }
 
     case "dot": {
       const target = getBodyPoint(poses, event.targetId, scene);
@@ -459,24 +356,40 @@ export const paintCombatEffects = (
   }
 };
 
+const VERY_CRIT_IMPACT = { shake: 7, flash: 0.28, zoom: 0.05, window: 0.42 };
+
+const CRIT_HIGHLIGHT_IMPACT = { shake: 4, flash: 0.22, zoom: 0, window: 0.3 };
+
+const CRIT_IMPACT = { shake: 2.5, flash: 0.1, zoom: 0, window: 0.3 };
+
+const getCritImpact = (event: ReplayAttackEvent) => {
+  if (event.isVeryCrit) return VERY_CRIT_IMPACT;
+
+  return event.isHighlight ? CRIT_HIGHLIGHT_IMPACT : CRIT_IMPACT;
+};
+
 export const getCameraImpact = (
   state: ReplayStateAtTime,
   reducedMotion: boolean,
 ) => {
   let shake = 0;
   let flash = 0;
+  let zoom = 0;
 
   for (const event of state.activeEvents) {
     const duration = Math.max(1, event.tEnd - event.tStart);
 
     if (event.kind === "attack" && event.isCrit && !event.isEvade) {
+      const impact = getCritImpact(event);
+
       const since =
         (state.timeMs - event.tStart) / duration - REPLAY_IMPACT_FRACTION;
 
-      if (since >= 0 && since < 0.3) {
-        const decay = 1 - since / 0.3;
-        shake = Math.max(shake, (event.isHighlight ? 4 : 2.5) * decay);
-        flash = Math.max(flash, (event.isHighlight ? 0.22 : 0.1) * decay);
+      if (since >= 0 && since < impact.window) {
+        const decay = 1 - since / impact.window;
+        shake = Math.max(shake, impact.shake * decay);
+        flash = Math.max(flash, impact.flash * decay);
+        zoom = Math.max(zoom, impact.zoom * decay ** 2);
       }
     }
 
@@ -487,12 +400,14 @@ export const getCameraImpact = (
     }
   }
 
-  if (reducedMotion || shake < 0.2)
-    return { x: 0, y: 0, flash: reducedMotion ? 0 : flash };
+  if (reducedMotion) return { x: 0, y: 0, flash: 0, zoom: 1 };
+
+  if (shake < 0.2) return { x: 0, y: 0, flash, zoom: 1 + zoom };
 
   return {
     x: Math.round(Math.sin(state.timeMs * 0.09) * shake),
     y: Math.round(Math.cos(state.timeMs * 0.13) * shake * 0.6),
     flash,
+    zoom: 1 + zoom,
   };
 };

@@ -20,7 +20,7 @@ const setPixelFont = (
   ctx.font = `${weight} ${size}px "${REPLAY_FONT_FAMILY}", "Trebuchet MS", sans-serif`;
 };
 
-const measurePixelText = (
+export const measurePixelText = (
   ctx: CanvasRenderingContext2D,
   text: string,
   size: number,

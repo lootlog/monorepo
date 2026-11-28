@@ -90,6 +90,51 @@ describe("replay-timeline", () => {
     });
   });
 
+  it("names the top damage dealer of the winning team as MVP, and of the whole fight only when nobody won", () => {
+    const moves = [
+      "2=100;1=10;+dmg=9000;-dmg=9000",
+      "1=10;2=0;+dmg=500;-dmg=500;winner=Attacker",
+    ];
+
+    const won = buildReplayTimeline(buildSampleInput(moves));
+
+    expect(won.mvpId).toBe("1");
+    expect(won.mvpDamage).toBe(500);
+    expect(won.events.at(-1)).toMatchObject({ kind: "victory", mvpId: "1" });
+
+    const lost = buildReplayTimeline(
+      buildSampleInput(moves, { winner: "Defender", winningTeam: 2 }),
+    );
+
+    expect(lost.outcome).toBe("defeat");
+    expect(lost.mvpId).toBe("2");
+
+    const drawn = buildReplayTimeline(
+      buildSampleInput(moves, { winner: "?", winningTeam: 1 }),
+    );
+
+    expect(drawn.mvpId).toBe("2");
+  });
+
+  it("splits a hit into its damage elements, strongest first", () => {
+    const timeline = buildReplayTimeline(
+      buildSampleInput([
+        "1=100;2=70;+dmg=400;+dmgf=1000;-dmg=300;-dmgf=900;-dmgc=0",
+      ]),
+    );
+
+    const attack = timeline.events.find((event) => event.kind === "attack");
+
+    expect(attack).toMatchObject({
+      damage: 1200,
+      damageKind: "fire",
+      damageParts: [
+        { kind: "fire", amount: 900 },
+        { kind: "physical", amount: 300 },
+      ],
+    });
+  });
+
   it("compresses 60+ turn fights into a ~20-35s social clip in smart pacing while keeping highlights slow", () => {
     const longMoves = Array.from({ length: 65 }, (_, index) => {
       const hp = Math.max(1, 100 - Math.floor((index / 65) * 95));
