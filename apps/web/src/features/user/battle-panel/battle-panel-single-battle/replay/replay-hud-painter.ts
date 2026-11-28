@@ -1,581 +1,225 @@
 import type {
-  ReplayEvent,
-  ReplayLayout,
   ReplayParticipant,
   ReplayStateAtTime,
   ReplayTimeline,
 } from "@lootlog/battle-processor/replay-timeline";
-import {
-  ARENA_PALETTES,
-  drawOrnateRpgPanel,
-  traceChamferedRect,
-  type ArenaAtmospherePalette,
-} from "./replay-arena-painter";
 import type { ReplayRenderLabels } from "./replay-canvas-types";
+import { drawPixelText, fitPixelText } from "./replay-pixel-text";
+import type { ReplayScene, ReplaySide } from "./replay-scene-layout";
+import { paintPixelBar } from "./replay-warrior-painter";
 
-const averageTeamHp = (
-  timeline: ReplayTimeline,
+export const paintPlate = (
+  ctx: CanvasRenderingContext2D,
+  left: number,
+  top: number,
+  width: number,
+  height: number,
+) => {
+  ctx.fillStyle = "#0b0705";
+  ctx.fillRect(left - 1, top - 1, width + 2, height + 2);
+  ctx.fillStyle = "#c8a05a";
+  ctx.fillRect(left, top, width, height);
+  ctx.fillStyle = "#5a4026";
+  ctx.fillRect(left + 1, top + 1, width - 2, height - 2);
+  ctx.fillStyle = "rgba(24, 16, 10, 0.94)";
+  ctx.fillRect(left + 2, top + 2, width - 4, height - 4);
+};
+
+type TeamSummary = {
+  readonly title: string;
+  readonly subtitle: string;
+  readonly hp: number;
+  readonly trailingHp: number;
+  readonly isUser: boolean;
+};
+
+const summarizeTeam = (
+  members: readonly ReplayParticipant[],
   state: ReplayStateAtTime,
-  side: "left" | "right",
-): number => {
-  let sum = 0;
-  let count = 0;
+  title: string,
+): TeamSummary => {
+  const [first] = members;
 
-  for (const participant of timeline.participants) {
-    if (participant.side !== side) continue;
-    sum += state.hpById[participant.id] ?? 100;
-    count += 1;
+  if (members.length === 1 && first) {
+    return {
+      title: first.name,
+      subtitle: `${first.lvl}${first.prof}`,
+      hp: state.hpById[first.id] ?? 100,
+      trailingHp: state.trailingHpById[first.id] ?? 100,
+      isUser: first.isUser,
+    };
   }
 
-  return count > 0 ? sum / count : 0;
-};
+  let weight = 0;
+  let hp = 0;
+  let trailingHp = 0;
 
-type LogSegment = {
-  readonly text: string;
-  readonly color: string;
-  readonly bold?: boolean;
-};
+  for (const member of members) {
+    const memberWeight = Math.max(1, member.maxHp);
+    weight += memberWeight;
+    hp += (state.hpById[member.id] ?? 100) * memberWeight;
+    trailingHp += (state.trailingHpById[member.id] ?? 100) * memberWeight;
+  }
 
-type FormattedLogLine = {
-  readonly turn: number;
-  readonly segments: readonly LogSegment[];
-};
-
-const formatNum = (value: number): string =>
-  value.toString().replace(/\B(?=(\d{3})+(?!\d))/gu, " ");
-
-const warriorSegment = (
-  id: string | null,
-  byId: ReadonlyMap<string, ReplayParticipant>,
-): LogSegment => {
-  const participant = id ? byId.get(id) : undefined;
-
-  if (!participant) return { text: "?", color: "#f8fafc", bold: true };
+  const alive = members.filter(
+    (member) => !state.deadIds.has(member.id),
+  ).length;
 
   return {
-    text: participant.name,
-    color: participant.side === "left" ? "#4ade80" : "#fb7185",
-    bold: true,
+    title,
+    subtitle: `${alive}/${members.length}`,
+    hp: weight > 0 ? hp / weight : 0,
+    trailingHp: weight > 0 ? trailingHp / weight : 0,
+    isUser: false,
   };
 };
 
-const formatAttackLogLine = (
-  event: Extract<ReplayEvent, { readonly kind: "attack" }>,
-  byId: ReadonlyMap<string, ReplayParticipant>,
-  labels: ReplayRenderLabels,
-): FormattedLogLine => {
-  const actor = warriorSegment(event.actorId, byId);
-  const target = warriorSegment(event.targetId, byId);
-
-  if (event.isEvade || event.isParry || event.isArrowBlock) {
-    const tag = event.isEvade
-      ? labels.evade
-      : event.isParry
-        ? labels.parry
-        : labels.arrowBlock;
-
-    return {
-      turn: event.turn,
-      segments: [
-        target,
-        { text: ` — ${tag} `, color: "#93c5fd", bold: true },
-        { text: "(", color: "#94a3b8" },
-        actor,
-        { text: ")", color: "#94a3b8" },
-      ],
-    };
-  }
-
-  const segments: LogSegment[] = [actor];
-
-  if (event.spellName) {
-    segments.push({ text: ` [${event.spellName}]`, color: "#e9d5ff" });
-  }
-
-  segments.push({ text: " → ", color: "#94a3b8" }, target);
-
-  if (event.damage > 0) {
-    const critColor = event.isVeryCrit
-      ? "#ff5c7a"
-      : event.isCrit
-        ? "#fde047"
-        : "#f8fafc";
-
-    segments.push({
-      text: `: -${formatNum(event.damage)}${event.isCrit ? "!" : ""}`,
-      color: critColor,
-      bold: true,
-    });
-  }
-
-  const flags: string[] = [];
-
-  if (event.isBlock) flags.push(labels.block);
-
-  if (event.isPierce) flags.push(labels.pierce);
-
-  if (event.isCounter) flags.push(labels.counter);
-
-  if (flags.length > 0) {
-    segments.push({ text: ` (${flags.join(", ")})`, color: "#93c5fd" });
-  }
-
-  return { turn: event.turn, segments };
-};
-
-const formatLogEventLine = (
-  event: ReplayEvent,
-  byId: ReadonlyMap<string, ReplayParticipant>,
-  labels: ReplayRenderLabels,
-): FormattedLogLine | null => {
-  if (event.kind === "attack") {
-    return formatAttackLogLine(event, byId, labels);
-  }
-
-  if (event.kind === "legendary_proc") {
-    return {
-      turn: event.turn,
-      segments: [
-        { text: "★ ", color: "#fbbf24", bold: true },
-        warriorSegment(event.actorId, byId),
-        {
-          text: `: ${labels.legendary[event.legendaryKind]}`,
-          color: "#fde68a",
-          bold: true,
-        },
-      ],
-    };
-  }
-
-  if (event.kind === "heal" && event.amount > 0) {
-    return {
-      turn: event.turn,
-      segments: [
-        warriorSegment(event.targetId, byId),
-        {
-          text: ` +${formatNum(event.amount)} HP`,
-          color: "#4ade80",
-          bold: true,
-        },
-      ],
-    };
-  }
-
-  if (event.kind === "dot" && event.damage > 0) {
-    return {
-      turn: event.turn,
-      segments: [
-        warriorSegment(event.targetId, byId),
-        {
-          text: ` -${formatNum(event.damage)} (${labels.effectLog})`,
-          color: "#fb923c",
-        },
-      ],
-    };
-  }
-
-  if (event.kind === "shield" && event.amount > 0) {
-    return {
-      turn: event.turn,
-      segments: [
-        warriorSegment(event.targetId, byId),
-        {
-          text: ` +${formatNum(event.amount)} ${labels.shieldLog}`,
-          color: "#38bdf8",
-        },
-      ],
-    };
-  }
-
-  if (event.kind === "step") {
-    return {
-      turn: event.turn,
-      segments: [
-        warriorSegment(event.actorId, byId),
-        { text: ` ${labels.stepLog}`, color: "#94a3b8" },
-      ],
-    };
-  }
-
-  if (event.kind === "death") {
-    return {
-      turn: event.turn,
-      segments: [
-        { text: "☠ ", color: "#fb7185", bold: true },
-        warriorSegment(event.victimId, byId),
-        { text: ` ${labels.diedLog}`, color: "#fb7185", bold: true },
-      ],
-    };
-  }
-
-  if (event.kind === "flee") {
-    return {
-      turn: event.turn,
-      segments: [
-        warriorSegment(event.actorId, byId),
-        { text: ` — ${labels.flee}`, color: "#fbbf24", bold: true },
-      ],
-    };
-  }
-
-  return null;
-};
-
-const collectRollingLogLines = (
-  timeline: ReplayTimeline,
-  timeMs: number,
-  maxLines: number,
-  byId: ReadonlyMap<string, ReplayParticipant>,
-  labels: ReplayRenderLabels,
-): FormattedLogLine[] => {
-  const lines: FormattedLogLine[] = [];
-
-  for (
-    let i = timeline.events.length - 1;
-    i >= 0 && lines.length < maxLines;
-    i -= 1
-  ) {
-    const ev = timeline.events[i];
-
-    if (!ev || ev.kind === "victory" || ev.tStart > timeMs) continue;
-
-    const formatted = formatLogEventLine(ev, byId, labels);
-
-    if (formatted) lines.unshift(formatted);
-  }
-
-  return lines;
-};
-
-const measureLogLineWidth = (
+const paintTeamPanel = (
   ctx: CanvasRenderingContext2D,
-  line: FormattedLogLine,
-  fontSize: number,
-): number => {
-  let total = 0;
-
-  if (line.turn > 0) {
-    ctx.font = `700 ${Math.round(fontSize * 0.78)}px "Trebuchet MS", "Segoe UI", sans-serif`;
-    total += ctx.measureText(`#${line.turn}`).width + 26;
-  }
-
-  for (const seg of line.segments) {
-    ctx.font = `${seg.bold ? 800 : 600} ${fontSize}px "Trebuchet MS", "Segoe UI", sans-serif`;
-    total += ctx.measureText(seg.text).width;
-  }
-
-  return total;
-};
-
-const paintCombatLogLine = (
-  ctx: CanvasRenderingContext2D,
-  line: FormattedLogLine,
-  startX: number,
-  rowY: number,
-  maxWidth: number,
-  baseFontSize: number,
-): void => {
-  const rawWidth = measureLogLineWidth(ctx, line, baseFontSize);
-
-  const fontSize =
-    rawWidth > maxWidth
-      ? Math.max(14, Math.floor(baseFontSize * (maxWidth / rawWidth)))
-      : baseFontSize;
-
-  let cursorX = startX;
-
-  if (line.turn > 0) {
-    const turnTag = `#${line.turn}`;
-    const tagFont = Math.round(fontSize * 0.76);
-    ctx.font = `700 ${tagFont}px "Trebuchet MS", "Segoe UI", sans-serif`;
-    const tagW = Math.max(tagFont * 2.1, ctx.measureText(turnTag).width + 14);
-    const tagH = Math.round(fontSize * 1.18);
-
-    traceChamferedRect(ctx, cursorX, rowY - tagH / 2, tagW, tagH, 4);
-    ctx.fillStyle = "rgba(245, 196, 108, 0.14)";
-    ctx.fill();
-    ctx.strokeStyle = "rgba(245, 196, 108, 0.35)";
-    ctx.lineWidth = 1;
-    ctx.stroke();
-    ctx.fillStyle = "#fde68a";
-    ctx.textAlign = "center";
-    ctx.fillText(turnTag, cursorX + tagW / 2, rowY + 0.5);
-    ctx.textAlign = "left";
-    cursorX += tagW + 10;
-  }
-
-  for (const seg of line.segments) {
-    ctx.font = `${seg.bold ? 800 : 600} ${fontSize}px "Trebuchet MS", "Segoe UI", sans-serif`;
-    ctx.fillStyle = seg.color;
-    ctx.fillText(seg.text, cursorX, rowY);
-    cursorX += ctx.measureText(seg.text).width;
-  }
-};
-
-const paintCombatLogStrip = (
-  ctx: CanvasRenderingContext2D,
+  summary: TeamSummary,
+  left: number,
+  top: number,
   width: number,
-  height: number,
-  isVertical: boolean,
+  align: "left" | "right",
+  titleSize: number,
+) => {
+  const textX = align === "left" ? left : left + width;
+  const subtitleSize = Math.round(titleSize * 0.8);
+
+  drawPixelText(
+    ctx,
+    fitPixelText(ctx, summary.title, width - 40, titleSize),
+    textX,
+    top + titleSize,
+    {
+      size: titleSize,
+      color: summary.isUser ? "#ffd769" : "#f4ead8",
+      align,
+      outlineWidth: 3,
+    },
+  );
+
+  drawPixelText(
+    ctx,
+    summary.subtitle,
+    align === "left" ? left + width : left,
+    top + titleSize,
+    {
+      size: subtitleSize,
+      weight: 500,
+      color: "#cdb68a",
+      align: align === "left" ? "right" : "left",
+      outlineWidth: 3,
+    },
+  );
+
+  const barTop = top + titleSize + 5;
+  const barHeight = Math.round(titleSize * 0.6);
+
+  paintPixelBar(
+    ctx,
+    left,
+    barTop,
+    width,
+    barHeight,
+    summary.hp,
+    summary.trailingHp,
+  );
+};
+
+const getTeam = (timeline: ReplayTimeline, side: ReplaySide) =>
+  timeline.participants
+    .filter((participant) => participant.side === side)
+    .sort((a, b) => a.slotIndex - b.slotIndex);
+
+export const paintReplayHud = (
+  ctx: CanvasRenderingContext2D,
   timeline: ReplayTimeline,
   state: ReplayStateAtTime,
+  scene: ReplayScene,
   labels: ReplayRenderLabels,
-  palette: ArenaAtmospherePalette,
-): void => {
-  const padX = 24;
-  const maxLines = isVertical ? 4 : 3;
-  const barH = isVertical ? 264 : 138;
-  const barY = height - barH - (isVertical ? 24 : 14);
-  const watermarkW = isVertical ? 204 : 160;
-  const logW = width - padX * 2 - watermarkW - 14;
+) => {
+  const ally = summarizeTeam(getTeam(timeline, "left"), state, labels.yourTeam);
 
-  drawOrnateRpgPanel(
-    ctx,
-    padX,
-    barY,
-    logW,
-    barH,
-    palette.borderLight,
-    palette.borderMid,
-    palette.borderDark,
-    14,
+  const enemy = summarizeTeam(
+    getTeam(timeline, "right"),
+    state,
+    labels.enemyTeam,
   );
 
-  const byId = new Map(timeline.participants.map((p) => [p.id, p]));
-
-  const rollingLines = collectRollingLogLines(
-    timeline,
-    state.timeMs,
-    maxLines,
-    byId,
-    labels,
-  );
-
-  const lines: FormattedLogLine[] =
-    rollingLines.length > 0
-      ? rollingLines
-      : [
-          {
-            turn: 0,
-            segments: [{ text: labels.logStart, color: "#cbd5e1" }],
-          },
-        ];
-
-  const fontSize = isVertical ? 33 : 22;
-  const lineGap = isVertical ? 58 : 40;
-  const padTop = isVertical ? 45 : 30;
-  const textMaxW = logW - 44;
-
-  ctx.save();
-  ctx.beginPath();
-  ctx.rect(padX + 10, barY + 6, logW - 20, barH - 12);
-  ctx.clip();
-  ctx.textAlign = "left";
-  ctx.textBaseline = "middle";
-
-  lines.forEach((line, index) => {
-    const isLatest = index === lines.length - 1;
-    const rowY = barY + padTop + index * lineGap;
-
-    if (isLatest && rollingLines.length > 0) {
-      const rowGrad = ctx.createLinearGradient(
-        padX + 12,
-        rowY,
-        padX + logW - 12,
-        rowY,
-      );
-
-      rowGrad.addColorStop(0, "rgba(250, 204, 108, 0.16)");
-      rowGrad.addColorStop(0.65, "rgba(250, 204, 108, 0.06)");
-      rowGrad.addColorStop(1, "rgba(250, 204, 108, 0)");
-      traceChamferedRect(
-        ctx,
-        padX + 12,
-        rowY - lineGap / 2 + 2,
-        logW - 24,
-        lineGap - 4,
-        6,
-      );
-      ctx.fillStyle = rowGrad;
-      ctx.fill();
-    }
-
-    ctx.globalAlpha = isLatest ? 1 : index === lines.length - 2 ? 0.72 : 0.46;
-    paintCombatLogLine(ctx, line, padX + 22, rowY, textMaxW, fontSize);
-  });
-
-  ctx.restore();
-
-  const wmX = padX + logW + 14;
-  drawOrnateRpgPanel(
-    ctx,
-    wmX,
-    barY,
-    watermarkW,
-    barH,
-    palette.borderLight,
-    palette.borderMid,
-    palette.borderDark,
-    14,
-  );
-
-  const cx = wmX + watermarkW / 2;
-  const crestY = barY + barH / 2 - (isVertical ? 22 : 16);
-  const cr = isVertical ? 15 : 10;
-
-  const gemGrad = ctx.createRadialGradient(cx, crestY, 1, cx, crestY, cr * 1.9);
-  gemGrad.addColorStop(0, "#ffffff");
-  gemGrad.addColorStop(0.35, "#fde047");
-  gemGrad.addColorStop(1, "rgba(245, 158, 11, 0)");
-  ctx.fillStyle = gemGrad;
-  ctx.beginPath();
-  ctx.arc(cx, crestY, cr * 1.9, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = "#fef08a";
-  ctx.beginPath();
-  ctx.moveTo(cx, crestY - cr);
-  ctx.lineTo(cx + cr * 0.72, crestY);
-  ctx.lineTo(cx, crestY + cr);
-  ctx.lineTo(cx - cr * 0.72, crestY);
-  ctx.closePath();
-  ctx.fill();
-
-  const wmGrad = ctx.createLinearGradient(
-    0,
-    barY + barH * 0.45,
-    0,
-    barY + barH * 0.85,
-  );
-
-  wmGrad.addColorStop(0, "#fff7d6");
-  wmGrad.addColorStop(0.55, "#f5c556");
-  wmGrad.addColorStop(1, "#b47824");
-  ctx.font = `900 ${isVertical ? 26 : 18}px Georgia, "Palatino Linotype", serif`;
-  ctx.fillStyle = wmGrad;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText(labels.watermark, cx, barY + barH / 2 + (isVertical ? 16 : 12));
-};
-
-export const paintArenaHud = (
-  ctx: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  layout: ReplayLayout,
-  timeline: ReplayTimeline,
-  state: ReplayStateAtTime,
-  labels: ReplayRenderLabels,
-): void => {
-  const isVertical = layout === "9:16";
-  const palette = ARENA_PALETTES[timeline.arenaTheme];
-  const padX = 24;
-  const topY = isVertical ? 22 : 12;
-  const barH = isVertical ? 70 : 48;
-
-  ctx.save();
-
-  drawOrnateRpgPanel(
-    ctx,
-    padX,
-    topY,
-    width - padX * 2,
-    barH,
-    palette.borderLight,
-    palette.borderMid,
-    palette.borderDark,
-    12,
-  );
-
-  const midY = topY + barH / 2;
-  const metaFont = isVertical ? 23 : 15;
-  ctx.font = `700 ${metaFont}px Georgia, "Palatino Linotype", serif`;
-  ctx.textBaseline = "middle";
-
-  const meta = [timeline.battleType, timeline.world]
-    .filter(Boolean)
-    .join("  ✦  ");
-
-  ctx.fillStyle = palette.borderLight;
-  ctx.textAlign = "left";
-  ctx.fillText(meta, padX + 24, midY);
-
-  const turnText = labels.turnCounter
-    .replace("{{current}}", String(state.currentTurn))
+  const turnText = labels.turn
+    .replace("{{current}}", String(Math.max(1, state.currentTurn)))
     .replace("{{total}}", String(timeline.totalTurns));
 
-  const titleGrad = ctx.createLinearGradient(0, topY + 8, 0, topY + barH - 8);
-  titleGrad.addColorStop(0, "#ffffff");
-  titleGrad.addColorStop(0.55, "#fde68a");
-  titleGrad.addColorStop(1, "#d49b38");
-  ctx.font = `900 ${isVertical ? 26 : 17}px Georgia, "Palatino Linotype", serif`;
-  ctx.fillStyle = titleGrad;
-  ctx.textAlign = "center";
-  ctx.fillText(turnText, width / 2, midY + 0.5);
+  if (!scene.isVertical) {
+    const shade = ctx.createLinearGradient(0, 0, 0, 52);
+    shade.addColorStop(0, "rgba(8, 5, 3, 0.86)");
+    shade.addColorStop(1, "rgba(8, 5, 3, 0)");
+    ctx.fillStyle = shade;
+    ctx.fillRect(0, 0, scene.width, 52);
 
-  const leftHp = averageTeamHp(timeline, state, "left");
-  const rightHp = averageTeamHp(timeline, state, "right");
-  const gaugeW = isVertical ? 232 : 204;
-  const gaugeH = isVertical ? 14 : 11;
-  const gaugeX = width - padX - gaugeW - 22;
-  const gaugeY = midY - gaugeH / 2;
+    paintTeamPanel(ctx, ally, 12, 6, 220, "left", 12);
+    paintTeamPanel(ctx, enemy, scene.width - 232, 6, 220, "right", 12);
 
-  ctx.save();
-  traceChamferedRect(ctx, gaugeX, gaugeY, gaugeW, gaugeH, 4);
-  ctx.fillStyle = "rgba(0, 0, 0, 0.72)";
-  ctx.fill();
-  ctx.clip();
+    paintPlate(ctx, scene.width / 2 - 42, 7, 84, 22);
+    drawPixelText(ctx, turnText, scene.width / 2, 22, {
+      size: 11,
+      color: "#ffe6a8",
+      align: "center",
+      outline: null,
+    });
 
-  const totalHp = Math.max(1, leftHp + rightHp);
-  const leftW = Math.max(0, Math.round(gaugeW * (leftHp / totalHp)));
+    drawPixelText(ctx, labels.watermark, scene.width - 10, scene.height - 9, {
+      size: 10,
+      color: "rgba(255, 244, 220, 0.85)",
+      align: "right",
+      outlineWidth: 3,
+    });
 
-  if (leftW > 0) {
-    const leftGrad = ctx.createLinearGradient(gaugeX, 0, gaugeX + leftW, 0);
-    leftGrad.addColorStop(0, "#15803d");
-    leftGrad.addColorStop(1, "#4ade80");
-    ctx.fillStyle = leftGrad;
-    ctx.fillRect(gaugeX, gaugeY, leftW, gaugeH);
+    return;
   }
 
-  if (gaugeW - leftW > 0) {
-    const rightGrad = ctx.createLinearGradient(
-      gaugeX + leftW,
-      0,
-      gaugeX + gaugeW,
-      0,
-    );
+  const topShade = ctx.createLinearGradient(0, 0, 0, 120);
+  topShade.addColorStop(0, "rgba(8, 5, 3, 0.9)");
+  topShade.addColorStop(1, "rgba(8, 5, 3, 0)");
+  ctx.fillStyle = topShade;
+  ctx.fillRect(0, 0, scene.width, 120);
 
-    rightGrad.addColorStop(0, "#fb7185");
-    rightGrad.addColorStop(1, "#b91c1c");
-    ctx.fillStyle = rightGrad;
-    ctx.fillRect(gaugeX + leftW, gaugeY, gaugeW - leftW, gaugeH);
-  }
-
-  ctx.fillStyle = "rgba(255, 255, 255, 0.28)";
-  ctx.fillRect(gaugeX, gaugeY, gaugeW, Math.max(2, gaugeH * 0.3));
-
-  if (leftW > 2 && leftW < gaugeW - 2) {
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(gaugeX + leftW - 1.5, gaugeY, 3, gaugeH);
-  }
-
-  ctx.restore();
-
-  traceChamferedRect(ctx, gaugeX, gaugeY, gaugeW, gaugeH, 4);
-  ctx.lineWidth = 1.2;
-  ctx.strokeStyle = palette.borderMid;
-  ctx.stroke();
-
-  paintCombatLogStrip(
-    ctx,
-    width,
-    height,
-    isVertical,
-    timeline,
-    state,
-    labels,
-    palette,
+  const bottomShade = ctx.createLinearGradient(
+    0,
+    scene.height - 130,
+    0,
+    scene.height,
   );
 
-  ctx.restore();
+  bottomShade.addColorStop(0, "rgba(8, 5, 3, 0)");
+  bottomShade.addColorStop(1, "rgba(8, 5, 3, 0.92)");
+  ctx.fillStyle = bottomShade;
+  ctx.fillRect(0, scene.height - 130, scene.width, 130);
+
+  paintPlate(ctx, scene.width / 2 - 50, 14, 100, 26);
+  drawPixelText(ctx, turnText, scene.width / 2, 32, {
+    size: 13,
+    color: "#ffe6a8",
+    align: "center",
+    outline: null,
+  });
+
+  paintTeamPanel(ctx, enemy, 24, 52, scene.width - 48, "left", 15);
+  paintTeamPanel(
+    ctx,
+    ally,
+    24,
+    scene.height - 96,
+    scene.width - 48,
+    "left",
+    15,
+  );
+
+  drawPixelText(ctx, labels.watermark, scene.width / 2, scene.height - 22, {
+    size: 13,
+    color: "rgba(255, 244, 220, 0.85)",
+    align: "center",
+    outlineWidth: 3,
+  });
 };

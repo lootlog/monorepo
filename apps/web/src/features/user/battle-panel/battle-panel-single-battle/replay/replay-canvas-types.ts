@@ -26,7 +26,9 @@ export const REPLAY_GIF_DIMENSIONS: Record<
 };
 
 export type ReplayLoadedSprite = {
-  readonly image: HTMLImageElement;
+  readonly image: CanvasImageSource;
+  readonly flash: CanvasImageSource;
+  readonly faded: CanvasImageSource;
   readonly isSheet: boolean;
   readonly frameWidth: number;
   readonly frameHeight: number;
@@ -34,36 +36,32 @@ export type ReplayLoadedSprite = {
 
 export type ReplaySpriteMap = ReadonlyMap<string, ReplayLoadedSprite>;
 
+export type ReplayAssets = {
+  readonly sprites: ReplaySpriteMap;
+  readonly battleground: HTMLImageElement | null;
+};
+
 export type ReplayRenderLabels = {
-  readonly turnCounter: string;
+  readonly turn: string;
   readonly evade: string;
   readonly block: string;
   readonly parry: string;
   readonly arrowBlock: string;
   readonly pierce: string;
-  readonly counter: string;
+  readonly crit: string;
   readonly flee: string;
   readonly mvp: string;
   readonly totalTurns: string;
-  readonly damageShort: string;
+  readonly damageDealt: string;
+  readonly yourTeam: string;
+  readonly enemyTeam: string;
   readonly watermark: string;
-  readonly logStart: string;
-  readonly stepLog: string;
-  readonly diedLog: string;
-  readonly effectLog: string;
-  readonly shieldLog: string;
   readonly outcomes: Record<ReplayOutcomeKind, string>;
   readonly legendary: Record<ReplayLegendaryKind, string>;
 };
 
 export type ReplayRenderOptions = {
-  readonly sprites: ReplaySpriteMap;
+  readonly assets: ReplayAssets;
   readonly labels: ReplayRenderLabels;
   readonly reducedMotion?: boolean;
-};
-
-export type ReplayAnchor = {
-  readonly x: number;
-  readonly y: number;
-  readonly scale: number;
 };

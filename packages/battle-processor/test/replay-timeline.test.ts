@@ -143,9 +143,13 @@ describe("replay-timeline", () => {
 
     const firstSnapshot = timeline.snapshots[1]!;
 
+    expect(
+      getReplayStateAtTime(timeline, firstSnapshot.impactMs - 1).hpById["2"],
+    ).toBe(100);
+
     const rightAfterHit = getReplayStateAtTime(
       timeline,
-      firstSnapshot.timeMs + 40,
+      firstSnapshot.impactMs + 40,
     );
 
     expect(rightAfterHit.hpById["2"]).toBe(60);
@@ -154,7 +158,7 @@ describe("replay-timeline", () => {
 
     const settledState = getReplayStateAtTime(
       timeline,
-      firstSnapshot.timeMs + 400,
+      firstSnapshot.impactMs + 400,
     );
 
     expect(settledState.trailingHpById["2"]).toBe(settledState.hpById["2"]);
@@ -167,45 +171,5 @@ describe("replay-timeline", () => {
     expect(outroState.victoryEvent?.outcome).toBe("victory");
     expect(outroState.victoryProgress).toBeGreaterThan(0);
     expect(outroState.deadIds.has("2")).toBe(true);
-  });
-
-  it("selects arena theme from matchmaking and team size", () => {
-    const abyss = buildReplayTimeline(
-      buildSampleInput(["1=100;2=0;+dmg=500;-dmg=500"], { matchmaking: true }),
-    );
-
-    const group = buildReplayTimeline(
-      buildSampleInput(["1=100;2=0;+dmg=500;-dmg=500"], {
-        warriors: [
-          {
-            originalId: "1",
-            name: "A",
-            lvl: 100,
-            prof: "w",
-            icon: "/a.gif",
-            team: 1,
-          },
-          {
-            originalId: "3",
-            name: "B",
-            lvl: 100,
-            prof: "m",
-            icon: "/b.gif",
-            team: 1,
-          },
-          {
-            originalId: "2",
-            name: "Boss",
-            lvl: 120,
-            prof: "w",
-            icon: "/boss.gif",
-            team: 2,
-          },
-        ],
-      }),
-    );
-
-    expect(abyss.arenaTheme).toBe("abyss");
-    expect(group.arenaTheme).toBe("group");
   });
 });

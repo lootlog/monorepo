@@ -1,30 +1,29 @@
 import { parseBattleMoves } from "@lootlog/battle-processor/battle-log";
-import { buildReplayTimeline } from "@lootlog/battle-processor/replay-timeline";
+import {
+  buildReplayTimeline,
+  REPLAY_IMPACT_FRACTION,
+} from "@lootlog/battle-processor/replay-timeline";
 import { describe, expect, it, vi } from "vitest";
-import { getReplaySoundTriggerMs } from "./replay-audio";
+import { getBattlegroundUrl, getReplaySpriteUrl } from "./replay-asset-loader";
 import type { ReplayRenderLabels } from "./replay-canvas-types";
 import { buildExportFilename } from "./replay-export-types";
 import { renderFrame } from "./replay-renderer";
-import { getReplaySpriteUrl } from "./replay-sprite-loader";
 
 const TEST_LABELS: ReplayRenderLabels = {
-  turnCounter: "TURA {{current}} / {{total}}",
+  turn: "TURA {{current}}/{{total}}",
   evade: "UNIK",
   block: "BLOK",
   parry: "PAROWANIE",
   arrowBlock: "BLOK STRZAŁY",
   pierce: "PRZEBICIE",
-  counter: "KONTRA",
+  crit: "KRYTYK",
   flee: "UCIECZKA",
-  mvp: "MVP",
+  mvp: "MVP walki",
   totalTurns: "Liczba tur",
-  damageShort: "obr.",
+  damageDealt: "Obrażenia",
+  yourTeam: "Twoja drużyna",
+  enemyTeam: "Przeciwnicy",
   watermark: "lootlog.pl",
-  logStart: "Walka rozpoczęta",
-  stepLog: "podchodzi bliżej",
-  diedLog: "poległ!",
-  effectLog: "efekt",
-  shieldLog: "absorpcji",
   outcomes: {
     victory: "Zwycięstwo",
     defeat: "Porażka",
@@ -73,7 +72,9 @@ const createFakeCanvasContext = (width: number, height: number) => {
     shadowOffsetX: 0,
     shadowOffsetY: 0,
     imageSmoothingEnabled: true,
+    imageSmoothingQuality: "low",
     save: vi.fn(),
+    setTransform: vi.fn(),
     restore: vi.fn(),
     translate: vi.fn(),
     rotate: vi.fn(),
@@ -111,6 +112,8 @@ const createFakeCanvasContext = (width: number, height: number) => {
   return { ctx: stub as CanvasRenderingContext2D, fillTextCalls };
 };
 
+const EMPTY_ASSETS = { sprites: new Map(), battleground: null };
+
 describe("battle replay helpers and renderer", () => {
   it("normalizes Margonem outfit URLs onto the same-origin CORS sprite proxy", () => {
     expect(getReplaySpriteUrl("/vip/12345.gif")).toBe(
@@ -121,11 +124,26 @@ describe("battle replay helpers and renderer", () => {
         "https://micc.garmory-cdn.cloud/obrazki/postacie/m/pal.gif",
       ),
     ).toBe("/cdn-proxy/obrazki/postacie/m/pal.gif");
-    expect(getReplaySpriteUrl("/npc/her/boss.gif")).toBe(
-      "/cdn-proxy/obrazki/npc/her/boss.gif",
-    );
     expect(getReplaySpriteUrl("../evil.gif")).toBeNull();
     expect(getReplaySpriteUrl("")).toBeNull();
+  });
+
+  it("resolves the battleground the game sent the way the game client does, falling back for missing or unsafe names", () => {
+    expect(getBattlegroundUrl("034.jpg")).toBe(
+      "/cdn-proxy/obrazki/battle/m1.jpg",
+    );
+    expect(getBattlegroundUrl("m8.jpg")).toBe(
+      "/cdn-proxy/obrazki/battle/m8.jpg",
+    );
+    expect(getBattlegroundUrl(undefined)).toBe(
+      "/cdn-proxy/obrazki/battle/m18.jpg",
+    );
+    expect(getBattlegroundUrl("matchmaking.jpg")).toBe(
+      "/cdn-proxy/obrazki/battle/m18.jpg",
+    );
+    expect(getBattlegroundUrl("../secret.jpg")).toBe(
+      "/cdn-proxy/obrazki/battle/m18.jpg",
+    );
   });
 
   it("formats export filenames by battle id, layout, and extension", () => {
@@ -137,7 +155,7 @@ describe("battle replay helpers and renderer", () => {
     );
   });
 
-  it("renders combat frames and victory outro deterministically for 16:9 and 9:16 layouts", () => {
+  it("shows the hit, its damage and both fighters at impact, then the outcome and MVP in the outro", () => {
     const timeline = buildReplayTimeline({
       characterId: "1",
       warriors: [
@@ -175,34 +193,37 @@ describe("battle replay helpers and renderer", () => {
       winningTeam: 1,
     });
 
-    const landscape = createFakeCanvasContext(1280, 720);
-
-    renderFrame(landscape.ctx, timeline, 650, "16:9", {
-      sprites: new Map(),
-      labels: TEST_LABELS,
-    });
-
-    expect(landscape.fillTextCalls).toContain("lootlog.pl");
-    expect(landscape.fillTextCalls).toContain("#1");
-    expect(
-      landscape.fillTextCalls.some((text) => text.includes("Wojownik [190w]")),
-    ).toBe(true);
-    expect(
-      landscape.fillTextCalls.some((text) => text.includes("-8 100!")),
-    ).toBe(true);
-
     const firstAttack = timeline.events.find(
       (event) => event.kind === "attack",
     );
 
     expect(firstAttack).toBeDefined();
 
-    const attackTriggerMs = firstAttack
-      ? getReplaySoundTriggerMs(firstAttack)
-      : -1;
+    const impactMs =
+      (firstAttack?.tStart ?? 0) +
+      ((firstAttack?.tEnd ?? 0) - (firstAttack?.tStart ?? 0)) *
+        REPLAY_IMPACT_FRACTION;
 
-    expect(attackTriggerMs).toBeGreaterThan(firstAttack?.tStart ?? 0);
-    expect(attackTriggerMs).toBeLessThan(firstAttack?.tEnd ?? 0);
+    const landscape = createFakeCanvasContext(1280, 720);
+
+    renderFrame(landscape.ctx, timeline, impactMs + 60, "16:9", {
+      assets: EMPTY_ASSETS,
+      labels: TEST_LABELS,
+    });
+
+    expect(landscape.fillTextCalls).toEqual(
+      expect.arrayContaining([
+        "lootlog.pl",
+        "TURA 1/2",
+        "Wojownik",
+        "Mag",
+        "190w",
+        "KRYTYK",
+      ]),
+    );
+    expect(
+      landscape.fillTextCalls.some((text) => /^8\s?100$/u.test(text)),
+    ).toBe(true);
 
     const verticalOutro = createFakeCanvasContext(1080, 1920);
 
@@ -211,13 +232,11 @@ describe("battle replay helpers and renderer", () => {
       timeline,
       timeline.actionDurationMs + 900,
       "9:16",
-      {
-        sprites: new Map(),
-        labels: TEST_LABELS,
-      },
+      { assets: EMPTY_ASSETS, labels: TEST_LABELS },
     );
 
-    expect(verticalOutro.fillTextCalls).toContain("ZWYCIĘSTWO");
-    expect(verticalOutro.fillTextCalls).toContain("Wojownik");
+    expect(verticalOutro.fillTextCalls).toEqual(
+      expect.arrayContaining(["Zwycięstwo", "MVP walki", "Wojownik"]),
+    );
   });
 });

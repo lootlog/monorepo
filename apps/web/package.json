@@ -17,6 +17,7 @@
     "doctor": "react-doctor ."
   },
   "dependencies": {
+    "@fontsource/pixelify-sans": "5.2.6",
     "@hookform/resolvers": "catalog:",
     "@lexical/code": "catalog:",
     "@lexical/code-prism": "catalog:",

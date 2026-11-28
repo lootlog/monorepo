@@ -3034,6 +3034,8 @@ components:
               type: string
             world:
               type: string
+            battleground:
+              type: string
             events:
               type: array
               items:
@@ -3717,6 +3719,8 @@ components:
                   init:
                     type: string
                   auto:
+                    type: string
+                  battleground:
                     type: string
                   w:
                     type: object
@@ -5845,6 +5849,8 @@ components:
                   init:
                     type: string
                   auto:
+                    type: string
+                  battleground:
                     type: string
                   w:
                     type: object

@@ -3859,6 +3859,9 @@
                     "auto": {
                       "type": "string"
                     },
+                    "battleground": {
+                      "type": "string"
+                    },
                     "w": {
                       "type": "object",
                       "additionalProperties": {
@@ -7150,6 +7153,9 @@
                 "type": "string"
               },
               "world": {
+                "type": "string"
+              },
+              "battleground": {
                 "type": "string"
               },
               "events": {

@@ -40,6 +40,7 @@ export const CreateBattleDto = Schema.Struct({
         endBattle: Schema.optionalKey(FiniteNumber),
         init: Schema.optionalKey(Schema.String),
         auto: Schema.optionalKey(Schema.String),
+        battleground: Schema.optionalKey(Schema.String),
         w: Schema.optionalKey(
           Schema.Record(
             Schema.String,

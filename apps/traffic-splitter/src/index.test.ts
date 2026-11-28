@@ -535,6 +535,29 @@ describe("traffic splitter", () => {
       ).toBe(false);
     });
 
+    it("proxies battle backgrounds so replays can paint the battleground the game used", async () => {
+      const upstreamFetch = vi.fn<UpstreamFetch>(() =>
+        Promise.resolve(
+          new Response(new Uint8Array([255, 216, 255]), {
+            status: 200,
+            headers: { "content-type": "image/jpeg" },
+          }),
+        ),
+      );
+
+      const response = await routeRequest(
+        new Request("https://lootlog.pl/cdn-proxy/obrazki/battle/m1.jpg"),
+        productionEnvironment,
+        upstreamFetch,
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get("access-control-allow-origin")).toBe("*");
+      expect(upstreamFetch.mock.calls[0]?.[0].url).toBe(
+        "https://micc.garmory-cdn.cloud/obrazki/battle/m1.jpg",
+      );
+    });
+
     it.each([
       "/cdn-proxy/obrazki/postacie/../secret.gif",
       "/cdn-proxy/obrazki/postacie/%2e%2e/secret.gif",

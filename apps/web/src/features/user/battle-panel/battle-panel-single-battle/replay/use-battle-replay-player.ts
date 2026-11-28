@@ -13,11 +13,7 @@ import { useTranslation } from "react-i18next";
 import { useMediaQuery } from "usehooks-ts";
 import { exportReplayToGif } from "./export-gif";
 import { exportReplayToMp4 } from "./export-mp4";
-import {
-  getReplaySoundTriggerMs,
-  scheduleReplayEventSound,
-} from "./replay-audio";
-import type { ReplaySpriteMap } from "./replay-canvas-types";
+import type { ReplayAssets } from "./replay-canvas-types";
 import {
   downloadReplayBlob,
   type ReplayExportFormat,
@@ -25,7 +21,7 @@ import {
 } from "./replay-export-types";
 import { buildReplayRenderLabels } from "./replay-render-labels";
 import { renderFrame } from "./replay-renderer";
-import { loadReplaySprites } from "./replay-sprite-loader";
+import { loadReplayAssets } from "./replay-asset-loader";
 
 export type ReplaySpeed = "0.5" | "1" | "2";
 
@@ -36,23 +32,11 @@ type UseBattleReplayPlayerParams = {
   readonly rawBattle: RawBattle;
 };
 
-const EMPTY_SPRITES: ReplaySpriteMap = new Map();
+const EMPTY_ASSETS: ReplayAssets = { sprites: new Map(), battleground: null };
 
 const isContentVisibilityEvent = (
   event: Event,
 ): event is ContentVisibilityEvent => "skipped" in event;
-
-const createLiveAudioContext = (): AudioContext | null => {
-  const AudioContextCtor = globalThis.AudioContext;
-
-  if (!AudioContextCtor) return null;
-
-  try {
-    return new AudioContextCtor();
-  } catch {
-    return null;
-  }
-};
 
 export const useBattleReplayPlayer = ({
   battle,
@@ -67,7 +51,6 @@ export const useBattleReplayPlayer = ({
   const [layout, setLayout] = useState<ReplayLayout>("16:9");
   const [pacingMode, setPacingMode] = useState<ReplayPacingMode>("smart");
   const [speed, setSpeed] = useState<ReplaySpeed>("1");
-  const [audioEnabled, setAudioEnabled] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTimeMs, setCurrentTimeMs] = useState(0);
 
@@ -82,8 +65,6 @@ export const useBattleReplayPlayer = ({
   const stageContainerRef = useRef<HTMLDivElement | null>(null);
   const currentTimeRef = useRef(0);
   const isStageHiddenRef = useRef(false);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const playedEventIdsRef = useRef<Set<string>>(new Set());
   const exportAbortRef = useRef<AbortController | null>(null);
 
   const timeline: ReplayTimeline = buildReplayTimeline({
@@ -100,14 +81,15 @@ export const useBattleReplayPlayer = ({
     pacingMode,
   });
 
-  const spriteQuery = useQuery({
-    queryKey: ["battle-replay-sprites", battle.id],
-    queryFn: () => loadReplaySprites(timeline.participants),
+  const assetQuery = useQuery({
+    queryKey: ["battle-replay-assets", battle.id],
+    queryFn: () =>
+      loadReplayAssets(timeline.participants, rawBattle.battleground),
     staleTime: Number.POSITIVE_INFINITY,
   });
 
-  const sprites = spriteQuery.data ?? EMPTY_SPRITES;
-  const isLoadingSprites = spriteQuery.isPending;
+  const assets = assetQuery.data ?? EMPTY_ASSETS;
+  const isLoadingSprites = assetQuery.isPending;
   const renderLabels = buildReplayRenderLabels(t);
   const speedMultiplier = Number.parseFloat(speed);
 
@@ -121,7 +103,7 @@ export const useBattleReplayPlayer = ({
     if (!ctx) return;
 
     renderFrame(ctx, timeline, timeMs, layout, {
-      sprites,
+      assets,
       labels: renderLabels,
       reducedMotion: prefersReducedMotion,
     });
@@ -129,34 +111,10 @@ export const useBattleReplayPlayer = ({
 
   const paintCanvasFromEffect = useEffectEvent(paintCanvas);
 
-  const triggerLiveAudio = useEffectEvent((fromMs: number, toMs: number) => {
-    if (!audioEnabled || toMs <= fromMs) return;
-
-    const audioCtx = audioContextRef.current;
-
-    if (!audioCtx || audioCtx.state !== "running") return;
-
-    for (const event of timeline.events) {
-      if (playedEventIdsRef.current.has(event.id)) continue;
-
-      const triggerMs = getReplaySoundTriggerMs(event);
-
-      if (triggerMs >= fromMs && triggerMs <= toMs) {
-        playedEventIdsRef.current.add(event.id);
-        scheduleReplayEventSound(
-          audioCtx,
-          audioCtx.destination,
-          event,
-          audioCtx.currentTime,
-        );
-      }
-    }
-  });
-
   // oxlint-disable-next-line lootlog/no-unreasoned-state-sync -- Keeps the imperative 2D canvas surface painted in sync with layout, pacing, sprite loading, motion preference, and scrubbed time.
   useEffect(() => {
     paintCanvasFromEffect(currentTimeRef.current);
-  }, [layout, pacingMode, sprites, prefersReducedMotion, currentTimeMs]);
+  }, [layout, pacingMode, assets, prefersReducedMotion, currentTimeMs]);
 
   // oxlint-disable-next-line lootlog/no-unreasoned-state-sync -- Subscribes to document visibility and contentvisibilityautostatechange/IntersectionObserver to pause background canvas playback when hidden or off-screen.
   useEffect(() => {
@@ -244,7 +202,6 @@ export const useBattleReplayPlayer = ({
       );
 
       currentTimeRef.current = nextTime;
-      triggerLiveAudio(previousTime, nextTime);
       paintCanvasFromEffect(nextTime);
 
       if (now - lastUiSync >= 66 || nextTime >= timeline.totalDurationMs) {
@@ -268,38 +225,22 @@ export const useBattleReplayPlayer = ({
     };
   }, [isPlaying, speedMultiplier, timeline.totalDurationMs]);
 
-  // oxlint-disable-next-line lootlog/no-unreasoned-state-sync -- Releases the Web Audio context and aborts any in-flight video/GIF export when the replay studio unmounts.
+  // oxlint-disable-next-line lootlog/no-unreasoned-state-sync -- Aborts any in-flight video/GIF export when the replay studio unmounts.
   useEffect(
     () => () => {
       exportAbortRef.current?.abort();
-      void audioContextRef.current?.close();
     },
     [],
   );
 
-  const ensureAudioReady = () => {
-    if (!audioEnabled) return;
-
-    if (!audioContextRef.current) {
-      audioContextRef.current = createLiveAudioContext();
-    }
-
-    if (audioContextRef.current?.state === "suspended") {
-      void audioContextRef.current.resume();
-    }
-  };
-
   const seekTo = (nextTimeMs: number) => {
     const clamped = Math.max(0, Math.min(timeline.totalDurationMs, nextTimeMs));
     currentTimeRef.current = clamped;
-    playedEventIdsRef.current.clear();
     setCurrentTimeMs(clamped);
     paintCanvas(clamped);
   };
 
   const togglePlay = () => {
-    ensureAudioReady();
-
     if (isPlaying) {
       setIsPlaying(false);
 
@@ -308,7 +249,6 @@ export const useBattleReplayPlayer = ({
 
     if (currentTimeRef.current >= timeline.totalDurationMs - 16) {
       currentTimeRef.current = 0;
-      playedEventIdsRef.current.clear();
       setCurrentTimeMs(0);
     }
 
@@ -316,9 +256,7 @@ export const useBattleReplayPlayer = ({
   };
 
   const restart = () => {
-    ensureAudioReady();
     currentTimeRef.current = 0;
-    playedEventIdsRef.current.clear();
     setCurrentTimeMs(0);
     paintCanvas(0);
     setIsPlaying(true);
@@ -351,7 +289,6 @@ export const useBattleReplayPlayer = ({
     setIsPlaying(false);
     setPacingMode(nextPacing);
     currentTimeRef.current = 0;
-    playedEventIdsRef.current.clear();
     setCurrentTimeMs(0);
   };
 
@@ -380,11 +317,10 @@ export const useBattleReplayPlayer = ({
           timeline,
           layout,
           renderOptions: {
-            sprites,
+            assets,
             labels: renderLabels,
             reducedMotion: false,
           },
-          includeAudio: audioEnabled,
           signal: controller.signal,
           onProgress: setExportProgress,
         };
@@ -430,8 +366,6 @@ export const useBattleReplayPlayer = ({
     handlePacingChange,
     speed,
     setSpeed,
-    audioEnabled,
-    setAudioEnabled,
     isPlaying,
     togglePlay,
     restart,

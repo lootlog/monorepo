@@ -246,6 +246,7 @@ export const BattleRawResponseDto_Output = Schema.Struct({
     accountId: Schema.String,
     characterId: Schema.String,
     world: Schema.String,
+    battleground: Schema.optionalKey(Schema.String),
     events: Schema.Array(
       Schema.Struct({
         attackerId: Schema.Union([Schema.String, Schema.Null]),

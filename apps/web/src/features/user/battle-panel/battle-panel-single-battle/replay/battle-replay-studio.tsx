@@ -23,8 +23,6 @@ export function BattleReplayStudio({
     handlePacingChange,
     speed,
     setSpeed,
-    audioEnabled,
-    setAudioEnabled,
     isPlaying,
     togglePlay,
     restart,
@@ -69,12 +67,10 @@ export function BattleReplayStudio({
       <BattleReplayExportPanel
         layout={layout}
         pacingMode={pacingMode}
-        audioEnabled={audioEnabled}
         exportFormat={exportFormat}
         exportProgress={exportProgress}
         onLayoutChange={setLayout}
         onPacingChange={handlePacingChange}
-        onAudioChange={setAudioEnabled}
         onExport={(format) => {
           void exportClip(format);
         }}

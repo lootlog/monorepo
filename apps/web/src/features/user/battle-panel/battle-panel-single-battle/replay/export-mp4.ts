@@ -1,7 +1,3 @@
-import {
-  REPLAY_AUDIO_SAMPLE_RATE,
-  renderReplayAudioTrack,
-} from "./replay-audio";
 import { REPLAY_VIDEO_DIMENSIONS } from "./replay-canvas-types";
 import {
   buildExportFilename,
@@ -47,83 +43,6 @@ const pickSupportedVideoConfig = async (
   }
 
   return null;
-};
-
-const pickSupportedAudioConfig =
-  async (): Promise<AudioEncoderConfig | null> => {
-    const AudioEncoderCtor = globalThis.AudioEncoder;
-
-    if (!AudioEncoderCtor || !globalThis.AudioData) return null;
-
-    const config: AudioEncoderConfig = {
-      codec: "mp4a.40.2",
-      numberOfChannels: 1,
-      sampleRate: REPLAY_AUDIO_SAMPLE_RATE,
-      bitrate: 96_000,
-    };
-
-    try {
-      const support = await AudioEncoderCtor.isConfigSupported(config);
-
-      return support.supported ? config : null;
-    } catch {
-      return null;
-    }
-  };
-
-const encodeAudioBuffer = async (
-  audioBuffer: AudioBuffer,
-  audioConfig: AudioEncoderConfig,
-  onChunk: (chunk: EncodedAudioChunk, meta?: EncodedAudioChunkMetadata) => void,
-  signal: AbortSignal | undefined,
-): Promise<void> => {
-  let encodingError: Error | null = null;
-
-  const audioEncoder = new AudioEncoder({
-    output: onChunk,
-    error: (error) => {
-      encodingError = error instanceof Error ? error : new Error(String(error));
-    },
-  });
-
-  audioEncoder.configure(audioConfig);
-
-  const channelData = audioBuffer.getChannelData(0);
-  const chunkFrames = 1024;
-
-  try {
-    for (let offset = 0; offset < channelData.length; offset += chunkFrames) {
-      throwIfAborted(signal);
-
-      if (encodingError) throw encodingError;
-
-      const slice = channelData.subarray(
-        offset,
-        Math.min(channelData.length, offset + chunkFrames),
-      );
-
-      const copy = new Float32Array(slice.length);
-      copy.set(slice);
-
-      const audioData = new AudioData({
-        format: "f32",
-        sampleRate: audioBuffer.sampleRate,
-        numberOfFrames: copy.length,
-        numberOfChannels: 1,
-        timestamp: Math.round((offset / audioBuffer.sampleRate) * 1_000_000),
-        data: copy,
-      });
-
-      audioEncoder.encode(audioData);
-      audioData.close();
-    }
-
-    await audioEncoder.flush();
-  } finally {
-    if (audioEncoder.state !== "closed") audioEncoder.close();
-  }
-
-  if (encodingError) throw encodingError;
 };
 
 const exportWithMediaRecorder = async (
@@ -238,17 +157,9 @@ export const exportReplayToMp4 = async (
 
   const { Muxer, ArrayBufferTarget } = await import("mp4-muxer");
 
-  const audioConfig = params.includeAudio
-    ? await pickSupportedAudioConfig()
-    : null;
-
-  const audioBuffer =
-    audioConfig !== null ? await renderReplayAudioTrack(params.timeline) : null;
-
   throwIfAborted(params.signal);
 
   const target = new ArrayBufferTarget();
-  const hasAudioTrack = audioBuffer !== null && audioConfig !== null;
 
   const muxer = new Muxer({
     target,
@@ -259,13 +170,6 @@ export const exportReplayToMp4 = async (
       width,
       height,
     },
-    audio: hasAudioTrack
-      ? {
-          codec: "aac",
-          numberOfChannels: 1,
-          sampleRate: REPLAY_AUDIO_SAMPLE_RATE,
-        }
-      : undefined,
   });
 
   let videoError: Error | null = null;
@@ -334,15 +238,6 @@ export const exportReplayToMp4 = async (
       totalFrames,
       progress: 0.94,
     });
-
-    if (audioBuffer && audioConfig) {
-      await encodeAudioBuffer(
-        audioBuffer,
-        audioConfig,
-        (chunk, meta) => muxer.addAudioChunk(chunk, meta),
-        params.signal,
-      );
-    }
 
     muxer.finalize();
   } finally {

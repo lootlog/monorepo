@@ -1,484 +1,498 @@
-import type {
-  ReplayAttackEvent,
-  ReplayDamageKind,
-  ReplayLegendaryProcEvent,
-  ReplayStateAtTime,
-} from "@lootlog/battle-processor/replay-timeline";
-import { BATTLE_HEX_COLORS } from "@lootlog/battle-ui/lib/battle-color-palette";
-import type { ReplayAnchor } from "./replay-canvas-types";
 import {
-  paintCrescentSlash,
-  paintDefenseVfx,
-  paintFireExplosion,
-  paintFrostSpikeBurst,
-  paintProjectile,
-  paintStarFlare,
-} from "./replay-projectile-painter";
+  REPLAY_IMPACT_FRACTION,
+  type ReplayAttackEvent,
+  type ReplayDamageKind,
+  type ReplayEvent,
+  type ReplayStateAtTime,
+} from "@lootlog/battle-processor/replay-timeline";
+import {
+  clamp01,
+  createSeededRandom,
+  easeOutCubic,
+  getEventProgress,
+} from "./replay-motion";
+import type { ReplayScene } from "./replay-scene-layout";
+import type { WarriorPoseMap } from "./replay-warrior-painter";
 
-const DAMAGE_COLORS: Record<ReplayDamageKind, string> = {
-  physical: "#f8fafc",
-  distance: "#86efac",
-  auxiliary: "#fdba74",
-  fire: "#ff6b35",
-  frost: "#38bdf8",
-  lightning: "#fde047",
-  poison: "#4ade80",
-  wound: "#fb923c",
-  true: "#e879f9",
+export const DAMAGE_KIND_COLORS: Record<ReplayDamageKind, string> = {
+  physical: "#fff4dc",
+  distance: "#f1dfb0",
+  auxiliary: "#d6c6ff",
+  fire: "#ff8a2b",
+  frost: "#7fd4ff",
+  lightning: "#ffe14d",
+  poison: "#7fdc5a",
+  wound: "#e0453a",
+  true: "#f39cff",
 };
 
-const LEGENDARY_COLORS: Record<
-  ReplayLegendaryProcEvent["legendaryKind"],
-  string
-> = {
-  anguish: BATTLE_HEX_COLORS.legendary.anguish,
-  cleanse: BATTLE_HEX_COLORS.legendary.cleanse,
-  critShield: BATTLE_HEX_COLORS.legendary.critShield,
-  curse: BATTLE_HEX_COLORS.legendary.curse,
-  facade: BATTLE_HEX_COLORS.legendary.facade,
-  frenzy: BATTLE_HEX_COLORS.legendary.frenzy,
-  glare: BATTLE_HEX_COLORS.legendary.glare,
-  holyTouch: BATTLE_HEX_COLORS.legendary.holyTouch,
-  lastHeal: BATTLE_HEX_COLORS.legendary.lastHeal,
-  puncture: BATTLE_HEX_COLORS.legendary.puncture,
-  retaliation: BATTLE_HEX_COLORS.legendary.retaliation,
-  unknown: BATTLE_HEX_COLORS.legendary.unknown,
-  veryCrit: BATTLE_HEX_COLORS.legendary.veryCrit,
+type Point = { readonly x: number; readonly y: number };
+
+const SPARK_LIFETIME_MS = 520;
+
+const getBodyPoint = (
+  poses: WarriorPoseMap,
+  id: string | null,
+  scene: ReplayScene,
+): Point | null => {
+  const pose = id ? poses.get(id) : undefined;
+
+  if (!pose) return null;
+
+  return {
+    x: pose.x,
+    y: pose.feetY - scene.frameHeight * scene.spriteScale * 0.55,
+  };
 };
 
-const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
-
-const hashId = (id: string): number => {
-  let hash = 2166136261;
-
-  for (let i = 0; i < id.length; i += 1) {
-    hash ^= id.charCodeAt(i);
-    hash = Math.imul(hash, 16777619);
-  }
-
-  return hash >>> 0;
-};
-
-const paintEnergyBurst = (
+const pixel = (
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
-  seed: number,
-  progress: number,
+  size: number,
   color: string,
-  count: number,
-  maxRadius: number,
-  doubleRing: boolean,
-): void => {
-  if (progress <= 0 || progress >= 1) return;
+) => {
+  ctx.fillStyle = color;
+  ctx.fillRect(Math.round(x - size / 2), Math.round(y - size / 2), size, size);
+};
 
-  const alpha = 1 - progress;
-  const easeOut = 1 - (1 - progress) ** 3;
-
-  paintStarFlare(
-    ctx,
-    x,
-    y,
-    maxRadius * (0.48 + progress * 0.5),
-    color,
-    Math.max(0, 1 - progress * 2.1),
-  );
-
+const paintArrow = (
+  ctx: CanvasRenderingContext2D,
+  position: Point,
+  angle: number,
+) => {
   ctx.save();
-  ctx.globalCompositeOperation = "lighter";
-
-  if (doubleRing) {
-    ctx.beginPath();
-    ctx.ellipse(
-      x,
-      y + 24,
-      maxRadius * 0.96 * easeOut,
-      maxRadius * 0.36 * easeOut,
-      0,
-      0,
-      Math.PI * 2,
-    );
-    ctx.strokeStyle = color;
-    ctx.globalAlpha = alpha * 0.9;
-    ctx.lineWidth = Math.max(1.5, 5.5 * alpha);
-    ctx.stroke();
-
-    const innerEase = 1 - (1 - clamp01(progress * 1.35)) ** 3;
-    ctx.beginPath();
-    ctx.ellipse(
-      x,
-      y + 24,
-      maxRadius * 0.62 * innerEase,
-      maxRadius * 0.22 * innerEase,
-      0,
-      0,
-      Math.PI * 2,
-    );
-    ctx.strokeStyle = "#ffffff";
-    ctx.globalAlpha = alpha * 0.65;
-    ctx.lineWidth = Math.max(1, 3 * alpha);
-    ctx.stroke();
-  }
-
-  ctx.lineCap = "round";
-
-  for (let i = 0; i < count; i += 1) {
-    const angleSeed = ((seed + i * 2654435761) >>> 0) % 3600;
-    const speedSeed = ((seed + i * 1597334677) >>> 0) % 1000;
-    const angle = (angleSeed / 3600) * Math.PI * 2;
-    const speed = 0.42 + (speedSeed / 1000) * 0.95;
-    const headDist = maxRadius * speed * easeOut;
-
-    const tailDist = Math.max(
-      0,
-      headDist - (18 + (i % 3) * 10) * (1 - progress * 0.55),
-    );
-
-    const gravity = progress * progress * 22;
-
-    ctx.beginPath();
-    ctx.moveTo(
-      x + Math.cos(angle) * tailDist,
-      y + Math.sin(angle) * tailDist + gravity,
-    );
-    ctx.lineTo(
-      x + Math.cos(angle) * headDist,
-      y + Math.sin(angle) * headDist + gravity,
-    );
-    ctx.strokeStyle = i % 3 === 0 ? "#ffffff" : color;
-    ctx.lineWidth = Math.max(1.4, (3.6 - (i % 2)) * (1 - progress * 0.45));
-    ctx.globalAlpha = alpha * 0.95;
-    ctx.stroke();
-  }
-
+  ctx.translate(Math.round(position.x), Math.round(position.y));
+  ctx.rotate(angle);
+  ctx.fillStyle = "#0b0705";
+  ctx.fillRect(-9, -1.5, 15, 3);
+  ctx.fillStyle = "#c79a5b";
+  ctx.fillRect(-8, -0.5, 12, 1);
+  ctx.fillStyle = "#e8e8f0";
+  ctx.fillRect(4, -1.5, 3, 3);
+  ctx.fillStyle = "#f4ead8";
+  ctx.fillRect(-9, -2, 2, 1);
+  ctx.fillRect(-9, 1, 2, 1);
   ctx.restore();
 };
 
-const paintHealLightPillar = (
+const paintOrb = (
   ctx: CanvasRenderingContext2D,
-  target: ReplayAnchor,
-  seed: number,
-  progress: number,
-  isLastHeal: boolean,
-): void => {
-  if (progress <= 0 || progress >= 1) return;
+  position: Point,
+  from: Point,
+  color: string,
+  core: string,
+  timeMs: number,
+) => {
+  const dx = position.x - from.x;
+  const dy = position.y - from.y;
+  const length = Math.hypot(dx, dy) || 1;
 
-  const alpha =
-    progress < 0.22 ? progress / 0.22 : 1 - (progress - 0.22) / 0.78;
+  for (let trail = 5; trail >= 1; trail -= 1) {
+    const offset = trail * 3.5;
+    const flicker = ((timeMs / 40 + trail) % 2) * 0.5;
+    ctx.globalAlpha = (1 - trail / 6) * 0.8;
+    pixel(
+      ctx,
+      position.x - (dx / length) * offset + flicker,
+      position.y - (dy / length) * offset,
+      Math.max(1, 5 - trail),
+      color,
+    );
+  }
 
-  ctx.save();
-  ctx.globalCompositeOperation = "lighter";
-  ctx.globalAlpha = clamp01(alpha);
+  ctx.globalAlpha = 1;
+  pixel(ctx, position.x, position.y, 6, "#0b0705");
+  pixel(ctx, position.x, position.y, 5, color);
+  pixel(ctx, position.x, position.y, 2, core);
+};
 
-  const beamW = (isLastHeal ? 116 : 64) * (1 - progress * 0.24);
+const paintLightning = (
+  ctx: CanvasRenderingContext2D,
+  from: Point,
+  to: Point,
+  seed: string,
+  fade: number,
+) => {
+  const random = createSeededRandom(seed);
+  const points: Point[] = [from];
+  const segments = 7;
 
-  const beamGrad = ctx.createLinearGradient(
-    0,
-    target.y - 280,
-    0,
-    target.y + 44,
-  );
+  for (let index = 1; index < segments; index += 1) {
+    const t = index / segments;
+    points.push({
+      x: from.x + (to.x - from.x) * t + (random() - 0.5) * 18,
+      y: from.y + (to.y - from.y) * t + (random() - 0.5) * 18,
+    });
+  }
 
-  beamGrad.addColorStop(0, "rgba(254, 240, 138, 0)");
-  beamGrad.addColorStop(
-    0.52,
-    isLastHeal ? "rgba(250, 204, 21, 0.56)" : "rgba(74, 222, 128, 0.34)",
-  );
-  beamGrad.addColorStop(1, "rgba(74, 222, 128, 0.65)");
-  ctx.fillStyle = beamGrad;
-  ctx.fillRect(target.x - beamW / 2, target.y - 280, beamW, 324);
+  points.push(to);
 
-  ctx.strokeStyle = isLastHeal ? "#fef08a" : "#86efac";
-  ctx.lineWidth = 2.5;
-
-  for (const phase of [0, Math.PI]) {
+  for (const [width, color] of [
+    [4, "rgba(255, 225, 77, 0.35)"],
+    [2, "#ffe14d"],
+    [1, "#ffffff"],
+  ] as const) {
+    ctx.globalAlpha = fade;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.lineJoin = "miter";
     ctx.beginPath();
 
-    for (let s = 0; s <= 18; s += 1) {
-      const f = s / 18;
-
-      const hx =
-        target.x + Math.sin(f * Math.PI * 3 + progress * 8 + phase) * 34;
-
-      const hy = target.y + 38 - f * 130;
-
-      if (s === 0) ctx.moveTo(hx, hy);
-      else ctx.lineTo(hx, hy);
+    for (const [index, point] of points.entries()) {
+      if (index === 0) ctx.moveTo(point.x, point.y);
+      else ctx.lineTo(point.x, point.y);
     }
 
     ctx.stroke();
   }
 
-  for (let i = 0; i < (isLastHeal ? 12 : 7); i += 1) {
-    const ox = ((seed + i * 317) % 82) - 41;
-    const oy = 26 - progress * 100 - ((seed + i * 193) % 28);
-    const cx = target.x + ox;
-    const cy = target.y + oy;
-    const color = isLastHeal && i % 2 === 0 ? "#fef08a" : "#4ade80";
-
-    const orb = ctx.createRadialGradient(cx, cy, 1, cx, cy, 12);
-    orb.addColorStop(0, "#ffffff");
-    orb.addColorStop(0.45, color);
-    orb.addColorStop(1, "rgba(0, 0, 0, 0)");
-    ctx.fillStyle = orb;
-    ctx.beginPath();
-    ctx.arc(cx, cy, 12, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  ctx.restore();
+  ctx.globalAlpha = 1;
 };
 
-const paintShieldDome = (
-  ctx: CanvasRenderingContext2D,
-  target: ReplayAnchor,
-  progress: number,
-  isMagic: boolean,
-): void => {
-  if (progress <= 0 || progress >= 1) return;
+const PROJECTILE_START = 0.12;
 
-  const alpha =
-    progress < 0.25 ? progress / 0.25 : 1 - (progress - 0.25) / 0.75;
-
-  const color = isMagic ? "#38bdf8" : "#93c5fd";
-  const rad = 58 * target.scale * (0.86 + progress * 0.18);
-
-  ctx.save();
-  ctx.globalCompositeOperation = "lighter";
-  ctx.globalAlpha = clamp01(alpha) * 0.92;
-
-  const dome = ctx.createRadialGradient(
-    target.x,
-    target.y,
-    rad * 0.3,
-    target.x,
-    target.y,
-    rad,
-  );
-
-  dome.addColorStop(0, "rgba(56, 189, 248, 0.04)");
-  dome.addColorStop(
-    0.78,
-    isMagic ? "rgba(56, 189, 248, 0.42)" : "rgba(148, 163, 184, 0.34)",
-  );
-  dome.addColorStop(1, "rgba(0, 0, 0, 0)");
-  ctx.fillStyle = dome;
-  ctx.beginPath();
-  ctx.arc(target.x, target.y, rad, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 2.6;
-  ctx.beginPath();
-  ctx.arc(target.x, target.y, rad * 0.88, 0, Math.PI * 2);
-  ctx.stroke();
-
-  ctx.restore();
-};
-
-const paintLegendaryAura = (
-  ctx: CanvasRenderingContext2D,
-  actor: ReplayAnchor,
-  seed: number,
-  progress: number,
-  color: string,
-): void => {
-  paintEnergyBurst(
-    ctx,
-    actor.x,
-    actor.y - 8,
-    seed,
-    progress,
-    color,
-    26,
-    128,
-    true,
-  );
-
-  const alpha = progress < 0.2 ? progress / 0.2 : 1 - (progress - 0.2) / 0.8;
-  ctx.save();
-  ctx.globalCompositeOperation = "lighter";
-  ctx.globalAlpha = clamp01(alpha) * 0.85;
-  const beamW = 86 * (1 - progress * 0.2);
-  const grad = ctx.createLinearGradient(0, actor.y - 260, 0, actor.y + 44);
-  grad.addColorStop(0, "rgba(255, 255, 255, 0)");
-  grad.addColorStop(0.5, color);
-  grad.addColorStop(1, "rgba(255, 255, 255, 0)");
-  ctx.fillStyle = grad;
-  ctx.fillRect(actor.x - beamW / 2, actor.y - 260, beamW, 304);
-  ctx.restore();
-};
-
-const paintAttackEventEffects = (
+const paintProjectile = (
   ctx: CanvasRenderingContext2D,
   event: ReplayAttackEvent,
-  anchors: ReadonlyMap<string, ReplayAnchor>,
   progress: number,
-  seed: number,
-): void => {
-  const from = anchors.get(event.actorId);
-  const to = anchors.get(event.targetId);
+  from: Point,
+  to: Point,
+  timeMs: number,
+) => {
+  if (event.damageKind === "lightning") {
+    if (progress < 0.32 || progress > REPLAY_IMPACT_FRACTION + 0.12) return;
+
+    paintLightning(
+      ctx,
+      from,
+      to,
+      `${event.id}:${Math.floor(timeMs / 60)}`,
+      progress > REPLAY_IMPACT_FRACTION ? 0.6 : 1,
+    );
+
+    return;
+  }
+
+  if (progress < PROJECTILE_START || progress >= REPLAY_IMPACT_FRACTION) return;
+
+  const flight =
+    (progress - PROJECTILE_START) / (REPLAY_IMPACT_FRACTION - PROJECTILE_START);
+
+  const arc = Math.sin(flight * Math.PI) * -10;
+
+  const position = {
+    x: from.x + (to.x - from.x) * flight,
+    y: from.y + (to.y - from.y) * flight + arc,
+  };
+
+  if (event.damageKind === "fire") {
+    paintOrb(ctx, position, from, "#ff8a2b", "#fff1a8", timeMs);
+  } else if (event.damageKind === "frost") {
+    paintOrb(ctx, position, from, "#7fd4ff", "#ffffff", timeMs);
+  } else if (event.damageKind === "poison") {
+    paintOrb(ctx, position, from, "#7fdc5a", "#e6ffd0", timeMs);
+  } else if (event.damageKind === "true" || event.damageKind === "auxiliary") {
+    paintOrb(
+      ctx,
+      position,
+      from,
+      DAMAGE_KIND_COLORS[event.damageKind],
+      "#ffffff",
+      timeMs,
+    );
+  } else {
+    const slope = Math.cos(flight * Math.PI) * -10;
+    const angle = Math.atan2(to.y - from.y + slope, to.x - from.x);
+    paintArrow(ctx, position, angle);
+  }
+};
+
+const paintSparks = (
+  ctx: CanvasRenderingContext2D,
+  seed: string,
+  origin: Point,
+  elapsedMs: number,
+  count: number,
+  colors: readonly string[],
+  spread: number,
+  gravity: number,
+) => {
+  if (elapsedMs < 0 || elapsedMs > SPARK_LIFETIME_MS) return;
+
+  const random = createSeededRandom(seed);
+  const life = elapsedMs / SPARK_LIFETIME_MS;
+
+  for (let index = 0; index < count; index += 1) {
+    const angle = random() * Math.PI * 2;
+    const speed = spread * (0.45 + random() * 0.75);
+    const size = random() > 0.7 ? 3 : 2;
+    const color = colors[Math.floor(random() * colors.length)] ?? "#ffffff";
+    const travel = easeOutCubic(life);
+
+    ctx.globalAlpha = 1 - life ** 2;
+    pixel(
+      ctx,
+      origin.x + Math.cos(angle) * speed * travel,
+      origin.y + Math.sin(angle) * speed * travel + gravity * life * life,
+      size,
+      color,
+    );
+  }
+
+  ctx.globalAlpha = 1;
+};
+
+const paintSlash = (
+  ctx: CanvasRenderingContext2D,
+  origin: Point,
+  reaction: number,
+  isCrit: boolean,
+) => {
+  if (reaction > 0.45) return;
+
+  const reach = (isCrit ? 15 : 11) * easeOutCubic(reaction / 0.45);
+  const color = isCrit ? "#ffd24a" : "#ffffff";
+  ctx.globalAlpha = 1 - reaction / 0.45;
+
+  for (const offset of [-4, 0, 4]) {
+    for (let step = -reach; step <= reach; step += 2) {
+      pixel(ctx, origin.x + step, origin.y + step * 0.55 + offset, 2, color);
+    }
+  }
+
+  ctx.globalAlpha = 1;
+};
+
+const paintRing = (
+  ctx: CanvasRenderingContext2D,
+  origin: Point,
+  progress: number,
+  color: string,
+  maxRadius: number,
+) => {
+  const radius = 4 + maxRadius * easeOutCubic(progress);
+  ctx.globalAlpha = 1 - progress;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.ellipse(origin.x, origin.y, radius, radius * 0.6, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+};
+
+const getSparkColors = (event: ReplayAttackEvent) => {
+  const color = DAMAGE_KIND_COLORS[event.damageKind];
+
+  if (event.isBlock || event.isParry) return ["#cfe3ff", "#ffffff", "#8aa4c8"];
+
+  return event.isCrit ? ["#ffd24a", "#ffffff", color] : [color, "#ffffff"];
+};
+
+const paintAttackEffect = (
+  ctx: CanvasRenderingContext2D,
+  event: ReplayAttackEvent,
+  timeMs: number,
+  poses: WarriorPoseMap,
+  scene: ReplayScene,
+) => {
+  const from = getBodyPoint(poses, event.actorId, scene);
+  const to = getBodyPoint(poses, event.targetId, scene);
 
   if (!from || !to) return;
 
-  if (event.isRanged) {
-    paintProjectile(ctx, event, from, to, progress, seed);
-  }
+  const duration = Math.max(1, event.tEnd - event.tStart);
+  const isActive = timeMs <= event.tEnd;
 
-  if (progress < 0.38) return;
-
-  const impactProgress = clamp01((progress - 0.38) / 0.62);
-
-  if (event.isEvade || event.isParry || event.isBlock || event.isArrowBlock) {
-    paintDefenseVfx(ctx, event, to, impactProgress);
-  }
-
-  if (event.isEvade) return;
-
-  if (!event.isRanged) {
-    paintCrescentSlash(
+  if (event.isRanged && isActive) {
+    paintProjectile(
       ctx,
-      to.x,
-      to.y - 6,
-      impactProgress,
-      event.isCrit,
-      event.isVeryCrit,
+      event,
+      getEventProgress(event, timeMs),
+      from,
+      to,
+      timeMs,
     );
-  } else if (event.damageKind === "fire") {
-    paintFireExplosion(ctx, to.x, to.y - 6, impactProgress, event.isCrit);
-  } else if (event.damageKind === "frost") {
-    paintFrostSpikeBurst(ctx, to.x, to.y - 6, impactProgress, event.isCrit);
   }
 
-  const color = event.isVeryCrit
-    ? "#ff3d68"
-    : event.isCrit
-      ? "#fbbf24"
-      : DAMAGE_COLORS[event.damageKind];
+  const sinceImpact =
+    timeMs - (event.tStart + duration * REPLAY_IMPACT_FRACTION);
 
-  paintEnergyBurst(
+  if (sinceImpact < 0 || event.isEvade) return;
+
+  if (!event.isRanged && isActive) {
+    paintSlash(ctx, to, sinceImpact / (duration * 0.55), event.isCrit);
+  }
+
+  paintSparks(
     ctx,
-    to.x,
-    to.y - 6,
-    seed,
-    impactProgress,
-    color,
-    event.isCrit ? 24 : 13,
-    event.isCrit ? 112 : 64,
-    event.isCrit || event.damageKind === "fire" || event.damageKind === "frost",
+    event.id,
+    to,
+    sinceImpact,
+    event.isCrit ? 18 : 9,
+    getSparkColors(event),
+    event.isCrit ? 26 : 16,
+    14,
   );
 };
 
-export const paintActiveProjectilesAndParticles = (
+const paintRestoreEffect = (
+  ctx: CanvasRenderingContext2D,
+  seed: string,
+  target: Point,
+  elapsedMs: number,
+  color: string,
+) => {
+  const random = createSeededRandom(seed);
+
+  for (let index = 0; index < 8; index += 1) {
+    const life = clamp01((elapsedMs - index * 40) / 700);
+
+    if (life <= 0 || life >= 1) continue;
+
+    ctx.globalAlpha = 1 - life;
+    pixel(
+      ctx,
+      target.x + (random() - 0.5) * 22,
+      target.y + 10 - life * 30 - random() * 6,
+      index % 3 === 0 ? 3 : 2,
+      index % 2 === 0 ? color : "#ffffff",
+    );
+  }
+
+  ctx.globalAlpha = 1;
+};
+
+const paintLegendaryEffect = (
+  ctx: CanvasRenderingContext2D,
+  seed: string,
+  origin: Point,
+  elapsedMs: number,
+) => {
+  const ringProgress = clamp01(elapsedMs / 700);
+
+  if (ringProgress < 1) {
+    paintRing(ctx, origin, ringProgress, "#ffd24a", 30);
+    paintRing(ctx, origin, clamp01(ringProgress * 1.4), "#fff4c2", 20);
+  }
+
+  paintSparks(
+    ctx,
+    `${seed}:legend`,
+    origin,
+    elapsedMs,
+    14,
+    ["#ffd24a", "#fff4c2", "#ff9f1c"],
+    28,
+    -6,
+  );
+};
+
+const paintEventEffect = (
+  ctx: CanvasRenderingContext2D,
+  event: ReplayEvent,
+  timeMs: number,
+  poses: WarriorPoseMap,
+  scene: ReplayScene,
+) => {
+  const elapsedMs = timeMs - event.tStart;
+
+  switch (event.kind) {
+    case "attack":
+      paintAttackEffect(ctx, event, timeMs, poses, scene);
+
+      break;
+    case "heal":
+    case "shield": {
+      const target = getBodyPoint(poses, event.targetId, scene);
+      const color = event.kind === "heal" ? "#6ff07a" : "#7fd4ff";
+
+      if (target) paintRestoreEffect(ctx, event.id, target, elapsedMs, color);
+
+      break;
+    }
+
+    case "legendary_proc": {
+      const origin = getBodyPoint(poses, event.actorId, scene);
+
+      if (origin) paintLegendaryEffect(ctx, event.id, origin, elapsedMs);
+
+      break;
+    }
+
+    case "dot": {
+      const target = getBodyPoint(poses, event.targetId, scene);
+      const colors = [DAMAGE_KIND_COLORS[event.damageKind], "#0b0705"];
+
+      if (target) {
+        paintSparks(ctx, event.id, target, elapsedMs, 6, colors, 12, -10);
+      }
+
+      break;
+    }
+
+    case "death": {
+      const pose = poses.get(event.victimId);
+      const colors = ["#6b6460", "#9a918a", "#3b3532"];
+
+      if (pose) {
+        const origin = { x: pose.x, y: pose.feetY - 8 };
+        paintSparks(ctx, event.id, origin, elapsedMs, 16, colors, 22, -12);
+      }
+
+      break;
+    }
+
+    default:
+      break;
+  }
+};
+
+export const paintCombatEffects = (
   ctx: CanvasRenderingContext2D,
   state: ReplayStateAtTime,
-  anchors: ReadonlyMap<string, ReplayAnchor>,
+  poses: WarriorPoseMap,
+  scene: ReplayScene,
+) => {
+  for (const event of state.recentEvents) {
+    paintEventEffect(ctx, event, state.timeMs, poses, scene);
+  }
+};
+
+export const getCameraImpact = (
+  state: ReplayStateAtTime,
   reducedMotion: boolean,
-): void => {
-  if (reducedMotion) return;
+) => {
+  let shake = 0;
+  let flash = 0;
 
   for (const event of state.activeEvents) {
     const duration = Math.max(1, event.tEnd - event.tStart);
-    const progress = clamp01((state.timeMs - event.tStart) / duration);
-    const seed = hashId(event.id);
 
-    if (event.kind === "attack") {
-      paintAttackEventEffects(ctx, event, anchors, progress, seed);
-      continue;
-    }
+    if (event.kind === "attack" && event.isCrit && !event.isEvade) {
+      const since =
+        (state.timeMs - event.tStart) / duration - REPLAY_IMPACT_FRACTION;
 
-    if (event.kind === "heal") {
-      const target = anchors.get(event.targetId);
-
-      if (target) {
-        paintHealLightPillar(ctx, target, seed, progress, event.isLastHeal);
+      if (since >= 0 && since < 0.3) {
+        const decay = 1 - since / 0.3;
+        shake = Math.max(shake, (event.isHighlight ? 4 : 2.5) * decay);
+        flash = Math.max(flash, (event.isHighlight ? 0.22 : 0.1) * decay);
       }
-
-      continue;
-    }
-
-    if (event.kind === "shield") {
-      const target = anchors.get(event.targetId);
-
-      if (target) {
-        paintShieldDome(ctx, target, progress, event.isMagic);
-      }
-
-      continue;
-    }
-
-    if (event.kind === "dot") {
-      const target = anchors.get(event.targetId);
-
-      if (target) {
-        paintEnergyBurst(
-          ctx,
-          target.x,
-          target.y,
-          seed,
-          progress,
-          DAMAGE_COLORS[event.damageKind],
-          10,
-          48,
-          false,
-        );
-      }
-
-      continue;
-    }
-
-    if (event.kind === "step") {
-      const actor = anchors.get(event.actorId);
-
-      if (actor) {
-        paintEnergyBurst(
-          ctx,
-          actor.x,
-          actor.y + 24,
-          seed,
-          progress,
-          "#cbd5e1",
-          6,
-          36,
-          false,
-        );
-      }
-
-      continue;
-    }
-
-    if (event.kind === "legendary_proc") {
-      const actor = anchors.get(event.actorId);
-
-      if (actor) {
-        paintLegendaryAura(
-          ctx,
-          actor,
-          seed,
-          progress,
-          LEGENDARY_COLORS[event.legendaryKind],
-        );
-      }
-
-      continue;
     }
 
     if (event.kind === "death") {
-      const victim = anchors.get(event.victimId);
+      const since = (state.timeMs - event.tStart) / duration;
 
-      if (victim) {
-        paintEnergyBurst(
-          ctx,
-          victim.x,
-          victim.y,
-          seed,
-          progress,
-          "#fb7185",
-          30,
-          136,
-          true,
-        );
-      }
+      if (since < 0.35) shake = Math.max(shake, 3 * (1 - since / 0.35));
     }
   }
+
+  if (reducedMotion || shake < 0.2)
+    return { x: 0, y: 0, flash: reducedMotion ? 0 : flash };
+
+  return {
+    x: Math.round(Math.sin(state.timeMs * 0.09) * shake),
+    y: Math.round(Math.cos(state.timeMs * 0.13) * shake * 0.6),
+    flash,
+  };
 };

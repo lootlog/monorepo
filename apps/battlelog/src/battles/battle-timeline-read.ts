@@ -80,17 +80,23 @@ export const makeBattleTimelineRead = (
 
   const loadRawBattleData = (battle: RawBattleSource) =>
     loadBattleEvents(battle).pipe(
-      Effect.map((sourceEvents): RawBattleData => ({
-        battleId: battle.id,
-        timestamp: battle.createdAt.toISOString(),
-        rawData: {
-          accountId: battle.accountId,
-          characterId: battle.characterId,
-          world: battle.world,
-          events: parseBattleMoves(sourceEvents),
-          sourceEvents,
-        },
-      })),
+      Effect.map((sourceEvents): RawBattleData => {
+        const battleground = sourceEvents.find((event) => event.f.battleground)
+          ?.f.battleground;
+
+        return {
+          battleId: battle.id,
+          timestamp: battle.createdAt.toISOString(),
+          rawData: {
+            accountId: battle.accountId,
+            characterId: battle.characterId,
+            world: battle.world,
+            ...(battleground && { battleground }),
+            events: parseBattleMoves(sourceEvents),
+            sourceEvents,
+          },
+        };
+      }),
     );
 
   const buildTimelineResponse = (battle: BattleWithRelations) =>

@@ -93,6 +93,7 @@ const CreateBattleFightEventSchema = Schema.Struct({
   endBattle: Schema.optionalKey(Schema.Finite),
   init: Schema.optionalKey(Schema.String),
   auto: Schema.optionalKey(Schema.String),
+  battleground: Schema.optionalKey(Schema.String),
   w: OptionalWarriorsRecordSchema,
 });
 

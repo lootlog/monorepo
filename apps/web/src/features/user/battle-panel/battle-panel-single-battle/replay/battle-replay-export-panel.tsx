@@ -4,16 +4,13 @@ import type {
 } from "@lootlog/battle-processor/replay-timeline";
 import { PillToggleGroup } from "@/components/common/pill-toggle-group";
 import { Button } from "@lootlog/ui/components/button";
-import { Label } from "@lootlog/ui/components/label";
 import {
   Progress,
   ProgressLabel,
   ProgressValue,
 } from "@lootlog/ui/components/progress";
 import { Separator } from "@lootlog/ui/components/separator";
-import { Switch } from "@lootlog/ui/components/switch";
-import { Download, Film, ImageIcon, Volume2, VolumeX, X } from "lucide-react";
-import { useId } from "react";
+import { Download, Film, ImageIcon, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type {
   ReplayExportFormat,
@@ -23,12 +20,10 @@ import type {
 type BattleReplayExportPanelProps = {
   readonly layout: ReplayLayout;
   readonly pacingMode: ReplayPacingMode;
-  readonly audioEnabled: boolean;
   readonly exportFormat: ReplayExportFormat | null;
   readonly exportProgress: ReplayExportProgress | null;
   readonly onLayoutChange: (layout: ReplayLayout) => void;
   readonly onPacingChange: (pacing: ReplayPacingMode) => void;
-  readonly onAudioChange: (enabled: boolean) => void;
   readonly onExport: (format: ReplayExportFormat) => void;
   readonly onCancelExport: () => void;
 };
@@ -36,17 +31,14 @@ type BattleReplayExportPanelProps = {
 export function BattleReplayExportPanel({
   layout,
   pacingMode,
-  audioEnabled,
   exportFormat,
   exportProgress,
   onLayoutChange,
   onPacingChange,
-  onAudioChange,
   onExport,
   onCancelExport,
 }: BattleReplayExportPanelProps) {
   const { t } = useTranslation();
-  const audioSwitchId = useId();
   const isExporting = exportFormat !== null;
 
   const layoutOptions = [
@@ -81,8 +73,6 @@ export function BattleReplayExportPanel({
             total: exportProgress?.totalFrames ?? 0,
           });
 
-  const AudioIcon = audioEnabled ? Volume2 : VolumeX;
-
   return (
     <aside className="flex w-full shrink-0 flex-col gap-4 border-t border-border/60 p-4 lg:w-80 lg:border-t-0 lg:border-l">
       <div className="flex flex-col gap-3">
@@ -115,26 +105,6 @@ export function BattleReplayExportPanel({
             onValueChange={(nextPacing) => {
               if (!isExporting) onPacingChange(nextPacing);
             }}
-          />
-        </div>
-
-        <div className="flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-muted/20 px-3 py-2.5">
-          <div className="flex items-center gap-2.5">
-            <AudioIcon className="size-4 shrink-0 text-muted-foreground" />
-            <div className="flex flex-col">
-              <Label htmlFor={audioSwitchId} className="text-xs font-medium">
-                {t("battlePanel.single.replay.audioLabel")}
-              </Label>
-              <span className="text-[11px] text-muted-foreground">
-                {t("battlePanel.single.replay.audioHint")}
-              </span>
-            </div>
-          </div>
-          <Switch
-            id={audioSwitchId}
-            checked={audioEnabled}
-            disabled={isExporting}
-            onCheckedChange={onAudioChange}
           />
         </div>
       </div>

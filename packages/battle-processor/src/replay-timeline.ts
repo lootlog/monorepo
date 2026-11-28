@@ -14,8 +14,6 @@ export type ReplayLayout = "16:9" | "9:16";
 
 export type ReplayPacingMode = "smart" | "normal";
 
-export type ReplayArenaTheme = "abyss" | "pvp" | "group";
-
 export type ReplayDamageKind =
   | "physical"
   | "distance"
@@ -102,7 +100,7 @@ export type ReplayAttackEvent = ReplayEventBase & {
   readonly isRanged: boolean;
 };
 
-export type ReplayLegendaryProcEvent = ReplayEventBase & {
+type ReplayLegendaryProcEvent = ReplayEventBase & {
   readonly kind: "legendary_proc";
   readonly actorId: string;
   readonly targetId: string | null;
@@ -175,6 +173,7 @@ export type ReplayEvent =
 type ReplaySnapshot = {
   readonly turn: number;
   readonly timeMs: number;
+  readonly impactMs: number;
   readonly hpById: Record<string, number>;
   readonly rowById: Record<string, number>;
   readonly deadIds: readonly string[];
@@ -189,7 +188,6 @@ export type ReplayTimeline = {
   readonly totalDurationMs: number;
   readonly actionDurationMs: number;
   readonly totalTurns: number;
-  readonly arenaTheme: ReplayArenaTheme;
   readonly pacingMode: ReplayPacingMode;
   readonly world: string;
   readonly battleType: string;
@@ -237,17 +235,7 @@ const VICTORY_SCREEN_DURATION_MS = 1800;
 
 const SMART_TARGET_DURATION_MS = 26_000;
 
-const resolveArenaTheme = (
-  input: ReplayBattleInput,
-  leftCount: number,
-  rightCount: number,
-): ReplayArenaTheme => {
-  if (input.matchmaking) return "abyss";
-
-  if (leftCount > 1 || rightCount > 1) return "group";
-
-  return "pvp";
-};
+export const REPLAY_IMPACT_FRACTION = 0.45;
 
 const resolveOutcome = (
   input: ReplayBattleInput,
@@ -391,12 +379,10 @@ const scheduleBundles = (
 
     const tStart = cursorMs;
     const tEnd = cursorMs + durationMs;
+    const impactMs = tStart + Math.round(durationMs * REPLAY_IMPACT_FRACTION);
 
     for (const draft of bundle.events) {
-      const eventStart =
-        draft.kind === "death"
-          ? tStart + Math.round(durationMs * 0.45)
-          : tStart;
+      const eventStart = draft.kind === "death" ? impactMs : tStart;
 
       events.push({
         ...draft,
@@ -409,6 +395,7 @@ const scheduleBundles = (
     snapshots.push({
       turn: bundle.turn,
       timeMs: tEnd,
+      impactMs,
       hpById: bundle.hpById,
       rowById: bundle.rowById,
       deadIds: bundle.deadIds,
@@ -451,6 +438,7 @@ export const buildReplayTimeline = (
   const initialSnapshot: ReplaySnapshot = {
     turn: 0,
     timeMs: 0,
+    impactMs: 0,
     ...snapshotFromState(state),
   };
 
@@ -503,7 +491,6 @@ export const buildReplayTimeline = (
     totalDurationMs,
     actionDurationMs,
     totalTurns: input.moves.length,
-    arenaTheme: resolveArenaTheme(input, leftCount, rightCount),
     pacingMode,
     world: input.world ?? "",
     battleType: input.battleType ?? `${leftCount}v${rightCount}`,
@@ -517,14 +504,16 @@ export const buildReplayTimeline = (
 const findSnapshotAtTime = (
   snapshots: readonly ReplaySnapshot[],
   timeMs: number,
+  moment: "timeMs" | "impactMs",
 ): ReplaySnapshot => {
   const first = snapshots[0];
 
-  if (!first || timeMs <= first.timeMs) {
+  if (!first || timeMs <= first[moment]) {
     return (
       first ?? {
         turn: 0,
         timeMs: 0,
+        impactMs: 0,
         hpById: {},
         rowById: {},
         deadIds: [],
@@ -541,7 +530,7 @@ const findSnapshotAtTime = (
     const mid = Math.ceil((low + high) / 2);
     const candidate = snapshots[mid];
 
-    if (candidate && candidate.timeMs <= timeMs) {
+    if (candidate && candidate[moment] <= timeMs) {
       low = mid;
     } else {
       high = mid - 1;
@@ -558,23 +547,35 @@ export const getReplayStateAtTime = (
   rawTimeMs: number,
 ): ReplayStateAtTime => {
   const timeMs = Math.max(0, Math.min(timeline.totalDurationMs, rawTimeMs));
-  const currentSnapshot = findSnapshotAtTime(timeline.snapshots, timeMs);
+
+  const currentSnapshot = findSnapshotAtTime(
+    timeline.snapshots,
+    timeMs,
+    "timeMs",
+  );
+
+  const impactSnapshot = findSnapshotAtTime(
+    timeline.snapshots,
+    timeMs,
+    "impactMs",
+  );
 
   const delayedSnapshot = findSnapshotAtTime(
     timeline.snapshots,
     Math.max(0, timeMs - TRAILING_DAMAGE_DELAY_MS),
+    "impactMs",
   );
 
   const trailingHpById: Record<string, number> = {};
 
   for (const participant of timeline.participants) {
-    const currentHp = currentSnapshot.hpById[participant.id] ?? 100;
+    const currentHp = impactSnapshot.hpById[participant.id] ?? 100;
     const delayedHp = delayedSnapshot.hpById[participant.id] ?? currentHp;
 
     if (delayedHp <= currentHp) {
       trailingHpById[participant.id] = currentHp;
     } else {
-      const elapsedSinceChange = Math.max(0, timeMs - currentSnapshot.timeMs);
+      const elapsedSinceChange = Math.max(0, timeMs - impactSnapshot.impactMs);
 
       const catchUpProgress = clamp01(
         elapsedSinceChange / TRAILING_DAMAGE_DELAY_MS,
@@ -628,12 +629,12 @@ export const getReplayStateAtTime = (
   return {
     timeMs,
     currentTurn: activeEvents[0]?.turn ?? currentSnapshot.turn,
-    hpById: currentSnapshot.hpById,
+    hpById: impactSnapshot.hpById,
     trailingHpById,
     rowById: currentSnapshot.rowById,
-    deadIds: new Set(currentSnapshot.deadIds),
-    shieldById: currentSnapshot.shieldById,
-    statusesById: currentSnapshot.statusesById,
+    deadIds: new Set(impactSnapshot.deadIds),
+    shieldById: impactSnapshot.shieldById,
+    statusesById: impactSnapshot.statusesById,
     activeEvents,
     recentEvents,
     victoryEvent,

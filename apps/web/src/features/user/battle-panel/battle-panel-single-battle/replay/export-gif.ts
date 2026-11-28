@@ -10,7 +10,13 @@ import { renderFrame } from "./replay-renderer";
 
 const GIF_FPS = 15;
 
-const GIF_MAX_COLORS = 128;
+const GIF_PALETTE_COLORS = 255;
+
+const GIF_TRANSPARENT_INDEX = 255;
+
+const GIF_PALETTE_SAMPLES = 8;
+
+const GIF_KEEP_PREVIOUS_FRAME = 1;
 
 export const exportReplayToGif = async (
   params: ReplayExportParams,
@@ -42,23 +48,60 @@ export const exportReplayToGif = async (
     Math.ceil(params.timeline.totalDurationMs / frameStepMs),
   );
 
-  for (let frame = 0; frame < totalFrames; frame += 1) {
-    throwIfAborted(params.signal);
-
+  const renderRgba = (frame: number) => {
     renderFrame(ctx, params.timeline, frame * frameStepMs, params.layout, {
       ...params.renderOptions,
       reducedMotion: false,
     });
 
-    const rgba = ctx.getImageData(0, 0, width, height).data;
-    const palette = quantize(rgba, GIF_MAX_COLORS);
-    const indexed = applyPalette(rgba, palette);
+    return ctx.getImageData(0, 0, width, height).data;
+  };
 
-    encoder.writeFrame(indexed, width, height, {
-      palette,
+  const frameBytes = width * height * 4;
+  const samples = new Uint8ClampedArray(frameBytes * GIF_PALETTE_SAMPLES);
+
+  for (let sample = 0; sample < GIF_PALETTE_SAMPLES; sample += 1) {
+    const frame = Math.floor((sample / GIF_PALETTE_SAMPLES) * totalFrames);
+    samples.set(renderRgba(frame), sample * frameBytes);
+  }
+
+  const quantized = quantize(samples, GIF_PALETTE_COLORS);
+
+  const palette = [
+    ...quantized,
+    ...Array.from(
+      { length: GIF_TRANSPARENT_INDEX + 1 - quantized.length },
+      () => [0, 0, 0],
+    ),
+  ];
+
+  let previous: Uint8Array | null = null;
+
+  for (let frame = 0; frame < totalFrames; frame += 1) {
+    throwIfAborted(params.signal);
+
+    const indexed = applyPalette(renderRgba(frame), palette);
+    const changed = previous ? new Uint8Array(indexed.length) : indexed;
+
+    if (previous) {
+      for (let pixel = 0; pixel < indexed.length; pixel += 1) {
+        changed[pixel] =
+          indexed[pixel] === previous[pixel]
+            ? GIF_TRANSPARENT_INDEX
+            : (indexed[pixel] ?? 0);
+      }
+    }
+
+    encoder.writeFrame(changed, width, height, {
+      palette: previous ? null : palette,
       delay: frameDelayMs,
       repeat: 0,
+      transparent: previous !== null,
+      transparentIndex: GIF_TRANSPARENT_INDEX,
+      dispose: GIF_KEEP_PREVIOUS_FRAME,
     });
+
+    previous = indexed;
 
     if (frame % 3 === 0 || frame === totalFrames - 1) {
       params.onProgress?.({

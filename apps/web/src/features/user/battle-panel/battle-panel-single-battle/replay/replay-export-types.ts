@@ -25,7 +25,6 @@ export type ReplayExportParams = {
   readonly timeline: ReplayTimeline;
   readonly layout: ReplayLayout;
   readonly renderOptions: ReplayRenderOptions;
-  readonly includeAudio?: boolean;
   readonly signal?: AbortSignal;
   readonly onProgress?: (progress: ReplayExportProgress) => void;
 };

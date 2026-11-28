@@ -178,6 +178,27 @@ describe("battle creation storage and timelines", () => {
     ).toHaveLength(2);
   });
 
+  it("returns the battleground the game sent with the battle in its raw data", async () => {
+    app = createTestApplication().app;
+
+    const { body } = await postBattle(app.handler, {
+      ...battleContext,
+      events: [
+        { ...battleEvent, f: { ...battleEvent.f, battleground: "034.jpg" } },
+      ],
+    });
+
+    const raw = await requestJson(
+      app.handler,
+      "GET",
+      `/battles/${body.battleId}/raw`,
+      BattleResponseSchemas.raw,
+      200,
+    );
+
+    expect(raw.body.rawData.battleground).toBe("034.jpg");
+  });
+
   it("stores one canonical battle for duplicated incremental and compact payloads", async () => {
     const processBattle = spyOn(BattleProcessor.prototype, "processBattle");
     const testApplication = createTestApplication();

@@ -53,6 +53,7 @@ export const mapBattleEventsToPayload = (
       endBattle: event.f.endBattle,
       init: event.f.init,
       auto: event.f.auto,
+      battleground: event.f.battleground,
       w: Object.keys(fightWarriors).length === 0 ? undefined : fightWarriors,
     };
 

@@ -2,7 +2,12 @@ const MARGONEM_CDN_ORIGIN = "https://micc.garmory-cdn.cloud";
 
 const CDN_PROXY_PREFIX = "/cdn-proxy/obrazki/";
 
-const ALLOWED_ASSET_DIRECTORIES = new Set(["postacie", "npc", "itemy"]);
+const ALLOWED_ASSET_DIRECTORIES = new Set([
+  "postacie",
+  "npc",
+  "itemy",
+  "battle",
+]);
 
 const ALLOWED_IMAGE_EXTENSIONS = /\.(gif|png|webp|jpe?g)$/iu;
 

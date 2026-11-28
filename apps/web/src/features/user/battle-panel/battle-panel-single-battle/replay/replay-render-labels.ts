@@ -2,23 +2,20 @@ import type { TFunction } from "i18next";
 import type { ReplayRenderLabels } from "./replay-canvas-types";
 
 export const buildReplayRenderLabels = (t: TFunction): ReplayRenderLabels => ({
-  turnCounter: t("battlePanel.single.replay.canvas.turnCounter"),
+  turn: t("battlePanel.single.replay.canvas.turn"),
   evade: t("battlePanel.single.replay.canvas.evade"),
   block: t("battlePanel.single.replay.canvas.block"),
   parry: t("battlePanel.single.replay.canvas.parry"),
   arrowBlock: t("battlePanel.single.replay.canvas.arrowBlock"),
   pierce: t("battlePanel.single.replay.canvas.pierce"),
-  counter: t("battlePanel.single.replay.canvas.counter"),
+  crit: t("battlePanel.single.replay.canvas.crit"),
   flee: t("battlePanel.single.replay.canvas.flee"),
   mvp: t("battlePanel.single.replay.canvas.mvp"),
   totalTurns: t("battlePanel.single.replay.canvas.totalTurns"),
-  damageShort: t("battlePanel.single.replay.canvas.damageShort"),
+  damageDealt: t("battlePanel.single.replay.canvas.damageDealt"),
+  yourTeam: t("battlePanel.single.replay.canvas.yourTeam"),
+  enemyTeam: t("battlePanel.single.replay.canvas.enemyTeam"),
   watermark: t("battlePanel.single.replay.canvas.watermark"),
-  logStart: t("battlePanel.single.replay.canvas.logStart"),
-  stepLog: t("battlePanel.single.replay.canvas.stepLog"),
-  diedLog: t("battlePanel.single.replay.canvas.diedLog"),
-  effectLog: t("battlePanel.single.replay.canvas.effectLog"),
-  shieldLog: t("battlePanel.single.replay.canvas.shieldLog"),
   outcomes: {
     victory: t("battlePanel.single.replay.canvas.outcomes.victory"),
     defeat: t("battlePanel.single.replay.canvas.outcomes.defeat"),
