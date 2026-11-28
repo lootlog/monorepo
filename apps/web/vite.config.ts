@@ -74,6 +74,12 @@ export default defineConfig({
         target: "https://micc.garmory-cdn.cloud",
         changeOrigin: true,
         rewrite: (requestPath) => requestPath.replace(/^\/cdn-proxy/, ""),
+        configure: (proxy) => {
+          proxy.on("proxyReq", (proxyRequest) => {
+            proxyRequest.removeHeader("cookie");
+            proxyRequest.removeHeader("authorization");
+          });
+        },
       },
     },
   },

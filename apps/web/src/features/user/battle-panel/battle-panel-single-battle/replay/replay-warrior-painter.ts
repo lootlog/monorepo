@@ -172,7 +172,7 @@ const applyEventToPose = (
 
       return;
     case "step":
-      if (event.actorId !== participant.id) return;
+      if (event.actorId !== participant.id || progress >= 1) return;
 
       draft.isActing = true;
       draft.walking = true;
@@ -501,7 +501,12 @@ export const paintWarriorOverlays = (
 ) => {
   const scale = scene.spriteScale;
   const crowded = participants.some((participant) => participant.teamSize > 5);
-  const nameSize = scene.isVertical ? (crowded ? 8 : 11) : crowded ? 7 : 9;
+
+  const nameSizes = scene.isVertical
+    ? { crowded: 8, roomy: 11 }
+    : { crowded: 7, roomy: 9 };
+
+  const nameSize = crowded ? nameSizes.crowded : nameSizes.roomy;
   const barHeight = scale >= 3 ? 4 : 3;
 
   for (const participant of participants) {

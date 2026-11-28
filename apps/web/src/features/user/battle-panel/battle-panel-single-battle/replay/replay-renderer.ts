@@ -125,7 +125,15 @@ export const renderFrame = (
       sprites,
       scene,
     );
-    paintFloatingText(ctx, timeline, state, poses, scene, options.labels);
+    paintFloatingText(
+      ctx,
+      timeline,
+      state,
+      poses,
+      scene,
+      options.labels,
+      reducedMotion,
+    );
   }
 
   ctx.restore();
@@ -144,6 +152,7 @@ export const renderFrame = (
       scene,
       sprites,
       options.labels,
+      reducedMotion,
     );
   } else {
     paintReplayHud(ctx, timeline, state, scene, options.labels);

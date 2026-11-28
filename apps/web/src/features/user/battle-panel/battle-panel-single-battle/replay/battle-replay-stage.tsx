@@ -35,7 +35,7 @@ export function BattleReplayStage({
         contentVisibility: "auto",
         containIntrinsicSize: "auto none auto 420px",
       }}
-      className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-xl border border-border/60 bg-slate-950/90 p-3"
+      className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-xl max-lg:min-h-64 border border-border/60 bg-slate-950/90 p-3"
     >
       <canvas
         ref={canvasRef}

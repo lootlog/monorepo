@@ -41,7 +41,9 @@ export const exportReplayToGif = async (
 
   const encoder = GIFEncoder();
   const frameStepMs = 1000 / GIF_FPS;
-  const frameDelayMs = Math.round(frameStepMs);
+
+  const toCentiseconds = (frame: number) =>
+    Math.round((frame * frameStepMs) / 10);
 
   const totalFrames = Math.max(
     1,
@@ -94,7 +96,7 @@ export const exportReplayToGif = async (
 
     encoder.writeFrame(changed, width, height, {
       palette: previous ? null : palette,
-      delay: frameDelayMs,
+      delay: (toCentiseconds(frame + 1) - toCentiseconds(frame)) * 10,
       repeat: 0,
       transparent: previous !== null,
       transparentIndex: GIF_TRANSPARENT_INDEX,

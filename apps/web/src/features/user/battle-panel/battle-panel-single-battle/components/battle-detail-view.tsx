@@ -99,7 +99,11 @@ export function BattleDetailView({
   const detailActions =
     hasReplayData && battle && rawBattle ? (
       <>
-        <BattleReplayDialog battle={battle} rawBattle={rawBattle} />
+        <BattleReplayDialog
+          key={battle.id}
+          battle={battle}
+          rawBattle={rawBattle}
+        />
         {actions}
       </>
     ) : (

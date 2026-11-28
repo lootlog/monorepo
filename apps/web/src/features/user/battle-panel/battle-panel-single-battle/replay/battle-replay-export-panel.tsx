@@ -21,6 +21,7 @@ type BattleReplayExportPanelProps = {
   readonly layout: ReplayLayout;
   readonly pacingMode: ReplayPacingMode;
   readonly exportFormat: ReplayExportFormat | null;
+  readonly isLoadingAssets: boolean;
   readonly exportProgress: ReplayExportProgress | null;
   readonly onLayoutChange: (layout: ReplayLayout) => void;
   readonly onPacingChange: (pacing: ReplayPacingMode) => void;
@@ -32,6 +33,7 @@ export function BattleReplayExportPanel({
   layout,
   pacingMode,
   exportFormat,
+  isLoadingAssets,
   exportProgress,
   onLayoutChange,
   onPacingChange,
@@ -126,7 +128,7 @@ export function BattleReplayExportPanel({
             size="lg"
             variant="default"
             className="w-full justify-between"
-            disabled={isExporting}
+            disabled={isExporting || isLoadingAssets}
             loading={exportFormat === "mp4"}
             onClick={() => onExport("mp4")}
           >
@@ -143,7 +145,7 @@ export function BattleReplayExportPanel({
             size="lg"
             variant="outline"
             className="w-full justify-between"
-            disabled={isExporting}
+            disabled={isExporting || isLoadingAssets}
             loading={exportFormat === "gif"}
             onClick={() => onExport("gif")}
           >

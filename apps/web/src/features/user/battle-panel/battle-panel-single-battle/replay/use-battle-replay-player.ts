@@ -297,7 +297,7 @@ export const useBattleReplayPlayer = ({
   };
 
   const exportClip = async (format: ReplayExportFormat) => {
-    if (exportFormat !== null) return;
+    if (exportFormat !== null || isLoadingSprites) return;
 
     setIsPlaying(false);
     const controller = new AbortController();

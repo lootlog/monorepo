@@ -91,6 +91,7 @@ const paintBanner = (
   progress: number,
   scene: ReplayScene,
   labels: ReplayRenderLabels,
+  slide: number,
 ) => {
   const appear = easeOutCubic(clamp01(progress / 0.14));
   const leave = clamp01((BANNER_END - progress) / 0.08);
@@ -100,7 +101,10 @@ const paintBanner = (
 
   const colors = OUTCOME_COLORS[victory.outcome];
   const size = scene.isVertical ? 46 : 34;
-  const y = (scene.isVertical ? 62 : 34) + Math.round((1 - appear) * -14);
+
+  const y =
+    (scene.isVertical ? 62 : 34) + Math.round((1 - appear) * -14 * slide);
+
   const text = labels.outcomes[victory.outcome];
 
   ctx.save();
@@ -163,6 +167,7 @@ const paintMvpCard = (
   scene: ReplayScene,
   sprites: ReplaySpriteMap,
   labels: ReplayRenderLabels,
+  slide: number,
 ) => {
   const appear = easeOutCubic(clamp01((progress - CARD_START) / 0.14));
 
@@ -171,7 +176,11 @@ const paintMvpCard = (
   const width = scene.isVertical ? 320 : 300;
   const height = scene.isVertical ? 78 : 62;
   const left = Math.round(scene.width / 2 - width / 2);
-  const top = Math.round((scene.isVertical ? 22 : 8) + (1 - appear) * -12);
+
+  const top = Math.round(
+    (scene.isVertical ? 22 : 8) + (1 - appear) * -12 * slide,
+  );
+
   const portraitSize = height - 12;
   const textLeft = left + portraitSize + 16;
   const textWidth = left + width - textLeft - 10;
@@ -220,19 +229,26 @@ export const paintVictoryOverlay = (
   scene: ReplayScene,
   sprites: ReplaySpriteMap,
   labels: ReplayRenderLabels,
+  reducedMotion: boolean,
 ) => {
-  if (victory.winningTeam !== null && victory.outcome !== "draw") {
+  const slide = reducedMotion ? 0 : 1;
+
+  if (
+    !reducedMotion &&
+    victory.winningTeam !== null &&
+    victory.outcome !== "draw"
+  ) {
     paintConfetti(ctx, scene, progress * (victory.tEnd - victory.tStart));
   }
 
   paintTopShade(ctx, scene);
-  paintBanner(ctx, victory, progress, scene, labels);
+  paintBanner(ctx, victory, progress, scene, labels, slide);
 
   const mvp = timeline.participants.find(
     (participant) => participant.id === victory.mvpId,
   );
 
   if (mvp) {
-    paintMvpCard(ctx, victory, mvp, progress, scene, sprites, labels);
+    paintMvpCard(ctx, victory, mvp, progress, scene, sprites, labels, slide);
   }
 };

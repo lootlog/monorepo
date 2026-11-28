@@ -155,6 +155,7 @@ export const paintFloatingText = (
   poses: WarriorPoseMap,
   scene: ReplayScene,
   labels: ReplayRenderLabels,
+  reducedMotion: boolean,
 ) => {
   const baseSize = scene.isVertical ? 16 : 12;
   const texts: FloatingText[] = [];
@@ -187,7 +188,7 @@ export const paintFloatingText = (
     stackIndex.set(text.anchorId, stack + 1);
 
     const life = clamp01((state.timeMs - text.startMs) / text.lifeMs);
-    const rise = easeOutCubic(Math.min(1, life * 1.6)) * 18;
+    const rise = reducedMotion ? 0 : easeOutCubic(Math.min(1, life * 1.6)) * 18;
     const jitter = (createSeededRandom(text.key)() - 0.5) * 16;
     const x = Math.round(pose.x + jitter);
 

@@ -70,65 +70,76 @@ const exportWithMediaRecorder = async (
 
   const stream = canvas.captureStream(VIDEO_FPS);
 
-  const recorder = new MediaRecorderCtor(stream, {
-    mimeType,
-    videoBitsPerSecond: 4_500_000,
-  });
-
-  const chunks: BlobPart[] = [];
-  recorder.ondataavailable = (event) => {
-    if (event.data.size > 0) chunks.push(event.data);
-  };
-
-  const stopPromise = new Promise<void>((resolve, reject) => {
-    recorder.onstop = () => resolve();
-    recorder.onerror = () => reject(new Error("MediaRecorder export failed"));
-  });
-
-  const frameStepMs = 1000 / VIDEO_FPS;
-
-  const totalFrames = Math.max(
-    1,
-    Math.ceil(params.timeline.totalDurationMs / frameStepMs),
-  );
-
-  recorder.start();
-
   try {
-    for (let frame = 0; frame < totalFrames; frame += 1) {
-      throwIfAborted(params.signal);
+    const recorder = new MediaRecorderCtor(stream, {
+      mimeType,
+      videoBitsPerSecond: 4_500_000,
+    });
 
-      renderFrame(ctx, params.timeline, frame * frameStepMs, params.layout, {
-        ...params.renderOptions,
-        reducedMotion: false,
-      });
+    const chunks: BlobPart[] = [];
 
-      params.onProgress?.({
-        phase: "encoding",
-        completedFrames: frame + 1,
-        totalFrames,
-        progress: (frame + 1) / totalFrames,
-      });
+    recorder.ondataavailable = (event) => {
+      if (event.data.size > 0) chunks.push(event.data);
+    };
 
-      await new Promise<void>((resolve) => {
-        window.setTimeout(resolve, frameStepMs);
-      });
+    const stopPromise = new Promise<void>((resolve, reject) => {
+      recorder.onstop = () => resolve();
+      recorder.onerror = () => reject(new Error("MediaRecorder export failed"));
+    });
+
+    const frameStepMs = 1000 / VIDEO_FPS;
+
+    const totalFrames = Math.max(
+      1,
+      Math.ceil(params.timeline.totalDurationMs / frameStepMs),
+    );
+
+    recorder.start();
+    const startedAt = performance.now();
+
+    try {
+      for (let frame = 0; frame < totalFrames; frame += 1) {
+        throwIfAborted(params.signal);
+
+        renderFrame(ctx, params.timeline, frame * frameStepMs, params.layout, {
+          ...params.renderOptions,
+          reducedMotion: false,
+        });
+
+        params.onProgress?.({
+          phase: "encoding",
+          completedFrames: frame + 1,
+          totalFrames,
+          progress: (frame + 1) / totalFrames,
+        });
+
+        const nextFrameAt = startedAt + (frame + 1) * frameStepMs;
+
+        await new Promise<void>((resolve) => {
+          window.setTimeout(
+            resolve,
+            Math.max(0, nextFrameAt - performance.now()),
+          );
+        });
+      }
+    } finally {
+      if (recorder.state !== "inactive") recorder.stop();
     }
+
+    await stopPromise;
+    throwIfAborted(params.signal);
+
+    const extension = mimeType.includes("mp4") ? "mp4" : "webm";
+
+    return {
+      blob: new Blob(chunks, { type: mimeType }),
+      filename: buildExportFilename(params.battleId, params.layout, extension),
+      mimeType,
+      extension,
+    };
   } finally {
-    if (recorder.state !== "inactive") recorder.stop();
+    for (const track of stream.getTracks()) track.stop();
   }
-
-  await stopPromise;
-  throwIfAborted(params.signal);
-
-  const extension = mimeType.includes("mp4") ? "mp4" : "webm";
-
-  return {
-    blob: new Blob(chunks, { type: mimeType }),
-    filename: buildExportFilename(params.battleId, params.layout, extension),
-    mimeType,
-    extension,
-  };
 };
 
 export const exportReplayToMp4 = async (
