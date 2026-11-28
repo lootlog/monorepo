@@ -166,6 +166,44 @@ export const snapshotFromState = (
   ),
 });
 
+const describeObservedState = (state: SimulationState) =>
+  JSON.stringify(snapshotFromState(state));
+
+const observeHpAndDeath = (
+  state: SimulationState,
+  draftEvents: DraftReplayEvent[],
+  turn: number,
+  victimId: string | null,
+  hp: number | null,
+  killerId: string | null,
+): void => {
+  if (!victimId || hp === null || Number.isNaN(hp)) return;
+
+  const prevHp = state.hpById.get(victimId) ?? 100;
+  state.hpById.set(victimId, Math.max(0, Math.min(100, hp)));
+
+  if (hp > 0) {
+    state.deadIds.delete(victimId);
+
+    return;
+  }
+
+  if (prevHp > 0 && !state.deadIds.has(victimId)) {
+    state.deadIds.add(victimId);
+    state.statusesById.get(victimId)?.clear();
+    addStat(state.killsById, killerId, 1);
+
+    draftEvents.push({
+      id: nextEventId(state, turn),
+      turn,
+      kind: "death",
+      victimId,
+      killerId,
+      isHighlight: true,
+    });
+  }
+};
+
 const addStatus = (
   state: SimulationState,
   warriorId: string | null,
@@ -212,7 +250,18 @@ const processOtherDamageAction = (
   );
 
   if (named.id && named.hpPercentage !== null) {
-    state.hpById.set(named.id, named.hpPercentage);
+    if (named.id === acc.attackerId || named.id === acc.defenderId) {
+      observeHpAndDeath(
+        state,
+        acc.draftEvents,
+        acc.turn,
+        named.id,
+        named.hpPercentage,
+        named.id === acc.attackerId ? acc.defenderId : acc.attackerId,
+      );
+    } else {
+      state.hpById.set(named.id, named.hpPercentage);
+    }
   }
 
   if (!isReflected) {
@@ -452,53 +501,19 @@ const processHealingAction = (
 
   if (!targetId) return;
 
-  addStat(state.healingById, acc.attackerId ?? targetId, amount);
+  const healerId = namedId ?? acc.attackerId;
+  addStat(state.healingById, healerId ?? targetId, amount);
   acc.draftEvents.push({
     id: nextEventId(state, acc.turn),
     turn: acc.turn,
     kind: "heal",
-    actorId: acc.attackerId,
+    actorId: healerId,
     targetId,
     amount,
     isPassive: PASSIVE_HEAL_KEYS.has(actionType),
     isLastHeal: actionType === "legbon_lastheal",
     isHighlight: actionType === "legbon_lastheal",
   });
-};
-
-const observeHpAndDeath = (
-  state: SimulationState,
-  draftEvents: DraftReplayEvent[],
-  turn: number,
-  victimId: string | null,
-  hp: number | null,
-  killerId: string | null,
-): void => {
-  if (!victimId || hp === null || Number.isNaN(hp)) return;
-
-  const prevHp = state.hpById.get(victimId) ?? 100;
-  state.hpById.set(victimId, Math.max(0, Math.min(100, hp)));
-
-  if (hp > 0) {
-    state.deadIds.delete(victimId);
-
-    return;
-  }
-
-  if (prevHp > 0 && !state.deadIds.has(victimId)) {
-    state.deadIds.add(victimId);
-    state.statusesById.get(victimId)?.clear();
-    addStat(state.killsById, killerId, 1);
-
-    draftEvents.push({
-      id: nextEventId(state, turn),
-      turn,
-      kind: "death",
-      victimId,
-      killerId,
-      isHighlight: true,
-    });
-  }
 };
 
 const advanceStepRow = (
@@ -582,7 +597,7 @@ const finalizeAttackOrStep = (
     return;
   }
 
-  if (acc.hasStep && acc.attackerId && acc.draftEvents.length === 0) {
+  if (acc.hasStep && acc.attackerId) {
     advanceStepRow(state, acc.attackerId, acc.attacker?.team);
 
     acc.draftEvents.push({
@@ -702,6 +717,8 @@ export const extractTurnBundle = (
     hasStep: false,
   };
 
+  const observedBefore = describeObservedState(state);
+
   for (const { actionType, param } of move.actions) {
     processTurnAction(acc, state, actionType, param);
   }
@@ -730,7 +747,12 @@ export const extractTurnBundle = (
     defenderId ?? fallbackKiller,
   );
 
-  if (acc.draftEvents.length === 0) return null;
+  if (
+    acc.draftEvents.length === 0 &&
+    describeObservedState(state) === observedBefore
+  ) {
+    return null;
+  }
 
   return {
     turn,

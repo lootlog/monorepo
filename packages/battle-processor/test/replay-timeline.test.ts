@@ -172,4 +172,63 @@ describe("replay-timeline", () => {
     expect(outroState.victoryProgress).toBeGreaterThan(0);
     expect(outroState.deadIds.has("2")).toBe(true);
   });
+
+  it("moves a stepping fighter even when the same move also heals them", () => {
+    const timeline = buildReplayTimeline(
+      buildSampleInput([
+        "1=100;0;step=1;heal=500",
+        "1=100;2=0;+dmg=500;-dmg=500",
+      ]),
+    );
+
+    expect(timeline.events.some((event) => event.kind === "step")).toBe(true);
+    expect(timeline.snapshots.at(-1)?.rowById["1"]).not.toBe(
+      timeline.snapshots[0]?.rowById["1"],
+    );
+  });
+
+  it("credits a last-heal proc to the fighter it saved", () => {
+    const timeline = buildReplayTimeline(
+      buildSampleInput([
+        "1=100;2=35;+dmg=9500;-dmg=7800;legbon_lastheal=4000,Defender(35%)",
+      ]),
+    );
+
+    const heal = timeline.events.find((event) => event.kind === "heal");
+
+    expect(heal).toMatchObject({ actorId: "2", targetId: "2", amount: 4000 });
+  });
+
+  it("keeps HP the log reports on a move that produces no visible event", () => {
+    const timeline = buildReplayTimeline(
+      buildSampleInput(["1=100;2=60;+dmg=500;-dmg=500", "2=40;0"]),
+    );
+
+    expect(
+      getReplayStateAtTime(timeline, timeline.totalDurationMs).hpById["2"],
+    ).toBe(40);
+  });
+
+  it("records the attacker's death when reflected damage finishes them", () => {
+    const timeline = buildReplayTimeline(
+      buildSampleInput([
+        "1=90;2=100;+dmg=500;-dmg=0;+oth_dmg=150,dmg,Attacker(0%)",
+      ]),
+    );
+
+    expect(
+      timeline.events.find((event) => event.kind === "death"),
+    ).toMatchObject({
+      victimId: "1",
+      killerId: "2",
+    });
+  });
+
+  it("marks a fighter as wounded when a wound ticks on them", () => {
+    const timeline = buildReplayTimeline(
+      buildSampleInput(["1=95;0;wound=120"]),
+    );
+
+    expect(timeline.snapshots.at(-1)?.statusesById["1"]).toContain("wound");
+  });
 });

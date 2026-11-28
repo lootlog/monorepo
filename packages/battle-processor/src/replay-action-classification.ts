@@ -83,6 +83,17 @@ export const FREEZE_KEYS = new Set(["+freeze", "freeze"]);
 export const resolveDamageKindFromAction = (
   actionType: string,
 ): ReplayDamageKind => {
+  if (
+    actionType === "wound" ||
+    actionType === "critwound" ||
+    actionType === "injure" ||
+    actionType === "anguish"
+  ) {
+    return "wound";
+  }
+
+  if (actionType === "physical") return "physical";
+
   if (actionType.endsWith("f") || actionType === "fire") return "fire";
 
   if (actionType.endsWith("c") || actionType === "frost") return "frost";
@@ -100,15 +111,6 @@ export const resolveDamageKindFromAction = (
   }
 
   if (actionType === "poison") return "poison";
-
-  if (
-    actionType === "wound" ||
-    actionType === "critwound" ||
-    actionType === "injure" ||
-    actionType === "anguish"
-  ) {
-    return "wound";
-  }
 
   if (actionType === "absolute" || actionType === "+oth_dmg") return "true";
 

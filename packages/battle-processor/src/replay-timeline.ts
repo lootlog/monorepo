@@ -501,27 +501,25 @@ export const buildReplayTimeline = (
   };
 };
 
-const findSnapshotAtTime = (
+const EMPTY_SNAPSHOT: ReplaySnapshot = {
+  turn: 0,
+  timeMs: 0,
+  impactMs: 0,
+  hpById: {},
+  rowById: {},
+  deadIds: [],
+  shieldById: {},
+  statusesById: {},
+};
+
+const findSnapshotIndex = (
   snapshots: readonly ReplaySnapshot[],
   timeMs: number,
   moment: "timeMs" | "impactMs",
-): ReplaySnapshot => {
+) => {
   const first = snapshots[0];
 
-  if (!first || timeMs <= first[moment]) {
-    return (
-      first ?? {
-        turn: 0,
-        timeMs: 0,
-        impactMs: 0,
-        hpById: {},
-        rowById: {},
-        deadIds: [],
-        shieldById: {},
-        statusesById: {},
-      }
-    );
-  }
+  if (!first || timeMs <= first[moment]) return 0;
 
   let low = 0;
   let high = snapshots.length - 1;
@@ -537,7 +535,34 @@ const findSnapshotAtTime = (
     }
   }
 
-  return snapshots[low] ?? first;
+  return low;
+};
+
+const findSnapshotAtTime = (
+  snapshots: readonly ReplaySnapshot[],
+  timeMs: number,
+  moment: "timeMs" | "impactMs",
+) => snapshots[findSnapshotIndex(snapshots, timeMs, moment)] ?? EMPTY_SNAPSHOT;
+
+const findLastHpChangeMs = (
+  snapshots: readonly ReplaySnapshot[],
+  fromIndex: number,
+  participantId: string,
+) => {
+  for (let index = fromIndex; index > 0; index -= 1) {
+    const snapshot = snapshots[index];
+    const previous = snapshots[index - 1];
+
+    if (
+      snapshot &&
+      previous &&
+      snapshot.hpById[participantId] !== previous.hpById[participantId]
+    ) {
+      return snapshot.impactMs;
+    }
+  }
+
+  return 0;
 };
 
 const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
@@ -554,11 +579,8 @@ export const getReplayStateAtTime = (
     "timeMs",
   );
 
-  const impactSnapshot = findSnapshotAtTime(
-    timeline.snapshots,
-    timeMs,
-    "impactMs",
-  );
+  const impactIndex = findSnapshotIndex(timeline.snapshots, timeMs, "impactMs");
+  const impactSnapshot = timeline.snapshots[impactIndex] ?? EMPTY_SNAPSHOT;
 
   const delayedSnapshot = findSnapshotAtTime(
     timeline.snapshots,
@@ -575,7 +597,11 @@ export const getReplayStateAtTime = (
     if (delayedHp <= currentHp) {
       trailingHpById[participant.id] = currentHp;
     } else {
-      const elapsedSinceChange = Math.max(0, timeMs - impactSnapshot.impactMs);
+      const elapsedSinceChange = Math.max(
+        0,
+        timeMs -
+          findLastHpChangeMs(timeline.snapshots, impactIndex, participant.id),
+      );
 
       const catchUpProgress = clamp01(
         elapsedSinceChange / TRAILING_DAMAGE_DELAY_MS,
