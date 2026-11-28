@@ -115,34 +115,29 @@ const createFakeCanvasContext = (width: number, height: number) => {
 const EMPTY_ASSETS = { sprites: new Map(), battleground: null };
 
 describe("battle replay helpers and renderer", () => {
-  it("normalizes Margonem outfit URLs onto the same-origin CORS sprite proxy", () => {
+  it("loads outfits straight from the Margonem CDN and rejects path traversal", () => {
     expect(getReplaySpriteUrl("/vip/12345.gif")).toBe(
-      "/cdn-proxy/obrazki/postacie/vip/12345.gif",
+      "https://micc.garmory-cdn.cloud/obrazki/postacie/vip/12345.gif",
     );
-    expect(
-      getReplaySpriteUrl(
-        "https://micc.garmory-cdn.cloud/obrazki/postacie/m/pal.gif",
-      ),
-    ).toBe("/cdn-proxy/obrazki/postacie/m/pal.gif");
     expect(getReplaySpriteUrl("../evil.gif")).toBeNull();
     expect(getReplaySpriteUrl("")).toBeNull();
   });
 
   it("resolves the battleground the game sent the way the game client does, falling back for missing or unsafe names", () => {
     expect(getBattlegroundUrl("034.jpg")).toBe(
-      "/cdn-proxy/obrazki/battle/m1.jpg",
+      "https://micc.garmory-cdn.cloud/obrazki/battle/m1.jpg",
     );
     expect(getBattlegroundUrl("m8.jpg")).toBe(
-      "/cdn-proxy/obrazki/battle/m8.jpg",
+      "https://micc.garmory-cdn.cloud/obrazki/battle/m8.jpg",
     );
     expect(getBattlegroundUrl(undefined)).toBe(
-      "/cdn-proxy/obrazki/battle/m18.jpg",
+      "https://micc.garmory-cdn.cloud/obrazki/battle/m18.jpg",
     );
     expect(getBattlegroundUrl("matchmaking.jpg")).toBe(
-      "/cdn-proxy/obrazki/battle/m18.jpg",
+      "https://micc.garmory-cdn.cloud/obrazki/battle/m18.jpg",
     );
     expect(getBattlegroundUrl("../secret.jpg")).toBe(
-      "/cdn-proxy/obrazki/battle/m18.jpg",
+      "https://micc.garmory-cdn.cloud/obrazki/battle/m18.jpg",
     );
   });
 

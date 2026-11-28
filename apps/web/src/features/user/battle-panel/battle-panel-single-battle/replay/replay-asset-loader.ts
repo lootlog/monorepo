@@ -1,17 +1,16 @@
 import "@fontsource/pixelify-sans/500.css";
 import "@fontsource/pixelify-sans/700.css";
 import type { ReplayParticipant } from "@lootlog/battle-processor/replay-timeline";
+import {
+  MARGONEM_CDN_BATTLEGROUNDS_URL,
+  MARGONEM_CDN_CHARACTERS_URL,
+} from "@lootlog/domain/margonem-cdn";
 import type {
   ReplayAssets,
   ReplayLoadedSprite,
   ReplaySpriteMap,
 } from "./replay-canvas-types";
 import { REPLAY_FONT_FAMILY } from "./replay-pixel-text";
-
-const CDN_PROXY_ROOT = "/cdn-proxy/obrazki/";
-
-const CDN_PREFIX_PATTERN =
-  /^(?:https?:)?\/\/micc\.garmory-cdn\.cloud\/obrazki\//iu;
 
 const SAFE_BATTLEGROUND_FILE = /^[a-z0-9_-]+\.(?:jpe?g|png|webp)$/iu;
 
@@ -68,30 +67,18 @@ const GAME_BATTLEGROUND_ALIASES = new Map(
 );
 
 export const getReplaySpriteUrl = (icon: string): string | null => {
-  const stripped = icon
-    .trim()
-    .replace(CDN_PREFIX_PATTERN, "")
-    .replace(/^\/?obrazki\//iu, "")
-    .replace(/^\/+/u, "");
+  const path = icon.trim().replace(/^\/+/u, "");
 
-  if (!stripped || stripped.includes("..")) return null;
+  if (!path || path.includes("..")) return null;
 
-  if (
-    stripped.startsWith("postacie/") ||
-    stripped.startsWith("npc/") ||
-    stripped.startsWith("itemy/")
-  ) {
-    return `${CDN_PROXY_ROOT}${stripped}`;
-  }
-
-  return `${CDN_PROXY_ROOT}postacie/${stripped}`;
+  return `${MARGONEM_CDN_CHARACTERS_URL}/${path}`;
 };
 
 export const getBattlegroundUrl = (battleground: string | undefined) => {
   const requested = battleground?.trim().toLowerCase() ?? "";
   const file = GAME_BATTLEGROUND_ALIASES.get(requested) ?? requested;
 
-  return `${CDN_PROXY_ROOT}battle/${
+  return `${MARGONEM_CDN_BATTLEGROUNDS_URL}/${
     SAFE_BATTLEGROUND_FILE.test(file) && file !== "matchmaking.jpg"
       ? file
       : DEFAULT_BATTLEGROUND_FILE
