@@ -48,6 +48,7 @@ const RawBattleDataSchema = Schema.Struct({
     submissionId: CreateBattleSchema.fields.submissionId,
     world: CreateBattleSchema.fields.world,
     matchmaking: CreateBattleSchema.fields.matchmaking,
+    battleground: Schema.optionalKey(Schema.String),
     events: Schema.mutable(Schema.Array(ParsedMoveSchema)),
     sourceEvents: Schema.optionalKey(
       Schema.mutable(CreateBattleSchema.fields.events),

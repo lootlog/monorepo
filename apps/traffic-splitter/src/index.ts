@@ -2,6 +2,7 @@ import {
   createBattleLinkPreview,
   getPreviewBattleId,
 } from "./battle-link-preview";
+import { handleCdnProxyRequest, isCdnProxyRequest } from "./cdn-proxy";
 
 export interface TrafficSplitterEnvironment {
   BATTLELOG_ORIGIN: string;
@@ -278,6 +279,11 @@ export async function routeRequest(
   upstreamFetch: UpstreamFetch = fetch,
 ): Promise<Response> {
   const requestUrl = new URL(request.url);
+
+  if (isCdnProxyRequest(requestUrl.pathname)) {
+    return handleCdnProxyRequest(request, requestUrl, upstreamFetch);
+  }
+
   const isReadRequest = request.method === "GET" || request.method === "HEAD";
 
   if (

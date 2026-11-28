@@ -1,0 +1,41 @@
+import type { TFunction } from "i18next";
+import type { ReplayRenderLabels } from "./replay-canvas-types";
+
+export const buildReplayRenderLabels = (t: TFunction): ReplayRenderLabels => ({
+  turn: t("battlePanel.single.replay.canvas.turn"),
+  evade: t("battlePanel.single.replay.canvas.evade"),
+  block: t("battlePanel.single.replay.canvas.block"),
+  parry: t("battlePanel.single.replay.canvas.parry"),
+  arrowBlock: t("battlePanel.single.replay.canvas.arrowBlock"),
+  pierce: t("battlePanel.single.replay.canvas.pierce"),
+  crit: t("battlePanel.single.replay.canvas.crit"),
+  flee: t("battlePanel.single.replay.canvas.flee"),
+  mvp: t("battlePanel.single.replay.canvas.mvp"),
+  totalTurns: t("battlePanel.single.replay.canvas.totalTurns"),
+  damageDealt: t("battlePanel.single.replay.canvas.damageDealt"),
+  yourTeam: t("battlePanel.single.replay.canvas.yourTeam"),
+  enemyTeam: t("battlePanel.single.replay.canvas.enemyTeam"),
+  watermark: t("battlePanel.single.replay.canvas.watermark"),
+  outcomes: {
+    victory: t("battlePanel.single.replay.canvas.outcomes.victory"),
+    defeat: t("battlePanel.single.replay.canvas.outcomes.defeat"),
+    draw: t("battlePanel.single.replay.canvas.outcomes.draw"),
+    flee: t("battlePanel.single.replay.canvas.outcomes.flee"),
+    unfinished: t("battlePanel.single.replay.canvas.outcomes.unfinished"),
+  },
+  legendary: {
+    anguish: t("battlePanel.single.chart.legendary.anguish"),
+    cleanse: t("battlePanel.single.chart.legendary.cleanse"),
+    critShield: t("battlePanel.single.chart.legendary.critShield"),
+    curse: t("battlePanel.single.chart.legendary.curse"),
+    facade: t("battlePanel.single.chart.legendary.facade"),
+    frenzy: t("battlePanel.single.chart.legendary.frenzy"),
+    glare: t("battlePanel.single.chart.legendary.glare"),
+    holyTouch: t("battlePanel.single.chart.legendary.holyTouch"),
+    lastHeal: t("battlePanel.single.chart.legendary.lastHeal"),
+    puncture: t("battlePanel.single.chart.legendary.puncture"),
+    retaliation: t("battlePanel.single.chart.legendary.retaliation"),
+    unknown: t("battlePanel.single.chart.legendary.unknown"),
+    veryCrit: t("battlePanel.single.chart.legendary.veryCrit"),
+  },
+});

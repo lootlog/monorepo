@@ -22,6 +22,7 @@ import {
   BATTLE_DETAIL_RAIL_CLASS_NAME,
 } from "./battle-detail-layout";
 import { BattleDetailSummary } from "./battle-detail-summary";
+import { BattleReplayDialog } from "../replay/battle-replay-dialog";
 import {
   useBattleDetailView,
   type BattleDetailViewProps,
@@ -91,6 +92,24 @@ export function BattleDetailView({
 
   const hasRailTabs = panels.length > 1;
 
+  const hasReplayData = Boolean(
+    battle && rawBattle && rawBattle.events.length > 0,
+  );
+
+  const detailActions =
+    hasReplayData && battle && rawBattle ? (
+      <>
+        <BattleReplayDialog
+          key={battle.id}
+          battle={battle}
+          rawBattle={rawBattle}
+        />
+        {actions}
+      </>
+    ) : (
+      actions
+    );
+
   return (
     <ScrollArea
       data-under-top-bar
@@ -103,7 +122,7 @@ export function BattleDetailView({
         {battle ? (
           <DetailBar
             meta={<BattleMetadata battle={battle} />}
-            actions={actions}
+            actions={detailActions}
           />
         ) : null}
 

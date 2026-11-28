@@ -266,6 +266,7 @@ export type BattleRawResponseDtoOutputRawData = {
   accountId: string;
   characterId: string;
   world: string;
+  battleground?: string;
   events: BattleRawResponseDtoOutputRawDataEventsItem[];
   sourceEvents?: unknown[];
 };
@@ -583,6 +584,7 @@ export type RecordWeaponKillsDtoEventsItemF = {
   endBattle?: number;
   init?: string;
   auto?: string;
+  battleground?: string;
   w?: RecordWeaponKillsDtoEventsItemFW;
 };
 
@@ -1604,6 +1606,7 @@ export type CreateBattleDtoEventsItemF = {
   endBattle?: number;
   init?: string;
   auto?: string;
+  battleground?: string;
   w?: CreateBattleDtoEventsItemFW;
 };
 
